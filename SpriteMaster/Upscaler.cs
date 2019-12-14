@@ -412,8 +412,28 @@ namespace SpriteMaster
 					if (Config.Resample.Smoothing)
 					{
 						int[] outputData = new int[scaledSize.Area];
-						var scalerConfig = new ScalerCfg() { WrappedX = WrappedX, WrappedY = WrappedY };
-						new xBRZScaler().ScaleImage(scale, inputData, outputData, inputSize.Width, inputSize.Height, scalerConfig, 0, int.MaxValue);
+						var scalerConfig = new ScalerConfiguration() { WrappedX = WrappedX, WrappedY = WrappedY };
+
+						/*
+						new xBRZScaler(
+							scaleMultiplier: scale,
+							sourceData: rawData,
+							sourceWidth: input.ReferenceSize.Width,
+							sourceHeight: input.ReferenceSize.Height,
+							sourceTarget: new Rectangle(input.Size.X, input.Size.Y, input.Size.Width, input.Size.Height),
+							targetData: outputData,
+							configuration: scalerConfig
+						);
+						*/
+						new xBRZScaler(
+							scaleMultiplier: scale,
+							sourceData: inputData,
+							sourceWidth: inputSize.Width,
+							sourceHeight: inputSize.Height,
+							sourceTarget: null,
+							targetData: outputData,
+							configuration: scalerConfig
+						);
 						filtered = CreateBitmap(outputData, scaledSize, PixelFormat.Format32bppArgb);
 					}
 					else if (filtered == null)

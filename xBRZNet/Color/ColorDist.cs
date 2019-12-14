@@ -5,9 +5,9 @@ namespace xBRZNet.Color
 {
     internal class ColorDist
     {
-        protected readonly ScalerCfg Cfg;
+        protected readonly ScalerConfiguration Cfg;
 
-        public ColorDist(ScalerCfg cfg)
+        public ColorDist(ScalerConfiguration cfg)
         {
             Cfg = cfg;
         }

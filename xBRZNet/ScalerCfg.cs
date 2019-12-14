@@ -1,6 +1,6 @@
 ﻿namespace xBRZNet
 {
-	public class ScalerCfg
+	public class ScalerConfiguration
 	{
 		// These are the default values:
 		public double LuminanceWeight { get; set; } = 1;
