@@ -106,6 +106,11 @@ namespace SpriteMaster.Types
 			set { value.AssertGreaterEqual(Offset.Y); _Extent.Y = value - Offset.Y; }
 		}
 
+		public int Area
+		{
+			get { return Extent.X * Extent.Y; }
+		}
+
 		public bool Degenerate
 		{
 			get { return Extent.X <= 0 && Extent.Y <= 0; }

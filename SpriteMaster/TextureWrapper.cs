@@ -1,21 +1,15 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Types;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
-
-using XRectangle = Microsoft.Xna.Framework.Rectangle;
 
 namespace SpriteMaster
 {
 	internal class TextureWrapper
 	{
 		internal readonly Texture2D Reference;
-		internal readonly Dimensions ReferenceSize;
-		internal readonly XRectangle Size;
+		internal readonly Vector2I ReferenceSize;
+		internal readonly Bounds Size;
 		internal readonly Vector2B Wrapped;
 		internal readonly bool BlendEnabled;
 		internal byte[] Data = null;
@@ -23,9 +17,9 @@ namespace SpriteMaster
 
 		private static ConditionalWeakTable<Texture2D, WeakReference<byte[]>> DataCache = new ConditionalWeakTable<Texture2D, WeakReference<byte[]>>();
 
-		internal TextureWrapper(in Texture2D reference, in XRectangle dimensions)
+		internal TextureWrapper(in Texture2D reference, in Bounds dimensions)
 		{
-			ReferenceSize = Dimensions.From(reference);
+			ReferenceSize = new Vector2I(reference);
 			Size = dimensions;
 			if (Size.Bottom > ReferenceSize.Height)
 			{

@@ -39,10 +39,10 @@ namespace SpriteMaster
 	{
 		private const bool DisableCache = false;
 
-		static Bitmap CreateBitmap(in int[] source, in Dimensions size, PixelFormat format = PixelFormat.Format32bppArgb)
+		static Bitmap CreateBitmap(in int[] source, in Vector2I size, PixelFormat format = PixelFormat.Format32bppArgb)
 		{
 			var newImage = new Bitmap(size.Width, size.Height, format);
-			var rectangle = new System.Drawing.Rectangle(0, 0, newImage.Width, newImage.Height);
+			var rectangle = new Bounds(0, 0, newImage.Width, newImage.Height);
 			var newBitmapData = newImage.LockBits(rectangle, ImageLockMode.WriteOnly, format);
 			// Get the address of the first line.
 			var newBitmapPointer = newBitmapData.Scan0;
@@ -216,7 +216,7 @@ namespace SpriteMaster
 
 			var output = input.Reference;
 
-			var inputSize = desprite ? Dimensions.From(input.Size) : Dimensions.From(input.ReferenceSize);
+			var inputSize = desprite ? new Vector2I(input.Size.Width, input.Size.Height) : new Vector2I(input.ReferenceSize);
 
 			if (Config.Resample.SmartScale && Config.Resample.Scale)
 			{
@@ -382,7 +382,7 @@ namespace SpriteMaster
 									sourceData: rawData,
 									sourceWidth: input.ReferenceSize.Width,
 									sourceHeight: input.ReferenceSize.Height,
-									sourceTarget: new Rectangle(input.Size.X, input.Size.Y, input.Size.Width, input.Size.Height),
+									sourceTarget: input.Size,
 									targetData: bitmapData,
 									configuration: scalerConfig
 								);
@@ -402,15 +402,15 @@ namespace SpriteMaster
 					}
 					*/
 
-					var scaledDimensions = new Dimensions(input.Size.Width * scale, input.Size.Height * scale);
+					var scaledDimensions = new Vector2I(input.Size.Width * scale, input.Size.Height * scale);
 
 					if (scaledDimensions.Width != newSize.Width || scaledDimensions.Height != newSize.Height)
 					{
 						// This should be incredibly rare - we very rarely need to scale back down.
-						using (var filtered = CreateBitmap(bitmapData, new Dimensions(scaledDimensions.Width, scaledDimensions.Height), PixelFormat.Format32bppArgb))
+						using (var filtered = CreateBitmap(bitmapData, scaledDimensions, PixelFormat.Format32bppArgb))
 						{
 							var resized = filtered.Resize(newSize, System.Drawing.Drawing2D.InterpolationMode.Bicubic);
-							var resizedData = resized.LockBits(new System.Drawing.Rectangle(0, 0, resized.Width, resized.Height), ImageLockMode.ReadOnly, filtered.PixelFormat);
+							var resizedData = resized.LockBits(new Bounds(0, 0, resized.Width, resized.Height), ImageLockMode.ReadOnly, filtered.PixelFormat);
 							bitmapData = new int[resized.Width * resized.Height];
 
 							try

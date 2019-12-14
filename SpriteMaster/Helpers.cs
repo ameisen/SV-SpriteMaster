@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
+using SpriteMaster.Types;
 using System;
 using System.Collections.Generic;
 using System.Data.HashFunction.xxHash;
@@ -43,7 +44,7 @@ namespace SpriteMaster
 			return Math.Min(value, Config.ClampDimension);
 		}
 
-		internal static Dimensions ClampDimension(this in Dimensions value)
+		internal static Vector2I ClampDimension(this in Vector2I value)
 		{
 			return value.Min(Config.ClampDimension);
 		}
@@ -164,9 +165,9 @@ namespace SpriteMaster
 			return (uint)texture.Width * (uint)texture.Height * (uint)sizeof(int);
 		}
 
-		internal static Bitmap Resize(this Bitmap source, in Dimensions size, System.Drawing.Drawing2D.InterpolationMode filter = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic, bool discard = true)
+		internal static Bitmap Resize(this Bitmap source, in Vector2I size, System.Drawing.Drawing2D.InterpolationMode filter = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic, bool discard = true)
 		{
-			if (size == source)
+			if (size == new Vector2I(source))
 			{
 				return source;
 			}
@@ -304,6 +305,15 @@ namespace SpriteMaster
 		}
 
 		internal static ulong Hash(this in XRectangle rectangle)
+		{
+			return
+				((ulong)rectangle.X & 0xFFFF) |
+				(((ulong)rectangle.Y & 0xFFFF) << 16) |
+				(((ulong)rectangle.Width & 0xFFFF) << 32) |
+				(((ulong)rectangle.Height & 0xFFFF) << 48);
+		}
+
+		internal static ulong Hash(this in Bounds rectangle)
 		{
 			return
 				((ulong)rectangle.X & 0xFFFF) |

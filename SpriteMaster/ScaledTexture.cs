@@ -3,7 +3,6 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Threading;
 
-using System.Runtime.CompilerServices;
 using System.Reflection;
 using System.Linq;
 using System.Collections.Generic;
@@ -31,13 +30,13 @@ namespace SpriteMaster
 			return Config.Resample.DeSprite ? (ITextureMap)new SpriteMap() : (ITextureMap)new TextureMap();
 		}
 
-		internal abstract void Add(in Texture2D reference, in ScaledTexture texture, in Rectangle sourceRectangle);
+		internal abstract void Add(in Texture2D reference, in ScaledTexture texture, in Bounds sourceRectangle);
 
-		internal abstract bool TryGet(in Texture2D texture, in Rectangle sourceRectangle, out ScaledTexture result);
+		internal abstract bool TryGet(in Texture2D texture, in Bounds sourceRectangle, out ScaledTexture result);
 
 		internal abstract void Remove(in ScaledTexture scaledTexture, in Texture2D texture);
 
-		protected void OnAdd(in Texture2D reference, in ScaledTexture texture, in Rectangle sourceRectangle)
+		protected void OnAdd(in Texture2D reference, in ScaledTexture texture, in Bounds sourceRectangle)
 		{
 			if (!Config.Debug.TextureDump.Enabled) return;
 			ScaledTextureReferences.Add(new WeakScaledTexture(texture));
@@ -104,7 +103,7 @@ namespace SpriteMaster
 	{
 		private WeakTextureMap Map = new WeakTextureMap();
 
-		internal override void Add(in Texture2D reference, in ScaledTexture texture, in Rectangle sourceRectangle)
+		internal override void Add(in Texture2D reference, in ScaledTexture texture, in Bounds sourceRectangle)
 		{
 			using(Lock.LockExclusive())
 			{
@@ -113,7 +112,7 @@ namespace SpriteMaster
 			}
 		}
 
-		internal override bool TryGet(in Texture2D texture, in Rectangle sourceRectangle, out ScaledTexture result)
+		internal override bool TryGet(in Texture2D texture, in Bounds sourceRectangle, out ScaledTexture result)
 		{
 			result = null;
 
@@ -165,12 +164,12 @@ namespace SpriteMaster
 	{
 		private WeakSpriteMap Map = new WeakSpriteMap();
 
-		static private ulong SpriteHash(in Texture2D texture, in Rectangle sourceRectangle)
+		static private ulong SpriteHash(in Texture2D texture, in Bounds sourceRectangle)
 		{
 			return ScaledTexture.ExcludeSprite(texture) ? 0UL : sourceRectangle.Hash();
 		}
 
-		internal override void Add(in Texture2D reference, in ScaledTexture texture, in Rectangle sourceRectangle)
+		internal override void Add(in Texture2D reference, in ScaledTexture texture, in Bounds sourceRectangle)
 		{
 			using (Lock.LockExclusive())
 			{
@@ -184,7 +183,7 @@ namespace SpriteMaster
 			}
 		}
 
-		internal override bool TryGet(in Texture2D texture, in Rectangle sourceRectangle, out ScaledTexture result)
+		internal override bool TryGet(in Texture2D texture, in Bounds sourceRectangle, out ScaledTexture result)
 		{
 			result = null;
 
@@ -285,7 +284,7 @@ namespace SpriteMaster
 			}
 		}
 
-		static internal ScaledTexture Get(Texture2D texture, Rectangle sourceRectangle)
+		static internal ScaledTexture Get(Texture2D texture, Bounds sourceRectangle)
 		{
 			int textureArea = texture.Width * texture.Height;
 
@@ -422,11 +421,11 @@ namespace SpriteMaster
 		internal Vector2B Wrapped = new Vector2B(false);
 
 		internal WeakTexture Reference;
-		internal Rectangle OriginalSourceRectangle;
+		internal Bounds OriginalSourceRectangle;
 		internal ulong Hash;
 
-		private Dimensions originalSize;
-		private Rectangle sourceRectangle;
+		private Vector2I originalSize;
+		private Bounds sourceRectangle;
 		private int refScale;
 
 		internal static volatile uint TotalMemoryUsage = 0;
@@ -453,20 +452,20 @@ namespace SpriteMaster
 
 		internal static Dictionary<ulong, WeakScaledTexture> LocalTextureCache = new Dictionary<ulong, WeakScaledTexture>();
 
-		internal ScaledTexture(string assetName, TextureWrapper textureWrapper, Texture2D source, Rectangle sourceRectangle, int scale, ulong hash, bool isSprite)
+		internal ScaledTexture(string assetName, TextureWrapper textureWrapper, Texture2D source, Bounds sourceRectangle, int scale, ulong hash, bool isSprite)
 		{
 			TextureSizeHack(source.GraphicsDevice);
 			IsSprite = isSprite;
 			Hash = hash;
 
-			this.OriginalSourceRectangle = new Rectangle(sourceRectangle.X, sourceRectangle.Y, sourceRectangle.Width, sourceRectangle.Height);
-			this.Reference = new WeakReference<Texture2D>(source);
+			this.OriginalSourceRectangle = new Bounds(sourceRectangle.X, sourceRectangle.Y, sourceRectangle.Width, sourceRectangle.Height);
+			this.Reference = new WeakTexture(source);
 			this.sourceRectangle = sourceRectangle;
 			this.refScale = scale;
 			TextureMap.Add(source, this, sourceRectangle);
 
 			this.Name = source.Name.IsBlank() ? assetName : source.Name;
-			originalSize = IsSprite ? Dimensions.From(sourceRectangle) : Dimensions.From(source);
+			originalSize = IsSprite ? new Vector2I(sourceRectangle.Width, sourceRectangle.Height) : new Vector2I(source);
 
 			if (Config.AsyncScaling.Enabled)
 			{

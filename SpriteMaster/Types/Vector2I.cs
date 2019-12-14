@@ -45,6 +45,11 @@ namespace SpriteMaster.Types
 			set { Y = value; }
 		}
 
+		public int Area
+		{
+			get { return X * Y; }
+		}
+
 		public bool IsEmpty
 		{
 			get { return X == 0 && Y == 0; }
@@ -69,6 +74,10 @@ namespace SpriteMaster.Types
 		public Vector2I(in DrawingSize v) : this(v.Width, v.Height) { }
 
 		public Vector2I(in XTileSize v) : this(v.Width, v.Height) { }
+
+		public Vector2I(in Microsoft.Xna.Framework.Graphics.Texture2D tex) : this(tex.Width, tex.Height) { }
+
+		public Vector2I(in System.Drawing.Bitmap bmp) : this(bmp.Width, bmp.Height) { }
 
 		public Vector2I Set(in int x, in int y)
 		{
@@ -160,6 +169,64 @@ namespace SpriteMaster.Types
 		public static implicit operator Vector2I(in XTileSize vec)
 		{
 			return new Vector2I(vec);
+		}
+
+		public readonly int Min()
+		{
+			return Math.Min(X, Y);
+		}
+
+		public readonly int Max()
+		{
+			return Math.Max(X, Y);
+		}
+
+		public readonly Vector2I Min(in Vector2I v)
+		{
+			return new Vector2I(
+				Math.Min(X, v.X),
+				Math.Min(Y, v.Y)
+			);
+		}
+
+		public readonly Vector2I Max(in Vector2I v)
+		{
+			return new Vector2I(
+				Math.Max(X, v.X),
+				Math.Max(Y, v.Y)
+			);
+		}
+
+		public readonly Vector2I Clamp(in Vector2I min, in Vector2I max)
+		{
+			return new Vector2I(
+				Helpers.Clamp(X, min.X, max.X),
+				Helpers.Clamp(Y, min.Y, max.Y)
+			);
+		}
+
+		public readonly Vector2I Min(in int v)
+		{
+			return new Vector2I(
+				Math.Min(X, v),
+				Math.Min(Y, v)
+			);
+		}
+
+		public readonly Vector2I Max(in int v)
+		{
+			return new Vector2I(
+				Math.Max(X, v),
+				Math.Max(Y, v)
+			);
+		}
+
+		public readonly Vector2I Clamp(in int min, in int max)
+		{
+			return new Vector2I(
+				Helpers.Clamp(X, min, max),
+				Helpers.Clamp(Y, min, max)
+			);
 		}
 
 		public readonly Vector2I Clone()

@@ -1,20 +1,4 @@
-﻿/// **********
-/// HDSpritesMod is a mod for Stardew Valley using SMAPI and Harmony.
-/// It loads all *.png/*.xnb from the mod's local assets folder into 
-/// ScaledTexture2D objects and replaces their game loaded counterparts.
-/// 
-/// Harmony is used to patch the XNA drawMethod (which the game uses to render its
-/// textures) to check if the texture being drawn is of the replaced type ScaledTexture2D, 
-/// and if it is, then draw the larger version using its scale adjusted parameters.
-/// 
-/// Credit goes to Platonymous for the ScaledTexture2D and SpriteBatchFix Harmony 
-/// patch classes from his Portraiture mod that makes this whole mod possible.
-/// 
-/// Author: NinthWorld
-/// Date: 5/31/19
-/// **********
-
-using Harmony;
+﻿using Harmony;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using System.Reflection;
