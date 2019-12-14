@@ -1,9 +1,26 @@
-﻿namespace SpriteMaster
+﻿using System;
+
+namespace SpriteMaster.Types
 {
-	internal struct Vector2B
+	internal struct Vector2B : ICloneable
 	{
+		public static readonly Vector2B True = new Vector2B(true, true);
+		public static readonly Vector2B False = new Vector2B(false, false);
+
 		public bool X;
 		public bool Y;
+
+		public bool Width
+		{
+			readonly get { return X; }
+			set { X = value; }
+		}
+
+		public bool Height
+		{
+			readonly get { return Y; }
+			set { Y = value; }
+		}
 
 		public Vector2B(in bool x, in bool y)
 		{
@@ -40,6 +57,16 @@
 		{
 			Y = X = v;
 			return this;
+		}
+
+		public readonly Vector2B Clone()
+		{
+			return new Vector2B(X, Y);
+		}
+
+		readonly object ICloneable.Clone()
+		{
+			return Clone();
 		}
 
 		public static Vector2B operator &(in Vector2B lhs, in Vector2B rhs)

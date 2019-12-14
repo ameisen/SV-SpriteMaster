@@ -62,10 +62,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Extensions\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Include="..\LICENSE.MD">
       <Pack>True</Pack>
       <PackagePath></PackagePath>

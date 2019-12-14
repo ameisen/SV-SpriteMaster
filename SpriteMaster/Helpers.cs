@@ -382,7 +382,7 @@ namespace SpriteMaster
 
 		internal static string Reverse(this string str)
 		{
-			Debug.Argument.AssertNotNull(str);
+			Contract.Argument.AssertNotNull(str);
 
 			unsafe
 			{
@@ -403,21 +403,21 @@ namespace SpriteMaster
 
 		internal static string Reversed(this string str)
 		{
-			Debug.Argument.AssertNotNull(str);
+			Contract.Argument.AssertNotNull(str);
 			var strArray = str.ToCharArray().Reverse();
 			return new string(strArray);
 		}
 
 		internal static T[] Reverse<T>(this T[] array)
 		{
-			Debug.Argument.AssertNotNull(array);
+			Contract.Argument.AssertNotNull(array);
 			Array.Reverse(array);
 			return array;
 		}
 
 		internal static T[] Reversed<T>(this T[] array)
 		{
-			Debug.Argument.AssertNotNull(array);
+			Contract.Argument.AssertNotNull(array);
 			var result = (T[])array.Clone();
 			Array.Reverse(result);
 			return result;
@@ -514,8 +514,8 @@ namespace SpriteMaster
 
 		private static string Delimit(this string valueString, string delimiter, in uint delimitCount)
 		{
-			Debug.Argument.Assert(delimitCount > 0);
-			Debug.Argument.AssertTrue(delimiter.IsNormalized());
+			Contract.Argument.Assert(delimitCount > 0);
+			Contract.Argument.AssertTrue(delimiter.IsNormalized());
 
 			delimiter = delimiter.Reversed();
 
@@ -570,25 +570,25 @@ namespace SpriteMaster
 
 		internal static string AsDataSize(this in long value, in DataFormat format = DataFormat.IEC, int decimals = 2)
 		{
-			Debug.Argument.Assert(value >= 0);
+			Contract.Argument.Assert(value >= 0);
 			return AsDataSize((ulong)value, format, decimals);
 		}
 
 		internal static string AsDataSize(this in int value, in DataFormat format = DataFormat.IEC, int decimals = 2)
 		{
-			Debug.Argument.Assert(value >= 0);
+			Contract.Argument.Assert(value >= 0);
 			return AsDataSize((ulong)value, format, decimals);
 		}
 
 		internal static string AsDataSize(this in short value, in DataFormat format = DataFormat.IEC, int decimals = 2)
 		{
-			Debug.Argument.Assert(value >= 0);
+			Contract.Argument.Assert(value >= 0);
 			return AsDataSize((ulong)value, format, decimals);
 		}
 
 		internal static string AsDataSize(this in sbyte value, in DataFormat format = DataFormat.IEC, int decimals = 2)
 		{
-			Debug.Argument.Assert(value >= 0);
+			Contract.Argument.Assert(value >= 0);
 			return AsDataSize((ulong)value, format, decimals);
 		}
 
@@ -609,7 +609,7 @@ namespace SpriteMaster
 
 		internal static string AsDataSize(this in ulong number, in DataFormat format = DataFormat.IEC, int decimals = 2)
 		{
-			Debug.Argument.Assert(decimals >= 0);
+			Contract.Argument.Assert(decimals >= 0);
 			uint fraction = (format == DataFormat.Metric) ? 1000U : 1024U;
 
 			var SuffixTable = (format == DataFormat.IEC) ? BinarySuffixTable : DecimalSuffixTable;

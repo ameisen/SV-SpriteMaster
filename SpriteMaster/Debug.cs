@@ -4,13 +4,6 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.CompilerServices;
-
-using AssertionException = System.Exception;
-using NotNullReferenceException = System.Exception;
-using BooleanException = System.Exception;
-using ArgumentNotNullException = System.ArgumentOutOfRangeException;
-using ArgumentBooleanException = System.ArgumentOutOfRangeException;
 
 namespace SpriteMaster
 {
@@ -31,114 +24,6 @@ namespace SpriteMaster
 			{
 				LogFile = new StreamWriter(LocalLogPath);
 			}
-		}
-
-		// Assertion Stuff
-
-		static private bool IsExceptionType(this Type type)
-		{
-			return type.IsSubclassOf(typeof(Exception));
-		}
-
-		static internal class Argument
-		{
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			static internal bool Assert(bool predicate, in string message = "Argument is invalid", Type exception = null)
-			{
-				return Debug.Assert(predicate, message, exception ?? typeof(ArgumentOutOfRangeException));
-			}
-
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			static internal bool AssertNull<T>(in T value, in string message = "Variable is not null", Type exception = null)
-			{
-				return Assert(value == null, message, exception ?? typeof(ArgumentNotNullException));
-			}
-
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			static internal bool AssertNotNull<T>(in T value, in string message = "Variable is null", Type exception = null)
-			{
-				return Assert(value != null, message, exception ?? typeof(ArgumentNullException));
-			}
-
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			static internal bool AssertTrue(in bool value, in string message = "Variable is not true", Type exception = null)
-			{
-				return Assert(value == true, message, exception ?? typeof(ArgumentBooleanException));
-			}
-
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			static internal bool AssertFalse(in bool value, in string message = "Variable is not false", Type exception = null)
-			{
-				return Assert(value == false, message, exception ?? typeof(ArgumentBooleanException));
-			}
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		static internal bool AssertArgNull<T>(this T value, in string message = null, Type exception = null)
-		{
-			return Argument.AssertNull(value, message, exception);
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		static internal bool AssertArgNotNull<T>(this T value, in string message = null, Type exception = null)
-		{
-			return Argument.AssertNotNull(value, message, exception);
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		static internal bool AssertNull<T>(this T value, in string message = "Variable is not null", Type exception = null)
-		{
-			return Assert(value == null, message, exception ?? typeof(NotNullReferenceException));
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		static internal bool AssertNotNull<T>(this T value, in string message = "Variable is null", Type exception = null)
-		{
-			return Assert(value != null, message, exception ?? typeof(NullReferenceException));
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		static internal bool AssertArgTrue(this in bool value, in string message = null, Type exception = null)
-		{
-			return Argument.AssertTrue(value, message, exception);
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		static internal bool AssertArgFalse(this in bool value, in string message = null, Type exception = null)
-		{
-			return Argument.AssertFalse(value, message, exception);
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		static internal bool AssertTrue(this in bool value, in string message = "Variable is not true", Type exception = null)
-		{
-			return Assert(value == true, message, exception ?? typeof(BooleanException));
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		static internal bool AssertFalse(this in bool value, in string message = "Variable is not false", Type exception = null)
-		{
-			return Assert(value == false, message, exception ?? typeof(BooleanException));
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		static internal bool AssertArg(bool predicate, in string message = null, Type exception = null)
-		{
-			return Argument.Assert(predicate, message, exception);
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		static internal bool Assert(bool predicate, in string message = "Variable's value is invalid", Type exception = null)
-		{
-			if (!exception.IsExceptionType())
-			{
-				throw new ArgumentOutOfRangeException("Provided assert exception type is not a subclass of Exception");
-			}
-			if (!predicate)
-			{
-				throw (AssertionException)Activator.CreateInstance(exception ?? typeof(AssertionException), new object[] { message });
-			}
-			return true;
 		}
 
 		// Logging Stuff

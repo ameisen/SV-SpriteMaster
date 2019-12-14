@@ -1,6 +1,8 @@
-﻿namespace SpriteMaster
+﻿using System;
+
+namespace SpriteMaster.Types
 {
-	internal struct Vector2T<T> where T : struct
+	internal struct Vector2T<T> : ICloneable where T : struct
 	{
 		public T X;
 		public T Y;
@@ -40,6 +42,16 @@
 		{
 			Y = X = v;
 			return this;
+		}
+
+		public readonly Vector2T<T> Clone()
+		{
+			return new Vector2T<T>(X, Y);
+		}
+
+		readonly object ICloneable.Clone()
+		{
+			return Clone();
 		}
 	}
 }
