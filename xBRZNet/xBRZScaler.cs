@@ -55,7 +55,7 @@ namespace xBRZNet
 		
 		public xBRZScaler(
 			in int scaleMultiplier,
-			in int[] sourceData,
+			in Span<int> sourceData,
 			in int sourceWidth,
 			in int sourceHeight,
 			in Rectangle? sourceTarget,
@@ -63,7 +63,7 @@ namespace xBRZNet
 			in ScalerConfiguration configuration
 		)
 		{
-			if (scaleMultiplier < 1 || scaleMultiplier >= 5)
+			if (scaleMultiplier < 2 || scaleMultiplier > 5)
 			{
 				throw new ArgumentOutOfRangeException(nameof(scaleMultiplier));
 			}
@@ -322,7 +322,7 @@ namespace xBRZNet
 		}
 
 		//scaler policy: see "Scaler2x" reference implementation
-		private void Scale(int[] src, int[] trg)
+		private void Scale(in Span<int> src, int[] trg)
 		{
 			int yFirst = sourceTarget.Top;
 			int yLast = sourceTarget.Bottom;

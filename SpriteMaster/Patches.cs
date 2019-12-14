@@ -166,7 +166,7 @@ namespace SpriteMaster
 		{
 			if (Config.AsyncScaling.CanFetchAndLoadSameFrame || !PushedUpdateThisFrame)
 			{
-				ScaledTexture.ProcessPendingActions();
+				ScaledTexture.ProcessPendingActions(100);
 			}
 			RemainingTexelFetchBudget = Config.AsyncScaling.TexelFetchFrameBudget;
 			FetchedThisFrame = false;

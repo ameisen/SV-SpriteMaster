@@ -54,7 +54,7 @@ namespace SpriteMaster
 			internal const bool Smoothing = true;
 			internal const bool Scale = Smoothing;
 			internal const bool SmartScale = true;
-			internal const int MaxScale = 4;
+			internal const int MaxScale = 5;
 			internal const bool DeSprite = true;
 			internal const bool EnableWrappedAddressing = true;
 		}

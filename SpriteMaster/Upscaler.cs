@@ -302,63 +302,7 @@ namespace SpriteMaster
 				}
 				else
 				{
-					int[] rawData = new int[input.ReferenceSize.Area];
-					Buffer.BlockCopy(input.Data, 0, rawData, 0, input.Data.Length);
-
-					bool WrappedX = input.WrappedX;// || !input.BlendEnabled;
-					bool WrappedY = input.WrappedY;// || !input.BlendEnabled;
-					if (Config.Resample.DeSprite && Config.WrapDetection.Enabled && Config.Resample.EnableWrappedAddressing)
-					{
-						byte GetAlpha(int sample)
-						{
-							return (byte)(((uint)sample >> 24) & 0xFF);
-						}
-
-						// Count the fragments that are not alphad out completely on the edges.
-						// Both edges must meet the threshold.
-						if (!WrappedX)
-						{
-							int[] samples = new int[] { 0, 0 };
-							foreach (int y in 0.Until(inputSize.Height))
-							{
-								int offset = (y + input.Size.Y) * inputSize.Width + input.Size.X;
-								int sample0 = rawData[offset];
-								int sample1 = rawData[offset + (inputSize.Width - 1)];
-
-								if (GetAlpha(sample0) >= Config.WrapDetection.alphaThreshold)
-								{
-									samples[0]++;
-								}
-								if (GetAlpha(sample1) >= Config.WrapDetection.alphaThreshold)
-								{
-									samples[1]++;
-								}
-							}
-							int threshold = ((float)inputSize.Height * Config.WrapDetection.edgeThreshold).RoundToInt();
-							WrappedX = samples[0] >= threshold && samples[1] >= threshold;
-						}
-						if (!WrappedY)
-						{
-							int[] samples = new int[] { 0, 0 };
-							int[] offsets = new int[] { input.Size.Y * inputSize.Width, input.Size.Y + (inputSize.Height - 1) * inputSize.Width };
-							int sampler = 0;
-							foreach (int yOffset in offsets)
-							{
-								foreach (int x in 0.Until(inputSize.Width))
-								{
-									int offset = yOffset + x + input.Size.X;
-									int sample = rawData[offset];
-									if (GetAlpha(sample) >= Config.WrapDetection.alphaThreshold)
-									{
-										samples[sampler]++;
-									}
-								}
-								sampler++;
-							}
-							int threshold = ((float)inputSize.Width * Config.WrapDetection.edgeThreshold).RoundToInt();
-							WrappedY = samples[0] >= threshold && samples[1] >= threshold;
-						}
-					}
+					Bitmap filtered = null;
 
 					Bitmap GetDumpBitmap(Bitmap source)
 					{
@@ -375,37 +319,101 @@ namespace SpriteMaster
 						return dump;
 					}
 
-					wrappedX = WrappedX = WrappedX && Config.Resample.EnableWrappedAddressing;
-					wrappedY = WrappedY = WrappedY && Config.Resample.EnableWrappedAddressing;
+					bool WrappedX = input.WrappedX;// || !input.BlendEnabled;
+					bool WrappedY = input.WrappedY;// || !input.BlendEnabled;
 
-					Bitmap filtered = null;
-					if (Config.Debug.Sprite.DumpReference)
+					unsafe
 					{
-						filtered = CreateBitmap(rawData, inputSize, PixelFormat.Format32bppArgb);
-						var dump = GetDumpBitmap(filtered);
-						dump.Save(Path.Combine(LocalDataPath, "dump", $"{input.Reference.SafeName().Replace("\\", ".")}.{hashString}.reference.png"), ImageFormat.Png);
+						using (var rawDataHandle = input.Data.AsMemory().Pin())
+						{
+							var rawData = new Span<int>(rawDataHandle.Pointer, input.Data.Length / sizeof(int));
+
+							if (Config.Resample.DeSprite && Config.WrapDetection.Enabled && Config.Resample.EnableWrappedAddressing)
+							{
+								byte GetAlpha(int sample)
+								{
+									return (byte)(((uint)sample >> 24) & 0xFF);
+								}
+
+								// Count the fragments that are not alphad out completely on the edges.
+								// Both edges must meet the threshold.
+								if (!WrappedX)
+								{
+									int[] samples = new int[] { 0, 0 };
+									foreach (int y in 0.Until(inputSize.Height))
+									{
+										int offset = (y + input.Size.Y) * inputSize.Width + input.Size.X;
+										int sample0 = rawData[offset];
+										int sample1 = rawData[offset + (inputSize.Width - 1)];
+
+										if (GetAlpha(sample0) >= Config.WrapDetection.alphaThreshold)
+										{
+											samples[0]++;
+										}
+										if (GetAlpha(sample1) >= Config.WrapDetection.alphaThreshold)
+										{
+											samples[1]++;
+										}
+									}
+									int threshold = ((float)inputSize.Height * Config.WrapDetection.edgeThreshold).RoundToInt();
+									WrappedX = samples[0] >= threshold && samples[1] >= threshold;
+								}
+								if (!WrappedY)
+								{
+									int[] samples = new int[] { 0, 0 };
+									int[] offsets = new int[] { input.Size.Y * inputSize.Width, input.Size.Y + (inputSize.Height - 1) * inputSize.Width };
+									int sampler = 0;
+									foreach (int yOffset in offsets)
+									{
+										foreach (int x in 0.Until(inputSize.Width))
+										{
+											int offset = yOffset + x + input.Size.X;
+											int sample = rawData[offset];
+											if (GetAlpha(sample) >= Config.WrapDetection.alphaThreshold)
+											{
+												samples[sampler]++;
+											}
+										}
+										sampler++;
+									}
+									int threshold = ((float)inputSize.Width * Config.WrapDetection.edgeThreshold).RoundToInt();
+									WrappedY = samples[0] >= threshold && samples[1] >= threshold;
+								}
+							}
+
+							wrappedX = WrappedX = WrappedX && Config.Resample.EnableWrappedAddressing;
+							wrappedY = WrappedY = WrappedY && Config.Resample.EnableWrappedAddressing;
+
+							if (Config.Debug.Sprite.DumpReference)
+							{
+								filtered = CreateBitmap(rawData.ToArray(), inputSize, PixelFormat.Format32bppArgb);
+								var dump = GetDumpBitmap(filtered);
+								dump.Save(Path.Combine(LocalDataPath, "dump", $"{input.Reference.SafeName().Replace("\\", ".")}.{hashString}.reference.png"), ImageFormat.Png);
+							}
+
+							if (Config.Resample.Smoothing)
+							{
+								int[] outputData = new int[scaledSize.Area];
+								var scalerConfig = new ScalerConfiguration() { WrappedX = WrappedX, WrappedY = WrappedY };
+
+								new xBRZScaler(
+									scaleMultiplier: scale,
+									sourceData: rawData,
+									sourceWidth: input.ReferenceSize.Width,
+									sourceHeight: input.ReferenceSize.Height,
+									sourceTarget: new Rectangle(input.Size.X, input.Size.Y, input.Size.Width, input.Size.Height),
+									targetData: outputData,
+									configuration: scalerConfig
+								);
+								filtered = CreateBitmap(outputData, scaledSize, PixelFormat.Format32bppArgb);
+							}
+							else if (filtered == null)
+							{
+								filtered = CreateBitmap(rawData.ToArray(), inputSize, PixelFormat.Format32bppArgb);
+							}
+						}
 					}
 
-					if (Config.Resample.Smoothing)
-					{
-						int[] outputData = new int[scaledSize.Area];
-						var scalerConfig = new ScalerConfiguration() { WrappedX = WrappedX, WrappedY = WrappedY };
-
-						new xBRZScaler(
-							scaleMultiplier: scale,
-							sourceData: rawData,
-							sourceWidth: input.ReferenceSize.Width,
-							sourceHeight: input.ReferenceSize.Height,
-							sourceTarget: new Rectangle(input.Size.X, input.Size.Y, input.Size.Width, input.Size.Height),
-							targetData: outputData,
-							configuration: scalerConfig
-						);
-						filtered = CreateBitmap(outputData, scaledSize, PixelFormat.Format32bppArgb);
-					}
-					else if (filtered == null)
-					{
-						filtered = CreateBitmap(rawData, inputSize, PixelFormat.Format32bppArgb);
-					}
 					filtered = filtered.Resize(newSize, System.Drawing.Drawing2D.InterpolationMode.Bicubic);
 
 					if (Config.Debug.Sprite.DumpResample)
