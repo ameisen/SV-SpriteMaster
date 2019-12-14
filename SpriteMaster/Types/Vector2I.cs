@@ -52,7 +52,7 @@ namespace SpriteMaster.Types
 
 		public bool IsEmpty
 		{
-			get { return X == 0 && Y == 0; }
+			get { return this == Zero; }
 		}
 
 		public Vector2I(in int x, in int y)

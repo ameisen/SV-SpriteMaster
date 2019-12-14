@@ -42,7 +42,7 @@ namespace SpriteMaster
 		static Bitmap CreateBitmap(in int[] source, in Vector2I size, PixelFormat format = PixelFormat.Format32bppArgb)
 		{
 			var newImage = new Bitmap(size.Width, size.Height, format);
-			var rectangle = new Bounds(0, 0, newImage.Width, newImage.Height);
+			var rectangle = new Bounds(newImage);
 			var newBitmapData = newImage.LockBits(rectangle, ImageLockMode.WriteOnly, format);
 			// Get the address of the first line.
 			var newBitmapPointer = newBitmapData.Scan0;
@@ -410,7 +410,7 @@ namespace SpriteMaster
 						using (var filtered = CreateBitmap(bitmapData, scaledDimensions, PixelFormat.Format32bppArgb))
 						{
 							var resized = filtered.Resize(newSize, System.Drawing.Drawing2D.InterpolationMode.Bicubic);
-							var resizedData = resized.LockBits(new Bounds(0, 0, resized.Width, resized.Height), ImageLockMode.ReadOnly, filtered.PixelFormat);
+							var resizedData = resized.LockBits(new Bounds(resized), ImageLockMode.ReadOnly, filtered.PixelFormat);
 							bitmapData = new int[resized.Width * resized.Height];
 
 							try

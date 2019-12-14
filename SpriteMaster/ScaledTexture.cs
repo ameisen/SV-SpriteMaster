@@ -458,7 +458,7 @@ namespace SpriteMaster
 			IsSprite = isSprite;
 			Hash = hash;
 
-			this.OriginalSourceRectangle = new Bounds(sourceRectangle.X, sourceRectangle.Y, sourceRectangle.Width, sourceRectangle.Height);
+			this.OriginalSourceRectangle = new Bounds(sourceRectangle);
 			this.Reference = new WeakTexture(source);
 			this.sourceRectangle = sourceRectangle;
 			this.refScale = scale;

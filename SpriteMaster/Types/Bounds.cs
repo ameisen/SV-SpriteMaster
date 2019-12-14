@@ -147,6 +147,10 @@ namespace SpriteMaster.Types
 
 		public Bounds(in XTileRectangle rect) : this(rect.X, rect.Y, rect.Width, rect.Height) { }
 
+		public Bounds(in Microsoft.Xna.Framework.Graphics.Texture2D tex) : this(tex.Width, tex.Height) { }
+
+		public Bounds(in System.Drawing.Bitmap bmp) : this(bmp.Width, bmp.Height) { }
+
 		public readonly Bounds Clone()
 		{
 			return new Bounds(this);
