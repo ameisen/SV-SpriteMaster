@@ -465,7 +465,7 @@ namespace SpriteMaster
 			TextureMap.Add(source, this, sourceRectangle);
 
 			this.Name = source.Name.IsBlank() ? assetName : source.Name;
-			originalSize = IsSprite ? new Vector2I(sourceRectangle.Width, sourceRectangle.Height) : new Vector2I(source);
+			originalSize = IsSprite ? sourceRectangle.Extent : new Vector2I(source);
 
 			if (Config.AsyncScaling.Enabled)
 			{

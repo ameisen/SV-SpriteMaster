@@ -193,7 +193,7 @@ namespace SpriteMaster
 
 			var output = input.Reference;
 
-			var inputSize = desprite ? new Vector2I(input.Size.Width, input.Size.Height) : new Vector2I(input.ReferenceSize);
+			var inputSize = desprite ? input.Size.Extent : input.ReferenceSize;
 
 			if (Config.Resample.SmartScale && Config.Resample.Scale)
 			{
@@ -396,7 +396,7 @@ namespace SpriteMaster
 					}
 					*/
 
-					var scaledDimensions = new Vector2I(input.Size.Width * scale, input.Size.Height * scale);
+					var scaledDimensions = input.Size.Extent * scale;
 
 					if (scaledDimensions.Width != newSize.Width || scaledDimensions.Height != newSize.Height)
 					{
