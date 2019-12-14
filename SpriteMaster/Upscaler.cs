@@ -117,8 +117,9 @@ namespace SpriteMaster
 			return newImage;
 		}
 
-		private static readonly string JunctionCacheName = "TextureCache";
-		private static readonly string CacheName = $"{JunctionCacheName}_{typeof(Upscaler).Assembly.GetName().Version.ToString()}";
+		private static readonly string TextureCacheName = "TextureCache";
+		private static readonly string JunctionCacheName = $"{TextureCacheName}_Current";
+		private static readonly string CacheName = $"{TextureCacheName}_{typeof(Upscaler).Assembly.GetName().Version.ToString()}";
 		private static readonly string OldLocalDataRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Stardew Valley");
 		private static readonly string LocalDataPath = Path.Combine(Config.LocalRoot, CacheName);
 
@@ -131,6 +132,12 @@ namespace SpriteMaster
 		[DllImport("kernel32.dll")]
 		static extern bool CreateSymbolicLink(string Link, string Target, LinkType Type);
 
+		private static bool IsSymbolic(string path)
+		{
+			FileInfo pathInfo = new FileInfo(path);
+			return pathInfo.Attributes.HasFlag(FileAttributes.ReparsePoint);
+		}
+
 		static Upscaler()
 		{
 
@@ -139,7 +146,7 @@ namespace SpriteMaster
 				// Delete any old caches.
 				try
 				{
-					foreach (var root in new string[] { OldLocalDataRoot, Config.LocalRoot })
+					foreach (var root in new string[] { Config.LocalRoot })
 					{
 						var directories = Directory.EnumerateDirectories(root);
 						foreach (var directory in directories)
@@ -150,8 +157,12 @@ namespace SpriteMaster
 								{
 									continue;
 								}
+								if (IsSymbolic(directory))
+								{
+									continue;
+								}
 								var endPath = Path.GetFileName(directory);
-								if (endPath != CacheName)
+								if (endPath != CacheName && endPath != JunctionCacheName)
 								{
 									// If it doesn't match, it's outdated and should be deleted.
 									Directory.Delete(directory, true);
@@ -293,17 +304,27 @@ namespace SpriteMaster
 			var hashString = hash.ToString("x");
 			var localDataPath = Path.Combine(LocalDataPath, $"{hashString}.cache");
 
-			byte[] bitmapData;
+			int[] bitmapData = null;
 			try
 			{
 				if (!DisableCache && File.Exists(localDataPath))
 				{
-					bitmapData = File.ReadAllBytes(localDataPath);
-				}
-				else
-				{
-					Bitmap filtered = null;
+					using (var reader = new BinaryReader(File.OpenRead(localDataPath)))
+					{
+						bitmapData = new int[(reader.BaseStream.Length - 2) / sizeof(int)];
 
+						wrappedX = reader.ReadBoolean();
+						wrappedY = reader.ReadBoolean();
+
+						foreach (int i in 0.Until(bitmapData.Length))
+						{
+							bitmapData[i] = reader.ReadInt32();
+						}
+					}
+				}
+				
+				if (bitmapData == null)
+				{
 					Bitmap GetDumpBitmap(Bitmap source)
 					{
 						var dump = (Bitmap)source.Clone();
@@ -384,16 +405,20 @@ namespace SpriteMaster
 							wrappedX = WrappedX = WrappedX && Config.Resample.EnableWrappedAddressing;
 							wrappedY = WrappedY = WrappedY && Config.Resample.EnableWrappedAddressing;
 
+							/*
 							if (Config.Debug.Sprite.DumpReference)
 							{
-								filtered = CreateBitmap(rawData.ToArray(), inputSize, PixelFormat.Format32bppArgb);
-								var dump = GetDumpBitmap(filtered);
-								dump.Save(Path.Combine(LocalDataPath, "dump", $"{input.Reference.SafeName().Replace("\\", ".")}.{hashString}.reference.png"), ImageFormat.Png);
+								using (var filtered = CreateBitmap(rawData.ToArray(), input.ReferenceSize, PixelFormat.Format32bppArgb))
+								{
+									var dump = GetDumpBitmap(filtered);
+									dump.Save(Path.Combine(LocalDataPath, "dump", $"{input.Reference.SafeName().Replace("\\", ".")}.{hashString}.reference.png"), ImageFormat.Png);
+								}
 							}
+							*/
 
 							if (Config.Resample.Smoothing)
 							{
-								int[] outputData = new int[scaledSize.Area];
+								bitmapData = new int[scaledSize.Area];
 								var scalerConfig = new ScalerConfiguration() { WrappedX = WrappedX, WrappedY = WrappedY };
 
 								new xBRZScaler(
@@ -402,65 +427,72 @@ namespace SpriteMaster
 									sourceWidth: input.ReferenceSize.Width,
 									sourceHeight: input.ReferenceSize.Height,
 									sourceTarget: new Rectangle(input.Size.X, input.Size.Y, input.Size.Width, input.Size.Height),
-									targetData: outputData,
+									targetData: bitmapData,
 									configuration: scalerConfig
 								);
-								filtered = CreateBitmap(outputData, scaledSize, PixelFormat.Format32bppArgb);
 							}
-							else if (filtered == null)
+							else
 							{
-								filtered = CreateBitmap(rawData.ToArray(), inputSize, PixelFormat.Format32bppArgb);
+								bitmapData = rawData.ToArray();
 							}
 						}
 					}
 
-					filtered = filtered.Resize(newSize, System.Drawing.Drawing2D.InterpolationMode.Bicubic);
-
+					/*
 					if (Config.Debug.Sprite.DumpResample)
 					{
 						var dump = GetDumpBitmap(filtered);
 						dump.Save(Path.Combine(LocalDataPath, "dump", $"{input.Reference.SafeName().Replace("\\", ".")}.{hashString}.resample-{WrappedX}-{WrappedY}.png"), ImageFormat.Png);
 					}
+					*/
 
-					try
+					var scaledDimensions = new Dimensions(input.Size.Width * scale, input.Size.Height * scale);
+
+					if (scaledDimensions.Width != newSize.Width || scaledDimensions.Height != newSize.Height)
 					{
-						var data = filtered.LockBits(new System.Drawing.Rectangle(0, 0, filtered.Width, filtered.Height), ImageLockMode.ReadOnly, filtered.PixelFormat);
-						try
+						// This should be incredibly rare - we very rarely need to scale back down.
+						using (var filtered = CreateBitmap(bitmapData, new Dimensions(scaledDimensions.Width, scaledDimensions.Height), PixelFormat.Format32bppArgb))
 						{
-							var dataSize = data.Stride * data.Height;
-							var dataPtr = data.Scan0;
-							var widthSize = data.Width * sizeof(int);
+							var resized = filtered.Resize(newSize, System.Drawing.Drawing2D.InterpolationMode.Bicubic);
+							var resizedData = resized.LockBits(new System.Drawing.Rectangle(0, 0, resized.Width, resized.Height), ImageLockMode.ReadOnly, filtered.PixelFormat);
+							bitmapData = new int[resized.Width * resized.Height];
 
-							bitmapData = new byte[newSize.Area * sizeof(int)];
-
-							var dataBytes = new byte[dataSize];
-							int offsetSource = 0;
-							int offsetDest = 0;
-							foreach (int y in 0.Until(data.Height))
+							try
 							{
-								Marshal.Copy(dataPtr + offsetSource, bitmapData, offsetDest, widthSize);
-								offsetSource += data.Stride;
-								offsetDest += widthSize;
+								var dataSize = resizedData.Stride * resizedData.Height;
+								var dataPtr = resizedData.Scan0;
+								var widthSize = resizedData.Width * sizeof(int);
+
+								var dataBytes = new byte[dataSize];
+								int offsetSource = 0;
+								int offsetDest = 0;
+								foreach (int y in 0.Until(resizedData.Height))
+								{
+									Marshal.Copy(dataPtr + offsetSource, bitmapData, offsetDest, widthSize);
+									offsetSource += resizedData.Stride;
+									offsetDest += widthSize;
+								}
+							}
+							finally
+							{
+								resized.UnlockBits(resizedData);
 							}
 
-							if (!DisableCache)
+						}
+					}
+
+					if (!DisableCache)
+					{
+						using (var writer = new BinaryWriter(File.OpenWrite(localDataPath)))
+						{
+							writer.Write(wrappedX);
+							writer.Write(wrappedY);
+
+							foreach (var v in bitmapData)
 							{
-								File.WriteAllBytes(localDataPath, bitmapData);
+								writer.Write(v);
 							}
 						}
-						catch
-						{
-							filtered.UnlockBits(data);
-							throw;
-						}
-					}
-					catch
-					{
-						throw;
-					}
-					finally
-					{
-						filtered.Dispose();
 					}
 				}
 
