@@ -1,28 +1,4 @@
-﻿/**
- * 2xBR Filter
- *
- * Javascript implementation of the 2xBR filter.
- *
- * This is a rewrite of the previous 0.2.5 version, it outputs the same quality,
- * however this version is about a magnitude **slower** than its predecessor. 
- *
- * Use this version if you want to learn how the algorithms works, as the code is 
- * much more readable.
- *
- * @version 0.3.0
- * @author Ascari <carlos.ascari.x@gmail.com>
- */
-
-/**
- * Originally written in JavaScript
- * @url https://github.com/carlosascari/2xBR-Filter/blob/master/xbr.js
- * 
- * Converted to C# / XNA
- * @author NinthWorld
- * @date June 11, 2019
- */
-
-using Microsoft.Xna.Framework.Graphics;
+﻿using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Types;
 using System;
 using System.Drawing;
@@ -31,6 +7,7 @@ using System.IO;
 using System.Management;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Threading;
 using xBRZNet;
 
 namespace SpriteMaster
@@ -267,16 +244,33 @@ namespace SpriteMaster
 			{
 				if (!DisableCache && File.Exists(localDataPath))
 				{
-					using (var reader = new BinaryReader(File.OpenRead(localDataPath)))
+					int retries = 100;
+					bool success = false;
+
+					while (!success && --retries != 0)
 					{
-						bitmapData = new int[(reader.BaseStream.Length - 2) / sizeof(int)];
-
-						wrapped.X = reader.ReadBoolean();
-						wrapped.Y = reader.ReadBoolean();
-
-						foreach (int i in 0.Until(bitmapData.Length))
+						if (File.Exists(localDataPath))
 						{
-							bitmapData[i] = reader.ReadInt32();
+							try
+							{
+								using (var reader = new BinaryReader(new FileStream(localDataPath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+								{
+									bitmapData = new int[(reader.BaseStream.Length - 2) / sizeof(int)];
+
+									wrapped.X = reader.ReadBoolean();
+									wrapped.Y = reader.ReadBoolean();
+
+									foreach (int i in 0.Until(bitmapData.Length))
+									{
+										bitmapData[i] = reader.ReadInt32();
+									}
+								}
+								success = true;
+							}
+							catch (IOException)
+							{
+								Thread.Sleep(16);
+							}
 						}
 					}
 				}
@@ -439,16 +433,20 @@ namespace SpriteMaster
 
 					if (!DisableCache)
 					{
-						using (var writer = new BinaryWriter(File.OpenWrite(localDataPath)))
+						try
 						{
-							writer.Write(wrapped.X);
-							writer.Write(wrapped.Y);
-
-							foreach (var v in bitmapData)
+							using (var writer = new BinaryWriter(File.OpenWrite(localDataPath)))
 							{
-								writer.Write(v);
+								writer.Write(wrapped.X);
+								writer.Write(wrapped.Y);
+
+								foreach (var v in bitmapData)
+								{
+									writer.Write(v);
+								}
 							}
 						}
+						catch { }
 					}
 				}
 

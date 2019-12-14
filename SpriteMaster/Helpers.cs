@@ -6,7 +6,6 @@ using System.Data.HashFunction.xxHash;
 using System.Drawing;
 using System.IO;
 using System.Reflection;
-using System.Threading;
 
 using XRectangle = Microsoft.Xna.Framework.Rectangle;
 
