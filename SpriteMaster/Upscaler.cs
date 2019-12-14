@@ -302,31 +302,8 @@ namespace SpriteMaster
 				}
 				else
 				{
-					int[] inputData = new int[inputSize.Area];
-					if (desprite)
-					{
-						// We need to get just the subtexture of the texture.
-						// TODO : For now this is brute-forced. Fix later.
-						// We are just copying the subelement to our array. This isn't very
-						// far or nice, but it should still work.
-						int[] rawData = new int[input.ReferenceSize.Area];
-						//input.Reference.GetData(rawData);
-						Buffer.BlockCopy(input.Data, 0, rawData, 0, input.Data.Length);
-						int outIndex = 0;
-						foreach (int y in input.Size.Y.Until(input.Size.Bottom))
-						{
-							int strideOffset = (y * input.ReferenceSize.Width) + input.Size.X;
-							foreach (int x in input.Size.X.Until(input.Size.Right))
-							{
-								inputData[outIndex++] = rawData[strideOffset++];
-							}
-						}
-					}
-					else
-					{
-						Buffer.BlockCopy(input.Data, 0, inputData, 0, input.Data.Length);
-						//input.Reference.GetData(inputData);
-					}
+					int[] rawData = new int[input.ReferenceSize.Area];
+					Buffer.BlockCopy(input.Data, 0, rawData, 0, input.Data.Length);
 
 					bool WrappedX = input.WrappedX;// || !input.BlendEnabled;
 					bool WrappedY = input.WrappedY;// || !input.BlendEnabled;
@@ -344,9 +321,9 @@ namespace SpriteMaster
 							int[] samples = new int[] { 0, 0 };
 							foreach (int y in 0.Until(inputSize.Height))
 							{
-								int offset = y * inputSize.Width;
-								int sample0 = inputData[offset];
-								int sample1 = inputData[offset + (inputSize.Width - 1)];
+								int offset = (y + input.Size.Y) * inputSize.Width + input.Size.X;
+								int sample0 = rawData[offset];
+								int sample1 = rawData[offset + (inputSize.Width - 1)];
 
 								if (GetAlpha(sample0) >= Config.WrapDetection.alphaThreshold)
 								{
@@ -363,14 +340,14 @@ namespace SpriteMaster
 						if (!WrappedY)
 						{
 							int[] samples = new int[] { 0, 0 };
-							int[] offsets = new int[] { 0, (inputSize.Height - 1) * inputSize.Width };
+							int[] offsets = new int[] { input.Size.Y * inputSize.Width, input.Size.Y + (inputSize.Height - 1) * inputSize.Width };
 							int sampler = 0;
 							foreach (int yOffset in offsets)
 							{
 								foreach (int x in 0.Until(inputSize.Width))
 								{
-									int offset = yOffset + x;
-									int sample = inputData[offset];
+									int offset = yOffset + x + input.Size.X;
+									int sample = rawData[offset];
 									if (GetAlpha(sample) >= Config.WrapDetection.alphaThreshold)
 									{
 										samples[sampler]++;
@@ -404,7 +381,7 @@ namespace SpriteMaster
 					Bitmap filtered = null;
 					if (Config.Debug.Sprite.DumpReference)
 					{
-						filtered = CreateBitmap(inputData, inputSize, PixelFormat.Format32bppArgb);
+						filtered = CreateBitmap(rawData, inputSize, PixelFormat.Format32bppArgb);
 						var dump = GetDumpBitmap(filtered);
 						dump.Save(Path.Combine(LocalDataPath, "dump", $"{input.Reference.SafeName().Replace("\\", ".")}.{hashString}.reference.png"), ImageFormat.Png);
 					}
@@ -414,7 +391,6 @@ namespace SpriteMaster
 						int[] outputData = new int[scaledSize.Area];
 						var scalerConfig = new ScalerConfiguration() { WrappedX = WrappedX, WrappedY = WrappedY };
 
-						/*
 						new xBRZScaler(
 							scaleMultiplier: scale,
 							sourceData: rawData,
@@ -424,21 +400,11 @@ namespace SpriteMaster
 							targetData: outputData,
 							configuration: scalerConfig
 						);
-						*/
-						new xBRZScaler(
-							scaleMultiplier: scale,
-							sourceData: inputData,
-							sourceWidth: inputSize.Width,
-							sourceHeight: inputSize.Height,
-							sourceTarget: null,
-							targetData: outputData,
-							configuration: scalerConfig
-						);
 						filtered = CreateBitmap(outputData, scaledSize, PixelFormat.Format32bppArgb);
 					}
 					else if (filtered == null)
 					{
-						filtered = CreateBitmap(inputData, inputSize, PixelFormat.Format32bppArgb);
+						filtered = CreateBitmap(rawData, inputSize, PixelFormat.Format32bppArgb);
 					}
 					filtered = filtered.Resize(newSize, System.Drawing.Drawing2D.InterpolationMode.Bicubic);
 
