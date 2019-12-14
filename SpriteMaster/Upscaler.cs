@@ -23,6 +23,7 @@
  */
 
 using Microsoft.Xna.Framework.Graphics;
+using SpriteMaster.Types;
 using System;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -34,47 +35,6 @@ using xBRZNet;
 
 namespace SpriteMaster
 {
-	[StructLayout(LayoutKind.Explicit, Pack = 0)]
-	struct Pixel
-	{
-		[FieldOffset(0)]
-		public int Packed;
-		[FieldOffset(0)]
-		public uint UPacked;
-		[FieldOffset(0)]
-		public byte A;
-		[FieldOffset(1)]
-		public byte B;
-		[FieldOffset(2)]
-		public byte G;
-		[FieldOffset(3)]
-		public byte R;
-
-		public Color Color
-		{
-			get { return Color.FromArgb(A, R, G, B); }
-			set { A = value.A; R = value.R; G = value.G; B = value.B; }
-		}
-
-		internal static Pixel From(in Color color)
-		{
-			return new Pixel()
-			{
-				Color = color
-			};
-		}
-
-		internal static Pixel FromARGB(in Color color)
-		{
-			return new Pixel()
-			{
-				A = color.A,
-				B = color.R,
-				G = color.G,
-				R = color.B
-			};
-		}
-	}
 	internal class Upscaler
 	{
 		private const bool DisableCache = false;
@@ -120,7 +80,6 @@ namespace SpriteMaster
 		private static readonly string TextureCacheName = "TextureCache";
 		private static readonly string JunctionCacheName = $"{TextureCacheName}_Current";
 		private static readonly string CacheName = $"{TextureCacheName}_{typeof(Upscaler).Assembly.GetName().Version.ToString()}";
-		private static readonly string OldLocalDataRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Stardew Valley");
 		private static readonly string LocalDataPath = Path.Combine(Config.LocalRoot, CacheName);
 
 		enum LinkType : int
@@ -251,10 +210,9 @@ namespace SpriteMaster
 			return hash;
 		}
 
-		internal static Texture2D Upscale(ScaledTexture texture, ref int scale, in TextureWrapper input, bool desprite, ulong hash, out bool wrappedX, out bool wrappedY)
+		internal static Texture2D Upscale(ScaledTexture texture, ref int scale, in TextureWrapper input, bool desprite, ulong hash, ref Vector2B wrapped)
 		{
-			wrappedX = false;
-			wrappedY = false;
+			wrapped.Set(false);
 
 			var output = input.Reference;
 
@@ -313,8 +271,8 @@ namespace SpriteMaster
 					{
 						bitmapData = new int[(reader.BaseStream.Length - 2) / sizeof(int)];
 
-						wrappedX = reader.ReadBoolean();
-						wrappedY = reader.ReadBoolean();
+						wrapped.X = reader.ReadBoolean();
+						wrapped.Y = reader.ReadBoolean();
 
 						foreach (int i in 0.Until(bitmapData.Length))
 						{
@@ -333,15 +291,14 @@ namespace SpriteMaster
 							{
 								dump.SetPixel(
 									x, y,
-									Pixel.FromARGB(dump.GetPixel(x, y)).Color
+									Texel.FromARGB(dump.GetPixel(x, y)).Color
 								);
 							}
 
 						return dump;
 					}
 
-					bool WrappedX = input.WrappedX;// || !input.BlendEnabled;
-					bool WrappedY = input.WrappedY;// || !input.BlendEnabled;
+					Vector2B Wrapped = new Vector2B(input.Wrapped);
 
 					unsafe
 					{
@@ -358,7 +315,7 @@ namespace SpriteMaster
 
 								// Count the fragments that are not alphad out completely on the edges.
 								// Both edges must meet the threshold.
-								if (!WrappedX)
+								if (!Wrapped.X)
 								{
 									int[] samples = new int[] { 0, 0 };
 									foreach (int y in 0.Until(inputSize.Height))
@@ -377,9 +334,9 @@ namespace SpriteMaster
 										}
 									}
 									int threshold = ((float)inputSize.Height * Config.WrapDetection.edgeThreshold).RoundToInt();
-									WrappedX = samples[0] >= threshold && samples[1] >= threshold;
+									Wrapped.X = samples[0] >= threshold && samples[1] >= threshold;
 								}
-								if (!WrappedY)
+								if (!Wrapped.Y)
 								{
 									int[] samples = new int[] { 0, 0 };
 									int[] offsets = new int[] { input.Size.Y * inputSize.Width, input.Size.Y + (inputSize.Height - 1) * inputSize.Width };
@@ -398,12 +355,11 @@ namespace SpriteMaster
 										sampler++;
 									}
 									int threshold = ((float)inputSize.Width * Config.WrapDetection.edgeThreshold).RoundToInt();
-									WrappedY = samples[0] >= threshold && samples[1] >= threshold;
+									Wrapped.Y = samples[0] >= threshold && samples[1] >= threshold;
 								}
 							}
 
-							wrappedX = WrappedX = WrappedX && Config.Resample.EnableWrappedAddressing;
-							wrappedY = WrappedY = WrappedY && Config.Resample.EnableWrappedAddressing;
+							wrapped = Wrapped = (Wrapped & Config.Resample.EnableWrappedAddressing);
 
 							/*
 							if (Config.Debug.Sprite.DumpReference)
@@ -419,7 +375,7 @@ namespace SpriteMaster
 							if (Config.Resample.Smoothing)
 							{
 								bitmapData = new int[scaledSize.Area];
-								var scalerConfig = new ScalerConfiguration() { WrappedX = WrappedX, WrappedY = WrappedY };
+								var scalerConfig = new ScalerConfiguration() { WrappedX = Wrapped.X, WrappedY = Wrapped.Y };
 
 								new xBRZScaler(
 									scaleMultiplier: scale,
@@ -485,8 +441,8 @@ namespace SpriteMaster
 					{
 						using (var writer = new BinaryWriter(File.OpenWrite(localDataPath)))
 						{
-							writer.Write(wrappedX);
-							writer.Write(wrappedY);
+							writer.Write(wrapped.X);
+							writer.Write(wrapped.Y);
 
 							foreach (var v in bitmapData)
 							{

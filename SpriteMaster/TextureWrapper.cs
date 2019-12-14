@@ -15,8 +15,7 @@ namespace SpriteMaster
 		internal readonly Texture2D Reference;
 		internal readonly Dimensions ReferenceSize;
 		internal readonly XRectangle Size;
-		internal readonly bool WrappedX;
-		internal readonly bool WrappedY;
+		internal readonly Vector2B Wrapped;
 		internal readonly bool BlendEnabled;
 		internal byte[] Data = null;
 		private ulong _Hash = 0;
@@ -53,8 +52,10 @@ namespace SpriteMaster
 			}
 
 			BlendEnabled = Patches.CurrentBlendSourceMode != Blend.One;
-			WrappedX = (Patches.CurrentAddressModeU == TextureAddressMode.Wrap);
-			WrappedY = (Patches.CurrentAddressModeV == TextureAddressMode.Wrap);
+			Wrapped = new Vector2B(
+				Patches.CurrentAddressModeU == TextureAddressMode.Wrap,
+				Patches.CurrentAddressModeV == TextureAddressMode.Wrap
+			);
 		}
 
 		internal ulong Hash()

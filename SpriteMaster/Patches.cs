@@ -84,9 +84,11 @@ namespace SpriteMaster
 						return;
 					}
 				}
+				var harmonyMethod = new HarmonyMethod(method);
+				harmonyMethod.prioritiy = Priority.Last; // sic
 				instance.Patch(
 					typeMethod,
-					new HarmonyMethod(method),
+					harmonyMethod,
 					null,
 					null
 				);
@@ -246,8 +248,8 @@ namespace SpriteMaster
 				OriginalState = spriteBatch.GraphicsDevice.SamplerStates[0];
 				var newState = new SamplerState()
 				{
-					AddressU = texture.WrappedX ? TextureAddressMode.Wrap : OriginalState.AddressU,
-					AddressV = texture.WrappedY ? TextureAddressMode.Wrap : OriginalState.AddressV,
+					AddressU = texture.Wrapped.X ? TextureAddressMode.Wrap : OriginalState.AddressU,
+					AddressV = texture.Wrapped.Y ? TextureAddressMode.Wrap : OriginalState.AddressV,
 					AddressW = OriginalState.AddressW,
 					MaxAnisotropy = OriginalState.MaxAnisotropy,
 					MaxMipLevel = OriginalState.MaxMipLevel,

@@ -418,8 +418,7 @@ namespace SpriteMaster
 		internal readonly bool IsSprite;
 		internal volatile bool IsReady = false;
 
-		internal bool WrappedX = false;
-		internal bool WrappedY = false;
+		internal Vector2B Wrapped = new Vector2B(false);
 
 		internal WeakTexture Reference;
 		internal Rectangle OriginalSourceRectangle;
@@ -468,12 +467,6 @@ namespace SpriteMaster
 			this.Name = source.Name.IsBlank() ? assetName : source.Name;
 			originalSize = IsSprite ? Dimensions.From(sourceRectangle) : Dimensions.From(source);
 
-			// Cat Hack
-			if (source.Name.StartsWith("Animals\\cat"))
-			{
-				originalSize /= 2;
-			}
-
 			if (Config.AsyncScaling.Enabled)
 			{
 				new Thread(() =>
@@ -485,8 +478,7 @@ namespace SpriteMaster
 						input: textureWrapper,
 						desprite: IsSprite,
 						hash: Hash,
-						wrappedX: out WrappedX,
-						wrappedY: out WrappedY
+						wrapped: ref Wrapped
 					);
 				}).Start();
 			}
@@ -499,8 +491,7 @@ namespace SpriteMaster
 					input: textureWrapper,
 					desprite: IsSprite,
 					hash: Hash,
-					wrappedX: out WrappedX,
-					wrappedY: out WrappedY
+					wrapped: ref Wrapped
 				);
 
 				if (this.Texture != null)
@@ -529,18 +520,16 @@ namespace SpriteMaster
 				Debug.InfoLn($"Creating HD Spritesheet [scale {refScale}]: {this.SafeName()}");
 			}
 
-			this.Scale = new Vector2(
-				(float)Texture.Width / originalSize.Width,
-				(float)Texture.Height / originalSize.Height
-			);
+			this.Scale = new Vector2(Texture.Width, Texture.Height) / new Vector2(originalSize.Width, originalSize.Height);
 
 			if (Config.RestrictSize)
 			{
-				if (originalSize.Height * refScale > Config.ClampDimension)
+				var scaledSize = originalSize * refScale;
+				if (scaledSize.Height > Config.ClampDimension)
 				{
 					Scale.Y = 1f;
 				}
-				if (originalSize.Width * refScale > Config.ClampDimension)
+				if (scaledSize.Width > Config.ClampDimension)
 				{
 					Scale.X = 1f;
 				}
