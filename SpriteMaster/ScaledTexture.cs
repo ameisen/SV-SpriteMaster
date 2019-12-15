@@ -22,8 +22,8 @@ namespace SpriteMaster
 
 	internal abstract class ITextureMap
 	{
-		protected SharedLock Lock = new SharedLock();
-		protected List<WeakScaledTexture> ScaledTextureReferences = Config.Debug.TextureDump.Enabled ? new List<WeakScaledTexture>() : null;
+		protected readonly SharedLock Lock = new SharedLock();
+		protected readonly List<WeakScaledTexture> ScaledTextureReferences = Config.Debug.TextureDump.Enabled ? new List<WeakScaledTexture>() : null;
 
 		internal static ITextureMap Create()
 		{
@@ -99,9 +99,9 @@ namespace SpriteMaster
 		}
 	}
 
-	class TextureMap : ITextureMap
+	sealed class TextureMap : ITextureMap
 	{
-		private WeakTextureMap Map = new WeakTextureMap();
+		private readonly WeakTextureMap Map = new WeakTextureMap();
 
 		internal override void Add(in Texture2D reference, in ScaledTexture texture, in Bounds sourceRectangle)
 		{
@@ -160,9 +160,9 @@ namespace SpriteMaster
 		}
 	}
 
-	class SpriteMap : ITextureMap
+	sealed class SpriteMap : ITextureMap
 	{
-		private WeakSpriteMap Map = new WeakSpriteMap();
+		private readonly WeakSpriteMap Map = new WeakSpriteMap();
 
 		static private ulong SpriteHash(in Texture2D texture, in Bounds sourceRectangle)
 		{
@@ -236,12 +236,12 @@ namespace SpriteMaster
 		}
 	}
 
-	internal class ScaledTexture
+	internal sealed class ScaledTexture
 	{
 		// TODO : This can grow unbounded. Should fix.
-		static public ITextureMap TextureMap = ITextureMap.Create();
+		public static readonly ITextureMap TextureMap = ITextureMap.Create();
 
-		static private List<Action> PendingActions = Config.AsyncScaling.Enabled ? new List<Action>() : null;
+		private static readonly List<Action> PendingActions = Config.AsyncScaling.Enabled ? new List<Action>() : null;
 
 		static internal bool ExcludeSprite(in Texture2D texture)
 		{
@@ -420,12 +420,12 @@ namespace SpriteMaster
 
 		internal Vector2B Wrapped = new Vector2B(false);
 
-		internal WeakTexture Reference;
-		internal Bounds OriginalSourceRectangle;
-		internal ulong Hash;
+		internal readonly WeakTexture Reference;
+		internal readonly Bounds OriginalSourceRectangle;
+		internal readonly ulong Hash;
 
-		private Vector2I originalSize;
-		private Bounds sourceRectangle;
+		private readonly Vector2I originalSize;
+		private readonly Bounds sourceRectangle;
 		private int refScale;
 
 		internal static volatile uint TotalMemoryUsage = 0;
@@ -450,7 +450,7 @@ namespace SpriteMaster
 			}
 		}
 
-		internal static Dictionary<ulong, WeakScaledTexture> LocalTextureCache = new Dictionary<ulong, WeakScaledTexture>();
+		internal static readonly Dictionary<ulong, WeakScaledTexture> LocalTextureCache = new Dictionary<ulong, WeakScaledTexture>();
 
 		internal ScaledTexture(string assetName, TextureWrapper textureWrapper, Texture2D source, Bounds sourceRectangle, int scale, ulong hash, bool isSprite)
 		{

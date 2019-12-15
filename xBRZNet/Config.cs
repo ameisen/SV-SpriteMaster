@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace xBRZNet2
 {
-	public struct Config
+	public readonly struct Config
 	{
 		internal readonly bool WrappedX;
 		internal readonly bool WrappedY;

@@ -27,9 +27,9 @@ namespace SpriteMaster
 		}
 	}
 
-	internal class Patches
+	internal sealed class Patches
 	{
-		internal static ThreadLocal<bool> ReentranceLock = new ThreadLocal<bool>(false);
+		internal static readonly ThreadLocal<bool> ReentranceLock = new ThreadLocal<bool>(false);
 
 		private partial class Harmony
 		{
@@ -230,7 +230,7 @@ namespace SpriteMaster
 			return OnBegin(__instance, sortMode, blendState, samplerState, depthStencilState, rasterizerState, effect, transformMatrix);
 		}
 
-		private class AddressModeHandler : IDisposable
+		private sealed class AddressModeHandler : IDisposable
 		{
 			private const bool Enabled = Config.Resample.EnableWrappedAddressing;
 			private readonly SamplerState OriginalState = SamplerState.PointClamp;
@@ -273,11 +273,11 @@ namespace SpriteMaster
 			}
 		}
 
-		private class ReentranceLockWrapper : IDisposable
+		private sealed class ReentranceLockWrapper : IDisposable
 		{
-			private ThreadLocal<bool> ReentranceLock;
+			private readonly ThreadLocal<bool> ReentranceLock;
 
-			internal ReentranceLockWrapper(ref ThreadLocal<bool> reentranceLock)
+			internal ReentranceLockWrapper(in ThreadLocal<bool> reentranceLock)
 			{
 				this.ReentranceLock = reentranceLock;
 				ReentranceLock.Value = true;
@@ -370,7 +370,7 @@ namespace SpriteMaster
 
 			try
 			{
-				using (new ReentranceLockWrapper(ref ReentranceLock))
+				using (new ReentranceLockWrapper(ReentranceLock))
 				{
 					using (new AddressModeHandler(__instance, scaledTexture))
 					{
@@ -425,7 +425,7 @@ namespace SpriteMaster
 				// The position should stay unchanged, but the scale needs to be adjusted by the inverse of the scaled... scale
 				var scaledScale = scale / scaledTexture.Scale;
 
-				using (new ReentranceLockWrapper(ref ReentranceLock))
+				using (new ReentranceLockWrapper(ReentranceLock))
 				{
 					using (new AddressModeHandler(__instance, scaledTexture))
 					{

@@ -6,7 +6,7 @@ using System.Reflection;
 namespace SpriteMaster
 {
 	/// <summary>The mod entry class.</summary>
-	public class SpriteMaster : Mod
+	public sealed class SpriteMaster : Mod
 	{
 		/// <summary>The mod entry point, called after the mod is first loaded.</summary>
 		/// <param name="help">Provides simplified APIs for writing mods.</param>

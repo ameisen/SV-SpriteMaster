@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster
 {
-	internal class TextureWrapper
+	internal sealed class TextureWrapper
 	{
 		internal readonly Texture2D Reference;
 		internal readonly Vector2I ReferenceSize;
@@ -61,6 +61,7 @@ namespace SpriteMaster
 			}
 			return _Hash;
 
+			/*
 			ulong hash = ulong.MaxValue;
 			foreach (int y in Size.Top.Until(Size.Bottom))
 			{
@@ -73,6 +74,7 @@ namespace SpriteMaster
 			}
 
 			return hash;
+			*/
 		}
 
 		internal void Dispose()

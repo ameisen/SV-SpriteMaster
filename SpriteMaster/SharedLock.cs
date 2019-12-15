@@ -1,18 +1,20 @@
 ﻿using System;
+using System.Security;
 using System.Threading;
 
 namespace SpriteMaster
 {
-	internal class SharedLock : IDisposable
+	[SecuritySafeCritical]
+	internal sealed class SharedLock : IDisposable
 	{
 		private ReaderWriterLock Lock = new ReaderWriterLock();
 
 		internal struct Promoted : IDisposable
 		{
-			private ReaderWriterLock Lock;
+			private readonly ReaderWriterLock Lock;
 			private LockCookie Cookie;
 
-			internal Promoted(ReaderWriterLock sharedLock, LockCookie cookie)
+			internal Promoted(in ReaderWriterLock sharedLock, in LockCookie cookie)
 			{
 				this.Lock = sharedLock;
 				this.Cookie = cookie;

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using System.Runtime.CompilerServices;
 using xBRZNet2.Blend;
 using xBRZNet2.Color;
 using xBRZNet2.Common;
@@ -49,7 +50,7 @@ namespace xBRZNet2
 	*/
 
 	// ReSharper disable once InconsistentNaming
-	public class xBRZScaler
+	public sealed class xBRZScaler
 	{
 		// scaleSize = 2 to 5
 		
@@ -130,6 +131,7 @@ namespace xBRZNet2
 		private readonly int targetHeight;
 
 		//fill block with the given color
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static void FillBlock(int[] trg, int trgi, int pitch, int col, int blockSize)
 		{
 			for (var y = 0; y < blockSize; ++y, trgi += pitch)
@@ -191,7 +193,7 @@ namespace xBRZNet2
 				-------------
 				blendInfo: result of preprocessing all four corners of pixel "e"
 		*/
-		private void ScalePixel(IScaler scaler, int rotDeg, Kernel3x3 ker, int trgi, char blendInfo)
+		private unsafe void ScalePixel(IScaler scaler, int rotDeg, Kernel3x3 ker, int trgi, char blendInfo)
 		{
 			var blend = blendInfo.Rotate((RotationDegree)rotDeg);
 
@@ -281,18 +283,7 @@ namespace xBRZNet2
 			}
 		}
 
-		private static int clamp(int value, int reference, bool wrap)
-		{
-			if (wrap)
-			{
-				return (value + reference) % reference;
-			}
-			else
-			{
-				return Math.Min(Math.Max(value, 0), reference - 1);
-			}
-		}
-
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private int clampX(int x)
 		{
 			x -= sourceTarget.Left;
@@ -307,6 +298,7 @@ namespace xBRZNet2
 			return x + sourceTarget.Left;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private int clampY(int y)
 		{
 			y -= sourceTarget.Top;
@@ -322,7 +314,8 @@ namespace xBRZNet2
 		}
 
 		//scaler policy: see "Scaler2x" reference implementation
-		private void Scale(in Span<int> src, int[] trg)
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private unsafe void Scale(in Span<int> src, in int[] trg)
 		{
 			int yFirst = sourceTarget.Top;
 			int yLast = sourceTarget.Bottom;

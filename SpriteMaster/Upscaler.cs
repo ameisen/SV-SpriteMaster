@@ -12,7 +12,7 @@ using xBRZNet2;
 
 namespace SpriteMaster
 {
-	internal class Upscaler
+	internal sealed class Upscaler
 	{
 		private const bool DisableCache = false;
 
@@ -162,7 +162,7 @@ namespace SpriteMaster
 			}
 		}
 
-		private static ConditionalWeakTable<Texture2D, MetaData> MetaCache = new ConditionalWeakTable<Texture2D, MetaData>();
+		private static readonly ConditionalWeakTable<Texture2D, MetaData> MetaCache = new ConditionalWeakTable<Texture2D, MetaData>();
 		//private static Dictionary<ulong, Texture2D> TextureCache = new Dictionary<ulong, Texture2D>();
 
 		internal static ulong GetHash(in TextureWrapper input, bool desprite)
