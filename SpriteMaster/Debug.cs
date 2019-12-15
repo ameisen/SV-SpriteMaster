@@ -3,11 +3,46 @@
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 
 namespace SpriteMaster
 {
-	static internal class Debug
+	// https://stackoverflow.com/a/11898531
+	[AttributeUsage(AttributeTargets.Method, Inherited = false)]
+	public sealed class UntracedAttribute : Attribute { }
+
+	public static class DebugExtensions
+	{
+		public static bool IsUntraced(this MethodBase method)
+		{
+			return method.IsDefined(typeof(UntracedAttribute), true);
+		}
+
+		[Untraced]
+		public static string GetStackTrace(this Exception e)
+		{
+			var tracedFrames = new List<StackFrame>();
+			foreach (var frame in new StackTrace(e, true).GetFrames())
+			{
+				if (!frame.GetMethod().IsUntraced())
+				{
+					tracedFrames.Add(frame);
+				}
+			}
+
+			var tracedStrings = new List<string>();
+			foreach (var frame in tracedFrames)
+			{
+				tracedStrings.Add(new StackTrace(frame).ToString());
+			}
+
+			return string.Concat(tracedStrings);
+		}
+	}
+
+	internal static class Debug
 	{
 		private static readonly string ModuleName = typeof(Debug).Namespace;
 
@@ -28,34 +63,40 @@ namespace SpriteMaster
 
 		// Logging Stuff
 
+		[Untraced]
 		static internal void Info(string str)
 		{
 			if (!Config.Debug.Logging.LogInfo) return;
 			Console.Error.DebugWrite(str);
 		}
 
+		[Untraced]
 		static internal void InfoLn(string str)
 		{
 			Info(str + "\n");
 		}
 
+		[Untraced]
 		static internal void Warning(string str)
 		{
 			if (!Config.Debug.Logging.LogWarnings) return;
 			Console.Error.DebugWrite(WarningColor, str);
 		}
 
+		[Untraced]
 		static internal void WarningLn(string str)
 		{
 			Warning(str + "\n");
 		}
 
+		[Untraced]
 		static internal void Error(string str)
 		{
 			if (!Config.Debug.Logging.LogErrors) return;
 			Console.Error.DebugWrite(ErrorColor, str);
 		}
 
+		[Untraced]
 		static internal void ErrorLn(string str)
 		{
 			Error(str + "\n");
@@ -127,6 +168,7 @@ namespace SpriteMaster
 			}
 		}
 
+		[Untraced]
 		static private void DebugWrite(this TextWriter writer, in ConsoleColor color, in string str)
 		{
 			lock (writer)
@@ -149,6 +191,7 @@ namespace SpriteMaster
 			}
 		}
 
+		[Untraced]
 		static private void DebugWrite(this TextWriter writer, in string str)
 		{
 			var strings = str.Split('\n');

@@ -76,7 +76,6 @@ namespace SpriteMaster
 
 		static Upscaler()
 		{
-
 			if (!DisableCache)
 			{
 				// Delete any old caches.
@@ -185,6 +184,123 @@ namespace SpriteMaster
 				hash ^= input.Size.Hash();
 			}
 			return hash;
+		}
+
+		internal static class ColorSpace
+		{
+			// TODO : After conversion, we should be temporarily working with 64-bit textures instead of 32-bit. We want to retain precision.
+
+			private const bool UseStrictConversion = true;
+			private const bool IgnoreAlpha = true; // sRGB Alpha doesn't make much sense. I suppose it isn't impossible, but why? It's a data channel.
+			private const double ByteMax = (double)byte.MaxValue;
+			private const double Gamma = 2.4;
+
+			// https://entropymine.com/imageworsener/srgbformula/
+			private static double ToSRGB(in double value, in double gamma)
+			{
+				if (UseStrictConversion)
+				{
+					if (value <= 0.0031308)
+						return value * 12.92;
+					else
+						return 1.055 * Math.Pow(value, 1.0 / gamma) - 0.055;
+				}
+				else
+				{
+					return Math.Pow(value, gamma);
+				}
+			}
+
+			private static double ToLinear(in double value, in double gamma)
+			{
+				if (UseStrictConversion)
+				{
+					if (value <= 0.04045)
+						return value / 12.92;
+					else
+						return Math.Pow((value + 0.055) / 1.055, gamma);
+				}
+				else
+				{
+					return Math.Pow(value, 1.0 / gamma);
+				}
+			}
+
+			internal static void ConvertSRGBToLinear(in int[] textureData, in Texel.Ordering order = Texel.Ordering.ABGR, in double gamma = Gamma)
+			{
+				ConvertSRGBToLinear(textureData.AsSpan(), order, gamma);
+			}
+
+			internal static void ConvertSRGBToLinear(in Span<int> textureData, in Texel.Ordering order = Texel.Ordering.ABGR, in double gamma = Gamma)
+			{
+				foreach (int i in 0.Until(textureData.Length))
+				{
+					ref var texelValue = ref textureData[i];
+
+					var texel = Texel.From(texelValue, order);
+					var R = (double)texel.R / ByteMax;
+					var G = (double)texel.G / ByteMax;
+					var B = (double)texel.B / ByteMax;
+
+					Contract.AssertLessEqual(R, 1.0);
+					Contract.AssertLessEqual(G, 1.0);
+					Contract.AssertLessEqual(B, 1.0);
+
+					if (!IgnoreAlpha)
+					{
+						var A = (double)texel.A / ByteMax;
+						A = ToLinear(A, gamma);
+						texel.A = unchecked((byte)(A * ByteMax).RoundToInt());
+					}
+					R = ToLinear(R, gamma);
+					G = ToLinear(G, gamma);
+					B = ToLinear(B, gamma);
+
+					texel.R = unchecked((byte)(R * ByteMax).RoundToInt());
+					texel.G = unchecked((byte)(G * ByteMax).RoundToInt());
+					texel.B = unchecked((byte)(B * ByteMax).RoundToInt());
+
+					texelValue = texel.To(order);
+				}
+			}
+
+			internal static void ConvertLinearToSRGB(in int[] textureData, in Texel.Ordering order = Texel.Ordering.ABGR, in double gamma = Gamma)
+			{
+				ConvertLinearToSRGB(textureData.AsSpan(), order, gamma);
+			}
+
+			internal static void ConvertLinearToSRGB(in Span<int> textureData, in Texel.Ordering order = Texel.Ordering.ABGR, in double gamma = Gamma)
+			{
+				foreach (int i in 0.Until(textureData.Length))
+				{
+					ref var texelValue = ref textureData[i];
+
+					var texel = Texel.From(texelValue, order);
+					var R = (double)texel.R / ByteMax;
+					var G = (double)texel.G / ByteMax;
+					var B = (double)texel.B / ByteMax;
+
+					Contract.AssertLessEqual(R, 1.0);
+					Contract.AssertLessEqual(G, 1.0);
+					Contract.AssertLessEqual(B, 1.0);
+
+					if (!IgnoreAlpha)
+					{
+						var A = (double)texel.A / ByteMax;
+						A = ToSRGB(A, gamma);
+						texel.A = unchecked((byte)(A * ByteMax).RoundToInt());
+					}
+					R = ToSRGB(R, gamma);
+					G = ToSRGB(G, gamma);
+					B = ToSRGB(B, gamma);
+
+					texel.R = unchecked((byte)(R * ByteMax).RoundToInt());
+					texel.G = unchecked((byte)(G * ByteMax).RoundToInt());
+					texel.B = unchecked((byte)(B * ByteMax).RoundToInt());
+
+					texelValue = texel.To(order);
+				}
+			}
 		}
 
 		internal static Texture2D Upscale(ScaledTexture texture, ref int scale, in TextureWrapper input, bool desprite, ulong hash, ref Vector2B wrapped)
@@ -369,7 +485,11 @@ namespace SpriteMaster
 							if (Config.Resample.Smoothing)
 							{
 								bitmapData = new int[scaledSize.Area];
+
 								var scalerConfig = new xBRZNet2.Config(wrappedX: Wrapped.X, wrappedY: Wrapped.Y);
+
+								//ColorSpace.ConvertSRGBToLinear(rawData, Texel.Ordering.ARGB);
+								//ColorSpace.ConvertLinearToSRGB(rawData, Texel.Ordering.ABGR);
 
 								new xBRZScaler(
 									scaleMultiplier: scale,
@@ -380,6 +500,7 @@ namespace SpriteMaster
 									targetData: bitmapData,
 									configuration: scalerConfig
 								);
+								//ColorSpace.ConvertLinearToSRGB(bitmapData, Texel.Ordering.ARGB);
 							}
 							else
 							{

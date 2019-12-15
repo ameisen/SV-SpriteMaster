@@ -346,7 +346,7 @@ namespace SpriteMaster
 			catch (Exception ex)
 			{
 				Debug.ErrorLn($"Exception In DrawHandler: {ex.Message}");
-				Debug.ErrorLn(ex.StackTrace);
+				Debug.ErrorLn(ex.GetStackTrace());
 			}
 
 			return null;

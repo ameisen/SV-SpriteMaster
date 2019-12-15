@@ -113,7 +113,7 @@ namespace SpriteMaster.Types
 
 		public bool Degenerate
 		{
-			get { return Extent.X <= 0 && Extent.Y <= 0; }
+			get { return Extent.X <= 0 || Extent.Y <= 0; }
 		}
 
 		public bool IsEmpty
@@ -123,8 +123,8 @@ namespace SpriteMaster.Types
 
 		public Bounds(in Vector2I offset, in Vector2I extent)
 		{
-			extent.Width.AssertArgGreaterEqual(0, $"{nameof(extent.Width)} is not greater than or equal to 0");
-			extent.Height.AssertArgGreaterEqual(0, $"{nameof(extent.Height)} is not greater than or equal to 0");
+			Contract.AssertPositiveOrZero(extent.Width, $"{nameof(extent.Width)} is not positive");
+			Contract.AssertPositiveOrZero(extent.Height, $"{nameof(extent.Height)} is not positive");
 			Offset = offset.Clone();
 			_Extent = extent.Clone();
 		}

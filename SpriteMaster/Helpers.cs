@@ -374,6 +374,66 @@ namespace SpriteMaster
 			return result;
 		}
 
+		// Extracts a byte (8 bits) worth of data from a provided value, from the given offset
+		// Example: ExtractByte(0x00F0, 8) would return 0xF
+		internal static byte ExtractByte(this in byte value, in int offset)
+		{
+			Contract.AssertZero(offset);
+			return value;
+		}
+
+		// Extracts a byte (8 bits) worth of data from a provided value, from the given offset
+		// Example: ExtractByte(0x00F0, 8) would return 0xF
+		internal static byte ExtractByte(this in ushort value, in int offset)
+		{
+			Contract.AssertLess(Math.Abs(offset), sizeof(ushort) * 8);
+			return unchecked((byte)((value >> offset) & 0xFFU));
+		}
+
+		// Extracts a byte (8 bits) worth of data from a provided value, from the given offset
+		// Example: ExtractByte(0x00F0, 8) would return 0xF
+		internal static byte ExtractByte(this in uint value, in int offset)
+		{
+			Contract.AssertLess(Math.Abs(offset), sizeof(uint) * 8);
+			return unchecked((byte)((value >> offset) & 0xFFU));
+		}
+
+		// Extracts a byte (8 bits) worth of data from a provided value, from the given offset
+		// Example: ExtractByte(0x00F0, 8) would return 0xF
+		internal static byte ExtractByte(this in ulong value, in int offset)
+		{
+			Contract.AssertLess(Math.Abs(offset), sizeof(ulong) * 8);
+			return unchecked((byte)((value >> offset) & 0xFFU));
+		}
+
+		// Extracts a byte (8 bits) worth of data from a provided value, from the given offset
+		// Example: ExtractByte(0x00F0, 8) would return 0xF
+		internal static byte ExtractByte(this in sbyte value, in int offset)
+		{
+			return ExtractByte(unchecked((byte)value), offset);
+		}
+
+		// Extracts a byte (8 bits) worth of data from a provided value, from the given offset
+		// Example: ExtractByte(0x00F0, 8) would return 0xF
+		internal static byte ExtractByte(this in short value, in int offset)
+		{
+			return ExtractByte(unchecked((ushort)value), offset);
+		}
+
+		// Extracts a byte (8 bits) worth of data from a provided value, from the given offset
+		// Example: ExtractByte(0x00F0, 8) would return 0xF
+		internal static byte ExtractByte(this in int value, in int offset)
+		{
+			return ExtractByte(unchecked((uint)value), offset);
+		}
+
+		// Extracts a byte (8 bits) worth of data from a provided value, from the given offset
+		// Example: ExtractByte(0x00F0, 8) would return 0xF
+		internal static byte ExtractByte(this in long value, in int offset)
+		{
+			return ExtractByte(unchecked((ulong)value), offset);
+		}
+
 		internal static bool IsBlank(this string str)
 		{
 			return str == null || str == "";
@@ -391,7 +451,7 @@ namespace SpriteMaster
 
 		internal static string Reverse(this string str)
 		{
-			Contract.Argument.AssertNotNull(str);
+			Contract.AssertNotNull(str);
 
 			unsafe
 			{
@@ -400,9 +460,7 @@ namespace SpriteMaster
 					foreach (int i in 0.To(str.Length / 2))
 					{
 						int endIndex = (str.Length - i) - 1;
-						char temp = p[i];
-						p[i] = p[endIndex];
-						p[endIndex] = temp;
+						Swap(ref p[i], ref p[endIndex]);
 					}
 				}
 			}
@@ -412,21 +470,21 @@ namespace SpriteMaster
 
 		internal static string Reversed(this string str)
 		{
-			Contract.Argument.AssertNotNull(str);
+			Contract.AssertNotNull(str);
 			var strArray = str.ToCharArray().Reverse();
 			return new string(strArray);
 		}
 
 		internal static T[] Reverse<T>(this T[] array)
 		{
-			Contract.Argument.AssertNotNull(array);
+			Contract.AssertNotNull(array);
 			Array.Reverse(array);
 			return array;
 		}
 
 		internal static T[] Reversed<T>(this T[] array)
 		{
-			Contract.Argument.AssertNotNull(array);
+			Contract.AssertNotNull(array);
 			var result = (T[])array.Clone();
 			Array.Reverse(result);
 			return result;
@@ -523,8 +581,8 @@ namespace SpriteMaster
 
 		private static string Delimit(this string valueString, string delimiter, in uint delimitCount)
 		{
-			Contract.Argument.Assert(delimitCount > 0);
-			Contract.Argument.AssertTrue(delimiter.IsNormalized());
+			Contract.AssertPositive(delimitCount);
+			Contract.AssertTrue(delimiter.IsNormalized());
 
 			delimiter = delimiter.Reversed();
 
@@ -579,25 +637,25 @@ namespace SpriteMaster
 
 		internal static string AsDataSize(this in long value, in DataFormat format = DataFormat.IEC, int decimals = 2)
 		{
-			Contract.Argument.Assert(value >= 0);
+			Contract.AssertNotNegative(value);
 			return AsDataSize((ulong)value, format, decimals);
 		}
 
 		internal static string AsDataSize(this in int value, in DataFormat format = DataFormat.IEC, int decimals = 2)
 		{
-			Contract.Argument.Assert(value >= 0);
+			Contract.AssertNotNegative(value);
 			return AsDataSize((ulong)value, format, decimals);
 		}
 
 		internal static string AsDataSize(this in short value, in DataFormat format = DataFormat.IEC, int decimals = 2)
 		{
-			Contract.Argument.Assert(value >= 0);
+			Contract.AssertNotNegative(value);
 			return AsDataSize((ulong)value, format, decimals);
 		}
 
 		internal static string AsDataSize(this in sbyte value, in DataFormat format = DataFormat.IEC, int decimals = 2)
 		{
-			Contract.Argument.Assert(value >= 0);
+			Contract.AssertNotNegative(value);
 			return AsDataSize((ulong)value, format, decimals);
 		}
 
@@ -618,7 +676,7 @@ namespace SpriteMaster
 
 		internal static string AsDataSize(this in ulong number, in DataFormat format = DataFormat.IEC, int decimals = 2)
 		{
-			Contract.Argument.Assert(decimals >= 0);
+			Contract.AssertNotNegative(decimals);
 			uint fraction = (format == DataFormat.Metric) ? 1000U : 1024U;
 
 			var SuffixTable = (format == DataFormat.IEC) ? BinarySuffixTable : DecimalSuffixTable;
