@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 
-namespace xBRZNet.Scalers
+namespace xBRZNet2.Scalers
 {
     internal static class Rot
     {

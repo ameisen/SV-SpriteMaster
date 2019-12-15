@@ -1,16 +1,18 @@
 ﻿using System;
-using xBRZNet.Scalers;
+using System.Runtime.CompilerServices;
 
-namespace xBRZNet.Color
+namespace xBRZNet2.Color
 {
-    internal class ColorEq : ColorDist
-    {
-        public ColorEq(ScalerConfiguration cfg) : base(cfg) { }
+	internal sealed class ColorEq : ColorDist
+	{
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public ColorEq(in Config configuration) : base(configuration) { }
 
-        public bool IsColorEqual(int color1, int color2)
-        {
-            var eqColorThres = Math.Pow(Cfg.EqualColorTolerance, 2);
-            return DistYCbCr(color1, color2) < eqColorThres;
-        }
-    }
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public bool IsColorEqual(in int color1, in int color2)
+		{
+			var eqColorThres = Configuration.EqualColorTolerancePow2;
+			return DistYCbCr(color1, color2) < eqColorThres;
+		}
+	}
 }

@@ -1,6 +1,6 @@
-﻿namespace xBRZNet.Blend
+﻿namespace xBRZNet2.Blend
 {
-    internal enum BlendType
+    internal enum BlendType : sbyte
     {
         // These blend types must fit into 2 bits.
         None = 0, //do not blend

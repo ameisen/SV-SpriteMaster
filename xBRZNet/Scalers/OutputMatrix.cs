@@ -1,6 +1,6 @@
-﻿using xBRZNet.Common;
+﻿using xBRZNet2.Common;
 
-namespace xBRZNet.Scalers
+namespace xBRZNet2.Scalers
 {
     //access matrix area, top-left at position "out" for image with given width
     internal class OutputMatrix
@@ -30,7 +30,7 @@ namespace xBRZNet.Scalers
         public IntPtr Ref(int i, int j)
         {
             var rot = MatrixRotation[_nr + i * MaxScale + j];
-            _out.Position(_outi + rot.J + rot.I * _outWidth);
+            _out.Offset = (_outi + rot.J + rot.I * _outWidth);
             return _out;
         }
 

@@ -1,4 +1,4 @@
-﻿namespace xBRZNet.Scalers
+﻿namespace xBRZNet2.Scalers
 {
     // ReSharper disable once InconsistentNaming
     internal class Kernel3x3

@@ -1,6 +1,6 @@
-﻿using xBRZNet.Common;
+﻿using xBRZNet2.Common;
 
-namespace xBRZNet.Scalers
+namespace xBRZNet2.Scalers
 {
 	internal interface IScaler
 	{
@@ -21,13 +21,13 @@ namespace xBRZNet.Scalers
 			//assert 0 < n && n < m : "0 < N && N < M";
 
 			//this works because 8 upper bits are free
-			var dst = dstPtr.Get();
+			var dst = dstPtr.Value;
 			var alphaComponent = BlendComponent(Mask.Alpha, n, m, dst, col);
 			var redComponent = BlendComponent(Mask.Red, n, m, dst, col);
 			var greenComponent = BlendComponent(Mask.Green, n, m, dst, col);
 			var blueComponent = BlendComponent(Mask.Blue, n, m, dst, col);
 			var blend = (alphaComponent | redComponent | greenComponent | blueComponent);
-			dstPtr.Set(unchecked((int)blend)); // MJY: Added required cast but will throw an exception if the asserts at the top are not checked.
+			dstPtr.Value = (unchecked((int)blend)); // MJY: Added required cast but will throw an exception if the asserts at the top are not checked.
 		}
 
 		private static uint BlendComponent(uint mask, int n, int m, int inPixel, int setPixel)
@@ -84,7 +84,7 @@ namespace xBRZNet.Scalers
 			AlphaBlend(1, 4, out_.Ref(Scale - 1, 0), col);
 			AlphaBlend(1, 4, out_.Ref(Scale - 2, 2), col);
 			AlphaBlend(3, 4, out_.Ref(Scale - 1, 1), col);
-			out_.Ref(Scale - 1, 2).Set(col);
+			out_.Ref(Scale - 1, 2).Value = col;
 		}
 
 		public void BlendLineSteep(int col, OutputMatrix out_)
@@ -92,7 +92,7 @@ namespace xBRZNet.Scalers
 			AlphaBlend(1, 4, out_.Ref(0, Scale - 1), col);
 			AlphaBlend(1, 4, out_.Ref(2, Scale - 2), col);
 			AlphaBlend(3, 4, out_.Ref(1, Scale - 1), col);
-			out_.Ref(2, Scale - 1).Set(col);
+			out_.Ref(2, Scale - 1).Value = col;
 		}
 
 		public void BlendLineSteepAndShallow(int col, OutputMatrix out_)
@@ -101,7 +101,7 @@ namespace xBRZNet.Scalers
 			AlphaBlend(1, 4, out_.Ref(0, 2), col);
 			AlphaBlend(3, 4, out_.Ref(2, 1), col);
 			AlphaBlend(3, 4, out_.Ref(1, 2), col);
-			out_.Ref(2, 2).Set(col);
+			out_.Ref(2, 2).Value = col;
 		}
 
 		public void BlendLineDiagonal(int col, OutputMatrix out_)
@@ -130,8 +130,8 @@ namespace xBRZNet.Scalers
 			AlphaBlend(1, 4, out_.Ref(Scale - 2, 2), col);
 			AlphaBlend(3, 4, out_.Ref(Scale - 1, 1), col);
 			AlphaBlend(3, 4, out_.Ref(Scale - 2, 3), col);
-			out_.Ref(Scale - 1, 2).Set(col);
-			out_.Ref(Scale - 1, 3).Set(col);
+			out_.Ref(Scale - 1, 2).Value = col;
+			out_.Ref(Scale - 1, 3).Value = col;
 		}
 
 		public void BlendLineSteep(int col, OutputMatrix out_)
@@ -140,8 +140,8 @@ namespace xBRZNet.Scalers
 			AlphaBlend(1, 4, out_.Ref(2, Scale - 2), col);
 			AlphaBlend(3, 4, out_.Ref(1, Scale - 1), col);
 			AlphaBlend(3, 4, out_.Ref(3, Scale - 2), col);
-			out_.Ref(2, Scale - 1).Set(col);
-			out_.Ref(3, Scale - 1).Set(col);
+			out_.Ref(2, Scale - 1).Value = col;
+			out_.Ref(3, Scale - 1).Value = col;
 		}
 
 		public void BlendLineSteepAndShallow(int col, OutputMatrix out_)
@@ -151,16 +151,16 @@ namespace xBRZNet.Scalers
 			AlphaBlend(1, 4, out_.Ref(3, 0), col);
 			AlphaBlend(1, 4, out_.Ref(0, 3), col);
 			AlphaBlend(1, 3, out_.Ref(2, 2), col); //[!] fixes 1/4 used in xBR
-			out_.Ref(3, 3).Set(col);
-			out_.Ref(3, 2).Set(col);
-			out_.Ref(2, 3).Set(col);
+			out_.Ref(3, 3).Value = col;
+			out_.Ref(3, 2).Value = col;
+			out_.Ref(2, 3).Value = col;
 		}
 
 		public void BlendLineDiagonal(int col, OutputMatrix out_)
 		{
 			AlphaBlend(1, 2, out_.Ref(Scale - 1, Scale / 2), col);
 			AlphaBlend(1, 2, out_.Ref(Scale - 2, Scale / 2 + 1), col);
-			out_.Ref(Scale - 1, Scale - 1).Set(col);
+			out_.Ref(Scale - 1, Scale - 1).Value = col;
 		}
 
 		public void BlendCorner(int col, OutputMatrix out_)
@@ -183,10 +183,10 @@ namespace xBRZNet.Scalers
 			AlphaBlend(1, 4, out_.Ref(Scale - 3, 4), col);
 			AlphaBlend(3, 4, out_.Ref(Scale - 1, 1), col);
 			AlphaBlend(3, 4, out_.Ref(Scale - 2, 3), col);
-			out_.Ref(Scale - 1, 2).Set(col);
-			out_.Ref(Scale - 1, 3).Set(col);
-			out_.Ref(Scale - 1, 4).Set(col);
-			out_.Ref(Scale - 2, 4).Set(col);
+			out_.Ref(Scale - 1, 2).Value = col;
+			out_.Ref(Scale - 1, 3).Value = col;
+			out_.Ref(Scale - 1, 4).Value = col;
+			out_.Ref(Scale - 2, 4).Value = col;
 		}
 
 		public void BlendLineSteep(int col, OutputMatrix out_)
@@ -196,10 +196,10 @@ namespace xBRZNet.Scalers
 			AlphaBlend(1, 4, out_.Ref(4, Scale - 3), col);
 			AlphaBlend(3, 4, out_.Ref(1, Scale - 1), col);
 			AlphaBlend(3, 4, out_.Ref(3, Scale - 2), col);
-			out_.Ref(2, Scale - 1).Set(col);
-			out_.Ref(3, Scale - 1).Set(col);
-			out_.Ref(4, Scale - 1).Set(col);
-			out_.Ref(4, Scale - 2).Set(col);
+			out_.Ref(2, Scale - 1).Value = col;
+			out_.Ref(3, Scale - 1).Value = col;
+			out_.Ref(4, Scale - 1).Value = col;
+			out_.Ref(4, Scale - 2).Value = col;
 		}
 
 		public void BlendLineSteepAndShallow(int col, OutputMatrix out_)
@@ -210,11 +210,11 @@ namespace xBRZNet.Scalers
 			AlphaBlend(1, 4, out_.Ref(Scale - 1, 0), col);
 			AlphaBlend(1, 4, out_.Ref(Scale - 2, 2), col);
 			AlphaBlend(3, 4, out_.Ref(Scale - 1, 1), col);
-			out_.Ref(2, Scale - 1).Set(col);
-			out_.Ref(3, Scale - 1).Set(col);
-			out_.Ref(Scale - 1, 2).Set(col);
-			out_.Ref(Scale - 1, 3).Set(col);
-			out_.Ref(4, Scale - 1).Set(col);
+			out_.Ref(2, Scale - 1).Value = col;
+			out_.Ref(3, Scale - 1).Value = col;
+			out_.Ref(Scale - 1, 2).Value = col;
+			out_.Ref(Scale - 1, 3).Value = col;
+			out_.Ref(4, Scale - 1).Value = col;
 			AlphaBlend(2, 3, out_.Ref(3, 3), col);
 		}
 
@@ -225,7 +225,7 @@ namespace xBRZNet.Scalers
 			AlphaBlend(1, 8, out_.Ref(Scale - 3, Scale / 2 + 2), col);
 			AlphaBlend(7, 8, out_.Ref(4, 3), col);
 			AlphaBlend(7, 8, out_.Ref(3, 4), col);
-			out_.Ref(4, 4).Set(col);
+			out_.Ref(4, 4).Value = col;
 		}
 
 		public void BlendCorner(int col, OutputMatrix out_)

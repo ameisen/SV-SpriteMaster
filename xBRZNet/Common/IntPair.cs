@@ -1,14 +1,17 @@
-﻿namespace xBRZNet.Common
-{
-    internal struct IntPair
-    {
-        public int I { get; set; }
-        public int J { get; set; }
+﻿using System.Runtime.CompilerServices;
 
-        public IntPair(int i, int j)
-        {
-            I = i;
-            J = j;
-        }
-    }
+namespace xBRZNet2.Common
+{
+	internal struct IntPair
+	{
+		public int I;
+		public int J;
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public IntPair(in int i, in int j)
+		{
+			I = i;
+			J = j;
+		}
+	}
 }

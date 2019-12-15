@@ -1,4 +1,4 @@
-﻿namespace xBRZNet.Scalers
+﻿namespace xBRZNet2.Scalers
 {
     /*
         input kernel area naming convention:

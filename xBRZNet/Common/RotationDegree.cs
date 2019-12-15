@@ -1,7 +1,7 @@
-﻿namespace xBRZNet.Common
+﻿namespace xBRZNet2.Common
 {
     //clock-wise
-    internal enum RotationDegree
+    internal enum RotationDegree : sbyte
     {
         R0 = 0,
         R90 = 1,

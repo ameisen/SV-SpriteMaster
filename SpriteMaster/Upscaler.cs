@@ -8,7 +8,7 @@ using System.Management;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
-using xBRZNet;
+using xBRZNet2;
 
 namespace SpriteMaster
 {
@@ -369,7 +369,7 @@ namespace SpriteMaster
 							if (Config.Resample.Smoothing)
 							{
 								bitmapData = new int[scaledSize.Area];
-								var scalerConfig = new ScalerConfiguration() { WrappedX = Wrapped.X, WrappedY = Wrapped.Y };
+								var scalerConfig = new xBRZNet2.Config(wrappedX: Wrapped.X, wrappedY: Wrapped.Y);
 
 								new xBRZScaler(
 									scaleMultiplier: scale,

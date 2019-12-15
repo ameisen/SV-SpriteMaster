@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Drawing;
-using xBRZNet.Blend;
-using xBRZNet.Color;
-using xBRZNet.Common;
-using xBRZNet.Scalers;
+using xBRZNet2.Blend;
+using xBRZNet2.Color;
+using xBRZNet2.Common;
+using xBRZNet2.Scalers;
 
-namespace xBRZNet
+namespace xBRZNet2
 {
 	//http://intrepidis.blogspot.com/2014/02/xbrz-in-java.html
 	/*
@@ -60,7 +60,7 @@ namespace xBRZNet
 			in int sourceHeight,
 			in Rectangle? sourceTarget,
 			int[] targetData,
-			in ScalerConfiguration configuration
+			in Config configuration
 		)
 		{
 			if (scaleMultiplier < 2 || scaleMultiplier > 5)
@@ -115,10 +115,10 @@ namespace xBRZNet
 			Scale(sourceData, targetData);
 		}
 
-		private readonly ScalerConfiguration configuration;
+		private readonly Config configuration;
 		private readonly IScaler scaler;
 		private OutputMatrix outputMatrix;
-		private readonly BlendResult blendResult = new BlendResult();
+		private BlendResult blendResult = new BlendResult();
 
 		private readonly ColorDist ColorDistance;
 		private readonly ColorEq ColorEqualizer;

@@ -1,25 +1,35 @@
-﻿using xBRZNet.Common;
+﻿using System.Runtime.CompilerServices;
+using xBRZNet2.Common;
 
-namespace xBRZNet.Blend
+namespace xBRZNet2.Blend
 {
-    internal static class BlendInfo
-    {
-        public static char GetTopL(this char b) { return (char)(b & 0x3); }
-        public static char GetTopR(this char b) { return (char)((b >> 2) & 0x3); }
-        public static char GetBottomR(this char b) { return (char)((b >> 4) & 0x3); }
-        public static char GetBottomL(this char b) { return (char)((b >> 6) & 0x3); }
+	internal static class BlendInfo
+	{
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static char GetTopL(this in char b) { return (char)(b & 0x3); }
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static char GetTopR(this in char b) { return (char)((b >> 2) & 0x3); }
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static char GetBottomR(this in char b) { return (char)((b >> 4) & 0x3); }
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static char GetBottomL(this in char b) { return (char)((b >> 6) & 0x3); }
 
-        public static char SetTopL(this char b, char bt) { return (char)(b | bt); }
-        public static char SetTopR(this char b, char bt) { return (char)(b | (bt << 2)); }
-        public static char SetBottomR(this char b, char bt) { return (char)(b | (bt << 4)); }
-        public static char SetBottomL(this char b, char bt) { return (char)(b | (bt << 6)); }
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static char SetTopL(this in char b, in char bt) { return (char)(b | bt); }
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static char SetTopR(this in char b, in char bt) { return (char)(b | (bt << 2)); }
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static char SetBottomR(this in char b, in char bt) { return (char)(b | (bt << 4)); }
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static char SetBottomL(this in char b, in char bt) { return (char)(b | (bt << 6)); }
 
-        public static char Rotate(this char b, RotationDegree rotDeg)
-        {
-            var l = (int)rotDeg << 1;
-            var r = 8 - l;
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static char Rotate(this in char b, in RotationDegree rotDeg)
+		{
+			var l = (int)rotDeg << 1;
+			var r = 8 - l;
 
-            return (char)(b << l | b >> r);
-        }
-    }
+			return (char)(b << l | b >> r);
+		}
+	}
 }

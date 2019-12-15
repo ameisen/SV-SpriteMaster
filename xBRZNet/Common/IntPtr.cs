@@ -1,28 +1,30 @@
-﻿namespace xBRZNet.Common
+﻿using System.Runtime.CompilerServices;
+
+namespace xBRZNet2.Common
 {
-    internal class IntPtr
-    {
-        private readonly int[] _array;
-        private int _ptr;
+	internal sealed class IntPtr
+	{
+		private readonly int[] Array;
+		public int Offset = 0;
 
-        public IntPtr(int[] array)
-        {
-            _array = array;
-        }
+		public int Value
+		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			get { return Array[Offset]; }
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			set { Array[Offset] = value; }
+		}
 
-        public void Position(int position)
-        {
-            _ptr = position;
-        }
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 
-        public int Get()
-        {
-            return _array[_ptr];
-        }
+		public IntPtr(in int[] array)
+		{
+			Array = array;
+		}
 
-        public void Set(int val)
-        {
-            _array[_ptr] = val;
-        }
-    }
+		public static implicit operator int (in IntPtr pointer)
+		{
+			return pointer.Value;
+		}
+	}
 }
