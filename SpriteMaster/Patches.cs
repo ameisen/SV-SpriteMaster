@@ -295,51 +295,58 @@ namespace SpriteMaster
 			ref Rectangle sourceRectangle
 		)
 		{
-			if (Config.ClampInvalidBounds)
+			try
 			{
-				sourceRectangle = sourceRectangle.ClampTo(new Rectangle(0, 0, texture.Width, texture.Height));
-			}
-
-			// Let's just skip potentially invalid draws since I have no idea what to do with them.
-			if ((sourceRectangle.Height * sourceRectangle.Width) == 0)
-			{
-				return null;
-			}
-
-			ScaledTexture scaledTexture = null;
-			// Load textures on the fly.
-			//if (texture.Name != null && (texture.Name.Contains("\\") || texture.Name.Contains("/") || (texture.Name == "" && !IsTargetMap())) && texture.Width >= 1 && texture.Height >= 1)
-			if (!(texture is RenderTarget2D) && texture.Width >= 1 && texture.Height >= 1)
-			{
-				scaledTexture = ScaledTexture.Get(texture, sourceRectangle);
-			}
-
-			if (scaledTexture != null && scaledTexture.IsReady)
-			{
-				Texture2D t = scaledTexture.Texture;
-
-				if (t == null) return null;
-
-				if (Config.Resample.DeSprite && scaledTexture.IsSprite)
+				if (Config.ClampInvalidBounds)
 				{
-					sourceRectangle = new Rectangle(
-						0,
-						0,
-						t.Width,
-						t.Height
-					);
-				}
-				else
-				{
-					sourceRectangle = new Rectangle(
-						(sourceRectangle.X * scaledTexture.Scale.X).ToCoordinate(),
-						(sourceRectangle.Y * scaledTexture.Scale.Y).ToCoordinate(),
-						(sourceRectangle.Width * scaledTexture.Scale.X).ToCoordinate(),
-						(sourceRectangle.Height * scaledTexture.Scale.Y).ToCoordinate()
-					);
+					sourceRectangle = sourceRectangle.ClampTo(new Rectangle(0, 0, texture.Width, texture.Height));
 				}
 
-				return scaledTexture;
+				// Let's just skip potentially invalid draws since I have no idea what to do with them.
+				if (sourceRectangle.Height <= 0 || sourceRectangle.Width <= 0)
+				{
+					return null;
+				}
+
+				ScaledTexture scaledTexture = null;
+				// Load textures on the fly.
+				if (!(texture is RenderTarget2D) && texture.Width >= 1 && texture.Height >= 1)
+				{
+					scaledTexture = ScaledTexture.Get(texture, sourceRectangle);
+				}
+
+				if (scaledTexture != null && scaledTexture.IsReady)
+				{
+					Texture2D t = scaledTexture.Texture;
+
+					if (t == null) return null;
+
+					if (Config.Resample.DeSprite && scaledTexture.IsSprite)
+					{
+						sourceRectangle = new Rectangle(
+							0,
+							0,
+							t.Width,
+							t.Height
+						);
+					}
+					else
+					{
+						sourceRectangle = new Rectangle(
+							(sourceRectangle.X * scaledTexture.Scale.X).ToCoordinate(),
+							(sourceRectangle.Y * scaledTexture.Scale.Y).ToCoordinate(),
+							(sourceRectangle.Width * scaledTexture.Scale.X).ToCoordinate(),
+							(sourceRectangle.Height * scaledTexture.Scale.Y).ToCoordinate()
+						);
+					}
+
+					return scaledTexture;
+				}
+			}
+			catch (Exception ex)
+			{
+				Debug.ErrorLn($"Exception In DrawHandler: {ex.Message}");
+				Debug.ErrorLn(ex.StackTrace);
 			}
 
 			return null;

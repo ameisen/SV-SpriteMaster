@@ -30,21 +30,45 @@ namespace SpriteMaster
 		private class NotNullReferenceException : ValueException
 		{
 			protected new const string DefaultMessage = "Value failed assertion, was not null";
+
+			internal NotNullReferenceException() : this(DefaultMessage) { }
+
+			internal NotNullReferenceException(in string message) : this(message, null) { }
+
+			internal NotNullReferenceException(in string message, in Exception inner) : base(message, inner) { }
 		}
 
 		private class NullReferenceException : ValueException
 		{
 			protected new const string DefaultMessage = "Value failed assertion, was null";
+
+			internal NullReferenceException() : this(DefaultMessage) { }
+
+			internal NullReferenceException(in string message) : this(message, null) { }
+
+			internal NullReferenceException(in string message, in Exception inner) : base(message, inner) { }
 		}
 
 		private class BooleanException : ValueException
 		{
 			protected new const string DefaultMessage = "Value failed boolean assertion";
+
+			internal BooleanException() : this(DefaultMessage) { }
+
+			internal BooleanException(in string message) : this(message, null) { }
+
+			internal BooleanException(in string message, in Exception inner) : base(message, inner) { }
 		}
 
 		private class OutOfRangeException : ValueException
 		{
 			protected new const string DefaultMessage = "Value failed assertion, out of range";
+
+			internal OutOfRangeException() : this(DefaultMessage) { }
+
+			internal OutOfRangeException(in string message) : this(message, null) { }
+
+			internal OutOfRangeException(in string message, in Exception inner) : base(message, inner) { }
 		}
 
 		static private bool IsExceptionType(this Type type)
@@ -59,26 +83,56 @@ namespace SpriteMaster
 			private class ValueException : Contract.ValueException
 			{
 				protected new const string DefaultMessage = "Argument failed assertion";
+
+				internal ValueException() : this(DefaultMessage) { }
+
+				internal ValueException(in string message) : this(message, null) { }
+
+				internal ValueException(in string message, in Exception inner) : base(message, inner) { }
 			}
 
 			private class NotNullReferenceException : Contract.NotNullReferenceException
 			{
 				protected new const string DefaultMessage = "Argument failed assertion, was not null";
+
+				internal NotNullReferenceException() : this(DefaultMessage) { }
+
+				internal NotNullReferenceException(in string message) : this(message, null) { }
+
+				internal NotNullReferenceException(in string message, in Exception inner) : base(message, inner) { }
 			}
 
 			private class NullReferenceException : Contract.NullReferenceException
 			{
 				protected new const string DefaultMessage = "Argument failed assertion, was null";
+
+				internal NullReferenceException() : this(DefaultMessage) { }
+
+				internal NullReferenceException(in string message) : this(message, null) { }
+
+				internal NullReferenceException(in string message, in Exception inner) : base(message, inner) { }
 			}
 
 			private class BooleanException : Contract.BooleanException
 			{
 				protected new const string DefaultMessage = "Argument failed boolean assertion";
+
+				internal BooleanException() : this(DefaultMessage) { }
+
+				internal BooleanException(in string message) : this(message, null) { }
+
+				internal BooleanException(in string message, in Exception inner) : base(message, inner) { }
 			}
 
 			private class OutOfRangeException : Contract.OutOfRangeException
 			{
 				protected new const string DefaultMessage = "Argument failed assertion, out of range";
+
+				internal OutOfRangeException() : this(DefaultMessage) { }
+
+				internal OutOfRangeException(in string message) : this(message, null) { }
+
+				internal OutOfRangeException(in string message, in Exception inner) : base(message, inner) { }
 			}
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
