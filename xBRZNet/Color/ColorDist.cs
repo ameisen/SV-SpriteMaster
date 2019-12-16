@@ -21,9 +21,9 @@ namespace xBRZNet2.Color
 
 			//http://en.wikipedia.org/wiki/YCbCr#ITU-R_BT.601_conversion
 			//YCbCr conversion is a matrix multiplication => take advantage of linearity by subtracting first!
-			int rDiff = (int)(((pix1 & ColorConstant.Mask.Red) - (pix2 & ColorConstant.Mask.Red)) >> ColorConstant.Shift.Red); //we may delay division by 255 to after matrix multiplication
-			int gDiff = (int)(((pix1 & ColorConstant.Mask.Green) - (pix2 & ColorConstant.Mask.Green)) >> ColorConstant.Shift.Green);
-			int bDiff = (int)(((pix1 & ColorConstant.Mask.Blue) - (pix2 & ColorConstant.Mask.Blue)) >> ColorConstant.Shift.Blue); //subtraction for int is noticeable faster than for double
+			int rDiff = unchecked((int)(((pix1 & ColorConstant.Mask.Red) - (pix2 & ColorConstant.Mask.Red)) >> ColorConstant.Shift.Red)); //we may delay division by 255 to after matrix multiplication
+			int gDiff = unchecked((int)(((pix1 & ColorConstant.Mask.Green) - (pix2 & ColorConstant.Mask.Green)) >> ColorConstant.Shift.Green));
+			int bDiff = unchecked((int)(((pix1 & ColorConstant.Mask.Blue) - (pix2 & ColorConstant.Mask.Blue)) >> ColorConstant.Shift.Blue)); //subtraction for int is noticeable faster than for double
 
 			const double kB = 0.0722; //ITU-R BT.709 conversion
 			const double kR = 0.2126;
