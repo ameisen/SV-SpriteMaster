@@ -351,7 +351,7 @@ namespace xBRZNet2
 			var trgWidth = targetWidth;
 
 			//temporary buffer for "on the fly preprocessing"
-			var preProcBuffer = new char[sourceTarget.Width];
+			var preProcBuffer = stackalloc char[sourceTarget.Width];
 
 			var ker4 = new Kernel4x4();
 

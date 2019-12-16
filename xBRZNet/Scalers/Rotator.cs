@@ -30,7 +30,6 @@ namespace xBRZNet2.Scalers
 		}
 
 		//http://stackoverflow.com/a/38964502/294804
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static int[] RotateClockwise(this int[] square1DMatrix, in int sideLength)
 		{
 			var size = sideLength;
