@@ -18,7 +18,7 @@ namespace xBRZNet2.Scalers
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public OutputMatrix(in int scale, in int[] outPtr, in int outWidth)
 		{
-			_n = (scale - 2) * (Rot.MaxRotations * MaxScaleSquared);
+			_n = (scale - 2) * (Rotator.MaxRotations * MaxScaleSquared);
 			_out = outPtr;
 			_outWidth = outWidth;
 			_outi = 0;
@@ -59,15 +59,15 @@ namespace xBRZNet2.Scalers
 		}
 
 		//calculate input matrix coordinates after rotation at program startup
-		private static readonly IntPair[] MatrixRotation = new IntPair[(MaxScale - 1) * MaxScaleSquared * Rot.MaxRotations];
+		private static readonly IntPair[] MatrixRotation = new IntPair[(MaxScale - 1) * MaxScaleSquared * Rotator.MaxRotations];
 
 		static OutputMatrix()
 		{
 			for (var n = 2; n < MaxScale + 1; n++)
 			{
-				for (var r = 0; r < Rot.MaxRotations; r++)
+				for (var r = 0; r < Rotator.MaxRotations; r++)
 				{
-					var nr = (n - 2) * (Rot.MaxRotations * MaxScaleSquared) + r * MaxScaleSquared;
+					var nr = (n - 2) * (Rotator.MaxRotations * MaxScaleSquared) + r * MaxScaleSquared;
 					for (var i = 0; i < MaxScale; i++)
 					{
 						for (var j = 0; j < MaxScale; j++)
@@ -79,7 +79,7 @@ namespace xBRZNet2.Scalers
 			}
 		}
 
-		private static IntPair BuildMatrixRotation(int rotDeg, int i, int j, int n)
+		private static IntPair BuildMatrixRotation(in int rotDeg, in int i, in int j, in int n)
 		{
 			int iOld, jOld;
 

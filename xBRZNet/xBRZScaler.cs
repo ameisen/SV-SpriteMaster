@@ -200,14 +200,14 @@ namespace xBRZNet2
 			if ((BlendType)blend.GetBottomR() == BlendType.None) return;
 
 			// int a = ker._[Rot._[(0 << 2) + rotDeg]];
-			var b = ker._[Rot._[(1 << 2) + rotDeg]];
-			var c = ker._[Rot._[(2 << 2) + rotDeg]];
-			var d = ker._[Rot._[(3 << 2) + rotDeg]];
-			var e = ker._[Rot._[(4 << 2) + rotDeg]];
-			var f = ker._[Rot._[(5 << 2) + rotDeg]];
-			var g = ker._[Rot._[(6 << 2) + rotDeg]];
-			var h = ker._[Rot._[(7 << 2) + rotDeg]];
-			var i = ker._[Rot._[(8 << 2) + rotDeg]];
+			var b = ker._[Rotator._[(1 << 2) + rotDeg]];
+			var c = ker._[Rotator._[(2 << 2) + rotDeg]];
+			var d = ker._[Rotator._[(3 << 2) + rotDeg]];
+			var e = ker._[Rotator._[(4 << 2) + rotDeg]];
+			var f = ker._[Rotator._[(5 << 2) + rotDeg]];
+			var g = ker._[Rotator._[(6 << 2) + rotDeg]];
+			var h = ker._[Rotator._[(7 << 2) + rotDeg]];
+			var i = ker._[Rotator._[(8 << 2) + rotDeg]];
 
 			var eq = ColorEqualizer;
 			var dist = ColorDistance;
