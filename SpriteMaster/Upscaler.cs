@@ -427,7 +427,7 @@ namespace SpriteMaster
 								// Both edges must meet the threshold.
 								if (!Wrapped.X)
 								{
-									int[] samples = new int[] { 0, 0 };
+									var samples = stackalloc int[] { 0, 0 };
 									foreach (int y in 0.Until(inputSize.Height))
 									{
 										int offset = (y + input.Size.Y) * inputSize.Width + input.Size.X;
@@ -448,11 +448,12 @@ namespace SpriteMaster
 								}
 								if (!Wrapped.Y)
 								{
-									int[] samples = new int[] { 0, 0 };
-									int[] offsets = new int[] { input.Size.Y * inputSize.Width, input.Size.Y + (inputSize.Height - 1) * inputSize.Width };
+									var samples = stackalloc int[] { 0, 0 };
+									var offsets = stackalloc int[] { input.Size.Y * inputSize.Width, input.Size.Y + (inputSize.Height - 1) * inputSize.Width };
 									int sampler = 0;
-									foreach (int yOffset in offsets)
+									foreach (int i in 0.Until(2))
 									{
+										var yOffset = offsets[i];
 										foreach (int x in 0.Until(inputSize.Width))
 										{
 											int offset = yOffset + x + input.Size.X;

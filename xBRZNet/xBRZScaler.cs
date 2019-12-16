@@ -113,7 +113,7 @@ namespace xBRZNet2
 			this.ColorEqualizer = new ColorEq(this.configuration);
 			this.sourceWidth = sourceWidth;
 			this.sourceHeight = sourceHeight;
-			Scale<int>(sourceData, targetData);
+			Scale(sourceData, targetData);
 		}
 
 		private readonly Config configuration;
@@ -193,7 +193,7 @@ namespace xBRZNet2
 				-------------
 				blendInfo: result of preprocessing all four corners of pixel "e"
 		*/
-		private unsafe void ScalePixel(IScaler scaler, int rotDeg, Kernel3x3 ker, int trgi, char blendInfo)
+		private unsafe void ScalePixel(IScaler scaler, int rotDeg, in Kernel3x3 ker, int trgi, char blendInfo)
 		{
 			var blend = blendInfo.Rotate((RotationDegree)rotDeg);
 
@@ -313,35 +313,9 @@ namespace xBRZNet2
 			return y + sourceTarget.Top;
 		}
 
-		internal ref struct DynamicSpan<T>
-		{
-			private readonly Span<T> Data;
-
-			internal DynamicSpan(in Span<T> data)
-			{
-				Data = data;
-			}
-
-			public static implicit operator DynamicSpan<T>(in Span<T> data)
-			{
-				return new DynamicSpan<T>(data);
-			}
-
-			public static implicit operator Span<T>(in DynamicSpan<T> data)
-			{
-				return data.Data;
-			}
-
-			internal dynamic this[in int i]
-			{
-				readonly get { return Data[i]; }
-				set { Data[i] = value; }
-			}
-		}
-
 		//scaler policy: see "Scaler2x" reference implementation
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private unsafe void Scale<T>(in DynamicSpan<T> src, in int[] trg) where T : unmanaged
+		private unsafe void Scale(in Span<int> src, in int[] trg)
 		{
 			int yFirst = sourceTarget.Top;
 			int yLast = sourceTarget.Bottom;
