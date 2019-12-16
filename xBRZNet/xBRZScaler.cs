@@ -113,7 +113,7 @@ namespace xBRZNet2
 			this.ColorEqualizer = new ColorEq(this.configuration);
 			this.sourceWidth = sourceWidth;
 			this.sourceHeight = sourceHeight;
-			Scale(sourceData, targetData);
+			Scale<int>(sourceData, targetData);
 		}
 
 		private readonly Config configuration;
@@ -144,7 +144,7 @@ namespace xBRZNet2
 		}
 
 		//detect blend direction
-		private void PreProcessCorners(Kernel4x4 ker)
+		private void PreProcessCorners(in Kernel4x4 ker)
 		{
 			blendResult.Reset();
 
@@ -313,9 +313,35 @@ namespace xBRZNet2
 			return y + sourceTarget.Top;
 		}
 
+		internal ref struct DynamicSpan<T>
+		{
+			private readonly Span<T> Data;
+
+			internal DynamicSpan(in Span<T> data)
+			{
+				Data = data;
+			}
+
+			public static implicit operator DynamicSpan<T>(in Span<T> data)
+			{
+				return new DynamicSpan<T>(data);
+			}
+
+			public static implicit operator Span<T>(in DynamicSpan<T> data)
+			{
+				return data.Data;
+			}
+
+			internal dynamic this[in int i]
+			{
+				readonly get { return Data[i]; }
+				set { Data[i] = value; }
+			}
+		}
+
 		//scaler policy: see "Scaler2x" reference implementation
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private unsafe void Scale(in Span<int> src, in int[] trg)
+		private unsafe void Scale<T>(in DynamicSpan<T> src, in int[] trg) where T : unmanaged
 		{
 			int yFirst = sourceTarget.Top;
 			int yLast = sourceTarget.Bottom;

@@ -1,7 +1,7 @@
 ﻿namespace xBRZNet2.Scalers
 {
 	// ReSharper disable once InconsistentNaming
-	internal unsafe struct Kernel3x3
+	internal unsafe ref struct Kernel3x3
 	{
 		public fixed int _[3 * 3];
 	}

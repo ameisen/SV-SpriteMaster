@@ -13,7 +13,7 @@
 			-----------------
 	*/
 	// ReSharper disable once InconsistentNaming
-	internal struct Kernel4x4
+	internal ref struct Kernel4x4
 	{
 		public int A, B, C, D;
 		public int E, F, G, H;
