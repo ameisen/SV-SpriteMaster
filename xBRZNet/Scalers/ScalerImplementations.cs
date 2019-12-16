@@ -39,8 +39,8 @@ namespace xBRZNet2.Scalers
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static uint BlendComponent(in uint mask, in int n, in int m, in int inPixel, in int setPixel)
 		{
-			var inChan = unchecked((uint)inPixel) & mask;
-			var setChan = unchecked((uint)setPixel) & mask;
+			var inChan = (long)(unchecked((uint)inPixel) & mask);
+			var setChan = (long)(unchecked((uint)setPixel) & mask);
 			var blend = setChan * n + inChan * (m - n);
 			var component = unchecked(((uint)(blend / m)) & mask);
 			return component;

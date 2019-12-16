@@ -1,5 +1,4 @@
 ﻿using System.Linq;
-using System.Runtime.CompilerServices;
 using xBRZNet.Common;
 
 namespace xBRZNet2.Scalers
