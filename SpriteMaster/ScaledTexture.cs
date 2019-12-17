@@ -34,6 +34,8 @@ namespace SpriteMaster {
 
 		internal abstract void Remove (in ScaledTexture scaledTexture, in Texture2D texture);
 
+		internal abstract void Purge (in Texture2D reference, in Bounds? sourceRectangle = null);
+
 		protected void OnAdd (in Texture2D reference, in ScaledTexture texture, in Bounds sourceRectangle) {
 			if (!Config.Debug.CacheDump.Enabled)
 				return;
@@ -132,6 +134,21 @@ namespace SpriteMaster {
 				}
 			}
 		}
+
+		internal override void Purge (in Texture2D reference, in Bounds? sourceRectangle = null) {
+			try {
+				using (Lock.LockShared()) {
+					if (Map.TryGetValue(reference, out var scaledTexture)) {
+						using (Lock.Promote()) {
+							Debug.InfoLn($"Purging Texture {reference.SafeName()}");
+							Map.Remove(reference);
+							// TODO dispose sprite?
+						}
+					}
+				}
+			}
+			catch { }
+		}
 	}
 
 	sealed class SpriteMap : ITextureMap {
@@ -191,6 +208,21 @@ namespace SpriteMaster {
 					//scaledTexture.Texture.Dispose();
 				}
 			}
+		}
+
+		internal override void Purge (in Texture2D reference, in Bounds? sourceRectangle = null) {
+			try {
+				using (Lock.LockShared()) {
+					if (Map.TryGetValue(reference, out var scaledTextureMap)) {
+						using (Lock.Promote()) {
+							Debug.InfoLn($"Purging Texture {reference.SafeName()}");
+							Map.Remove(reference);
+							// TODO dispose sprites?
+						}
+					}
+				}
+			}
+			catch { }
 		}
 	}
 

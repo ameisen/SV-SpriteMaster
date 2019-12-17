@@ -8,6 +8,13 @@ namespace SpriteMaster
 	/// <summary>The mod entry class.</summary>
 	public sealed class SpriteMaster : Mod
 	{
+		public static SpriteMaster Self { get => _Self; }
+		private static SpriteMaster _Self = null;
+
+		public SpriteMaster() {
+			_Self = this;
+		}
+
 		/// <summary>The mod entry point, called after the mod is first loaded.</summary>
 		/// <param name="help">Provides simplified APIs for writing mods.</param>
 		public override void Entry(IModHelper help)

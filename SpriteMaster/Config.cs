@@ -18,6 +18,20 @@ namespace SpriteMaster {
 		internal const bool EnableCachedHashTextures = false;
 		internal const bool IgnoreUnknownTextures = false;
 
+		internal enum Configuration {
+			Debug,
+			Release
+		}
+
+#if DEBUG
+		internal const Configuration BuildConfiguration = Configuration.Debug;
+#else
+		internal const Configuration BuildConfiguration = Configuration.Release;
+#endif
+
+		internal const bool IsDebug = BuildConfiguration == Configuration.Debug;
+		internal const bool IsRelease = BuildConfiguration == Configuration.Release;
+
 		internal static readonly string LocalRoot = Path.Combine(
 			Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
 			"StardewValley",
@@ -27,10 +41,11 @@ namespace SpriteMaster {
 
 		internal static class Debug {
 			internal static class Logging {
-				internal const bool LogInfo = true;
+				internal const bool LogInfo = IsDebug;
 				internal const bool LogWarnings = true;
 				internal const bool LogErrors = true;
 				internal const bool OwnLogFile = true;
+				internal const bool UseSMAPI = true;
 			}
 
 			internal static class CacheDump {

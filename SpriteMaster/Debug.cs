@@ -1,6 +1,7 @@
 ﻿#pragma warning disable 0162
 
 using Microsoft.Xna.Framework.Graphics;
+using StardewModdingAPI;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -13,11 +14,12 @@ namespace SpriteMaster {
 	public sealed class UntracedAttribute : Attribute { }
 
 	public static class DebugExtensions {
+		[DebuggerStepThrough, DebuggerHidden(), Untraced]
 		public static bool IsUntraced (this MethodBase method) {
 			return method.IsDefined(typeof(UntracedAttribute), true);
 		}
 
-		[Untraced]
+		[DebuggerStepThrough, DebuggerHidden(), Untraced]
 		public static string GetStackTrace (this Exception e) {
 			var tracedFrames = new List<StackFrame>();
 			foreach (var frame in new StackTrace(e, true).GetFrames()) {
@@ -39,6 +41,7 @@ namespace SpriteMaster {
 		private static readonly string ModuleName = typeof(Debug).Namespace;
 
 		private const bool AlwaysFlush = false;
+		private const ConsoleColor InfoColor = ConsoleColor.White;
 		private const ConsoleColor WarningColor = ConsoleColor.Yellow;
 		private const ConsoleColor ErrorColor = ConsoleColor.Red;
 
@@ -53,43 +56,43 @@ namespace SpriteMaster {
 
 		// Logging Stuff
 
-		[Untraced]
+		[DebuggerStepThrough, DebuggerHidden(), Untraced]
 		static internal void Info (string str) {
 			if (!Config.Debug.Logging.LogInfo)
 				return;
-			Console.Error.DebugWrite(str);
+			Console.Error.DebugWriteStr(str);
 		}
 
-		[Untraced]
+		[DebuggerStepThrough, DebuggerHidden(), Untraced]
 		static internal void InfoLn (string str) {
 			Info(str + "\n");
 		}
 
-		[Untraced]
+		[DebuggerStepThrough, DebuggerHidden(), Untraced]
 		static internal void Warning (string str) {
 			if (!Config.Debug.Logging.LogWarnings)
 				return;
 			Console.Error.DebugWrite(WarningColor, str);
 		}
 
-		[Untraced]
+		[DebuggerStepThrough, DebuggerHidden(), Untraced]
 		static internal void WarningLn (string str) {
 			Warning(str + "\n");
 		}
 
-		[Untraced]
+		[DebuggerStepThrough, DebuggerHidden(), Untraced]
 		static internal void Error (string str) {
 			if (!Config.Debug.Logging.LogErrors)
 				return;
 			Console.Error.DebugWrite(ErrorColor, str);
 		}
 
-		[Untraced]
+		[DebuggerStepThrough, DebuggerHidden(), Untraced]
 		static internal void ErrorLn (string str) {
 			Error(str + "\n");
 		}
 
-		[Untraced]
+		[DebuggerStepThrough, DebuggerHidden(), Untraced]
 		static internal void Flush () {
 			Console.Error.FlushAsync();
 		}
@@ -151,7 +154,7 @@ namespace SpriteMaster {
 			}
 		}
 
-		[Untraced]
+		[DebuggerStepThrough, DebuggerHidden(), Untraced]
 		static private void DebugWrite (this TextWriter writer, in ConsoleColor color, in string str) {
 			lock (writer) {
 				try {
@@ -161,7 +164,7 @@ namespace SpriteMaster {
 
 				Console.ForegroundColor = color;
 				try {
-					writer.DebugWrite(str);
+					writer.DebugWriteStr(str, color);
 				}
 				finally {
 					Console.ResetColor();
@@ -169,19 +172,29 @@ namespace SpriteMaster {
 			}
 		}
 
-		[Untraced]
-		static private void DebugWrite (this TextWriter writer, in string str) {
-			var strings = str.Split('\n');
-			foreach (var line in strings) {
-				if (line == "") {
-					writer.Write("\n");
-				}
-				else {
-					writer.Write($"[{ModuleName}] {line}");
-				}
+		[DebuggerStepThrough, DebuggerHidden(), Untraced]
+		static private void DebugWriteStr (this TextWriter writer, in string str, in ConsoleColor color = ConsoleColor.White) {
+			if (Config.Debug.Logging.UseSMAPI) {
+				var logLevel = color switch {
+					InfoColor => LogLevel.Info,
+					WarningColor => LogLevel.Warn,
+					_ => LogLevel.Error,
+				};
+				SpriteMaster.Self.Monitor.Log(str.TrimEnd(), logLevel);
 			}
-			if (AlwaysFlush)
-				writer.FlushAsync();
+			else {
+				var strings = str.Split('\n');
+				foreach (var line in strings) {
+					if (line == "") {
+						writer.Write("\n");
+					}
+					else {
+						writer.Write($"[{ModuleName}] {line}");
+					}
+				}
+				if (AlwaysFlush)
+					writer.FlushAsync();
+			}
 		}
 	}
 }

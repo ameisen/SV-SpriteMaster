@@ -51,10 +51,14 @@ namespace SpriteMaster {
 
 							var testParameter = DeReference(testParameters[i].ParameterType);
 							var testParameterRef = AsReference(testParameter);
+							var testBaseParameter = testParameter.IsArray ? testParameter.GetElementType() : testParameter;
 							var methodParameter = DeReference(methodParameters[i]);
 							var methodParameterRef = AsReference(methodParameter);
 							var baseParameter = methodParameter.IsArray ? methodParameter.GetElementType() : methodParameter;
-							if (!testParameterRef.Equals(methodParameterRef) && !methodParameter.Equals(typeof(object)) && !(testParameter.IsArray && methodParameter.IsArray && baseParameter.Equals(typeof(object)))) {
+							if (
+								!testParameterRef.Equals(methodParameterRef) &&
+								!(testBaseParameter.IsGenericParameter && baseParameter.IsGenericParameter) &&
+								!methodParameter.Equals(typeof(object)) && !(testParameter.IsArray && methodParameter.IsArray && baseParameter.Equals(typeof(object)))) {
 								found = false;
 								break;
 							}
@@ -85,9 +89,35 @@ namespace SpriteMaster {
 				);
 			}
 
+			internal static void Patch<T, U> (in HarmonyInstance instance, string name, in MethodInfo method) where U : struct {
+				var typeMethod = GetPatchMethod<T>(name, method).MakeGenericMethod(typeof(U));
+				var genericMethod = method.MakeGenericMethod(typeof(U));
+				var harmonyMethod = new HarmonyMethod(genericMethod);
+				harmonyMethod.prioritiy = Priority.Last; // sic
+				instance.Patch(
+					typeMethod,
+					harmonyMethod,
+					null,
+					null
+				);
+			}
+
 			internal static void PostPatch<T> (in HarmonyInstance instance, string name, in MethodInfo method) {
 				var typeMethod = GetPatchMethod<T>(name, method);
 				var harmonyMethod = new HarmonyMethod(method);
+				harmonyMethod.prioritiy = Priority.Last; // sic
+				instance.Patch(
+					typeMethod,
+					null,
+					harmonyMethod,
+					null
+				);
+			}
+
+			internal static void PostPatch<T, U> (in HarmonyInstance instance, string name, in MethodInfo method) where U : struct {
+				var typeMethod = GetPatchMethod<T>(name, method).MakeGenericMethod(typeof(U));
+				var genericMethod = method.MakeGenericMethod(typeof(U));
+				var harmonyMethod = new HarmonyMethod(genericMethod);
 				harmonyMethod.prioritiy = Priority.Last; // sic
 				instance.Patch(
 					typeMethod,
@@ -122,6 +152,15 @@ namespace SpriteMaster {
 				Harmony.PostPatch<SpriteBatch>(instance, "PlatformRenderBatch", method);
 
 			// https://github.com/pardeike/Harmony/issues/121
+			foreach (var method in GetMethods<Patches>("SetData")) {
+				Harmony.PostPatch<Texture2D, byte>(instance, "SetData", method);
+				Harmony.PostPatch<Texture2D, sbyte>(instance, "SetData", method);
+				Harmony.PostPatch<Texture2D, int>(instance, "SetData", method);
+				Harmony.PostPatch<Texture2D, uint>(instance, "SetData", method);
+				Harmony.PostPatch<Texture2D, Color>(instance, "SetData", method);
+				Harmony.PostPatch<Texture2D, System.Drawing.Color>(instance, "SetData", method);
+			}
+
 			//foreach (MethodInfo method in typeof(DrawPatched).GetMethods(BindingFlags.Static | BindingFlags.NonPublic).Where(m => m.Name == "SetData"))
 			//	Harmony.Patch(instance, typeof(Texture2D), "SetData", method);
 		}
@@ -214,14 +253,14 @@ namespace SpriteMaster {
 		public static TextureAddressMode CurrentAddressModeV = DefaultSamplerState.AddressV;
 		public static Blend CurrentBlendSourceMode = BlendState.AlphaBlend.AlphaSourceBlend;
 
-		internal static bool SetData<T> (in Texture2D __instance, T[] data) where T : struct {
-			return true;
+		internal static void SetData<T> (in Texture2D __instance, T[] data) where T : struct {
+			ScaledTexture.TextureMap.Purge(__instance);
 		}
-		internal static bool SetData<T> (in Texture2D __instance, T[] data, int startIndex, int elementCount) where T : struct {
-			return true;
+		internal static void SetData<T> (in Texture2D __instance, T[] data, int startIndex, int elementCount) where T : struct {
+			ScaledTexture.TextureMap.Purge(__instance);
 		}
-		internal static bool SetData<T> (in Texture2D __instance, int level, Rectangle? rect, T[] data, int startIndex, int elementCount) where T : struct {
-			return true;
+		internal static void SetData<T> (in Texture2D __instance, int level, Rectangle? rect, T[] data, int startIndex, int elementCount) where T : struct {
+			ScaledTexture.TextureMap.Purge(__instance, rect ?? null);
 		}
 
 		private static void SetCurrentAddressMode (in SamplerState samplerState) {
