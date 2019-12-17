@@ -88,14 +88,7 @@ namespace xBRZNet2
 			{
 				throw new ArgumentOutOfRangeException(nameof(sourceData));
 			}
-			if (sourceTarget == null || !sourceTarget.HasValue)
-			{
-				this.sourceTarget = new Rectangle(0, 0, sourceWidth, sourceHeight);
-			}
-			else
-			{
-				this.sourceTarget = sourceTarget.Value;
-			}
+			this.sourceTarget = sourceTarget.GetValueOrDefault(new Rectangle(0, 0, sourceWidth, sourceHeight));
 			if (this.sourceTarget.Right > sourceWidth || this.sourceTarget.Bottom > sourceHeight)
 			{
 				throw new ArgumentOutOfRangeException(nameof(sourceTarget));
@@ -313,6 +306,46 @@ namespace xBRZNet2
 			return y + sourceTarget.Top;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private bool legalX(int x)
+		{
+			return true;
+			if (configuration.WrappedX)
+			{
+				return true;
+			}
+			return x >= sourceTarget.Left && x < sourceTarget.Right;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private bool legalY(int y)
+		{
+			return true;
+			if (configuration.WrappedY)
+			{
+				return true;
+			}
+			return y >= sourceTarget.Top && y < sourceTarget.Bottom;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private int getX(int x)
+		{
+			return legalX(x) ? clampX(x) : -clampX(x);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private int getY(int y)
+		{
+			return legalY(y) ? clampY(y) : -clampY(y);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private static int Mask(in int value, in uint mask)
+		{
+			return unchecked((int)((uint)value & mask));
+		}
+
 		//scaler policy: see "Scaler2x" reference implementation
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private unsafe void Scale(in Span<int> src, in int[] trg)
@@ -329,6 +362,26 @@ namespace xBRZNet2
 
 			var ker4 = new Kernel4x4();
 
+			int GetPixel(in Span<int> src, int stride, int offset)
+			{
+				// We can try embedded a distance calculation as well. Perhaps instead of a negative stride/offset, we provide a 
+				// negative distance from the edge and just recalculate the stride/offset in that case.
+				// We can scale the alpha reduction by the distance to hopefully correct the edges.
+
+				// Alternatively, for non-wrapping textures (or for wrapping ones that only have one wrapped axis) we embed them in a new target
+				// which is padded with alpha, and after resampling we manually clamp the colors on it. This will give a normal-ish effect for drawing, and will make it so we might get a more correct edge since it can overdraw.
+				// If we do this, we draw the entire texture, with the padding, but we slightly enlarge the target area for _drawing_ to account for the extra padding.
+				// This will effectively cause a filtering effect and hopefully prevent the hard edge problems
+
+				if (stride >= 0 && offset >= 0)
+					return src[stride + offset];
+				stride = (stride < 0) ? -stride : stride;
+				offset = (offset < 0) ? -offset : offset;
+				int sample = src[stride + offset];
+				const uint mask = 0x00_FF_FF_FFU;
+				return Mask(sample, mask);
+			}
+
 			//initialize preprocessing buffer for first row:
 			//detect upper left and right corner blending
 			//this cannot be optimized for adjacent processing
@@ -337,37 +390,37 @@ namespace xBRZNet2
 			{
 				var y = yFirst - 1;
 
-				var sM1 = sourceWidth * clampY(y - 1);
+				var sM1 = sourceWidth * getY(y - 1);
 				var s0 = sourceWidth * y; //center line
-				var sP1 = sourceWidth * clampY(y + 1);
-				var sP2 = sourceWidth * clampY(y + 2);
+				var sP1 = sourceWidth * getY(y + 1);
+				var sP2 = sourceWidth * getY(y + 2);
 
 				for (var x = sourceTarget.Left; x < sourceTarget.Right; ++x)
 				{
-					var xM1 = clampX(x - 1);
-					var xP1 = clampX(x + 1);
-					var xP2 = clampX(x + 2);
+					var xM1 = getX(x - 1);
+					var xP1 = getX(x + 1);
+					var xP2 = getX(x + 2);
 
 					//read sequentially from memory as far as possible
-					ker4.A = src[sM1 + xM1];
-					ker4.B = src[sM1 + x];
-					ker4.C = src[sM1 + xP1];
-					ker4.D = src[sM1 + xP2];
+					ker4.A = GetPixel(src, sM1, xM1);
+					ker4.B = GetPixel(src, sM1, x);
+					ker4.C = GetPixel(src, sM1, xP1);
+					ker4.D = GetPixel(src, sM1, xP2);
 
-					ker4.E = src[s0 + xM1];
+					ker4.E = GetPixel(src, s0, xM1);
 					ker4.F = src[s0 + x];
-					ker4.G = src[s0 + xP1];
-					ker4.H = src[s0 + xP2];
+					ker4.G = GetPixel(src, s0, xP1);
+					ker4.H = GetPixel(src, s0, xP2);
 
-					ker4.I = src[sP1 + xM1];
-					ker4.J = src[sP1 + x];
-					ker4.K = src[sP1 + xP1];
-					ker4.L = src[sP1 + xP2];
+					ker4.I = GetPixel(src, sP1, xM1);
+					ker4.J = GetPixel(src, sP1, x);
+					ker4.K = GetPixel(src, sP1, xP1);
+					ker4.L = GetPixel(src, sP1, xP2);
 
-					ker4.M = src[sP2 + xM1];
-					ker4.N = src[sP2 + x];
-					ker4.O = src[sP2 + xP1];
-					ker4.P = src[sP2 + xP2];
+					ker4.M = GetPixel(src, sP2, xM1);
+					ker4.N = GetPixel(src, sP2, x);
+					ker4.O = GetPixel(src, sP2, xP1);
+					ker4.P = GetPixel(src, sP2, xP2);
 
 					PreProcessCorners(ker4); // writes to blendResult
 					/*
@@ -403,42 +456,42 @@ namespace xBRZNet2
 				//consider MT "striped" access
 				var trgi = scaler.Scale * (y - yFirst) * trgWidth;
 
-				var sM1 = sourceWidth * clampY(y - 1);
+				var sM1 = sourceWidth * getY(y - 1);
 				var s0 = sourceWidth * y; //center line
-				var sP1 = sourceWidth * clampY(y + 1);
-				var sP2 = sourceWidth * clampY(y + 2);
+				var sP1 = sourceWidth * getY(y + 1);
+				var sP2 = sourceWidth * getY(y + 2);
 
 				var blendXy1 = (char)0;
 
 				for (var x = sourceTarget.Left; x < sourceTarget.Right; ++x, trgi += scaler.Scale)
 				{
-					var xM1 = clampX(x - 1);
-					var xP1 = clampX(x + 1);
-					var xP2 = clampX(x + 2);
+					var xM1 = getX(x - 1);
+					var xP1 = getX(x + 1);
+					var xP2 = getX(x + 2);
 
 					//evaluate the four corners on bottom-right of current pixel
 					//blend_xy for current (x, y) position
 
 					//read sequentially from memory as far as possible
-					ker4.A = src[sM1 + xM1];
-					ker4.B = src[sM1 + x];
-					ker4.C = src[sM1 + xP1];
-					ker4.D = src[sM1 + xP2];
+					ker4.A = GetPixel(src, sM1, xM1);
+					ker4.B = GetPixel(src, sM1, x);
+					ker4.C = GetPixel(src, sM1, xP1);
+					ker4.D = GetPixel(src, sM1, xP2);
 
-					ker4.E = src[s0 + xM1];
+					ker4.E = GetPixel(src, s0, xM1);
 					ker4.F = src[s0 + x];
-					ker4.G = src[s0 + xP1];
-					ker4.H = src[s0 + xP2];
+					ker4.G = GetPixel(src, s0, xP1);
+					ker4.H = GetPixel(src, s0, xP2);
 
-					ker4.I = src[sP1 + xM1];
-					ker4.J = src[sP1 + x];
-					ker4.K = src[sP1 + xP1];
-					ker4.L = src[sP1 + xP2];
+					ker4.I = GetPixel(src, sP1, xM1);
+					ker4.J = GetPixel(src, sP1, x);
+					ker4.K = GetPixel(src, sP1, xP1);
+					ker4.L = GetPixel(src, sP1, xP2);
 
-					ker4.M = src[sP2 + xM1];
-					ker4.N = src[sP2 + x];
-					ker4.O = src[sP2 + xP1];
-					ker4.P = src[sP2 + xP2];
+					ker4.M = GetPixel(src, sP2, xM1);
+					ker4.N = GetPixel(src, sP2, x);
+					ker4.O = GetPixel(src, sP2, xP1);
+					ker4.P = GetPixel(src, sP2, xP2);
 
 					PreProcessCorners(ker4); // writes to blendResult
 
@@ -487,17 +540,17 @@ namespace xBRZNet2
 					const int a = 0, b = 1, c = 2, d = 3, e = 4, f = 5, g = 6, h = 7, i = 8;
 
 					//read sequentially from memory as far as possible
-					ker3._[a] = src[sM1 + xM1];
-					ker3._[b] = src[sM1 + x];
-					ker3._[c] = src[sM1 + xP1];
+					ker3._[a] = GetPixel(src, sM1, xM1);
+					ker3._[b] = GetPixel(src, sM1, x);
+					ker3._[c] = GetPixel(src, sM1, xP1);
 
-					ker3._[d] = src[s0 + xM1];
+					ker3._[d] = GetPixel(src, s0, xM1);
 					ker3._[e] = src[s0 + x];
-					ker3._[f] = src[s0 + xP1];
+					ker3._[f] = GetPixel(src, s0, xP1);
 
-					ker3._[g] = src[sP1 + xM1];
-					ker3._[h] = src[sP1 + x];
-					ker3._[i] = src[sP1 + xP1];
+					ker3._[g] = GetPixel(src, sP1, xM1);
+					ker3._[h] = GetPixel(src, sP1, x);
+					ker3._[i] = GetPixel(src, sP1, xP1);
 
 					ScalePixel(scaler, (int)RotationDegree.R0, ker3, trgi, blendXy);
 					ScalePixel(scaler, (int)RotationDegree.R90, ker3, trgi, blendXy);

@@ -284,7 +284,7 @@ namespace SpriteMaster
 			}
 		}
 
-		static internal ScaledTexture Get(Texture2D texture, Bounds sourceRectangle)
+		static internal ScaledTexture Get(Texture2D texture, Bounds sourceRectangle, Bounds indexRectangle, bool allowPadding)
 		{
 			int textureArea = texture.Width * texture.Height;
 
@@ -307,7 +307,7 @@ namespace SpriteMaster
 				return null;
 			}
 
-			if (TextureMap.TryGet(texture, sourceRectangle, out var scaleTexture))
+			if (TextureMap.TryGet(texture, indexRectangle, out var scaleTexture))
 			{
 				return scaleTexture;
 			}
@@ -318,7 +318,7 @@ namespace SpriteMaster
 			}
 
 			bool isSprite = Config.Resample.DeSprite && !ExcludeSprite(texture) && ((sourceRectangle.X != 0 || sourceRectangle.Y != 0) || (sourceRectangle.Width != texture.Width || sourceRectangle.Height != texture.Height));
-			var textureWrapper = new TextureWrapper(texture, sourceRectangle);
+			var textureWrapper = new TextureWrapper(texture, sourceRectangle, indexRectangle);
 			ulong hash = Upscaler.GetHash(textureWrapper, isSprite);
 
 			if (Config.EnableCachedHashTextures)
@@ -330,7 +330,7 @@ namespace SpriteMaster
 						if (scaledTextureRef.TryGetTarget(out var cachedTexture))
 						{
 							Debug.InfoLn($"Using Cached Texture for \"{cachedTexture.SafeName()}\"");
-							TextureMap.Add(texture, cachedTexture, sourceRectangle);
+							TextureMap.Add(texture, cachedTexture, indexRectangle);
 							texture.Disposing += (object sender, EventArgs args) => { cachedTexture.OnParentDispose((Texture2D)sender); };
 							if (!cachedTexture.IsReady || cachedTexture.Texture == null)
 							{
@@ -358,9 +358,11 @@ namespace SpriteMaster
 				textureWrapper: textureWrapper,
 				source: texture,
 				sourceRectangle: sourceRectangle,
+				indexRectangle: indexRectangle,
 				scale: scale,
 				isSprite: isSprite,
-				hash: hash
+				hash: hash,
+				allowPadding: allowPadding
 			);
 			if (Config.EnableCachedHashTextures)
 				lock (LocalTextureCache)
@@ -424,6 +426,8 @@ namespace SpriteMaster
 		internal readonly Bounds OriginalSourceRectangle;
 		internal readonly ulong Hash;
 
+		internal Vector2I Padding = Vector2I.Zero;
+		internal Vector2I UnpaddedSize;
 		private readonly Vector2I originalSize;
 		private readonly Bounds sourceRectangle;
 		private int refScale;
@@ -452,7 +456,7 @@ namespace SpriteMaster
 
 		internal static readonly Dictionary<ulong, WeakScaledTexture> LocalTextureCache = new Dictionary<ulong, WeakScaledTexture>();
 
-		internal ScaledTexture(string assetName, TextureWrapper textureWrapper, Texture2D source, Bounds sourceRectangle, int scale, ulong hash, bool isSprite)
+		internal ScaledTexture(string assetName, TextureWrapper textureWrapper, Texture2D source, Bounds sourceRectangle, Bounds indexRectangle, int scale, ulong hash, bool isSprite, bool allowPadding)
 		{
 			TextureSizeHack(source.GraphicsDevice);
 			IsSprite = isSprite;
@@ -462,7 +466,7 @@ namespace SpriteMaster
 			this.Reference = new WeakTexture(source);
 			this.sourceRectangle = sourceRectangle;
 			this.refScale = scale;
-			TextureMap.Add(source, this, sourceRectangle);
+			TextureMap.Add(source, this, indexRectangle);
 
 			this.Name = source.Name.IsBlank() ? assetName : source.Name;
 			originalSize = IsSprite ? sourceRectangle.Extent : new Vector2I(source);
@@ -478,7 +482,8 @@ namespace SpriteMaster
 						input: textureWrapper,
 						desprite: IsSprite,
 						hash: Hash,
-						wrapped: ref Wrapped
+						wrapped: ref Wrapped,
+						allowPadding: allowPadding
 					);
 				}).Start();
 			}
@@ -491,7 +496,8 @@ namespace SpriteMaster
 					input: textureWrapper,
 					desprite: IsSprite,
 					hash: Hash,
-					wrapped: ref Wrapped
+					wrapped: ref Wrapped,
+					allowPadding: allowPadding
 				);
 
 				if (this.Texture != null)

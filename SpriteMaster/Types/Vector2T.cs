@@ -7,6 +7,34 @@ namespace SpriteMaster.Types
 		public T X;
 		public T Y;
 
+		public T this[in int index]
+		{
+			readonly get
+			{
+				switch (index)
+				{
+					case 0:
+						return X;
+					case 1:
+						return Y;
+					default:
+						throw new IndexOutOfRangeException(nameof(index));
+				}
+			}
+			set
+			{
+				switch (index)
+				{
+					case 0:
+						X = value; return;
+					case 1:
+						Y = value; return;
+					default:
+						throw new IndexOutOfRangeException(nameof(index));
+				}
+			}
+		}
+
 		public Vector2T(in T x, in T y)
 		{
 			X = x;

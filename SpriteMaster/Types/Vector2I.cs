@@ -45,12 +45,45 @@ namespace SpriteMaster.Types
 			set { Y = value; }
 		}
 
+		public int this[in int index]
+		{
+			readonly get
+			{
+				switch (index)
+				{
+					case 0:
+						return X;
+					case 1:
+						return Y;
+					default:
+						throw new IndexOutOfRangeException(nameof(index));
+				}
+			}
+			set
+			{
+				switch (index)
+				{
+					case 0:
+						X = value; return;
+					case 1:
+						Y = value; return;
+					default:
+						throw new IndexOutOfRangeException(nameof(index));
+				}
+			}
+		}
+
 		public int Area
 		{
 			get { return X * Y; }
 		}
 
 		public bool IsEmpty
+		{
+			get { return this == Zero; }
+		}
+
+		public bool IsZero
 		{
 			get { return this == Zero; }
 		}

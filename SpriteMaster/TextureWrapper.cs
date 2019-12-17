@@ -10,6 +10,7 @@ namespace SpriteMaster
 		internal readonly Texture2D Reference;
 		internal readonly Vector2I ReferenceSize;
 		internal readonly Bounds Size;
+		internal readonly Bounds IndexRectangle;
 		internal readonly Vector2B Wrapped;
 		internal readonly bool BlendEnabled;
 		internal byte[] Data = null;
@@ -17,10 +18,11 @@ namespace SpriteMaster
 
 		private static ConditionalWeakTable<Texture2D, WeakReference<byte[]>> DataCache = new ConditionalWeakTable<Texture2D, WeakReference<byte[]>>();
 
-		internal TextureWrapper(in Texture2D reference, in Bounds dimensions)
+		internal TextureWrapper(in Texture2D reference, in Bounds dimensions, in Bounds indexRectangle)
 		{
 			ReferenceSize = new Vector2I(reference);
 			Size = dimensions;
+			IndexRectangle = indexRectangle;
 			if (Size.Bottom > ReferenceSize.Height)
 			{
 				Size.Height -= (Size.Bottom - ReferenceSize.Height);

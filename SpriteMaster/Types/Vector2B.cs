@@ -2,7 +2,11 @@
 
 namespace SpriteMaster.Types
 {
-	internal struct Vector2B : ICloneable
+	internal struct Vector2B :
+		ICloneable,
+		IComparable,
+		IComparable<Vector2B>,
+		IEquatable<Vector2B>
 	{
 		public static readonly Vector2B True = new Vector2B(true, true);
 		public static readonly Vector2B False = new Vector2B(false, false);
@@ -20,6 +24,46 @@ namespace SpriteMaster.Types
 		{
 			readonly get { return Y; }
 			set { Y = value; }
+		}
+
+		public bool Negative
+		{
+			readonly get { return X; }
+			set { X = value; }
+		}
+
+		public bool Positive
+		{
+			readonly get { return Y; }
+			set { Y = value; }
+		}
+
+		public bool this[in int index]
+		{
+			readonly get
+			{
+				switch (index)
+				{
+					case 0:
+						return X;
+					case 1:
+						return Y;
+					default:
+						throw new IndexOutOfRangeException(nameof(index));
+				}
+			}
+			set
+			{
+				switch (index)
+				{
+					case 0:
+						X = value; return;
+					case 1:
+						Y = value; return;
+					default:
+						throw new IndexOutOfRangeException(nameof(index));
+				}
+			}
 		}
 
 		public Vector2B(in bool x, in bool y)
@@ -99,6 +143,33 @@ namespace SpriteMaster.Types
 				lhs.X || rhs,
 				lhs.Y || rhs
 			);
+		}
+
+		public override readonly string ToString () {
+			return $"{{{X}, {Y}}}";
+		}
+
+		public readonly int CompareTo (object obj) {
+			if (obj is Vector2B other) {
+				return CompareTo(other);
+			}
+			else {
+				throw new ArgumentException();
+			}
+		}
+
+		public readonly int CompareTo (Vector2B other) {
+			var xComp = X.CompareTo(other);
+			var YComp = Y.CompareTo(other);
+			if (xComp != 0)
+				return xComp;
+			if (YComp != 0)
+				return YComp;
+			return 0;
+		}
+
+		public readonly bool Equals (Vector2B other) {
+			return X == other.X && Y == other.Y;
 		}
 	}
 }
