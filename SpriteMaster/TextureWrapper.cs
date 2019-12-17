@@ -3,10 +3,8 @@ using SpriteMaster.Types;
 using System;
 using System.Runtime.CompilerServices;
 
-namespace SpriteMaster
-{
-	internal sealed class TextureWrapper
-	{
+namespace SpriteMaster {
+	internal sealed class TextureWrapper {
 		internal readonly Texture2D Reference;
 		internal readonly Vector2I ReferenceSize;
 		internal readonly Bounds Size;
@@ -18,31 +16,25 @@ namespace SpriteMaster
 
 		private static ConditionalWeakTable<Texture2D, WeakReference<byte[]>> DataCache = new ConditionalWeakTable<Texture2D, WeakReference<byte[]>>();
 
-		internal TextureWrapper(in Texture2D reference, in Bounds dimensions, in Bounds indexRectangle)
-		{
+		internal TextureWrapper (Texture2D reference, in Bounds dimensions, in Bounds indexRectangle) {
 			ReferenceSize = new Vector2I(reference);
 			Size = dimensions;
 			IndexRectangle = indexRectangle;
-			if (Size.Bottom > ReferenceSize.Height)
-			{
+			if (Size.Bottom > ReferenceSize.Height) {
 				Size.Height -= (Size.Bottom - ReferenceSize.Height);
 			}
-			if (Size.Right > ReferenceSize.Width)
-			{
+			if (Size.Right > ReferenceSize.Width) {
 				Size.Width -= (Size.Right - ReferenceSize.Width);
 			}
 			Reference = reference;
 
-			if (DataCache.TryGetValue(reference, out var dataRef))
-			{
-				if (!dataRef.TryGetTarget(out Data))
-				{
+			if (DataCache.TryGetValue(reference, out var dataRef)) {
+				if (!dataRef.TryGetTarget(out Data)) {
 					DataCache.Remove(reference);
 				}
 			}
 
-			if (Data == null)
-			{
+			if (Data == null) {
 				Data = new byte[reference.Width * reference.Height * 4];
 				reference.GetData(Data);
 				DataCache.Add(reference, new WeakReference<byte[]>(Data));
@@ -55,10 +47,8 @@ namespace SpriteMaster
 			);
 		}
 
-		internal ulong Hash()
-		{
-			if (_Hash == 0)
-			{
+		internal ulong Hash () {
+			if (_Hash == 0) {
 				_Hash = Data.Hash();
 			}
 			return _Hash;
@@ -79,12 +69,8 @@ namespace SpriteMaster
 			*/
 		}
 
-		internal void Dispose()
-		{
-			if (Data != null)
-			{
-				Data = null;
-			}
+		internal void Dispose () {
+			Data = null;
 		}
 	}
 }

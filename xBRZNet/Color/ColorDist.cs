@@ -2,23 +2,19 @@
 using System.Runtime.CompilerServices;
 using xBRZNet2.Common;
 
-namespace xBRZNet2.Color
-{
-	internal class ColorDist
-	{
+namespace xBRZNet2.Color {
+	internal class ColorDist {
 		protected readonly Config Configuration;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public ColorDist(in Config cfg)
-		{
+		public ColorDist (in Config cfg) {
 			Configuration = cfg;
 		}
 
 		private const bool MultiplyAlpha = false;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static int TexelDiff(int texel1, int texel2, in int shift)
-		{
+		private static int TexelDiff (int texel1, int texel2, int shift) {
 			texel1 = unchecked((int)(((uint)texel1 >> shift) & 0xFF));
 			texel2 = unchecked((int)(((uint)texel2 >> shift) & 0xFF));
 
@@ -27,9 +23,9 @@ namespace xBRZNet2.Color
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public double DistYCbCr(in int pix1, in int pix2)
-		{
-			if (pix1 == pix2) return 0;
+		public double DistYCbCr (int pix1, int pix2) {
+			if (pix1 == pix2)
+				return 0;
 
 			//http://en.wikipedia.org/wiki/YCbCr#ITU-R_BT.601_conversion
 			//YCbCr conversion is a matrix multiplication => take advantage of linearity by subtracting first!
@@ -40,8 +36,7 @@ namespace xBRZNet2.Color
 			// Alpha gives some interesting properties.
 			// We techncially cannot guarantee that the color is correct once we are in transparent areas, but we might still want to blend there.
 
-			if (MultiplyAlpha)
-			{
+			if (MultiplyAlpha) {
 				var aDiff = 0xFF - TexelDiff(pix1, pix2, ColorConstant.Shift.Alpha);
 				rDiff = (rDiff * aDiff) / 0xFF;
 				gDiff = (gDiff * aDiff) / 0xFF;

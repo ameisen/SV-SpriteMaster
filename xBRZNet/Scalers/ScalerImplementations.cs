@@ -1,27 +1,23 @@
 ﻿using System.Runtime.CompilerServices;
 using xBRZNet2.Common;
 
-namespace xBRZNet2.Scalers
-{
-	internal abstract class IScaler
-	{
+namespace xBRZNet2.Scalers {
+	internal abstract class IScaler {
 		public readonly int Scale;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected IScaler(in int scale)
-		{
+		protected IScaler (int scale) {
 			Scale = scale;
 		}
 
-		public abstract void BlendLineSteep(in int col, in OutputMatrix out_);
-		public abstract void BlendLineSteepAndShallow(in int col, in OutputMatrix out_);
-		public abstract void BlendLineShallow(in int col, in OutputMatrix out_);
-		public abstract void BlendLineDiagonal(in int col, in OutputMatrix out_);
-		public abstract void BlendCorner(in int col, in OutputMatrix out_);
+		public abstract void BlendLineSteep (int col, in OutputMatrix out_);
+		public abstract void BlendLineSteepAndShallow (int col, in OutputMatrix out_);
+		public abstract void BlendLineShallow (int col, in OutputMatrix out_);
+		public abstract void BlendLineDiagonal (int col, in OutputMatrix out_);
+		public abstract void BlendCorner (int col, in OutputMatrix out_);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static void AlphaBlend(in int n, in int m, ref int dstRef, in int col)
-		{
+		protected static void AlphaBlend (int n, int m, ref int dstRef, int col) {
 			//assert n < 256 : "possible overflow of (col & redMask) * N";
 			//assert m < 256 : "possible overflow of (col & redMask) * N + (dst & redMask) * (M - N)";
 			//assert 0 < n && n < m : "0 < N && N < M";
@@ -37,8 +33,7 @@ namespace xBRZNet2.Scalers
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static uint BlendComponent(in uint mask, in int n, in int m, in int inPixel, in int setPixel)
-		{
+		private static uint BlendComponent (uint mask, int n, int m, int inPixel, int setPixel) {
 			var inChan = (long)(unchecked((uint)inPixel) & mask);
 			var setChan = (long)(unchecked((uint)setPixel) & mask);
 			var blend = setChan * n + inChan * (m - n);
@@ -47,55 +42,47 @@ namespace xBRZNet2.Scalers
 		}
 	}
 
-	internal sealed class Scaler2X : IScaler
-	{
+	internal sealed class Scaler2X : IScaler {
 		public new const int Scale = 2;
-		[MethodImpl(MethodImplOptions.AggressiveInlining)] public Scaler2X() : base(Scale) { }
+		[MethodImpl(MethodImplOptions.AggressiveInlining)] public Scaler2X () : base(Scale) { }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendLineShallow(in int col, in OutputMatrix out_)
-		{
+		public override void BlendLineShallow (int col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(Scale - 1, 0), col);
 			AlphaBlend(3, 4, ref out_.Ref(Scale - 1, 1), col);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendLineSteep(in int col, in OutputMatrix out_)
-		{
+		public override void BlendLineSteep (int col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(0, Scale - 1), col);
 			AlphaBlend(3, 4, ref out_.Ref(1, Scale - 1), col);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendLineSteepAndShallow(in int col, in OutputMatrix out_)
-		{
+		public override void BlendLineSteepAndShallow (int col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(1, 0), col);
 			AlphaBlend(1, 4, ref out_.Ref(0, 1), col);
 			AlphaBlend(5, 6, ref out_.Ref(1, 1), col); //[!] fixes 7/8 used in xBR
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendLineDiagonal(in int col, in OutputMatrix out_)
-		{
+		public override void BlendLineDiagonal (int col, in OutputMatrix out_) {
 			AlphaBlend(1, 2, ref out_.Ref(1, 1), col);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendCorner(in int col, in OutputMatrix out_)
-		{
+		public override void BlendCorner (int col, in OutputMatrix out_) {
 			//model a round corner
 			AlphaBlend(21, 100, ref out_.Ref(1, 1), col); //exact: 1 - pi/4 = 0.2146018366
 		}
 	}
 
-	internal sealed class Scaler3X : IScaler
-	{
+	internal sealed class Scaler3X : IScaler {
 		public new const int Scale = 3;
-		[MethodImpl(MethodImplOptions.AggressiveInlining)] public Scaler3X() : base(Scale) { }
+		[MethodImpl(MethodImplOptions.AggressiveInlining)] public Scaler3X () : base(Scale) { }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendLineShallow(in int col, in OutputMatrix out_)
-		{
+		public override void BlendLineShallow (int col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(Scale - 1, 0), col);
 			AlphaBlend(1, 4, ref out_.Ref(Scale - 2, 2), col);
 			AlphaBlend(3, 4, ref out_.Ref(Scale - 1, 1), col);
@@ -103,8 +90,7 @@ namespace xBRZNet2.Scalers
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendLineSteep(in int col, in OutputMatrix out_)
-		{
+		public override void BlendLineSteep (int col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(0, Scale - 1), col);
 			AlphaBlend(1, 4, ref out_.Ref(2, Scale - 2), col);
 			AlphaBlend(3, 4, ref out_.Ref(1, Scale - 1), col);
@@ -112,8 +98,7 @@ namespace xBRZNet2.Scalers
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendLineSteepAndShallow(in int col, in OutputMatrix out_)
-		{
+		public override void BlendLineSteepAndShallow (int col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(2, 0), col);
 			AlphaBlend(1, 4, ref out_.Ref(0, 2), col);
 			AlphaBlend(3, 4, ref out_.Ref(2, 1), col);
@@ -122,16 +107,14 @@ namespace xBRZNet2.Scalers
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendLineDiagonal(in int col, in OutputMatrix out_)
-		{
+		public override void BlendLineDiagonal (int col, in OutputMatrix out_) {
 			AlphaBlend(1, 8, ref out_.Ref(1, 2), col);
 			AlphaBlend(1, 8, ref out_.Ref(2, 1), col);
 			AlphaBlend(7, 8, ref out_.Ref(2, 2), col);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendCorner(in int col, in OutputMatrix out_)
-		{
+		public override void BlendCorner (int col, in OutputMatrix out_) {
 			//model a round corner
 			AlphaBlend(45, 100, ref out_.Ref(2, 2), col); //exact: 0.4545939598
 																										//alphaBlend(14, 1000, out.ref(2, 1), col); //0.01413008627 -> negligable
@@ -139,14 +122,12 @@ namespace xBRZNet2.Scalers
 		}
 	}
 
-	internal sealed class Scaler4X : IScaler
-	{
+	internal sealed class Scaler4X : IScaler {
 		public new const int Scale = 4;
-		[MethodImpl(MethodImplOptions.AggressiveInlining)] public Scaler4X() : base(Scale) { }
+		[MethodImpl(MethodImplOptions.AggressiveInlining)] public Scaler4X () : base(Scale) { }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendLineShallow(in int col, in OutputMatrix out_)
-		{
+		public override void BlendLineShallow (int col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(Scale - 1, 0), col);
 			AlphaBlend(1, 4, ref out_.Ref(Scale - 2, 2), col);
 			AlphaBlend(3, 4, ref out_.Ref(Scale - 1, 1), col);
@@ -156,8 +137,7 @@ namespace xBRZNet2.Scalers
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendLineSteep(in int col, in OutputMatrix out_)
-		{
+		public override void BlendLineSteep (int col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(0, Scale - 1), col);
 			AlphaBlend(1, 4, ref out_.Ref(2, Scale - 2), col);
 			AlphaBlend(3, 4, ref out_.Ref(1, Scale - 1), col);
@@ -167,8 +147,7 @@ namespace xBRZNet2.Scalers
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendLineSteepAndShallow(in int col, in OutputMatrix out_)
-		{
+		public override void BlendLineSteepAndShallow (int col, in OutputMatrix out_) {
 			AlphaBlend(3, 4, ref out_.Ref(3, 1), col);
 			AlphaBlend(3, 4, ref out_.Ref(1, 3), col);
 			AlphaBlend(1, 4, ref out_.Ref(3, 0), col);
@@ -180,16 +159,14 @@ namespace xBRZNet2.Scalers
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendLineDiagonal(in int col, in OutputMatrix out_)
-		{
+		public override void BlendLineDiagonal (int col, in OutputMatrix out_) {
 			AlphaBlend(1, 2, ref out_.Ref(Scale - 1, Scale / 2), col);
 			AlphaBlend(1, 2, ref out_.Ref(Scale - 2, Scale / 2 + 1), col);
 			out_.Set(Scale - 1, Scale - 1, col);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendCorner(in int col, in OutputMatrix out_)
-		{
+		public override void BlendCorner (int col, in OutputMatrix out_) {
 			//model a round corner
 			AlphaBlend(68, 100, ref out_.Ref(3, 3), col); //exact: 0.6848532563
 			AlphaBlend(9, 100, ref out_.Ref(3, 2), col); //0.08677704501
@@ -197,14 +174,12 @@ namespace xBRZNet2.Scalers
 		}
 	}
 
-	internal sealed class Scaler5X : IScaler
-	{
+	internal sealed class Scaler5X : IScaler {
 		public new const int Scale = 5;
-		[MethodImpl(MethodImplOptions.AggressiveInlining)] public Scaler5X() : base(Scale) { }
+		[MethodImpl(MethodImplOptions.AggressiveInlining)] public Scaler5X () : base(Scale) { }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendLineShallow(in int col, in OutputMatrix out_)
-		{
+		public override void BlendLineShallow (int col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(Scale - 1, 0), col);
 			AlphaBlend(1, 4, ref out_.Ref(Scale - 2, 2), col);
 			AlphaBlend(1, 4, ref out_.Ref(Scale - 3, 4), col);
@@ -217,8 +192,7 @@ namespace xBRZNet2.Scalers
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendLineSteep(in int col, in OutputMatrix out_)
-		{
+		public override void BlendLineSteep (int col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(0, Scale - 1), col);
 			AlphaBlend(1, 4, ref out_.Ref(2, Scale - 2), col);
 			AlphaBlend(1, 4, ref out_.Ref(4, Scale - 3), col);
@@ -231,8 +205,7 @@ namespace xBRZNet2.Scalers
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendLineSteepAndShallow(in int col, in OutputMatrix out_)
-		{
+		public override void BlendLineSteepAndShallow (int col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(0, Scale - 1), col);
 			AlphaBlend(1, 4, ref out_.Ref(2, Scale - 2), col);
 			AlphaBlend(3, 4, ref out_.Ref(1, Scale - 1), col);
@@ -248,8 +221,7 @@ namespace xBRZNet2.Scalers
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendLineDiagonal(in int col, in OutputMatrix out_)
-		{
+		public override void BlendLineDiagonal (int col, in OutputMatrix out_) {
 			AlphaBlend(1, 8, ref out_.Ref(Scale - 1, Scale / 2), col);
 			AlphaBlend(1, 8, ref out_.Ref(Scale - 2, Scale / 2 + 1), col);
 			AlphaBlend(1, 8, ref out_.Ref(Scale - 3, Scale / 2 + 2), col);
@@ -259,8 +231,7 @@ namespace xBRZNet2.Scalers
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendCorner(in int col, in OutputMatrix out_)
-		{
+		public override void BlendCorner (int col, in OutputMatrix out_) {
 			//model a round corner
 			AlphaBlend(86, 100, ref out_.Ref(4, 4), col); //exact: 0.8631434088
 			AlphaBlend(23, 100, ref out_.Ref(4, 3), col); //0.2306749731

@@ -3,7 +3,6 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Threading;
 
-using System.Reflection;
 using System.Linq;
 using System.Collections.Generic;
 
@@ -12,31 +11,25 @@ using WeakScaledTexture = System.WeakReference<SpriteMaster.ScaledTexture>;
 using WeakTextureMap = System.Runtime.CompilerServices.ConditionalWeakTable<Microsoft.Xna.Framework.Graphics.Texture2D, SpriteMaster.ScaledTexture>;
 using WeakSpriteMap = System.Runtime.CompilerServices.ConditionalWeakTable<Microsoft.Xna.Framework.Graphics.Texture2D, System.Collections.Generic.Dictionary<ulong, SpriteMaster.ScaledTexture>>;
 using SpriteMaster.Types;
-using System.Runtime.InteropServices;
 
 namespace SpriteMaster {
-	// Modified from PyTK.Types.ScaledTexture2D
-	// Origial Source: https://github.com/Platonymous/Stardew-Valley-Mods/blob/master/PyTK/Types/ScaledTexture2D.cs
-	// Original Licence: GNU General Public License v3.0
-	// Original Author: PlatonymousUpscale
-
 	internal abstract class ITextureMap {
 		protected readonly SharedLock Lock = new SharedLock();
 		protected readonly List<WeakScaledTexture> ScaledTextureReferences = Config.Debug.CacheDump.Enabled ? new List<WeakScaledTexture>() : null;
 
 		internal static ITextureMap Create () {
-			return Config.Resample.DeSprite ? (ITextureMap)new SpriteMap() : (ITextureMap)new TextureMap();
+			return Config.Resample.DeSprite ? (ITextureMap)new SpriteMap() : new TextureMap();
 		}
 
-		internal abstract void Add (in Texture2D reference, in ScaledTexture texture, in Bounds sourceRectangle);
+		internal abstract void Add (Texture2D reference, ScaledTexture texture, Bounds sourceRectangle);
 
-		internal abstract bool TryGet (in Texture2D texture, in Bounds sourceRectangle, out ScaledTexture result);
+		internal abstract bool TryGet (Texture2D texture, Bounds sourceRectangle, out ScaledTexture result);
 
-		internal abstract void Remove (in ScaledTexture scaledTexture, in Texture2D texture);
+		internal abstract void Remove (ScaledTexture scaledTexture, Texture2D texture);
 
-		internal abstract void Purge (in Texture2D reference, in Bounds? sourceRectangle = null);
+		internal abstract void Purge (Texture2D reference, Bounds? sourceRectangle = null);
 
-		protected void OnAdd (in Texture2D reference, in ScaledTexture texture, in Bounds sourceRectangle) {
+		protected void OnAdd (Texture2D reference, ScaledTexture texture, Bounds sourceRectangle) {
 			if (!Config.Debug.CacheDump.Enabled)
 				return;
 			ScaledTextureReferences.Add(new WeakScaledTexture(texture));
@@ -91,14 +84,14 @@ namespace SpriteMaster {
 	sealed class TextureMap : ITextureMap {
 		private readonly WeakTextureMap Map = new WeakTextureMap();
 
-		internal override void Add (in Texture2D reference, in ScaledTexture texture, in Bounds sourceRectangle) {
+		internal override void Add (Texture2D reference, ScaledTexture texture, Bounds sourceRectangle) {
 			using (Lock.LockExclusive()) {
 				Map.Add(reference, texture);
 				OnAdd(reference, texture, sourceRectangle);
 			}
 		}
 
-		internal override bool TryGet (in Texture2D texture, in Bounds sourceRectangle, out ScaledTexture result) {
+		internal override bool TryGet (Texture2D texture, Bounds sourceRectangle, out ScaledTexture result) {
 			result = null;
 
 			using (Lock.LockShared()) {
@@ -119,7 +112,7 @@ namespace SpriteMaster {
 			return false;
 		}
 
-		internal override void Remove (in ScaledTexture scaledTexture, in Texture2D texture) {
+		internal override void Remove (ScaledTexture scaledTexture, Texture2D texture) {
 			try {
 				using (Lock.LockExclusive()) {
 					OnRemove(scaledTexture, texture);
@@ -135,7 +128,7 @@ namespace SpriteMaster {
 			}
 		}
 
-		internal override void Purge (in Texture2D reference, in Bounds? sourceRectangle = null) {
+		internal override void Purge (Texture2D reference, Bounds? sourceRectangle = null) {
 			try {
 				using (Lock.LockShared()) {
 					if (Map.TryGetValue(reference, out var scaledTexture)) {
@@ -154,11 +147,11 @@ namespace SpriteMaster {
 	sealed class SpriteMap : ITextureMap {
 		private readonly WeakSpriteMap Map = new WeakSpriteMap();
 
-		static private ulong SpriteHash (in Texture2D texture, in Bounds sourceRectangle) {
+		static private ulong SpriteHash (Texture2D texture, Bounds sourceRectangle) {
 			return ScaledTexture.ExcludeSprite(texture) ? 0UL : sourceRectangle.Hash();
 		}
 
-		internal override void Add (in Texture2D reference, in ScaledTexture texture, in Bounds sourceRectangle) {
+		internal override void Add (Texture2D reference, ScaledTexture texture, Bounds sourceRectangle) {
 			using (Lock.LockExclusive()) {
 				OnAdd(reference, texture, sourceRectangle);
 
@@ -170,7 +163,7 @@ namespace SpriteMaster {
 			}
 		}
 
-		internal override bool TryGet (in Texture2D texture, in Bounds sourceRectangle, out ScaledTexture result) {
+		internal override bool TryGet (Texture2D texture, Bounds sourceRectangle, out ScaledTexture result) {
 			result = null;
 
 			using (Lock.LockShared()) {
@@ -194,7 +187,7 @@ namespace SpriteMaster {
 			return false;
 		}
 
-		internal override void Remove (in ScaledTexture scaledTexture, in Texture2D texture) {
+		internal override void Remove (ScaledTexture scaledTexture, Texture2D texture) {
 			try {
 				using (Lock.LockExclusive()) {
 					OnRemove(scaledTexture, texture);
@@ -210,7 +203,7 @@ namespace SpriteMaster {
 			}
 		}
 
-		internal override void Purge (in Texture2D reference, in Bounds? sourceRectangle = null) {
+		internal override void Purge (Texture2D reference, Bounds? sourceRectangle = null) {
 			try {
 				using (Lock.LockShared()) {
 					if (Map.TryGetValue(reference, out var scaledTextureMap)) {
@@ -232,7 +225,7 @@ namespace SpriteMaster {
 
 		private static readonly List<Action> PendingActions = Config.AsyncScaling.Enabled ? new List<Action>() : null;
 
-		static internal bool ExcludeSprite (in Texture2D texture) {
+		static internal bool ExcludeSprite (Texture2D texture) {
 			return false;// && (texture.Name == "LooseSprites\\Cursors");
 		}
 
@@ -245,7 +238,7 @@ namespace SpriteMaster {
 			}
 		}
 
-		static internal void AddPendingAction (in Action action) {
+		static internal void AddPendingAction (Action action) {
 			lock (PendingActions) {
 				PendingActions.Add(action);
 			}
@@ -360,31 +353,6 @@ namespace SpriteMaster {
 			}
 
 		}
-		private static bool hackOnce = false;
-		private static void TextureSizeHack (in GraphicsDevice device) {
-			if (hackOnce)
-				return;
-			hackOnce = true;
-
-			try {
-				FieldInfo getPrivateField (in object obj, in string name) {
-					return obj.GetType().GetField(name, BindingFlags.NonPublic | BindingFlags.Instance);
-				}
-
-				var capabilitiesProperty = getPrivateField(device, "_profileCapabilities");
-				var capabilities = capabilitiesProperty.GetValue(device);
-
-				var maxTextureSizeProperty = getPrivateField(capabilities, "MaxTextureSize");
-				if ((int)maxTextureSizeProperty.GetValue(capabilities) < Config.PreferredDimension) {
-					maxTextureSizeProperty.SetValue(capabilities, Config.PreferredDimension);
-					getPrivateField(capabilities, "MaxTextureAspectRatio").SetValue(capabilities, Config.PreferredDimension / 2);
-					Config.ClampDimension = Config.PreferredDimension;
-				}
-			}
-			catch (Exception ex) {
-				Debug.ErrorLn($"Failed to hack: {ex.Message}");
-			}
-		}
 
 		internal Texture2D Texture;
 		internal readonly string Name;
@@ -434,7 +402,6 @@ namespace SpriteMaster {
 		}
 
 		internal ScaledTexture (string assetName, TextureWrapper textureWrapper, Texture2D source, Bounds sourceRectangle, Bounds indexRectangle, int scale, ulong hash, bool isSprite, bool allowPadding) {
-			TextureSizeHack(source.GraphicsDevice);
 			IsSprite = isSprite;
 			Hash = hash;
 
@@ -486,8 +453,8 @@ namespace SpriteMaster {
 
 		// Async Call
 		internal void Finish () {
-			TotalMemoryUsage += Texture.SizeBytes();
-			Texture.Disposing += (object sender, EventArgs args) => { TotalMemoryUsage -= Texture.SizeBytes(); };
+			TotalMemoryUsage += (uint)Texture.SizeBytes();
+			Texture.Disposing += (object sender, EventArgs args) => { TotalMemoryUsage -= (uint)Texture.SizeBytes(); };
 
 			if (IsSprite) {
 				Debug.InfoLn($"Creating HD Sprite [scale {refScale}]: {this.SafeName()} {sourceRectangle}");

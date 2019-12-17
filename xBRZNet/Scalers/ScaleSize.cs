@@ -1,9 +1,7 @@
 ﻿using System.Linq;
 
-namespace xBRZNet2.Scalers
-{
-	internal static class ScaleSize
-	{
+namespace xBRZNet2.Scalers {
+	internal static class ScaleSize {
 		private static readonly IScaler[] Scalers =
 		{
 			new Scaler2X(),
@@ -12,8 +10,7 @@ namespace xBRZNet2.Scalers
 			new Scaler5X()
 		};
 
-		public static IScaler ToIScaler(this int scaleSize)
-		{
+		public static IScaler ToIScaler (this int scaleSize) {
 			// MJY: Need value checks to assure scaleSize is between 2-5 inclusive.
 			return Scalers.Single(s => s.Scale == scaleSize);
 		}

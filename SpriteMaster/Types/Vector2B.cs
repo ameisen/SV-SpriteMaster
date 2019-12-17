@@ -1,144 +1,116 @@
 ﻿using System;
 
-namespace SpriteMaster.Types
-{
+namespace SpriteMaster.Types {
 	internal struct Vector2B :
 		ICloneable,
 		IComparable,
 		IComparable<Vector2B>,
-		IEquatable<Vector2B>
-	{
-		public static readonly Vector2B True = new Vector2B(true, true);
-		public static readonly Vector2B False = new Vector2B(false, false);
+		IEquatable<Vector2B> {
+		public static readonly Vector2B True = new Vector2B(true);
+		public static readonly Vector2B False = new Vector2B(false);
 
 		public bool X;
 		public bool Y;
 
-		public bool Width
-		{
+		public bool Width {
 			readonly get { return X; }
 			set { X = value; }
 		}
 
-		public bool Height
-		{
+		public bool Height {
 			readonly get { return Y; }
 			set { Y = value; }
 		}
 
-		public bool Negative
-		{
+		public bool Negative {
 			readonly get { return X; }
 			set { X = value; }
 		}
 
-		public bool Positive
-		{
+		public bool Positive {
 			readonly get { return Y; }
 			set { Y = value; }
 		}
 
-		public bool this[in int index]
-		{
-			readonly get
-			{
-				switch (index)
+		public bool this[int index] {
+			readonly get {
+				return index switch
 				{
-					case 0:
-						return X;
-					case 1:
-						return Y;
-					default:
-						throw new IndexOutOfRangeException(nameof(index));
-				}
+					0 => X,
+					1 => Y,
+					_ => throw new IndexOutOfRangeException(nameof(index))
+				};
 			}
-			set
-			{
-				switch (index)
-				{
+			set {
+				switch (index) {
 					case 0:
-						X = value; return;
+						X = value;
+						return;
 					case 1:
-						Y = value; return;
+						Y = value;
+						return;
 					default:
 						throw new IndexOutOfRangeException(nameof(index));
 				}
 			}
 		}
 
-		public Vector2B(in bool x, in bool y)
-		{
+		public Vector2B (bool x, bool y) {
 			X = x;
 			Y = y;
 		}
 
-		public Vector2B(in bool v)
-		{
-			Y = X = v;
-		}
+		public Vector2B (bool v) : this(v, v) { }
 
-		public Vector2B(in Vector2B vec)
-		{
-			X = vec.X;
-			Y = vec.Y;
-		}
+		public Vector2B (Vector2B vec) : this(vec.X, vec.Y) { }
 
-		public Vector2B Set(in Vector2B vec)
-		{
+		public Vector2B Set (Vector2B vec) {
 			X = vec.X;
 			Y = vec.Y;
 			return this;
 		}
 
-		public Vector2B Set(in bool x, in bool y)
-		{
+		public Vector2B Set (bool x, bool y) {
 			X = x;
 			Y = y;
 			return this;
 		}
 
-		public Vector2B Set(in bool v)
-		{
+		public Vector2B Set (bool v) {
 			Y = X = v;
 			return this;
 		}
 
-		public readonly Vector2B Clone()
-		{
+		public readonly Vector2B Clone () {
 			return new Vector2B(X, Y);
 		}
 
-		readonly object ICloneable.Clone()
-		{
+		readonly object ICloneable.Clone () {
 			return Clone();
 		}
 
-		public static Vector2B operator &(in Vector2B lhs, in Vector2B rhs)
-		{
+		public static Vector2B operator & (Vector2B lhs, Vector2B rhs) {
 			return new Vector2B(
 				lhs.X && rhs.X,
 				lhs.Y && rhs.Y
 			);
 		}
 
-		public static Vector2B operator &(in Vector2B lhs, in bool rhs)
-		{
+		public static Vector2B operator & (Vector2B lhs, bool rhs) {
 			return new Vector2B(
 				lhs.X && rhs,
 				lhs.Y && rhs
 			);
 		}
 
-		public static Vector2B operator |(in Vector2B lhs, in Vector2B rhs)
-		{
+		public static Vector2B operator | (Vector2B lhs, Vector2B rhs) {
 			return new Vector2B(
 				lhs.X || rhs.X,
 				lhs.Y || rhs.Y
 			);
 		}
 
-		public static Vector2B operator |(in Vector2B lhs, in bool rhs)
-		{
+		public static Vector2B operator | (Vector2B lhs, bool rhs) {
 			return new Vector2B(
 				lhs.X || rhs,
 				lhs.Y || rhs

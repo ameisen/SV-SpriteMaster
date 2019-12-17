@@ -6,8 +6,7 @@ using xBRZNet2.Color;
 using xBRZNet2.Common;
 using xBRZNet2.Scalers;
 
-namespace xBRZNet2
-{
+namespace xBRZNet2 {
 	//http://intrepidis.blogspot.com/2014/02/xbrz-in-java.html
 	/*
 			-------------------------------------------------------------------------
@@ -50,53 +49,43 @@ namespace xBRZNet2
 	*/
 
 	// ReSharper disable once InconsistentNaming
-	public sealed class xBRZScaler
-	{
+	public sealed class xBRZScaler {
 		// scaleSize = 2 to 5
-		
-		public xBRZScaler(
-			in int scaleMultiplier,
-			in Span<int> sourceData,
-			in int sourceWidth,
-			in int sourceHeight,
+
+		public xBRZScaler (
+			int scaleMultiplier,
+			Span<int> sourceData,
+			int sourceWidth,
+			int sourceHeight,
 			in Rectangle? sourceTarget,
 			int[] targetData,
 			in Config configuration
-		)
-		{
-			if (scaleMultiplier < 2 || scaleMultiplier > 5)
-			{
+		) {
+			if (scaleMultiplier < 2 || scaleMultiplier > 5) {
 				throw new ArgumentOutOfRangeException(nameof(scaleMultiplier));
 			}
-			if (sourceData == null)
-			{
+			if (sourceData == null) {
 				throw new ArgumentNullException(nameof(sourceData));
 			}
-			if (targetData == null)
-			{
+			if (targetData == null) {
 				throw new ArgumentNullException(nameof(targetData));
 			}
-			if (sourceWidth <= 0)
-			{
+			if (sourceWidth <= 0) {
 				throw new ArgumentOutOfRangeException(nameof(sourceWidth));
 			}
-			if (sourceHeight <= 0)
-			{
+			if (sourceHeight <= 0) {
 				throw new ArgumentOutOfRangeException(nameof(sourceHeight));
 			}
-			if (sourceWidth * sourceHeight > sourceData.Length)
-			{
+			if (sourceWidth * sourceHeight > sourceData.Length) {
 				throw new ArgumentOutOfRangeException(nameof(sourceData));
 			}
 			this.sourceTarget = sourceTarget.GetValueOrDefault(new Rectangle(0, 0, sourceWidth, sourceHeight));
-			if (this.sourceTarget.Right > sourceWidth || this.sourceTarget.Bottom > sourceHeight)
-			{
+			if (this.sourceTarget.Right > sourceWidth || this.sourceTarget.Bottom > sourceHeight) {
 				throw new ArgumentOutOfRangeException(nameof(sourceTarget));
 			}
 			this.targetWidth = this.sourceTarget.Width * scaleMultiplier;
 			this.targetHeight = this.sourceTarget.Height * scaleMultiplier;
-			if (targetWidth * targetHeight > targetData.Length)
-			{
+			if (targetWidth * targetHeight > targetData.Length) {
 				throw new ArgumentOutOfRangeException(nameof(targetData));
 			}
 
@@ -125,23 +114,20 @@ namespace xBRZNet2
 
 		//fill block with the given color
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static void FillBlock(int[] trg, int trgi, int pitch, int col, int blockSize)
-		{
-			for (var y = 0; y < blockSize; ++y, trgi += pitch)
-			{
-				for (var x = 0; x < blockSize; ++x)
-				{
+		private static void FillBlock (int[] trg, int trgi, int pitch, int col, int blockSize) {
+			for (var y = 0; y < blockSize; ++y, trgi += pitch) {
+				for (var x = 0; x < blockSize; ++x) {
 					trg[trgi + x] = col;
 				}
 			}
 		}
 
 		//detect blend direction
-		private void PreProcessCorners(in Kernel4x4 ker)
-		{
+		private void PreProcessCorners (in Kernel4x4 ker) {
 			blendResult.Reset();
 
-			if ((ker.F == ker.G && ker.J == ker.K) || (ker.F == ker.J && ker.G == ker.K)) return;
+			if ((ker.F == ker.G && ker.J == ker.K) || (ker.F == ker.J && ker.G == ker.K))
+				return;
 
 			var dist = ColorDistance;
 
@@ -149,27 +135,21 @@ namespace xBRZNet2
 			var jg = dist.DistYCbCr(ker.I, ker.F) + dist.DistYCbCr(ker.F, ker.C) + dist.DistYCbCr(ker.N, ker.K) + dist.DistYCbCr(ker.K, ker.H) + weight * dist.DistYCbCr(ker.J, ker.G);
 			var fk = dist.DistYCbCr(ker.E, ker.J) + dist.DistYCbCr(ker.J, ker.O) + dist.DistYCbCr(ker.B, ker.G) + dist.DistYCbCr(ker.G, ker.L) + weight * dist.DistYCbCr(ker.F, ker.K);
 
-			if (jg < fk)
-			{
+			if (jg < fk) {
 				var dominantGradient = (char)((configuration.DominantDirectionThreshold * jg < fk) ? BlendType.Dominant : BlendType.Normal);
-				if (ker.F != ker.G && ker.F != ker.J)
-				{
+				if (ker.F != ker.G && ker.F != ker.J) {
 					blendResult.F = dominantGradient;
 				}
-				if (ker.K != ker.J && ker.K != ker.G)
-				{
+				if (ker.K != ker.J && ker.K != ker.G) {
 					blendResult.K = dominantGradient;
 				}
 			}
-			else if (fk < jg)
-			{
+			else if (fk < jg) {
 				var dominantGradient = (char)((configuration.DominantDirectionThreshold * fk < jg) ? BlendType.Dominant : BlendType.Normal);
-				if (ker.J != ker.F && ker.J != ker.K)
-				{
+				if (ker.J != ker.F && ker.J != ker.K) {
 					blendResult.J = dominantGradient;
 				}
-				if (ker.G != ker.F && ker.G != ker.K)
-				{
+				if (ker.G != ker.F && ker.G != ker.K) {
 					blendResult.G = dominantGradient;
 				}
 			}
@@ -186,11 +166,11 @@ namespace xBRZNet2
 				-------------
 				blendInfo: result of preprocessing all four corners of pixel "e"
 		*/
-		private unsafe void ScalePixel(IScaler scaler, int rotDeg, in Kernel3x3 ker, int trgi, char blendInfo)
-		{
+		private unsafe void ScalePixel (IScaler scaler, int rotDeg, in Kernel3x3 ker, int trgi, char blendInfo) {
 			var blend = blendInfo.Rotate((RotationDegree)rotDeg);
 
-			if ((BlendType)blend.GetBottomR() == BlendType.None) return;
+			if ((BlendType)blend.GetBottomR() == BlendType.None)
+				return;
 
 			// int a = ker._[Rot._[(0 << 2) + rotDeg]];
 			var b = ker._[Rotator._[(1 << 2) + rotDeg]];
@@ -207,28 +187,23 @@ namespace xBRZNet2
 
 			bool doLineBlend;
 
-			if (blend.GetBottomR() >= (char)BlendType.Dominant)
-			{
+			if (blend.GetBottomR() >= (char)BlendType.Dominant) {
 				doLineBlend = true;
 			}
 			//make sure there is no second blending in an adjacent
 			//rotation for this pixel: handles insular pixels, mario eyes
 			//but support double-blending for 90� corners
-			else if (blend.GetTopR() != (char)BlendType.None && !eq.IsColorEqual(e, g))
-			{
+			else if (blend.GetTopR() != (char)BlendType.None && !eq.IsColorEqual(e, g)) {
 				doLineBlend = false;
 			}
-			else if (blend.GetBottomL() != (char)BlendType.None && !eq.IsColorEqual(e, c))
-			{
+			else if (blend.GetBottomL() != (char)BlendType.None && !eq.IsColorEqual(e, c)) {
 				doLineBlend = false;
 			}
 			//no full blending for L-shapes; blend corner only (handles "mario mushroom eyes")
-			else if (eq.IsColorEqual(g, h) && eq.IsColorEqual(h, i) && eq.IsColorEqual(i, f) && eq.IsColorEqual(f, c) && !eq.IsColorEqual(e, i))
-			{
+			else if (eq.IsColorEqual(g, h) && eq.IsColorEqual(h, i) && eq.IsColorEqual(i, f) && eq.IsColorEqual(f, c) && !eq.IsColorEqual(e, i)) {
 				doLineBlend = false;
 			}
-			else
-			{
+			else {
 				doLineBlend = true;
 			}
 
@@ -238,8 +213,7 @@ namespace xBRZNet2
 			var out_ = outputMatrix;
 			out_.Move(rotDeg, trgi);
 
-			if (!doLineBlend)
-			{
+			if (!doLineBlend) {
 				scaler.BlendCorner(px, out_);
 				return;
 			}
@@ -252,108 +226,89 @@ namespace xBRZNet2
 			var haveShallowLine = configuration.SteepDirectionThreshold * fg <= hc && e != g && d != g;
 			var haveSteepLine = configuration.SteepDirectionThreshold * hc <= fg && e != c && b != c;
 
-			if (haveShallowLine)
-			{
-				if (haveSteepLine)
-				{
+			if (haveShallowLine) {
+				if (haveSteepLine) {
 					scaler.BlendLineSteepAndShallow(px, out_);
 				}
-				else
-				{
+				else {
 					scaler.BlendLineShallow(px, out_);
 				}
 			}
-			else
-			{
-				if (haveSteepLine)
-				{
+			else {
+				if (haveSteepLine) {
 					scaler.BlendLineSteep(px, out_);
 				}
-				else
-				{
+				else {
 					scaler.BlendLineDiagonal(px, out_);
 				}
 			}
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private int clampX(int x)
-		{
+		private int clampX (int x) {
 			x -= sourceTarget.Left;
-			if (configuration.WrappedX)
-			{
+			if (configuration.WrappedX) {
 				x = (x + sourceTarget.Width) % sourceTarget.Width;
 			}
-			else
-			{
+			else {
 				x = Math.Min(Math.Max(x, 0), sourceTarget.Width - 1);
 			}
 			return x + sourceTarget.Left;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private int clampY(int y)
-		{
+		private int clampY (int y) {
 			y -= sourceTarget.Top;
-			if (configuration.WrappedY)
-			{
+			if (configuration.WrappedY) {
 				y = (y + sourceTarget.Height) % sourceTarget.Height;
 			}
-			else
-			{
+			else {
 				y = Math.Min(Math.Max(y, 0), sourceTarget.Height - 1);
 			}
 			return y + sourceTarget.Top;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private bool legalX(int x)
-		{
+		private bool legalX (int x) {
 			return true;
-			if (configuration.WrappedX)
-			{
+			if (configuration.WrappedX) {
 				return true;
 			}
 			return x >= sourceTarget.Left && x < sourceTarget.Right;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private bool legalY(int y)
-		{
+		private bool legalY (int y) {
 			return true;
-			if (configuration.WrappedY)
-			{
+			if (configuration.WrappedY) {
 				return true;
 			}
 			return y >= sourceTarget.Top && y < sourceTarget.Bottom;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private int getX(int x)
-		{
+		private int getX (int x) {
 			return legalX(x) ? clampX(x) : -clampX(x);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private int getY(int y)
-		{
+		private int getY (int y) {
 			return legalY(y) ? clampY(y) : -clampY(y);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static int Mask(in int value, in uint mask)
-		{
+		private static int Mask (int value, uint mask) {
 			return unchecked((int)((uint)value & mask));
 		}
 
 		//scaler policy: see "Scaler2x" reference implementation
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private unsafe void Scale(in Span<int> src, in int[] trg)
-		{
+		private unsafe void Scale (Span<int> src, int[] trg) {
 			int yFirst = sourceTarget.Top;
 			int yLast = sourceTarget.Bottom;
 
-			if (yFirst >= yLast) return;
+			if (yFirst >= yLast)
+				return;
 
 			var trgWidth = targetWidth;
 
@@ -362,8 +317,7 @@ namespace xBRZNet2
 
 			var ker4 = new Kernel4x4();
 
-			int GetPixel(in Span<int> src, int stride, int offset)
-			{
+			int GetPixel (in Span<int> src, int stride, int offset) {
 				// We can try embedded a distance calculation as well. Perhaps instead of a negative stride/offset, we provide a 
 				// negative distance from the edge and just recalculate the stride/offset in that case.
 				// We can scale the alpha reduction by the distance to hopefully correct the edges.
@@ -386,8 +340,7 @@ namespace xBRZNet2
 			//detect upper left and right corner blending
 			//this cannot be optimized for adjacent processing
 			//stripes; we must not allow for a memory race condition!
-			if (yFirst > 0)
-			{
+			if (yFirst > 0) {
 				var y = yFirst - 1;
 
 				var sM1 = sourceWidth * getY(y - 1);
@@ -395,8 +348,7 @@ namespace xBRZNet2
 				var sP1 = sourceWidth * getY(y + 1);
 				var sP2 = sourceWidth * getY(y + 2);
 
-				for (var x = sourceTarget.Left; x < sourceTarget.Right; ++x)
-				{
+				for (var x = sourceTarget.Left; x < sourceTarget.Right; ++x) {
 					var xM1 = getX(x - 1);
 					var xP1 = getX(x + 1);
 					var xP2 = getX(x + 2);
@@ -436,12 +388,10 @@ namespace xBRZNet2
 
 					preProcBuffer[adjustedX] = preProcBuffer[adjustedX].SetTopR(blendResult.J);
 
-					if (x + 1 < sourceTarget.Right)
-					{
+					if (x + 1 < sourceTarget.Right) {
 						preProcBuffer[adjustedX + 1] = preProcBuffer[adjustedX + 1].SetTopL(blendResult.K);
 					}
-					else if (configuration.WrappedX)
-					{
+					else if (configuration.WrappedX) {
 						preProcBuffer[0] = preProcBuffer[0].SetTopL(blendResult.K);
 					}
 				}
@@ -451,8 +401,7 @@ namespace xBRZNet2
 
 			var ker3 = new Kernel3x3();
 
-			for (var y = yFirst; y < yLast; ++y)
-			{
+			for (var y = yFirst; y < yLast; ++y) {
 				//consider MT "striped" access
 				var trgi = scaler.Scale * (y - yFirst) * trgWidth;
 
@@ -463,8 +412,7 @@ namespace xBRZNet2
 
 				var blendXy1 = (char)0;
 
-				for (var x = sourceTarget.Left; x < sourceTarget.Right; ++x, trgi += scaler.Scale)
-				{
+				for (var x = sourceTarget.Left; x < sourceTarget.Right; ++x, trgi += scaler.Scale) {
 					var xM1 = getX(x - 1);
 					var xP1 = getX(x + 1);
 					var xP2 = getX(x + 2);
@@ -519,13 +467,11 @@ namespace xBRZNet2
 					//buffer for use on next column
 					blendXy1 = ((char)0).SetTopL(blendResult.K);
 
-					if (x + 1 < sourceTarget.Right)
-					{
+					if (x + 1 < sourceTarget.Right) {
 						//set 3rd known corner for (x + 1, y)
 						preProcBuffer[adjustedX + 1] = preProcBuffer[adjustedX + 1].SetBottomL(blendResult.G);
 					}
-					else if (configuration.WrappedX)
-					{
+					else if (configuration.WrappedX) {
 						preProcBuffer[0] = preProcBuffer[0].SetBottomL(blendResult.G);
 					}
 
@@ -535,7 +481,8 @@ namespace xBRZNet2
 					FillBlock(trg, trgi, trgWidth, src[s0 + x], scaler.Scale);
 
 					//blend four corners of current pixel
-					if (blendXy == 0) continue;
+					if (blendXy == 0)
+						continue;
 
 					const int a = 0, b = 1, c = 2, d = 3, e = 4, f = 5, g = 6, h = 7, i = 8;
 

@@ -1,4 +1,5 @@
-﻿using StardewModdingAPI;
+﻿using Microsoft.Xna.Framework.Graphics;
+using StardewModdingAPI;
 using System;
 using System.IO;
 
@@ -61,6 +62,9 @@ namespace SpriteMaster {
 
 		internal static class DrawState {
 			internal const bool SetLinear = true;
+			internal const bool EnableMSAA = true;
+			internal const bool DisableDepthBuffer = true;
+			internal const SurfaceFormat BackbufferFormat = SurfaceFormat.Rgba1010102;
 		}
 
 		internal static class Resample {

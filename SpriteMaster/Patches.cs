@@ -3,31 +3,33 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Reflection;
 using System.Linq;
-using System.Threading;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using static SpriteMaster.ScaledTexture;
 
 namespace SpriteMaster {
+
+	using DrawState = Config.DrawState;
+
 	static class Extension {
 		internal static int ToCoordinate (this float coordinate) {
-			return coordinate.RoundToInt();
+			return coordinate.NearestInt();
 		}
 
 		internal static int ToCoordinate (this double coordinate) {
-			return coordinate.RoundToInt();
+			return coordinate.NearestInt();
 		}
 	}
 
 	internal sealed class Patches {
 		private partial class Harmony {
-			private static Type[] GetMethodParameters (in MethodInfo method) {
+			private static Type[] GetMethodParameters (MethodInfo method) {
 				var filteredParameters = method.GetParameters().Where(t => !t.Name.StartsWith("__"));
 				return filteredParameters.Select(p => p.ParameterType).ToArray();
 			}
 
-			internal static MethodInfo GetPatchMethod<T> (string name, in MethodInfo method) {
+			internal static MethodInfo GetPatchMethod<T> (string name, MethodInfo method) {
 				var type = typeof(T);
 				var methodParameters = GetMethodParameters(method);
 				var typeMethod = type.GetMethod(name, methodParameters);
@@ -42,18 +44,11 @@ namespace SpriteMaster {
 
 						bool found = true;
 						foreach (var i in 0.Until(testParameters.Length)) {
-							Type AsReference (in Type type) {
-								return type.MakeByRefType();
-							}
-							Type DeReference (in Type type) {
-								return type.IsByRef ? type.GetElementType() : type;
-							}
-
-							var testParameter = DeReference(testParameters[i].ParameterType);
-							var testParameterRef = AsReference(testParameter);
+							var testParameter = testParameters[i].ParameterType.RemoveRef();
+							var testParameterRef = testParameter.AddRef();
 							var testBaseParameter = testParameter.IsArray ? testParameter.GetElementType() : testParameter;
-							var methodParameter = DeReference(methodParameters[i]);
-							var methodParameterRef = AsReference(methodParameter);
+							var methodParameter = methodParameters[i].RemoveRef();
+							var methodParameterRef = methodParameter.AddRef();
 							var baseParameter = methodParameter.IsArray ? methodParameter.GetElementType() : methodParameter;
 							if (
 								!testParameterRef.Equals(methodParameterRef) &&
@@ -77,88 +72,74 @@ namespace SpriteMaster {
 				return typeMethod;
 			}
 
-			internal static void Patch<T> (in HarmonyInstance instance, string name, in MethodInfo method) {
-				var typeMethod = GetPatchMethod<T>(name, method);
-				var harmonyMethod = new HarmonyMethod(method);
-				harmonyMethod.prioritiy = Priority.Last; // sic
+			internal static void Patch<T> (HarmonyInstance instance, string name, MethodInfo pre = null, MethodInfo post = null, int priority = Priority.Last) {
+				var referenceMethod = pre ?? post;
+				var typeMethod = GetPatchMethod<T>(name, referenceMethod);
 				instance.Patch(
 					typeMethod,
-					harmonyMethod,
-					null,
+					(pre == null) ? null : new HarmonyMethod(pre) { prioritiy = priority },
+					(post == null) ? null : new HarmonyMethod(post) { prioritiy = priority },
 					null
 				);
 			}
 
-			internal static void Patch<T, U> (in HarmonyInstance instance, string name, in MethodInfo method) where U : struct {
-				var typeMethod = GetPatchMethod<T>(name, method).MakeGenericMethod(typeof(U));
-				var genericMethod = method.MakeGenericMethod(typeof(U));
-				var harmonyMethod = new HarmonyMethod(genericMethod);
-				harmonyMethod.prioritiy = Priority.Last; // sic
+			internal static void Patch<T> (HarmonyInstance instance, string name, IEnumerable<MethodInfo> pre = default, IEnumerable<MethodInfo> post = default, int priority = Priority.Last) {
+				if (pre != null)
+					foreach (var method in pre) {
+						Patch<T>(instance, name, pre: method, post: null, priority);
+					}
+				if (post != null)
+					foreach (var method in post) {
+						Patch<T>(instance, name, pre: null, post: method, priority);
+					}
+			}
+
+			internal static void Patch<T, U> (HarmonyInstance instance, string name, MethodInfo pre = null, MethodInfo post = null, int priority = Priority.Last) where U : struct {
+				var referenceMethod = pre ?? post;
+				var typeMethod = GetPatchMethod<T>(name, referenceMethod).MakeGenericMethod(typeof(U));
 				instance.Patch(
 					typeMethod,
-					harmonyMethod,
-					null,
+					(pre == null) ? null : new HarmonyMethod(pre.MakeGenericMethod(typeof(U))) { prioritiy = priority },
+					(post == null) ? null : new HarmonyMethod(post.MakeGenericMethod(typeof(U))) { prioritiy = priority },
 					null
 				);
 			}
 
-			internal static void PostPatch<T> (in HarmonyInstance instance, string name, in MethodInfo method) {
-				var typeMethod = GetPatchMethod<T>(name, method);
-				var harmonyMethod = new HarmonyMethod(method);
-				harmonyMethod.prioritiy = Priority.Last; // sic
-				instance.Patch(
-					typeMethod,
-					null,
-					harmonyMethod,
-					null
-				);
-			}
-
-			internal static void PostPatch<T, U> (in HarmonyInstance instance, string name, in MethodInfo method) where U : struct {
-				var typeMethod = GetPatchMethod<T>(name, method).MakeGenericMethod(typeof(U));
-				var genericMethod = method.MakeGenericMethod(typeof(U));
-				var harmonyMethod = new HarmonyMethod(genericMethod);
-				harmonyMethod.prioritiy = Priority.Last; // sic
-				instance.Patch(
-					typeMethod,
-					null,
-					harmonyMethod,
-					null
-				);
+			internal static void Patch<T, U> (HarmonyInstance instance, string name, IEnumerable<MethodInfo> pre = default, IEnumerable<MethodInfo> post = default, int priority = Priority.Last) where U : struct {
+				if (pre != null)
+					foreach (var method in pre) {
+						Patch<T, U>(instance, name, pre: method, post: null, priority);
+					}
+				if (post != null)
+					foreach (var method in post) {
+						Patch<T, U>(instance, name, pre: null, post: method, priority);
+					}
 			}
 		}
 
-		internal static void InitializePatch (in HarmonyInstance instance) {
+		internal static void InitializePatch (HarmonyInstance instance) {
 			IEnumerable<MethodInfo> GetMethods<T> (string name) {
 				return typeof(T).GetMethods(BindingFlags.Static | BindingFlags.NonPublic).Where(m => m.Name == name);
 			}
 
-			foreach (var method in GetMethods<Patches.Harmony>("Draw"))
-				Harmony.Patch<SpriteBatch>(instance, "Draw", method);
+			Harmony.Patch<SpriteBatch>(instance, "Draw", pre: GetMethods<Patches.Harmony>("Draw"));
 
-			foreach (var method in GetMethods<Patches>("Begin"))
-				Harmony.Patch<SpriteBatch>(instance, "Begin", method);
+			Harmony.Patch<SpriteBatch>(instance, "Begin", pre: GetMethods<Patches>("Begin"));
 
-			foreach (var method in GetMethods<Patches>("ApplyChanges"))
-				Harmony.Patch<GraphicsDeviceManager>(instance, "ApplyChanges", method);
+			Harmony.Patch<GraphicsDeviceManager>(instance, "ApplyChanges", pre: GetMethods<Patches>("ApplyChanges"), post: GetMethods<Patches>("ApplyChangesPost"));
 
-			foreach (var method in GetMethods<Patches>("Present"))
-				Harmony.Patch<GraphicsDevice>(instance, "Present", method);
+			Harmony.Patch<GraphicsDevice>(instance, "Present", pre: GetMethods<Patches>("Present"));
 
-			foreach (var method in GetMethods<Patches>("PlatformRenderBatch"))
-				Harmony.Patch<SpriteBatch>(instance, "PlatformRenderBatch", method);
-
-			foreach (var method in GetMethods<Patches>("PlatformRenderBatchPost"))
-				Harmony.PostPatch<SpriteBatch>(instance, "PlatformRenderBatch", method);
+			Harmony.Patch<SpriteBatch>(instance, "PlatformRenderBatch", pre: GetMethods<Patches>("PlatformRenderBatch"), post: GetMethods<Patches>("PlatformRenderBatchPost"));
 
 			// https://github.com/pardeike/Harmony/issues/121
 			foreach (var method in GetMethods<Patches>("SetData")) {
-				Harmony.PostPatch<Texture2D, byte>(instance, "SetData", method);
-				Harmony.PostPatch<Texture2D, sbyte>(instance, "SetData", method);
-				Harmony.PostPatch<Texture2D, int>(instance, "SetData", method);
-				Harmony.PostPatch<Texture2D, uint>(instance, "SetData", method);
-				Harmony.PostPatch<Texture2D, Color>(instance, "SetData", method);
-				Harmony.PostPatch<Texture2D, System.Drawing.Color>(instance, "SetData", method);
+				Harmony.Patch<Texture2D, byte>(instance, "SetData", post: method);
+				Harmony.Patch<Texture2D, sbyte>(instance, "SetData", post: method);
+				Harmony.Patch<Texture2D, int>(instance, "SetData", post: method);
+				Harmony.Patch<Texture2D, uint>(instance, "SetData", post: method);
+				Harmony.Patch<Texture2D, Color>(instance, "SetData", post: method);
+				Harmony.Patch<Texture2D, System.Drawing.Color>(instance, "SetData", post: method);
 			}
 
 			//foreach (MethodInfo method in typeof(DrawPatched).GetMethods(BindingFlags.Static | BindingFlags.NonPublic).Where(m => m.Name == "SetData"))
@@ -212,8 +193,7 @@ namespace SpriteMaster {
 				}
 			}
 			catch (Exception ex) {
-				Debug.ErrorLn($"Exception In PlatformRenderBatch: {ex.Message}");
-				Debug.ErrorLn(ex.GetStackTrace());
+				ex.PrintError();
 			}
 
 			return true;
@@ -233,16 +213,57 @@ namespace SpriteMaster {
 				___samplerState = __state;
 			}
 			catch (Exception ex) {
-				Debug.ErrorLn($"Exception In PlatformRenderBatchPost: {ex.Message}");
-				Debug.ErrorLn(ex.GetStackTrace());
+				ex.PrintError();
 			}
 		}
 
 
 		internal static bool ApplyChanges (GraphicsDeviceManager __instance) {
-			__instance.PreferMultiSampling = true;
-			__instance.GraphicsDevice.PresentationParameters.MultiSampleCount = 8;
+			var @this = __instance;
+
+			@this.PreferMultiSampling = DrawState.EnableMSAA;
+			@this.SynchronizeWithVerticalRetrace = true;
+			@this.PreferredBackBufferFormat = Config.DrawState.BackbufferFormat;
+			if (DrawState.DisableDepthBuffer)
+				@this.PreferredDepthStencilFormat = DepthFormat.None;
+
 			return true;
+		}
+
+		internal static void ApplyChangesPost (GraphicsDeviceManager __instance) {
+			var @this = __instance;
+
+			var device = @this.GraphicsDevice;
+
+			try {
+				FieldInfo getPrivateField (object obj, string name, bool instance = true) {
+					return obj.GetType().GetField(name, BindingFlags.NonPublic | BindingFlags.Public | (instance ? BindingFlags.Instance : BindingFlags.Static));
+				}
+
+				var capabilitiesProperty = getPrivateField(device, "_profileCapabilities");
+
+				var capabilitiesMember = capabilitiesProperty.GetValue(device);
+
+				object[] capabilitiesList = new object[] {
+					getPrivateField(capabilitiesMember, "HiDef", instance: false).GetValue(capabilitiesMember),
+					capabilitiesMember
+				};
+
+				foreach (var capabilities in capabilitiesList) {
+					if (capabilities == null) {
+						continue;
+					}
+					var maxTextureSizeProperty = getPrivateField(capabilities, "MaxTextureSize");
+					if ((int)maxTextureSizeProperty.GetValue(capabilities) < Config.PreferredDimension) {
+						maxTextureSizeProperty.SetValue(capabilities, Config.PreferredDimension);
+						getPrivateField(capabilities, "MaxTextureAspectRatio").SetValue(capabilities, Config.PreferredDimension / 2);
+						Config.ClampDimension = Config.PreferredDimension;
+					}
+				}
+			}
+			catch (Exception ex) {
+				ex.PrintWarning();
+			}
 		}
 
 		private static readonly SamplerState DefaultSamplerState = SamplerState.LinearClamp;
@@ -253,17 +274,17 @@ namespace SpriteMaster {
 		public static TextureAddressMode CurrentAddressModeV = DefaultSamplerState.AddressV;
 		public static Blend CurrentBlendSourceMode = BlendState.AlphaBlend.AlphaSourceBlend;
 
-		internal static void SetData<T> (in Texture2D __instance, T[] data) where T : struct {
+		internal static void SetData<T> (Texture2D __instance, T[] data) where T : struct {
 			ScaledTexture.TextureMap.Purge(__instance);
 		}
-		internal static void SetData<T> (in Texture2D __instance, T[] data, int startIndex, int elementCount) where T : struct {
+		internal static void SetData<T> (Texture2D __instance, T[] data, int startIndex, int elementCount) where T : struct {
 			ScaledTexture.TextureMap.Purge(__instance);
 		}
-		internal static void SetData<T> (in Texture2D __instance, int level, Rectangle? rect, T[] data, int startIndex, int elementCount) where T : struct {
+		internal static void SetData<T> (Texture2D __instance, int level, Rectangle? rect, T[] data, int startIndex, int elementCount) where T : struct {
 			ScaledTexture.TextureMap.Purge(__instance, rect ?? null);
 		}
 
-		private static void SetCurrentAddressMode (in SamplerState samplerState) {
+		private static void SetCurrentAddressMode (SamplerState samplerState) {
 			CurrentAddressModeU = samplerState.AddressU;
 			CurrentAddressModeV = samplerState.AddressV;
 		}
@@ -354,7 +375,7 @@ namespace SpriteMaster {
 		}
 
 		private static ScaledTexture DrawHandler (
-			in SpriteBatch @this,
+			SpriteBatch @this,
 			Texture2D texture,
 			ref Rectangle sourceRectangle,
 			bool allowPadding
@@ -408,8 +429,7 @@ namespace SpriteMaster {
 				}
 			}
 			catch (Exception ex) {
-				Debug.ErrorLn($"Exception In DrawHandler: {ex.Message}");
-				Debug.ErrorLn(ex.GetStackTrace());
+				ex.PrintError();
 			}
 
 			return null;
@@ -418,15 +438,15 @@ namespace SpriteMaster {
 		// new AddressModeHandler(__instance, scaledTexture)
 
 		internal static bool DrawPatched (
-			in SpriteBatch @this,
+			SpriteBatch @this,
 			ref Texture2D texture,
 			ref Rectangle destination,
 			ref Rectangle? source,
-			in Color color,
-			in float rotation,
+			Color color,
+			float rotation,
 			ref Vector2 origin,
-			in SpriteEffects effects,
-			in float layerDepth
+			SpriteEffects effects,
+			float layerDepth
 		) {
 			var sourceRectangle = source.GetValueOrDefault(new Rectangle(0, 0, texture.Width, texture.Height));
 			var originalSourceRectangle = sourceRectangle;
@@ -473,16 +493,16 @@ namespace SpriteMaster {
 		}
 
 		internal static bool DrawPatched (
-			in SpriteBatch @this,
+			SpriteBatch @this,
 			ref Texture2D texture,
 			ref Vector2 position,
 			ref Rectangle? source,
-			in Color color,
-			in float rotation,
+			Color color,
+			float rotation,
 			ref Vector2 origin,
 			ref Vector2 scale,
-			in SpriteEffects effects,
-			in float layerDepth
+			SpriteEffects effects,
+			float layerDepth
 		) {
 			// TODO : We need to intgrate the origin into the bounds so we can properly hash-sprite these calls.
 
@@ -538,15 +558,15 @@ namespace SpriteMaster {
 		private partial class Harmony {
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			internal static bool Draw (
-				in SpriteBatch __instance,
+				SpriteBatch __instance,
 				ref Texture2D texture,
 				ref Rectangle destinationRectangle,
 				ref Rectangle? sourceRectangle,
-				in Color color,
-				in float rotation,
+				Color color,
+				float rotation,
 				ref Vector2 origin,
-				in SpriteEffects effects,
-				in float layerDepth
+				SpriteEffects effects,
+				float layerDepth
 			) {
 				if (!Config.Enabled)
 					return true;
@@ -566,15 +586,15 @@ namespace SpriteMaster {
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			private static bool Redraw (
-				in SpriteBatch @this,
-				in Texture2D texture,
-				in Rectangle destinationRectangle,
-				in Color color,
-				in Rectangle? sourceRectangle = null,
-				in float rotation = 0f,
-				in Vector2? origin = null,
-				in SpriteEffects effects = SpriteEffects.None,
-				in float layerDepth = 0f
+				SpriteBatch @this,
+				Texture2D texture,
+				Rectangle destinationRectangle,
+				Color color,
+				Rectangle? sourceRectangle = null,
+				float rotation = 0f,
+				Vector2? origin = null,
+				SpriteEffects effects = SpriteEffects.None,
+				float layerDepth = 0f
 			) {
 				if (!Config.Enabled)
 					return true;
@@ -616,16 +636,16 @@ namespace SpriteMaster {
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			private static bool Redraw (
-				in SpriteBatch @this,
-				in Texture2D texture,
-				in Vector2 position,
-				in Color color,
-				in Rectangle? sourceRectangle = null,
-				in float rotation = 0f,
-				in Vector2? origin = null,
-				in Vector2? scale = null,
-				in SpriteEffects effects = SpriteEffects.None,
-				in float layerDepth = 0f
+				SpriteBatch @this,
+				Texture2D texture,
+				Vector2 position,
+				Color color,
+				Rectangle? sourceRectangle = null,
+				float rotation = 0f,
+				Vector2? origin = null,
+				Vector2? scale = null,
+				SpriteEffects effects = SpriteEffects.None,
+				float layerDepth = 0f
 			) {
 				if (!Config.Enabled)
 					return true;

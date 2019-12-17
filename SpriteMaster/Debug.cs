@@ -1,12 +1,11 @@
-﻿#pragma warning disable 0162
-
-using Microsoft.Xna.Framework.Graphics;
+﻿using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace SpriteMaster {
 	// https://stackoverflow.com/a/11898531
@@ -57,39 +56,68 @@ namespace SpriteMaster {
 		// Logging Stuff
 
 		[DebuggerStepThrough, DebuggerHidden(), Untraced]
-		static internal void Info (string str) {
+		static private string Format(this string memberName, bool format = true) {
+			return (!format || memberName == null) ? "" : $"[{memberName}] ";
+		}
+
+		[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden(), Untraced]
+		static internal void Info (string message, bool format = true, [CallerMemberName] string caller = null) {
 			if (!Config.Debug.Logging.LogInfo)
 				return;
-			Console.Error.DebugWriteStr(str);
+			Console.Error.DebugWriteStr($"{caller.Format(format)}{message}");
+		}
+
+		[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden(), Untraced]
+		static internal void Info<T>(T exception, [CallerMemberName] string caller = null) where T : Exception {
+			if (!Config.Debug.Logging.LogInfo)
+				return;
+			InfoLn($"Exception: {exception.Message}", caller: caller);
+			InfoLn(exception.GetStackTrace(), caller: caller);
+		}
+
+		[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden(), Untraced]
+		static internal void InfoLn (string message, bool format = true, [CallerMemberName] string caller = null) {
+			Info($"{message}\n", format, caller);
 		}
 
 		[DebuggerStepThrough, DebuggerHidden(), Untraced]
-		static internal void InfoLn (string str) {
-			Info(str + "\n");
-		}
-
-		[DebuggerStepThrough, DebuggerHidden(), Untraced]
-		static internal void Warning (string str) {
+		static internal void Warning (string message, bool format = true, [CallerMemberName] string caller = null) {
 			if (!Config.Debug.Logging.LogWarnings)
 				return;
-			Console.Error.DebugWrite(WarningColor, str);
+			Console.Error.DebugWrite(WarningColor, $"{caller.Format(format)}{message}");
 		}
 
 		[DebuggerStepThrough, DebuggerHidden(), Untraced]
-		static internal void WarningLn (string str) {
-			Warning(str + "\n");
+		static internal void Warning<T> (T exception, [CallerMemberName] string caller = null) where T : Exception {
+			if (!Config.Debug.Logging.LogInfo)
+				return;
+			WarningLn($"Exception: {exception.Message}", caller: caller);
+			WarningLn(exception.GetStackTrace(), caller: caller);
 		}
 
 		[DebuggerStepThrough, DebuggerHidden(), Untraced]
-		static internal void Error (string str) {
+		static internal void WarningLn (string message, bool format = true, [CallerMemberName] string caller = null) {
+			Warning($"{message}\n", format, caller);
+		}
+
+		[DebuggerStepThrough, DebuggerHidden(), Untraced]
+		static internal void Error (string message, bool format = true, [CallerMemberName] string caller = null) {
 			if (!Config.Debug.Logging.LogErrors)
 				return;
-			Console.Error.DebugWrite(ErrorColor, str);
+			Console.Error.DebugWrite(ErrorColor, $"{caller.Format(format)}{message}");
 		}
 
 		[DebuggerStepThrough, DebuggerHidden(), Untraced]
-		static internal void ErrorLn (string str) {
-			Error(str + "\n");
+		static internal void Error<T> (T exception, [CallerMemberName] string caller = null) where T : Exception {
+			if (!Config.Debug.Logging.LogInfo)
+				return;
+			ErrorLn($"Exception: {exception.Message}", caller: caller);
+			ErrorLn(exception.GetStackTrace(), caller: caller);
+		}
+
+		[DebuggerStepThrough, DebuggerHidden(), Untraced]
+		static internal void ErrorLn (string message, bool format = true, [CallerMemberName] string caller = null) {
+			Error($"{message}\n", format, caller);
 		}
 
 		[DebuggerStepThrough, DebuggerHidden(), Untraced]
@@ -155,7 +183,7 @@ namespace SpriteMaster {
 		}
 
 		[DebuggerStepThrough, DebuggerHidden(), Untraced]
-		static private void DebugWrite (this TextWriter writer, in ConsoleColor color, in string str) {
+		static private void DebugWrite (this TextWriter writer, ConsoleColor color, string str) {
 			lock (writer) {
 				try {
 					LogFile.Write(str);
@@ -173,7 +201,7 @@ namespace SpriteMaster {
 		}
 
 		[DebuggerStepThrough, DebuggerHidden(), Untraced]
-		static private void DebugWriteStr (this TextWriter writer, in string str, in ConsoleColor color = ConsoleColor.White) {
+		static private void DebugWriteStr (this TextWriter writer, string str, ConsoleColor color = ConsoleColor.White) {
 			if (Config.Debug.Logging.UseSMAPI) {
 				var logLevel = color switch {
 					InfoColor => LogLevel.Info,

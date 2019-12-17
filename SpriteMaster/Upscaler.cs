@@ -13,7 +13,7 @@ using static SpriteMaster.ScaledTexture;
 
 namespace SpriteMaster {
 	internal sealed class Upscaler {
-		static Bitmap CreateBitmap (in int[] source, in Vector2I size, PixelFormat format = PixelFormat.Format32bppArgb) {
+		static Bitmap CreateBitmap (int[] source, Vector2I size, PixelFormat format = PixelFormat.Format32bppArgb) {
 			var newImage = new Bitmap(size.Width, size.Height, format);
 			var rectangle = new Bounds(newImage);
 			var newBitmapData = newImage.LockBits(rectangle, ImageLockMode.WriteOnly, format);
@@ -144,7 +144,7 @@ namespace SpriteMaster {
 		private static readonly ConditionalWeakTable<Texture2D, MetaData> MetaCache = new ConditionalWeakTable<Texture2D, MetaData>();
 		//private static Dictionary<ulong, Texture2D> TextureCache = new Dictionary<ulong, Texture2D>();
 
-		internal static ulong GetHash (in TextureWrapper input, bool desprite) {
+		internal static ulong GetHash (TextureWrapper input, bool desprite) {
 			ulong hash;
 			lock (MetaCache) {
 				if (MetaCache.TryGetValue(input.Reference, out var metaData)) {
@@ -170,7 +170,7 @@ namespace SpriteMaster {
 			private const double Gamma = 2.4;
 
 			// https://entropymine.com/imageworsener/srgbformula/
-			private static double ToSRGB (in double value, in double gamma) {
+			private static double ToSRGB (double value, double gamma) {
 				if (UseStrictConversion) {
 					if (value <= 0.0031308)
 						return value * 12.92;
@@ -182,7 +182,7 @@ namespace SpriteMaster {
 				}
 			}
 
-			private static double ToLinear (in double value, in double gamma) {
+			private static double ToLinear (double value, double gamma) {
 				if (UseStrictConversion) {
 					if (value <= 0.04045)
 						return value / 12.92;
@@ -194,13 +194,13 @@ namespace SpriteMaster {
 				}
 			}
 
-			internal static void ConvertSRGBToLinear (in int[] textureData, in Texel.Ordering order = Texel.Ordering.ABGR, in double gamma = Gamma) {
+			internal static void ConvertSRGBToLinear (int[] textureData, Texel.Ordering order = Texel.Ordering.ABGR, double gamma = Gamma) {
 				ConvertSRGBToLinear(textureData.AsSpan(), order, gamma);
 			}
 
-			internal static void ConvertSRGBToLinear (in Span<int> textureData, in Texel.Ordering order = Texel.Ordering.ABGR, in double gamma = Gamma) {
+			internal static void ConvertSRGBToLinear (Span<int> textureData, Texel.Ordering order = Texel.Ordering.ABGR, double gamma = Gamma) {
 				foreach (int i in 0.Until(textureData.Length)) {
-					ref var texelValue = ref textureData[i];
+					var texelValue = textureData[i];
 
 					var texel = Texel.From(texelValue, order);
 					var R = (double)texel.R / ByteMax;
@@ -214,27 +214,27 @@ namespace SpriteMaster {
 					if (!IgnoreAlpha) {
 						var A = (double)texel.A / ByteMax;
 						A = ToLinear(A, gamma);
-						texel.A = unchecked((byte)(A * ByteMax).RoundToInt());
+						texel.A = unchecked((byte)(A * ByteMax).NearestInt());
 					}
 					R = ToLinear(R, gamma);
 					G = ToLinear(G, gamma);
 					B = ToLinear(B, gamma);
 
-					texel.R = unchecked((byte)(R * ByteMax).RoundToInt());
-					texel.G = unchecked((byte)(G * ByteMax).RoundToInt());
-					texel.B = unchecked((byte)(B * ByteMax).RoundToInt());
+					texel.R = unchecked((byte)(R * ByteMax).NearestInt());
+					texel.G = unchecked((byte)(G * ByteMax).NearestInt());
+					texel.B = unchecked((byte)(B * ByteMax).NearestInt());
 
-					texelValue = texel.To(order);
+					textureData[i] = texel.To(order);
 				}
 			}
 
-			internal static void ConvertLinearToSRGB (in int[] textureData, in Texel.Ordering order = Texel.Ordering.ABGR, in double gamma = Gamma) {
+			internal static void ConvertLinearToSRGB (int[] textureData, Texel.Ordering order = Texel.Ordering.ABGR, double gamma = Gamma) {
 				ConvertLinearToSRGB(textureData.AsSpan(), order, gamma);
 			}
 
-			internal static void ConvertLinearToSRGB (in Span<int> textureData, in Texel.Ordering order = Texel.Ordering.ABGR, in double gamma = Gamma) {
+			internal static void ConvertLinearToSRGB (Span<int> textureData, Texel.Ordering order = Texel.Ordering.ABGR, double gamma = Gamma) {
 				foreach (int i in 0.Until(textureData.Length)) {
-					ref var texelValue = ref textureData[i];
+					var texelValue = textureData[i];
 
 					var texel = Texel.From(texelValue, order);
 					var R = (double)texel.R / ByteMax;
@@ -248,22 +248,23 @@ namespace SpriteMaster {
 					if (!IgnoreAlpha) {
 						var A = (double)texel.A / ByteMax;
 						A = ToSRGB(A, gamma);
-						texel.A = unchecked((byte)(A * ByteMax).RoundToInt());
+						texel.A = unchecked((byte)(A * ByteMax).NearestInt());
 					}
 					R = ToSRGB(R, gamma);
 					G = ToSRGB(G, gamma);
 					B = ToSRGB(B, gamma);
 
-					texel.R = unchecked((byte)(R * ByteMax).RoundToInt());
-					texel.G = unchecked((byte)(G * ByteMax).RoundToInt());
-					texel.B = unchecked((byte)(B * ByteMax).RoundToInt());
+					texel.R = unchecked((byte)(R * ByteMax).NearestInt());
+					texel.G = unchecked((byte)(G * ByteMax).NearestInt());
+					texel.B = unchecked((byte)(B * ByteMax).NearestInt());
 
-					texelValue = texel.To(order);
+					textureData[i] = texel.To(order);
 				}
 			}
 		}
 
-		internal static Texture2D Upscale (ScaledTexture texture, ref int scale, in TextureWrapper input, bool desprite, ulong hash, ref Vector2B wrapped, bool allowPadding) {
+		// TODO : Detangle this method.
+		internal static Texture2D Upscale (ScaledTexture texture, ref int scale, TextureWrapper input, bool desprite, ulong hash, ref Vector2B wrapped, bool allowPadding) {
 			wrapped.Set(false);
 
 			var output = input.Reference;
@@ -380,8 +381,8 @@ namespace SpriteMaster {
 
 					wrapped = input.Wrapped;
 
-					Vector2B WrappedX = new Vector2B(wrapped.X);
-					Vector2B WrappedY = new Vector2B(wrapped.Y);
+					var WrappedX = new Vector2B(wrapped.X);
+					var WrappedY = new Vector2B(wrapped.Y);
 
 					unsafe {
 						using (var rawDataHandle = input.Data.AsMemory().Pin()) {
@@ -428,14 +429,14 @@ namespace SpriteMaster {
 											samples[1]++;
 										}
 									}
-									int threshold = ((float)inputSize.Height * Config.WrapDetection.edgeThreshold).RoundToInt();
+									int threshold = ((float)inputSize.Height * Config.WrapDetection.edgeThreshold).NearestInt();
 									WrappedX.Negative = samples[0] >= threshold;
 									WrappedX.Positive = samples[1] >= threshold;
 									wrapped.X = WrappedX[0] && WrappedX[1];
 								}
 								if (!wrapped.Y) {
 									var samples = stackalloc int[] { 0, 0 };
-									var offsets = stackalloc int[] { spriteInputSize.Top * rawInputSize.Width, (spriteInputSize.Bottom - 1) * rawInputSize.Width};
+									var offsets = stackalloc int[] { spriteInputSize.Top * rawInputSize.Width, (spriteInputSize.Bottom - 1) * rawInputSize.Width };
 									int sampler = 0;
 									foreach (int i in 0.Until(2)) {
 										var yOffset = offsets[i];
@@ -448,7 +449,7 @@ namespace SpriteMaster {
 										}
 										sampler++;
 									}
-									int threshold = ((float)inputSize.Width * Config.WrapDetection.edgeThreshold).RoundToInt();
+									int threshold = ((float)inputSize.Width * Config.WrapDetection.edgeThreshold).NearestInt();
 									WrappedY.Negative = samples[0] >= threshold;
 									WrappedY.Positive = samples[0] >= threshold;
 									wrapped.Y = WrappedY[0] && WrappedY[1];
@@ -551,7 +552,7 @@ namespace SpriteMaster {
 											int strideOffsetRaw = (i + input.Size.Top) * prescaleSize.Width;
 											// Write a padded X line
 											int xOffset = strideOffset;
-											void WritePaddingX() {
+											void WritePaddingX () {
 												if (!shouldPad.X)
 													return;
 												foreach (int x in 0.Until(padding)) {

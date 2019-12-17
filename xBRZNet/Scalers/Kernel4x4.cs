@@ -1,5 +1,4 @@
-﻿namespace xBRZNet2.Scalers
-{
+﻿namespace xBRZNet2.Scalers {
 	/*
 			input kernel area naming convention:
 			-----------------
@@ -13,8 +12,7 @@
 			-----------------
 	*/
 	// ReSharper disable once InconsistentNaming
-	internal ref struct Kernel4x4
-	{
+	internal ref struct Kernel4x4 {
 		public int A, B, C, D;
 		public int E, F, G, H;
 		public int I, J, K, L;
