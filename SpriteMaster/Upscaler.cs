@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
+using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using System;
 using System.Drawing;

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using SpriteMaster.Extensions;
 using System;
 
 namespace SpriteMaster.Types {
@@ -202,8 +203,8 @@ namespace SpriteMaster.Types {
 
 		public readonly Vector2I Clamp (Vector2I min, Vector2I max) {
 			return new Vector2I(
-				Helpers.Clamp(X, min.X, max.X),
-				Helpers.Clamp(Y, min.Y, max.Y)
+				X.Clamp(min.X, max.X),
+				Y.Clamp(min.Y, max.Y)
 			);
 		}
 
@@ -223,8 +224,8 @@ namespace SpriteMaster.Types {
 
 		public readonly Vector2I Clamp (int min, int max) {
 			return new Vector2I(
-				Helpers.Clamp(X, min, max),
-				Helpers.Clamp(Y, min, max)
+				X.Clamp(min, max),
+				Y.Clamp(min, max)
 			);
 		}
 

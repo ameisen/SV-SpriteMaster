@@ -11,6 +11,7 @@ using WeakScaledTexture = System.WeakReference<SpriteMaster.ScaledTexture>;
 using WeakTextureMap = System.Runtime.CompilerServices.ConditionalWeakTable<Microsoft.Xna.Framework.Graphics.Texture2D, SpriteMaster.ScaledTexture>;
 using WeakSpriteMap = System.Runtime.CompilerServices.ConditionalWeakTable<Microsoft.Xna.Framework.Graphics.Texture2D, System.Collections.Generic.Dictionary<ulong, SpriteMaster.ScaledTexture>>;
 using SpriteMaster.Types;
+using SpriteMaster.Extensions;
 
 namespace SpriteMaster {
 	internal abstract class ITextureMap {

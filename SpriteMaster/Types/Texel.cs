@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SpriteMaster.Extensions;
+using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
 

@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using static SpriteMaster.ScaledTexture;
+using SpriteMaster.Extensions;
 
 namespace SpriteMaster {
 
