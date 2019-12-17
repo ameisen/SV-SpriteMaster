@@ -519,12 +519,19 @@ namespace SpriteMaster {
 			var sourceRectangle = source.GetValueOrDefault(new Rectangle(0, 0, texture.Width, texture.Height));
 			bool allowPadding = true;
 
-			var scaledTexture = DrawHandler(@this, texture, ref sourceRectangle, allowPadding);
-			if (scaledTexture == null) {
-				return true;
+			ScaledTexture scaledTexture;
+			Texture2D t;
+			if (texture is ScaledTexture.ManagedTexture2D managedTexture) {
+				scaledTexture = managedTexture.Texture;
+				t = texture;
 			}
-
-			var t = scaledTexture.Texture;
+			else {
+				scaledTexture = DrawHandler(@this, texture, ref sourceRectangle, allowPadding);
+				if (scaledTexture == null) {
+					return true;
+				}
+				t = scaledTexture.Texture;
+			}
 
 			var adjustedScale = scale / scaledTexture.Scale;
 			var adjustedPosition = position;
