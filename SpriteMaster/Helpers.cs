@@ -110,6 +110,10 @@ namespace SpriteMaster
 			return ToExclusive(from, to);
 		}
 
+		internal static IEnumerable<int> For (this int from, int count) {
+			return ToExclusive(from, from + count);
+		}
+
 		internal static IEnumerable<long> ToInclusive(this long from, long to)
 		{
 			if (from < to)
@@ -692,6 +696,11 @@ namespace SpriteMaster
 			}
 
 			return string.Format("{0:0.00}", value) + $" {SuffixTable[suffixIndex]}";
+		}
+
+		internal static T GetValue<T>(this FieldInfo field, in object instance) {
+			var result = field.GetValue(instance);
+			return (T)result;
 		}
 	}
 }

@@ -12,6 +12,7 @@ using WeakScaledTexture = System.WeakReference<SpriteMaster.ScaledTexture>;
 using WeakTextureMap = System.Runtime.CompilerServices.ConditionalWeakTable<Microsoft.Xna.Framework.Graphics.Texture2D, SpriteMaster.ScaledTexture>;
 using WeakSpriteMap = System.Runtime.CompilerServices.ConditionalWeakTable<Microsoft.Xna.Framework.Graphics.Texture2D, System.Collections.Generic.Dictionary<ulong, SpriteMaster.ScaledTexture>>;
 using SpriteMaster.Types;
+using System.Runtime.InteropServices;
 
 namespace SpriteMaster {
 	// Modified from PyTK.Types.ScaledTexture2D
@@ -389,6 +390,16 @@ namespace SpriteMaster {
 		}
 
 		internal static readonly Dictionary<ulong, WeakScaledTexture> LocalTextureCache = new Dictionary<ulong, WeakScaledTexture>();
+
+		internal sealed class ManagedTexture2D : Texture2D {
+			public readonly Texture2D Reference;
+			public readonly ScaledTexture Texture;
+
+			public ManagedTexture2D (ScaledTexture texture, Texture2D reference, Vector2I dimensions, SurfaceFormat format) : base(reference.GraphicsDevice, dimensions.Width, dimensions.Height, false, format) {
+				Reference = reference;
+				Texture = texture;
+			}
+		}
 
 		internal ScaledTexture (string assetName, TextureWrapper textureWrapper, Texture2D source, Bounds sourceRectangle, Bounds indexRectangle, int scale, ulong hash, bool isSprite, bool allowPadding) {
 			TextureSizeHack(source.GraphicsDevice);

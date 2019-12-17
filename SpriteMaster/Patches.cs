@@ -7,6 +7,7 @@ using System.Threading;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using static SpriteMaster.ScaledTexture;
 
 namespace SpriteMaster {
 	static class Extension {
@@ -22,16 +23,16 @@ namespace SpriteMaster {
 	internal sealed class Patches {
 		private partial class Harmony {
 			private static Type[] GetMethodParameters (in MethodInfo method) {
-				var filteredParameters = method.GetParameters().Where(t => !t.Name.Equals("__instance"));
+				var filteredParameters = method.GetParameters().Where(t => !t.Name.StartsWith("__"));
 				return filteredParameters.Select(p => p.ParameterType).ToArray();
 			}
 
-			internal static void Patch<T> (in HarmonyInstance instance, string name, in MethodInfo method) {
+			internal static MethodInfo GetPatchMethod<T> (string name, in MethodInfo method) {
 				var type = typeof(T);
 				var methodParameters = GetMethodParameters(method);
 				var typeMethod = type.GetMethod(name, methodParameters);
 				if (typeMethod == null) {
-					var typeMethods = type.GetMethods().Where(t => t.Name == name);
+					var typeMethods = type.GetMethods(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public).Where(t => t.Name == name);
 					foreach (var testMethod in typeMethods) {
 						// Compare the parameters. Ignore references.
 						var testParameters = testMethod.GetParameters();
@@ -42,12 +43,18 @@ namespace SpriteMaster {
 						bool found = true;
 						foreach (var i in 0.Until(testParameters.Length)) {
 							Type AsReference (in Type type) {
-								return type.IsByRef ? type : type.MakeByRefType();
+								return type.MakeByRefType();
+							}
+							Type DeReference (in Type type) {
+								return type.IsByRef ? type.GetElementType() : type;
 							}
 
-							var testParameter = AsReference(testParameters[i].ParameterType);
-							var methodParameter = AsReference(methodParameters[i]);
-							if (!testParameter.Equals(methodParameter)) {
+							var testParameter = DeReference(testParameters[i].ParameterType);
+							var testParameterRef = AsReference(testParameter);
+							var methodParameter = DeReference(methodParameters[i]);
+							var methodParameterRef = AsReference(methodParameter);
+							var baseParameter = methodParameter.IsArray ? methodParameter.GetElementType() : methodParameter;
+							if (!testParameterRef.Equals(methodParameterRef) && !methodParameter.Equals(typeof(object)) && !(testParameter.IsArray && methodParameter.IsArray && baseParameter.Equals(typeof(object)))) {
 								found = false;
 								break;
 							}
@@ -60,15 +67,32 @@ namespace SpriteMaster {
 
 					if (typeMethod == null) {
 						Debug.ErrorLn($"Failed to patch {type.Name}.{name}");
-						return;
+						return null;
 					}
 				}
+				return typeMethod;
+			}
+
+			internal static void Patch<T> (in HarmonyInstance instance, string name, in MethodInfo method) {
+				var typeMethod = GetPatchMethod<T>(name, method);
 				var harmonyMethod = new HarmonyMethod(method);
 				harmonyMethod.prioritiy = Priority.Last; // sic
 				instance.Patch(
 					typeMethod,
 					harmonyMethod,
 					null,
+					null
+				);
+			}
+
+			internal static void PostPatch<T> (in HarmonyInstance instance, string name, in MethodInfo method) {
+				var typeMethod = GetPatchMethod<T>(name, method);
+				var harmonyMethod = new HarmonyMethod(method);
+				harmonyMethod.prioritiy = Priority.Last; // sic
+				instance.Patch(
+					typeMethod,
+					null,
+					harmonyMethod,
 					null
 				);
 			}
@@ -91,10 +115,90 @@ namespace SpriteMaster {
 			foreach (var method in GetMethods<Patches>("Present"))
 				Harmony.Patch<GraphicsDevice>(instance, "Present", method);
 
+			foreach (var method in GetMethods<Patches>("PlatformRenderBatch"))
+				Harmony.Patch<SpriteBatch>(instance, "PlatformRenderBatch", method);
+
+			foreach (var method in GetMethods<Patches>("PlatformRenderBatchPost"))
+				Harmony.PostPatch<SpriteBatch>(instance, "PlatformRenderBatch", method);
+
 			// https://github.com/pardeike/Harmony/issues/121
 			//foreach (MethodInfo method in typeof(DrawPatched).GetMethods(BindingFlags.Static | BindingFlags.NonPublic).Where(m => m.Name == "SetData"))
 			//	Harmony.Patch(instance, typeof(Texture2D), "SetData", method);
 		}
+
+		internal static bool PlatformRenderBatch (
+			SpriteBatch __instance,
+			Texture2D texture,
+			object[] sprites,
+			int offset,
+			int count,
+			ref SamplerState ___samplerState,
+			ref SamplerState __state
+		) {
+			try {
+				var OriginalState = ___samplerState;
+				__state = OriginalState;
+
+				if (texture is ManagedTexture2D managedTexture) {
+					var newState = new SamplerState() {
+						AddressU = managedTexture.Texture.Wrapped.X ? TextureAddressMode.Wrap : OriginalState.AddressU,
+						AddressV = managedTexture.Texture.Wrapped.Y ? TextureAddressMode.Wrap : OriginalState.AddressV,
+						AddressW = OriginalState.AddressW,
+						MaxAnisotropy = OriginalState.MaxAnisotropy,
+						MaxMipLevel = OriginalState.MaxMipLevel,
+						MipMapLevelOfDetailBias = OriginalState.MipMapLevelOfDetailBias,
+						Name = "RescaledSampler",
+						Tag = OriginalState.Tag,
+						Filter = (Config.DrawState.SetLinear) ? TextureFilter.Linear : OriginalState.Filter
+					};
+
+					__instance.GraphicsDevice.SamplerStates[0] = newState;
+					___samplerState = newState;
+				}
+				else if (texture is RenderTarget2D) {
+					var newState = new SamplerState() {
+						AddressU = OriginalState.AddressU,
+						AddressV = OriginalState.AddressV,
+						AddressW = OriginalState.AddressW,
+						MaxAnisotropy = OriginalState.MaxAnisotropy,
+						MaxMipLevel = OriginalState.MaxMipLevel,
+						MipMapLevelOfDetailBias = OriginalState.MipMapLevelOfDetailBias,
+						Name = "RescaledSampler",
+						Tag = OriginalState.Tag,
+						Filter = (Config.DrawState.SetLinear) ? TextureFilter.Linear : OriginalState.Filter
+					};
+
+					__instance.GraphicsDevice.SamplerStates[0] = newState;
+					___samplerState = newState;
+				}
+			}
+			catch (Exception ex) {
+				Debug.ErrorLn($"Exception In PlatformRenderBatch: {ex.Message}");
+				Debug.ErrorLn(ex.GetStackTrace());
+			}
+
+			return true;
+		}
+
+		internal static void PlatformRenderBatchPost (
+			SpriteBatch __instance,
+			Texture2D texture,
+			object[] sprites,
+			int offset,
+			int count,
+			ref SamplerState ___samplerState,
+			ref SamplerState __state
+		) {
+			try {
+				__instance.GraphicsDevice.SamplerStates[0] = __state;
+				___samplerState = __state;
+			}
+			catch (Exception ex) {
+				Debug.ErrorLn($"Exception In PlatformRenderBatchPost: {ex.Message}");
+				Debug.ErrorLn(ex.GetStackTrace());
+			}
+		}
+
 
 		internal static bool ApplyChanges (GraphicsDeviceManager __instance) {
 			__instance.PreferMultiSampling = true;
@@ -138,7 +242,7 @@ namespace SpriteMaster {
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static void OnPresent () {
 			if (Config.AsyncScaling.CanFetchAndLoadSameFrame || !PushedUpdateThisFrame) {
-				ScaledTexture.ProcessPendingActions(100);
+				ScaledTexture.ProcessPendingActions(1);
 			}
 			RemainingTexelFetchBudget = Config.AsyncScaling.TexelFetchFrameBudget;
 			FetchedThisFrame = false;
@@ -207,19 +311,6 @@ namespace SpriteMaster {
 			SetCurrentAddressMode(samplerState);
 			CurrentBlendSourceMode = blendState.AlphaSourceBlend;
 
-			var OriginalState = samplerState;
-			var newState = new SamplerState() {
-				AddressU = TextureAddressMode.Clamp,
-				AddressV = TextureAddressMode.Clamp,
-				AddressW = OriginalState.AddressW,
-				MaxAnisotropy = OriginalState.MaxAnisotropy,
-				MaxMipLevel = OriginalState.MaxMipLevel,
-				MipMapLevelOfDetailBias = OriginalState.MipMapLevelOfDetailBias,
-				Name = "RescaledSampler",
-				Tag = OriginalState.Tag,
-				Filter = Config.DrawState.SetLinear ? TextureFilter.Linear : OriginalState.Filter
-			};
-			samplerState = newState;
 			return true;
 		}
 

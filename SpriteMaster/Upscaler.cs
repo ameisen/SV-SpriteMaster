@@ -9,6 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using xBRZNet2;
+using static SpriteMaster.ScaledTexture;
 
 namespace SpriteMaster {
 	internal sealed class Upscaler {
@@ -659,7 +660,7 @@ namespace SpriteMaster {
 						if (reference.IsDisposed) {
 							return;
 						}
-						var newTexture = new Texture2D(reference.GraphicsDevice, newSize.Width, newSize.Height, false, SurfaceFormat.Color);
+						var newTexture = new ManagedTexture2D(texture, reference, newSize, SurfaceFormat.Color);
 						newTexture.Name = reference.SafeName() + " [RESAMPLED]";
 						try {
 							newTexture.SetData(bitmapData);
@@ -677,7 +678,7 @@ namespace SpriteMaster {
 					return null;
 				}
 				else {
-					var newTexture = new Texture2D(input.Reference.GraphicsDevice, newSize.Width, newSize.Height, false, SurfaceFormat.Color);
+					var newTexture = new ManagedTexture2D(texture, input.Reference, newSize, SurfaceFormat.Color);
 					newTexture.Name = input.Reference.SafeName() + " [RESAMPLED]";
 					try {
 						newTexture.SetData(bitmapData);
