@@ -16,6 +16,7 @@ namespace SpriteMaster {
 		internal const bool ClampInvalidBounds = true;
 		internal const uint MaxMemoryUsage = 2048U * 1024U * 1024U;
 		internal const bool EnableCachedHashTextures = false;
+		internal const bool IgnoreUnknownTextures = false;
 
 		internal static readonly string LocalRoot = Path.Combine(
 			Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -38,8 +39,8 @@ namespace SpriteMaster {
 			}
 
 			internal static class Sprite {
-				internal const bool DumpReference = true;
-				internal const bool DumpResample = true;
+				internal const bool DumpReference = false;
+				internal const bool DumpResample = false;
 			}
 		}
 
@@ -57,24 +58,25 @@ namespace SpriteMaster {
 			internal static class Padding {
 				internal const bool Enabled = true;
 				internal const int MinSize = 4;
+				internal const bool IgnoreUnknown = true;
 			}
 		}
 
 		internal static class WrapDetection {
 			internal const bool Enabled = true;
-			internal const float edgeThreshold = 0.5f;
+			internal const float edgeThreshold = 0.25f;
 			internal const byte alphaThreshold = 1;
 		}
 
 		internal static class AsyncScaling {
 			internal const bool Enabled = true;
 			internal const bool CanFetchAndLoadSameFrame = true;
-			internal const int MaxLoadsPerFrame = 1;
-			internal const int TexelFetchFrameBudget = 128 * 128;
+			internal const int MaxLoadsPerFrame = 100;
+			internal const int TexelFetchFrameBudget = 1024 * 1024 * 1024;
 		}
 
 		internal static class Cache {
-			internal const bool Enabled = false;
+			internal const bool Enabled = true;
 			internal const int LockRetries = 32;
 			internal const int LockSleepMS = 32;
 		}

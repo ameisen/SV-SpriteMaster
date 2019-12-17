@@ -13,80 +13,66 @@ using WeakTextureMap = System.Runtime.CompilerServices.ConditionalWeakTable<Micr
 using WeakSpriteMap = System.Runtime.CompilerServices.ConditionalWeakTable<Microsoft.Xna.Framework.Graphics.Texture2D, System.Collections.Generic.Dictionary<ulong, SpriteMaster.ScaledTexture>>;
 using SpriteMaster.Types;
 
-namespace SpriteMaster
-{
+namespace SpriteMaster {
 	// Modified from PyTK.Types.ScaledTexture2D
 	// Origial Source: https://github.com/Platonymous/Stardew-Valley-Mods/blob/master/PyTK/Types/ScaledTexture2D.cs
 	// Original Licence: GNU General Public License v3.0
 	// Original Author: PlatonymousUpscale
 
-	internal abstract class ITextureMap
-	{
+	internal abstract class ITextureMap {
 		protected readonly SharedLock Lock = new SharedLock();
 		protected readonly List<WeakScaledTexture> ScaledTextureReferences = Config.Debug.CacheDump.Enabled ? new List<WeakScaledTexture>() : null;
 
-		internal static ITextureMap Create()
-		{
+		internal static ITextureMap Create () {
 			return Config.Resample.DeSprite ? (ITextureMap)new SpriteMap() : (ITextureMap)new TextureMap();
 		}
 
-		internal abstract void Add(in Texture2D reference, in ScaledTexture texture, in Bounds sourceRectangle);
+		internal abstract void Add (in Texture2D reference, in ScaledTexture texture, in Bounds sourceRectangle);
 
-		internal abstract bool TryGet(in Texture2D texture, in Bounds sourceRectangle, out ScaledTexture result);
+		internal abstract bool TryGet (in Texture2D texture, in Bounds sourceRectangle, out ScaledTexture result);
 
-		internal abstract void Remove(in ScaledTexture scaledTexture, in Texture2D texture);
+		internal abstract void Remove (in ScaledTexture scaledTexture, in Texture2D texture);
 
-		protected void OnAdd(in Texture2D reference, in ScaledTexture texture, in Bounds sourceRectangle)
-		{
-			if (!Config.Debug.CacheDump.Enabled) return;
+		protected void OnAdd (in Texture2D reference, in ScaledTexture texture, in Bounds sourceRectangle) {
+			if (!Config.Debug.CacheDump.Enabled)
+				return;
 			ScaledTextureReferences.Add(new WeakScaledTexture(texture));
 		}
 
-		protected void OnRemove(in ScaledTexture scaledTexture, in Texture2D texture)
-		{
-			if (!Config.Debug.CacheDump.Enabled) return;
-			try
-			{
+		protected void OnRemove (in ScaledTexture scaledTexture, in Texture2D texture) {
+			if (!Config.Debug.CacheDump.Enabled)
+				return;
+			try {
 				List<WeakScaledTexture> removeElements = new List<WeakScaledTexture>();
-				foreach (var element in ScaledTextureReferences)
-				{
-					if (element.TryGetTarget(out var elementTexture))
-					{
-						if (elementTexture == scaledTexture)
-						{
+				foreach (var element in ScaledTextureReferences) {
+					if (element.TryGetTarget(out var elementTexture)) {
+						if (elementTexture == scaledTexture) {
 							removeElements.Add(element);
 						}
 					}
-					else
-					{
+					else {
 						removeElements.Add(element);
 					}
 				}
 
-				foreach (var element in removeElements)
-				{
+				foreach (var element in removeElements) {
 					ScaledTextureReferences.Remove(element);
 				}
 			}
 			catch { }
 		}
 
-		internal Dictionary<Texture2D, List<ScaledTexture>> GetDump()
-		{
+		internal Dictionary<Texture2D, List<ScaledTexture>> GetDump () {
 			if (!Config.Debug.CacheDump.Enabled)
 				return null;
 
 			var result = new Dictionary<Texture2D, List<ScaledTexture>>();
 
-			foreach (var element in ScaledTextureReferences)
-			{
-				if (element.TryGetTarget(out var scaledTexture))
-				{
-					if (scaledTexture.Reference.TryGetTarget(out var referenceTexture))
-					{
+			foreach (var element in ScaledTextureReferences) {
+				if (element.TryGetTarget(out var scaledTexture)) {
+					if (scaledTexture.Reference.TryGetTarget(out var referenceTexture)) {
 						List<ScaledTexture> resultList;
-						if (!result.TryGetValue(referenceTexture, out resultList))
-						{
+						if (!result.TryGetValue(referenceTexture, out resultList)) {
 							resultList = new List<ScaledTexture>();
 							result.Add(referenceTexture, resultList);
 						}
@@ -99,35 +85,27 @@ namespace SpriteMaster
 		}
 	}
 
-	sealed class TextureMap : ITextureMap
-	{
+	sealed class TextureMap : ITextureMap {
 		private readonly WeakTextureMap Map = new WeakTextureMap();
 
-		internal override void Add(in Texture2D reference, in ScaledTexture texture, in Bounds sourceRectangle)
-		{
-			using(Lock.LockExclusive())
-			{
+		internal override void Add (in Texture2D reference, in ScaledTexture texture, in Bounds sourceRectangle) {
+			using (Lock.LockExclusive()) {
 				Map.Add(reference, texture);
 				OnAdd(reference, texture, sourceRectangle);
 			}
 		}
 
-		internal override bool TryGet(in Texture2D texture, in Bounds sourceRectangle, out ScaledTexture result)
-		{
+		internal override bool TryGet (in Texture2D texture, in Bounds sourceRectangle, out ScaledTexture result) {
 			result = null;
 
-			using (Lock.LockShared())
-			{
-				if (Map.TryGetValue(texture, out var scaledTexture))
-				{
-					if (scaledTexture.Texture != null && scaledTexture.Texture.IsDisposed)
-					{
+			using (Lock.LockShared()) {
+				if (Map.TryGetValue(texture, out var scaledTexture)) {
+					if (scaledTexture.Texture != null && scaledTexture.Texture.IsDisposed) {
 						Lock.Promote();
 						Map.Remove(texture);
 					}
 					else {
-						if (scaledTexture.IsReady)
-						{
+						if (scaledTexture.IsReady) {
 							result = scaledTexture;
 						}
 						return true;
@@ -138,20 +116,15 @@ namespace SpriteMaster
 			return false;
 		}
 
-		internal override void Remove(in ScaledTexture scaledTexture, in Texture2D texture)
-		{
-			try
-			{
-				using (Lock.LockExclusive())
-				{
+		internal override void Remove (in ScaledTexture scaledTexture, in Texture2D texture) {
+			try {
+				using (Lock.LockExclusive()) {
 					OnRemove(scaledTexture, texture);
 					Map.Remove(texture);
 				}
 			}
-			finally
-			{
-				if (scaledTexture.Texture != null && !scaledTexture.Texture.IsDisposed)
-				{
+			finally {
+				if (scaledTexture.Texture != null && !scaledTexture.Texture.IsDisposed) {
 					Debug.InfoLn($"Disposing Active HD Texture: {scaledTexture.SafeName()}");
 
 					//scaledTexture.Texture.Dispose();
@@ -160,19 +133,15 @@ namespace SpriteMaster
 		}
 	}
 
-	sealed class SpriteMap : ITextureMap
-	{
+	sealed class SpriteMap : ITextureMap {
 		private readonly WeakSpriteMap Map = new WeakSpriteMap();
 
-		static private ulong SpriteHash(in Texture2D texture, in Bounds sourceRectangle)
-		{
+		static private ulong SpriteHash (in Texture2D texture, in Bounds sourceRectangle) {
 			return ScaledTexture.ExcludeSprite(texture) ? 0UL : sourceRectangle.Hash();
 		}
 
-		internal override void Add(in Texture2D reference, in ScaledTexture texture, in Bounds sourceRectangle)
-		{
-			using (Lock.LockExclusive())
-			{
+		internal override void Add (in Texture2D reference, in ScaledTexture texture, in Bounds sourceRectangle) {
+			using (Lock.LockExclusive()) {
 				OnAdd(reference, texture, sourceRectangle);
 
 				var rectangleHash = SpriteHash(reference, sourceRectangle);
@@ -183,26 +152,19 @@ namespace SpriteMaster
 			}
 		}
 
-		internal override bool TryGet(in Texture2D texture, in Bounds sourceRectangle, out ScaledTexture result)
-		{
+		internal override bool TryGet (in Texture2D texture, in Bounds sourceRectangle, out ScaledTexture result) {
 			result = null;
 
-			using (Lock.LockShared())
-			{
-				if (Map.TryGetValue(texture, out var spriteMap))
-				{
+			using (Lock.LockShared()) {
+				if (Map.TryGetValue(texture, out var spriteMap)) {
 					var rectangleHash = SpriteHash(texture, sourceRectangle);
-					if (spriteMap.TryGetValue(rectangleHash, out var scaledTexture))
-					{
-						if (scaledTexture.Texture != null && scaledTexture.Texture.IsDisposed)
-						{
+					if (spriteMap.TryGetValue(rectangleHash, out var scaledTexture)) {
+						if (scaledTexture.Texture != null && scaledTexture.Texture.IsDisposed) {
 							Lock.Promote();
 							Map.Remove(texture);
 						}
-						else
-						{
-							if (scaledTexture.IsReady)
-							{
+						else {
+							if (scaledTexture.IsReady) {
 								result = scaledTexture;
 							}
 							return true;
@@ -214,20 +176,15 @@ namespace SpriteMaster
 			return false;
 		}
 
-		internal override void Remove(in ScaledTexture scaledTexture, in Texture2D texture)
-		{
-			try
-			{
-				using (Lock.LockExclusive())
-				{
+		internal override void Remove (in ScaledTexture scaledTexture, in Texture2D texture) {
+			try {
+				using (Lock.LockExclusive()) {
 					OnRemove(scaledTexture, texture);
 					Map.Remove(texture);
 				}
 			}
-			finally
-			{
-				if (scaledTexture.Texture != null && !scaledTexture.Texture.IsDisposed)
-				{
+			finally {
+				if (scaledTexture.Texture != null && !scaledTexture.Texture.IsDisposed) {
 					Debug.InfoLn($"Disposing Active HD Texture: {scaledTexture.SafeName()}");
 
 					//scaledTexture.Texture.Dispose();
@@ -236,28 +193,32 @@ namespace SpriteMaster
 		}
 	}
 
-	internal sealed class ScaledTexture
-	{
+	internal sealed class ScaledTexture {
 		// TODO : This can grow unbounded. Should fix.
 		public static readonly ITextureMap TextureMap = ITextureMap.Create();
 
 		private static readonly List<Action> PendingActions = Config.AsyncScaling.Enabled ? new List<Action>() : null;
 
-		static internal bool ExcludeSprite(in Texture2D texture)
-		{
+		static internal bool ExcludeSprite (in Texture2D texture) {
 			return false;// && (texture.Name == "LooseSprites\\Cursors");
 		}
 
-		static internal void AddPendingAction(in Action action)
-		{
-			lock (PendingActions)
-			{
+		static internal bool HasPendingActions () {
+			if (!Config.AsyncScaling.Enabled) {
+				return false;
+			}
+			lock (PendingActions) {
+				return PendingActions.Count != 0;
+			}
+		}
+
+		static internal void AddPendingAction (in Action action) {
+			lock (PendingActions) {
 				PendingActions.Add(action);
 			}
 		}
 
-		static internal void ProcessPendingActions(int processCount = Config.AsyncScaling.MaxLoadsPerFrame)
-		{
+		static internal void ProcessPendingActions (int processCount = Config.AsyncScaling.MaxLoadsPerFrame) {
 			if (!Config.AsyncScaling.Enabled) {
 				return;
 			}
@@ -265,18 +226,14 @@ namespace SpriteMaster
 			// TODO : use GetUpdateToken
 
 			lock (PendingActions) {
-				if (processCount >= PendingActions.Count)
-				{
-					foreach (var action in PendingActions)
-					{
+				if (processCount >= PendingActions.Count) {
+					foreach (var action in PendingActions) {
 						action.Invoke();
 					}
 					PendingActions.Clear();
 				}
-				else
-				{
-					while (processCount-- > 0)
-					{
+				else {
+					while (processCount-- > 0) {
 						PendingActions.Last().Invoke();
 						PendingActions.RemoveAt(PendingActions.Count - 1);
 					}
@@ -284,36 +241,33 @@ namespace SpriteMaster
 			}
 		}
 
-		static internal ScaledTexture Get(Texture2D texture, Bounds sourceRectangle, Bounds indexRectangle, bool allowPadding)
-		{
+		static internal ScaledTexture Get (Texture2D texture, Bounds sourceRectangle, Bounds indexRectangle, bool allowPadding) {
 			int textureArea = texture.Width * texture.Height;
 
-			if (textureArea == 0 || texture.IsDisposed)
-			{
+			if (textureArea == 0 || texture.IsDisposed) {
 				return null;
 			}
 
-			bool LegalFormat(SurfaceFormat format)
-			{
-				switch (format)
-				{
+			if (Config.IgnoreUnknownTextures && (texture.Name == null || texture.Name == "")) {
+				return null;
+			}
+
+			bool LegalFormat (SurfaceFormat format) {
+				switch (format) {
 					case SurfaceFormat.Color:
 						return true;
 				}
 				return false;
 			}
-			if (!LegalFormat(texture.Format))
-			{
+			if (!LegalFormat(texture.Format)) {
 				return null;
 			}
 
-			if (TextureMap.TryGet(texture, indexRectangle, out var scaleTexture))
-			{
+			if (TextureMap.TryGet(texture, indexRectangle, out var scaleTexture)) {
 				return scaleTexture;
 			}
 
-			if (Config.AsyncScaling.Enabled && !Patches.GetUpdateToken(textureArea))
-			{
+			if (Config.AsyncScaling.Enabled && !Patches.GetUpdateToken(textureArea)) {
 				return null;
 			}
 
@@ -321,33 +275,26 @@ namespace SpriteMaster
 			var textureWrapper = new TextureWrapper(texture, sourceRectangle, indexRectangle);
 			ulong hash = Upscaler.GetHash(textureWrapper, isSprite);
 
-			if (Config.EnableCachedHashTextures)
-			{
-				lock (LocalTextureCache)
-				{
-					if (LocalTextureCache.TryGetValue(hash, out var scaledTextureRef))
-					{
-						if (scaledTextureRef.TryGetTarget(out var cachedTexture))
-						{
+			if (Config.EnableCachedHashTextures) {
+				lock (LocalTextureCache) {
+					if (LocalTextureCache.TryGetValue(hash, out var scaledTextureRef)) {
+						if (scaledTextureRef.TryGetTarget(out var cachedTexture)) {
 							Debug.InfoLn($"Using Cached Texture for \"{cachedTexture.SafeName()}\"");
 							TextureMap.Add(texture, cachedTexture, indexRectangle);
 							texture.Disposing += (object sender, EventArgs args) => { cachedTexture.OnParentDispose((Texture2D)sender); };
-							if (!cachedTexture.IsReady || cachedTexture.Texture == null)
-							{
+							if (!cachedTexture.IsReady || cachedTexture.Texture == null) {
 								return null;
 							}
 							return cachedTexture;
 						}
-						else
-						{
+						else {
 							LocalTextureCache.Remove(hash);
 						}
 					}
 				}
 			}
 
-			if (TotalMemoryUsage >= Config.MaxMemoryUsage)
-			{
+			if (TotalMemoryUsage >= Config.MaxMemoryUsage) {
 				Debug.ErrorLn($"Over Max Memory Usage: {TotalMemoryUsage.AsDataSize()}");
 			}
 
@@ -365,35 +312,29 @@ namespace SpriteMaster
 				allowPadding: allowPadding
 			);
 			if (Config.EnableCachedHashTextures)
-				lock (LocalTextureCache)
-				{
+				lock (LocalTextureCache) {
 					LocalTextureCache.Add(hash, new WeakScaledTexture(newTexture));
 				}
-			if (Config.AsyncScaling.Enabled)
-			{
+			if (Config.AsyncScaling.Enabled) {
 				// It adds itself to the relevant maps.
-				if (newTexture.IsReady && newTexture.Texture != null)
-				{
+				if (newTexture.IsReady && newTexture.Texture != null) {
 					return newTexture;
 				}
 				return null;
 			}
-			else
-			{
+			else {
 				return newTexture;
 			}
 
 		}
 		private static bool hackOnce = false;
-		private static void TextureSizeHack(in GraphicsDevice device)
-		{
-			if (hackOnce) return;
+		private static void TextureSizeHack (in GraphicsDevice device) {
+			if (hackOnce)
+				return;
 			hackOnce = true;
 
-			try
-			{
-				FieldInfo getPrivateField(in object obj, in string name)
-				{
+			try {
+				FieldInfo getPrivateField (in object obj, in string name) {
 					return obj.GetType().GetField(name, BindingFlags.NonPublic | BindingFlags.Instance);
 				}
 
@@ -401,15 +342,13 @@ namespace SpriteMaster
 				var capabilities = capabilitiesProperty.GetValue(device);
 
 				var maxTextureSizeProperty = getPrivateField(capabilities, "MaxTextureSize");
-				if ((int)maxTextureSizeProperty.GetValue(capabilities) < Config.PreferredDimension)
-				{
+				if ((int)maxTextureSizeProperty.GetValue(capabilities) < Config.PreferredDimension) {
 					maxTextureSizeProperty.SetValue(capabilities, Config.PreferredDimension);
 					getPrivateField(capabilities, "MaxTextureAspectRatio").SetValue(capabilities, Config.PreferredDimension / 2);
 					Config.ClampDimension = Config.PreferredDimension;
 				}
 			}
-			catch (Exception ex)
-			{
+			catch (Exception ex) {
 				Debug.ErrorLn($"Failed to hack: {ex.Message}");
 			}
 		}
@@ -434,30 +373,24 @@ namespace SpriteMaster
 
 		internal static volatile uint TotalMemoryUsage = 0;
 
-		internal long MemorySize
-		{
-			get
-			{
-				if (!IsReady || Texture == null)
-				{
+		internal long MemorySize {
+			get {
+				if (!IsReady || Texture == null) {
 					return 0;
 				}
 				return Texture.Width * Texture.Height * sizeof(int);
 			}
 		}
 
-		internal long OriginalMemorySize
-		{
-			get
-			{
+		internal long OriginalMemorySize {
+			get {
 				return originalSize.Width * originalSize.Height * sizeof(int);
 			}
 		}
 
 		internal static readonly Dictionary<ulong, WeakScaledTexture> LocalTextureCache = new Dictionary<ulong, WeakScaledTexture>();
 
-		internal ScaledTexture(string assetName, TextureWrapper textureWrapper, Texture2D source, Bounds sourceRectangle, Bounds indexRectangle, int scale, ulong hash, bool isSprite, bool allowPadding)
-		{
+		internal ScaledTexture (string assetName, TextureWrapper textureWrapper, Texture2D source, Bounds sourceRectangle, Bounds indexRectangle, int scale, ulong hash, bool isSprite, bool allowPadding) {
 			TextureSizeHack(source.GraphicsDevice);
 			IsSprite = isSprite;
 			Hash = hash;
@@ -471,11 +404,10 @@ namespace SpriteMaster
 			this.Name = source.Name.IsBlank() ? assetName : source.Name;
 			originalSize = IsSprite ? sourceRectangle.Extent : new Vector2I(source);
 
-			if (Config.AsyncScaling.Enabled)
-			{
-				new Thread(() =>
-				{
+			if (Config.AsyncScaling.Enabled) {
+				new Thread(() => {
 					Thread.CurrentThread.Priority = ThreadPriority.Lowest;
+					Thread.CurrentThread.Name = "Texture Resampling Thread";
 					Upscaler.Upscale(
 						texture: this,
 						scale: ref refScale,
@@ -487,8 +419,7 @@ namespace SpriteMaster
 					);
 				}).Start();
 			}
-			else
-			{
+			else {
 				// TODO store the HD Texture in _this_ object instead. Will confuse things like subtexture updates, though.
 				this.Texture = Upscaler.Upscale(
 					texture: this,
@@ -500,8 +431,7 @@ namespace SpriteMaster
 					allowPadding: allowPadding
 				);
 
-				if (this.Texture != null)
-				{
+				if (this.Texture != null) {
 					Finish();
 				}
 			}
@@ -512,31 +442,25 @@ namespace SpriteMaster
 		}
 
 		// Async Call
-		internal void Finish()
-		{
+		internal void Finish () {
 			TotalMemoryUsage += Texture.SizeBytes();
 			Texture.Disposing += (object sender, EventArgs args) => { TotalMemoryUsage -= Texture.SizeBytes(); };
 
-			if (IsSprite)
-			{
+			if (IsSprite) {
 				Debug.InfoLn($"Creating HD Sprite [scale {refScale}]: {this.SafeName()} {sourceRectangle}");
 			}
-			else
-			{
+			else {
 				Debug.InfoLn($"Creating HD Spritesheet [scale {refScale}]: {this.SafeName()}");
 			}
 
 			this.Scale = new Vector2(Texture.Width, Texture.Height) / new Vector2(originalSize.Width, originalSize.Height);
 
-			if (Config.RestrictSize)
-			{
+			if (Config.RestrictSize) {
 				var scaledSize = originalSize * refScale;
-				if (scaledSize.Height > Config.ClampDimension)
-				{
+				if (scaledSize.Height > Config.ClampDimension) {
 					Scale.Y = 1f;
 				}
-				if (scaledSize.Width > Config.ClampDimension)
-				{
+				if (scaledSize.Width > Config.ClampDimension) {
 					Scale.X = 1f;
 				}
 			}
@@ -544,13 +468,11 @@ namespace SpriteMaster
 			IsReady = true;
 		}
 
-		internal void Destroy(Texture2D texture)
-		{
+		internal void Destroy (Texture2D texture) {
 			TextureMap.Remove(this, texture);
 		}
 
-		private void OnParentDispose(Texture2D texture)
-		{
+		private void OnParentDispose (Texture2D texture) {
 			Debug.InfoLn($"Parent Texture Disposing: {texture.SafeName()}");
 
 			Destroy(texture);

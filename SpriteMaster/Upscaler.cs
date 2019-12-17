@@ -391,10 +391,6 @@ namespace SpriteMaster {
 									return unchecked((byte)(((uint)sample >> 24) & 0xFF));
 								}
 
-								if (hashString == "23a0d05668d9651b") {
-									Debug.ErrorLn("test");
-								}
-
 								var rawInputSize = input.ReferenceSize;
 								var spriteInputSize = input.Size;
 
@@ -485,7 +481,13 @@ namespace SpriteMaster {
 
 								bool padded = false;
 
-								if (prescaleSize.X <= Config.Resample.Padding.MinSize && prescaleSize.Y <= Config.Resample.Padding.MinSize) {
+								if (
+									(
+										prescaleSize.X <= Config.Resample.Padding.MinSize &&
+										prescaleSize.Y <= Config.Resample.Padding.MinSize
+									) ||
+									Config.Resample.Padding.IgnoreUnknown && (input.Reference.Name == null || input.Reference.Name == "")
+								) {
 									shouldPad = Vector2B.False;
 								}
 
@@ -658,12 +660,15 @@ namespace SpriteMaster {
 							return;
 						}
 						var newTexture = new Texture2D(reference.GraphicsDevice, newSize.Width, newSize.Height, false, SurfaceFormat.Color);
+						newTexture.Name = reference.SafeName() + " [RESAMPLED]";
 						try {
 							newTexture.SetData(bitmapData);
 							texture.Texture = newTexture;
 							texture.Finish();
 						}
-						catch {
+						catch (Exception ex) {
+							Debug.ErrorLn($"There was an exception creating the texture: {ex.Message}");
+							Debug.ErrorLn(ex.StackTrace);
 							newTexture.Dispose();
 							texture.Destroy(reference);
 						}
@@ -673,11 +678,14 @@ namespace SpriteMaster {
 				}
 				else {
 					var newTexture = new Texture2D(input.Reference.GraphicsDevice, newSize.Width, newSize.Height, false, SurfaceFormat.Color);
+					newTexture.Name = input.Reference.SafeName() + " [RESAMPLED]";
 					try {
 						newTexture.SetData(bitmapData);
 						output = newTexture;
 					}
-					catch {
+					catch (Exception ex) {
+						Debug.ErrorLn($"There was an exception in the upscaler: {ex.Message}");
+						Debug.ErrorLn(ex.StackTrace);
 						newTexture.Dispose();
 					}
 				}
