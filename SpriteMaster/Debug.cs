@@ -95,7 +95,7 @@ namespace SpriteMaster {
 		}
 
 		static internal void DumpMemory () {
-			if (!Config.Debug.TextureDump.Enabled)
+			if (!Config.Debug.CacheDump.Enabled)
 				return;
 
 			lock (Console.Error) {

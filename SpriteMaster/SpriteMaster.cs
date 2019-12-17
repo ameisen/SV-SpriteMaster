@@ -20,8 +20,8 @@ namespace SpriteMaster
 			{
 				switch (args.Button)
 				{
-					case Config.Debug.TextureDump.Button:
-						if (Config.Debug.TextureDump.Enabled)
+					case Config.Debug.CacheDump.Button:
+						if (Config.Debug.CacheDump.Enabled)
 						{
 							Debug.DumpMemory();
 						}

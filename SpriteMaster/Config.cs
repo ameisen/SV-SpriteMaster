@@ -32,7 +32,7 @@ namespace SpriteMaster {
 				internal const bool OwnLogFile = true;
 			}
 
-			internal static class TextureDump {
+			internal static class CacheDump {
 				internal const bool Enabled = true;
 				internal const SButton Button = SButton.F10;
 			}
@@ -54,7 +54,10 @@ namespace SpriteMaster {
 			internal const int MaxScale = 5;
 			internal const bool DeSprite = true;
 			internal const bool EnableWrappedAddressing = true;
-			internal const bool EnablePadding = true;
+			internal static class Padding {
+				internal const bool Enabled = true;
+				internal const int MinSize = 4;
+			}
 		}
 
 		internal static class WrapDetection {

@@ -23,7 +23,7 @@ namespace SpriteMaster
 	internal abstract class ITextureMap
 	{
 		protected readonly SharedLock Lock = new SharedLock();
-		protected readonly List<WeakScaledTexture> ScaledTextureReferences = Config.Debug.TextureDump.Enabled ? new List<WeakScaledTexture>() : null;
+		protected readonly List<WeakScaledTexture> ScaledTextureReferences = Config.Debug.CacheDump.Enabled ? new List<WeakScaledTexture>() : null;
 
 		internal static ITextureMap Create()
 		{
@@ -38,13 +38,13 @@ namespace SpriteMaster
 
 		protected void OnAdd(in Texture2D reference, in ScaledTexture texture, in Bounds sourceRectangle)
 		{
-			if (!Config.Debug.TextureDump.Enabled) return;
+			if (!Config.Debug.CacheDump.Enabled) return;
 			ScaledTextureReferences.Add(new WeakScaledTexture(texture));
 		}
 
 		protected void OnRemove(in ScaledTexture scaledTexture, in Texture2D texture)
 		{
-			if (!Config.Debug.TextureDump.Enabled) return;
+			if (!Config.Debug.CacheDump.Enabled) return;
 			try
 			{
 				List<WeakScaledTexture> removeElements = new List<WeakScaledTexture>();
@@ -73,7 +73,7 @@ namespace SpriteMaster
 
 		internal Dictionary<Texture2D, List<ScaledTexture>> GetDump()
 		{
-			if (!Config.Debug.TextureDump.Enabled)
+			if (!Config.Debug.CacheDump.Enabled)
 				return null;
 
 			var result = new Dictionary<Texture2D, List<ScaledTexture>>();

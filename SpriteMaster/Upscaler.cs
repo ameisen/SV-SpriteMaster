@@ -474,19 +474,20 @@ namespace SpriteMaster {
 							if (Config.Resample.Smoothing) {
 								var scalerConfig = new xBRZNet2.Config(wrappedX: wrapped.X, wrappedY: wrapped.Y);
 
-								//ColorSpace.ConvertSRGBToLinear(rawData, Texel.Ordering.ARGB);
-								//ColorSpace.ConvertLinearToSRGB(rawData, Texel.Ordering.ABGR);
-
 								// Do we need to pad the sprite?
 								var prescaleData = rawData;
 								var prescaleSize = input.ReferenceSize;
 
 								var shouldPad = new Vector2B(
-									!(WrappedX.Positive && WrappedX.Negative) && Config.Resample.EnablePadding && allowPadding,
-									!(WrappedY.Positive && WrappedX.Negative) && Config.Resample.EnablePadding && allowPadding
+									!(WrappedX.Positive && WrappedX.Negative) && Config.Resample.Padding.Enabled && allowPadding,
+									!(WrappedY.Positive && WrappedX.Negative) && Config.Resample.Padding.Enabled && allowPadding
 								);
 
 								bool padded = false;
+
+								if (prescaleSize.X <= Config.Resample.Padding.MinSize && prescaleSize.Y <= Config.Resample.Padding.MinSize) {
+									shouldPad = Vector2B.False;
+								}
 
 								if (shouldPad.X || shouldPad.Y) {
 									int padding = scale;
@@ -656,7 +657,7 @@ namespace SpriteMaster {
 						if (reference.IsDisposed) {
 							return;
 						}
-						Texture2D newTexture = new Texture2D(reference.GraphicsDevice, newSize.Width, newSize.Height, false, SurfaceFormat.Color);
+						var newTexture = new Texture2D(reference.GraphicsDevice, newSize.Width, newSize.Height, false, SurfaceFormat.Color);
 						try {
 							newTexture.SetData(bitmapData);
 							texture.Texture = newTexture;
@@ -671,7 +672,7 @@ namespace SpriteMaster {
 					return null;
 				}
 				else {
-					Texture2D newTexture = new Texture2D(input.Reference.GraphicsDevice, newSize.Width, newSize.Height, false, SurfaceFormat.Color);
+					var newTexture = new Texture2D(input.Reference.GraphicsDevice, newSize.Width, newSize.Height, false, SurfaceFormat.Color);
 					try {
 						newTexture.SetData(bitmapData);
 						output = newTexture;
@@ -683,6 +684,7 @@ namespace SpriteMaster {
 			}
 			catch (Exception ex) {
 				Debug.ErrorLn($"An exception was caught during texture processing: {ex.Message}");
+				Debug.ErrorLn(ex.GetStackTrace());
 			}
 
 			//TextureCache.Add(hash, output);

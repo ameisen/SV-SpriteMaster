@@ -9,11 +9,6 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster {
-	// Modified from PyTK.Overrides.OvSpritebatchNew
-	// Origial Source: https://github.com/Platonymous/Stardew-Valley-Mods/blob/master/PyTK/Overrides/OvSpritebatchNew.cs
-	// Original Licence: GNU General Public License v3.0
-	// Original Author: Platonymous
-
 	static class Extension {
 		internal static int ToCoordinate (this float coordinate) {
 			return coordinate.RoundToInt();
@@ -31,7 +26,8 @@ namespace SpriteMaster {
 				return filteredParameters.Select(p => p.ParameterType).ToArray();
 			}
 
-			internal static void Patch (in HarmonyInstance instance, in Type type, string name, in MethodInfo method) {
+			internal static void Patch<T> (in HarmonyInstance instance, string name, in MethodInfo method) {
+				var type = typeof(T);
 				var methodParameters = GetMethodParameters(method);
 				var typeMethod = type.GetMethod(name, methodParameters);
 				if (typeMethod == null) {
@@ -83,17 +79,17 @@ namespace SpriteMaster {
 				return typeof(T).GetMethods(BindingFlags.Static | BindingFlags.NonPublic).Where(m => m.Name == name);
 			}
 
-			foreach (MethodInfo method in GetMethods<Patches.Harmony>("Draw"))
-				Harmony.Patch(instance, typeof(SpriteBatch), "Draw", method);
+			foreach (var method in GetMethods<Patches.Harmony>("Draw"))
+				Harmony.Patch<SpriteBatch>(instance, "Draw", method);
 
-			foreach (MethodInfo method in GetMethods<Patches>("Begin"))
-				Harmony.Patch(instance, typeof(SpriteBatch), "Begin", method);
+			foreach (var method in GetMethods<Patches>("Begin"))
+				Harmony.Patch<SpriteBatch>(instance, "Begin", method);
 
-			foreach (MethodInfo method in GetMethods<Patches>("ApplyChanges"))
-				Harmony.Patch(instance, typeof(GraphicsDeviceManager), "ApplyChanges", method);
+			foreach (var method in GetMethods<Patches>("ApplyChanges"))
+				Harmony.Patch<GraphicsDeviceManager>(instance, "ApplyChanges", method);
 
-			foreach (MethodInfo method in GetMethods<Patches>("Present"))
-				Harmony.Patch(instance, typeof(GraphicsDevice), "Present", method);
+			foreach (var method in GetMethods<Patches>("Present"))
+				Harmony.Patch<GraphicsDevice>(instance, "Present", method);
 
 			// https://github.com/pardeike/Harmony/issues/121
 			//foreach (MethodInfo method in typeof(DrawPatched).GetMethods(BindingFlags.Static | BindingFlags.NonPublic).Where(m => m.Name == "SetData"))
@@ -106,11 +102,12 @@ namespace SpriteMaster {
 			return true;
 		}
 
+		private static readonly SamplerState DefaultSamplerState = SamplerState.LinearClamp;
 		private static bool FetchedThisFrame = false;
 		private static int RemainingTexelFetchBudget = Config.AsyncScaling.TexelFetchFrameBudget;
 		private static bool PushedUpdateThisFrame = false;
-		public static TextureAddressMode CurrentAddressModeU = TextureAddressMode.Clamp;
-		public static TextureAddressMode CurrentAddressModeV = TextureAddressMode.Clamp;
+		public static TextureAddressMode CurrentAddressModeU = DefaultSamplerState.AddressU;
+		public static TextureAddressMode CurrentAddressModeV = DefaultSamplerState.AddressV;
 		public static Blend CurrentBlendSourceMode = BlendState.AlphaBlend.AlphaSourceBlend;
 
 		internal static bool SetData<T> (in Texture2D __instance, T[] data) where T : struct {
@@ -177,21 +174,79 @@ namespace SpriteMaster {
 
 			SetCurrentAddressMode(samplerState);
 			CurrentBlendSourceMode = blendState.AlphaSourceBlend;
+
+			var OriginalState = __instance.GraphicsDevice.SamplerStates[0];
+			var newState = new SamplerState() {
+				AddressU = OriginalState.AddressU,
+				AddressV = OriginalState.AddressV,
+				AddressW = OriginalState.AddressW,
+				MaxAnisotropy = OriginalState.MaxAnisotropy,
+				MaxMipLevel = OriginalState.MaxMipLevel,
+				MipMapLevelOfDetailBias = OriginalState.MipMapLevelOfDetailBias,
+				Name = "RescaledSampler",
+				Tag = OriginalState.Tag,
+				Filter = Config.DrawState.SetLinear ? TextureFilter.Linear : OriginalState.Filter
+			};
+
+			__instance.GraphicsDevice.SamplerStates[0] = newState;
 			return true;
 		}
 
-		private static void MakeSamplerState(ref SamplerState state) {
-			state = new SamplerState() {
-				AddressU = state.AddressU,
-				AddressV = state.AddressV,
-				AddressW = state.AddressW,
-				MaxAnisotropy = state.MaxAnisotropy,
-				MaxMipLevel = state.MaxMipLevel,
-				MipMapLevelOfDetailBias = state.MipMapLevelOfDetailBias,
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private static bool OnBegin2 (
+			SpriteBatch __instance,
+			ref SamplerState samplerState,
+			SpriteSortMode sortMode = SpriteSortMode.Deferred,
+			BlendState blendState = null,
+			DepthStencilState depthStencilState = null,
+			RasterizerState rasterizerState = null,
+			Effect effect = null,
+			Matrix? transformMatrixRef = null
+		) {
+			blendState ??= BlendState.AlphaBlend;
+			samplerState ??= SamplerState.LinearClamp;
+			depthStencilState ??= DepthStencilState.Default;
+			rasterizerState ??= RasterizerState.CullCounterClockwise;
+			var transformMatrix = (transformMatrixRef != null) ? transformMatrixRef.GetValueOrDefault(Matrix.Identity) : Matrix.Identity;
+
+			SetCurrentAddressMode(samplerState);
+			CurrentBlendSourceMode = blendState.AlphaSourceBlend;
+
+			ResetSamplerState(ref samplerState);
+			/*
+			var OriginalState = samplerState;
+			var newState = new SamplerState() {
+				AddressU = OriginalState.AddressU,
+				AddressV = OriginalState.AddressV,
+				AddressW = OriginalState.AddressW,
+				MaxAnisotropy = OriginalState.MaxAnisotropy,
+				MaxMipLevel = OriginalState.MaxMipLevel,
+				MipMapLevelOfDetailBias = OriginalState.MipMapLevelOfDetailBias,
 				Name = "RescaledSampler",
-				Tag = state.Tag,
-				Filter = Config.DrawState.SetLinear ? TextureFilter.Linear : state.Filter
+				Tag = OriginalState.Tag,
+				Filter = Config.DrawState.SetLinear ? TextureFilter.Linear : OriginalState.Filter
 			};
+
+			samplerState = newState;
+			*/
+			return true;
+		}
+
+		internal static void ResetSamplerState(ref SamplerState samplerState) {
+			var OriginalState = samplerState;
+			var newState = new SamplerState() {
+				AddressU = TextureAddressMode.Wrap,
+				AddressV = TextureAddressMode.Wrap,
+				AddressW = OriginalState.AddressW,
+				MaxAnisotropy = OriginalState.MaxAnisotropy,
+				MaxMipLevel = OriginalState.MaxMipLevel,
+				MipMapLevelOfDetailBias = OriginalState.MipMapLevelOfDetailBias,
+				Name = "RescaledSampler",
+				Tag = OriginalState.Tag,
+				Filter = Config.DrawState.SetLinear ? TextureFilter.Linear : OriginalState.Filter
+			};
+
+			samplerState = newState;
 		}
 
 		internal static bool Begin (SpriteBatch __instance) {
@@ -201,17 +256,16 @@ namespace SpriteMaster {
 			return OnBegin(__instance, sortMode, blendState);
 		}
 		internal static bool Begin (SpriteBatch __instance, SpriteSortMode sortMode, BlendState blendState, ref SamplerState samplerState, DepthStencilState depthStencilState, RasterizerState rasterizerState) {
-			MakeSamplerState(ref samplerState);
-			return OnBegin(__instance, sortMode, blendState, samplerState, depthStencilState, rasterizerState);
+			return OnBegin2(__instance, ref samplerState, sortMode, blendState, depthStencilState, rasterizerState);
 		}
 		internal static bool Begin (SpriteBatch __instance, SpriteSortMode sortMode, BlendState blendState, ref SamplerState samplerState, DepthStencilState depthStencilState, RasterizerState rasterizerState, Effect effect) {
-			MakeSamplerState(ref samplerState);
-			return OnBegin(__instance, sortMode, blendState, samplerState, depthStencilState, rasterizerState, effect);
+			return OnBegin2(__instance, ref samplerState, sortMode, blendState, depthStencilState, rasterizerState, effect);
 		}
 		internal static bool Begin (SpriteBatch __instance, SpriteSortMode sortMode, BlendState blendState, ref SamplerState samplerState, DepthStencilState depthStencilState, RasterizerState rasterizerState, Effect effect, Matrix transformMatrix) {
-			MakeSamplerState(ref samplerState);
-			return OnBegin(__instance, sortMode, blendState, samplerState, depthStencilState, rasterizerState, effect, transformMatrix);
+			return OnBegin2(__instance, ref samplerState, sortMode, blendState, depthStencilState, rasterizerState, effect, transformMatrix);
 		}
+
+		private static FieldInfo SamplerStateField = typeof(SpriteBatch).GetField("samplerState", BindingFlags.Instance | BindingFlags.NonPublic);
 
 		private sealed class AddressModeHandler : IDisposable {
 			private const bool Enabled = Config.Resample.EnableWrappedAddressing;
@@ -238,7 +292,14 @@ namespace SpriteMaster {
 					Filter = Config.DrawState.SetLinear ? TextureFilter.Linear : OriginalState.Filter
 				};
 
+				var ti = Batch.GetType().GetTypeInfo();
+				// void SetPlatformRenderState()
+				// void SetRenderState()
+
 				spriteBatch.GraphicsDevice.SamplerStates[0] = newState;
+				SamplerStateField.SetValue(spriteBatch, newState);
+				typeof(SpriteBatch).GetMethod("SetRenderState", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(Batch, null);
+				typeof(SpriteBatch).GetMethod("SetPlatformRenderState", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(Batch, null);
 			}
 
 			public void Dispose () {
@@ -247,6 +308,23 @@ namespace SpriteMaster {
 				}
 
 				Batch.GraphicsDevice.SamplerStates[0] = OriginalState;
+				SamplerStateField.SetValue(Batch, OriginalState);
+				typeof(SpriteBatch).GetMethod("SetRenderState", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(Batch, null);
+				typeof(SpriteBatch).GetMethod("SetPlatformRenderState", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(Batch, null);
+			}
+		}
+
+		internal static readonly ThreadLocal<bool> ReentranceLock = new ThreadLocal<bool>(false);
+		private sealed class ReentranceLockWrapper : IDisposable {
+			private readonly ThreadLocal<bool> ReentranceLock;
+
+			internal ReentranceLockWrapper (in ThreadLocal<bool> reentranceLock) {
+				this.ReentranceLock = reentranceLock;
+				ReentranceLock.Value = true;
+			}
+
+			public void Dispose () {
+				ReentranceLock.Value = false;
 			}
 		}
 
@@ -254,23 +332,8 @@ namespace SpriteMaster {
 			in SpriteBatch @this,
 			Texture2D texture,
 			ref Rectangle sourceRectangle,
-			bool allowPadding,
-			ref Vector2 origin
+			bool allowPadding
 		) {
-			var OriginalState = @this.GraphicsDevice.SamplerStates[0];
-			var newState = new SamplerState() {
-				AddressU = OriginalState.AddressU,
-				AddressV = OriginalState.AddressV,
-				AddressW = OriginalState.AddressW,
-				MaxAnisotropy = OriginalState.MaxAnisotropy,
-				MaxMipLevel = OriginalState.MaxMipLevel,
-				MipMapLevelOfDetailBias = OriginalState.MipMapLevelOfDetailBias,
-				Name = "RescaledSampler",
-				Tag = OriginalState.Tag,
-				Filter = Config.DrawState.SetLinear ? TextureFilter.Linear : OriginalState.Filter
-			};
-			@this.GraphicsDevice.SamplerStates[0] = newState;
-
 			try {
 				if (Config.ClampInvalidBounds) {
 					sourceRectangle = sourceRectangle.ClampTo(new Rectangle(0, 0, texture.Width, texture.Height));
@@ -346,7 +409,7 @@ namespace SpriteMaster {
 			bool allowPadding = true;
 			//origin.X == 0 && origin.Y == 0;
 
-			var scaledTexture = DrawHandler(@this, texture, ref sourceRectangle, allowPadding, ref origin);
+			var scaledTexture = DrawHandler(@this, texture, ref sourceRectangle, allowPadding);
 			if (scaledTexture == null) {
 				return true;
 			}
@@ -376,30 +439,38 @@ namespace SpriteMaster {
 				return false;
 			}
 
-			try {
+			var scaledOrigin = origin / scaledTexture.Scale;
+
+			if (Config.DrawState.SetLinear) {
+				try {
+					using (new ReentranceLockWrapper(ReentranceLock)) {
+						using (new AddressModeHandler(@this, scaledTexture)) {
+							@this.Draw(
+								texture: t,
+								destinationRectangle: destination,
+								sourceRectangle: sourceRectangle,
+								color: color,
+								rotation: rotation,
+								origin: scaledOrigin,
+								effects: effects,
+								layerDepth: layerDepth
+							);
+						}
+					}
+				}
+				catch (Exception ex) {
+					Debug.ErrorLn($"Exception Caught While Drawing: {ex.Message}");
+				}
+			}
+			else {
 				source = sourceRectangle;
-				origin = origin / scaledTexture.Scale;
+				origin = scaledOrigin;
 				texture = t;
-			}
-			catch {
-				Debug.ErrorLn("Exception Caught While Drawing");
+
+				return true;
 			}
 
-			var OriginalState = @this.GraphicsDevice.SamplerStates[0];
-			var newState = new SamplerState() {
-				AddressU = OriginalState.AddressU,
-				AddressV = OriginalState.AddressV,
-				AddressW = OriginalState.AddressW,
-				MaxAnisotropy = OriginalState.MaxAnisotropy,
-				MaxMipLevel = OriginalState.MaxMipLevel,
-				MipMapLevelOfDetailBias = OriginalState.MipMapLevelOfDetailBias,
-				Name = "RescaledSampler",
-				Tag = OriginalState.Tag,
-				Filter = Config.DrawState.SetLinear ? TextureFilter.Linear : OriginalState.Filter
-			};
-			@this.GraphicsDevice.SamplerStates[0] = newState;
-
-			return true;
+			return false;
 		}
 		internal static bool DrawPatched (
 			in SpriteBatch @this,
@@ -419,87 +490,76 @@ namespace SpriteMaster {
 			bool allowPadding = true;
 			//origin.X == 0 && origin.Y == 0;
 
-			var scaledTexture = DrawHandler(@this, texture, ref sourceRectangle, allowPadding, ref origin);
+			var scaledTexture = DrawHandler(@this, texture, ref sourceRectangle, allowPadding);
 			if (scaledTexture == null) {
 				return true;
 			}
 
 			var t = scaledTexture.Texture;
 
-			scale /= scaledTexture.Scale;
-
-			bool hasOrigin = false;// (origin.X != 0) && (origin.Y != 0);
+			var adjustedScale = scale / scaledTexture.Scale;
+			var adjustedPosition = position;
+			var adjustedOrigin = origin;
 
 			if (!scaledTexture.Padding.IsZero) {
 				var textureSize = new Vector2(t.Width, t.Height);
 				var innerSize = new Vector2(scaledTexture.UnpaddedSize.Width, scaledTexture.UnpaddedSize.Height);
 
-				var originalPaddingSize = textureSize - innerSize;
-				if (hasOrigin) {
-					origin += new Vector2(scaledTexture.Padding.X, scaledTexture.Padding.Y) * 0.5f;
-				}
-
 				// This is the scale factor to bring the inner size to the draw size.
 				var innerRatio = textureSize / innerSize;
 
 				// Scale the... scale by the scale factor.
-				scale *= innerRatio;
+				adjustedScale *= innerRatio;
 
 				// This is the new size the sprite will draw on the screen.
-				var drawSize = textureSize * scale;
+				var drawSize = textureSize * adjustedScale;
 				// This is the new size the inner sprite will draw on the screen.
-				var scaledInnerSize = innerSize * scale;
+				var scaledInnerSize = innerSize * adjustedScale;
 
 				// This is the size of an edge of padding.
 				var paddingSize = (drawSize - scaledInnerSize) * 0.5f;
 
-				if (!hasOrigin) {
-					position -= paddingSize;
-				}
+				adjustedPosition -= paddingSize;
 
-				//origin += paddingSize;
-
-				origin *= scaledTexture.Scale;
-				origin /= innerRatio;
-
-				//originOffset -= (textureSize - innerSize) * 0.5f;
+				adjustedOrigin *= scaledTexture.Scale;
+				adjustedOrigin /= innerRatio;
 			}
 			else {
-				origin *= scaledTexture.Scale;
+				adjustedOrigin *= scaledTexture.Scale;
 			}
 
-			//ScalingFactor.X = 1.5f;
-			//ScalingFactor.Y = 1.5f;
-
-			//ScalingFactor = scaledTexture.Scale;
-
-			try {
-				// The math here is certainly more fun since we're working with an offset and a scale rather than just a rectangle!
-				// The position should stay unchanged, but the scale needs to be adjusted by the inverse of the scaled... scale
-
+			if (Config.DrawState.SetLinear) {
+				try {
+					using (new ReentranceLockWrapper(ReentranceLock)) {
+						using (new AddressModeHandler(@this, scaledTexture)) {
+							@this.Draw(
+								texture: t,
+								position: adjustedPosition,
+								sourceRectangle: sourceRectangle,
+								color: color,
+								rotation: rotation,
+								origin: adjustedOrigin,
+								scale: adjustedScale,
+								effects: effects,
+								layerDepth: layerDepth
+							);
+						}
+					}
+				}
+				catch (Exception ex) {
+					Debug.ErrorLn($"Exception Caught While Drawing: {ex.Message}");
+				}
+			}
+			else {
 				texture = t;
 				source = sourceRectangle;
-				//origin = origin / originScale;
-			}
-			catch {
-				Debug.ErrorLn("Exception Caught While Drawing");
+				origin = adjustedOrigin;
+				scale = adjustedScale;
+				position = adjustedPosition;
+				return true;
 			}
 
-			var OriginalState = @this.GraphicsDevice.SamplerStates[0];
-			var newState = new SamplerState() {
-				AddressU = OriginalState.AddressU,
-				AddressV = OriginalState.AddressV,
-				AddressW = OriginalState.AddressW,
-				MaxAnisotropy = OriginalState.MaxAnisotropy,
-				MaxMipLevel = OriginalState.MaxMipLevel,
-				MipMapLevelOfDetailBias = OriginalState.MipMapLevelOfDetailBias,
-				Name = "RescaledSampler",
-				Tag = OriginalState.Tag,
-				Filter = Config.DrawState.SetLinear ? TextureFilter.Linear : OriginalState.Filter
-			};
-			@this.GraphicsDevice.SamplerStates[0] = newState;
-
-			return true;
+			return false;
 		}
 
 		private partial class Harmony {
@@ -515,7 +575,8 @@ namespace SpriteMaster {
 				in SpriteEffects effects,
 				in float layerDepth
 			) {
-				if (!Config.Enabled) return true;
+				if (!Config.Enabled || ReentranceLock.Value)
+					return true;
 
 				return DrawPatched(
 					@this: __instance,
@@ -542,7 +603,8 @@ namespace SpriteMaster {
 				in SpriteEffects effects = SpriteEffects.None,
 				in float layerDepth = 0f
 			) {
-				if (!Config.Enabled) return true;
+				if (!Config.Enabled || ReentranceLock.Value)
+					return true;
 
 				@this.Draw(
 					texture: texture,
@@ -592,7 +654,7 @@ namespace SpriteMaster {
 				in SpriteEffects effects = SpriteEffects.None,
 				in float layerDepth = 0f
 			) {
-				if (!Config.Enabled)
+				if (!Config.Enabled || ReentranceLock.Value)
 					return true;
 
 				@this.Draw(
@@ -612,7 +674,8 @@ namespace SpriteMaster {
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			internal static bool Draw (SpriteBatch __instance, ref Texture2D texture, ref Vector2 position, ref Rectangle? sourceRectangle, Color color, float rotation, ref Vector2 origin, ref Vector2 scale, SpriteEffects effects, float layerDepth) {
-				if (!Config.Enabled) return true;
+				if (!Config.Enabled || ReentranceLock.Value)
+					return true;
 
 				return DrawPatched(
 					@this: __instance,
