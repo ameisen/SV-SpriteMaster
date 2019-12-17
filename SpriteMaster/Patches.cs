@@ -135,10 +135,19 @@ namespace SpriteMaster {
 
 			// https://github.com/pardeike/Harmony/issues/121
 			foreach (var method in GetMethods<Patches>("SetData")) {
+				Harmony.Patch<Texture2D, char>(instance, "SetData", post: method);
 				Harmony.Patch<Texture2D, byte>(instance, "SetData", post: method);
 				Harmony.Patch<Texture2D, sbyte>(instance, "SetData", post: method);
+				Harmony.Patch<Texture2D, short>(instance, "SetData", post: method);
+				Harmony.Patch<Texture2D, ushort>(instance, "SetData", post: method);
 				Harmony.Patch<Texture2D, int>(instance, "SetData", post: method);
 				Harmony.Patch<Texture2D, uint>(instance, "SetData", post: method);
+				Harmony.Patch<Texture2D, long>(instance, "SetData", post: method);
+				Harmony.Patch<Texture2D, ulong>(instance, "SetData", post: method);
+				Harmony.Patch<Texture2D, float>(instance, "SetData", post: method);
+				Harmony.Patch<Texture2D, double>(instance, "SetData", post: method);
+				Harmony.Patch<Texture2D, Vector2>(instance, "SetData", post: method);
+				Harmony.Patch<Texture2D, Vector4>(instance, "SetData", post: method);
 				Harmony.Patch<Texture2D, Color>(instance, "SetData", post: method);
 				Harmony.Patch<Texture2D, System.Drawing.Color>(instance, "SetData", post: method);
 			}
