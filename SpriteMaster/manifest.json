@@ -6,5 +6,8 @@
   "UniqueID": "DigitalCarbide.SpriteMaster",
   "EntryDll": "SpriteMaster.dll",
   "MinimumApiVersion": "3.0.1",
-  "UpdateKeys": []
+  "UpdateKeys": [
+    "GitHub:ameisen/SV-SpriteMaster",
+    "Nexus:4922"
+  ]
 }

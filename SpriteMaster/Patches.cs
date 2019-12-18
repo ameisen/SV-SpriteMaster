@@ -73,13 +73,23 @@ namespace SpriteMaster {
 				return typeMethod;
 			}
 
+			internal static int GetPriority(MethodInfo method, int defaultPriority) {
+				try {
+					var priorityAttribute = method.GetCustomAttribute<HarmonyPriority>();
+					return priorityAttribute.info.prioritiy;
+				}
+				catch {
+					return defaultPriority;
+				}
+			}
+
 			internal static void Patch<T> (HarmonyInstance instance, string name, MethodInfo pre = null, MethodInfo post = null, int priority = Priority.Last) {
 				var referenceMethod = pre ?? post;
 				var typeMethod = GetPatchMethod<T>(name, referenceMethod);
 				instance.Patch(
 					typeMethod,
-					(pre == null) ? null : new HarmonyMethod(pre) { prioritiy = priority },
-					(post == null) ? null : new HarmonyMethod(post) { prioritiy = priority },
+					(pre == null) ? null : new HarmonyMethod(pre) { prioritiy = GetPriority(pre, priority) },
+					(post == null) ? null : new HarmonyMethod(post) { prioritiy = GetPriority(post, priority) },
 					null
 				);
 			}
@@ -95,13 +105,24 @@ namespace SpriteMaster {
 					}
 			}
 
+			internal static void Patch<T> (HarmonyInstance instance, Type type, string name, MethodInfo pre = null, MethodInfo post = null, int priority = Priority.Last) {
+				var referenceMethod = pre ?? post;
+				var typeMethod = GetPatchMethod<T>(name, referenceMethod).MakeGenericMethod(type);
+				instance.Patch(
+					typeMethod,
+					(pre == null) ? null : new HarmonyMethod(pre.MakeGenericMethod(type)) { prioritiy = GetPriority(pre, priority) },
+					(post == null) ? null : new HarmonyMethod(post.MakeGenericMethod(type)) { prioritiy = GetPriority(post, priority) },
+					null
+				);
+			}
+
 			internal static void Patch<T, U> (HarmonyInstance instance, string name, MethodInfo pre = null, MethodInfo post = null, int priority = Priority.Last) where U : struct {
 				var referenceMethod = pre ?? post;
 				var typeMethod = GetPatchMethod<T>(name, referenceMethod).MakeGenericMethod(typeof(U));
 				instance.Patch(
 					typeMethod,
-					(pre == null) ? null : new HarmonyMethod(pre.MakeGenericMethod(typeof(U))) { prioritiy = priority },
-					(post == null) ? null : new HarmonyMethod(post.MakeGenericMethod(typeof(U))) { prioritiy = priority },
+					(pre == null) ? null : new HarmonyMethod(pre.MakeGenericMethod(typeof(U))) { prioritiy = GetPriority(pre, priority) },
+					(post == null) ? null : new HarmonyMethod(post.MakeGenericMethod(typeof(U))) { prioritiy = GetPriority(post, priority) },
 					null
 				);
 			}
@@ -124,6 +145,8 @@ namespace SpriteMaster {
 			}
 
 			Harmony.Patch<SpriteBatch>(instance, "Draw", pre: GetMethods<Patches.Harmony>("Draw"));
+			Harmony.Patch<SpriteBatch>(instance, "Draw", pre: GetMethods<Patches.Harmony>("DrawFirst"));
+			Harmony.Patch<SpriteBatch>(instance, "Draw", pre: GetMethods<Patches.Harmony>("DrawLast"));
 
 			Harmony.Patch<SpriteBatch>(instance, "Begin", pre: GetMethods<Patches>("Begin"));
 
@@ -133,29 +156,60 @@ namespace SpriteMaster {
 
 			Harmony.Patch<SpriteBatch>(instance, "PlatformRenderBatch", pre: GetMethods<Patches>("PlatformRenderBatch"), post: GetMethods<Patches>("PlatformRenderBatchPost"));
 
+			/*
+			var typeSet = new HashSet<Type>();
+			var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+			foreach (var assembly in assemblies) {
+				foreach (var module in assembly.GetLoadedModules()) {
+					var types = module.GetTypes();
+					foreach (var t in types) {
+						if (t.IsValueType) {
+							typeSet.Add(t);
+						}
+					}
+				}
+			}
+			*/
+
 			// https://github.com/pardeike/Harmony/issues/121
 			foreach (var method in GetMethods<Patches>("SetData")) {
-				Harmony.Patch<Texture2D, char>(instance, "SetData", post: method);
-				Harmony.Patch<Texture2D, byte>(instance, "SetData", post: method);
-				Harmony.Patch<Texture2D, sbyte>(instance, "SetData", post: method);
-				Harmony.Patch<Texture2D, short>(instance, "SetData", post: method);
-				Harmony.Patch<Texture2D, ushort>(instance, "SetData", post: method);
-				Harmony.Patch<Texture2D, int>(instance, "SetData", post: method);
-				Harmony.Patch<Texture2D, uint>(instance, "SetData", post: method);
-				Harmony.Patch<Texture2D, long>(instance, "SetData", post: method);
-				Harmony.Patch<Texture2D, ulong>(instance, "SetData", post: method);
-				Harmony.Patch<Texture2D, float>(instance, "SetData", post: method);
-				Harmony.Patch<Texture2D, double>(instance, "SetData", post: method);
-				Harmony.Patch<Texture2D, Vector2>(instance, "SetData", post: method);
-				Harmony.Patch<Texture2D, Vector4>(instance, "SetData", post: method);
-				Harmony.Patch<Texture2D, Color>(instance, "SetData", post: method);
-				Harmony.Patch<Texture2D, System.Drawing.Color>(instance, "SetData", post: method);
+				/*
+				foreach (var type in typeSet) {
+					try {
+						Harmony.Patch<Texture2D>(instance, type, "SetData", post: method);
+					}
+					catch {
+
+					}
+				}
+				*/
+				foreach (var type in new [] {
+					typeof(char),
+					typeof(byte),
+					typeof(sbyte),
+					typeof(short),
+					typeof(ushort),
+					typeof(int),
+					typeof(uint),
+					typeof(long),
+					typeof(ulong),
+					typeof(float),
+					typeof(double),
+					typeof(Vector2),
+					typeof(Vector3),
+					typeof(Vector4),
+					typeof(Color),
+					typeof(System.Drawing.Color)
+				}) {
+					Harmony.Patch<Texture2D>(instance, type, "SetData", post: method);
+				}
 			}
 
 			//foreach (MethodInfo method in typeof(DrawPatched).GetMethods(BindingFlags.Static | BindingFlags.NonPublic).Where(m => m.Name == "SetData"))
 			//	Harmony.Patch(instance, typeof(Texture2D), "SetData", method);
 		}
 
+		[HarmonyPriority(Priority.First)]
 		internal static bool PlatformRenderBatch (
 			SpriteBatch __instance,
 			Texture2D texture,
@@ -209,6 +263,7 @@ namespace SpriteMaster {
 			return true;
 		}
 
+		[HarmonyPriority(Priority.Last)]
 		internal static void PlatformRenderBatchPost (
 			SpriteBatch __instance,
 			Texture2D texture,
@@ -227,7 +282,7 @@ namespace SpriteMaster {
 			}
 		}
 
-
+		[HarmonyPriority(Priority.Last)]
 		internal static bool ApplyChanges (GraphicsDeviceManager __instance) {
 			var @this = __instance;
 
@@ -329,6 +384,7 @@ namespace SpriteMaster {
 			return true;
 		}
 
+		[HarmonyPriority(Priority.First)]
 		internal static bool Begin (SpriteBatch __instance) {
 			__instance.Begin(
 				SpriteSortMode.Deferred,
@@ -341,6 +397,7 @@ namespace SpriteMaster {
 			);
 			return false;
 		}
+		[HarmonyPriority(Priority.First)]
 		internal static bool Begin (SpriteBatch __instance, SpriteSortMode sortMode, BlendState blendState) {
 			__instance.Begin(
 				sortMode,
@@ -353,6 +410,7 @@ namespace SpriteMaster {
 			);
 			return false;
 		}
+		[HarmonyPriority(Priority.First)]
 		internal static bool Begin (SpriteBatch __instance, SpriteSortMode sortMode, BlendState blendState, SamplerState samplerState, DepthStencilState depthStencilState, RasterizerState rasterizerState) {
 			__instance.Begin(
 				sortMode,
@@ -365,6 +423,7 @@ namespace SpriteMaster {
 			);
 			return false;
 		}
+		[HarmonyPriority(Priority.First)]
 		internal static bool Begin (SpriteBatch __instance, SpriteSortMode sortMode, BlendState blendState, SamplerState samplerState, DepthStencilState depthStencilState, RasterizerState rasterizerState, Effect effect) {
 			__instance.Begin(
 				sortMode,
@@ -447,7 +506,7 @@ namespace SpriteMaster {
 
 		// new AddressModeHandler(__instance, scaledTexture)
 
-		internal static bool DrawPatched (
+		internal static bool DrawFirstPatched (
 			SpriteBatch @this,
 			ref Texture2D texture,
 			ref Rectangle destination,
@@ -467,8 +526,6 @@ namespace SpriteMaster {
 			if (scaledTexture == null) {
 				return true;
 			}
-
-			var t = scaledTexture.Texture;
 
 			if (!scaledTexture.Padding.IsZero) {
 				// Convert the draw into the other draw style. This has to be done because the padding potentially has
@@ -492,6 +549,30 @@ namespace SpriteMaster {
 				);
 				return false;
 			}
+			return true;
+		}
+
+		internal static bool DrawLastPatched (
+			SpriteBatch @this,
+			ref Texture2D texture,
+			ref Rectangle destination,
+			ref Rectangle? source,
+			Color color,
+			float rotation,
+			ref Vector2 origin,
+			SpriteEffects effects,
+			float layerDepth
+		) {
+			var sourceRectangle = source.GetValueOrDefault(new Rectangle(0, 0, texture.Width, texture.Height));
+
+			bool allowPadding = true;
+
+			var scaledTexture = DrawHandler(@this, texture, ref sourceRectangle, allowPadding);
+			if (scaledTexture == null) {
+				return true;
+			}
+
+			var t = scaledTexture.Texture;
 
 			var scaledOrigin = origin / scaledTexture.Scale;
 
@@ -574,7 +655,8 @@ namespace SpriteMaster {
 
 		private partial class Harmony {
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			internal static bool Draw (
+			[HarmonyPriority(Priority.First)]
+			internal static bool DrawFirst (
 				SpriteBatch __instance,
 				ref Texture2D texture,
 				ref Rectangle destinationRectangle,
@@ -588,7 +670,7 @@ namespace SpriteMaster {
 				if (!Config.Enabled)
 					return true;
 
-				return DrawPatched(
+				return DrawFirstPatched(
 					@this: __instance,
 					texture: ref texture,
 					destination: ref destinationRectangle,
@@ -601,6 +683,34 @@ namespace SpriteMaster {
 				);
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			[HarmonyPriority(Priority.First)]
+			internal static bool DrawLast (
+				SpriteBatch __instance,
+				ref Texture2D texture,
+				ref Rectangle destinationRectangle,
+				ref Rectangle? sourceRectangle,
+				Color color,
+				float rotation,
+				ref Vector2 origin,
+				SpriteEffects effects,
+				float layerDepth
+			) {
+				if (!Config.Enabled)
+					return true;
+
+				return DrawLastPatched(
+					@this: __instance,
+					texture: ref texture,
+					destination: ref destinationRectangle,
+					source: ref sourceRectangle,
+					color: color,
+					rotation: rotation,
+					origin: ref origin,
+					effects: effects,
+					layerDepth: layerDepth
+				);
+			}
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			private static bool Redraw (
 				SpriteBatch @this,
@@ -631,6 +741,7 @@ namespace SpriteMaster {
 			}
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			[HarmonyPriority(Priority.First)]
 			internal static bool Draw (SpriteBatch __instance, Texture2D texture, Rectangle destinationRectangle, Rectangle? sourceRectangle, Color color) {
 				return Redraw(
 					@this: __instance,
@@ -642,6 +753,7 @@ namespace SpriteMaster {
 			}
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			[HarmonyPriority(Priority.First)]
 			internal static bool Draw (SpriteBatch __instance, Texture2D texture, Rectangle destinationRectangle, Color color) {
 				return Redraw(
 					@this: __instance,
@@ -683,6 +795,7 @@ namespace SpriteMaster {
 			}
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			[HarmonyPriority(Priority.Last)]
 			internal static bool Draw (SpriteBatch __instance, ref Texture2D texture, ref Vector2 position, ref Rectangle? sourceRectangle, Color color, float rotation, ref Vector2 origin, ref Vector2 scale, SpriteEffects effects, float layerDepth) {
 				if (!Config.Enabled)
 					return true;
@@ -701,6 +814,7 @@ namespace SpriteMaster {
 				);
 			}
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			[HarmonyPriority(Priority.First)]
 			internal static bool Draw (SpriteBatch __instance, Texture2D texture, Vector2 position, Rectangle? sourceRectangle, Color color, float rotation, Vector2 origin, float scale, SpriteEffects effects, float layerDepth) {
 				return Redraw(
 					@this: __instance,
@@ -716,6 +830,7 @@ namespace SpriteMaster {
 				);
 			}
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			[HarmonyPriority(Priority.First)]
 			internal static bool Draw (SpriteBatch __instance, Texture2D texture, Vector2 position, Rectangle? sourceRectangle, Color color) {
 				return Redraw(
 					@this: __instance,
@@ -726,6 +841,7 @@ namespace SpriteMaster {
 				);
 			}
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			[HarmonyPriority(Priority.First)]
 			internal static bool Draw (SpriteBatch __instance, Texture2D texture, Vector2 position, Color color) {
 				return Redraw(
 					@this: __instance,

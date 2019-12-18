@@ -50,7 +50,7 @@ namespace SpriteMaster {
 			}
 
 			internal static class CacheDump {
-				internal const bool Enabled = true;
+				internal const bool Enabled = IsDebug;
 				internal const SButton Button = SButton.F10;
 			}
 
@@ -90,8 +90,8 @@ namespace SpriteMaster {
 		internal static class AsyncScaling {
 			internal const bool Enabled = true;
 			internal const bool CanFetchAndLoadSameFrame = true;
-			internal const int MaxLoadsPerFrame = 1;
-			internal const int TexelFetchFrameBudget = 256 * 256;
+			internal const int MaxLoadsPerFrame = 2;
+			internal const int TexelFetchFrameBudget = 2 * 256 * 256;
 		}
 
 		internal static class Cache {
