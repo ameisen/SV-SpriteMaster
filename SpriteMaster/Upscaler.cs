@@ -288,10 +288,10 @@ namespace SpriteMaster {
 			if (Config.RestrictSize) {
 				var scaledTestSize = inputSize * scale;
 				if (scaledTestSize.Width > Config.ClampDimension) {
-					newSize.Width = input.ReferenceSize.Width;
+					newSize.Width = inputSize.Width;
 				}
 				if (scaledTestSize.Height > Config.ClampDimension) {
-					newSize.Height = input.ReferenceSize.Height;
+					newSize.Height = inputSize.Height;
 				}
 			}
 
@@ -342,9 +342,9 @@ namespace SpriteMaster {
 									}
 
 									if (!texture.Padding.IsEmpty) {
-										var paddedSize = scaledSize + texture.Padding * 2;
+										var paddedSize = inputSize + texture.Padding * 2;
 										scaledDimensions = newSize = paddedSize;
-										scaledSize = input.ReferenceSize * scale;
+										scaledSize = inputSize * scale;
 
 										scaledDimensions = newSize = scaledSize = paddedSize * scale;
 									}

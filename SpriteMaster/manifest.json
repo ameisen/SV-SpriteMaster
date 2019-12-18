@@ -1,9 +1,10 @@
 ﻿{
   "Name": "SpriteMaster",
-  "Author": "Digital Carbide",
+  "Author": "mkukli",
   "Version": "0.9.8",
   "Description": "Resample's sprites on the fly to improve resolution and quality.",
   "UniqueID": "DigitalCarbide.SpriteMaster",
   "EntryDll": "SpriteMaster.dll",
-  "MinimumApiVersion": "3.0.1"
+  "MinimumApiVersion": "3.0.1",
+  "UpdateKeys": []
 }

@@ -91,7 +91,7 @@ namespace SpriteMaster {
 			internal const bool Enabled = true;
 			internal const bool CanFetchAndLoadSameFrame = true;
 			internal const int MaxLoadsPerFrame = 1;
-			internal const int TexelFetchFrameBudget = 1024 * 1024;
+			internal const int TexelFetchFrameBudget = 256 * 256;
 		}
 
 		internal static class Cache {
