@@ -14,10 +14,10 @@
 		<Platforms>x86</Platforms>
 		<RunAnalyzersDuringLiveAnalysis>false</RunAnalyzersDuringLiveAnalysis>
 		<RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
-		<Authors>Digital Carbide</Authors>
+		<Authors>mkukli</Authors>
 		<Company>Digital Carbide</Company>
 		<PackageLicenseFile>LICENSE.MD</PackageLicenseFile>
-		<Copyright>Digital Carbide</Copyright>
+		<Copyright>mkukli</Copyright>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
