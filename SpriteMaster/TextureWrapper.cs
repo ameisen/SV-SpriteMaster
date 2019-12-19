@@ -41,10 +41,10 @@ namespace SpriteMaster {
 				DataCache.Add(reference, new WeakReference<byte[]>(Data));
 			}
 
-			BlendEnabled = Patches.CurrentBlendSourceMode != Blend.One;
+			BlendEnabled = DrawState.CurrentBlendSourceMode != Blend.One;
 			Wrapped = new Vector2B(
-				Patches.CurrentAddressModeU == TextureAddressMode.Wrap,
-				Patches.CurrentAddressModeV == TextureAddressMode.Wrap
+				DrawState.CurrentAddressModeU == TextureAddressMode.Wrap,
+				DrawState.CurrentAddressModeV == TextureAddressMode.Wrap
 			);
 		}
 

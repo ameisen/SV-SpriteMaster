@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.Xna.Framework;
+using SpriteMaster.Types;
+using System;
 
 namespace SpriteMaster.Extensions {
 	internal static class Floating {
@@ -19,6 +21,18 @@ namespace SpriteMaster.Extensions {
 		}
 		internal static int TruncateInt (this double v) {
 			return (int)v;
+		}
+
+		internal static int ToCoordinate (this float coordinate) {
+			return coordinate.NearestInt();
+		}
+
+		internal static int ToCoordinate (this double coordinate) {
+			return coordinate.NearestInt();
+		}
+
+		internal static Vector2I ToCoordinate (this Vector2 coordinate) {
+			return new Vector2I(coordinate.X.NearestInt(), coordinate.Y.NearestInt());
 		}
 	}
 }

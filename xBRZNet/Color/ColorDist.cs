@@ -36,12 +36,14 @@ namespace xBRZNet2.Color {
 			// Alpha gives some interesting properties.
 			// We techncially cannot guarantee that the color is correct once we are in transparent areas, but we might still want to blend there.
 
+#pragma warning disable 0162
 			if (MultiplyAlpha) {
 				var aDiff = 0xFF - TexelDiff(pix1, pix2, ColorConstant.Shift.Alpha);
 				rDiff = (rDiff * aDiff) / 0xFF;
 				gDiff = (gDiff * aDiff) / 0xFF;
 				bDiff = (bDiff * aDiff) / 0xFF;
 			}
+#pragma warning restore 0162
 
 			const double kB = 0.0722; //ITU-R BT.709 conversion
 			const double kR = 0.2126;

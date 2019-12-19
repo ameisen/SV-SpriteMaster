@@ -268,25 +268,30 @@ namespace SpriteMaster {
 			}
 		}
 
-		static internal ScaledTexture Get (Texture2D texture, Bounds sourceRectangle, Bounds indexRectangle, bool allowPadding) {
+		private static bool LegalFormat(Texture2D texture) {
+			return texture.Format == SurfaceFormat.Color;
+		}
+
+		private static bool Validate(Texture2D texture) {
 			int textureArea = texture.Width * texture.Height;
 
 			if (textureArea == 0 || texture.IsDisposed) {
-				return null;
+				return false;
 			}
 
 			if (Config.IgnoreUnknownTextures && (texture.Name == null || texture.Name == "")) {
-				return null;
-			}
-
-			bool LegalFormat (SurfaceFormat format) {
-				switch (format) {
-					case SurfaceFormat.Color:
-						return true;
-				}
 				return false;
 			}
-			if (!LegalFormat(texture.Format)) {
+
+			if (!LegalFormat(texture)) {
+				return false;
+			}
+
+			return true;
+		}
+
+		static internal ScaledTexture Fetch (Texture2D texture, Bounds sourceRectangle, Bounds indexRectangle, bool allowPadding = true) {
+			if (!Validate(texture)) {
 				return null;
 			}
 
@@ -294,7 +299,19 @@ namespace SpriteMaster {
 				return scaleTexture;
 			}
 
-			if (Config.AsyncScaling.Enabled && !Patches.GetUpdateToken(textureArea)) {
+			return null;
+		}
+
+		static internal ScaledTexture Get (Texture2D texture, Bounds sourceRectangle, Bounds indexRectangle, bool allowPadding = true) {
+			if (!Validate(texture)) {
+				return null;
+			}
+
+			if (TextureMap.TryGet(texture, indexRectangle, out var scaleTexture)) {
+				return scaleTexture;
+			}
+
+			if (Config.AsyncScaling.Enabled && !DrawState.GetUpdateToken(texture.Width * texture.Height)) {
 				return null;
 			}
 

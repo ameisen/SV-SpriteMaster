@@ -1,7 +1,7 @@
 ﻿using Harmony;
+using SpriteMaster.HarmonyExt;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
-using System.Reflection;
 
 namespace SpriteMaster {
 	public sealed class SpriteMaster : Mod {
@@ -14,8 +14,7 @@ namespace SpriteMaster {
 
 		public override void Entry (IModHelper help) {
 			var instance = HarmonyInstance.Create($"DigitalCarbide.${Config.ModuleName}");
-			Patches.InitializePatch(instance);
-			instance.PatchAll(Assembly.GetExecutingAssembly());
+			instance.ApplyPatches();
 
 			help.Events.Input.ButtonPressed += (object sender, ButtonPressedEventArgs args) => {
 				switch (args.Button) {
