@@ -50,7 +50,17 @@ namespace SpriteMaster {
 
 		static Debug () {
 			if (Config.Debug.Logging.OwnLogFile) {
-				LogFile = new StreamWriter(LocalLogPath);
+				// For some reason, on Linux it breaks if the log file could not be created?
+				try {
+					Directory.CreateDirectory(Path.GetDirectoryName(LocalLogPath));
+					LogFile = new StreamWriter(
+						path: LocalLogPath,
+						append: false
+					);
+				}
+				catch {
+					WarningLn($"Could not create log file at {LocalLogPath}");
+				}
 			}
 		}
 
@@ -186,10 +196,12 @@ namespace SpriteMaster {
 		[DebuggerStepThrough, DebuggerHidden(), Untraced]
 		static private void DebugWrite (this TextWriter writer, ConsoleColor color, string str) {
 			lock (writer) {
-				try {
-					LogFile.Write(str);
+				if (LogFile != null) {
+					try {
+						LogFile.Write(str);
+					}
+					catch { /* ignore errors */ }
 				}
-				catch { /* ignore errors */ }
 
 				Console.ForegroundColor = color;
 				try {
