@@ -45,7 +45,7 @@ namespace SpriteMaster {
 
 		internal static class Debug {
 			internal static class Logging {
-				internal const bool LogInfo = IsDebug;
+				internal const bool LogInfo = true;
 				internal static bool LogWarnings = true;
 				internal static bool LogErrors = true;
 				internal const bool OwnLogFile = true;

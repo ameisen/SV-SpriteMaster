@@ -160,7 +160,9 @@ namespace SpriteMaster {
 
 				var spriteMap = Map.GetOrCreateValue(reference);
 				spriteMap.Add(rectangleHash, texture);
-				ScaledTextureReferences.Add(new WeakScaledTexture(texture));
+
+				if (Config.Debug.CacheDump.Enabled)
+					ScaledTextureReferences.Add(new WeakScaledTexture(texture));
 			}
 		}
 
