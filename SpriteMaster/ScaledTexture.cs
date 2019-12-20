@@ -436,7 +436,7 @@ namespace SpriteMaster {
 				Reference = reference.MakeWeak();
 				Texture = texture;
 
-				reference.Disposing += (object obj, EventArgs args) => ((ManagedTexture2D)obj).OnParentDispose();
+				reference.Disposing += (object obj, EventArgs args) => OnParentDispose();
 			}
 
 			private void OnParentDispose() {
