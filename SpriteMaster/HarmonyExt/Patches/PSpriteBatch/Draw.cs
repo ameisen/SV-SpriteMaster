@@ -204,10 +204,9 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 				// This is the size of an edge of padding.
 				var paddingSize = (drawSize - scaledInnerSize) * 0.5f;
 
-				adjustedPosition -= paddingSize;
-
 				adjustedOrigin *= scaledTexture.Scale;
 				adjustedOrigin /= innerRatio;
+				adjustedOrigin += (textureSize - innerSize) * 0.5f;
 			}
 			else {
 				adjustedOrigin *= scaledTexture.Scale;
