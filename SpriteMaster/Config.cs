@@ -93,8 +93,8 @@ namespace SpriteMaster {
 		internal static class AsyncScaling {
 			internal static bool Enabled = true;
 			internal static bool CanFetchAndLoadSameFrame = true;
-			internal static int MaxLoadsPerFrame = -1;
-			internal static int ScalingBudgetPerFrame = 32 * 256 * 256;
+			internal static int MaxLoadsPerFrame = 2;
+			internal static int ScalingBudgetPerFrame = 2 * 256 * 256;
 		}
 
 		internal static class Cache {
