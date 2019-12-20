@@ -146,6 +146,13 @@ namespace SpriteMaster {
 		private static readonly ConditionalWeakTable<Texture2D, MetaData> MetaCache = new ConditionalWeakTable<Texture2D, MetaData>();
 		//private static Dictionary<ulong, Texture2D> TextureCache = new Dictionary<ulong, Texture2D>();
 
+		internal static void PurgeHash (Texture2D reference) {
+			try {
+				MetaCache.Remove(reference);
+			}
+			catch { /* do nothing */ }
+		}
+
 		internal static ulong GetHash (TextureWrapper input, bool desprite) {
 			ulong hash;
 			lock (MetaCache) {

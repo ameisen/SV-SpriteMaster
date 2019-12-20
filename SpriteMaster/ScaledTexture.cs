@@ -418,6 +418,12 @@ namespace SpriteMaster {
 
 		internal static readonly Dictionary<ulong, WeakScaledTexture> LocalTextureCache = new Dictionary<ulong, WeakScaledTexture>();
 
+		internal static void Purge (Texture2D reference, Bounds? sourceRectangle = null) {
+			TextureMap.Purge(reference, sourceRectangle);
+			Upscaler.PurgeHash(reference);
+			TextureWrapper.Purge(reference);
+		}
+
 		internal sealed class ManagedTexture2D : Texture2D {
 			public readonly WeakReference<Texture2D> Reference;
 			public readonly ScaledTexture Texture;

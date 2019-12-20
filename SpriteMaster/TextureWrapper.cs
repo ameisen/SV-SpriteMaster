@@ -17,6 +17,12 @@ namespace SpriteMaster {
 
 		private static ConditionalWeakTable<Texture2D, WeakReference<byte[]>> DataCache = new ConditionalWeakTable<Texture2D, WeakReference<byte[]>>();
 
+		internal static void Purge(Texture2D reference) {
+			try {
+				DataCache.Remove(reference);
+			}
+			catch { /* do nothing */ }
+		}
 		internal TextureWrapper (Texture2D reference, in Bounds dimensions, in Bounds indexRectangle) {
 			ReferenceSize = new Vector2I(reference);
 			Size = dimensions;
