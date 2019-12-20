@@ -6,6 +6,25 @@ using static SpriteMaster.ScaledTexture;
 
 namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 	class PlatformRenderBatch {
+		/*
+	public class SpriteBatch : GraphicsResource {
+		private struct SpriteInfo {
+			public Vector4 Source;
+
+			public Vector4 Destination;
+
+			public Vector2 Origin;
+
+			public float Rotation;
+
+			public float Depth;
+
+			public SpriteEffects Effects;
+
+			public Color Color;
+		}
+		 */
+
 		[HarmonyPatch("PlatformRenderBatch", HarmonyPatch.Fixation.Prefix, PriorityLevel.First)]
 		internal static bool OnPlatformRenderBatch (
 			SpriteBatch __instance,

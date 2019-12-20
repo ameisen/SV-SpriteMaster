@@ -196,14 +196,6 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 				// Scale the... scale by the scale factor.
 				adjustedScale *= innerRatio;
 
-				// This is the new size the sprite will draw on the screen.
-				var drawSize = textureSize * adjustedScale;
-				// This is the new size the inner sprite will draw on the screen.
-				var scaledInnerSize = innerSize * adjustedScale;
-
-				// This is the size of an edge of padding.
-				var paddingSize = (drawSize - scaledInnerSize) * 0.5f;
-
 				adjustedOrigin *= scaledTexture.Scale;
 				adjustedOrigin /= innerRatio;
 				adjustedOrigin += (textureSize - innerSize) * 0.5f;
