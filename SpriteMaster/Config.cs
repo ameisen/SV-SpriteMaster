@@ -21,6 +21,9 @@ namespace SpriteMaster {
 		internal const uint MaxMemoryUsage = 2048U * 1024U * 1024U;
 		internal const bool EnableCachedHashTextures = false;
 		internal const bool IgnoreUnknownTextures = false;
+		internal static long ForceGarbageCollectAfter = 64 * 1024 * 1024;
+		internal static bool GarbageCollectAccountUnownedTextures = true;
+		internal static bool GarbageCollectAccountOwnedTexture = true;
 
 		internal enum Configuration {
 			Debug,

@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Management;
+using System.Runtime;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -265,7 +266,30 @@ namespace SpriteMaster {
 		}
 
 		// TODO : Detangle this method.
+		private static long TotalAdditionalSize = 0;
+
+		private static ConditionalWeakTable<Texture2D, object> GCAccount = new ConditionalWeakTable<Texture2D, object>();
+
 		internal static Texture2D Upscale (ScaledTexture texture, ref int scale, TextureWrapper input, bool desprite, ulong hash, ref Vector2B wrapped, bool allowPadding) {
+			if (TotalAdditionalSize >= Config.ForceGarbageCollectAfter) {
+				Debug.InfoLn("Forcing Garbage Compaction");
+				GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
+				//GC.Collect();
+				TotalAdditionalSize %= Config.ForceGarbageCollectAfter;
+			}
+
+			if (Config.GarbageCollectAccountUnownedTextures) {
+				if (!GCAccount.TryGetValue(input.Reference, out object v)) {
+					GCAccount.Add(input.Reference, null);
+					long size = input.Reference.Area() * sizeof(int);
+					GC.AddMemoryPressure(size);
+					input.Reference.Disposing += (object obj, EventArgs args) => {
+						long size = ((Texture2D)obj).Area() * sizeof(int);
+						GC.RemoveMemoryPressure(size);
+					};
+				}
+			}
+
 			wrapped.Set(false);
 
 			var output = input.Reference;
@@ -656,13 +680,21 @@ namespace SpriteMaster {
 					}
 				}
 
+				TotalAdditionalSize += newSize.Area * sizeof(int);
+
 				if (Config.AsyncScaling.Enabled) {
 					var reference = input.Reference;
 					Action asyncCall = () => {
 						if (reference.IsDisposed) {
 							return;
 						}
+						if (Config.GarbageCollectAccountOwnedTexture)
+							GC.AddMemoryPressure(newSize.Area * sizeof(int));
 						var newTexture = new ManagedTexture2D(texture, reference, newSize, SurfaceFormat.Color);
+						if (Config.GarbageCollectAccountOwnedTexture)
+							newTexture.Disposing += (object obj, EventArgs args) => {
+								GC.RemoveMemoryPressure(((ManagedTexture2D)obj).Area() * sizeof(int));
+							};
 						newTexture.Name = reference.SafeName() + " [RESAMPLED]";
 						try {
 							newTexture.SetData(bitmapData);
@@ -680,7 +712,13 @@ namespace SpriteMaster {
 					return null;
 				}
 				else {
+					if (Config.GarbageCollectAccountOwnedTexture)
+						GC.AddMemoryPressure(newSize.Area * sizeof(int));
 					var newTexture = new ManagedTexture2D(texture, input.Reference, newSize, SurfaceFormat.Color);
+					if (Config.GarbageCollectAccountOwnedTexture)
+						newTexture.Disposing += (object obj, EventArgs args) => {
+							GC.RemoveMemoryPressure(((ManagedTexture2D)obj).Area() * sizeof(int));
+						};
 					newTexture.Name = input.Reference.SafeName() + " [RESAMPLED]";
 					try {
 						newTexture.SetData(bitmapData);

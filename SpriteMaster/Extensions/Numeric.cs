@@ -2,6 +2,30 @@
 
 namespace SpriteMaster.Extensions {
 	internal static class Numeric {
+		internal static long KiB(this long value) {
+			return value * 1024L;
+		}
+
+		internal static long MiB (this long value) {
+			return value * 1024L * 1024L;
+		}
+
+		internal static long GiB (this long value) {
+			return value * 1024L * 1024L * 1024L;
+		}
+
+		internal static long KiB (this int value) {
+			return value * 1024L;
+		}
+
+		internal static long MiB (this int value) {
+			return value * 1024L * 1024L;
+		}
+
+		internal static long GiB (this int value) {
+			return value * 1024L * 1024L * 1024L;
+		}
+
 		// Extracts a byte (8 bits) worth of data from a provided value, from the given offset
 		// Example: ExtractByte(0x00F0, 8) would return 0xF
 		internal static byte ExtractByte (this byte value, int offset) {

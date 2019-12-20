@@ -33,7 +33,7 @@ namespace SpriteMaster {
 		protected void OnAdd (Texture2D reference, ScaledTexture texture, Bounds sourceRectangle) {
 			if (!Config.Debug.CacheDump.Enabled)
 				return;
-			ScaledTextureReferences.Add(new WeakScaledTexture(texture));
+			ScaledTextureReferences.Add(texture.MakeWeak());
 		}
 
 		protected void OnRemove (in ScaledTexture scaledTexture, in Texture2D texture) {
@@ -162,7 +162,7 @@ namespace SpriteMaster {
 				spriteMap.Add(rectangleHash, texture);
 
 				if (Config.Debug.CacheDump.Enabled)
-					ScaledTextureReferences.Add(new WeakScaledTexture(texture));
+					ScaledTextureReferences.Add(texture.MakeWeak());
 			}
 		}
 
@@ -366,7 +366,7 @@ namespace SpriteMaster {
 			);
 			if (Config.EnableCachedHashTextures)
 				lock (LocalTextureCache) {
-					LocalTextureCache.Add(hash, new WeakScaledTexture(newTexture));
+					LocalTextureCache.Add(hash, newTexture.MakeWeak());
 				}
 			if (Config.AsyncScaling.Enabled) {
 				// It adds itself to the relevant maps.
@@ -419,12 +419,18 @@ namespace SpriteMaster {
 		internal static readonly Dictionary<ulong, WeakScaledTexture> LocalTextureCache = new Dictionary<ulong, WeakScaledTexture>();
 
 		internal sealed class ManagedTexture2D : Texture2D {
-			public readonly Texture2D Reference;
+			public readonly WeakReference<Texture2D> Reference;
 			public readonly ScaledTexture Texture;
 
 			public ManagedTexture2D (ScaledTexture texture, Texture2D reference, Vector2I dimensions, SurfaceFormat format) : base(reference.GraphicsDevice, dimensions.Width, dimensions.Height, false, format) {
-				Reference = reference;
+				Reference = reference.MakeWeak();
 				Texture = texture;
+
+				reference.Disposing += (object obj, EventArgs args) => ((ManagedTexture2D)obj).OnParentDispose();
+			}
+
+			private void OnParentDispose() {
+				Dispose();
 			}
 		}
 
@@ -433,7 +439,7 @@ namespace SpriteMaster {
 			Hash = hash;
 
 			this.OriginalSourceRectangle = new Bounds(sourceRectangle);
-			this.Reference = new WeakTexture(source);
+			this.Reference = source.MakeWeak();
 			this.sourceRectangle = sourceRectangle;
 			this.refScale = scale;
 			TextureMap.Add(source, this, indexRectangle);

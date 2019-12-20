@@ -9,6 +9,10 @@ namespace SpriteMaster.Extensions {
 			}
 		}
 
+		internal static WeakReference<T> MakeWeak<T>(this T obj) where T : class {
+			return new WeakReference<T>(obj);
+		}
+
 		internal static int ClampDimension (this int value) {
 			return Math.Min(value, Config.ClampDimension);
 		}

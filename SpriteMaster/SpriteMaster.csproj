@@ -3,11 +3,11 @@
   <PropertyGroup>
     <AssemblyName>SpriteMaster</AssemblyName>
     <RootNamespace>SpriteMaster</RootNamespace>
-    <Version>0.9.10</Version>
+    <Version>0.9.11</Version>
     <TargetFramework>net452</TargetFramework>
     <PlatformTarget>x86</PlatformTarget>
     <EnableHarmony>true</EnableHarmony>
-    <AssemblyVersion>0.9.9.*</AssemblyVersion>
+    <AssemblyVersion>0.9.11.*</AssemblyVersion>
 		<Deterministic>false</Deterministic>
 		<LangVersion>8.0</LangVersion>
 		<RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
@@ -18,7 +18,7 @@
 		<Company>Digital Carbide</Company>
 		<PackageLicenseFile>LICENSE.MD</PackageLicenseFile>
 		<Copyright>mkukli</Copyright>
-		<FileVersion>0.9.10.0</FileVersion>
+		<FileVersion>0.9.11.0</FileVersion>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <FileAlignment>4096</FileAlignment>
     <NoWarn>0162;7035</NoWarn>

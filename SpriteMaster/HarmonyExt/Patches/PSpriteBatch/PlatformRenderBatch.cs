@@ -1,6 +1,8 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using System;
+using System.Reflection;
 using static SpriteMaster.HarmonyExt.HarmonyExt;
 using static SpriteMaster.ScaledTexture;
 
@@ -24,6 +26,73 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			public Color Color;
 		}
 		 */
+
+
+		private ref struct SpriteInfo {
+			private static readonly Type RealType;
+			private static readonly FieldInfo SourceInfo;
+			private static readonly FieldInfo DestinationInfo;
+			private static readonly FieldInfo OriginInfo;
+			private static readonly FieldInfo RotationInfo;
+			private static readonly FieldInfo DepthInfo;
+			private static readonly FieldInfo EffectsInfo;
+			private static readonly FieldInfo ColorInfo;
+
+			static SpriteInfo() {
+				RealType = typeof(SpriteBatch).GetNestedType("SpriteInfo", BindingFlags.NonPublic);
+				FieldInfo GetField(string name) {
+					return RealType.GetField(name, BindingFlags.Instance | BindingFlags.Public);
+				}
+				SourceInfo = GetField("Source");
+				DestinationInfo = GetField("Destination");
+				OriginInfo = GetField("Origin");
+				RotationInfo = GetField("Rotation");
+				DepthInfo = GetField("Depth");
+				EffectsInfo = GetField("Effects");
+				ColorInfo = GetField("Color");
+			}
+
+			private readonly object Reference;
+
+			public Vector4 Source {
+				readonly get => (Vector4)SourceInfo.GetValue(Reference);
+				set => SourceInfo.SetValue(Reference, value);
+			}
+
+			public Vector4 Destination {
+				readonly get => (Vector4)DestinationInfo.GetValue(Reference);
+				set => DestinationInfo.SetValue(Reference, value);
+			}
+
+			public Vector2 Origin {
+				readonly get => (Vector2)OriginInfo.GetValue(Reference);
+				set => OriginInfo.SetValue(Reference, value);
+			}
+
+			public float Rotation {
+				readonly get => (float)RotationInfo.GetValue(Reference);
+				set => RotationInfo.SetValue(Reference, value);
+			}
+
+			public float Depth {
+				readonly get => (float)DepthInfo.GetValue(Reference);
+				set => DepthInfo.SetValue(Reference, value);
+			}
+
+			public SpriteEffects Effects {
+				readonly get => (SpriteEffects)EffectsInfo.GetValue(Reference);
+				set => EffectsInfo.SetValue(Reference, value);
+			}
+
+			public Color Color {
+				readonly get => (Color)ColorInfo.GetValue(Reference);
+				set => ColorInfo.SetValue(Reference, value);
+			}
+
+			internal SpriteInfo(object reference) {
+				Reference = reference;
+			}
+		}
 
 		[HarmonyPatch("PlatformRenderBatch", HarmonyPatch.Fixation.Prefix, PriorityLevel.First)]
 		internal static bool OnPlatformRenderBatch (

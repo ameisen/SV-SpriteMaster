@@ -38,7 +38,7 @@ namespace SpriteMaster {
 			if (Data == null) {
 				Data = new byte[reference.Width * reference.Height * 4];
 				reference.GetData(Data);
-				DataCache.Add(reference, new WeakReference<byte[]>(Data));
+				DataCache.Add(reference, Data.MakeWeak());
 			}
 
 			BlendEnabled = DrawState.CurrentBlendSourceMode != Blend.One;
