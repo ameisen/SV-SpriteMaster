@@ -46,10 +46,10 @@ namespace SpriteMaster.HarmonyExt.Patches {
 						continue;
 					}
 					var maxTextureSizeProperty = getPrivateField(capabilities, "MaxTextureSize");
-					if ((int)maxTextureSizeProperty.GetValue(capabilities) < Config.PreferredDimension) {
-						maxTextureSizeProperty.SetValue(capabilities, Config.PreferredDimension);
-						getPrivateField(capabilities, "MaxTextureAspectRatio").SetValue(capabilities, Config.PreferredDimension / 2);
-						Config.ClampDimension = Config.PreferredDimension;
+					if ((int)maxTextureSizeProperty.GetValue(capabilities) < Config.PreferredMaxTextureDimension) {
+						maxTextureSizeProperty.SetValue(capabilities, Config.PreferredMaxTextureDimension);
+						getPrivateField(capabilities, "MaxTextureAspectRatio").SetValue(capabilities, Config.PreferredMaxTextureDimension / 2);
+						Config.ClampDimension = Config.PreferredMaxTextureDimension;
 					}
 				}
 			}

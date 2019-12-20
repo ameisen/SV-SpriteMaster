@@ -5,14 +5,17 @@ using System.IO;
 
 namespace SpriteMaster {
 	static class Config {
+		internal class FileIgnoreAttribute : Attribute { }
+
 		internal static readonly string ModuleName = typeof(Config).Namespace;
 
 		internal static bool Enabled = true;
-		internal const SButton ToggleButton = SButton.F11;
+		internal static SButton ToggleButton = SButton.F11;
 
 		internal const int MaxSamplers = 16;
+		[FileIgnore]
 		internal static int ClampDimension = 4096; // this is adjustable by the mod
-		internal const int PreferredDimension = 8192;
+		internal static int PreferredMaxTextureDimension = 8192;
 		internal const bool RestrictSize = false;
 		internal const bool ClampInvalidBounds = true;
 		internal const uint MaxMemoryUsage = 2048U * 1024U * 1024U;
@@ -43,8 +46,8 @@ namespace SpriteMaster {
 		internal static class Debug {
 			internal static class Logging {
 				internal const bool LogInfo = IsDebug;
-				internal const bool LogWarnings = true;
-				internal const bool LogErrors = true;
+				internal static bool LogWarnings = true;
+				internal static bool LogErrors = true;
 				internal const bool OwnLogFile = true;
 				internal const bool UseSMAPI = true;
 			}
@@ -61,17 +64,17 @@ namespace SpriteMaster {
 		}
 
 		internal static class DrawState {
-			internal const bool SetLinear = true;
-			internal const bool EnableMSAA = true;
-			internal const bool DisableDepthBuffer = true;
-			internal const SurfaceFormat BackbufferFormat = SurfaceFormat.Rgba1010102;
+			internal static bool SetLinear = true;
+			internal static bool EnableMSAA = true;
+			internal static bool DisableDepthBuffer = true;
+			internal static SurfaceFormat BackbufferFormat = SurfaceFormat.Rgba1010102;
 		}
 
 		internal static class Resample {
 			internal const bool Smoothing = true;
 			internal const bool Scale = Smoothing;
 			internal const bool SmartScale = true;
-			internal const int MaxScale = 5;
+			internal static int MaxScale = 5;
 			internal const bool DeSprite = true;
 			internal const bool EnableWrappedAddressing = true;
 			internal static class Padding {
@@ -95,7 +98,7 @@ namespace SpriteMaster {
 		}
 
 		internal static class Cache {
-			internal const bool Enabled = true;
+			internal static bool Enabled = true;
 			internal const int LockRetries = 32;
 			internal const int LockSleepMS = 32;
 		}
