@@ -324,6 +324,10 @@ namespace SpriteMaster {
 				return null;
 			}
 
+			if (Config.AsyncScaling.Enabled && RemainingAsyncTasks <= 0) {
+				return null;
+			}
+
 			bool isSprite = Config.Resample.DeSprite && !ExcludeSprite(texture) && ((sourceRectangle.X != 0 || sourceRectangle.Y != 0) || (sourceRectangle.Width != texture.Width || sourceRectangle.Height != texture.Height));
 			var textureWrapper = new TextureWrapper(texture, sourceRectangle, indexRectangle);
 			ulong hash = Upscaler.GetHash(textureWrapper, isSprite);
@@ -440,6 +444,8 @@ namespace SpriteMaster {
 			}
 		}
 
+		internal static volatile int RemainingAsyncTasks = Config.AsyncScaling.MaxInflightTasks;
+
 		internal ScaledTexture (string assetName, TextureWrapper textureWrapper, Texture2D source, Bounds sourceRectangle, Bounds indexRectangle, int scale, ulong hash, bool isSprite, bool allowPadding) {
 			IsSprite = isSprite;
 			Hash = hash;
@@ -455,17 +461,23 @@ namespace SpriteMaster {
 
 			if (Config.AsyncScaling.Enabled) {
 				new Thread(() => {
-					Thread.CurrentThread.Priority = ThreadPriority.Lowest;
-					Thread.CurrentThread.Name = "Texture Resampling Thread";
-					Upscaler.Upscale(
-						texture: this,
-						scale: ref refScale,
-						input: textureWrapper,
-						desprite: IsSprite,
-						hash: Hash,
-						wrapped: ref Wrapped,
-						allowPadding: allowPadding
-					);
+					--RemainingAsyncTasks;
+					try {
+						Thread.CurrentThread.Priority = ThreadPriority.Lowest;
+						Thread.CurrentThread.Name = "Texture Resampling Thread";
+						Upscaler.Upscale(
+							texture: this,
+							scale: ref refScale,
+							input: textureWrapper,
+							desprite: IsSprite,
+							hash: Hash,
+							wrapped: ref Wrapped,
+							allowPadding: allowPadding
+						);
+					}
+					finally {
+						++RemainingAsyncTasks;
+					}
 				}).Start();
 			}
 			else {

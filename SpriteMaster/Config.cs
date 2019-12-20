@@ -98,6 +98,7 @@ namespace SpriteMaster {
 			internal static bool CanFetchAndLoadSameFrame = true;
 			internal static int MaxLoadsPerFrame = 2;
 			internal static int ScalingBudgetPerFrame = 2 * 256 * 256;
+			internal static int MaxInflightTasks = 8;
 		}
 
 		internal static class Cache {
