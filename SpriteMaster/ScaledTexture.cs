@@ -245,9 +245,16 @@ namespace SpriteMaster {
 			}
 		}
 
-		static internal void ProcessPendingActions (int processCount = Config.AsyncScaling.MaxLoadsPerFrame) {
+		static internal void ProcessPendingActions (int processCount = -1) {
 			if (!Config.AsyncScaling.Enabled) {
 				return;
+			}
+
+			if (processCount < 0) {
+				processCount = Config.AsyncScaling.MaxLoadsPerFrame;
+				if (processCount < 0) {
+					processCount = int.MaxValue;
+				}
 			}
 
 			// TODO : use GetUpdateToken

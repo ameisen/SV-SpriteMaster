@@ -91,10 +91,10 @@ namespace SpriteMaster {
 		}
 
 		internal static class AsyncScaling {
-			internal const bool Enabled = true;
-			internal const bool CanFetchAndLoadSameFrame = true;
-			internal const int MaxLoadsPerFrame = 2;
-			internal const int TexelFetchFrameBudget = 2 * 256 * 256;
+			internal static bool Enabled = true;
+			internal static bool CanFetchAndLoadSameFrame = true;
+			internal static int MaxLoadsPerFrame = -1;
+			internal static int ScalingBudgetPerFrame = 32 * 256 * 256;
 		}
 
 		internal static class Cache {
