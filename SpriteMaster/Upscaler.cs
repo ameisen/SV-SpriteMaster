@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+﻿//using ManagedSquish;
+using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using System;
@@ -64,7 +65,7 @@ namespace SpriteMaster {
 		static extern bool CreateSymbolicLink (string Link, string Target, LinkType Type);
 
 		private static bool IsSymbolic (string path) {
-			FileInfo pathInfo = new FileInfo(path);
+			var pathInfo = new FileInfo(path);
 			return pathInfo.Attributes.HasFlag(FileAttributes.ReparsePoint);
 		}
 
@@ -496,7 +497,7 @@ namespace SpriteMaster {
 										var dump = GetDumpBitmap(submap);
 										var path = Path.Combine(DumpPath, $"{input.Reference.SafeName().Replace("\\", ".")}.{hashString}.reference.png");
 										File.Delete(path);
-										dump.Save(path, ImageFormat.Png);
+										dump.Save(path, System.Drawing.Imaging.ImageFormat.Png);
 									}
 								}
 							}
@@ -517,8 +518,8 @@ namespace SpriteMaster {
 
 								if (
 									(
-										prescaleSize.X <= Config.Resample.Padding.MinSize &&
-										prescaleSize.Y <= Config.Resample.Padding.MinSize
+										prescaleSize.X <= Config.Resample.Padding.MinimumSizeTexels &&
+										prescaleSize.Y <= Config.Resample.Padding.MinimumSizeTexels
 									) ||
 									Config.Resample.Padding.IgnoreUnknown && (input.Reference.Name == null || input.Reference.Name == "")
 								) {
@@ -526,13 +527,12 @@ namespace SpriteMaster {
 								}
 
 								if (shouldPad.X || shouldPad.Y) {
-									int padding = scale;
+									int padding = Math.Max(1, scale / 2);
 									int scaledPadding = padding * scale;
 
 									// TODO we only need to pad the edge that has texels. Double padding is wasteful.
 									var paddedSize = inputSize.Clone();
 									var spriteSize = inputSize.Clone();
-
 
 									if (shouldPad.X) {
 										if ((paddedSize.X + padding * 2) * scale > Config.ClampDimension) {
@@ -638,7 +638,7 @@ namespace SpriteMaster {
 							var dump = GetDumpBitmap(filtered);
 							var path = Path.Combine(DumpPath, $"{input.Reference.SafeName().Replace("\\", ".")}.{hashString}.resample-{WrappedX}-{WrappedY}-{texture.Padding.X}-{texture.Padding.Y}.png");
 							File.Delete(path);
-							dump.Save(path, ImageFormat.Png);
+							dump.Save(path, System.Drawing.Imaging.ImageFormat.Png);
 						}
 					}
 
@@ -689,6 +689,28 @@ namespace SpriteMaster {
 
 				TotalAdditionalSize += newSize.Area * sizeof(int);
 
+				var format = SurfaceFormat.Color;
+
+				bool IsBlockMultiple = (newSize.Width % 4) == 0 && (newSize.Height % 4) == 0;
+
+				const SurfaceFormat blockFormat = SurfaceFormat.Dxt5; // Dxt5
+
+				/*
+				if (Config.Resample.UseBlockCompression && IsBlockMultiple) {
+					unsafe {
+						var blockData = new int[(newSize.Width * newSize.Height) / sizeof(int)];
+						fixed (int* p = bitmapData) {
+							// public static void CompressImage (IntPtr rgba, int width, int height, IntPtr blocks, SquishFlags flags);
+							fixed (int* outData = blockData) {
+								Squish.CompressImage((IntPtr)p, newSize.Width, newSize.Height, (IntPtr)outData, SquishFlags.Dxt5 | SquishFlags.WeightColourByAlpha);
+							}
+						}
+
+						bitmapData = blockData;
+					}
+				}
+				*/
+
 				if (Config.AsyncScaling.Enabled) {
 					var reference = input.Reference;
 					Action asyncCall = () => {
@@ -697,14 +719,14 @@ namespace SpriteMaster {
 						}
 						if (Config.GarbageCollectAccountOwnedTexture)
 							GC.AddMemoryPressure(newSize.Area * sizeof(int));
-						var newTexture = new ManagedTexture2D(texture, reference, newSize, SurfaceFormat.Color);
+						var newTexture = new ManagedTexture2D(texture, reference, newSize, format);
 						if (Config.GarbageCollectAccountOwnedTexture)
 							newTexture.Disposing += (object obj, EventArgs args) => {
 								GC.RemoveMemoryPressure(((ManagedTexture2D)obj).Area() * sizeof(int));
 							};
-						newTexture.Name = reference.SafeName() + " [RESAMPLED]";
+						newTexture.Name = reference.SafeName() + $" [RESAMPLED {format}]";
 						try {
-							newTexture.SetData(bitmapData);
+							newTexture.SetDataEx(bitmapData);
 							texture.Texture = newTexture;
 							texture.Finish();
 						}
@@ -721,14 +743,14 @@ namespace SpriteMaster {
 				else {
 					if (Config.GarbageCollectAccountOwnedTexture)
 						GC.AddMemoryPressure(newSize.Area * sizeof(int));
-					var newTexture = new ManagedTexture2D(texture, input.Reference, newSize, SurfaceFormat.Color);
+					var newTexture = new ManagedTexture2D(texture, input.Reference, newSize, format);
 					if (Config.GarbageCollectAccountOwnedTexture)
 						newTexture.Disposing += (object obj, EventArgs args) => {
 							GC.RemoveMemoryPressure(((ManagedTexture2D)obj).Area() * sizeof(int));
 						};
-					newTexture.Name = input.Reference.SafeName() + " [RESAMPLED]";
+					newTexture.Name = input.Reference.SafeName() + $" [RESAMPLED {format}]";
 					try {
-						newTexture.SetData(bitmapData);
+						newTexture.SetDataEx(bitmapData);
 						output = newTexture;
 					}
 					catch (Exception ex) {

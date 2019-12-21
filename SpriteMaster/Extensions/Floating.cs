@@ -31,6 +31,14 @@ namespace SpriteMaster.Extensions {
 			return coordinate.NearestInt();
 		}
 
+		internal static float Saturate (this float v) {
+			return v.Clamp(0.0f, 1.0f);
+		}
+
+		internal static double Saturate (this double v) {
+			return v.Clamp(0.0, 1.0);
+		}
+
 		internal static Vector2I ToCoordinate (this Vector2 coordinate) {
 			return new Vector2I(coordinate.X.NearestInt(), coordinate.Y.NearestInt());
 		}

@@ -2,6 +2,7 @@
 using SpriteMaster.Types;
 using System;
 using System.Drawing;
+using System.Runtime.InteropServices;
 
 namespace SpriteMaster.Extensions {
 	internal static class Texture {
@@ -43,6 +44,20 @@ namespace SpriteMaster.Extensions {
 
 		internal static long SizeBytes (this ScaledTexture.ManagedTexture2D texture) {
 			return (long)texture.Area() * 4;
+		}
+
+		internal static unsafe void SetDataEx (this Texture2D texture, int[] data) {
+			// If we are getting integer data in, we may have to convert it.
+			if (texture.Format == SurfaceFormat.Dxt5) {
+				var byteData = new byte[data.Length * sizeof(int)];
+				fixed (byte* p = byteData) {
+					Marshal.Copy(data, 0, (IntPtr)p, data.Length);
+				}
+				texture.SetData(byteData);
+			}
+			else {
+				texture.SetData<int>(data);
+			}
 		}
 
 		internal static Bitmap Resize (this Bitmap source, Vector2I size, System.Drawing.Drawing2D.InterpolationMode filter = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic, bool discard = true) {

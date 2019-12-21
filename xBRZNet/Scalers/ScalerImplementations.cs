@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Runtime.CompilerServices;
 using xBRZNet2.Common;
 
 namespace xBRZNet2.Scalers {
@@ -24,21 +25,78 @@ namespace xBRZNet2.Scalers {
 
 			//this works because 8 upper bits are free
 			var dst = dstRef;
-			var alphaComponent = BlendComponent(ColorConstant.Mask.Alpha, n, m, dst, col);
-			var redComponent = BlendComponent(ColorConstant.Mask.Red, n, m, dst, col);
-			var greenComponent = BlendComponent(ColorConstant.Mask.Green, n, m, dst, col);
-			var blueComponent = BlendComponent(ColorConstant.Mask.Blue, n, m, dst, col);
+			var alphaComponent = BlendComponent(ColorConstant.Shift.Alpha, ColorConstant.Mask.Alpha, n, m, dst, col);
+			var redComponent = BlendComponent(ColorConstant.Shift.Red, ColorConstant.Mask.Red, n, m, dst, col);
+			var greenComponent = BlendComponent(ColorConstant.Shift.Green, ColorConstant.Mask.Green, n, m, dst, col);
+			var blueComponent = BlendComponent(ColorConstant.Shift.Blue, ColorConstant.Mask.Blue, n, m, dst, col);
 			var blend = (alphaComponent | redComponent | greenComponent | blueComponent);
 			dstRef = unchecked((int)blend); // MJY: Added required cast but will throw an exception if the asserts at the top are not checked.
 		}
 
+		private static readonly int[] ToLinearTable = new int[0x10000];
+		private static readonly int[] ToGammaTable = new int[0x10000];
+
+		static IScaler() {
+			for (int i = 0; i <= 0xFFFF; ++i) {
+				var finput = (double)i / ushort.MaxValue;
+
+				{
+					var foutput = (finput <= 0.0404482362771082) ?
+						(finput / 12.92) :
+						Math.Pow((finput + 0.055) / 1.055, 2.4);
+					foutput *= ushort.MaxValue;
+					ToLinearTable[i] = Math.Min((int)foutput, ushort.MaxValue);
+				}
+				{
+					var foutput = (finput <= 0.00313066844250063) ?
+						(finput * 12.92) :
+						((1.055 * Math.Pow(finput, 1.0 / 2.4)) - 0.055);
+					foutput *= ushort.MaxValue;
+					ToGammaTable[i] = Math.Min((int)foutput, ushort.MaxValue);
+				}
+			}
+		}
+
+		private static int ToLinear(int input) {
+			return ToLinearTable[input];
+		}
+
+		private static int ToGamma (int input) {
+			return ToGammaTable[input];
+		}
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static uint BlendComponent (uint mask, int n, int m, int inPixel, int setPixel) {
-			var inChan = (long)(unchecked((uint)inPixel) & mask);
-			var setChan = (long)(unchecked((uint)setPixel) & mask);
-			var blend = setChan * n + inChan * (m - n);
-			var component = unchecked(((uint)(blend / m)) & mask);
-			return component;
+		private static uint BlendComponent (int shift, uint mask, int n, int m, int inPixel, int setPixel) {
+			if (true) {
+				var inChan = (int)((unchecked((uint)inPixel) >> shift) & 0xFF) * 0x101;
+				var setChan = (int)((unchecked((uint)setPixel) >> shift) & 0xFF) * 0x101;
+
+				inChan = ToLinear(inChan);
+				setChan = ToLinear(setChan);
+
+				var blend = setChan * n + inChan * (m - n);
+
+				var outChan = (int)unchecked(((uint)(blend / m)) & 0xFFFF);
+
+				outChan = ToGamma(outChan);
+
+				var component = (outChan / 0x101) << shift;
+				return (uint)component;
+			}
+			else {
+				/*
+				var inChan = (int)((unchecked((uint)inPixel) >> shift) & 0xFF);
+				var setChan = (int)((unchecked((uint)setPixel) >> shift) & 0xFF);
+				var blend = setChan * n + inChan * (m - n);
+				var component = unchecked(((uint)(blend / m)) & 0xFF) << shift;
+				return component;
+				*/
+				var inChan = (long)(unchecked((uint)inPixel) & mask);
+				var setChan = (long)(unchecked((uint)setPixel) & mask);
+				var blend = setChan * n + inChan * (m - n);
+				var component = unchecked(((uint)(blend / m)) & mask);
+				return component;
+			}
 		}
 	}
 
@@ -233,11 +291,11 @@ namespace xBRZNet2.Scalers {
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public override void BlendCorner (int col, in OutputMatrix out_) {
 			//model a round corner
-			AlphaBlend(86, 100, ref out_.Ref(4, 4), col); //exact: 0.8631434088
-			AlphaBlend(23, 100, ref out_.Ref(4, 3), col); //0.2306749731
-			AlphaBlend(23, 100, ref out_.Ref(3, 4), col); //0.2306749731
-																										//alphaBlend(8, 1000, out.ref(4, 2), col); //0.008384061834 -> negligable
-																										//alphaBlend(8, 1000, out.ref(2, 4), col); //0.008384061834
+			AlphaBlend(86314, 100000, ref out_.Ref(4, 4), col); //exact: 0.8631434088
+			AlphaBlend(23067, 100000, ref out_.Ref(4, 3), col); //0.2306749731
+			AlphaBlend(23067, 100000, ref out_.Ref(3, 4), col); //0.2306749731
+			AlphaBlend(839, 100000, ref out_.Ref(4, 2), col); //0.008384061834 -> negligible
+			AlphaBlend(839, 100000, ref out_.Ref(2, 4), col); //0.008384061834
 		}
 	}
 }

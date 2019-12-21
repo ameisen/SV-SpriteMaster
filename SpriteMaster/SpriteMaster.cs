@@ -39,89 +39,100 @@ namespace SpriteMaster {
 				var Data = Toml.Parse(ConfigText, ConfigPath);
 
 				foreach (var table in Data.Tables) {
-					var tableName = table.Name.ToString();
-					var elements = tableName.Split('.');
-					if (elements.Length != 0) {
-						elements[0] = null;
-					}
-					var configClass = typeof(Config);
-					string summedClass = configClass.Name.Trim();
-					foreach (var element in elements) {
-						if (element == null)
-							continue;
-						var trimmedElement = element.Trim();
-						summedClass += $".{trimmedElement}";
-						var child = configClass.GetNestedType(trimmedElement, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
-						if (child == null || child.IsNestedPrivate || child.GetCustomAttribute<Config.FileIgnoreAttribute>() != null)
-							throw new InvalidDataException($"Configuration Child Class '{summedClass}' does not exist");
-						configClass = child;
-					}
+					string tableName = "";
+					try {
+						tableName = table.Name.ToString();
+						var elements = tableName.Split('.');
+						if (elements.Length != 0) {
+							elements[0] = null;
+						}
+						var configClass = typeof(Config);
+						string summedClass = configClass.Name.Trim();
+						foreach (var element in elements) {
+							if (element == null)
+								continue;
+							var trimmedElement = element.Trim();
+							summedClass += $".{trimmedElement}";
+							var child = configClass.GetNestedType(trimmedElement, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+							if (child == null || child.IsNestedPrivate || child.GetCustomAttribute<Config.ConfigIgnoreAttribute>() != null)
+								throw new InvalidDataException($"Configuration Child Class '{summedClass}' does not exist");
+							configClass = child;
+						}
 
-					foreach (var value in table.Items) {
-						var keyString = value.Key.ToString().Trim();
-						var field = configClass.GetField(keyString, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
-						if (field == null || field.IsPrivate || field.IsInitOnly || !field.IsStatic || field.IsLiteral)
-							throw new InvalidDataException($"Configuration Value '{summedClass}.{keyString}' does not exist");
+						foreach (var value in table.Items) {
+							try {
+								var keyString = value.Key.ToString().Trim();
+								var field = configClass.GetField(keyString, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+								if (field == null || field.IsPrivate || field.IsInitOnly || !field.IsStatic || field.IsLiteral)
+									throw new InvalidDataException($"Configuration Value '{summedClass}.{keyString}' does not exist");
 
-						object fieldValue = field.GetValue(null);
-						switch (fieldValue) {
-							case string v:
-								field.SetValue(null, (string)((StringValueSyntax)value.Value).Value.Trim());
-								break;
-							case sbyte v:
-								field.SetValue(null, (sbyte)((IntegerValueSyntax)value.Value).Value);
-								break;
-							case byte v:
-								field.SetValue(null, (byte)((IntegerValueSyntax)value.Value).Value);
-								break;
-							case short v:
-								field.SetValue(null, (short)((IntegerValueSyntax)value.Value).Value);
-								break;
-							case ushort v:
-								field.SetValue(null, (ushort)((IntegerValueSyntax)value.Value).Value);
-								break;
-							case int v:
-								field.SetValue(null, (int)((IntegerValueSyntax)value.Value).Value);
-								break;
-							case uint v:
-								field.SetValue(null, (uint)((IntegerValueSyntax)value.Value).Value);
-								break;
-							case ulong v:
-								field.SetValue(null, unchecked((ulong)((IntegerValueSyntax)value.Value).Value));
-								break;
-							case float v:
-								field.SetValue(null, (float)((FloatValueSyntax)value.Value).Value);
-								break;
-							case double v:
-								field.SetValue(null, (double)((FloatValueSyntax)value.Value).Value);
-								break;
-							case bool v:
-								field.SetValue(null, (bool)((BooleanValueSyntax)value.Value).Value);
-								break;
-							default:
-								if (fieldValue.GetType().IsEnum) {
-									var enumNames = fieldValue.GetType().GetEnumNames();
-									var values = fieldValue.GetType().GetEnumValues();
+								object fieldValue = field.GetValue(null);
+								switch (fieldValue) {
+									case string v:
+										field.SetValue(null, (string)((StringValueSyntax)value.Value).Value.Trim());
+										break;
+									case sbyte v:
+										field.SetValue(null, (sbyte)((IntegerValueSyntax)value.Value).Value);
+										break;
+									case byte v:
+										field.SetValue(null, (byte)((IntegerValueSyntax)value.Value).Value);
+										break;
+									case short v:
+										field.SetValue(null, (short)((IntegerValueSyntax)value.Value).Value);
+										break;
+									case ushort v:
+										field.SetValue(null, (ushort)((IntegerValueSyntax)value.Value).Value);
+										break;
+									case int v:
+										field.SetValue(null, (int)((IntegerValueSyntax)value.Value).Value);
+										break;
+									case uint v:
+										field.SetValue(null, (uint)((IntegerValueSyntax)value.Value).Value);
+										break;
+									case ulong v:
+										field.SetValue(null, unchecked((ulong)((IntegerValueSyntax)value.Value).Value));
+										break;
+									case float v:
+										field.SetValue(null, (float)((FloatValueSyntax)value.Value).Value);
+										break;
+									case double v:
+										field.SetValue(null, (double)((FloatValueSyntax)value.Value).Value);
+										break;
+									case bool v:
+										field.SetValue(null, (bool)((BooleanValueSyntax)value.Value).Value);
+										break;
+									default:
+										if (fieldValue.GetType().IsEnum) {
+											var enumNames = fieldValue.GetType().GetEnumNames();
+											var values = fieldValue.GetType().GetEnumValues();
 
-									var configValue = ((StringValueSyntax)value.Value).Value.Trim();
+											var configValue = ((StringValueSyntax)value.Value).Value.Trim();
 
-									bool found = false;
-									foreach (var index in 0.Until(enumNames.Length)) {
-										if (enumNames[index] == configValue) {
-											field.SetValue(null, values.GetValue(index));
-											found = true;
+											bool found = false;
+											foreach (var index in 0.Until(enumNames.Length)) {
+												if (enumNames[index] == configValue) {
+													field.SetValue(null, values.GetValue(index));
+													found = true;
+													break;
+												}
+											}
+											if (!found)
+												throw new InvalidDataException($"Unknown Enumeration Value Type '{summedClass}.{keyString}' = '{value.Value.ToString()}'");
+
 											break;
 										}
-									}
-									if (!found)
-										throw new InvalidDataException($"Unknown Enumeration Value Type '{summedClass}.{keyString}' = '{value.Value.ToString()}'");
-
-									break;
+										else {
+											throw new InvalidDataException($"Unknown Configuration Value Type '{summedClass}.{keyString}' = '{value.Value.ToString()}'");
+										}
 								}
-								else {
-									throw new InvalidDataException($"Unknown Configuration Value Type '{summedClass}.{keyString}' = '{value.Value.ToString()}'");
-								}
+							}
+							catch (Exception ex) {
+								ex.PrintWarning();
+							}
 						}
+					}
+					catch (Exception ex) {
+						throw new InvalidDataException($"Unknown Configuration Table '{tableName}'");
 					}
 				}
 			}
@@ -134,8 +145,6 @@ namespace SpriteMaster {
 		}
 
 		private void SaveClass(Type type, DocumentSyntax document, KeySyntax key = null) {
-			bool root = (type == typeof(Config));
-
 			key = key ?? new KeySyntax(type.Name);
 
 			var fields = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
@@ -148,7 +157,7 @@ namespace SpriteMaster {
 				if (field.IsPrivate || field.IsInitOnly || !field.IsStatic || field.IsLiteral)
 					continue;
 
-				if (field.GetCustomAttribute<Config.FileIgnoreAttribute>() != null) {
+				if (field.GetCustomAttribute<Config.ConfigIgnoreAttribute>() != null) {
 					continue;
 				}
 
@@ -187,16 +196,26 @@ namespace SpriteMaster {
 				if (value == null)
 					continue;
 
-				tableItems.Add(new KeyValueSyntax(
+				var keyValue = new KeyValueSyntax(
 					field.Name,
 					value
-				));
+				);
+
+				//if (field.GetAttribute<Config.CommentAttribute>(out var attribute)) {
+				//keyValue.GetChildren(Math.Max(0, keyValue.ChildrenCount - 2)).AddComment(attribute.Message);
+				//}
+
+				tableItems.Add(keyValue);
+			}
+
+			if (table.Items.ChildrenCount != 0) {
+				document.Tables.Add(table);
 			}
 
 			foreach (var child in children) {
 				if (child.IsNestedPrivate)
 					continue;
-				if (child.GetCustomAttribute<Config.FileIgnoreAttribute>() != null) {
+				if (child.GetCustomAttribute<Config.ConfigIgnoreAttribute>() != null) {
 					continue;
 				}
 				var childKey = new KeySyntax(typeof(Config).Name);
@@ -211,10 +230,6 @@ namespace SpriteMaster {
 				}
 				childKey.DotKeys.Add(new DottedKeyItemSyntax(child.Name));
 				SaveClass(child, document, childKey);
-			}
-
-			if (table.Items.ChildrenCount != 0) {
-				document.Tables.Add(table);
 			}
 		}
 

@@ -75,7 +75,7 @@ namespace SpriteMaster {
 
 		[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden(), MethodImpl(MethodImplOptions.AggressiveInlining), Untraced]
 		static internal void Assert (bool predicate, in string message = "Variable's value is invalid", Type exception = null) {
-			if (!exception.IsExceptionType()) {
+			if (exception != null && !exception.IsExceptionType()) {
 				throw new ArgumentOutOfRangeException("Provided assert exception type is not a subclass of Exception");
 			}
 			if (!predicate) {

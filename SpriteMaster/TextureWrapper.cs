@@ -3,6 +3,7 @@ using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace SpriteMaster {
 	internal sealed class TextureWrapper {
@@ -17,12 +18,78 @@ namespace SpriteMaster {
 
 		private static ConditionalWeakTable<Texture2D, WeakReference<byte[]>> DataCache = new ConditionalWeakTable<Texture2D, WeakReference<byte[]>>();
 
-		internal static void Purge(Texture2D reference) {
+		private static unsafe byte[] MakeByteArray<T>(DataRef<T> data, long referenceSize = 0) where T : unmanaged {
+			try {
+				if (referenceSize == 0)
+					referenceSize = (long)data.Length * sizeof(T);
+				var newData = new byte[referenceSize];
+
+				fixed (T* ptr = data.Data) {
+					var bytePtr = (byte*)ptr;
+					foreach (var i in 0.Until(referenceSize)) {
+						newData[i] = bytePtr[i];
+					}
+				}
+
+				return newData;
+			}
+			catch (Exception ex) {
+				ex.PrintInfo();
+				return null;
+			}
+		}
+
+		private static void Purge(Texture2D reference) {
 			try {
 				DataCache.Remove(reference);
 			}
 			catch { /* do nothing */ }
 		}
+
+		// Attempt to update the bytedata cache for the reference texture, or purge if it that makes more sense or if updating
+		// is not plausible.
+		internal static unsafe void Purge<T>(Texture2D reference, Bounds? bounds, DataRef<T> data) where T : unmanaged {
+			if (data.IsNull) {
+				Purge(reference);
+				return;
+			}
+
+			var refSize = (long)reference.Area() * sizeof(T);
+
+			bool forcePurge = false;
+
+			try {
+				if (data.Offset == 0 && data.Length >= refSize) {
+					DataCache.Remove(reference);
+					var newByteArray = MakeByteArray(data, refSize);
+					if (newByteArray == null)
+						forcePurge = true;
+					else
+						DataCache.Add(reference, newByteArray.MakeWeak());
+				}
+				else if (DataCache.TryGetValue(reference, out var weakData) && weakData.TryGetTarget(out var currentData)) {
+					fixed (T *ptr = data.Data) {
+						var bytePtr = (byte*)ptr;
+						long untilOffset = Math.Min(currentData.Length - data.Offset, (long)data.Length * sizeof(T));
+						foreach (var i in 0.Until(untilOffset)) {
+							currentData[i + data.Offset] = bytePtr[i];
+						}
+					}
+				}
+				else {
+					forcePurge = true;
+				}
+			}
+			catch (Exception ex) {
+				ex.PrintInfo();
+				forcePurge = true;
+			}
+
+			if (forcePurge) {
+				Purge(reference);
+			}
+		}
+
 		internal TextureWrapper (Texture2D reference, in Bounds dimensions, in Bounds indexRectangle) {
 			ReferenceSize = new Vector2I(reference);
 			Size = dimensions;

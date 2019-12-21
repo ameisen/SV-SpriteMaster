@@ -5,7 +5,15 @@ using System.IO;
 
 namespace SpriteMaster {
 	static class Config {
-		internal class FileIgnoreAttribute : Attribute { }
+		internal sealed class CommentAttribute : Attribute {
+			public readonly string Message;
+
+			public CommentAttribute (string message) {
+				Message = message;
+			}
+		}
+
+		internal sealed class ConfigIgnoreAttribute : Attribute { }
 
 		internal static readonly string ModuleName = typeof(Config).Namespace;
 
@@ -13,8 +21,9 @@ namespace SpriteMaster {
 		internal static SButton ToggleButton = SButton.F11;
 
 		internal const int MaxSamplers = 16;
-		[FileIgnore]
-		internal static int ClampDimension = 4096; // this is adjustable by the mod
+		[ConfigIgnore]
+		internal static int ClampDimension = 4096; // this is adjustable by the system itself. The user shouldn't be able to touch it.
+		[Comment("The preferred maximum texture edge length, if allowed by the hardware")]
 		internal static int PreferredMaxTextureDimension = 8192;
 		internal const bool RestrictSize = false;
 		internal const bool ClampInvalidBounds = true;
@@ -80,25 +89,28 @@ namespace SpriteMaster {
 			internal static int MaxScale = 5;
 			internal const bool DeSprite = true;
 			internal const bool EnableWrappedAddressing = true;
+			internal const bool UseBlockCompression = true;
 			internal static class Padding {
 				internal const bool Enabled = true;
-				internal const int MinSize = 4;
+				internal static int MinimumSizeTexels = 4;
 				internal const bool IgnoreUnknown = true;
 			}
 		}
 
 		internal static class WrapDetection {
 			internal const bool Enabled = true;
-			internal const float edgeThreshold = 0.25f;
-			internal const byte alphaThreshold = 1;
+			internal static float edgeThreshold = 0.25f;
+			internal static byte alphaThreshold = 1;
 		}
 
 		internal static class AsyncScaling {
 			internal static bool Enabled = true;
+			internal static bool EnabledForUnknownTextures = false;
 			internal static bool CanFetchAndLoadSameFrame = true;
 			internal static int MaxLoadsPerFrame = 2;
-			internal static int ScalingBudgetPerFrame = 2 * 256 * 256;
-			internal static int MaxInflightTasks = 8;
+			internal static long MinimumSizeTexels = 0;
+			internal static long ScalingBudgetPerFrameTexels = 2 * 256 * 256;
+			internal static int MaxInFlightTasks = 8;
 		}
 
 		internal static class Cache {

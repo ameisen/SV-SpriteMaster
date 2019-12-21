@@ -7,7 +7,7 @@ namespace SpriteMaster {
 	internal static class DrawState {
 		private static readonly SamplerState DefaultSamplerState = SamplerState.LinearClamp;
 		private static bool FetchedThisFrame = false;
-		private static int RemainingTexelFetchBudget = Config.AsyncScaling.ScalingBudgetPerFrame;
+		private static long RemainingTexelFetchBudget = Config.AsyncScaling.ScalingBudgetPerFrameTexels;
 		private static bool PushedUpdateThisFrame = false;
 		public static TextureAddressMode CurrentAddressModeU = DefaultSamplerState.AddressU;
 		public static TextureAddressMode CurrentAddressModeV = DefaultSamplerState.AddressV;
@@ -35,7 +35,7 @@ namespace SpriteMaster {
 			if (Config.AsyncScaling.CanFetchAndLoadSameFrame || !PushedUpdateThisFrame) {
 				ScaledTexture.ProcessPendingActions();
 			}
-			RemainingTexelFetchBudget = Config.AsyncScaling.ScalingBudgetPerFrame;
+			RemainingTexelFetchBudget = Config.AsyncScaling.ScalingBudgetPerFrameTexels;
 			FetchedThisFrame = false;
 			PushedUpdateThisFrame = false;
 		}

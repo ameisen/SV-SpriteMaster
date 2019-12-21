@@ -320,11 +320,13 @@ namespace SpriteMaster {
 				return scaleTexture;
 			}
 
-			if (Config.AsyncScaling.Enabled && !DrawState.GetUpdateToken(texture.Width * texture.Height)) {
+			bool useAsync = (Config.AsyncScaling.EnabledForUnknownTextures || !texture.Name.IsBlank()) && (texture.Area() >= Config.AsyncScaling.MinimumSizeTexels);
+
+			if (useAsync && Config.AsyncScaling.Enabled && !DrawState.GetUpdateToken(texture.Width * texture.Height)) {
 				return null;
 			}
 
-			if (Config.AsyncScaling.Enabled && RemainingAsyncTasks <= 0) {
+			if (useAsync && Config.AsyncScaling.Enabled && RemainingAsyncTasks <= 0) {
 				return null;
 			}
 
@@ -366,13 +368,14 @@ namespace SpriteMaster {
 				scale: scale,
 				isSprite: isSprite,
 				hash: hash,
-				allowPadding: allowPadding
+				allowPadding: allowPadding,
+				async: useAsync
 			);
 			if (Config.EnableCachedHashTextures)
 				lock (LocalTextureCache) {
 					LocalTextureCache.Add(hash, newTexture.MakeWeak());
 				}
-			if (Config.AsyncScaling.Enabled) {
+			if (useAsync && Config.AsyncScaling.Enabled) {
 				// It adds itself to the relevant maps.
 				if (newTexture.IsReady && newTexture.Texture != null) {
 					return newTexture;
@@ -422,10 +425,10 @@ namespace SpriteMaster {
 
 		internal static readonly Dictionary<ulong, WeakScaledTexture> LocalTextureCache = new Dictionary<ulong, WeakScaledTexture>();
 
-		internal static void Purge (Texture2D reference, Bounds? sourceRectangle = null) {
-			TextureMap.Purge(reference, sourceRectangle);
+		internal static void Purge<T> (Texture2D reference, Bounds? bounds, DataRef<T> data) where T : unmanaged {
+			TextureMap.Purge(reference, bounds);
 			Upscaler.PurgeHash(reference);
-			TextureWrapper.Purge(reference);
+			TextureWrapper.Purge(reference, bounds, data);
 		}
 
 		internal sealed class ManagedTexture2D : Texture2D {
@@ -444,9 +447,9 @@ namespace SpriteMaster {
 			}
 		}
 
-		internal static volatile int RemainingAsyncTasks = Config.AsyncScaling.MaxInflightTasks;
+		internal static volatile int RemainingAsyncTasks = Config.AsyncScaling.MaxInFlightTasks;
 
-		internal ScaledTexture (string assetName, TextureWrapper textureWrapper, Texture2D source, Bounds sourceRectangle, Bounds indexRectangle, int scale, ulong hash, bool isSprite, bool allowPadding) {
+		internal ScaledTexture (string assetName, TextureWrapper textureWrapper, Texture2D source, Bounds sourceRectangle, Bounds indexRectangle, int scale, ulong hash, bool isSprite, bool allowPadding, bool async) {
 			IsSprite = isSprite;
 			Hash = hash;
 
@@ -459,7 +462,7 @@ namespace SpriteMaster {
 			this.Name = source.Name.IsBlank() ? assetName : source.Name;
 			originalSize = IsSprite ? sourceRectangle.Extent : new Vector2I(source);
 
-			if (Config.AsyncScaling.Enabled) {
+			if (async && Config.AsyncScaling.Enabled) {
 				new Thread(() => {
 					--RemainingAsyncTasks;
 					try {

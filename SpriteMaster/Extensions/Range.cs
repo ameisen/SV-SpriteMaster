@@ -35,7 +35,26 @@ namespace SpriteMaster.Extensions {
 			}
 		}
 
+		internal static IEnumerable<long> ToInclusive (this int from, long to) {
+			var _from = (long)from;
+			if (_from >= to) {
+				Common.Swap(ref _from, ref to);
+			}
+			while (_from <= to) {
+				yield return _from++;
+			}
+		}
+
 		internal static IEnumerable<int> ToExclusive (this int from, int to) {
+			while (from < to) {
+				yield return from++;
+			}
+			while (from > to) {
+				yield return from--;
+			}
+		}
+
+		internal static IEnumerable<long> ToExclusive (this int from, long to) {
 			while (from < to) {
 				yield return from++;
 			}
@@ -48,11 +67,23 @@ namespace SpriteMaster.Extensions {
 			return ToInclusive(from, to);
 		}
 
+		internal static IEnumerable<long> To (this int from, long to) {
+			return ToInclusive(from, to);
+		}
+
 		internal static IEnumerable<int> Until (this int from, int to) {
 			return ToExclusive(from, to);
 		}
 
+		internal static IEnumerable<long> Until (this int from, long to) {
+			return ToExclusive(from, to);
+		}
+
 		internal static IEnumerable<int> For (this int from, int count) {
+			return ToExclusive(from, from + count);
+		}
+
+		internal static IEnumerable<long> For (this int from, long count) {
 			return ToExclusive(from, from + count);
 		}
 

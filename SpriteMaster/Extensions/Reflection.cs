@@ -23,5 +23,10 @@ namespace SpriteMaster.Extensions {
 			var result = field.GetValue(instance);
 			return (T)result;
 		}
+
+		internal static bool GetAttribute<T> (this MemberInfo member, out T attribute) where T : Attribute {
+			attribute = member.GetCustomAttribute<T>();
+			return attribute != null;
+		}
 	}
 }
