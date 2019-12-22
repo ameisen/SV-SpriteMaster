@@ -615,12 +615,17 @@ namespace SpriteMaster {
 									}
 								}
 
+								requireBlockPadding = new Vector2B(
+									inputSize.X >= 4 && (paddedSize.X % 4 != 0),
+									inputSize.Y >= 4 && (paddedSize.Y % 4 != 0)
+								) & Config.Resample.UseBlockCompression;
+
 								// Block padding can never take us over a dimension clamp, as the clamps themselves are multiples of the block padding (4, generally).
 								if (requireBlockPadding.X) {
-									texture.BlockPadding.X = 4 - inputSize.X % 4;
+									texture.BlockPadding.X = 4 - paddedSize.X % 4;
 								}
 								if (requireBlockPadding.Y) {
-									texture.BlockPadding.Y = 4 - inputSize.Y % 4;
+									texture.BlockPadding.Y = 4 - paddedSize.Y % 4;
 								}
 
 								paddedSize += texture.BlockPadding;
@@ -641,13 +646,23 @@ namespace SpriteMaster {
 											return;
 										if (pre && !shouldPad.Y)
 											return;
-										var rows = (!pre) ? (texture.Padding.Y + texture.BlockPadding.Y) : texture.Padding.Y;
-										foreach (int i in 0.Until(rows)) {
+										int lastStrideOffset = 0;
+										foreach (int i in 0.Until(texture.Padding.Y)) {
 											int strideOffset = y * paddedSize.Width;
+											lastStrideOffset = strideOffset;
 											foreach (int x in 0.Until(paddedSize.Width)) {
 												paddedData[strideOffset + x] = padConstant;
 											}
 											++y;
+										}
+										if (!pre) {
+											foreach (int i in 0.Until(texture.BlockPadding.Y)) {
+												int strideOffset = y * paddedSize.Width;
+												foreach (int x in 0.Until(paddedSize.Width)) {
+													paddedData[strideOffset + x] = paddedData[lastStrideOffset + x]; // For block-padding, we clamp the data to inhibit edge artifacts.
+												}
+												++y;
+											}
 										}
 									}
 
@@ -663,9 +678,15 @@ namespace SpriteMaster {
 												return;
 											if (pre && !shouldPad.X)
 												return;
-											var columns = (!pre) ? (texture.Padding.X + texture.BlockPadding.X) : texture.Padding.X;
-											foreach (int x in 0.Until(columns)) {
+											int lastXOffset = 0;
+											foreach (int x in 0.Until(texture.Padding.X)) {
+												lastXOffset = xOffset;
 												paddedData[xOffset++] = padConstant;
+											}
+											if (!pre) {
+												foreach (int x in 0.Until(texture.BlockPadding.X)) {
+													paddedData[xOffset++] = paddedData[lastXOffset]; // For block-padding, we clamp the data to inhibit edge artifacts.
+												}
 											}
 										}
 										WritePaddingX(true);
