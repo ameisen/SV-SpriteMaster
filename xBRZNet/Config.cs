@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 
+// TODO : Handle X or Y-only scaling, since the game has a lot of 1xY and Xx1 sprites - 1D textures.
 namespace xBRZNet2 {
 	public readonly struct Config : IEquatable<Config> {
 		internal readonly bool WrappedX;
 		internal readonly bool WrappedY;
+		internal readonly bool SRGB;
 
 		// These are the default values:
 		internal readonly double LuminanceWeight;
@@ -19,19 +21,21 @@ namespace xBRZNet2 {
 		public Config (
 			bool wrappedX = false,
 			bool wrappedY = false,
+			bool SRGB = true,
 			double luminanceWeight = 1.0,
 			double equalColorTolerance = 30.0,
 			double dominantDirectionThreshold = 3.6,
 			double steepDirectionThreshold = 2.2
 		) {
-			WrappedX = wrappedX;
-			WrappedY = wrappedY;
-			LuminanceWeight = luminanceWeight;
-			EqualColorTolerance = equalColorTolerance;
-			DominantDirectionThreshold = dominantDirectionThreshold;
-			SteepDirectionThreshold = steepDirectionThreshold;
+			this.WrappedX = wrappedX;
+			this.WrappedY = wrappedY;
+			this.SRGB = SRGB;
+			this.LuminanceWeight = luminanceWeight;
+			this.EqualColorTolerance = equalColorTolerance;
+			this.DominantDirectionThreshold = dominantDirectionThreshold;
+			this.SteepDirectionThreshold = steepDirectionThreshold;
 
-			EqualColorTolerancePow2 = Math.Pow(EqualColorTolerance, 2.0);
+			this.EqualColorTolerancePow2 = Math.Pow(EqualColorTolerance, 2.0);
 		}
 
 		public override readonly bool Equals (object obj) {

@@ -78,12 +78,31 @@ namespace SpriteMaster.Types {
 			get { return this == Zero; }
 		}
 
+		public int MinOf {
+			get { return Math.Min(X, Y); }
+		}
+
+		public int MaxOf {
+			get { return Math.Max(X, Y); }
+		}
+
 		public Vector2I (int x, int y) {
 			X = x;
 			Y = y;
 		}
 
 		public Vector2I (int v) : this(v, v) { }
+
+		public Vector2I (Vector2 vec, bool round = true) {
+			if (round) {
+				X = vec.X.NearestInt();
+				Y = vec.Y.NearestInt();
+			}
+			else {
+				X = vec.X.TruncateInt();
+				Y = vec.Y.TruncateInt();
+			}
+		}
 
 		public Vector2I (Vector2I vec) : this(vec.X, vec.Y) { }
 
@@ -179,12 +198,16 @@ namespace SpriteMaster.Types {
 			return new Vector2I(vec);
 		}
 
-		public readonly int Min () {
-			return Math.Min(X, Y);
+		public static implicit operator Bounds (Vector2I vec) {
+			return new Bounds(vec);
 		}
 
-		public readonly int Max () {
-			return Math.Max(X, Y);
+		public readonly Vector2I Min () {
+			return new Vector2I(Math.Min(X, Y));
+		}
+
+		public readonly Vector2I Max () {
+			return new Vector2I(Math.Max(X, Y));
 		}
 
 		public readonly Vector2I Min (Vector2I v) {

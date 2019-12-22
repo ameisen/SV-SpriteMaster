@@ -32,6 +32,14 @@ namespace SpriteMaster.Types {
 			set { Y = value; }
 		}
 
+		public bool Any {
+			get { return X || Y; }
+		}
+
+		public bool All {
+			get { return X && Y; }
+		}
+
 		public bool this[int index] {
 			readonly get {
 				return index switch

@@ -2,6 +2,7 @@
 using StardewModdingAPI;
 using System;
 using System.IO;
+using TeximpNet.Compression;
 
 namespace SpriteMaster {
 	static class Config {
@@ -22,8 +23,10 @@ namespace SpriteMaster {
 
 		internal const int MaxSamplers = 16;
 		[ConfigIgnore]
-		internal static int ClampDimension = 4096; // this is adjustable by the system itself. The user shouldn't be able to touch it.
+		internal static int ClampDimension = BaseMaxTextureDimension; // this is adjustable by the system itself. The user shouldn't be able to touch it.
 		[Comment("The preferred maximum texture edge length, if allowed by the hardware")]
+		internal const int AbsoluteMaxTextureDimension = 16384;
+		internal const int BaseMaxTextureDimension = 4096;
 		internal static int PreferredMaxTextureDimension = 8192;
 		internal const bool RestrictSize = false;
 		internal const bool ClampInvalidBounds = true;
@@ -87,9 +90,12 @@ namespace SpriteMaster {
 			internal const bool Scale = Smoothing;
 			internal const bool SmartScale = true;
 			internal static int MaxScale = 5;
+			internal static int MinimumTextureDimensions = 4;
 			internal const bool DeSprite = true;
 			internal const bool EnableWrappedAddressing = true;
-			internal const bool UseBlockCompression = true;
+			internal static bool UseBlockCompression = true;
+			internal static CompressionQuality BlockCompressionQuality = CompressionQuality.Highest;
+			internal static int BlockHardAlphaDeviationThreshold = 7;
 			internal static class Padding {
 				internal const bool Enabled = true;
 				internal static int MinimumSizeTexels = 4;

@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
+using SpriteMaster.Types;
 using System;
 
 namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
@@ -27,22 +28,20 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 				if (reference is RenderTarget2D || reference.Width < 1 || reference.Height < 1)
 					return null;
 
+				if (reference.Extent().MaxOf <= Config.Resample.MinimumTextureDimensions)
+					return null;
+
 				var scaledTexture = create ?
 					ScaledTexture.Get(reference, sourceRectangle, sourceRectangle) :
 					ScaledTexture.Fetch(reference, sourceRectangle, sourceRectangle);
 				if (scaledTexture != null && scaledTexture.IsReady) {
 					var t = scaledTexture.Texture;
 
-					if (t == null)
+					if (t == null || t.IsDisposed)
 						return null;
 
-					if (Config.Resample.DeSprite && scaledTexture.IsSprite) {
-						sourceRectangle = new Rectangle(
-							0,
-							0,
-							t.Width,
-							t.Height
-						);
+					if (Config.Resample.DeSprite/* && scaledTexture.IsSprite*/) {
+						sourceRectangle = (Bounds)t.Dimensions;
 					}
 					else {
 						sourceRectangle = new Rectangle(
@@ -187,8 +186,8 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			var adjustedOrigin = origin;
 
 			if (!scaledTexture.Padding.IsZero) {
-				var textureSize = new Vector2(t.Width, t.Height);
-				var innerSize = new Vector2(scaledTexture.UnpaddedSize.Width, scaledTexture.UnpaddedSize.Height);
+				var textureSize = new Vector2(sourceRectangle.Width, sourceRectangle.Height);
+				var innerSize = (Vector2)scaledTexture.UnpaddedSize;
 
 				// This is the scale factor to bring the inner size to the draw size.
 				var innerRatio = textureSize / innerSize;

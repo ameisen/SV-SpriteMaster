@@ -25,7 +25,7 @@ namespace xBRZNet2.Scalers {
 
 			//this works because 8 upper bits are free
 			var dst = dstRef;
-			var alphaComponent = BlendComponent(ColorConstant.Shift.Alpha, ColorConstant.Mask.Alpha, n, m, dst, col);
+			var alphaComponent = BlendComponent(ColorConstant.Shift.Alpha, ColorConstant.Mask.Alpha, n, m, dst, col, gamma: false);
 			var redComponent = BlendComponent(ColorConstant.Shift.Red, ColorConstant.Mask.Red, n, m, dst, col);
 			var greenComponent = BlendComponent(ColorConstant.Shift.Green, ColorConstant.Mask.Green, n, m, dst, col);
 			var blueComponent = BlendComponent(ColorConstant.Shift.Blue, ColorConstant.Mask.Blue, n, m, dst, col);
@@ -66,19 +66,24 @@ namespace xBRZNet2.Scalers {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static uint BlendComponent (int shift, uint mask, int n, int m, int inPixel, int setPixel) {
+		private static uint BlendComponent (int shift, uint mask, int n, int m, int inPixel, int setPixel, bool gamma = true) {
 			if (true) {
 				var inChan = (int)((unchecked((uint)inPixel) >> shift) & 0xFF) * 0x101;
 				var setChan = (int)((unchecked((uint)setPixel) >> shift) & 0xFF) * 0x101;
 
-				inChan = ToLinear(inChan);
-				setChan = ToLinear(setChan);
+				// TODO : attach to the configuration setting for SRGB
+				if (gamma) {
+					inChan = ToLinear(inChan);
+					setChan = ToLinear(setChan);
+				}
 
 				var blend = setChan * n + inChan * (m - n);
 
 				var outChan = (int)unchecked(((uint)(blend / m)) & 0xFFFF);
 
-				outChan = ToGamma(outChan);
+				if (gamma) {
+					outChan = ToGamma(outChan);
+				}
 
 				var component = (outChan / 0x101) << shift;
 				return (uint)component;
@@ -291,11 +296,11 @@ namespace xBRZNet2.Scalers {
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public override void BlendCorner (int col, in OutputMatrix out_) {
 			//model a round corner
-			AlphaBlend(86314, 100000, ref out_.Ref(4, 4), col); //exact: 0.8631434088
-			AlphaBlend(23067, 100000, ref out_.Ref(4, 3), col); //0.2306749731
-			AlphaBlend(23067, 100000, ref out_.Ref(3, 4), col); //0.2306749731
-			AlphaBlend(839, 100000, ref out_.Ref(4, 2), col); //0.008384061834 -> negligible
-			AlphaBlend(839, 100000, ref out_.Ref(2, 4), col); //0.008384061834
+			AlphaBlend(86, 100, ref out_.Ref(4, 4), col); //exact: 0.8631434088
+			AlphaBlend(23, 100, ref out_.Ref(4, 3), col); //0.2306749731
+			AlphaBlend(23, 100, ref out_.Ref(3, 4), col); //0.2306749731
+			AlphaBlend(8, 1000, ref out_.Ref(4, 2), col); //0.008384061834 -> negligable
+			AlphaBlend(8, 1000, ref out_.Ref(2, 4), col); //0.008384061834
 		}
 	}
 }

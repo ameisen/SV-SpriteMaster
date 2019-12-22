@@ -3,7 +3,6 @@ using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using System;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
 namespace SpriteMaster {
 	internal sealed class TextureWrapper {

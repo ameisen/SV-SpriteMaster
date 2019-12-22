@@ -10,13 +10,17 @@ namespace SpriteMaster.Extensions {
 			return texture.Width * texture.Height;
 		}
 
-		internal static long SizeBytes (this Texture2D texture) {
-			switch (texture.Format) {
+		internal static Vector2I Extent (this Texture2D texture) {
+			return new Vector2I(texture.Width, texture.Height);
+		}
+
+		internal static long SizeBytes (this SurfaceFormat format, int texels) {
+			switch (format) {
 				case SurfaceFormat.Dxt1:
-					return texture.Area() / 2;
+					return texels / 2;
 			}
 
-			long elementSize = texture.Format switch
+			long elementSize = format switch
 			{
 				SurfaceFormat.Color => 4,
 				SurfaceFormat.Bgr565 => 2,
@@ -36,22 +40,42 @@ namespace SpriteMaster.Extensions {
 				SurfaceFormat.HalfSingle => 2,
 				SurfaceFormat.HalfVector2 => 4,
 				SurfaceFormat.HalfVector4 => 8,
-				_ => throw new ArgumentException(nameof(texture))
+				_ => throw new ArgumentException(nameof(format))
 			};
 
-			return (long)texture.Area() * elementSize;
+			return (long)texels * elementSize;
+		}
+
+		internal static long SizeBytes (this Texture2D texture) {
+			return texture.Format.SizeBytes(texture.Area());
 		}
 
 		internal static long SizeBytes (this ScaledTexture.ManagedTexture2D texture) {
 			return (long)texture.Area() * 4;
 		}
 
+		internal static bool IsBlockCompressed (this Texture2D texture) {
+			switch (texture.Format) {
+				case SurfaceFormat.Dxt1:
+				case SurfaceFormat.Dxt3:
+				case SurfaceFormat.Dxt5:
+					return true;
+			}
+			return false;
+		}
+
 		internal static unsafe void SetDataEx (this Texture2D texture, int[] data) {
 			// If we are getting integer data in, we may have to convert it.
-			if (texture.Format == SurfaceFormat.Dxt5) {
-				var byteData = new byte[data.Length * sizeof(int)];
-				fixed (byte* p = byteData) {
-					Marshal.Copy(data, 0, (IntPtr)p, data.Length);
+			if (texture.IsBlockCompressed()) {
+				var byteData = new byte[texture.SizeBytes()];
+				fixed (int* source = data) {
+					byte* pSource = (byte*)source;
+					fixed (byte* dest = byteData) {
+						foreach (int i in 0.Until(byteData.Length)) {
+							dest[i] = pSource[i];
+						}
+						//Marshal.Copy(pSource, 0, dest, data.Length);
+					}
 				}
 				texture.SetData(byteData);
 			}

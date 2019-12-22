@@ -135,6 +135,10 @@ namespace SpriteMaster {
 					if (Map.TryGetValue(reference, out var scaledTexture)) {
 						using (Lock.Promote()) {
 							Debug.InfoLn($"Purging Texture {reference.SafeName()}");
+							if (scaledTexture.Texture != null) {
+								scaledTexture.Texture.Purge();
+								scaledTexture.Texture = null;
+							}
 							Map.Remove(reference);
 							// TODO dispose sprite?
 						}
@@ -210,8 +214,17 @@ namespace SpriteMaster {
 			try {
 				using (Lock.LockShared()) {
 					if (Map.TryGetValue(reference, out var scaledTextureMap)) {
+						// TODO handle sourceRectangle meaningfully.
 						using (Lock.Promote()) {
 							Debug.InfoLn($"Purging Texture {reference.SafeName()}");
+
+							foreach (var scaledTexture in scaledTextureMap.Values) {
+								if (scaledTexture.Texture != null) {
+									scaledTexture.Texture.Purge();
+									scaledTexture.Texture = null;
+								}
+							}
+
 							Map.Remove(reference);
 							// TODO dispose sprites?
 						}
@@ -388,7 +401,7 @@ namespace SpriteMaster {
 
 		}
 
-		internal Texture2D Texture;
+		internal ManagedTexture2D Texture;
 		internal readonly string Name;
 		internal Vector2 Scale;
 		internal readonly bool IsSprite;
@@ -402,9 +415,18 @@ namespace SpriteMaster {
 
 		internal Vector2I Padding = Vector2I.Zero;
 		internal Vector2I UnpaddedSize;
+		internal Vector2I BlockPadding = Vector2I.Zero;
 		private readonly Vector2I originalSize;
 		private readonly Bounds sourceRectangle;
 		private int refScale;
+
+		internal Vector2 AdjustedScale = Vector2.One;
+
+		~ScaledTexture() {
+			if (Texture != null) {
+				Texture.Purge();
+			}
+		}
 
 		internal static volatile uint TotalMemoryUsage = 0;
 
@@ -434,16 +456,33 @@ namespace SpriteMaster {
 		internal sealed class ManagedTexture2D : Texture2D {
 			public readonly WeakReference<Texture2D> Reference;
 			public readonly ScaledTexture Texture;
+			public readonly Vector2I Dimensions;
 
 			public ManagedTexture2D (ScaledTexture texture, Texture2D reference, Vector2I dimensions, SurfaceFormat format) : base(reference.GraphicsDevice, dimensions.Width, dimensions.Height, false, format) {
 				Reference = reference.MakeWeak();
 				Texture = texture;
+				Dimensions = dimensions - new Vector2I(texture.AdjustedScale * texture.BlockPadding);
 
 				reference.Disposing += (object obj, EventArgs args) => OnParentDispose();
 			}
 
+			~ManagedTexture2D() {
+				Purge(onlySelf: false);
+			}
+
+			public void Purge(bool onlySelf = true) {
+				if (!IsDisposed) {
+					Dispose();
+					if (!onlySelf && Reference.TryGetTarget(out var ReferenceTexture)) {
+						if (ReferenceTexture != null && !ReferenceTexture.IsDisposed) {
+							ReferenceTexture.Dispose();
+						}
+					}
+				}
+			}
+
 			private void OnParentDispose() {
-				Dispose();
+				Purge();
 			}
 		}
 
@@ -485,7 +524,7 @@ namespace SpriteMaster {
 			}
 			else {
 				// TODO store the HD Texture in _this_ object instead. Will confuse things like subtexture updates, though.
-				this.Texture = Upscaler.Upscale(
+				this.Texture = (ManagedTexture2D)Upscaler.Upscale(
 					texture: this,
 					scale: ref refScale,
 					input: textureWrapper,
@@ -511,13 +550,13 @@ namespace SpriteMaster {
 			Texture.Disposing += (object sender, EventArgs args) => { TotalMemoryUsage -= (uint)Texture.SizeBytes(); };
 
 			if (IsSprite) {
-				Debug.InfoLn($"Creating HD Sprite [scale {refScale}]: {this.SafeName()} {sourceRectangle}");
+				Debug.InfoLn($"Creating HD Sprite [{Texture.Format} x{refScale}]: {this.SafeName()} {sourceRectangle}");
 			}
 			else {
-				Debug.InfoLn($"Creating HD Spritesheet [scale {refScale}]: {this.SafeName()}");
+				Debug.InfoLn($"Creating HD Spritesheet [{Texture.Format} x{refScale}]: {this.SafeName()}");
 			}
 
-			this.Scale = new Vector2(Texture.Width, Texture.Height) / new Vector2(originalSize.Width, originalSize.Height);
+			this.Scale = (Vector2)Texture.Dimensions / new Vector2(originalSize.Width, originalSize.Height);
 
 			if (Config.RestrictSize) {
 				var scaledSize = originalSize * refScale;

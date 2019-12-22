@@ -46,10 +46,19 @@ namespace SpriteMaster.HarmonyExt.Patches {
 						continue;
 					}
 					var maxTextureSizeProperty = getPrivateField(capabilities, "MaxTextureSize");
-					if ((int)maxTextureSizeProperty.GetValue(capabilities) < Config.PreferredMaxTextureDimension) {
-						maxTextureSizeProperty.SetValue(capabilities, Config.PreferredMaxTextureDimension);
-						getPrivateField(capabilities, "MaxTextureAspectRatio").SetValue(capabilities, Config.PreferredMaxTextureDimension / 2);
-						Config.ClampDimension = Config.PreferredMaxTextureDimension;
+					foreach (var i in Config.AbsoluteMaxTextureDimension.To(Config.BaseMaxTextureDimension)) {
+						if ((int)maxTextureSizeProperty.GetValue(capabilities) < i) {
+							maxTextureSizeProperty.SetValue(capabilities, i);
+							getPrivateField(capabilities, "MaxTextureAspectRatio").SetValue(capabilities, i / 2);
+							try {
+								Config.ClampDimension = i;
+								using (var testTexture = new Texture2D(@this.GraphicsDevice, i, i)) {
+									/* do nothing. We want to dispose of it immediately. */
+								}
+								break;
+							}
+							catch { /* do nothing. resolution unsupported. */ }
+						}
 					}
 				}
 			}
