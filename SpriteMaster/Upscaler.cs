@@ -2,18 +2,14 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
+using SpriteMaster.Resample;
 using SpriteMaster.Types;
 using System;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
-using System.Management;
-using System.Reflection;
-using System.Runtime;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Threading;
-using TeximpNet;
 using TeximpNet.Compression;
 using TeximpNet.DDS;
 using xBRZNet2;
@@ -21,127 +17,6 @@ using static SpriteMaster.ScaledTexture;
 
 namespace SpriteMaster {
 	internal sealed class Upscaler {
-		static Bitmap CreateBitmap (int[] source, Vector2I size, PixelFormat format = PixelFormat.Format32bppArgb) {
-			var newImage = new Bitmap(size.Width, size.Height, format);
-			var rectangle = new Bounds(newImage);
-			var newBitmapData = newImage.LockBits(rectangle, ImageLockMode.WriteOnly, format);
-			// Get the address of the first line.
-			var newBitmapPointer = newBitmapData.Scan0;
-			//http://stackoverflow.com/a/1917036/294804
-			// Copy the RGB values back to the bitmap
-
-			bool hasPadding = newBitmapData.Stride != (newBitmapData.Width * sizeof(int));
-
-			// Handle stride correctly as input data does not have any stride?
-			const bool CopyWithPadding = true;
-			if (CopyWithPadding && hasPadding) {
-				var rowElements = newImage.Width;
-				var rowSize = newBitmapData.Stride;
-
-				int sourceOffset = 0;
-				foreach (int row in 0.Until(newImage.Height)) {
-					Marshal.Copy(source, sourceOffset, newBitmapPointer, rowElements);
-					sourceOffset += rowElements;
-					newBitmapPointer += rowSize;
-				}
-			}
-			else {
-				var intCount = newBitmapData.Stride * newImage.Height / sizeof(int);
-				Marshal.Copy(source, 0, newBitmapPointer, intCount);
-			}
-			// Unlock the bits.
-			newImage.UnlockBits(newBitmapData);
-
-			return newImage;
-		}
-
-		private static readonly string TextureCacheName = "TextureCache";
-		private static readonly string JunctionCacheName = $"{TextureCacheName}_Current";
-		private static readonly Version AssemblyVersion = typeof(Upscaler).Assembly.GetName().Version;
-		private static readonly string CacheName = $"{TextureCacheName}_{AssemblyVersion.ToString()}";
-		private static readonly string LocalDataPath = Path.Combine(Config.LocalRoot, CacheName);
-		private static readonly string DumpPath = Path.Combine(LocalDataPath, "dump");
-
-		enum LinkType : int {
-			File = 0,
-			Directory = 1
-		}
-
-		[DllImport("kernel32.dll")]
-		static extern bool CreateSymbolicLink (string Link, string Target, LinkType Type);
-
-		private static bool IsSymbolic (string path) {
-			var pathInfo = new FileInfo(path);
-			return pathInfo.Attributes.HasFlag(FileAttributes.ReparsePoint);
-		}
-
-		static Upscaler () {
-			// Delete any old caches.
-			try {
-				foreach (var root in new string[] { Config.LocalRoot }) {
-					var directories = Directory.EnumerateDirectories(root);
-					foreach (var directory in directories) {
-						try {
-							if (!Directory.Exists(directory)) {
-								continue;
-							}
-							if (IsSymbolic(directory)) {
-								continue;
-							}
-							var endPath = Path.GetFileName(directory);
-							if (endPath != CacheName && endPath != JunctionCacheName) {
-								// If it doesn't match, it's outdated and should be deleted.
-								Directory.Delete(directory, true);
-							}
-						}
-						catch { /* Ignore failures */ }
-					}
-				}
-			}
-			catch { /* Ignore failures */ }
-
-			if (Config.Cache.Enabled) {
-				// Create the directory path
-				Directory.CreateDirectory(LocalDataPath);
-
-				// Mark the directory as compressed because this is very space wasteful and we are currently not performing compression.
-				// https://stackoverflow.com/questions/624125/compress-a-folder-using-ntfs-compression-in-net
-				try {
-					var dir = new DirectoryInfo(LocalDataPath);
-					if ((dir.Attributes & FileAttributes.Compressed) == 0) {
-						var objectPath = $"Win32_Directory.Name='{dir.FullName.Replace("\\", @"\\").TrimEnd('\\')}'";
-						using (ManagementObject obj = new ManagementObject(objectPath)) {
-							using (obj.InvokeMethod("Compress", null, null)) {
-								// I don't really care about the return value, 
-								// if we enabled it great but it can also be done manually
-								// if really needed
-							}
-						}
-					}
-				}
-				catch { /* Ignore failures */ }
-			}
-
-			Directory.CreateDirectory(LocalDataPath);
-			if (Config.Debug.Sprite.DumpReference || Config.Debug.Sprite.DumpResample) {
-				Directory.CreateDirectory(DumpPath);
-			}
-
-			// Set up a symbolic link to aid in debugging.
-			try {
-				Directory.Delete(Path.Combine(Config.LocalRoot, JunctionCacheName), false);
-			}
-			catch { /* Ignore failure */ }
-			try {
-				CreateSymbolicLink(
-					Link: Path.Combine(Config.LocalRoot, JunctionCacheName),
-					Target: Path.Combine(LocalDataPath),
-					Type: LinkType.Directory
-				);
-			}
-			catch { /* Ignore failure */ }
-		}
-
 		private class MetaData {
 			internal readonly ulong Hash;
 
@@ -151,7 +26,6 @@ namespace SpriteMaster {
 		}
 
 		private static readonly ConditionalWeakTable<Texture2D, MetaData> MetaCache = new ConditionalWeakTable<Texture2D, MetaData>();
-		//private static Dictionary<ulong, Texture2D> TextureCache = new Dictionary<ulong, Texture2D>();
 
 		internal static void PurgeHash (Texture2D reference) {
 			try {
@@ -177,165 +51,49 @@ namespace SpriteMaster {
 			return hash;
 		}
 
-		internal static class ColorSpace {
-			// TODO : After conversion, we should be temporarily working with 64-bit textures instead of 32-bit. We want to retain precision.
-
-			private const bool UseStrictConversion = true;
-			private const bool IgnoreAlpha = true; // sRGB Alpha doesn't make much sense. I suppose it isn't impossible, but why? It's a data channel.
-			private const double ByteMax = (double)byte.MaxValue;
-			private const double Gamma = 2.4;
-
-			// https://entropymine.com/imageworsener/srgbformula/
-			private static double ToSRGB (double value, double gamma) {
-				if (UseStrictConversion) {
-					if (value <= 0.0031308)
-						return value * 12.92;
-					else
-						return 1.055 * Math.Pow(value, 1.0 / gamma) - 0.055;
-				}
-				else {
-					return Math.Pow(value, gamma);
-				}
-			}
-
-			private static double ToLinear (double value, double gamma) {
-				if (UseStrictConversion) {
-					if (value <= 0.04045)
-						return value / 12.92;
-					else
-						return Math.Pow((value + 0.055) / 1.055, gamma);
-				}
-				else {
-					return Math.Pow(value, 1.0 / gamma);
-				}
-			}
-
-			internal static void ConvertSRGBToLinear (int[] textureData, Texel.Ordering order = Texel.Ordering.ABGR, double gamma = Gamma) {
-				ConvertSRGBToLinear(textureData.AsSpan(), order, gamma);
-			}
-
-			internal static void ConvertSRGBToLinear (Span<int> textureData, Texel.Ordering order = Texel.Ordering.ABGR, double gamma = Gamma) {
-				foreach (int i in 0.Until(textureData.Length)) {
-					var texelValue = textureData[i];
-
-					var texel = Texel.From(texelValue, order);
-					var R = (double)texel.R / ByteMax;
-					var G = (double)texel.G / ByteMax;
-					var B = (double)texel.B / ByteMax;
-
-					Contract.AssertLessEqual(R, 1.0);
-					Contract.AssertLessEqual(G, 1.0);
-					Contract.AssertLessEqual(B, 1.0);
-
-					if (!IgnoreAlpha) {
-						var A = (double)texel.A / ByteMax;
-						A = ToLinear(A, gamma);
-						texel.A = unchecked((byte)(A * ByteMax).NearestInt());
-					}
-					R = ToLinear(R, gamma);
-					G = ToLinear(G, gamma);
-					B = ToLinear(B, gamma);
-
-					texel.R = unchecked((byte)(R * ByteMax).NearestInt());
-					texel.G = unchecked((byte)(G * ByteMax).NearestInt());
-					texel.B = unchecked((byte)(B * ByteMax).NearestInt());
-
-					textureData[i] = texel.To(order);
-				}
-			}
-
-			internal static void ConvertLinearToSRGB (int[] textureData, Texel.Ordering order = Texel.Ordering.ABGR, double gamma = Gamma) {
-				ConvertLinearToSRGB(textureData.AsSpan(), order, gamma);
-			}
-
-			internal static void ConvertLinearToSRGB (Span<int> textureData, Texel.Ordering order = Texel.Ordering.ABGR, double gamma = Gamma) {
-				foreach (int i in 0.Until(textureData.Length)) {
-					var texelValue = textureData[i];
-
-					var texel = Texel.From(texelValue, order);
-					var R = (double)texel.R / ByteMax;
-					var G = (double)texel.G / ByteMax;
-					var B = (double)texel.B / ByteMax;
-
-					Contract.AssertLessEqual(R, 1.0);
-					Contract.AssertLessEqual(G, 1.0);
-					Contract.AssertLessEqual(B, 1.0);
-
-					if (!IgnoreAlpha) {
-						var A = (double)texel.A / ByteMax;
-						A = ToSRGB(A, gamma);
-						texel.A = unchecked((byte)(A * ByteMax).NearestInt());
-					}
-					R = ToSRGB(R, gamma);
-					G = ToSRGB(G, gamma);
-					B = ToSRGB(B, gamma);
-
-					texel.R = unchecked((byte)(R * ByteMax).NearestInt());
-					texel.G = unchecked((byte)(G * ByteMax).NearestInt());
-					texel.B = unchecked((byte)(B * ByteMax).NearestInt());
-
-					textureData[i] = texel.To(order);
-				}
-			}
-		}
-
 		// TODO : Detangle this method.
 		private static long TotalAdditionalSize = 0;
 
 		private static ConditionalWeakTable<Texture2D, object> GCAccount = new ConditionalWeakTable<Texture2D, object>();
 
-		internal static class TextureFormat {
-			public struct Format {
-				private readonly SurfaceFormat surfaceFormat;
-				private readonly CompressionFormat compressionFormat;
-
-				internal Format(SurfaceFormat surfaceFormat, CompressionFormat compressionFormat) {
-					this.surfaceFormat = surfaceFormat;
-					this.compressionFormat = compressionFormat;
+		internal static ManagedTexture2D Upscale (ScaledTexture texture, ref int scale, TextureWrapper input, bool desprite, ulong hash, ref Vector2B wrapped, bool allowPadding, bool async) {
+			// Try to process the texture twice. Garbage collect after a failure, maybe it'll work then.
+			foreach (var _ in 0.To(1)) {
+				try {
+					return UpscaleInternal(
+						texture: texture,
+						scale: ref scale,
+						input: input,
+						desprite: desprite,
+						hash: hash,
+						wrapped: ref wrapped,
+						allowPadding: allowPadding,
+						async: async
+					);
 				}
-
-				public static implicit operator SurfaceFormat (Format format) {
-					return format.surfaceFormat;
-				}
-
-				public static implicit operator CompressionFormat (Format format) {
-					return format.compressionFormat;
+				catch (OutOfMemoryException) {
+					Garbage.Collect(compact: true);
 				}
 			}
 
-			internal static readonly Format Color = new Format(SurfaceFormat.Color, CompressionFormat.BGRA);
-			internal static readonly Format WithAlpha = new Format(SurfaceFormat.Dxt5, CompressionFormat.DXT5);
-			internal static readonly Format WithHardAlpha = new Format(SurfaceFormat.Dxt3, CompressionFormat.DXT3);
-			internal static readonly Format WithPunchthroughAlpha = new Format(SurfaceFormat.Dxt1, CompressionFormat.DXT1a);
-			internal static readonly Format NoAlpha = new Format(SurfaceFormat.Dxt1, CompressionFormat.DXT1);
-
-			internal static Format? Get (CompressionFormat format) {
-				var fields = typeof(TextureFormat).GetFields(BindingFlags.Static | BindingFlags.NonPublic);
-				foreach (var field in fields) {
-					if (field.FieldType != typeof(Format))
-						continue;
-					var formatField = (Format)field.GetValue(null);
-					if ((CompressionFormat)formatField == format)
-						return formatField;
-				}
-				return null;
-			}
+			texture.Texture = null;
+			return null;
 		}
 
-		internal static unsafe Texture2D Upscale (ScaledTexture texture, ref int scale, TextureWrapper input, bool desprite, ulong hash, ref Vector2B wrapped, bool allowPadding) {
+		private static unsafe ManagedTexture2D UpscaleInternal (ScaledTexture texture, ref int scale, TextureWrapper input, bool desprite, ulong hash, ref Vector2B wrapped, bool allowPadding, bool async) {
 			if (TotalAdditionalSize >= Config.ForceGarbageCollectAfter) {
 				Debug.InfoLn("Forcing Garbage Compaction");
-				GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
-				//GC.Collect();
+				Garbage.MarkCompact();
 				TotalAdditionalSize %= Config.ForceGarbageCollectAfter;
 			}
 
-			var format = TextureFormat.Color;
+			var rawTextureData = input.Data;
+			var spriteFormat = TextureFormat.Color;
 
 			if (Config.GarbageCollectAccountUnownedTextures) {
 				if (!GCAccount.TryGetValue(input.Reference, out object v)) {
 					GCAccount.Add(input.Reference, null);
-					long size = input.Reference.Area() * sizeof(int);
+					long size = input.Reference.SizeBytes();
 					GC.AddMemoryPressure(size);
 					input.Reference.Disposing += (object obj, EventArgs args) => {
 						long size = ((Texture2D)obj).Area() * sizeof(int);
@@ -346,14 +104,14 @@ namespace SpriteMaster {
 
 			wrapped.Set(false);
 
-			var output = input.Reference;
+			ManagedTexture2D output = null;
 
 			var inputSize = desprite ? input.Size.Extent : input.ReferenceSize;
 
 			if (Config.Resample.SmartScale && Config.Resample.Scale) {
 				foreach (int s in Config.Resample.MaxScale.Until(scale)) {
 					var newDimensions = inputSize * s;
-					if (newDimensions.X <= Config.ClampDimension && newDimensions.Y <= Config.ClampDimension) {
+					if (newDimensions.X <= Config.PreferredMaxTextureDimension && newDimensions.Y <= Config.PreferredMaxTextureDimension) {
 						scale = s;
 						break;
 					}
@@ -391,70 +149,12 @@ namespace SpriteMaster {
 
 			// Apparently, using the filename is not sufficient for hashing cache data. So, we will need to hash the texture data, apparently. This is really messy.
 			var hashString = hash.ToString("x");
-			var localDataPath = Path.Combine(LocalDataPath, $"{hashString}.cache");
+			var cachePath = Cache.GetPath($"{hashString}.cache");
 
 			int[] bitmapData = null;
 			try {
-				if (Config.Cache.Enabled && File.Exists(localDataPath)) {
-					int retries = Config.Cache.LockRetries;
-					bool success = false;
-
-					while (!success && retries-- > 0) {
-						if (File.Exists(localDataPath)) {
-							// https://stackoverflow.com/questions/1304/how-to-check-for-file-lock
-							bool WasLocked (in IOException ex) {
-								var errorCode = Marshal.GetHRForException(ex) & ((1 << 16) - 1);
-								return errorCode == 32 || errorCode == 33;
-							}
-
-							try {
-								using (var reader = new BinaryReader(new FileStream(localDataPath, FileMode.Open, FileAccess.Read, FileShare.Read))) {
-									var version = reader.ReadString();
-									if (version != AssemblyVersion.ToString()) {
-										throw new IOException($"Texture Cache File out of date'{localDataPath}'");
-									}
-									var getFormat = TextureFormat.Get((CompressionFormat)reader.ReadInt32());
-									if (!getFormat.HasValue) {
-										throw new InvalidDataException("Illegal compression format in cached texture");
-									}
-									format = getFormat.Value;
-									wrapped.X = reader.ReadBoolean();
-									wrapped.Y = reader.ReadBoolean();
-									texture.Padding.X = reader.ReadInt32();
-									texture.Padding.Y = reader.ReadInt32();
-									texture.BlockPadding.X = reader.ReadInt32();
-									texture.BlockPadding.Y = reader.ReadInt32();
-
-									var remainingSize = reader.BaseStream.Length - reader.BaseStream.Position;
-									bitmapData = new int[remainingSize / sizeof(int)];
-
-									foreach (int i in 0.Until(bitmapData.Length)) {
-										bitmapData[i] = reader.ReadInt32();
-									}
-
-									if (!texture.Padding.IsEmpty) {
-										var paddedSize = inputSize + texture.Padding * 2;
-										scaledDimensions = newSize = paddedSize;
-										scaledSize = inputSize * scale;
-
-										scaledDimensions = newSize = scaledSize = paddedSize * scale;
-									}
-								}
-								success = true;
-							}
-							catch (IOException ex) {
-								bool wasLocked = WasLocked(ex);
-								if (WasLocked(ex)) {
-									Debug.InfoLn($"File was locked when trying to load cache file '{hashString}': {ex.Message} [{retries} retries]");
-									Thread.Sleep(Config.Cache.LockSleepMS);
-								}
-								else {
-									Debug.WarningLn($"IOException when trying to load cache file '{hashString}': {ex.Message}");
-									retries = 0;
-								}
-							}
-						}
-					}
+				if (Cache.Fetch(cachePath, out var fetchSize, out spriteFormat, out wrapped, out texture.Padding, out texture.BlockPadding, out bitmapData)) {
+					scaledDimensions = newSize = scaledSize = fetchSize;
 				}
 
 				if (bitmapData == null) {
@@ -471,302 +171,242 @@ namespace SpriteMaster {
 						return dump;
 					}
 
-					wrapped = input.Wrapped;
 
-					var WrappedX = new Vector2B(wrapped.X);
-					var WrappedY = new Vector2B(wrapped.Y);
+					Vector2B WrappedX;
+					Vector2B WrappedY;
 
-					using (var rawDataHandle = input.Data.AsMemory().Pin()) {
-						var rawData = new Span<int>(rawDataHandle.Pointer, input.Data.Length / sizeof(int));
+					var rawData = MemoryMarshal.Cast<byte, int>(rawTextureData.AsSpan());
 
-						if (Config.Resample.DeSprite && Config.WrapDetection.Enabled && Config.Resample.EnableWrappedAddressing) {
-							byte GetAlpha (in int sample) {
-								return unchecked((byte)(((uint)sample >> 24) & 0xFF));
-							}
+					var edgeResults = Edge.AnalyzeLegacy(
+						data: rawData,
+						rawSize: input.ReferenceSize,
+						spriteSize: input.Size,
+						Wrapped: input.Wrapped
+					);
 
-							var rawInputSize = input.ReferenceSize;
-							var spriteInputSize = input.Size;
+					WrappedX = edgeResults.WrappedX;
+					WrappedY = edgeResults.WrappedY;
+					wrapped = edgeResults.Wrapped;
 
-							long numSamples = 0;
-							double meanAlphaF = 0.0f;
-							if (!wrapped.X || !wrapped.Y) {
-								foreach (int y in 0.Until(spriteInputSize.Height)) {
-									int offset = (y + spriteInputSize.Top) * rawInputSize.Width + spriteInputSize.Left;
-									foreach (int x in 0.Until((spriteInputSize.Width))) {
-										int address = offset + x;
-										int sample = rawData[address];
-										meanAlphaF += GetAlpha(sample);
-										++numSamples;
-									}
-								}
-							}
-							//meanAlphaF /= numSamples;
-							//meanAlphaF *= (double)Config.WrapDetection.alphaThreshold / 255.0;
-							byte alphaThreshold = Config.WrapDetection.alphaThreshold; //(byte)Math.Min(meanAlphaF.RoundToInt(), byte.MaxValue);
+					wrapped = (wrapped & Config.Resample.EnableWrappedAddressing);
 
-							// Count the fragments that are not alphad out completely on the edges.
-							// Both edges must meet the threshold.
-							if (!wrapped.X) {
-								var samples = stackalloc int[] { 0, 0 };
-								foreach (int y in 0.Until(spriteInputSize.Height)) {
-									int offset = (y + spriteInputSize.Top) * rawInputSize.Width + spriteInputSize.Left;
-									int sample0 = rawData[offset];
-									int sample1 = rawData[offset + (spriteInputSize.Width - 1)];
-
-									if (GetAlpha(sample0) >= alphaThreshold) {
-										samples[0]++;
-									}
-									if (GetAlpha(sample1) >= alphaThreshold) {
-										samples[1]++;
-									}
-								}
-								int threshold = ((float)inputSize.Height * Config.WrapDetection.edgeThreshold).NearestInt();
-								WrappedX.Negative = samples[0] >= threshold;
-								WrappedX.Positive = samples[1] >= threshold;
-								wrapped.X = WrappedX[0] && WrappedX[1];
-							}
-							if (!wrapped.Y) {
-								var samples = stackalloc int[] { 0, 0 };
-								var offsets = stackalloc int[] { spriteInputSize.Top * rawInputSize.Width, (spriteInputSize.Bottom - 1) * rawInputSize.Width };
-								int sampler = 0;
-								foreach (int i in 0.Until(2)) {
-									var yOffset = offsets[i];
-									foreach (int x in 0.Until(spriteInputSize.Width)) {
-										int offset = yOffset + x + spriteInputSize.Left;
-										int sample = rawData[offset];
-										if (GetAlpha(sample) >= alphaThreshold) {
-											samples[sampler]++;
-										}
-									}
-									sampler++;
-								}
-								int threshold = ((float)inputSize.Width * Config.WrapDetection.edgeThreshold).NearestInt();
-								WrappedY.Negative = samples[0] >= threshold;
-								WrappedY.Positive = samples[0] >= threshold;
-								wrapped.Y = WrappedY[0] && WrappedY[1];
+					if (Config.Debug.Sprite.DumpReference) {
+						using (var filtered = Textures.CreateBitmap(rawData.ToArray(), input.ReferenceSize, PixelFormat.Format32bppArgb)) {
+							using (var submap = (Bitmap)filtered.Clone(input.Size, filtered.PixelFormat)) {
+								var dump = GetDumpBitmap(submap);
+								var path = Cache.GetDumpPath($"{input.Reference.SafeName().Replace("\\", ".")}.{hashString}.reference.png");
+								File.Delete(path);
+								dump.Save(path, System.Drawing.Imaging.ImageFormat.Png);
 							}
 						}
+					}
 
-						wrapped = (wrapped & Config.Resample.EnableWrappedAddressing);
+					if (Config.Resample.Smoothing) {
+						var scalerConfig = new xBRZNet2.Config(wrappedX: wrapped.X && false, wrappedY: wrapped.Y && false);
 
-						if (Config.Debug.Sprite.DumpReference) {
-							using (var filtered = CreateBitmap(rawData.ToArray(), input.ReferenceSize, PixelFormat.Format32bppArgb)) {
-								using (var submap = (Bitmap)filtered.Clone(input.Size, filtered.PixelFormat)) {
-									var dump = GetDumpBitmap(submap);
-									var path = Path.Combine(DumpPath, $"{input.Reference.SafeName().Replace("\\", ".")}.{hashString}.reference.png");
-									File.Delete(path);
-									dump.Save(path, System.Drawing.Imaging.ImageFormat.Png);
-								}
-							}
+						// Do we need to pad the sprite?
+						var prescaleData = rawData;
+						var prescaleSize = input.ReferenceSize;
+
+						var shouldPad = new Vector2B(
+							!(WrappedX.Positive && WrappedX.Negative) && Config.Resample.Padding.Enabled && allowPadding && inputSize.X > 1,
+							!(WrappedY.Positive && WrappedX.Negative) && Config.Resample.Padding.Enabled && allowPadding && inputSize.Y > 1
+						);
+
+						var outputSize = input.Size;
+
+						if (
+							(
+								prescaleSize.X <= Config.Resample.Padding.MinimumSizeTexels &&
+								prescaleSize.Y <= Config.Resample.Padding.MinimumSizeTexels
+							) ||
+							Config.Resample.Padding.IgnoreUnknown && (input.Reference.Name == null || input.Reference.Name == "")
+						) {
+							shouldPad = Vector2B.False;
 						}
 
-						if (Config.Resample.Smoothing) {
-							var scalerConfig = new xBRZNet2.Config(wrappedX: wrapped.X, wrappedY: wrapped.Y);
+						var requireBlockPadding = new Vector2B(
+							inputSize.X >= 4 && !BlockCompress.IsBlockMultiple(inputSize.X),
+							inputSize.Y >= 4 && !BlockCompress.IsBlockMultiple(inputSize.Y)
+						) & Config.Resample.UseBlockCompression;
 
-							// Do we need to pad the sprite?
-							var prescaleData = rawData;
-							var prescaleSize = input.ReferenceSize;
+						if ((shouldPad | requireBlockPadding).Any) {
+							int expectedPadding = Math.Max(1, scale / 2);
 
-							var shouldPad = new Vector2B(
-								!(WrappedX.Positive && WrappedX.Negative) && Config.Resample.Padding.Enabled && allowPadding && inputSize.X > 1,
-								!(WrappedY.Positive && WrappedX.Negative) && Config.Resample.Padding.Enabled && allowPadding && inputSize.Y > 1
-							);
+							// TODO we only need to pad the edge that has texels. Double padding is wasteful.
+							var paddedSize = inputSize.Clone();
+							var spriteSize = inputSize.Clone();
 
-							Bounds outputSize = input.Size;
-
-							if (
-								(
-									prescaleSize.X <= Config.Resample.Padding.MinimumSizeTexels &&
-									prescaleSize.Y <= Config.Resample.Padding.MinimumSizeTexels
-								) ||
-								Config.Resample.Padding.IgnoreUnknown && (input.Reference.Name == null || input.Reference.Name == "")
-							) {
-								shouldPad = Vector2B.False;
+							if (shouldPad.X) {
+								if ((paddedSize.X + expectedPadding * 2) * scale > Config.ClampDimension) {
+									shouldPad.X = false;
+								}
+								else {
+									paddedSize.X += expectedPadding * 2;
+									texture.Padding.X = expectedPadding;
+								}
+							}
+							if (shouldPad.Y) {
+								if ((paddedSize.Y + expectedPadding * 2) * scale > Config.ClampDimension) {
+									shouldPad.Y = false;
+								}
+								else {
+									paddedSize.Y += expectedPadding * 2;
+									texture.Padding.Y = expectedPadding;
+								}
 							}
 
-							var requireBlockPadding = new Vector2B(
-								inputSize.X >= 4 && (inputSize.X % 4 != 0),
-								inputSize.Y >= 4 && (inputSize.Y % 4 != 0)
+							requireBlockPadding = new Vector2B(
+								inputSize.X >= 4 && !BlockCompress.IsBlockMultiple(paddedSize.X),
+								inputSize.Y >= 4 && !BlockCompress.IsBlockMultiple(paddedSize.Y)
 							) & Config.Resample.UseBlockCompression;
 
-							if ((shouldPad | requireBlockPadding).Any) {
-								int expectedPadding = Math.Max(1, scale / 2);
+							// Block padding can never take us over a dimension clamp, as the clamps themselves are multiples of the block padding (4, generally).
+							if (requireBlockPadding.X) {
+								texture.BlockPadding.X = 4 - paddedSize.X % 4;
+							}
+							if (requireBlockPadding.Y) {
+								texture.BlockPadding.Y = 4 - paddedSize.Y % 4;
+							}
 
-								// TODO we only need to pad the edge that has texels. Double padding is wasteful.
-								var paddedSize = inputSize.Clone();
-								var spriteSize = inputSize.Clone();
+							paddedSize += texture.BlockPadding;
 
-								if (shouldPad.X) {
-									if ((paddedSize.X + expectedPadding * 2) * scale > Config.ClampDimension) {
-										shouldPad.X = false;
+							var hasPadding = shouldPad | requireBlockPadding;
+
+							if (hasPadding.Any) {
+								int[] paddedData = new int[paddedSize.Area];
+
+								int y = 0;
+
+								// TODO : when writing padding, we might want to consider color clamping but without alpha, especially for block padding.
+
+								const int padConstant = 0x00000000;
+
+								void WritePaddingY (bool pre) {
+									if (!hasPadding.Y)
+										return;
+									if (pre && !shouldPad.Y)
+										return;
+									int lastStrideOffset = 0;
+									foreach (int i in 0.Until(texture.Padding.Y)) {
+										int strideOffset = y * paddedSize.Width;
+										lastStrideOffset = strideOffset;
+										foreach (int x in 0.Until(paddedSize.Width)) {
+											paddedData[strideOffset + x] = padConstant;
+										}
+										++y;
 									}
-									else {
-										paddedSize.X += expectedPadding * 2;
-										texture.Padding.X = expectedPadding;
-									}
-								}
-								if (shouldPad.Y) {
-									if ((paddedSize.Y + expectedPadding * 2) * scale > Config.ClampDimension) {
-										shouldPad.Y = false;
-									}
-									else {
-										paddedSize.Y += expectedPadding * 2;
-										texture.Padding.Y = expectedPadding;
-									}
-								}
-
-								requireBlockPadding = new Vector2B(
-									inputSize.X >= 4 && (paddedSize.X % 4 != 0),
-									inputSize.Y >= 4 && (paddedSize.Y % 4 != 0)
-								) & Config.Resample.UseBlockCompression;
-
-								// Block padding can never take us over a dimension clamp, as the clamps themselves are multiples of the block padding (4, generally).
-								if (requireBlockPadding.X) {
-									texture.BlockPadding.X = 4 - paddedSize.X % 4;
-								}
-								if (requireBlockPadding.Y) {
-									texture.BlockPadding.Y = 4 - paddedSize.Y % 4;
-								}
-
-								paddedSize += texture.BlockPadding;
-
-								var hasPadding = shouldPad | requireBlockPadding;
-
-								if (hasPadding.Any) {
-									int[] paddedData = new int[paddedSize.Area];
-
-									int y = 0;
-
-									// TODO : when writing padding, we might want to consider color clamping but without alpha, especially for block padding.
-
-									const int padConstant = 0x00000000;
-
-									void WritePaddingY (bool pre) {
-										if (!hasPadding.Y)
-											return;
-										if (pre && !shouldPad.Y)
-											return;
-										int lastStrideOffset = 0;
-										foreach (int i in 0.Until(texture.Padding.Y)) {
+									if (!pre) {
+										foreach (int i in 0.Until(texture.BlockPadding.Y)) {
 											int strideOffset = y * paddedSize.Width;
-											lastStrideOffset = strideOffset;
 											foreach (int x in 0.Until(paddedSize.Width)) {
-												paddedData[strideOffset + x] = padConstant;
+												paddedData[strideOffset + x] = paddedData[lastStrideOffset + x]; // For block-padding, we clamp the data to inhibit edge artifacts.
 											}
 											++y;
 										}
-										if (!pre) {
-											foreach (int i in 0.Until(texture.BlockPadding.Y)) {
-												int strideOffset = y * paddedSize.Width;
-												foreach (int x in 0.Until(paddedSize.Width)) {
-													paddedData[strideOffset + x] = paddedData[lastStrideOffset + x]; // For block-padding, we clamp the data to inhibit edge artifacts.
-												}
-												++y;
-											}
-										}
 									}
-
-									WritePaddingY(true);
-
-									foreach (int i in 0.Until(spriteSize.Height)) {
-										int strideOffset = y * paddedSize.Width;
-										int strideOffsetRaw = (i + input.Size.Top) * prescaleSize.Width;
-										// Write a padded X line
-										int xOffset = strideOffset;
-										void WritePaddingX (bool pre) {
-											if (!hasPadding.X)
-												return;
-											if (pre && !shouldPad.X)
-												return;
-											int lastXOffset = 0;
-											foreach (int x in 0.Until(texture.Padding.X)) {
-												lastXOffset = xOffset;
-												paddedData[xOffset++] = padConstant;
-											}
-											if (!pre) {
-												foreach (int x in 0.Until(texture.BlockPadding.X)) {
-													paddedData[xOffset++] = paddedData[lastXOffset]; // For block-padding, we clamp the data to inhibit edge artifacts.
-												}
-											}
-										}
-										WritePaddingX(true);
-										foreach (int x in 0.Until(spriteSize.Width)) {
-											paddedData[xOffset++] = rawData[strideOffsetRaw + x + input.Size.Left];
-										}
-										WritePaddingX(false);
-										++y;
-									}
-
-									WritePaddingY(false);
-
-									prescaleData = new Span<int>(paddedData);
-									prescaleSize = paddedSize;
-									scaledDimensions = scaledSize = newSize = prescaleSize * scale;
-									outputSize = prescaleSize;
-									//scaledDimensions = originalPaddedSize * scale;
 								}
-							}
 
-							bitmapData = new int[scaledSize.Area];
+								WritePaddingY(true);
 
-							// TODO add a stride/mask so it won't write to the block padding area.
-							try {
-								new xBRZScaler(
-									scaleMultiplier: scale,
-									sourceData: prescaleData,
-									sourceWidth: prescaleSize.Width,
-									sourceHeight: prescaleSize.Height,
-									sourceTarget: outputSize,
-									targetData: bitmapData,
-									configuration: scalerConfig
-								);
+								foreach (int i in 0.Until(spriteSize.Height)) {
+									int strideOffset = y * paddedSize.Width;
+									int strideOffsetRaw = (i + input.Size.Top) * prescaleSize.Width;
+									// Write a padded X line
+									int xOffset = strideOffset;
+									void WritePaddingX (bool pre) {
+										if (!hasPadding.X)
+											return;
+										if (pre && !shouldPad.X)
+											return;
+										int lastXOffset = 0;
+										foreach (int x in 0.Until(texture.Padding.X)) {
+											lastXOffset = xOffset;
+											paddedData[xOffset++] = padConstant;
+										}
+										if (!pre) {
+											foreach (int x in 0.Until(texture.BlockPadding.X)) {
+												paddedData[xOffset++] = paddedData[lastXOffset]; // For block-padding, we clamp the data to inhibit edge artifacts.
+											}
+										}
+									}
+									WritePaddingX(true);
+									foreach (int x in 0.Until(spriteSize.Width)) {
+										paddedData[xOffset++] = rawData[strideOffsetRaw + x + input.Size.Left];
+									}
+									WritePaddingX(false);
+									++y;
+								}
+
+								WritePaddingY(false);
+
+								prescaleData = new Span<int>(paddedData);
+								prescaleSize = paddedSize;
+								scaledDimensions = scaledSize = newSize = prescaleSize * scale;
+								outputSize = prescaleSize;
+								//scaledDimensions = originalPaddedSize * scale;
 							}
-							catch (Exception ex) {
-								Debug.ErrorLn($"There was an exception in the upscaler: {ex.Message}");
-								Debug.ErrorLn(ex.StackTrace);
-								throw;
-							}
-							//ColorSpace.ConvertLinearToSRGB(bitmapData, Texel.Ordering.ARGB);
 						}
-						else {
-							bitmapData = rawData.ToArray();
+
+						bitmapData = new int[scaledSize.Area];
+
+						// TODO add a stride/mask so it won't write to the block padding area.
+						try {
+							new xBRZScaler(
+								scaleMultiplier: scale,
+								sourceData: prescaleData,
+								sourceWidth: prescaleSize.Width,
+								sourceHeight: prescaleSize.Height,
+								sourceTarget: outputSize,
+								targetData: bitmapData,
+								configuration: scalerConfig
+							);
 						}
+						catch (Exception ex) {
+							ex.PrintError();
+							throw;
+						}
+						//ColorSpace.ConvertLinearToSRGB(bitmapData, Texel.Ordering.ARGB);
+					}
+					else {
+						bitmapData = rawData.ToArray();
 					}
 
 					if (Config.Debug.Sprite.DumpResample) {
-						using (var filtered = CreateBitmap(bitmapData, scaledDimensions, PixelFormat.Format32bppArgb)) {
-							var dump = GetDumpBitmap(filtered);
-							var path = Path.Combine(DumpPath, $"{input.Reference.SafeName().Replace("\\", ".")}.{hashString}.resample-{WrappedX}-{WrappedY}-{texture.Padding.X}-{texture.Padding.Y}.png");
-							File.Delete(path);
-							dump.Save(path, System.Drawing.Imaging.ImageFormat.Png);
+						using (var filtered = Textures.CreateBitmap(bitmapData, scaledDimensions, PixelFormat.Format32bppArgb)) {
+							using (var dump = GetDumpBitmap(filtered)) {
+								var path = Cache.GetDumpPath($"{input.Reference.SafeName().Replace("\\", ".")}.{hashString}.resample-{WrappedX}-{WrappedY}-{texture.Padding.X}-{texture.Padding.Y}.png");
+								File.Delete(path);
+								dump.Save(path, System.Drawing.Imaging.ImageFormat.Png);
+							}
 						}
 					}
 
-					if (scaledDimensions.Width != newSize.Width || scaledDimensions.Height != newSize.Height) {
+					if (scaledDimensions != newSize) {
 						// This should be incredibly rare - we very rarely need to scale back down.
-						using (var filtered = CreateBitmap(bitmapData, scaledDimensions, PixelFormat.Format32bppArgb)) {
-							var resized = filtered.Resize(newSize, System.Drawing.Drawing2D.InterpolationMode.Bicubic);
-							var resizedData = resized.LockBits(new Bounds(resized), ImageLockMode.ReadOnly, filtered.PixelFormat);
-							bitmapData = new int[resized.Width * resized.Height];
+						using (var filtered = Textures.CreateBitmap(bitmapData, scaledDimensions, PixelFormat.Format32bppArgb)) {
+							using (var resized = filtered.Resize(newSize, System.Drawing.Drawing2D.InterpolationMode.Bicubic)) {
+								var resizedData = resized.LockBits(new Bounds(resized), ImageLockMode.ReadOnly, filtered.PixelFormat);
 
-							try {
-								var dataSize = resizedData.Stride * resizedData.Height;
-								var dataPtr = resizedData.Scan0;
-								var widthSize = resizedData.Width * sizeof(int);
+								try {
+									bitmapData = new int[resized.Width * resized.Height];
+									var dataSize = resizedData.Stride * resizedData.Height;
+									var dataPtr = resizedData.Scan0;
+									var widthSize = resizedData.Width * sizeof(int);
 
-								var dataBytes = new byte[dataSize];
-								int offsetSource = 0;
-								int offsetDest = 0;
-								foreach (int y in 0.Until(resizedData.Height)) {
-									Marshal.Copy(dataPtr + offsetSource, bitmapData, offsetDest, widthSize);
-									offsetSource += resizedData.Stride;
-									offsetDest += widthSize;
+									var dataBytes = new byte[dataSize];
+									int offsetSource = 0;
+									int offsetDest = 0;
+									foreach (int y in 0.Until(resizedData.Height)) {
+										Marshal.Copy(dataPtr + offsetSource, bitmapData, offsetDest, widthSize);
+										offsetSource += resizedData.Stride;
+										offsetDest += widthSize;
+									}
+								}
+								finally {
+									resized.UnlockBits(resizedData);
 								}
 							}
-							finally {
-								resized.UnlockBits(resizedData);
-							}
-
 						}
 					}
 
@@ -778,22 +418,23 @@ namespace SpriteMaster {
 					bool hasG = true;
 					bool hasB = true;
 					{
-						int[] alpha = new int[256];
-						int[] blue = new int[256];
-						int[] green = new int[256];
-						int[] red = new int[256];
+						const int MaxShades = 256;
+						var alpha = stackalloc int[MaxShades];
+						var blue = stackalloc int[MaxShades];
+						var green = stackalloc int[MaxShades];
+						var red = stackalloc int[MaxShades];
 
 						int idx = 0;
 						foreach (var color in bitmapData) {
-							int aValue = (color >> 24) & 0xFF;
+							var aValue = color.ExtractByte(24);
 							if (aValue == 0) {
 								// Clear out all other colors for alpha of zero.
 								bitmapData[idx] = 0;
 							}
 							alpha[aValue]++;
-							blue[(color >> 16) & 0xFF]++;
-							green[(color >> 8) & 0xFF]++;
-							red[color & 0xFF]++;
+							blue[color.ExtractByte(16)]++;
+							green[color.ExtractByte(8)]++;
+							red[color.ExtractByte(0)]++;
 
 							++idx;
 						}
@@ -803,28 +444,12 @@ namespace SpriteMaster {
 						hasB = blue[0] != bitmapData.Length;
 
 						//Debug.WarningLn($"Punch-through Alpha: {bitmapData.Length}");
-						IsPunchThroughAlpha = IsMasky = ((alpha[0] + alpha[255]) == bitmapData.Length);
-						HasAlpha = (alpha[255] != bitmapData.Length);
+						IsPunchThroughAlpha = IsMasky = ((alpha[0] + alpha[MaxShades - 1]) == bitmapData.Length);
+						HasAlpha = (alpha[MaxShades - 1] != bitmapData.Length);
 
 						if (HasAlpha && !IsPunchThroughAlpha) {
-							// standard deviation
-							double alphaSum = 0;
-							foreach (var i in 1.Until(255)) {
-								alphaSum += alpha[i];
-							}
-							alphaSum /= 254;
-							double meanDiff = 0;
-							foreach (var i in 1.Until(255)) {
-								var diff = Math.Abs(alpha[i] - alphaSum);
-								meanDiff = diff * diff;
-							}
-							meanDiff /= 254;
-							meanDiff = Math.Sqrt(meanDiff);
-							IsMasky = meanDiff < Config.Resample.BlockHardAlphaDeviationThreshold;
-						}
-
-						if ((blue[0] == 0 && green[0] == 0) || (blue[0] == 0 && red[0] == 0) || (red[0] == 0 && green[0] == 0)) {
-							//Debug.WarningLn($"Monochromatic: {bitmapData.Length}");
+							var alphaDeviation = Statistics.StandardDeviation(alpha, MaxShades, 1, MaxShades - 2);
+							IsMasky = alphaDeviation < Config.Resample.BlockHardAlphaDeviationThreshold;
 						}
 
 						bool grayscale = true;
@@ -839,92 +464,26 @@ namespace SpriteMaster {
 						}
 					}
 
-					bool IsBlockMultiple = (newSize.Width % 4) == 0 && (newSize.Height % 4) == 0;
-
-					bool useBlockCompression = Config.Resample.UseBlockCompression && IsBlockMultiple;
+					bool useBlockCompression = Config.Resample.UseBlockCompression && BlockCompress.IsBlockMultiple(newSize);
 
 					if (useBlockCompression) {
-						var oldBitmapData = bitmapData;
-						try {
-							using (var compressor = new Compressor()) {
-								compressor.Input.AlphaMode = (HasAlpha) ? AlphaMode.Premultiplied : AlphaMode.None;
-								compressor.Input.GenerateMipmaps = false;
-								var textureFormat =
-									(!HasAlpha) ?
-										TextureFormat.NoAlpha :
-										((false && IsPunchThroughAlpha && Config.Resample.BlockCompressionQuality != CompressionQuality.Fastest) ?
-											TextureFormat.WithPunchthroughAlpha :
-											(IsMasky ?
-												TextureFormat.WithHardAlpha :
-												TextureFormat.WithAlpha));
-								compressor.Compression.Format = textureFormat;
-								compressor.Compression.Quality = Config.Resample.BlockCompressionQuality;
-								compressor.Compression.SetQuantization(true, true, IsPunchThroughAlpha);
-
-								{
-									compressor.Compression.GetColorWeights(out var r, out var g, out var b, out var a);
-									a = HasAlpha ? (a) : 0.0f;
-									// Relative luminance of the various channels.
-									r = hasR ? (r * 0.2126f) : 0.0f;
-									g = hasG ? (g * 0.7152f) : 0.0f;
-									b = hasB ? (b * 0.0722f) : 0.0f;
-
-									compressor.Compression.SetColorWeights(r, g, b, a);
-								}
-
-								compressor.Output.IsSRGBColorSpace = true;
-								compressor.Output.OutputHeader = false;
-
-								Surface surface;
-								fixed (int* p = bitmapData) {
-									surface = Surface.LoadFromRawData((IntPtr)p, newSize.Width, newSize.Height, newSize.Width * sizeof(int), false);
-								}
-
-								compressor.Input.SetData(surface);
-
-								using (surface) {
-									if (compressor.Process(out var container)) {
-										using (container) {
-											var compressedData = container.MipChains[0][0];
-											bitmapData = new int[(compressedData.SizeInBytes + 3) / 4];
-											Marshal.Copy(compressedData.Data, bitmapData, 0, bitmapData.Length);
-											format = textureFormat;
-										}
-									}
-									else {
-										Debug.WarningLn($"Failed to use {(CompressionFormat)textureFormat} compression: " + compressor.LastErrorString);
-									}
-								}
-							}
-						}
-						catch (Exception ex) {
-							ex.PrintWarning();
-							bitmapData = oldBitmapData;
-						}
+						BlockCompress.Compress(
+							data: ref bitmapData,
+							format: ref spriteFormat,
+							dimensions: newSize,
+							HasAlpha: HasAlpha,
+							IsPunchThroughAlpha: IsPunchThroughAlpha,
+							IsMasky: IsMasky,
+							HasR: hasR,
+							HasG: hasG,
+							HasB: hasB
+						);
 					}
 
-					if (Config.Cache.Enabled) {
-						try {
-							using (var writer = new BinaryWriter(File.OpenWrite(localDataPath))) {
-								writer.Write(AssemblyVersion.ToString());
-								writer.Write((int)(CompressionFormat)format);
-								writer.Write(wrapped.X);
-								writer.Write(wrapped.Y);
-								writer.Write(texture.Padding.X);
-								writer.Write(texture.Padding.Y);
-								writer.Write(texture.BlockPadding.X);
-								writer.Write(texture.BlockPadding.Y);
-
-								foreach (var v in bitmapData) {
-									writer.Write(v);
-								}
-							}
-						}
-						catch { }
-					}
+					Cache.Save(cachePath, newSize, spriteFormat, wrapped, texture.Padding, texture.BlockPadding, bitmapData);
 				}
 
-				TotalAdditionalSize += ((SurfaceFormat)format).SizeBytes(newSize.Area);
+				TotalAdditionalSize += spriteFormat.SizeBytes(newSize.Area);
 
 				/*
 				if (useBlockCompression) {
@@ -940,29 +499,34 @@ namespace SpriteMaster {
 				}
 				*/
 
-				if (Config.AsyncScaling.Enabled) {
+				ManagedTexture2D CreateTexture(int[] data) {
+					var newTexture = new ManagedTexture2D(
+						texture: texture,
+						reference: input.Reference,
+						dimensions: newSize,
+						format: spriteFormat
+					);
+					newTexture.SetDataEx(data);
+					return newTexture;
+				}
+
+				if (Config.AsyncScaling.Enabled && async) {
 					var reference = input.Reference;
 					Action asyncCall = () => {
 						if (reference.IsDisposed) {
 							return;
 						}
-						if (Config.GarbageCollectAccountOwnedTexture)
-							GC.AddMemoryPressure(((SurfaceFormat)format).SizeBytes(newSize.Area));
-						var newTexture = new ManagedTexture2D(texture, reference, newSize, format);
-						if (Config.GarbageCollectAccountOwnedTexture)
-							newTexture.Disposing += (object obj, EventArgs args) => {
-								GC.RemoveMemoryPressure(((ManagedTexture2D)obj).SizeBytes());
-							};
-						newTexture.Name = reference.SafeName() + $" [RESAMPLED {(CompressionFormat)format}]";
+						ManagedTexture2D newTexture = null;
 						try {
-							newTexture.SetDataEx(bitmapData);
+							newTexture = CreateTexture(bitmapData);
 							texture.Texture = newTexture;
 							texture.Finish();
 						}
 						catch (Exception ex) {
-							Debug.ErrorLn($"There was an exception creating the texture: {ex.Message}");
-							Debug.ErrorLn(ex.StackTrace);
-							newTexture.Dispose();
+							ex.PrintError();
+							if (newTexture != null) {
+								newTexture.Dispose();
+							}
 							texture.Destroy(reference);
 						}
 					};
@@ -970,28 +534,21 @@ namespace SpriteMaster {
 					return null;
 				}
 				else {
-					if (Config.GarbageCollectAccountOwnedTexture)
-						GC.AddMemoryPressure(((SurfaceFormat)format).SizeBytes(newSize.Area));
-					var newTexture = new ManagedTexture2D(texture, input.Reference, newSize, format);
-					if (Config.GarbageCollectAccountOwnedTexture)
-						newTexture.Disposing += (object obj, EventArgs args) => {
-							GC.RemoveMemoryPressure(((ManagedTexture2D)obj).SizeBytes());
-						};
-					newTexture.Name = input.Reference.SafeName() + $" [RESAMPLED {(CompressionFormat)format}]";
+					ManagedTexture2D newTexture = null;
 					try {
-						newTexture.SetDataEx(bitmapData);
+						newTexture = CreateTexture(bitmapData);
 						output = newTexture;
 					}
 					catch (Exception ex) {
-						Debug.ErrorLn($"There was an exception in the upscaler: {ex.Message}");
-						Debug.ErrorLn(ex.StackTrace);
-						newTexture.Dispose();
+						ex.PrintError();
+						if (newTexture != null) {
+							newTexture.Dispose();
+						}
 					}
 				}
 			}
 			catch (Exception ex) {
-				Debug.ErrorLn($"An exception was caught during texture processing: {ex.Message}");
-				Debug.ErrorLn(ex.GetStackTrace());
+				ex.PrintError();
 			}
 
 			//TextureCache.Add(hash, output);

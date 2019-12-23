@@ -2,14 +2,19 @@
 using SpriteMaster.Types;
 using System;
 using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace SpriteMaster.Extensions {
-	internal static class Texture {
+	internal static class Textures {
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static int Area (this Texture2D texture) {
 			return texture.Width * texture.Height;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static Vector2I Extent (this Texture2D texture) {
 			return new Vector2I(texture.Width, texture.Height);
 		}
@@ -46,14 +51,17 @@ namespace SpriteMaster.Extensions {
 			return (long)texels * elementSize;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static long SizeBytes (this Texture2D texture) {
 			return texture.Format.SizeBytes(texture.Area());
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static long SizeBytes (this ScaledTexture.ManagedTexture2D texture) {
 			return (long)texture.Area() * 4;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static bool IsBlockCompressed (this Texture2D texture) {
 			switch (texture.Format) {
 				case SurfaceFormat.Dxt1:
@@ -64,29 +72,34 @@ namespace SpriteMaster.Extensions {
 			return false;
 		}
 
-		internal static unsafe void SetDataEx (this Texture2D texture, int[] data) {
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal static void SetDataEx (this Texture2D texture, byte[] data) {
+			texture.SetData<byte>(data);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal static void SetDataEx<T> (this Texture2D texture, T[] data) where T : unmanaged {
 			// If we are getting integer data in, we may have to convert it.
 			if (texture.IsBlockCompressed()) {
-				var byteData = new byte[texture.SizeBytes()];
-				fixed (int* source = data) {
-					byte* pSource = (byte*)source;
-					fixed (byte* dest = byteData) {
-						foreach (int i in 0.Until(byteData.Length)) {
-							dest[i] = pSource[i];
-						}
-						//Marshal.Copy(pSource, 0, dest, data.Length);
-					}
-				}
-				texture.SetData(byteData);
+				// TODO : Find a faster way to do this without copying.
+				var byteData = data.CastAs<T, byte>();
+				texture.SetData(byteData.ToArray());
 			}
 			else {
-				texture.SetData<int>(data);
+				texture.SetData<T>(data);
 			}
 		}
 
-		internal static Bitmap Resize (this Bitmap source, Vector2I size, System.Drawing.Drawing2D.InterpolationMode filter = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic, bool discard = true) {
+		internal static Bitmap Resize (this Bitmap source, Vector2I size, InterpolationMode filter = InterpolationMode.HighQualityBicubic, bool discard = true) {
 			if (size == new Vector2I(source)) {
-				return source;
+				try {
+					return new Bitmap(source);
+				}
+				finally {
+					if (discard) {
+						source.Dispose();
+					}
+				}
 			}
 			var output = new Bitmap(size.Width, size.Height);
 			try {
@@ -105,6 +118,7 @@ namespace SpriteMaster.Extensions {
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static string SafeName (this Texture2D texture) {
 			if (texture.Name != null && texture.Name != "") {
 				return texture.Name;
@@ -113,12 +127,47 @@ namespace SpriteMaster.Extensions {
 			return "Unknown";
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static string SafeName (this ScaledTexture texture) {
 			if (texture.Name != null && texture.Name != "") {
 				return texture.Name;
 			}
 
 			return "Unknown";
+		}
+
+		internal static Bitmap CreateBitmap (int[] source, Vector2I size, PixelFormat format = PixelFormat.Format32bppArgb) {
+			var newImage = new Bitmap(size.Width, size.Height, format);
+			var rectangle = new Bounds(newImage);
+			var newBitmapData = newImage.LockBits(rectangle, ImageLockMode.WriteOnly, format);
+			// Get the address of the first line.
+			var newBitmapPointer = newBitmapData.Scan0;
+			//http://stackoverflow.com/a/1917036/294804
+			// Copy the RGB values back to the bitmap
+
+			bool hasPadding = newBitmapData.Stride != (newBitmapData.Width * sizeof(int));
+
+			// Handle stride correctly as input data does not have any stride?
+			const bool CopyWithPadding = true;
+			if (CopyWithPadding && hasPadding) {
+				var rowElements = newImage.Width;
+				var rowSize = newBitmapData.Stride;
+
+				int sourceOffset = 0;
+				foreach (int row in 0.Until(newImage.Height)) {
+					Marshal.Copy(source, sourceOffset, newBitmapPointer, rowElements);
+					sourceOffset += rowElements;
+					newBitmapPointer += rowSize;
+				}
+			}
+			else {
+				var intCount = newBitmapData.Stride * newImage.Height / sizeof(int);
+				Marshal.Copy(source, 0, newBitmapPointer, intCount);
+			}
+			// Unlock the bits.
+			newImage.UnlockBits(newBitmapData);
+
+			return newImage;
 		}
 	}
 }

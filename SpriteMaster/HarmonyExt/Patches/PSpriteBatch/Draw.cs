@@ -3,9 +3,11 @@ using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using System;
+using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 	static class Draw {
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static bool Cleanup (this ref Rectangle sourceRectangle, Texture2D reference) {
 			if (Config.ClampInvalidBounds) {
 				sourceRectangle = sourceRectangle.ClampTo(new Rectangle(0, 0, reference.Width, reference.Height));
@@ -62,6 +64,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			return null;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static ScaledTexture GetScaledTexture (
 			this SpriteBatch @this,
 			Texture2D reference,
@@ -121,6 +124,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			return true;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static bool OnDraw (
 			this SpriteBatch @this,
 			ref Texture2D texture,

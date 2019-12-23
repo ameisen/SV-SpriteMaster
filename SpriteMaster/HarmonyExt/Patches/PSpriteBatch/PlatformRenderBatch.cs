@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using System;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using static SpriteMaster.HarmonyExt.HarmonyExt;
 using static SpriteMaster.ScaledTexture;
 
@@ -55,40 +56,55 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			private readonly object Reference;
 
 			public Vector4 Source {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				readonly get => (Vector4)SourceInfo.GetValue(Reference);
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				set => SourceInfo.SetValue(Reference, value);
 			}
 
 			public Vector4 Destination {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				readonly get => (Vector4)DestinationInfo.GetValue(Reference);
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				set => DestinationInfo.SetValue(Reference, value);
 			}
 
 			public Vector2 Origin {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				readonly get => (Vector2)OriginInfo.GetValue(Reference);
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				set => OriginInfo.SetValue(Reference, value);
 			}
 
 			public float Rotation {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				readonly get => (float)RotationInfo.GetValue(Reference);
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				set => RotationInfo.SetValue(Reference, value);
 			}
 
 			public float Depth {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				readonly get => (float)DepthInfo.GetValue(Reference);
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				set => DepthInfo.SetValue(Reference, value);
 			}
 
 			public SpriteEffects Effects {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				readonly get => (SpriteEffects)EffectsInfo.GetValue(Reference);
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				set => EffectsInfo.SetValue(Reference, value);
 			}
 
 			public Color Color {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				readonly get => (Color)ColorInfo.GetValue(Reference);
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				set => ColorInfo.SetValue(Reference, value);
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			internal SpriteInfo(object reference) {
 				Reference = reference;
 			}
@@ -148,6 +164,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			return true;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		[HarmonyPatch("PlatformRenderBatch", HarmonyPatch.Fixation.Postfix, PriorityLevel.Last)]
 		internal static void OnPlatformRenderBatchPost (
 			SpriteBatch __instance,

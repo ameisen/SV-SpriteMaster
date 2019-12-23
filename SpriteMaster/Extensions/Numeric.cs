@@ -1,33 +1,41 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Extensions {
 	internal static class Numeric {
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static long KiB(this long value) {
 			return value * 1024L;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static long MiB (this long value) {
 			return value * 1024L * 1024L;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static long GiB (this long value) {
 			return value * 1024L * 1024L * 1024L;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static long KiB (this int value) {
 			return value * 1024L;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static long MiB (this int value) {
 			return value * 1024L * 1024L;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static long GiB (this int value) {
 			return value * 1024L * 1024L * 1024L;
 		}
 
 		// Extracts a byte (8 bits) worth of data from a provided value, from the given offset
 		// Example: ExtractByte(0x00F0, 8) would return 0xF
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static byte ExtractByte (this byte value, int offset) {
 			Contract.AssertZero(offset);
 			return value;
@@ -35,6 +43,7 @@ namespace SpriteMaster.Extensions {
 
 		// Extracts a byte (8 bits) worth of data from a provided value, from the given offset
 		// Example: ExtractByte(0x00F0, 8) would return 0xF
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static byte ExtractByte (this ushort value, int offset) {
 			Contract.AssertLess(Math.Abs(offset), sizeof(ushort) * 8);
 			return unchecked((byte)((value >> offset) & 0xFFU));
@@ -42,6 +51,7 @@ namespace SpriteMaster.Extensions {
 
 		// Extracts a byte (8 bits) worth of data from a provided value, from the given offset
 		// Example: ExtractByte(0x00F0, 8) would return 0xF
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static byte ExtractByte (this uint value, int offset) {
 			Contract.AssertLess(Math.Abs(offset), sizeof(uint) * 8);
 			return unchecked((byte)((value >> offset) & 0xFFU));
@@ -49,6 +59,7 @@ namespace SpriteMaster.Extensions {
 
 		// Extracts a byte (8 bits) worth of data from a provided value, from the given offset
 		// Example: ExtractByte(0x00F0, 8) would return 0xF
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static byte ExtractByte (this ulong value, int offset) {
 			Contract.AssertLess(Math.Abs(offset), sizeof(ulong) * 8);
 			return unchecked((byte)((value >> offset) & 0xFFU));
@@ -56,88 +67,108 @@ namespace SpriteMaster.Extensions {
 
 		// Extracts a byte (8 bits) worth of data from a provided value, from the given offset
 		// Example: ExtractByte(0x00F0, 8) would return 0xF
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static byte ExtractByte (this sbyte value, int offset) {
 			return ExtractByte(unchecked((byte)value), offset);
 		}
 
 		// Extracts a byte (8 bits) worth of data from a provided value, from the given offset
 		// Example: ExtractByte(0x00F0, 8) would return 0xF
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static byte ExtractByte (this short value, int offset) {
 			return ExtractByte(unchecked((ushort)value), offset);
 		}
 
 		// Extracts a byte (8 bits) worth of data from a provided value, from the given offset
 		// Example: ExtractByte(0x00F0, 8) would return 0xF
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static byte ExtractByte (this int value, int offset) {
 			return ExtractByte(unchecked((uint)value), offset);
 		}
 
 		// Extracts a byte (8 bits) worth of data from a provided value, from the given offset
 		// Example: ExtractByte(0x00F0, 8) would return 0xF
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static byte ExtractByte (this long value, int offset) {
 			return ExtractByte(unchecked((ulong)value), offset);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static string Delimit (this long number) {
 			return number.ToString("G");
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static string Delimit (this int number) {
 			return number.ToString("G");
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static string Delimit (this short number) {
 			return number.ToString("G");
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static string Delimit (this sbyte number) {
 			return number.ToString("G");
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static string Delimit (this ulong number) {
 			return number.ToString("G");
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static string Delimit (this uint number) {
 			return number.ToString("G");
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static string Delimit (this ushort number) {
 			return number.ToString("G");
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static string Delimit (this byte number) {
 			return number.ToString("G");
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static string Delimit (this long number, string delimiter = ",", uint delimitCount = 3) {
 			return Delimit(number.ToString(), delimiter.Normalize(), delimitCount);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static string Delimit (this int number, string delimiter = ",", uint delimitCount = 3) {
 			return Delimit(number.ToString(), delimiter.Normalize(), delimitCount);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static string Delimit (this short number, string delimiter = ",", uint delimitCount = 3) {
 			return Delimit(number.ToString(), delimiter.Normalize(), delimitCount);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static string Delimit (this sbyte number, string delimiter = ",", uint delimitCount = 3) {
 			return Delimit(number.ToString(), delimiter.Normalize(), delimitCount);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static string Delimit (this ulong number, string delimiter = ",", uint delimitCount = 3) {
 			return Delimit(number.ToString(), delimiter.Normalize(), delimitCount);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static string Delimit (this uint number, string delimiter = ",", uint delimitCount = 3) {
 			return Delimit(number.ToString(), delimiter.Normalize(), delimitCount);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static string Delimit (this ushort number, string delimiter = ",", uint delimitCount = 3) {
 			return Delimit(number.ToString(), delimiter.Normalize(), delimitCount);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static string Delimit (this byte number, string delimiter = ",", uint delimitCount = 3) {
 			return Delimit(number.ToString(), delimiter.Normalize(), delimitCount);
 		}
@@ -194,34 +225,41 @@ namespace SpriteMaster.Extensions {
 			"HiB"
 		};
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static string AsDataSize (this long value, DataFormat format = DataFormat.IEC, int decimals = 2) {
 			Contract.AssertNotNegative(value);
 			return AsDataSize((ulong)value, format, decimals);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static string AsDataSize (this int value, DataFormat format = DataFormat.IEC, int decimals = 2) {
 			Contract.AssertNotNegative(value);
 			return AsDataSize((ulong)value, format, decimals);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static string AsDataSize (this short value, DataFormat format = DataFormat.IEC, int decimals = 2) {
 			Contract.AssertNotNegative(value);
 			return AsDataSize((ulong)value, format, decimals);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static string AsDataSize (this sbyte value, DataFormat format = DataFormat.IEC, int decimals = 2) {
 			Contract.AssertNotNegative(value);
 			return AsDataSize((ulong)value, format, decimals);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static string AsDataSize (this uint value, DataFormat format = DataFormat.IEC, int decimals = 2) {
 			return AsDataSize((ulong)value, format, decimals);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static string AsDataSize (this ushort value, DataFormat format = DataFormat.IEC, int decimals = 2) {
 			return AsDataSize((ulong)value, format, decimals);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static string AsDataSize (this byte value, DataFormat format = DataFormat.IEC, int decimals = 2) {
 			return AsDataSize((ulong)value, format, decimals);
 		}

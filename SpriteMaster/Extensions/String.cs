@@ -1,7 +1,8 @@
-﻿using System;
+﻿using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Extensions {
 	internal static class String {
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static bool IsBlank (this string str) {
 			return str == null || str == "";
 		}
@@ -21,30 +22,19 @@ namespace SpriteMaster.Extensions {
 			return str;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static string Reversed (this string str) {
 			Contract.AssertNotNull(str);
 			var strArray = str.ToCharArray().Reverse();
 			return new string(strArray);
 		}
 
-		internal static T[] Reverse<T> (this T[] array) {
-			Contract.AssertNotNull(array);
-			Array.Reverse(array);
-			return array;
-		}
-
-		internal static T[] Reversed<T> (this T[] array) {
-			Contract.AssertNotNull(array);
-			var result = (T[])array.Clone();
-			Array.Reverse(result);
-			return result;
-		}
-
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static string Enquote (this string str, string quote = "\'") {
 			if (str.StartsWith(quote) && str.EndsWith(quote)) {
 				return str;
 			}
-			return quote + str + quote;
+			return $"{quote}{str}{quote}";
 		}
 	}
 }

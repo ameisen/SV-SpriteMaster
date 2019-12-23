@@ -52,6 +52,7 @@ namespace SpriteMaster.HarmonyExt.Patches {
 							getPrivateField(capabilities, "MaxTextureAspectRatio").SetValue(capabilities, i / 2);
 							try {
 								Config.ClampDimension = i;
+								//Math.Min(i, Config.PreferredMaxTextureDimension);
 								using (var testTexture = new Texture2D(@this.GraphicsDevice, i, i)) {
 									/* do nothing. We want to dispose of it immediately. */
 								}

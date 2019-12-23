@@ -93,7 +93,7 @@ namespace SpriteMaster {
 			internal static int MinimumTextureDimensions = 4;
 			internal const bool DeSprite = true;
 			internal const bool EnableWrappedAddressing = true;
-			internal static bool UseBlockCompression = true;
+			internal const bool UseBlockCompression = true;
 			internal static CompressionQuality BlockCompressionQuality = CompressionQuality.Highest;
 			internal static int BlockHardAlphaDeviationThreshold = 7;
 			internal static class Padding {
@@ -105,7 +105,7 @@ namespace SpriteMaster {
 
 		internal static class WrapDetection {
 			internal const bool Enabled = true;
-			internal static float edgeThreshold = 0.25f;
+			internal const float edgeThreshold = 0.25f;
 			internal static byte alphaThreshold = 1;
 		}
 
@@ -116,7 +116,7 @@ namespace SpriteMaster {
 			internal static int MaxLoadsPerFrame = 2;
 			internal static long MinimumSizeTexels = 0;
 			internal static long ScalingBudgetPerFrameTexels = 2 * 256 * 256;
-			internal static int MaxInFlightTasks = 8;
+			internal static int MaxInFlightTasks = 4;
 		}
 
 		internal static class Cache {

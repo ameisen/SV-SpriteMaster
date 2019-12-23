@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
+using xBRZNet.Common;
 using xBRZNet2.Common;
 
 namespace xBRZNet2.Scalers {
@@ -68,8 +69,8 @@ namespace xBRZNet2.Scalers {
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static uint BlendComponent (int shift, uint mask, int n, int m, int inPixel, int setPixel, bool gamma = true) {
 			if (true) {
-				var inChan = (int)((unchecked((uint)inPixel) >> shift) & 0xFF) * 0x101;
-				var setChan = (int)((unchecked((uint)setPixel) >> shift) & 0xFF) * 0x101;
+				var inChan = ((inPixel.asUnsigned() >> shift) & 0xFF).asSigned().Widen();
+				var setChan = ((setPixel.asUnsigned() >> shift) & 0xFF).asSigned().Widen();
 
 				// TODO : attach to the configuration setting for SRGB
 				if (gamma) {
@@ -79,14 +80,29 @@ namespace xBRZNet2.Scalers {
 
 				var blend = setChan * n + inChan * (m - n);
 
-				var outChan = (int)unchecked(((uint)(blend / m)) & 0xFFFF);
+				var outChan = ((blend / m).asUnsigned() & 0xFFFF).asSigned();
 
 				if (gamma) {
 					outChan = ToGamma(outChan);
 				}
 
-				var component = (outChan / 0x101) << shift;
-				return (uint)component;
+				// Value is now in the range of 0 to 0xFFFF
+				if (!gamma) {
+					// If it's alpha, let's try hardening the edges.
+					float channelF = (float)outChan / (float)0xFFFF;
+
+					// alternatively, could use sin(x*pi - (pi/2))
+					var hardenedAlpha = IMath.Lerp(
+						IMath.Square(channelF),
+						IMath.Sqrt(channelF),
+						channelF
+					);
+
+					outChan = Math.Min(0xFFFF, (int)(hardenedAlpha * 0xFFFF));
+				}
+
+				var component = (outChan.Narrow()) << shift;
+				return component.asUnsigned();
 			}
 			else {
 				/*
@@ -299,8 +315,8 @@ namespace xBRZNet2.Scalers {
 			AlphaBlend(86, 100, ref out_.Ref(4, 4), col); //exact: 0.8631434088
 			AlphaBlend(23, 100, ref out_.Ref(4, 3), col); //0.2306749731
 			AlphaBlend(23, 100, ref out_.Ref(3, 4), col); //0.2306749731
-			AlphaBlend(8, 1000, ref out_.Ref(4, 2), col); //0.008384061834 -> negligable
-			AlphaBlend(8, 1000, ref out_.Ref(2, 4), col); //0.008384061834
+			//AlphaBlend(8, 1000, ref out_.Ref(4, 2), col); //0.008384061834 -> negligable
+			//AlphaBlend(8, 1000, ref out_.Ref(2, 4), col); //0.008384061834
 		}
 	}
 }

@@ -12,6 +12,7 @@ using WeakTextureMap = System.Runtime.CompilerServices.ConditionalWeakTable<Micr
 using WeakSpriteMap = System.Runtime.CompilerServices.ConditionalWeakTable<Microsoft.Xna.Framework.Graphics.Texture2D, System.Collections.Generic.Dictionary<ulong, SpriteMaster.ScaledTexture>>;
 using SpriteMaster.Types;
 using SpriteMaster.Extensions;
+using TeximpNet.Compression;
 
 namespace SpriteMaster {
 	internal abstract class ITextureMap {
@@ -375,7 +376,6 @@ namespace SpriteMaster {
 			newTexture = new ScaledTexture(
 				assetName: texture.Name,
 				textureWrapper: textureWrapper,
-				source: texture,
 				sourceRectangle: sourceRectangle,
 				indexRectangle: indexRectangle,
 				scale: scale,
@@ -401,7 +401,7 @@ namespace SpriteMaster {
 
 		}
 
-		internal ManagedTexture2D Texture;
+		internal ManagedTexture2D Texture = null;
 		internal readonly string Name;
 		internal Vector2 Scale;
 		internal readonly bool IsSprite;
@@ -458,12 +458,35 @@ namespace SpriteMaster {
 			public readonly ScaledTexture Texture;
 			public readonly Vector2I Dimensions;
 
-			public ManagedTexture2D (ScaledTexture texture, Texture2D reference, Vector2I dimensions, SurfaceFormat format) : base(reference.GraphicsDevice, dimensions.Width, dimensions.Height, false, format) {
+			public ManagedTexture2D (
+				ScaledTexture texture,
+				Texture2D reference,
+				Vector2I dimensions,
+				SurfaceFormat format,
+				int[] data = null,
+				string name = null
+			) : base(reference.GraphicsDevice, dimensions.Width, dimensions.Height, false, format) {
+				if (name != null) {
+					this.Name = name;
+				}
+				else {
+					this.Name = $"{reference.SafeName()} [RESAMPLED {(CompressionFormat)format}]";
+				}
+
 				Reference = reference.MakeWeak();
 				Texture = texture;
 				Dimensions = dimensions - new Vector2I(texture.AdjustedScale * texture.BlockPadding);
 
 				reference.Disposing += (object obj, EventArgs args) => OnParentDispose();
+
+				Garbage.MarkOwned(format, dimensions.Area);
+				Disposing += (object obj, EventArgs args) => {
+					Garbage.UnmarkOwned(format, dimensions.Area);
+				};
+
+				if (data != null) {
+					this.SetDataEx(data);
+				}
 			}
 
 			~ManagedTexture2D() {
@@ -488,9 +511,10 @@ namespace SpriteMaster {
 
 		internal static volatile int RemainingAsyncTasks = Config.AsyncScaling.MaxInFlightTasks;
 
-		internal ScaledTexture (string assetName, TextureWrapper textureWrapper, Texture2D source, Bounds sourceRectangle, Bounds indexRectangle, int scale, ulong hash, bool isSprite, bool allowPadding, bool async) {
+		internal ScaledTexture (string assetName, TextureWrapper textureWrapper, Bounds sourceRectangle, Bounds indexRectangle, int scale, ulong hash, bool isSprite, bool allowPadding, bool async) {
 			IsSprite = isSprite;
 			Hash = hash;
+			var source = textureWrapper.Reference;
 
 			this.OriginalSourceRectangle = new Bounds(sourceRectangle);
 			this.Reference = source.MakeWeak();
@@ -514,8 +538,10 @@ namespace SpriteMaster {
 							desprite: IsSprite,
 							hash: Hash,
 							wrapped: ref Wrapped,
-							allowPadding: allowPadding
+							allowPadding: allowPadding,
+							async: true
 						);
+						// If the upscale fails, the asynchronous action on the render thread automatically cleans up the ScaledTexture.
 					}
 					finally {
 						++RemainingAsyncTasks;
@@ -531,11 +557,16 @@ namespace SpriteMaster {
 					desprite: IsSprite,
 					hash: Hash,
 					wrapped: ref Wrapped,
-					allowPadding: allowPadding
+					allowPadding: allowPadding,
+					async: false
 				);
 
 				if (this.Texture != null) {
 					Finish();
+				}
+				else {
+					Destroy(source);
+					return;
 				}
 			}
 

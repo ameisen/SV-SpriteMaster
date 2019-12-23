@@ -1,9 +1,11 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System.Runtime.CompilerServices;
 using static SpriteMaster.HarmonyExt.HarmonyExt;
 
 namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 	static class Begin {
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		[HarmonyPatch("Begin", priority: PriorityLevel.First)]
 		internal static bool OnBegin (SpriteBatch __instance) {
 			__instance.Begin(
@@ -17,6 +19,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			);
 			return false;
 		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		[HarmonyPatch("Begin", priority: PriorityLevel.First)]
 		internal static bool OnBegin (SpriteBatch __instance, SpriteSortMode sortMode, BlendState blendState) {
 			__instance.Begin(
@@ -30,6 +33,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			);
 			return false;
 		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		[HarmonyPatch("Begin", priority: PriorityLevel.First)]
 		internal static bool OnBegin (SpriteBatch __instance, SpriteSortMode sortMode, BlendState blendState, SamplerState samplerState, DepthStencilState depthStencilState, RasterizerState rasterizerState) {
 			__instance.Begin(
@@ -43,6 +47,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			);
 			return false;
 		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		[HarmonyPatch("Begin", priority: PriorityLevel.First)]
 		internal static bool OnBegin (SpriteBatch __instance, SpriteSortMode sortMode, BlendState blendState, SamplerState samplerState, DepthStencilState depthStencilState, RasterizerState rasterizerState, Effect effect) {
 			__instance.Begin(
@@ -57,6 +62,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			return false;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		[HarmonyPatch("Begin")]
 		internal static bool OnBegin (SpriteBatch __instance, SpriteSortMode sortMode, BlendState blendState, SamplerState samplerState, DepthStencilState depthStencilState, RasterizerState rasterizerState, Effect effect, Matrix transformMatrix) {
 			DrawState.OnBegin(__instance, sortMode, blendState, samplerState, depthStencilState, rasterizerState, effect, transformMatrix);
