@@ -84,6 +84,7 @@ namespace SpriteMaster {
 			if (TotalAdditionalSize >= Config.ForceGarbageCollectAfter) {
 				Debug.InfoLn("Forcing Garbage Compaction");
 				Garbage.MarkCompact();
+				//Garbage.Collect(true);
 				TotalAdditionalSize %= Config.ForceGarbageCollectAfter;
 			}
 

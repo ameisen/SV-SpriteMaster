@@ -27,26 +27,24 @@ namespace SpriteMaster.HarmonyExt {
 			First = int.MaxValue
 		}
 
-		private static IEnumerable<Type> GetStructTypes() {
-			return new[] {
-				typeof(char),
-				typeof(byte),
-				typeof(sbyte),
-				typeof(short),
-				typeof(ushort),
-				typeof(int),
-				typeof(uint),
-				typeof(long),
-				typeof(ulong),
-				typeof(float),
-				typeof(double),
-				typeof(Vector2),
-				typeof(Vector3),
-				typeof(Vector4),
-				typeof(Color),
-				typeof(System.Drawing.Color)
-			};
-		}
+		internal static readonly Type[] StructTypes = new[] {
+			typeof(char),
+			typeof(byte),
+			typeof(sbyte),
+			typeof(short),
+			typeof(ushort),
+			typeof(int),
+			typeof(uint),
+			typeof(long),
+			typeof(ulong),
+			typeof(float),
+			typeof(double),
+			typeof(Vector2),
+			typeof(Vector3),
+			typeof(Vector4),
+			typeof(Color),
+			typeof(System.Drawing.Color)
+		};
 
 		public static void ApplyPatches(this HarmonyInstance @this) {
 			Contract.AssertNotNull(@this);
@@ -73,7 +71,7 @@ namespace SpriteMaster.HarmonyExt {
 							);
 							break;
 						case HarmonyPatch.Generic.Struct:
-							foreach (var structType in GetStructTypes()) {
+							foreach (var structType in StructTypes) {
 								@this.Patch(
 									instanceType,
 									structType,

@@ -447,7 +447,7 @@ namespace SpriteMaster {
 
 		internal static readonly Dictionary<ulong, WeakScaledTexture> LocalTextureCache = new Dictionary<ulong, WeakScaledTexture>();
 
-		internal static void Purge<T> (Texture2D reference, Bounds? bounds, DataRef<T> data) where T : unmanaged {
+		internal static void Purge<T> (Texture2D reference, Bounds? bounds, DataRef<T> data) where T : struct {
 			TextureMap.Purge(reference, bounds);
 			Upscaler.PurgeHash(reference);
 			TextureWrapper.Purge(reference, bounds, data);
@@ -526,7 +526,7 @@ namespace SpriteMaster {
 			originalSize = IsSprite ? sourceRectangle.Extent : new Vector2I(source);
 
 			if (async && Config.AsyncScaling.Enabled) {
-				new Thread(() => {
+				ThreadPool.QueueUserWorkItem((object wrapper) => {
 					--RemainingAsyncTasks;
 					try {
 						Thread.CurrentThread.Priority = ThreadPriority.Lowest;
@@ -534,7 +534,7 @@ namespace SpriteMaster {
 						Upscaler.Upscale(
 							texture: this,
 							scale: ref refScale,
-							input: textureWrapper,
+							input: (TextureWrapper)wrapper,
 							desprite: IsSprite,
 							hash: Hash,
 							wrapped: ref Wrapped,
@@ -546,7 +546,7 @@ namespace SpriteMaster {
 					finally {
 						++RemainingAsyncTasks;
 					}
-				}).Start();
+				}, textureWrapper);
 			}
 			else {
 				// TODO store the HD Texture in _this_ object instead. Will confuse things like subtexture updates, though.
