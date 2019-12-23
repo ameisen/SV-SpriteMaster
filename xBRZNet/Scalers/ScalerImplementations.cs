@@ -66,6 +66,10 @@ namespace xBRZNet2.Scalers {
 			return ToGammaTable[input];
 		}
 
+		private static double Curve (double x) {
+			return ((Math.Sin(x * Math.PI - (Math.PI / 2.0))) + 1) / 2;
+		}
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static uint BlendComponent (int shift, uint mask, int n, int m, int inPixel, int setPixel, bool gamma = true) {
 			if (true) {
@@ -92,13 +96,34 @@ namespace xBRZNet2.Scalers {
 					float channelF = (float)outChan / (float)0xFFFF;
 
 					// alternatively, could use sin(x*pi - (pi/2))
-					var hardenedAlpha = IMath.Lerp(
-						IMath.Square(channelF),
-						IMath.Sqrt(channelF),
-						channelF
-					);
+					var hardenedAlpha = Curve(channelF);
 
 					outChan = Math.Min(0xFFFF, (int)(hardenedAlpha * 0xFFFF));
+				}
+				else if (false) {
+					double channelF = (double)outChan / (double)0xFFFF;
+
+					//const double exponent = 300.0;
+
+					// alternatively, could use sin(x*pi - (pi/2))
+					//var hardenedAlpha = IMath.Lerp(
+					//	Math.Pow(channelF, exponent),
+					//	Math.Pow(channelF, 1.0 / exponent),
+					//	channelF
+					//);
+					const int iterations = 1;
+					for (int i = 0; i < iterations; ++i) {
+						channelF = Curve(channelF);
+					}
+
+					outChan = Math.Min(0xFFFF, (int)(channelF * 0xFFFF));
+				}
+				else if (false) {
+					double channelF = (double)outChan / (double)0xFFFF;
+
+					channelF = channelF * channelF;
+
+					outChan = Math.Min(0xFFFF, (int)(channelF * 0xFFFF));
 				}
 
 				var component = (outChan.Narrow()) << shift;

@@ -210,8 +210,8 @@ namespace SpriteMaster {
 						var prescaleSize = input.ReferenceSize;
 
 						var shouldPad = new Vector2B(
-							!(WrappedX.Positive && WrappedX.Negative) && Config.Resample.Padding.Enabled && allowPadding && inputSize.X > 1,
-							!(WrappedY.Positive && WrappedX.Negative) && Config.Resample.Padding.Enabled && allowPadding && inputSize.Y > 1
+							!(WrappedX.Positive || WrappedX.Negative) && Config.Resample.Padding.Enabled && allowPadding && inputSize.X > 1,
+							!(WrappedY.Positive || WrappedX.Negative) && Config.Resample.Padding.Enabled && allowPadding && inputSize.Y > 1
 						);
 
 						var outputSize = input.Size;

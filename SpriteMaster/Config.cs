@@ -105,7 +105,7 @@ namespace SpriteMaster {
 
 		internal static class WrapDetection {
 			internal const bool Enabled = true;
-			internal const float edgeThreshold = 0.25f;
+			internal const float edgeThreshold = 0.8f;
 			internal static byte alphaThreshold = 1;
 		}
 
