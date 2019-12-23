@@ -475,7 +475,7 @@ namespace SpriteMaster {
 
 				Reference = reference.MakeWeak();
 				Texture = texture;
-				Dimensions = dimensions - new Vector2I(texture.AdjustedScale * texture.BlockPadding);
+				Dimensions = dimensions - texture.BlockPadding;
 
 				reference.Disposing += (object obj, EventArgs args) => OnParentDispose();
 

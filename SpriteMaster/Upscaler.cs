@@ -226,12 +226,7 @@ namespace SpriteMaster {
 							shouldPad = Vector2B.False;
 						}
 
-						var requireBlockPadding = new Vector2B(
-							inputSize.X >= 4 && !BlockCompress.IsBlockMultiple(inputSize.X),
-							inputSize.Y >= 4 && !BlockCompress.IsBlockMultiple(inputSize.Y)
-						) & Config.Resample.UseBlockCompression;
-
-						if ((shouldPad | requireBlockPadding).Any) {
+						if (shouldPad.Any) {
 							int expectedPadding = Math.Max(1, scale / 2);
 
 							// TODO we only need to pad the edge that has texels. Double padding is wasteful.
@@ -257,22 +252,9 @@ namespace SpriteMaster {
 								}
 							}
 
-							requireBlockPadding = new Vector2B(
-								inputSize.X >= 4 && !BlockCompress.IsBlockMultiple(paddedSize.X),
-								inputSize.Y >= 4 && !BlockCompress.IsBlockMultiple(paddedSize.Y)
-							) & Config.Resample.UseBlockCompression;
-
-							// Block padding can never take us over a dimension clamp, as the clamps themselves are multiples of the block padding (4, generally).
-							if (requireBlockPadding.X) {
-								texture.BlockPadding.X = 4 - paddedSize.X % 4;
-							}
-							if (requireBlockPadding.Y) {
-								texture.BlockPadding.Y = 4 - paddedSize.Y % 4;
-							}
-
 							paddedSize += texture.BlockPadding;
 
-							var hasPadding = shouldPad | requireBlockPadding;
+							var hasPadding = shouldPad;
 
 							if (hasPadding.Any) {
 								int[] paddedData = new int[paddedSize.Area];
@@ -283,63 +265,41 @@ namespace SpriteMaster {
 
 								const int padConstant = 0x00000000;
 
-								void WritePaddingY (bool pre) {
+								void WritePaddingY () {
 									if (!hasPadding.Y)
 										return;
-									if (pre && !shouldPad.Y)
-										return;
-									int lastStrideOffset = 0;
 									foreach (int i in 0.Until(texture.Padding.Y)) {
 										int strideOffset = y * paddedSize.Width;
-										lastStrideOffset = strideOffset;
 										foreach (int x in 0.Until(paddedSize.Width)) {
 											paddedData[strideOffset + x] = padConstant;
 										}
 										++y;
 									}
-									if (!pre) {
-										foreach (int i in 0.Until(texture.BlockPadding.Y)) {
-											int strideOffset = y * paddedSize.Width;
-											foreach (int x in 0.Until(paddedSize.Width)) {
-												paddedData[strideOffset + x] = paddedData[lastStrideOffset + x]; // For block-padding, we clamp the data to inhibit edge artifacts.
-											}
-											++y;
-										}
-									}
 								}
 
-								WritePaddingY(true);
+								WritePaddingY();
 
 								foreach (int i in 0.Until(spriteSize.Height)) {
 									int strideOffset = y * paddedSize.Width;
 									int strideOffsetRaw = (i + input.Size.Top) * prescaleSize.Width;
 									// Write a padded X line
 									int xOffset = strideOffset;
-									void WritePaddingX (bool pre) {
+									void WritePaddingX () {
 										if (!hasPadding.X)
 											return;
-										if (pre && !shouldPad.X)
-											return;
-										int lastXOffset = 0;
 										foreach (int x in 0.Until(texture.Padding.X)) {
-											lastXOffset = xOffset;
 											paddedData[xOffset++] = padConstant;
 										}
-										if (!pre) {
-											foreach (int x in 0.Until(texture.BlockPadding.X)) {
-												paddedData[xOffset++] = paddedData[lastXOffset]; // For block-padding, we clamp the data to inhibit edge artifacts.
-											}
-										}
 									}
-									WritePaddingX(true);
+									WritePaddingX();
 									foreach (int x in 0.Until(spriteSize.Width)) {
 										paddedData[xOffset++] = rawData[strideOffsetRaw + x + input.Size.Left];
 									}
-									WritePaddingX(false);
+									WritePaddingX();
 									++y;
 								}
 
-								WritePaddingY(false);
+								WritePaddingY();
 
 								prescaleData = new Span<int>(paddedData);
 								prescaleSize = paddedSize;
@@ -409,6 +369,46 @@ namespace SpriteMaster {
 								}
 							}
 						}
+					}
+
+
+					var requireBlockPadding = new Vector2B(
+						newSize.X >= 4 && !BlockCompress.IsBlockMultiple(newSize.X),
+						newSize.Y >= 4 && !BlockCompress.IsBlockMultiple(newSize.Y)
+					) & Config.Resample.UseBlockCompression;
+
+					if (requireBlockPadding.Any) {
+						var blockPaddedSize = newSize + new Vector2I(3, 3);
+						blockPaddedSize.X &= ~3;
+						blockPaddedSize.Y &= ~3;
+
+						var newBuffer = new int[blockPaddedSize.Area];
+
+						int y;
+						for (y = 0; y < newSize.Y; ++y) {
+							int newBufferOffset = y * blockPaddedSize.X;
+							int bitmapOffset = y * newSize.X;
+							int x;
+							for (x = 0; x < newSize.X; ++x) {
+								newBuffer[newBufferOffset + x] = bitmapData[bitmapOffset + x];
+							}
+							int lastX = x - 1;
+							for (; x < blockPaddedSize.X; ++x) {
+								newBuffer[newBufferOffset + x] = bitmapData[bitmapOffset + lastX];
+							}
+						}
+						int lastY = y - 1;
+						int sourceOffset = lastY * newSize.X;
+						for (; y < blockPaddedSize.Y; ++y) {
+							int newBufferOffset = y * blockPaddedSize.X;
+							for (int x = 0; x < blockPaddedSize.X; ++x) {
+								newBuffer[newBufferOffset + x] = newBuffer[sourceOffset + x];
+							}
+						}
+
+						bitmapData = newBuffer;
+						texture.BlockPadding = blockPaddedSize - newSize;
+						newSize = blockPaddedSize;
 					}
 
 					// Check for special cases

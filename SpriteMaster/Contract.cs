@@ -4,48 +4,6 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster {
 	public static class Contract {
-		private abstract class Exception : System.Exception {
-			protected const string DefaultMessage = "Contract Exception";
-			protected Exception () : this(DefaultMessage) { }
-			protected Exception (in string message) : this(message, null) { }
-			protected Exception (in string message, in Exception inner) : base(message, inner) { }
-		}
-
-		private class ValueException : Exception {
-			protected new const string DefaultMessage = "Value failed assertion";
-			internal ValueException () : this(DefaultMessage) { }
-			internal ValueException (in string message) : this(message, null) { }
-			internal ValueException (in string message, in Exception inner) : base(message, inner) { }
-		}
-
-		private class NotNullReferenceException : ValueException {
-			protected new const string DefaultMessage = "Value failed assertion, was not null";
-			internal NotNullReferenceException () : this(DefaultMessage) { }
-			internal NotNullReferenceException (in string message) : this(message, null) { }
-			internal NotNullReferenceException (in string message, in Exception inner) : base(message, inner) { }
-		}
-
-		private class NullReferenceException : ValueException {
-			protected new const string DefaultMessage = "Value failed assertion, was null";
-			internal NullReferenceException () : this(DefaultMessage) { }
-			internal NullReferenceException (in string message) : this(message, null) { }
-			internal NullReferenceException (in string message, in Exception inner) : base(message, inner) { }
-		}
-
-		private class BooleanException : ValueException {
-			protected new const string DefaultMessage = "Value failed boolean assertion";
-			internal BooleanException () : this(DefaultMessage) { }
-			internal BooleanException (in string message) : this(message, null) { }
-			internal BooleanException (in string message, in Exception inner) : base(message, inner) { }
-		}
-
-		private class OutOfRangeException : ValueException {
-			protected new const string DefaultMessage = "Value failed assertion, out of range";
-			internal OutOfRangeException () : this(DefaultMessage) { }
-			internal OutOfRangeException (in string message) : this(message, null) { }
-			internal OutOfRangeException (in string message, in Exception inner) : base(message, inner) { }
-		}
-
 		[DebuggerStepThrough, DebuggerHidden(), MethodImpl(MethodImplOptions.AggressiveInlining), Untraced]
 		static private bool IsExceptionType (this Type type) {
 			return type.IsSubclassOf(typeof(Exception));
@@ -55,7 +13,7 @@ namespace SpriteMaster {
 
 		[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden(), MethodImpl(MethodImplOptions.AggressiveInlining), Untraced]
 		static internal void AssertNull<T> (this T value, in string message = "Variable is not null", Type exception = null) {
-			Assert(value == null, message, exception ?? typeof(NotNullReferenceException));
+			Assert(value == null, message, exception ?? typeof(ArgumentOutOfRangeException));
 		}
 
 		[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden(), MethodImpl(MethodImplOptions.AggressiveInlining), Untraced]
@@ -65,12 +23,12 @@ namespace SpriteMaster {
 
 		[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden(), MethodImpl(MethodImplOptions.AggressiveInlining), Untraced]
 		static internal void AssertTrue (this in bool value, in string message = "Variable is not true", Type exception = null) {
-			Assert(value == true, message, exception ?? typeof(BooleanException));
+			Assert(value == true, message, exception ?? typeof(ArgumentOutOfRangeException));
 		}
 
 		[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden(), MethodImpl(MethodImplOptions.AggressiveInlining), Untraced]
 		static internal void AssertFalse (this in bool value, in string message = "Variable is not false", Type exception = null) {
-			Assert(value == false, message, exception ?? typeof(BooleanException));
+			Assert(value == false, message, exception ?? typeof(ArgumentOutOfRangeException));
 		}
 
 		[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden(), MethodImpl(MethodImplOptions.AggressiveInlining), Untraced]
@@ -79,7 +37,7 @@ namespace SpriteMaster {
 				throw new ArgumentOutOfRangeException("Provided assert exception type is not a subclass of Exception");
 			}
 			if (!predicate) {
-				throw (ValueException)Activator.CreateInstance(exception ?? typeof(ValueException), new object[] { message });
+				throw (ArgumentOutOfRangeException)Activator.CreateInstance(exception ?? typeof(ArgumentOutOfRangeException), new object[] { message });
 			}
 		}
 
@@ -88,7 +46,7 @@ namespace SpriteMaster {
 			if (predicate == null) {
 				throw new ArgumentNullException($"Argument '{nameof(predicate)}' is null");
 			}
-			Assert(predicate.Invoke(), message, exception ?? typeof(ValueException));
+			Assert(predicate.Invoke(), message, exception ?? typeof(ArgumentOutOfRangeException));
 		}
 
 		[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden(), MethodImpl(MethodImplOptions.AggressiveInlining), Untraced]
@@ -96,7 +54,7 @@ namespace SpriteMaster {
 			if (predicate == null) {
 				throw new ArgumentNullException($"Argument '{nameof(predicate)}' is null");
 			}
-			Assert(predicate.Invoke(value), message, exception ?? typeof(ValueException));
+			Assert(predicate.Invoke(value), message, exception ?? typeof(ArgumentOutOfRangeException));
 		}
 
 		[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden(), MethodImpl(MethodImplOptions.AggressiveInlining), Untraced]
@@ -112,7 +70,7 @@ namespace SpriteMaster {
 				}
 			}
 
-			Assert(Predicate(value, reference), message ?? $"Variable '{value}' is not equal to '{reference}'", exception ?? typeof(ValueException));
+			Assert(Predicate(value, reference), message ?? $"Variable '{value}' is not equal to '{reference}'", exception ?? typeof(ArgumentOutOfRangeException));
 		}
 
 		[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden(), MethodImpl(MethodImplOptions.AggressiveInlining), Untraced]
@@ -128,7 +86,7 @@ namespace SpriteMaster {
 				}
 			}
 
-			Assert(Predicate(value, reference), message ?? $"Variable '{value}' is equal to '{reference}'", exception ?? typeof(ValueException));
+			Assert(Predicate(value, reference), message ?? $"Variable '{value}' is equal to '{reference}'", exception ?? typeof(ArgumentOutOfRangeException));
 		}
 
 		[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden(), MethodImpl(MethodImplOptions.AggressiveInlining), Untraced]
@@ -139,7 +97,7 @@ namespace SpriteMaster {
 				return value.CompareTo(reference) > 0;
 			}
 
-			Assert(Predicate(value, reference), message ?? $"Variable '{value}' is less than or equal to '{reference}'", exception ?? typeof(ValueException));
+			Assert(Predicate(value, reference), message ?? $"Variable '{value}' is less than or equal to '{reference}'", exception ?? typeof(ArgumentOutOfRangeException));
 		}
 
 		[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden(), MethodImpl(MethodImplOptions.AggressiveInlining), Untraced]
@@ -150,7 +108,7 @@ namespace SpriteMaster {
 				return value.CompareTo(reference) >= 0;
 			}
 
-			Assert(Predicate(value, reference), message ?? $"Variable '{value}' is less than to '{reference}'", exception ?? typeof(ValueException));
+			Assert(Predicate(value, reference), message ?? $"Variable '{value}' is less than to '{reference}'", exception ?? typeof(ArgumentOutOfRangeException));
 		}
 
 		[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden(), MethodImpl(MethodImplOptions.AggressiveInlining), Untraced]
@@ -161,7 +119,7 @@ namespace SpriteMaster {
 				return value.CompareTo(reference) < 0;
 			}
 
-			Assert(Predicate(value, reference), message ?? $"Variable '{value}' is greater than or equal to '{reference}'", exception ?? typeof(ValueException));
+			Assert(Predicate(value, reference), message ?? $"Variable '{value}' is greater than or equal to '{reference}'", exception ?? typeof(ArgumentOutOfRangeException));
 		}
 
 		[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden(), MethodImpl(MethodImplOptions.AggressiveInlining), Untraced]
@@ -172,7 +130,7 @@ namespace SpriteMaster {
 				return value.CompareTo(reference) <= 0;
 			}
 
-			Assert(Predicate(value, reference), message ?? $"Variable '{value}' is greater than '{reference}'", exception ?? typeof(ValueException));
+			Assert(Predicate(value, reference), message ?? $"Variable '{value}' is greater than '{reference}'", exception ?? typeof(ArgumentOutOfRangeException));
 		}
 
 		[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden(), MethodImpl(MethodImplOptions.AggressiveInlining), Untraced]
@@ -181,7 +139,7 @@ namespace SpriteMaster {
 				value,
 				(T)Convert.ChangeType(0, typeof(T)),
 				message ?? $"Variable '{value}' is not equal to zero",
-				exception ?? typeof(OutOfRangeException)
+				exception ?? typeof(ArgumentOutOfRangeException)
 			);
 		}
 
@@ -191,7 +149,7 @@ namespace SpriteMaster {
 				value,
 				(T)Convert.ChangeType(1, typeof(T)),
 				message ?? $"Variable '{value}' is not equal to one",
-				exception ?? typeof(OutOfRangeException)
+				exception ?? typeof(ArgumentOutOfRangeException)
 			);
 		}
 
@@ -201,7 +159,7 @@ namespace SpriteMaster {
 				value,
 				(T)Convert.ChangeType(0, typeof(T)),
 				message ?? $"Variable '{value}' is equal to zero",
-				exception ?? typeof(OutOfRangeException)
+				exception ?? typeof(ArgumentOutOfRangeException)
 			);
 		}
 
@@ -211,7 +169,7 @@ namespace SpriteMaster {
 				value,
 				(T)Convert.ChangeType(0, typeof(T)),
 				message ?? $"Variable '{value}' is not positive",
-				exception ?? typeof(OutOfRangeException)
+				exception ?? typeof(ArgumentOutOfRangeException)
 			);
 		}
 
@@ -221,7 +179,7 @@ namespace SpriteMaster {
 				value,
 				(T)Convert.ChangeType(0, typeof(T)),
 				message ?? $"Variable '{value}' is not positive or zero",
-				exception ?? typeof(OutOfRangeException)
+				exception ?? typeof(ArgumentOutOfRangeException)
 			);
 		}
 
@@ -236,7 +194,7 @@ namespace SpriteMaster {
 				value,
 				(T)Convert.ChangeType(0, typeof(T)),
 				message ?? $"Variable '{value}' is not negative",
-				exception ?? typeof(OutOfRangeException)
+				exception ?? typeof(ArgumentOutOfRangeException)
 			);
 		}
 
@@ -246,7 +204,7 @@ namespace SpriteMaster {
 				value,
 				(T)Convert.ChangeType(0, typeof(T)),
 				message ?? $"Variable '{value}' is not negative or zero",
-				exception ?? typeof(OutOfRangeException)
+				exception ?? typeof(ArgumentOutOfRangeException)
 			);
 		}
 
