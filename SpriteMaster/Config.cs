@@ -33,8 +33,8 @@ namespace SpriteMaster {
 		internal const uint MaxMemoryUsage = 2048U * 1024U * 1024U;
 		internal const bool EnableCachedHashTextures = false;
 		internal const bool IgnoreUnknownTextures = false;
-		internal static long ForceGarbageCompactAfter = 64 * 1024 * 1024;
-		internal static long ForceGarbageCollectAfter = 128 * 1024 * 1024;
+		internal static long ForceGarbageCompactAfter = long.MaxValue;
+		internal static long ForceGarbageCollectAfter = long.MaxValue;
 		internal static bool GarbageCollectAccountUnownedTextures = true;
 		internal static bool GarbageCollectAccountOwnedTexture = true;
 		internal static bool DiscardDuplicates = true;
@@ -118,7 +118,7 @@ namespace SpriteMaster {
 			internal static int MaxLoadsPerFrame = 2;
 			internal static long MinimumSizeTexels = 0;
 			internal static long ScalingBudgetPerFrameTexels = 2 * 256 * 256;
-			internal static int MaxInFlightTasks = 4;
+			internal static int MaxInFlightTasks = Environment.ProcessorCount;
 		}
 
 		internal static class Cache {
