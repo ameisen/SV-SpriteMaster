@@ -163,18 +163,6 @@ namespace SpriteMaster.Types {
 			return _List.BinarySearch(item, new ReferenceComparer(comparer));
 		}
 
-		public int BinarySearch (int index, int count, T item, IComparer<T> comparer) {
-			return _List.BinarySearch(index, count, Weak(item), new ReferenceComparer(comparer));
-		}
-
-		public int BinarySearch (int index, int count, WeakReference<T> item, IComparer<T> comparer) {
-			return _List.BinarySearch(index, count, item, new ReferenceComparer(comparer));
-		}
-
-		public int BinarySearch (int index, int count, ComparableWeakReference<T> item, IComparer<T> comparer) {
-			return _List.BinarySearch(index, count, item, new ReferenceComparer(comparer));
-		}
-
 		public void Clear() {
 			_List.Clear();
 		}
@@ -202,8 +190,6 @@ namespace SpriteMaster.Types {
 		}
 
 		public void CopyTo (T[] array) {
-			_Check_CopyTo(0, array, 0, _List.Count);
-
 			CopyTo(array: array, arrayIndex: 0);
 		}
 
@@ -216,39 +202,35 @@ namespace SpriteMaster.Types {
 		}
 
 		public void CopyTo(T[] array, int arrayIndex) {
-			CopyTo(index: 0, array: array, arrayIndex: arrayIndex, array.Length - arrayIndex);
+			CopyTo(array: array, arrayIndex: arrayIndex, array.Length - arrayIndex);
 		}
 
 		public void CopyTo (WeakReference<T>[] array, int arrayIndex) {
-			CopyTo(index: 0, array: array, arrayIndex: arrayIndex, array.Length - arrayIndex);
+			CopyTo(array: array, arrayIndex: arrayIndex, array.Length - arrayIndex);
 		}
 
 		public void CopyTo (ComparableWeakReference<T>[] array, int arrayIndex) {
-			CopyTo(index: 0, array: array, arrayIndex: arrayIndex, array.Length - arrayIndex);
+			CopyTo(array: array, arrayIndex: arrayIndex, array.Length - arrayIndex);
 		}
 
-		private void _Check_CopyTo<U>(int index, U[] array, int arrayIndex, int count) where U : class {
+		private void _Check_CopyTo<U>(U[] array, int arrayIndex, int count) where U : class {
 			_ = array ?? throw new ArgumentNullException(nameof(array));
-			if (index < 0)
-				throw new ArgumentOutOfRangeException(nameof(index));
 			if (arrayIndex < 0)
 				throw new ArgumentOutOfRangeException(nameof(arrayIndex));
 			if (count < 0)
 				throw new ArgumentOutOfRangeException(nameof(count));
-			if (index >= _List.Count)
-				throw new ArgumentException($"{nameof(index)} ({index}) is equal to or greater than the Count ({_List.Count}) of the source WeakList<T>");
 			if (_List.Count > count)
 				throw new ArgumentException($"The number of elements in the source WeakList<T> ({_List.Count}) is greater than the available space from {nameof(arrayIndex)} ({arrayIndex}) to the end of the destination {nameof(array)} ({array.Length})");
 		}
 
-		public void CopyTo(int index, T[] array, int arrayIndex, int count) {
-			_Check_CopyTo(index, array, arrayIndex, count);
+		public void CopyTo(T[] array, int arrayIndex, int count) {
+			_Check_CopyTo(array, arrayIndex, count);
+			Purge();
 
 			int dstOffset = arrayIndex;
 			int dstLastOffset = dstOffset + count;
-			int srcOffset = index;
 			foreach (var i in 0.Until(count)) {
-				if (_List[srcOffset + i].TryGetTarget(out T target)) {
+				if (_List[i].TryGetTarget(out T target)) {
 					array[dstOffset++] = target;
 				}
 			}
@@ -257,23 +239,23 @@ namespace SpriteMaster.Types {
 			}
 		}
 
-		public void CopyTo (int index, WeakReference<T>[] array, int arrayIndex, int count) {
-			_Check_CopyTo(index, array, arrayIndex, count);
+		public void CopyTo (WeakReference<T>[] array, int arrayIndex, int count) {
+			_Check_CopyTo(array, arrayIndex, count);
+			Purge();
 
 			int dstOffset = arrayIndex;
-			int srcOffset = index;
 			foreach (var i in 0.Until(count)) {
-				array[dstOffset + i] = _List[srcOffset + i];
+				array[dstOffset + i] = _List[i];
 			}
 		}
 
-		public void CopyTo (int index, ComparableWeakReference<T>[] array, int arrayIndex, int count) {
-			_Check_CopyTo(index, array, arrayIndex, count);
+		public void CopyTo (ComparableWeakReference<T>[] array, int arrayIndex, int count) {
+			_Check_CopyTo(array, arrayIndex, count);
+			Purge();
 
 			int dstOffset = arrayIndex;
-			int srcOffset = index;
 			foreach (var i in 0.Until(count)) {
-				array[dstOffset + i] = _List[srcOffset + i];
+				array[dstOffset + i] = _List[i];
 			}
 		}
 
@@ -377,68 +359,6 @@ namespace SpriteMaster.Types {
 
 			return result;
 		}
-
-		public int FindIndex(Predicate<T> match) {
-			return FindIndex(0, _List.Count, match);
-		}
-
-		public int FindIndex (Predicate<WeakReference<T>> match) {
-			return FindIndex(0, _List.Count, match);
-		}
-
-		public int FindIndex (Predicate<ComparableWeakReference<T>> match) {
-			return FindIndex(0, _List.Count, match);
-		}
-
-		public int FindIndex (int startIndex, Predicate<T> match) {
-			return FindIndex(startIndex, _List.Count - startIndex, match);
-		}
-
-		public int FindIndex (int startIndex, Predicate<WeakReference<T>> match) {
-			return FindIndex(startIndex, _List.Count - startIndex, match);
-		}
-
-		public int FindIndex (int startIndex, Predicate<ComparableWeakReference<T>> match) {
-			return FindIndex(startIndex, _List.Count - startIndex, match);
-		}
-
-		public int FindIndex (int startIndex, int count, Predicate<T> match) {
-			foreach (var i in startIndex.For(count)) {
-				var item = _List[i];
-				if (item.TryGetTarget(out T target)) {
-					if (match.Invoke(target)) {
-						return i;
-					}
-				}
-			}
-
-			return -1;
-		}
-
-		public int FindIndex (int startIndex, int count, Predicate<WeakReference<T>> match) {
-			foreach (var i in startIndex.For(count)) {
-				var item = _List[i];
-				if (match.Invoke(item)) {
-					return i;
-				}
-			}
-
-			return -1;
-		}
-
-		public int FindIndex (int startIndex, int count, Predicate<ComparableWeakReference<T>> match) {
-			foreach (var i in startIndex.For(count)) {
-				var item = _List[i];
-				if (match.Invoke(item)) {
-					return i;
-				}
-			}
-
-			return -1;
-		}
-
-		// FindLast
-		// FindLastIndex
 
 		public void ForEach (Action<T> action) {
 			Purge();
