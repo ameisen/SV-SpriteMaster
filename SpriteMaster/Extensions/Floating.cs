@@ -50,6 +50,14 @@ namespace SpriteMaster.Extensions {
 			return v.Clamp(0.0, 1.0);
 		}
 
+		internal static float Lerp (this float x, float y, float s) {
+			return x * (1 - s) + y * s;
+		}
+
+		internal static double Lerp (this double x, double y, double s) {
+			return x * (1 - s) + y * s;
+		}
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static Vector2I ToCoordinate (this Vector2 coordinate) {
 			return new Vector2I(coordinate.X.NearestInt(), coordinate.Y.NearestInt());

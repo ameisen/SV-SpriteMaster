@@ -88,21 +88,28 @@ namespace SpriteMaster.Extensions {
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static IEnumerable<int> ToInclusive (this int from, int to) {
 			if (from >= to) {
-				Common.Swap(ref from, ref to);
+				while (from >= to) {
+					yield return from--;
+				}
 			}
-			while (from <= to) {
-				yield return from++;
+			else {
+				while (from <= to) {
+					yield return from++;
+				}
 			}
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static IEnumerable<long> ToInclusive (this int from, long to) {
-			var _from = (long)from;
-			if (_from >= to) {
-				Common.Swap(ref _from, ref to);
+			if (from >= to) {
+				while (from >= to) {
+					yield return from--;
+				}
 			}
-			while (_from <= to) {
-				yield return _from++;
+			else {
+				while (from <= to) {
+					yield return from++;
+				}
 			}
 		}
 

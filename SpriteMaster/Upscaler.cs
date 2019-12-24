@@ -189,6 +189,55 @@ namespace SpriteMaster {
 					WrappedY = edgeResults.WrappedY;
 					wrapped = edgeResults.Wrapped;
 
+					// Recolor
+					/*
+					{
+						foreach (int y in input.Size.Top.Until(input.Size.Bottom)) {
+							int offsetY = y * input.ReferenceSize.Width;
+							foreach (int x in input.Size.Left.Until(input.Size.Right)) {
+								int offset = offsetY + x;
+
+								var texel = unchecked((uint)rawData[offset]);
+
+								var bI = (texel >> 16) & 0xFFU;
+								var gI = (texel >> 8) & 0xFFU;
+								var rI = (texel) & 0xFFU;
+
+								var color = new Vector3(
+									(float)rI / 255.0f,
+									(float)gI / 255.0f,
+									(float)bI / 255.0f
+								);
+
+								float Curve (float x) {
+									return (float)((Math.Sin(x * Math.PI - (Math.PI / 2.0))) + 1) / 2;
+								}
+
+								float Recolor (float x) {
+									return Floating.Lerp(x, Curve(x), 0.25f);
+								}
+
+								color.X = Recolor(color.X);
+								color.Y = Recolor(color.Y);
+								color.Z = Recolor(color.Z);
+
+								bI = (uint)Math.Min(255f, color.Z * 255f);
+								gI = (uint)Math.Min(255f, color.Y * 255f);
+								rI = (uint)Math.Min(255f, color.X * 255f);
+
+								texel =
+									(texel & 0xFF000000U) |
+									(bI << 16) |
+									(gI << 8) |
+									(rI);
+
+								rawData[offset] = unchecked((int)texel);
+							}
+						}
+					}
+					*/
+					// ~Recolor
+
 					wrapped = (wrapped & Config.Resample.EnableWrappedAddressing);
 
 					if (Config.Debug.Sprite.DumpReference) {

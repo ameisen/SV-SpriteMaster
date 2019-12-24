@@ -56,9 +56,11 @@ namespace SpriteMaster.HarmonyExt.Patches {
 								using (var testTexture = new Texture2D(@this.GraphicsDevice, i, i)) {
 									/* do nothing. We want to dispose of it immediately. */
 								}
+								Garbage.Collect(compact: true, blocking: true, background: false);
 								break;
 							}
 							catch { /* do nothing. resolution unsupported. */ }
+							Garbage.Collect(compact: true, blocking: true, background: false);
 						}
 					}
 				}
