@@ -3,15 +3,13 @@ using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
 using SpriteMaster.Types;
 using System;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace SpriteMaster {
-	internal sealed class TextureWrapper {
+	internal sealed class SpriteInfo {
 		internal readonly Texture2D Reference;
 		internal readonly Vector2I ReferenceSize;
 		internal readonly Bounds Size;
-		internal readonly Bounds IndexRectangle;
 		internal readonly Vector2B Wrapped;
 		internal readonly bool BlendEnabled;
 		internal byte[] Data = null;
@@ -42,10 +40,7 @@ namespace SpriteMaster {
 		}
 
 		private static void Purge(Texture2D reference) {
-			try {
-				reference.Meta().CachedData = null;
-			}
-			catch { /* do nothing */ }
+			reference.Meta().CachedData = null;
 		}
 
 		// Attempt to update the bytedata cache for the reference texture, or purge if it that makes more sense or if updating
@@ -98,10 +93,9 @@ namespace SpriteMaster {
 			reference.Meta().CachedData = data.MakeWeak();
 		}
 
-		internal TextureWrapper (Texture2D reference, in Bounds dimensions, in Bounds indexRectangle) {
+		internal SpriteInfo (Texture2D reference, in Bounds dimensions) {
 			ReferenceSize = new Vector2I(reference);
 			Size = dimensions;
-			IndexRectangle = indexRectangle;
 			if (Size.Bottom > ReferenceSize.Height) {
 				Size.Height -= (Size.Bottom - ReferenceSize.Height);
 			}

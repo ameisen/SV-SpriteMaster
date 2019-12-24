@@ -30,7 +30,7 @@ namespace SpriteMaster {
 			}
 		}
 
-		internal static ulong GetHash (TextureWrapper input, bool desprite) {
+		internal static ulong GetHash (SpriteInfo input, bool desprite) {
 			var meta = input.Reference.Meta();
 			ulong hash;
 			lock (meta) {
@@ -40,7 +40,7 @@ namespace SpriteMaster {
 				}
 			}
 			if (desprite) {
-				hash ^= input.IndexRectangle.Hash();
+				hash ^= input.Size.Hash();
 			}
 			return hash;
 		}
@@ -53,7 +53,7 @@ namespace SpriteMaster {
 
 		// TODO : use MemoryFailPoint class. Extensively.
 
-		internal static ManagedTexture2D Upscale (ScaledTexture texture, ref int scale, TextureWrapper input, bool desprite, ulong hash, ref Vector2B wrapped, bool allowPadding, bool async) {
+		internal static ManagedTexture2D Upscale (ScaledTexture texture, ref int scale, SpriteInfo input, bool desprite, ulong hash, ref Vector2B wrapped, bool async) {
 			// Try to process the texture twice. Garbage collect after a failure, maybe it'll work then.
 			foreach (var _ in 0.To(1)) {
 				try {
@@ -64,7 +64,6 @@ namespace SpriteMaster {
 						desprite: desprite,
 						hash: hash,
 						wrapped: ref wrapped,
-						allowPadding: allowPadding,
 						async: async
 					);
 				}
@@ -77,7 +76,7 @@ namespace SpriteMaster {
 			return null;
 		}
 
-		private static unsafe ManagedTexture2D UpscaleInternal (ScaledTexture texture, ref int scale, TextureWrapper input, bool desprite, ulong hash, ref Vector2B wrapped, bool allowPadding, bool async) {
+		private static unsafe ManagedTexture2D UpscaleInternal (ScaledTexture texture, ref int scale, SpriteInfo input, bool desprite, ulong hash, ref Vector2B wrapped, bool async) {
 			if (AccumulatedSizeGarbageCompact >= Config.ForceGarbageCompactAfter) {
 				Debug.InfoLn("Forcing Garbage Compaction");
 				Garbage.MarkCompact();
@@ -245,8 +244,8 @@ namespace SpriteMaster {
 						var prescaleSize = input.ReferenceSize;
 
 						var shouldPad = new Vector2B(
-							!(WrappedX.Positive || WrappedX.Negative) && Config.Resample.Padding.Enabled && allowPadding && inputSize.X > 1,
-							!(WrappedY.Positive || WrappedX.Negative) && Config.Resample.Padding.Enabled && allowPadding && inputSize.Y > 1
+							!(WrappedX.Positive || WrappedX.Negative) && Config.Resample.Padding.Enabled && inputSize.X > 1,
+							!(WrappedY.Positive || WrappedX.Negative) && Config.Resample.Padding.Enabled && inputSize.Y > 1
 						);
 
 						var outputSize = input.Size;

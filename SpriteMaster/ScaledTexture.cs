@@ -253,24 +253,24 @@ namespace SpriteMaster {
 			return true;
 		}
 
-		static internal ScaledTexture Fetch (Texture2D texture, Bounds sourceRectangle, Bounds indexRectangle, bool allowPadding = true) {
+		static internal ScaledTexture Fetch (Texture2D texture, Bounds sourceRectangle) {
 			if (!Validate(texture)) {
 				return null;
 			}
 
-			if (SpriteMap.TryGet(texture, indexRectangle, out var scaleTexture)) {
+			if (SpriteMap.TryGet(texture, sourceRectangle, out var scaleTexture)) {
 				return scaleTexture;
 			}
 
 			return null;
 		}
 
-		static internal ScaledTexture Get (Texture2D texture, Bounds sourceRectangle, Bounds indexRectangle, bool allowPadding = true) {
+		static internal ScaledTexture Get (Texture2D texture, Bounds sourceRectangle) {
 			if (!Validate(texture)) {
 				return null;
 			}
 
-			if (SpriteMap.TryGet(texture, indexRectangle, out var scaleTexture)) {
+			if (SpriteMap.TryGet(texture, sourceRectangle, out var scaleTexture)) {
 				return scaleTexture;
 			}
 
@@ -314,7 +314,7 @@ namespace SpriteMaster {
 			}
 
 			bool isSprite = !ExcludeSprite(texture) && ((sourceRectangle.X != 0 || sourceRectangle.Y != 0) || (sourceRectangle.Width != texture.Width || sourceRectangle.Height != texture.Height));
-			var textureWrapper = new TextureWrapper(texture, sourceRectangle, indexRectangle);
+			var textureWrapper = new SpriteInfo(texture, sourceRectangle);
 			ulong hash = Upscaler.GetHash(textureWrapper, isSprite);
 
 			if (Config.EnableCachedHashTextures) {
@@ -322,7 +322,7 @@ namespace SpriteMaster {
 					if (LocalTextureCache.TryGetValue(hash, out var scaledTextureRef)) {
 						if (scaledTextureRef.TryGetTarget(out var cachedTexture)) {
 							Debug.InfoLn($"Using Cached Texture for \"{cachedTexture.SafeName()}\"");
-							SpriteMap.Add(texture, cachedTexture, indexRectangle);
+							SpriteMap.Add(texture, cachedTexture, sourceRectangle);
 							texture.Disposing += (object sender, EventArgs args) => { cachedTexture.OnParentDispose((Texture2D)sender); };
 							if (!cachedTexture.IsReady || cachedTexture.Texture == null) {
 								return null;
@@ -346,11 +346,9 @@ namespace SpriteMaster {
 				assetName: texture.Name,
 				textureWrapper: textureWrapper,
 				sourceRectangle: sourceRectangle,
-				indexRectangle: indexRectangle,
 				scale: scale,
 				isSprite: isSprite,
 				hash: hash,
-				allowPadding: allowPadding,
 				async: useAsync
 			);
 			if (Config.EnableCachedHashTextures)
@@ -425,7 +423,7 @@ namespace SpriteMaster {
 		internal static void Purge<T> (Texture2D reference, Bounds? bounds, DataRef<T> data) where T : struct {
 			SpriteMap.Purge(reference, bounds);
 			Upscaler.PurgeHash(reference);
-			TextureWrapper.Purge(reference, bounds, data);
+			SpriteInfo.Purge(reference, bounds, data);
 		}
 
 		internal sealed class ManagedTexture2D : Texture2D {
@@ -509,7 +507,7 @@ namespace SpriteMaster {
 
 		internal static volatile int RemainingAsyncTasks = Config.AsyncScaling.MaxInFlightTasks;
 
-		internal ScaledTexture (string assetName, TextureWrapper textureWrapper, Bounds sourceRectangle, Bounds indexRectangle, int scale, ulong hash, bool isSprite, bool allowPadding, bool async) {
+		internal ScaledTexture (string assetName, SpriteInfo textureWrapper, Bounds sourceRectangle, int scale, ulong hash, bool isSprite, bool async) {
 			IsSprite = isSprite;
 			Hash = hash;
 			var source = textureWrapper.Reference;
@@ -518,7 +516,7 @@ namespace SpriteMaster {
 			this.Reference = source.MakeWeak();
 			this.sourceRectangle = sourceRectangle;
 			this.refScale = scale;
-			SpriteMap.Add(source, this, indexRectangle);
+			SpriteMap.Add(source, this, sourceRectangle);
 
 			this.Name = source.Name.IsBlank() ? assetName : source.Name;
 			originalSize = IsSprite ? sourceRectangle.Extent : new Vector2I(source);
@@ -532,11 +530,10 @@ namespace SpriteMaster {
 						Upscaler.Upscale(
 							texture: this,
 							scale: ref refScale,
-							input: (TextureWrapper)wrapper,
+							input: (SpriteInfo)wrapper,
 							desprite: IsSprite,
 							hash: Hash,
 							wrapped: ref Wrapped,
-							allowPadding: allowPadding,
 							async: true
 						);
 						// If the upscale fails, the asynchronous action on the render thread automatically cleans up the ScaledTexture.
@@ -555,7 +552,6 @@ namespace SpriteMaster {
 					desprite: IsSprite,
 					hash: Hash,
 					wrapped: ref Wrapped,
-					allowPadding: allowPadding,
 					async: false
 				);
 

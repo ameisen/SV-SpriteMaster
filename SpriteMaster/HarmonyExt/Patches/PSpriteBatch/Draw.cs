@@ -37,8 +37,8 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 					return null;
 
 				var scaledTexture = create ?
-					ScaledTexture.Get(reference, sourceRectangle, sourceRectangle) :
-					ScaledTexture.Fetch(reference, sourceRectangle, sourceRectangle);
+					ScaledTexture.Get(reference, sourceRectangle) :
+					ScaledTexture.Fetch(reference, sourceRectangle);
 				if (scaledTexture != null && scaledTexture.IsReady) {
 					var t = scaledTexture.Texture;
 
