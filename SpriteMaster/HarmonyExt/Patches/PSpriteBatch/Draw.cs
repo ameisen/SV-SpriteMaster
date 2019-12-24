@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
+using SpriteMaster.Metadata;
 using SpriteMaster.Types;
 using System;
 using System.Diagnostics.CodeAnalysis;
@@ -84,6 +85,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			SpriteEffects effects,
 			float layerDepth
 		) {
+			texture.Meta().UpdateLastAccess();
 			var sourceRectangle = source.GetValueOrDefault(new Rectangle(0, 0, texture.Width, texture.Height));
 			var originalSourceRectangle = sourceRectangle;
 
@@ -131,6 +133,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			SpriteEffects effects,
 			float layerDepth
 		) {
+			texture.Meta().UpdateLastAccess();
 			var sourceRectangle = source.GetValueOrDefault(new Rectangle(0, 0, texture.Width, texture.Height));
 
 			var scaledTexture = FetchScaledTexture(@this, texture, ref sourceRectangle);
@@ -163,7 +166,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			SpriteEffects effects,
 			float layerDepth
 		) {
-			// TODO : We need to intgrate the origin into the bounds so we can properly hash-sprite these calls.
+			texture.Meta().UpdateLastAccess();
 
 			var sourceRectangle = source.GetValueOrDefault(new Rectangle(0, 0, texture.Width, texture.Height));
 			bool allowPadding = true;

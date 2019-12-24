@@ -292,9 +292,10 @@ namespace SpriteMaster {
 					bool insert = false;
 					if (DuplicateTable.TryGetValue(texture.Name, out var weakTexture)) {
 						if (weakTexture.TryGetTarget(out var strongTexture)) {
-							if (strongTexture != texture) {
-								DuplicateTable.Remove(texture.Name);
-								Debug.WarningLn($"Purging Duplicate Texture '{texture.Name}'");
+							// Is it not the same texture, and the previous texture has not been accessed for at least 2 frames?
+							if (strongTexture != texture && (DrawState.CurrentFrame - strongTexture.Meta().LastAccessFrame) > 2) {
+								DuplicateTable.Remove(strongTexture.Name);
+								Debug.WarningLn($"Purging Duplicate Texture '{strongTexture.Name}'");
 								Purge(strongTexture);
 								insert = true;
 							}
