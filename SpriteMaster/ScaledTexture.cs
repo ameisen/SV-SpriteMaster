@@ -135,8 +135,10 @@ namespace SpriteMaster {
 						using (Lock.Promote) {
 							Debug.InfoLn($"Purging Texture {reference.SafeName()}");
 							if (scaledTexture.Texture != null) {
-								scaledTexture.Texture.Purge();
-								scaledTexture.Texture = null;
+								lock (scaledTexture) {
+									scaledTexture.Texture.Purge();
+									scaledTexture.Texture = null;
+								}
 							}
 							Map.Remove(reference);
 							// TODO dispose sprite?
@@ -247,8 +249,10 @@ namespace SpriteMaster {
 
 							foreach (var scaledTexture in scaledTextureMap.Values) {
 								if (scaledTexture.Texture != null) {
-									scaledTexture.Texture.Purge();
-									scaledTexture.Texture = null;
+									lock (scaledTexture) {
+										scaledTexture.Texture.Purge();
+										scaledTexture.Texture = null;
+									}
 								}
 							}
 
@@ -689,17 +693,26 @@ namespace SpriteMaster {
 
 		// Async Call
 		internal void Finish () {
-			TotalMemoryUsage += (uint)Texture.SizeBytes();
-			Texture.Disposing += (object sender, EventArgs args) => { TotalMemoryUsage -= (uint)Texture.SizeBytes(); };
+			ManagedTexture2D texture;
+			lock (this) {
+				texture = Texture;
+			}
+
+			if (texture == null || texture.IsDisposed) {
+				return;
+			}
+
+			TotalMemoryUsage += (uint)texture.SizeBytes();
+			texture.Disposing += (object sender, EventArgs args) => { TotalMemoryUsage -= (uint)texture.SizeBytes(); };
 
 			if (IsSprite) {
-				Debug.InfoLn($"Creating HD Sprite [{Texture.Format} x{refScale}]: {this.SafeName()} {sourceRectangle}");
+				Debug.InfoLn($"Creating HD Sprite [{texture.Format} x{refScale}]: {this.SafeName()} {sourceRectangle}");
 			}
 			else {
-				Debug.InfoLn($"Creating HD Spritesheet [{Texture.Format} x{refScale}]: {this.SafeName()}");
+				Debug.InfoLn($"Creating HD Spritesheet [{texture.Format} x{refScale}]: {this.SafeName()}");
 			}
 
-			this.Scale = (Vector2)Texture.Dimensions / new Vector2(originalSize.Width, originalSize.Height);
+			this.Scale = (Vector2)texture.Dimensions / new Vector2(originalSize.Width, originalSize.Height);
 
 			if (Config.RestrictSize) {
 				var scaledSize = originalSize * refScale;
