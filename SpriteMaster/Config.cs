@@ -100,14 +100,18 @@ namespace SpriteMaster {
 				internal const bool Enabled = true;
 				internal static int MinimumSizeTexels = 4;
 				internal const bool IgnoreUnknown = true;
-				internal static List<string> Whitelist = new List<string>() { "LooseSprites\\Cursors" };
-				internal static List<string> Blacklist = new List<string>();
+				internal static List<string> Whitelist = new List<string>() {
+					
+				};
+				internal static List<string> Blacklist = new List<string>() {
+					"LooseSprites\\Cursors"
+				};
 			}
 		}
 
 		internal static class WrapDetection {
 			internal const bool Enabled = true;
-			internal const float edgeThreshold = 0.4f;
+			internal const float edgeThreshold = 0.2f;
 			internal static byte alphaThreshold = 1;
 		}
 
