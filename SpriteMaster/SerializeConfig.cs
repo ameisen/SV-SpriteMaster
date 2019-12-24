@@ -1,5 +1,6 @@
 ﻿using SpriteMaster.Extensions;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using Tomlyn;
@@ -80,7 +81,35 @@ namespace SpriteMaster {
 										field.SetValue(null, (bool)((BooleanValueSyntax)value.Value).Value);
 										break;
 									default:
-										if (fieldValue.GetType().IsEnum) {
+										if (fieldValue is List<string> slist) {
+											var arrayValue = ((ArraySyntax)value.Value).Items;
+											var list = new List<string>(arrayValue.ChildrenCount);
+											foreach (var obj in arrayValue) {
+												var ovalue = obj.Value;
+												if (ovalue is StringValueSyntax svalue) {
+													list.Add(svalue.Value);
+												}
+												else if (ovalue is IntegerValueSyntax ivalue) {
+													list.Add(ivalue.Value.ToString());
+												}
+											}
+											field.SetValue(null, list);
+										}
+										else if (fieldValue is List<int> ilist) {
+											var arrayValue = ((ArraySyntax)value.Value).Items;
+											var list = new List<int>(arrayValue.ChildrenCount);
+											foreach (var obj in arrayValue) {
+												var ovalue = obj.Value;
+												if (ovalue is StringValueSyntax svalue) {
+													list.Add(Int32.Parse(svalue.Value));
+												}
+												else if (ovalue is IntegerValueSyntax ivalue) {
+													list.Add((int)ivalue.Value);
+												}
+											}
+											field.SetValue(null, list);
+										}
+										else if (fieldValue.GetType().IsEnum) {
 											var enumNames = fieldValue.GetType().GetEnumNames();
 											var values = fieldValue.GetType().GetEnumValues();
 
@@ -96,12 +125,11 @@ namespace SpriteMaster {
 											}
 											if (!found)
 												throw new InvalidDataException($"Unknown Enumeration Value Type '{summedClass}.{keyString}' = '{value.Value.ToString()}'");
-
-											break;
 										}
 										else {
 											throw new InvalidDataException($"Unknown Configuration Value Type '{summedClass}.{keyString}' = '{value.Value.ToString()}'");
 										}
+										break;
 								}
 							}
 							catch (Exception ex) {
@@ -176,10 +204,17 @@ namespace SpriteMaster {
 					case bool v:
 						value = new BooleanValueSyntax(v);
 						break;
-				}
-
-				if (value == null && fieldValue.GetType().IsEnum) {
-					value = new StringValueSyntax(fieldValue.GetType().GetEnumName(fieldValue));
+					default:
+						if (fieldValue is List<string> slist) {
+							value = new ArraySyntax(slist.ToArray());
+						}
+						else if (fieldValue is List<int> ilist) {
+							value = new ArraySyntax(ilist.ToArray());
+						}
+						else if (fieldValue.GetType().IsEnum) {
+							value = new StringValueSyntax(fieldValue.GetType().GetEnumName(fieldValue));
+						}
+						break;
 				}
 
 				if (value == null)

@@ -270,9 +270,15 @@ namespace SpriteMaster {
 								prescaleSize.X <= Config.Resample.Padding.MinimumSizeTexels &&
 								prescaleSize.Y <= Config.Resample.Padding.MinimumSizeTexels
 							) ||
-							Config.Resample.Padding.IgnoreUnknown && (input.Reference.Name == null || input.Reference.Name == "")
+							(Config.Resample.Padding.IgnoreUnknown && (input.Reference.Name == null || input.Reference.Name == "")) ||
+							(input.Reference.Name != null && Config.Resample.Padding.Blacklist.Contains(input.Reference.Name))
 						) {
 							shouldPad = Vector2B.False;
+						}
+
+						// TODO : make X and Y variants of the whitelist and blacklist
+						if (input.Reference.Name != null && Config.Resample.Padding.Whitelist.Contains(input.Reference.Name)) {
+							shouldPad = Vector2B.True;
 						}
 
 						if (shouldPad.Any) {

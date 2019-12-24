@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using TeximpNet.Compression;
 
@@ -98,12 +99,14 @@ namespace SpriteMaster {
 				internal const bool Enabled = true;
 				internal static int MinimumSizeTexels = 4;
 				internal const bool IgnoreUnknown = true;
+				internal static List<string> Whitelist = new List<string>() { "foo" };
+				internal static List<string> Blacklist = new List<string>() { "bar" };
 			}
 		}
 
 		internal static class WrapDetection {
 			internal const bool Enabled = true;
-			internal const float edgeThreshold = 0.75f;
+			internal const float edgeThreshold = 0.4f;
 			internal static byte alphaThreshold = 1;
 		}
 
