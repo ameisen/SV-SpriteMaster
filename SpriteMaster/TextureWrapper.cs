@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
+using SpriteMaster.Metadata;
 using SpriteMaster.Types;
 using System;
 using System.Runtime.CompilerServices;
@@ -15,8 +16,6 @@ namespace SpriteMaster {
 		internal readonly bool BlendEnabled;
 		internal byte[] Data = null;
 		private ulong _Hash = 0;
-
-		private static ConditionalWeakTable<Texture2D, WeakReference<byte[]>> DataCache = new ConditionalWeakTable<Texture2D, WeakReference<byte[]>>();
 
 		private static unsafe byte[] MakeByteArray<T>(DataRef<T> data, long referenceSize = 0) where T : struct {
 			var dataData = data.Data;
@@ -44,7 +43,7 @@ namespace SpriteMaster {
 
 		private static void Purge(Texture2D reference) {
 			try {
-				DataCache.Remove(reference);
+				reference.Meta().CachedData = null;
 			}
 			catch { /* do nothing */ }
 		}
@@ -61,16 +60,19 @@ namespace SpriteMaster {
 
 			bool forcePurge = false;
 
+			var meta = reference.Meta();
+
 			try {
 				if (data.Offset == 0 && data.Length >= refSize) {
-					DataCache.Remove(reference);
 					var newByteArray = MakeByteArray(data, refSize);
-					if (newByteArray == null)
+					if (newByteArray == null) {
+						meta.CachedData = null;
 						forcePurge = true;
+					}
 					else
-						DataCache.Add(reference, newByteArray.MakeWeak());
+						meta.CachedData = newByteArray.MakeWeak();
 				}
-				else if (DataCache.TryGetValue(reference, out var weakData) && weakData.TryGetTarget(out var currentData)) {
+				else if (meta.CachedData != null && meta.CachedData.TryGetTarget(out var currentData)) {
 					var byteSpan = data.Data.CastAs<T, byte>();
 					long untilOffset = Math.Min(currentData.Length - data.Offset, (long)data.Length * Marshal.SizeOf(typeof(T)));
 					foreach (var i in 0.Until((int)untilOffset)) {
@@ -93,7 +95,7 @@ namespace SpriteMaster {
 
 		// TODO : thread safety?
 		internal static void UpdateCache(Texture2D reference, byte[] data) {
-			DataCache.Add(reference, data.MakeWeak());
+			reference.Meta().CachedData = data.MakeWeak();
 		}
 
 		internal TextureWrapper (Texture2D reference, in Bounds dimensions, in Bounds indexRectangle) {
@@ -107,12 +109,6 @@ namespace SpriteMaster {
 				Size.Width -= (Size.Right - ReferenceSize.Width);
 			}
 			Reference = reference;
-
-			if (DataCache.TryGetValue(reference, out var dataRef)) {
-				if (!dataRef.TryGetTarget(out Data)) {
-					DataCache.Remove(reference);
-				}
-			}
 
 			if (Data == null) {
 				Data = new byte[reference.SizeBytes()];
