@@ -17,7 +17,7 @@ using SpriteMaster.Metadata;
 namespace SpriteMaster {
 	sealed class SpriteMap {
 		private readonly SharedLock Lock = new SharedLock();
-		private readonly List<WeakScaledTexture> ScaledTextureReferences = new List<WeakScaledTexture>();
+		private readonly WeakCollection<ScaledTexture> ScaledTextureReferences = new WeakCollection<ScaledTexture>();
 
 		static private ulong SpriteHash (Texture2D texture, Bounds sourceRectangle) {
 			return ScaledTexture.ExcludeSprite(texture) ? 0UL : sourceRectangle.Hash();
@@ -28,11 +28,8 @@ namespace SpriteMaster {
 			var rectangleHash = SpriteHash(reference, sourceRectangle);
 
 			using (Lock.Exclusive) {
-				ScaledTextureReferences.Add(texture.MakeWeak());
-
+				ScaledTextureReferences.Add(texture);
 				Map.Add(rectangleHash, texture);
-
-				ScaledTextureReferences.Add(texture.MakeWeak());
 			}
 		}
 
@@ -68,14 +65,10 @@ namespace SpriteMaster {
 				using (Lock.Exclusive) {
 
 					try {
-						var removeElements = new List<WeakScaledTexture>();
+						ScaledTextureReferences.Purge();
+						var removeElements = new List<ScaledTexture>();
 						foreach (var element in ScaledTextureReferences) {
-							if (element.TryGetTarget(out var elementTexture)) {
-								if (elementTexture == scaledTexture) {
-									removeElements.Add(element);
-								}
-							}
-							else {
+							if (element == scaledTexture) {
 								removeElements.Add(element);
 							}
 						}
@@ -128,17 +121,15 @@ namespace SpriteMaster {
 			try {
 				var purgeList = new List<ScaledTexture>();
 				using (Lock.Shared) {
-					foreach (var weakRef in ScaledTextureReferences) {
-						if (weakRef.TryGetTarget(out var scaledTexture)) {
-							if (
-								(scaledTexture.Name.ToLower().Contains("spring") ||
-								scaledTexture.Name.ToLower().Contains("summer") ||
-								scaledTexture.Name.ToLower().Contains("fall") ||
-								scaledTexture.Name.ToLower().Contains("winter")) &&
-								!scaledTexture.Name.ToLower().Contains(season.ToLower())
-							) {
-								purgeList.Add(scaledTexture);
-							}
+					foreach (var scaledTexture in ScaledTextureReferences) {
+						if (
+							(scaledTexture.Name.ToLower().Contains("spring") ||
+							scaledTexture.Name.ToLower().Contains("summer") ||
+							scaledTexture.Name.ToLower().Contains("fall") ||
+							scaledTexture.Name.ToLower().Contains("winter")) &&
+							!scaledTexture.Name.ToLower().Contains(season.ToLower())
+						) {
+							purgeList.Add(scaledTexture);
 						}
 					}
 				}
@@ -157,16 +148,14 @@ namespace SpriteMaster {
 		internal Dictionary<Texture2D, List<ScaledTexture>> GetDump () {
 			var result = new Dictionary<Texture2D, List<ScaledTexture>>();
 
-			foreach (var element in ScaledTextureReferences) {
-				if (element.TryGetTarget(out var scaledTexture)) {
-					if (scaledTexture.Reference.TryGetTarget(out var referenceTexture)) {
-						List<ScaledTexture> resultList;
-						if (!result.TryGetValue(referenceTexture, out resultList)) {
-							resultList = new List<ScaledTexture>();
-							result.Add(referenceTexture, resultList);
-						}
-						resultList.Add(scaledTexture);
+			foreach (var scaledTexture in ScaledTextureReferences) {
+				if (scaledTexture.Reference.TryGetTarget(out var referenceTexture)) {
+					List<ScaledTexture> resultList;
+					if (!result.TryGetValue(referenceTexture, out resultList)) {
+						resultList = new List<ScaledTexture>();
+						result.Add(referenceTexture, resultList);
 					}
+					resultList.Add(scaledTexture);
 				}
 			}
 
@@ -288,7 +277,7 @@ namespace SpriteMaster {
 				// Check for duplicates with the same name.
 				// TODO : We do have a synchronity issue here. We could purge before an asynchronous task adds the texture.
 				// DiscardDuplicatesFrameDelay
-				if (texture.Name != null && texture.Name != "" && texture.Name != "LooseSprites\\Cursors" && texture.Name != "Minigames\\TitleButtons") {
+				if (texture.Name != null && texture.Name != "" && !Config.DiscardDuplicatesBlacklist.Contains(texture.Name)) {
 					bool insert = false;
 					if (DuplicateTable.TryGetValue(texture.Name, out var weakTexture)) {
 						if (weakTexture.TryGetTarget(out var strongTexture)) {
@@ -314,7 +303,7 @@ namespace SpriteMaster {
 				}
 			}
 
-			bool isSprite = !ExcludeSprite(texture) && ((sourceRectangle.X != 0 || sourceRectangle.Y != 0) || (sourceRectangle.Width != texture.Width || sourceRectangle.Height != texture.Height));
+			bool isSprite = !ExcludeSprite(texture) && (!sourceRectangle.Offset.IsZero || sourceRectangle.Extent != texture.Extent());
 			var textureWrapper = new SpriteInfo(texture, sourceRectangle);
 			ulong hash = Upscaler.GetHash(textureWrapper, isSprite);
 
@@ -322,7 +311,7 @@ namespace SpriteMaster {
 				lock (LocalTextureCache) {
 					if (LocalTextureCache.TryGetValue(hash, out var scaledTextureRef)) {
 						if (scaledTextureRef.TryGetTarget(out var cachedTexture)) {
-							Debug.InfoLn($"Using Cached Texture for \"{cachedTexture.SafeName()}\"");
+							Debug.InfoLn($"Using Cached Texture for '{cachedTexture.SafeName()}'");
 							SpriteMap.Add(texture, cachedTexture, sourceRectangle);
 							texture.Disposing += (object sender, EventArgs args) => { cachedTexture.OnParentDispose((Texture2D)sender); };
 							if (!cachedTexture.IsReady || cachedTexture.Texture == null) {

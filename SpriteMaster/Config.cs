@@ -39,6 +39,10 @@ namespace SpriteMaster {
 		internal static bool GarbageCollectAccountOwnedTexture = true;
 		internal static bool DiscardDuplicates = true;
 		internal static int DiscardDuplicatesFrameDelay = 2;
+		internal static List<string> DiscardDuplicatesBlacklist = new List<string>() {
+			"LooseSprites\\Cursors",
+			"Minigames\\TitleButtons"
+		};
 
 		internal enum Configuration {
 			Debug,
