@@ -2,13 +2,13 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
+using SpriteMaster.Metadata;
 using SpriteMaster.Resample;
 using SpriteMaster.Types;
 using System;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using xBRZNet2;
 using static SpriteMaster.ScaledTexture;
@@ -23,24 +23,20 @@ namespace SpriteMaster {
 			}
 		}
 
-		private static readonly ConditionalWeakTable<Texture2D, MetaData> MetaCache = new ConditionalWeakTable<Texture2D, MetaData>();
-
 		internal static void PurgeHash (Texture2D reference) {
-			try {
-				MetaCache.Remove(reference);
+			var meta = reference.Meta();
+			lock (meta) {
+				meta.Hash = 0;
 			}
-			catch { /* do nothing */ }
 		}
 
 		internal static ulong GetHash (TextureWrapper input, bool desprite) {
+			var meta = input.Reference.Meta();
 			ulong hash;
-			lock (MetaCache) {
-				if (MetaCache.TryGetValue(input.Reference, out var metaData)) {
-					hash = metaData.Hash;
-				}
-				else {
-					hash = input.Hash();
-					MetaCache.Add(input.Reference, new MetaData(hash: hash));
+			lock (meta) {
+				hash = meta.Hash;
+				if (hash == 0) {
+					meta.Hash = hash = input.Hash();
 				}
 			}
 			if (desprite) {

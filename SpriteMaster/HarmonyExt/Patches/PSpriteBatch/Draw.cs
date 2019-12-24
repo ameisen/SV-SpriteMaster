@@ -102,6 +102,8 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 				return true;
 			}
 
+			scaledTexture.UpdateReferenceFrame();
+
 			if (!scaledTexture.Padding.IsZero) {
 				// Convert the draw into the other draw style. This has to be done because the padding potentially has
 				// subpixel accuracy when scaled to the destination rectangle.
@@ -146,6 +148,8 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 				return true;
 			}
 
+			scaledTexture.UpdateReferenceFrame();
+
 			var t = scaledTexture.Texture;
 
 			var scaledOrigin = origin / scaledTexture.Scale;
@@ -187,6 +191,8 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 				}
 				t = scaledTexture.Texture;
 			}
+
+			scaledTexture.UpdateReferenceFrame();
 
 			var adjustedScale = scale / scaledTexture.Scale;
 			var adjustedPosition = position;

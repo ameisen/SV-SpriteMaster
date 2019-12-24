@@ -8,7 +8,6 @@ namespace SpriteMaster {
 	internal sealed class SharedLock : CriticalFinalizerObject, IDisposable {
 		private ReaderWriterLock Lock = new ReaderWriterLock();
 
-
 		internal struct Promoted : IDisposable {
 			private ReaderWriterLock Lock;
 			private LockCookie Cookie;

@@ -509,6 +509,8 @@ namespace SpriteMaster {
 		private readonly Bounds sourceRectangle;
 		private int refScale;
 
+		internal long LastReferencedFrame = DrawState.CurrentFrame;
+
 		internal Vector2 AdjustedScale = Vector2.One;
 
 		~ScaledTexture() {
@@ -702,6 +704,8 @@ namespace SpriteMaster {
 				return;
 			}
 
+			UpdateReferenceFrame();
+
 			TotalMemoryUsage += (uint)texture.SizeBytes();
 			texture.Disposing += (object sender, EventArgs args) => { TotalMemoryUsage -= (uint)texture.SizeBytes(); };
 
@@ -725,6 +729,10 @@ namespace SpriteMaster {
 			}
 
 			IsReady = true;
+		}
+
+		internal void UpdateReferenceFrame() {
+			this.LastReferencedFrame = DrawState.CurrentFrame; ;
 		}
 
 		internal void Destroy (Texture2D texture) {

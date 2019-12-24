@@ -99,8 +99,8 @@ namespace SpriteMaster {
 				internal const bool Enabled = true;
 				internal static int MinimumSizeTexels = 4;
 				internal const bool IgnoreUnknown = true;
-				internal static List<string> Whitelist = new List<string>() { "foo" };
-				internal static List<string> Blacklist = new List<string>() { "bar" };
+				internal static List<string> Whitelist = new List<string>() { "LooseSprites\\Cursors" };
+				internal static List<string> Blacklist = new List<string>();
 			}
 		}
 

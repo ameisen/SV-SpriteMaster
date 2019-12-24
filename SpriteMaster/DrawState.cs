@@ -9,6 +9,7 @@ namespace SpriteMaster {
 		private static bool FetchedThisFrame = false;
 		private static long RemainingTexelFetchBudget = Config.AsyncScaling.ScalingBudgetPerFrameTexels;
 		private static bool PushedUpdateThisFrame = false;
+		public static long CurrentFrame = 0;
 		public static TextureAddressMode CurrentAddressModeU = DefaultSamplerState.AddressU;
 		public static TextureAddressMode CurrentAddressModeV = DefaultSamplerState.AddressV;
 		public static Blend CurrentBlendSourceMode = BlendState.AlphaBlend.AlphaSourceBlend;
@@ -38,6 +39,7 @@ namespace SpriteMaster {
 			RemainingTexelFetchBudget = Config.AsyncScaling.ScalingBudgetPerFrameTexels;
 			FetchedThisFrame = false;
 			PushedUpdateThisFrame = false;
+			++CurrentFrame;
 		}
 
 		internal static void OnBegin (

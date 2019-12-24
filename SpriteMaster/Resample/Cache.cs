@@ -77,7 +77,6 @@ namespace SpriteMaster.Resample {
 							return true;
 						}
 						catch (IOException ex) {
-							bool wasLocked = WasLocked(ex);
 							if (WasLocked(ex)) {
 								Debug.InfoLn($"File was locked when trying to load cache file '{path}': {ex.Message} [{retries} retries]");
 								Thread.Sleep(Config.Cache.LockSleepMS);
