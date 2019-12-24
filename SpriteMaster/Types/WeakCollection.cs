@@ -518,12 +518,52 @@ namespace SpriteMaster.Types {
 			return true;
 		}
 
+		public sealed class Enumerator : IEnumerator<T> {
+			private readonly IEnumerator<ComparableWeakReference<T>> _Enumerator;
+
+			internal Enumerator (IEnumerator<ComparableWeakReference<T>> enumerator) {
+				_Enumerator = enumerator;
+			}
+
+			public T Current => GetCurrent();
+
+			object IEnumerator.Current => GetCurrent();
+
+			private T GetCurrent () {
+				T target = null;
+				while (!_Enumerator.Current.TryGetTarget(out target)) {
+					if (!_Enumerator.MoveNext()) {
+						return null; // TODO
+					}
+				}
+				return target;
+			}
+
+			public void Dispose () {
+				_Enumerator.Dispose();
+			}
+
+			public bool MoveNext () {
+				do {
+					if (!_Enumerator.MoveNext()) {
+						return false;
+					}
+				} while (!_Enumerator.Current.IsAlive);
+				return true;
+			}
+
+			public void Reset () {
+				_Enumerator.Reset();
+				while (!_Enumerator.Current.IsAlive && _Enumerator.MoveNext()) {}
+			}
+		}
+
 		public IEnumerator<T> GetEnumerator () {
-			throw new NotImplementedException();
+			return new Enumerator(_List.GetEnumerator());
 		}
 
 		IEnumerator IEnumerable.GetEnumerator () {
-			throw new NotImplementedException();
+			return new Enumerator(_List.GetEnumerator());
 		}
 	}
 }
