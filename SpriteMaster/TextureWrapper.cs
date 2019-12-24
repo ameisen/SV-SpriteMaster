@@ -19,6 +19,11 @@ namespace SpriteMaster {
 		private static ConditionalWeakTable<Texture2D, WeakReference<byte[]>> DataCache = new ConditionalWeakTable<Texture2D, WeakReference<byte[]>>();
 
 		private static unsafe byte[] MakeByteArray<T>(DataRef<T> data, long referenceSize = 0) where T : struct {
+			var dataData = data.Data;
+			if (dataData is byte[] byteData) {
+				return byteData;
+			}
+
 			try {
 				if (referenceSize == 0)
 					referenceSize = (long)data.Length * Marshal.SizeOf(typeof(T));
@@ -86,6 +91,11 @@ namespace SpriteMaster {
 			}
 		}
 
+		// TODO : thread safety?
+		internal static void UpdateCache(Texture2D reference, byte[] data) {
+			DataCache.Add(reference, data.MakeWeak());
+		}
+
 		internal TextureWrapper (Texture2D reference, in Bounds dimensions, in Bounds indexRectangle) {
 			ReferenceSize = new Vector2I(reference);
 			Size = dimensions;
@@ -105,9 +115,9 @@ namespace SpriteMaster {
 			}
 
 			if (Data == null) {
-				Data = new byte[reference.Width * reference.Height * 4];
+				Data = new byte[reference.SizeBytes()];
 				reference.GetData(Data);
-				DataCache.Add(reference, Data.MakeWeak());
+				UpdateCache(reference, Data);
 			}
 
 			BlendEnabled = DrawState.CurrentBlendSourceMode != Blend.One;

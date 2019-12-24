@@ -3,15 +3,18 @@ using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Types;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using static SpriteMaster.HarmonyExt.HarmonyExt;
 using static SpriteMaster.ScaledTexture;
 
 namespace SpriteMaster.HarmonyExt.Patches {
+	[SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
+	[SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Harmony")]
 	static class PTexture2D {
 		private static readonly MethodInfo CopyData;
 		private static readonly Dictionary<Type, MethodInfo> CopyDataGeneric = new Dictionary<Type, MethodInfo>();
-		static PTexture2D() {
+		static PTexture2D () {
 			CopyData = typeof(Texture2D).GetMethod("CopyData", BindingFlags.Instance | BindingFlags.NonPublic);
 			foreach (var type in HarmonyExt.StructTypes) {
 				CopyDataGeneric.Add(type, CopyData.MakeGenericMethod(type));
@@ -73,7 +76,6 @@ namespace SpriteMaster.HarmonyExt.Patches {
 		*/
 
 		[HarmonyPatch("SetData", HarmonyPatch.Fixation.Postfix, PriorityLevel.Last, HarmonyPatch.Generic.Struct)]
-		[System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
 		private static void OnSetDataPost<T> (Texture2D __instance, int level, Rectangle? rect, T[] data, int startIndex, int elementCount) where T : struct {
 			if (__instance is ManagedTexture2D) {
 				return;

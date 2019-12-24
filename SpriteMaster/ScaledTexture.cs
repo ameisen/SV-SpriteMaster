@@ -13,11 +13,13 @@ using WeakSpriteMap = System.Runtime.CompilerServices.ConditionalWeakTable<Micro
 using SpriteMaster.Types;
 using SpriteMaster.Extensions;
 using TeximpNet.Compression;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace SpriteMaster {
 	internal abstract class ITextureMap {
 		protected readonly SharedLock Lock = new SharedLock();
-		protected readonly List<WeakScaledTexture> ScaledTextureReferences = Config.Debug.CacheDump.Enabled ? new List<WeakScaledTexture>() : null;
+		protected readonly List<WeakScaledTexture> ScaledTextureReferences = new List<WeakScaledTexture>();
 
 		internal static ITextureMap Create () {
 			return Config.Resample.DeSprite ? (ITextureMap)new SpriteMap() : new TextureMap();
@@ -31,15 +33,13 @@ namespace SpriteMaster {
 
 		internal abstract void Purge (Texture2D reference, Bounds? sourceRectangle = null);
 
+		internal abstract void SeasonPurge (string season);
+
 		protected void OnAdd (Texture2D reference, ScaledTexture texture, Bounds sourceRectangle) {
-			if (!Config.Debug.CacheDump.Enabled)
-				return;
 			ScaledTextureReferences.Add(texture.MakeWeak());
 		}
 
 		protected void OnRemove (in ScaledTexture scaledTexture, in Texture2D texture) {
-			if (!Config.Debug.CacheDump.Enabled)
-				return;
 			try {
 				List<WeakScaledTexture> removeElements = new List<WeakScaledTexture>();
 				foreach (var element in ScaledTextureReferences) {
@@ -61,9 +61,6 @@ namespace SpriteMaster {
 		}
 
 		internal Dictionary<Texture2D, List<ScaledTexture>> GetDump () {
-			if (!Config.Debug.CacheDump.Enabled)
-				return null;
-
 			var result = new Dictionary<Texture2D, List<ScaledTexture>>();
 
 			foreach (var element in ScaledTextureReferences) {
@@ -87,7 +84,7 @@ namespace SpriteMaster {
 		private readonly WeakTextureMap Map = new WeakTextureMap();
 
 		internal override void Add (Texture2D reference, ScaledTexture texture, Bounds sourceRectangle) {
-			using (Lock.LockExclusive()) {
+			using (Lock.Exclusive) {
 				Map.Add(reference, texture);
 				OnAdd(reference, texture, sourceRectangle);
 			}
@@ -96,11 +93,12 @@ namespace SpriteMaster {
 		internal override bool TryGet (Texture2D texture, Bounds sourceRectangle, out ScaledTexture result) {
 			result = null;
 
-			using (Lock.LockShared()) {
+			using (Lock.Shared) {
 				if (Map.TryGetValue(texture, out var scaledTexture)) {
 					if (scaledTexture.Texture != null && scaledTexture.Texture.IsDisposed) {
-						Lock.Promote();
-						Map.Remove(texture);
+						using (Lock.Promote) {
+							Map.Remove(texture);
+						}
 					}
 					else {
 						if (scaledTexture.IsReady) {
@@ -116,7 +114,7 @@ namespace SpriteMaster {
 
 		internal override void Remove (ScaledTexture scaledTexture, Texture2D texture) {
 			try {
-				using (Lock.LockExclusive()) {
+				using (Lock.Exclusive) {
 					OnRemove(scaledTexture, texture);
 					Map.Remove(texture);
 				}
@@ -132,9 +130,9 @@ namespace SpriteMaster {
 
 		internal override void Purge (Texture2D reference, Bounds? sourceRectangle = null) {
 			try {
-				using (Lock.LockShared()) {
+				using (Lock.Shared) {
 					if (Map.TryGetValue(reference, out var scaledTexture)) {
-						using (Lock.Promote()) {
+						using (Lock.Promote) {
 							Debug.InfoLn($"Purging Texture {reference.SafeName()}");
 							if (scaledTexture.Texture != null) {
 								scaledTexture.Texture.Purge();
@@ -143,6 +141,34 @@ namespace SpriteMaster {
 							Map.Remove(reference);
 							// TODO dispose sprite?
 						}
+					}
+				}
+			}
+			catch { }
+		}
+
+		internal override void SeasonPurge (string season) {
+			try {
+				var purgeList = new List<ScaledTexture>();
+				using (Lock.Shared) {
+					foreach (var weakRef in ScaledTextureReferences) {
+						if (weakRef.TryGetTarget(out var scaledTexture)) {
+							if (
+								(scaledTexture.Name.ToLower().Contains("spring") ||
+								scaledTexture.Name.ToLower().Contains("summer") ||
+								scaledTexture.Name.ToLower().Contains("fall") ||
+								scaledTexture.Name.ToLower().Contains("winter")) &&
+								!scaledTexture.Name.ToLower().Contains(season.ToLower())
+							) {
+								purgeList.Add(scaledTexture);
+							}
+						}
+					}
+				}
+				foreach (var purgable in purgeList) {
+					if (purgable.Reference.TryGetTarget(out var reference)) {
+						purgable.Destroy(reference);
+						Map.Remove(reference);
 					}
 				}
 			}
@@ -158,7 +184,7 @@ namespace SpriteMaster {
 		}
 
 		internal override void Add (Texture2D reference, ScaledTexture texture, Bounds sourceRectangle) {
-			using (Lock.LockExclusive()) {
+			using (Lock.Exclusive) {
 				OnAdd(reference, texture, sourceRectangle);
 
 				var rectangleHash = SpriteHash(reference, sourceRectangle);
@@ -166,21 +192,21 @@ namespace SpriteMaster {
 				var spriteMap = Map.GetOrCreateValue(reference);
 				spriteMap.Add(rectangleHash, texture);
 
-				if (Config.Debug.CacheDump.Enabled)
-					ScaledTextureReferences.Add(texture.MakeWeak());
+				ScaledTextureReferences.Add(texture.MakeWeak());
 			}
 		}
 
 		internal override bool TryGet (Texture2D texture, Bounds sourceRectangle, out ScaledTexture result) {
 			result = null;
 
-			using (Lock.LockShared()) {
+			using (Lock.Shared) {
 				if (Map.TryGetValue(texture, out var spriteMap)) {
 					var rectangleHash = SpriteHash(texture, sourceRectangle);
 					if (spriteMap.TryGetValue(rectangleHash, out var scaledTexture)) {
 						if (scaledTexture.Texture != null && scaledTexture.Texture.IsDisposed) {
-							Lock.Promote();
-							Map.Remove(texture);
+							using (Lock.Promote) {
+								Map.Remove(texture);
+							}
 						}
 						else {
 							if (scaledTexture.IsReady) {
@@ -197,7 +223,7 @@ namespace SpriteMaster {
 
 		internal override void Remove (ScaledTexture scaledTexture, Texture2D texture) {
 			try {
-				using (Lock.LockExclusive()) {
+				using (Lock.Exclusive) {
 					OnRemove(scaledTexture, texture);
 					Map.Remove(texture);
 				}
@@ -213,10 +239,10 @@ namespace SpriteMaster {
 
 		internal override void Purge (Texture2D reference, Bounds? sourceRectangle = null) {
 			try {
-				using (Lock.LockShared()) {
+				using (Lock.Shared) {
 					if (Map.TryGetValue(reference, out var scaledTextureMap)) {
 						// TODO handle sourceRectangle meaningfully.
-						using (Lock.Promote()) {
+						using (Lock.Promote) {
 							Debug.InfoLn($"Purging Texture {reference.SafeName()}");
 
 							foreach (var scaledTexture in scaledTextureMap.Values) {
@@ -234,6 +260,34 @@ namespace SpriteMaster {
 			}
 			catch { }
 		}
+
+		internal override void SeasonPurge (string season) {
+			try {
+				var purgeList = new List<ScaledTexture>();
+				using (Lock.Shared) {
+					foreach (var weakRef in ScaledTextureReferences) {
+						if (weakRef.TryGetTarget(out var scaledTexture)) {
+							if (
+								(scaledTexture.Name.ToLower().Contains("spring") ||
+								scaledTexture.Name.ToLower().Contains("summer") ||
+								scaledTexture.Name.ToLower().Contains("fall") ||
+								scaledTexture.Name.ToLower().Contains("winter")) &&
+								!scaledTexture.Name.ToLower().Contains(season.ToLower())
+							) {
+								purgeList.Add(scaledTexture);
+							}
+						}
+					}
+				}
+				foreach (var purgable in purgeList) {
+					if (purgable.Reference.TryGetTarget(out var reference)) {
+						purgable.Destroy(reference);
+						Map.Remove(reference);
+					}
+				}
+			}
+			catch { }
+		}
 	}
 
 	internal sealed class ScaledTexture {
@@ -241,6 +295,8 @@ namespace SpriteMaster {
 		public static readonly ITextureMap TextureMap = ITextureMap.Create();
 
 		private static readonly List<Action> PendingActions = Config.AsyncScaling.Enabled ? new List<Action>() : null;
+
+		private static readonly Dictionary<string, WeakTexture> DuplicateTable = Config.DiscardDuplicates ? new Dictionary<string, WeakTexture>() : null;
 
 		static internal bool ExcludeSprite (Texture2D texture) {
 			return false;// && (texture.Name == "LooseSprites\\Cursors");
@@ -342,6 +398,35 @@ namespace SpriteMaster {
 
 			if (useAsync && Config.AsyncScaling.Enabled && RemainingAsyncTasks <= 0) {
 				return null;
+			}
+
+			if (Config.DiscardDuplicates) {
+				// Check for duplicates with the same name.
+				// TODO : We do have a synchronity issue here. We could purge before an asynchronous task adds the texture.
+				// DiscardDuplicatesFrameDelay
+				if (texture.Name != null && texture.Name != "" && texture.Name != "LooseSprites\\Cursors" && texture.Name != "Minigames\\TitleButtons") {
+					bool insert = false;
+					if (DuplicateTable.TryGetValue(texture.Name, out var weakTexture)) {
+						if (weakTexture.TryGetTarget(out var strongTexture)) {
+							if (strongTexture != texture) {
+								DuplicateTable.Remove(texture.Name);
+								Debug.WarningLn($"Purging Duplicate Texture '{texture.Name}'");
+								Purge(strongTexture);
+								insert = true;
+							}
+						}
+						else {
+							DuplicateTable.Remove(texture.Name);
+							insert = true;
+						}
+					}
+					else {
+						insert = true;
+					}
+					if (insert) {
+						DuplicateTable.Add(texture.Name, texture.MakeWeak());
+					}
+				}
 			}
 
 			bool isSprite = Config.Resample.DeSprite && !ExcludeSprite(texture) && ((sourceRectangle.X != 0 || sourceRectangle.Y != 0) || (sourceRectangle.Width != texture.Width || sourceRectangle.Height != texture.Height));
@@ -447,6 +532,10 @@ namespace SpriteMaster {
 
 		internal static readonly Dictionary<ulong, WeakScaledTexture> LocalTextureCache = new Dictionary<ulong, WeakScaledTexture>();
 
+		internal static void Purge (Texture2D reference) {
+			Purge<byte>(reference, null, DataRef<byte>.Null);
+		}
+
 		internal static void Purge<T> (Texture2D reference, Bounds? bounds, DataRef<T> data) where T : struct {
 			TextureMap.Purge(reference, bounds);
 			Upscaler.PurgeHash(reference);
@@ -454,9 +543,29 @@ namespace SpriteMaster {
 		}
 
 		internal sealed class ManagedTexture2D : Texture2D {
+			private static long TotalAllocatedSize = 0;
+			private static int TotalManagedTextures = 0;
+
 			public readonly WeakReference<Texture2D> Reference;
 			public readonly ScaledTexture Texture;
 			public readonly Vector2I Dimensions;
+
+			[Conditional("DEBUG")]
+			private static void _DumpStats () {
+				DumpStats();
+			}
+
+			internal static void DumpStats() {
+				var currentProcess = Process.GetCurrentProcess();
+				var workingSet = currentProcess.WorkingSet64;
+				var vmem = currentProcess.VirtualMemorySize64;
+				var gca = GC.GetTotalMemory(false);
+				Debug.InfoLn($"Total Managed Textures : {TotalManagedTextures}");
+				Debug.InfoLn($"Total Texture Size     : {TotalAllocatedSize.AsDataSize()}");
+				Debug.InfoLn($"Process Working Set    : {workingSet.AsDataSize()}");
+				Debug.InfoLn($"Process Virtual Memory : {vmem.AsDataSize()}");
+				Debug.InfoLn($"GC Allocated Memory    : {gca.AsDataSize()}");
+			}
 
 			public ManagedTexture2D (
 				ScaledTexture texture,
@@ -479,9 +588,16 @@ namespace SpriteMaster {
 
 				reference.Disposing += (object obj, EventArgs args) => OnParentDispose();
 
+				TotalAllocatedSize += this.SizeBytes();
+				++TotalManagedTextures;
+
+				//_DumpStats();
+
 				Garbage.MarkOwned(format, dimensions.Area);
 				Disposing += (object obj, EventArgs args) => {
 					Garbage.UnmarkOwned(format, dimensions.Area);
+					TotalAllocatedSize -= this.SizeBytes();
+					--TotalManagedTextures;
 				};
 
 				if (data != null) {
@@ -490,22 +606,18 @@ namespace SpriteMaster {
 			}
 
 			~ManagedTexture2D() {
-				Purge(onlySelf: false);
-			}
-
-			public void Purge(bool onlySelf = true) {
 				if (!IsDisposed) {
-					Dispose();
-					if (!onlySelf && Reference.TryGetTarget(out var ReferenceTexture)) {
-						if (ReferenceTexture != null && !ReferenceTexture.IsDisposed) {
-							ReferenceTexture.Dispose();
-						}
-					}
+					Dispose(false);
 				}
 			}
 
+			public void Purge(bool onlySelf = true) {
+			}
+
 			private void OnParentDispose() {
-				Purge();
+				if (!IsDisposed) {
+					Dispose();
+				}
 			}
 		}
 

@@ -33,9 +33,12 @@ namespace SpriteMaster {
 		internal const uint MaxMemoryUsage = 2048U * 1024U * 1024U;
 		internal const bool EnableCachedHashTextures = false;
 		internal const bool IgnoreUnknownTextures = false;
-		internal static long ForceGarbageCollectAfter = 64 * 1024 * 1024;
+		internal static long ForceGarbageCompactAfter = 64 * 1024 * 1024;
+		internal static long ForceGarbageCollectAfter = 128 * 1024 * 1024;
 		internal static bool GarbageCollectAccountUnownedTextures = true;
 		internal static bool GarbageCollectAccountOwnedTexture = true;
+		internal static bool DiscardDuplicates = true;
+		internal static int DiscardDuplicatesFrameDelay = 2;
 
 		internal enum Configuration {
 			Debug,
@@ -65,11 +68,6 @@ namespace SpriteMaster {
 				internal static bool LogErrors = true;
 				internal const bool OwnLogFile = true;
 				internal const bool UseSMAPI = true;
-			}
-
-			internal static class CacheDump {
-				internal const bool Enabled = IsDebug;
-				internal const SButton Button = SButton.F10;
 			}
 
 			internal static class Sprite {
@@ -105,7 +103,7 @@ namespace SpriteMaster {
 
 		internal static class WrapDetection {
 			internal const bool Enabled = true;
-			internal const float edgeThreshold = 0.8f;
+			internal const float edgeThreshold = 0.5f;
 			internal static byte alphaThreshold = 1;
 		}
 

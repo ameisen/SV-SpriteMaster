@@ -12,6 +12,10 @@
 			get => Data == null;
 		}
 
+		public bool IsEntire {
+			get => Data != null && Offset == 0 && Length == Data.Length;
+		}
+
 		public static DataRef<T> Null => new DataRef<T>(null);
 
 		public DataRef (T[] data, int offset = 0, int length = 0) {
@@ -19,7 +23,7 @@
 
 			Data = data;
 			Offset = offset;
-			Length = (length == 0) ? Data.Length : length;
+			Length = (length == 0 && Data != null) ? Data.Length : length;
 		}
 
 		public static implicit operator DataRef<T> (T[] data) {

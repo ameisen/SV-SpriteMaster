@@ -137,9 +137,6 @@ namespace SpriteMaster {
 		}
 
 		static internal void DumpMemory () {
-			if (!Config.Debug.CacheDump.Enabled)
-				return;
-
 			lock (Console.Error) {
 				var duplicates = new Dictionary<string, List<Texture2D>>();
 				bool haveDuplicates = false;

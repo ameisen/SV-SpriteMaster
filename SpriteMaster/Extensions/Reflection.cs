@@ -33,5 +33,23 @@ namespace SpriteMaster.Extensions {
 			attribute = member.GetCustomAttribute<T>();
 			return attribute != null;
 		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal static bool TryGetField (this Type type, string name, out FieldInfo field, BindingFlags bindingAttr = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic) {
+			field = type.GetField(name, bindingAttr);
+			return (field != null);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal static bool TryGetProperty (this Type type, string name, out PropertyInfo property, BindingFlags bindingAttr = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic) {
+			property = type.GetProperty(name, bindingAttr);
+			return (property != null);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal static bool TryGetMethod (this Type type, string name, out MethodInfo method, BindingFlags bindingAttr = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic) {
+			method = type.GetMethod(name, bindingAttr);
+			return (method != null);
+		}
 	}
 }

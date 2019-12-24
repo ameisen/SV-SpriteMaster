@@ -2,13 +2,16 @@
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using static SpriteMaster.HarmonyExt.HarmonyExt;
 using static SpriteMaster.ScaledTexture;
 
 namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
-	class PlatformRenderBatch {
+	[SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
+	[SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Harmony")]
+	static class PlatformRenderBatch {
 		/*
 	public class SpriteBatch : GraphicsResource {
 		private struct SpriteInfo {

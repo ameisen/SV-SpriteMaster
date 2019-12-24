@@ -10,8 +10,6 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using TeximpNet.Compression;
-using TeximpNet.DDS;
 using xBRZNet2;
 using static SpriteMaster.ScaledTexture;
 
@@ -52,9 +50,12 @@ namespace SpriteMaster {
 		}
 
 		// TODO : Detangle this method.
-		private static long TotalAdditionalSize = 0;
+		private static long AccumulatedSizeGarbageCompact = 0;
+		private static long AccumulatedSizeGarbageCollect = 0;
 
-		private static ConditionalWeakTable<Texture2D, object> GCAccount = new ConditionalWeakTable<Texture2D, object>();
+		private static readonly WeakSet<Texture2D> GarbageMarkSet = Config.GarbageCollectAccountUnownedTextures ? new WeakSet<Texture2D>() : null;
+
+		// TODO : use MemoryFailPoint class. Extensively.
 
 		internal static ManagedTexture2D Upscale (ScaledTexture texture, ref int scale, TextureWrapper input, bool desprite, ulong hash, ref Vector2B wrapped, bool allowPadding, bool async) {
 			// Try to process the texture twice. Garbage collect after a failure, maybe it'll work then.
@@ -72,7 +73,7 @@ namespace SpriteMaster {
 					);
 				}
 				catch (OutOfMemoryException) {
-					Garbage.Collect(compact: true);
+					Garbage.Collect(compact: true, blocking: true, background: false);
 				}
 			}
 
@@ -81,26 +82,25 @@ namespace SpriteMaster {
 		}
 
 		private static unsafe ManagedTexture2D UpscaleInternal (ScaledTexture texture, ref int scale, TextureWrapper input, bool desprite, ulong hash, ref Vector2B wrapped, bool allowPadding, bool async) {
-			if (TotalAdditionalSize >= Config.ForceGarbageCollectAfter) {
+			if (AccumulatedSizeGarbageCompact >= Config.ForceGarbageCompactAfter) {
 				Debug.InfoLn("Forcing Garbage Compaction");
 				Garbage.MarkCompact();
-				//Garbage.Collect(true);
-				TotalAdditionalSize %= Config.ForceGarbageCollectAfter;
+				AccumulatedSizeGarbageCompact %= Config.ForceGarbageCompactAfter;
+			}
+			if (AccumulatedSizeGarbageCollect >= Config.ForceGarbageCollectAfter) {
+				Debug.InfoLn("Forcing Garbage Collection");
+				Garbage.Collect(compact: true, blocking: false, background: false);
+				AccumulatedSizeGarbageCollect %= Config.ForceGarbageCollectAfter;
 			}
 
 			var rawTextureData = input.Data;
 			var spriteFormat = TextureFormat.Color;
 
-			if (Config.GarbageCollectAccountUnownedTextures) {
-				if (!GCAccount.TryGetValue(input.Reference, out object v)) {
-					GCAccount.Add(input.Reference, null);
-					long size = input.Reference.SizeBytes();
-					GC.AddMemoryPressure(size);
-					input.Reference.Disposing += (object obj, EventArgs args) => {
-						long size = ((Texture2D)obj).Area() * sizeof(int);
-						GC.RemoveMemoryPressure(size);
-					};
-				}
+			if (Config.GarbageCollectAccountUnownedTextures && GarbageMarkSet.Add(input.Reference)) {
+				Garbage.Mark(input.Reference);
+				input.Reference.Disposing += (object obj, EventArgs args) => {
+					Garbage.Unmark((Texture2D)obj);
+				};
 			}
 
 			wrapped.Set(false);
@@ -371,7 +371,8 @@ namespace SpriteMaster {
 						}
 					}
 
-
+					// TODO : We can technically allocate the block padding before the scaling phase, and pass it a stride
+					// so it will just ignore the padding areas. That would be more efficient than this.
 					var requireBlockPadding = new Vector2B(
 						newSize.X >= 4 && !BlockCompress.IsBlockMultiple(newSize.X),
 						newSize.Y >= 4 && !BlockCompress.IsBlockMultiple(newSize.Y)
@@ -484,7 +485,9 @@ namespace SpriteMaster {
 					Cache.Save(cachePath, newSize, spriteFormat, wrapped, texture.Padding, texture.BlockPadding, bitmapData);
 				}
 
-				TotalAdditionalSize += spriteFormat.SizeBytes(newSize.Area);
+				var totalSpriteSize = spriteFormat.SizeBytes(newSize.Area);
+				AccumulatedSizeGarbageCompact += totalSpriteSize;
+				AccumulatedSizeGarbageCollect += totalSpriteSize;
 
 				/*
 				if (useBlockCompression) {

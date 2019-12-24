@@ -3,9 +3,12 @@ using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
+	[SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
+	[SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Harmony")]
 	static class Draw {
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static bool Cleanup (this ref Rectangle sourceRectangle, Texture2D reference) {
