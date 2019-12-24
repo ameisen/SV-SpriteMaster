@@ -342,12 +342,10 @@ namespace SpriteMaster {
 			}
 
 			ScaledTexture newTexture = null;
-			const int scale = Config.Resample.Scale ? 2 : 1;
 			newTexture = new ScaledTexture(
 				assetName: texture.Name,
 				textureWrapper: textureWrapper,
 				sourceRectangle: sourceRectangle,
-				scale: scale,
 				isSprite: isSprite,
 				hash: hash,
 				async: useAsync
@@ -508,7 +506,7 @@ namespace SpriteMaster {
 
 		internal static volatile int RemainingAsyncTasks = Config.AsyncScaling.MaxInFlightTasks;
 
-		internal ScaledTexture (string assetName, SpriteInfo textureWrapper, Bounds sourceRectangle, int scale, ulong hash, bool isSprite, bool async) {
+		internal ScaledTexture (string assetName, SpriteInfo textureWrapper, Bounds sourceRectangle, ulong hash, bool isSprite, bool async) {
 			IsSprite = isSprite;
 			Hash = hash;
 			var source = textureWrapper.Reference;
@@ -516,7 +514,7 @@ namespace SpriteMaster {
 			this.OriginalSourceRectangle = new Bounds(sourceRectangle);
 			this.Reference = source.MakeWeak();
 			this.sourceRectangle = sourceRectangle;
-			this.refScale = scale;
+			this.refScale = 2;
 			SpriteMap.Add(source, this, sourceRectangle);
 
 			this.Name = source.Name.IsBlank() ? assetName : source.Name;
