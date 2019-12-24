@@ -29,7 +29,6 @@ namespace SpriteMaster {
 		internal const int AbsoluteMaxTextureDimension = 16384;
 		internal const int BaseMaxTextureDimension = 4096;
 		internal static int PreferredMaxTextureDimension = 8192;
-		internal const bool RestrictSize = false;
 		internal const bool ClampInvalidBounds = true;
 		internal const uint MaxMemoryUsage = 2048U * 1024U * 1024U;
 		internal const bool EnableCachedHashTextures = false;
@@ -87,10 +86,8 @@ namespace SpriteMaster {
 		internal static class Resample {
 			internal const bool Smoothing = true;
 			internal const bool Scale = Smoothing;
-			internal const bool SmartScale = true;
 			internal static int MaxScale = 5;
 			internal static int MinimumTextureDimensions = 4;
-			internal const bool DeSprite = true;
 			internal const bool EnableWrappedAddressing = true;
 			internal const bool UseBlockCompression = true;
 			internal static CompressionQuality BlockCompressionQuality = CompressionQuality.Highest;

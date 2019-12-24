@@ -45,17 +45,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 					if (t == null || t.IsDisposed)
 						return null;
 
-					if (Config.Resample.DeSprite/* && scaledTexture.IsSprite*/) {
-						sourceRectangle = (Bounds)t.Dimensions;
-					}
-					else {
-						sourceRectangle = new Rectangle(
-							(sourceRectangle.X * scaledTexture.Scale.X).ToCoordinate(),
-							(sourceRectangle.Y * scaledTexture.Scale.Y).ToCoordinate(),
-							(sourceRectangle.Width * scaledTexture.Scale.X).ToCoordinate(),
-							(sourceRectangle.Height * scaledTexture.Scale.Y).ToCoordinate()
-						);
-					}
+					sourceRectangle = (Bounds)t.Dimensions;
 
 					return scaledTexture;
 				}

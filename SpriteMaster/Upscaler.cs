@@ -105,7 +105,7 @@ namespace SpriteMaster {
 
 			var inputSize = desprite ? input.Size.Extent : input.ReferenceSize;
 
-			if (Config.Resample.SmartScale && Config.Resample.Scale) {
+			if (Config.Resample.Scale) {
 				foreach (int s in Config.Resample.MaxScale.Until(scale)) {
 					var newDimensions = inputSize * s;
 					if (newDimensions.X <= Config.PreferredMaxTextureDimension && newDimensions.Y <= Config.PreferredMaxTextureDimension) {
@@ -117,16 +117,6 @@ namespace SpriteMaster {
 
 			var scaledSize = inputSize * scale;
 			var newSize = scaledSize.Min(Config.ClampDimension);
-
-			if (Config.RestrictSize) {
-				var scaledTestSize = inputSize * scale;
-				if (scaledTestSize.Width > Config.ClampDimension) {
-					newSize.Width = inputSize.Width;
-				}
-				if (scaledTestSize.Height > Config.ClampDimension) {
-					newSize.Height = inputSize.Height;
-				}
-			}
 
 			var scaledDimensions = input.Size.Extent * scale; // TODO : should this be (inputSize * scale)?
 			texture.UnpaddedSize = newSize;

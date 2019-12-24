@@ -66,7 +66,7 @@ namespace SpriteMaster {
 			var season = SDate.Now().Season.ToLower();
 			if (season != CurrentSeason) {
 				CurrentSeason = season;
-				ScaledTexture.TextureMap.SeasonPurge(season);
+				ScaledTexture.SpriteMap.SeasonPurge(season);
 			}
 		}
 

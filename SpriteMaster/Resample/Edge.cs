@@ -30,7 +30,7 @@ namespace SpriteMaster.Resample {
 			var WrappedX = new Vector2B(Wrapped.X);
 			var WrappedY = new Vector2B(Wrapped.Y);
 
-			if (Config.Resample.DeSprite && Config.WrapDetection.Enabled && Config.Resample.EnableWrappedAddressing) {
+			if (Config.WrapDetection.Enabled && Config.Resample.EnableWrappedAddressing) {
 				byte GetAlpha (in int sample) {
 					return unchecked((byte)(((uint)sample >> 24) & 0xFF));
 				}

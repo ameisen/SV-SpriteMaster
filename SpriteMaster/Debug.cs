@@ -141,7 +141,7 @@ namespace SpriteMaster {
 				var duplicates = new Dictionary<string, List<Texture2D>>();
 				bool haveDuplicates = false;
 
-				var textureDump = ScaledTexture.TextureMap.GetDump();
+				var textureDump = ScaledTexture.SpriteMap.GetDump();
 				long totalSize = 0;
 				long totalOriginalSize = 0;
 				ErrorLn("Texture Dump:");
