@@ -281,27 +281,28 @@ namespace SpriteMaster {
 				// TODO : We do have a synchronity issue here. We could purge before an asynchronous task adds the texture.
 				// DiscardDuplicatesFrameDelay
 				if (texture.Name != null && texture.Name != "" && !Config.DiscardDuplicatesBlacklist.Contains(texture.Name)) {
-					bool insert = false;
-					if (DuplicateTable.TryGetValue(texture.Name, out var weakTexture)) {
-						if (weakTexture.TryGetTarget(out var strongTexture)) {
-							// Is it not the same texture, and the previous texture has not been accessed for at least 2 frames?
-							if (strongTexture != texture && (DrawState.CurrentFrame - strongTexture.Meta().LastAccessFrame) > 2) {
-								DuplicateTable.Remove(strongTexture.Name);
-								Debug.WarningLn($"Purging Duplicate Texture '{strongTexture.Name}'");
-								Purge(strongTexture);
-								insert = true;
+					try {
+						lock (DuplicateTable) {
+							if (DuplicateTable.TryGetValue(texture.Name, out var weakTexture)) {
+								if (weakTexture.TryGetTarget(out var strongTexture)) {
+									// Is it not the same texture, and the previous texture has not been accessed for at least 2 frames?
+									if (strongTexture != texture && (DrawState.CurrentFrame - strongTexture.Meta().LastAccessFrame) > 2) {
+										Debug.WarningLn($"Purging Duplicate Texture '{strongTexture.Name}'");
+										DuplicateTable[texture.Name] = texture.MakeWeak();
+										Purge(strongTexture);
+									}
+								}
+								else {
+									DuplicateTable[texture.Name] = texture.MakeWeak();
+								}
+							}
+							else {
+								DuplicateTable.Add(texture.Name, texture.MakeWeak());
 							}
 						}
-						else {
-							DuplicateTable.Remove(texture.Name);
-							insert = true;
-						}
 					}
-					else {
-						insert = true;
-					}
-					if (insert) {
-						DuplicateTable.Add(texture.Name, texture.MakeWeak());
+					catch (Exception ex) {
+						ex.PrintWarning();
 					}
 				}
 			}
@@ -420,6 +421,7 @@ namespace SpriteMaster {
 		internal sealed class ManagedTexture2D : Texture2D {
 			private static long TotalAllocatedSize = 0;
 			private static int TotalManagedTextures = 0;
+			private const bool UseMips = false;
 
 			public readonly WeakReference<Texture2D> Reference;
 			public readonly ScaledTexture Texture;
@@ -449,7 +451,7 @@ namespace SpriteMaster {
 				SurfaceFormat format,
 				int[] data = null,
 				string name = null
-			) : base(reference.GraphicsDevice, dimensions.Width, dimensions.Height, false, format) {
+			) : base(reference.GraphicsDevice, dimensions.Width, dimensions.Height, UseMips, format) {
 				if (name != null) {
 					this.Name = name;
 				}
@@ -461,7 +463,7 @@ namespace SpriteMaster {
 				Texture = texture;
 				Dimensions = dimensions - texture.BlockPadding;
 
-				reference.Disposing += (object obj, EventArgs args) => OnParentDispose();
+				reference.Disposing += (_, _1) => OnParentDispose();
 
 				TotalAllocatedSize += this.SizeBytes();
 				++TotalManagedTextures;
@@ -469,7 +471,7 @@ namespace SpriteMaster {
 				//_DumpStats();
 
 				Garbage.MarkOwned(format, dimensions.Area);
-				Disposing += (object obj, EventArgs args) => {
+				Disposing += (_, _1) => {
 					Garbage.UnmarkOwned(format, dimensions.Area);
 					TotalAllocatedSize -= this.SizeBytes();
 					--TotalManagedTextures;

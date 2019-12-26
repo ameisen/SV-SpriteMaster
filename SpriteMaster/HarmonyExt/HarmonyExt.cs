@@ -129,16 +129,34 @@ namespace SpriteMaster.HarmonyExt {
 			return typeof(T).GetInstanceMethods(name);
 		}
 
-		private static MethodInfo GetPatchMethod (Type type, string name, MethodInfo method, bool transpile = false) {
+		private static MethodBase GetPatchMethod (Type type, string name, MethodInfo method, bool transpile = false) {
+			bool constructor = (name == ".ctor");
+
 			if (transpile) {
-				var instanceMethod = type.GetInstanceMethod(name);
-				return instanceMethod;
+				if (constructor) {
+					// TODO fix me
+					return type.GetConstructor(Type.EmptyTypes);
+				}
+				else {
+					return type.GetInstanceMethod(name);
+				}
 			}
 
 			var methodParameters = method.GetArguments();
-			var typeMethod = type.GetMethod(name, methodParameters);
+			var typeMethod = constructor ? (MethodBase)type.GetConstructor(methodParameters) : (MethodBase)type.GetMethod(name, methodParameters);
 			if (typeMethod == null) {
-				var typeMethods = type.GetMethods(name, InstanceFlags);
+				MethodBase[] typeMethods;
+				if (constructor) {
+					typeMethods = type.GetConstructors(InstanceFlags);
+				}
+				else {
+					var methods = type.GetMethods(name, InstanceFlags);
+					typeMethods = new MethodBase[methods.Count()];
+					foreach (var i in 0.Until(typeMethods.Length)) {
+						typeMethods[i] = methods.ElementAt(i);
+					}
+
+				}
 				foreach (var testMethod in typeMethods) {
 					// Compare the parameters. Ignore references.
 					var testParameters = testMethod.GetParameters();
@@ -189,7 +207,7 @@ namespace SpriteMaster.HarmonyExt {
 		private static void Patch(this HarmonyInstance instance, Type type, string name, MethodInfo pre = null, MethodInfo post = null, MethodInfo trans = null, int priority = Priority.Last) {
 			var referenceMethod = pre ?? post;
 			if (referenceMethod != null) {
-				var typeMethod = GetPatchMethod(type, name, referenceMethod);
+				var typeMethod = GetPatchMethod(type, name, referenceMethod) ?? throw new ArgumentException($"Method '{name}' in type '{type.FullName}' could not be found");
 				instance.Patch(
 					typeMethod,
 					(pre == null) ? null : new HarmonyMethod(pre) { prioritiy = GetPriority(pre, priority) },
@@ -198,7 +216,7 @@ namespace SpriteMaster.HarmonyExt {
 				);
 			}
 			if (trans != null) {
-				var typeMethod = GetPatchMethod(type, name, referenceMethod, transpile: true);
+				var typeMethod = GetPatchMethod(type, name, referenceMethod, transpile: true) ?? throw new ArgumentException($"Method '{name}' in type '{type.FullName}' could not be found");
 				instance.Patch(
 					typeMethod,
 					null,
@@ -230,17 +248,20 @@ namespace SpriteMaster.HarmonyExt {
 		public static void Patch (this HarmonyInstance instance, Type type, Type genericType, string name, MethodInfo pre = null, MethodInfo post = null, MethodInfo trans = null, int priority = Priority.Last) {
 			var referenceMethod = pre ?? post;
 			if (referenceMethod != null) {
-				var typeMethod = GetPatchMethod(type, name, referenceMethod).MakeGenericMethod(genericType);
+				var typeMethod = GetPatchMethod(type, name, referenceMethod) ?? throw new ArgumentException($"Method '{name}' in type '{type.FullName}' could not be found");
+				var typeMethodInfo = (MethodInfo)typeMethod;
 				instance.Patch(
-					typeMethod,
+					typeMethodInfo.MakeGenericMethod(genericType),
 					(pre == null) ? null : new HarmonyMethod(pre.MakeGenericMethod(genericType)) { prioritiy = GetPriority(pre, priority) },
 					(post == null) ? null : new HarmonyMethod(post.MakeGenericMethod(genericType)) { prioritiy = GetPriority(post, priority) },
 					null
 				);
 			}
 			if (trans != null) {
+				var typeMethod = GetPatchMethod(type, name, referenceMethod, transpile: true) ?? throw new ArgumentException($"Method '{name}' in type '{type.FullName}' could not be found");
+				var typeMethodInfo = (MethodInfo)typeMethod;
 				instance.Patch(
-					GetPatchMethod(type, name, referenceMethod, transpile: true).MakeGenericMethod(genericType),
+					typeMethodInfo.MakeGenericMethod(genericType),
 					null,
 					null,
 					new HarmonyMethod(trans.MakeGenericMethod(genericType)) { prioritiy = GetPriority(trans, priority) }

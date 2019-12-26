@@ -59,12 +59,12 @@ namespace SpriteMaster {
 			var meta = reference.Meta();
 
 			try {
-				if (data.Offset == 0 && data.Length >= refSize) {
+				if (!bounds.HasValue && data.Offset == 0 && (data.Length * typeSize) >= refSize) {
 					var newByteArray = MakeByteArray(data, refSize);
 					forcePurge |= (newByteArray == null);
 					meta.CachedData = newByteArray;
 				}
-				else if (meta.CachedData is var currentData && currentData != null) {
+				else if (!bounds.HasValue && meta.CachedData is var currentData && currentData != null) {
 					var byteSpan = data.Data.CastAs<T, byte>();
 					var untilOffset = Math.Min(currentData.Length - data.Offset, data.Length * typeSize);
 					foreach (var i in 0.Until(untilOffset)) {
@@ -100,6 +100,10 @@ namespace SpriteMaster {
 				Size.Width -= (Size.Right - ReferenceSize.Width);
 			}
 			Reference = reference;
+
+			if (Data == null) {
+				Data = reference.Meta().CachedData;
+			}
 
 			if (Data == null) {
 				Data = new byte[reference.SizeBytes()];

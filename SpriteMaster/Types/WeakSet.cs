@@ -36,13 +36,12 @@ namespace SpriteMaster.Types {
 		[SecuritySafeCritical]
 		public bool Add(T obj) {
 			try {
-				using (Lock.Shared) {
+				using (Lock.Exclusive) {
 					if (_Contains(obj)) {
 						return false;
 					}
-					using (Lock.Promote) {
-						InternalTable.Add(obj, Sentinel);
-					}
+
+					InternalTable.Add(obj, Sentinel);
 					return true;
 				}
 			}
