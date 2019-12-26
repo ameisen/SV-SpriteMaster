@@ -30,6 +30,9 @@ namespace SpriteMaster.HarmonyExt {
 			GenericType = generic;
 		}
 
+		public HarmonyPatch (Type parent, string type, string method, Fixation fixation = Fixation.Prefix, PriorityLevel priority = PriorityLevel.Average, Generic generic = Generic.None) :
+			this(parent.Assembly.GetType(type), method, fixation, priority, generic) { }
+
 		public HarmonyPatch (string method, Fixation fixation = Fixation.Prefix, PriorityLevel priority = PriorityLevel.Average, Generic generic = Generic.None) :
 			this(null, method, fixation, priority, generic) { }
 	}

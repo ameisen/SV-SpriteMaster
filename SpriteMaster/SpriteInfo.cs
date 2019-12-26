@@ -103,6 +103,7 @@ namespace SpriteMaster {
 
 			if (Data == null) {
 				Data = new byte[reference.SizeBytes()];
+				Debug.WarningLn("Reloading Texture Data");
 				reference.GetData(Data);
 				UpdateCache(reference, Data);
 			}

@@ -14,11 +14,6 @@ namespace SpriteMaster.Metadata {
 					return _Hash;
 				}
 			}
-			set {
-				lock (this) {
-					_Hash = value;
-				}
-			}
 		}
 
 		private WeakReference<byte[]> _CachedData = default;
