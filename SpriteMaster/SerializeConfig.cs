@@ -1,4 +1,5 @@
 ﻿using SpriteMaster.Extensions;
+using SpriteMaster.Types;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -8,6 +9,26 @@ using Tomlyn.Syntax;
 
 namespace SpriteMaster {
 	internal static class SerializeConfig {
+		private const BindingFlags StaticFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static;
+
+		private static ulong HashClass (Type type) {
+			ulong hash = default;
+			
+			foreach (var field in type.GetFields(StaticFlags)) {
+				hash ^= field.GetValue(null).GetLongHashCode();
+			}
+
+			foreach (var child in type.GetNestedTypes(StaticFlags)) {
+				hash ^= HashClass(child);
+			}
+
+			return hash;
+		}
+
+		internal static ulong Hash () {
+			return HashClass(typeof(Config));
+		}
+
 		internal static bool Load (string ConfigPath) {
 			if (!File.Exists(ConfigPath)) {
 				return false;
@@ -32,7 +53,7 @@ namespace SpriteMaster {
 								continue;
 							var trimmedElement = element.Trim();
 							summedClass += $".{trimmedElement}";
-							var child = configClass.GetNestedType(trimmedElement, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+							var child = configClass.GetNestedType(trimmedElement, StaticFlags);
 							if (child == null || child.IsNestedPrivate || child.GetCustomAttribute<Config.ConfigIgnoreAttribute>() != null)
 								throw new InvalidDataException($"Configuration Child Class '{summedClass}' does not exist");
 							configClass = child;
@@ -41,7 +62,7 @@ namespace SpriteMaster {
 						foreach (var value in table.Items) {
 							try {
 								var keyString = value.Key.ToString().Trim();
-								var field = configClass.GetField(keyString, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+								var field = configClass.GetField(keyString, StaticFlags);
 								if (field == null || field.IsPrivate || field.IsInitOnly || !field.IsStatic || field.IsLiteral)
 									throw new InvalidDataException($"Configuration Value '{summedClass}.{keyString}' does not exist");
 
@@ -137,7 +158,7 @@ namespace SpriteMaster {
 							}
 						}
 					}
-					catch (Exception ex) {
+					catch (Exception) {
 						throw new InvalidDataException($"Unknown Configuration Table '{tableName}'");
 					}
 				}
@@ -153,8 +174,8 @@ namespace SpriteMaster {
 		private static void SaveClass (Type type, DocumentSyntax document, KeySyntax key = null) {
 			key = key ?? new KeySyntax(type.Name);
 
-			var fields = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
-			var children = type.GetNestedTypes(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+			var fields = type.GetFields(StaticFlags);
+			var children = type.GetNestedTypes(StaticFlags);
 
 			var table = new TableSyntax(key);
 			var tableItems = table.Items;

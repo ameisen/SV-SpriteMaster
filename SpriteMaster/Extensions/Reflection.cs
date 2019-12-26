@@ -1,9 +1,23 @@
 ﻿using System;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace SpriteMaster.Extensions {
 	internal static class Reflection {
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal static int TypeSize<T> (this T obj) {
+			if (typeof(T) is Type) {
+				return Marshal.SizeOf(typeof(T));
+			}
+			return Marshal.SizeOf(obj.GetType());
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal static int Size (this Type type) {
+			return Marshal.SizeOf(type);
+		}
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static T AddRef<T> (this T type) where T : Type {
 			return (T)type.MakeByRefType();

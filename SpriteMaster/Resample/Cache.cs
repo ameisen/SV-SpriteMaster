@@ -1,6 +1,5 @@
 ﻿using SpriteMaster.Extensions;
 using SpriteMaster.Types;
-using System;
 using System.IO;
 using System.Management;
 using System.Runtime.CompilerServices;
@@ -12,8 +11,8 @@ namespace SpriteMaster.Resample {
 	internal static class Cache {
 		private static readonly string TextureCacheName = "TextureCache";
 		private static readonly string JunctionCacheName = $"{TextureCacheName}_Current";
-		private static readonly Version AssemblyVersion = typeof(Upscaler).Assembly.GetName().Version;
-		private static readonly string CacheName = $"{TextureCacheName}_{AssemblyVersion.ToString()}";
+		private static readonly string AssemblyVersion = typeof(Upscaler).Assembly.GetName().Version.ToString();
+		private static readonly string CacheName = $"{TextureCacheName}_{AssemblyVersion}";
 		private static readonly string LocalDataPath = Path.Combine(Config.LocalRoot, CacheName);
 		private static readonly string DumpPath = Path.Combine(LocalDataPath, "dump");
 
@@ -49,23 +48,14 @@ namespace SpriteMaster.Resample {
 
 						try {
 							using (var reader = new BinaryReader(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))) {
-								var version = reader.ReadString();
-								if (version != AssemblyVersion.ToString()) {
-									throw new IOException($"Texture Cache File out of date'{path}'");
-								}
-								size.X = reader.ReadInt32();
-								size.Y = reader.ReadInt32();
-								var getFormat = TextureFormat.Get((CompressionFormat)reader.ReadInt32());
-								if (!getFormat.HasValue) {
-									throw new InvalidDataException("Illegal compression format in cached texture");
-								}
-								format = getFormat.Value;
-								wrapped.X = reader.ReadBoolean();
-								wrapped.Y = reader.ReadBoolean();
-								padding.X = reader.ReadInt32();
-								padding.Y = reader.ReadInt32();
-								blockPadding.X = reader.ReadInt32();
-								blockPadding.Y = reader.ReadInt32();
+								var header = CacheHeader.Read(reader);
+								header.Validate(path);
+
+								size = header.Size;
+								format = header.Format.Value;
+								wrapped = header.Wrapped;
+								padding = header.Padding;
+								blockPadding = header.BlockPadding;
 
 								var remainingSize = reader.BaseStream.Length - reader.BaseStream.Position;
 								data = new int[remainingSize / sizeof(int)];
@@ -98,6 +88,45 @@ namespace SpriteMaster.Resample {
 			return false;
 		}
 
+		private class CacheHeader {
+			public string Assembly = AssemblyVersion;
+			public ulong ConfigHash = SerializeConfig.Hash();
+			public Vector2I Size;
+			public TextureFormat? Format;
+			public Vector2B Wrapped;
+			public Vector2I Padding;
+			public Vector2I BlockPadding;
+
+			internal static CacheHeader Read(BinaryReader reader) {
+				var newHeader = new CacheHeader();
+				
+				foreach (var field in typeof(CacheHeader).GetFields()) {
+					field.SetValue(
+						newHeader,
+						reader.Read(field.FieldType)
+					);
+				}
+
+				return newHeader;
+			}
+
+			internal void Write(BinaryWriter writer) {
+				foreach (var field in typeof(CacheHeader).GetFields()) {
+					writer.Write(field.GetValue(this));
+				}
+			}
+
+			internal void Validate(string path) {
+				if (Assembly != AssemblyVersion) {
+					throw new IOException($"Texture Cache File out of date '{path}'");
+				}
+
+				if (!Format.HasValue) {
+					throw new InvalidDataException("Illegal compression format in cached texture");
+				}
+			}
+		}
+
 		internal static bool Save (
 			string path,
 			Vector2I size,
@@ -108,29 +137,26 @@ namespace SpriteMaster.Resample {
 			int[] data
 		) {
 			if (Config.Cache.Enabled) {
-				try {
-					using (var writer = new BinaryWriter(File.OpenWrite(path))) {
-						writer.Write(AssemblyVersion.ToString());
-						writer.Write(size.X);
-						writer.Write(size.Y);
-						writer.Write((int)(CompressionFormat)format);
-						writer.Write(wrapped.X);
-						writer.Write(wrapped.Y);
-						writer.Write(padding.X);
-						writer.Write(padding.Y);
-						writer.Write(blockPadding.X);
-						writer.Write(blockPadding.Y);
+				ThreadPool.QueueUserWorkItem((object dataItem) => {
+					try {
+						using (var writer = new BinaryWriter(File.OpenWrite(path))) {
+							new CacheHeader() {
+								Size = size,
+								Format = format,
+								Wrapped = wrapped,
+								Padding = padding,
+								BlockPadding = blockPadding
+							}.Write(writer);
 
-						foreach (var v in data) {
-							writer.Write(v);
+							foreach (var v in (int[])data) {
+								writer.Write(v);
+							}
 						}
-
-						return true;
 					}
-				}
-				catch { }
+					catch { }
+				}, data);
 			}
-			return false;
+			return true;
 		}
 
 		enum LinkType : int {

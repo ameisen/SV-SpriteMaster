@@ -6,7 +6,8 @@ namespace SpriteMaster.HarmonyExt {
 	class HarmonyPatch : HarmonyAttribute {
 		public enum Fixation {
 			Prefix,
-			Postfix
+			Postfix,
+			Transpile
 		}
 
 		public enum Generic {
@@ -29,12 +30,7 @@ namespace SpriteMaster.HarmonyExt {
 			GenericType = generic;
 		}
 
-		public HarmonyPatch (string method, Fixation fixation = Fixation.Prefix, PriorityLevel priority = PriorityLevel.Average, Generic generic = Generic.None) {
-			Type = null;
-			Method = method;
-			PatchPriority = (int)priority;
-			PatchFixation = fixation;
-			GenericType = generic;
-		}
+		public HarmonyPatch (string method, Fixation fixation = Fixation.Prefix, PriorityLevel priority = PriorityLevel.Average, Generic generic = Generic.None) :
+			this(null, method, fixation, priority, generic) { }
 	}
 }

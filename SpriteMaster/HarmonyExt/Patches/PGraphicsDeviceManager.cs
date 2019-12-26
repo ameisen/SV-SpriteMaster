@@ -2,11 +2,20 @@
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using static SpriteMaster.HarmonyExt.HarmonyExt;
 
 namespace SpriteMaster.HarmonyExt.Patches {
 	static class PGraphicsDeviceManager {
+
+		// D3DCREATE_MULTITHREADED
+		/*
+		[HarmonyPatch(typeof(GraphicsDevice), "CreateDevice", HarmonyPatch.Fixation.Transpile, PriorityLevel.First)]
+		internal static IEnumerable<Harmony.CodeInstruction> CreateDeviceTranspiler (IEnumerable<Harmony.CodeInstruction> instructions) {
+			return new List<Harmony.CodeInstruction>(instructions);
+		}
+		*/
 
 		[HarmonyPatch("ApplyChanges", HarmonyPatch.Fixation.Prefix, PriorityLevel.First)]
 		internal static bool OnApplyChanges (GraphicsDeviceManager __instance) {

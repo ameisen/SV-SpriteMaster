@@ -31,11 +31,13 @@ namespace SpriteMaster.Extensions {
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static void MarkCompact() {
+			Debug.InfoLn("Marking for Compact");
 			GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static void Collect(bool compact = false, bool blocking = false, bool background = true) {
+			Debug.InfoLn("Garbage Collecting");
 			if (compact) {
 				MarkCompact();
 			}

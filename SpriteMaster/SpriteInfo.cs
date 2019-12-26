@@ -3,7 +3,6 @@ using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
 using SpriteMaster.Types;
 using System;
-using System.Runtime.InteropServices;
 
 namespace SpriteMaster {
 	internal sealed class SpriteInfo {
@@ -12,25 +11,30 @@ namespace SpriteMaster {
 		internal readonly Bounds Size;
 		internal readonly Vector2B Wrapped;
 		internal readonly bool BlendEnabled;
-		internal byte[] Data = null;
-		private ulong _Hash = 0;
+		internal byte[] Data { get; private set; } = default;
+		private ulong _Hash = default;
+		public ulong Hash {
+			get {
+				if (_Hash == default) {
+					_Hash = Data.Hash();
+				}
+				return _Hash;
+			}
+		}
 
-		private static unsafe byte[] MakeByteArray<T>(DataRef<T> data, long referenceSize = 0) where T : struct {
-			var dataData = data.Data;
-			if (dataData is byte[] byteData) {
+		private static unsafe byte[] MakeByteArray<T>(DataRef<T> data, int referenceSize = 0) where T : struct {
+			if (data.Data is byte[] byteData) {
 				return byteData;
 			}
 
 			try {
-				if (referenceSize == 0)
-					referenceSize = (long)data.Length * Marshal.SizeOf(typeof(T));
+				referenceSize = (referenceSize == 0) ? (data.Length * typeof(T).Size()) : referenceSize;
 				var newData = new byte[referenceSize];
 
 				var byteSpan = data.Data.CastAs<T, byte>();
-				foreach (var i in 0.Until((int)referenceSize)) {
+				foreach (var i in 0.Until(referenceSize)) {
 					newData[i] = byteSpan[i];
 				}
-
 				return newData;
 			}
 			catch (Exception ex) {
@@ -39,19 +43,16 @@ namespace SpriteMaster {
 			}
 		}
 
-		private static void Purge(Texture2D reference) {
-			reference.Meta().CachedData = null;
-		}
-
 		// Attempt to update the bytedata cache for the reference texture, or purge if it that makes more sense or if updating
 		// is not plausible.
 		internal static unsafe void Purge<T>(Texture2D reference, Bounds? bounds, DataRef<T> data) where T : struct {
 			if (data.IsNull) {
-				Purge(reference);
+				reference.Meta().CachedData = null;
 				return;
 			}
 
-			var refSize = (long)reference.Area() * Marshal.SizeOf(typeof(T));
+			var typeSize = typeof(T).Size();
+			var refSize = reference.Area() * typeSize;
 
 			bool forcePurge = false;
 
@@ -60,17 +61,13 @@ namespace SpriteMaster {
 			try {
 				if (data.Offset == 0 && data.Length >= refSize) {
 					var newByteArray = MakeByteArray(data, refSize);
-					if (newByteArray == null) {
-						meta.CachedData = null;
-						forcePurge = true;
-					}
-					else
-						meta.CachedData = newByteArray.MakeWeak();
+					forcePurge |= (newByteArray == null);
+					meta.CachedData = newByteArray;
 				}
-				else if (meta.CachedData != null && meta.CachedData.TryGetTarget(out var currentData)) {
+				else if (meta.CachedData is var currentData && currentData != null) {
 					var byteSpan = data.Data.CastAs<T, byte>();
-					long untilOffset = Math.Min(currentData.Length - data.Offset, (long)data.Length * Marshal.SizeOf(typeof(T)));
-					foreach (var i in 0.Until((int)untilOffset)) {
+					var untilOffset = Math.Min(currentData.Length - data.Offset, data.Length * typeSize);
+					foreach (var i in 0.Until(untilOffset)) {
 						currentData[i + data.Offset] = byteSpan[i];
 					}
 				}
@@ -84,13 +81,13 @@ namespace SpriteMaster {
 			}
 
 			if (forcePurge) {
-				Purge(reference);
+				reference.Meta().CachedData = null;
 			}
 		}
 
 		// TODO : thread safety?
 		internal static void UpdateCache(Texture2D reference, byte[] data) {
-			reference.Meta().CachedData = data.MakeWeak();
+			reference.Meta().CachedData = data;
 		}
 
 		internal SpriteInfo (Texture2D reference, in Bounds dimensions) {
@@ -117,30 +114,8 @@ namespace SpriteMaster {
 			);
 		}
 
-		internal ulong Hash () {
-			if (_Hash == 0) {
-				_Hash = Data.Hash();
-			}
-			return _Hash;
-
-			/*
-			ulong hash = ulong.MaxValue;
-			foreach (int y in Size.Top.Until(Size.Bottom))
-			{
-				int yOffset = y * ReferenceSize.Width;
-				foreach (int x in Size.Left.Until(Size.Right))
-				{
-					int offset = yOffset + x;
-					hash ^= Data.Hash(offset, Size.Width * sizeof(int));
-				}
-			}
-
-			return hash;
-			*/
-		}
-
 		internal void Dispose () {
-			Data = null;
+			Data = default;
 		}
 	}
 }

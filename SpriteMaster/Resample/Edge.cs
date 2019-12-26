@@ -1,4 +1,5 @@
-﻿using SpriteMaster.Extensions;
+﻿using Microsoft.Xna.Framework.Graphics;
+using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using System;
 
@@ -26,7 +27,19 @@ namespace SpriteMaster.Resample {
 			}
 		}
 
-		internal static unsafe Results AnalyzeLegacy (Span<int> data, Bounds rawSize, Bounds spriteSize, Vector2B Wrapped) {
+		internal static unsafe Results AnalyzeLegacy (Texture2D reference, Span<int> data, Bounds rawSize, Bounds spriteSize, Vector2B Wrapped) {
+			float edgeThreshold = Config.WrapDetection.edgeThreshold;
+
+			if (reference.Name != null && Config.Resample.Padding.StrictList.Contains(reference.Name)) {
+				var ratio = (float)Math.Max(spriteSize.Width, spriteSize.Height) / (float)Math.Min(spriteSize.Width, spriteSize.Height);
+				if (ratio >= 4.0f) {
+					edgeThreshold = 2.0f;
+				}
+				else {
+					edgeThreshold = 0.8f;
+				}
+			}
+
 			var WrappedX = new Vector2B(Wrapped.X);
 			var WrappedY = new Vector2B(Wrapped.Y);
 
@@ -71,7 +84,7 @@ namespace SpriteMaster.Resample {
 							samples[1]++;
 						}
 					}
-					int threshold = ((float)spriteInputSize.Height * Config.WrapDetection.edgeThreshold).NearestInt();
+					int threshold = ((float)spriteInputSize.Height * edgeThreshold).NearestInt();
 					WrappedX.Negative = samples[0] >= threshold;
 					WrappedX.Positive = samples[1] >= threshold;
 					Wrapped.X = WrappedX[0] && WrappedX[1];
@@ -91,7 +104,7 @@ namespace SpriteMaster.Resample {
 						}
 						sampler++;
 					}
-					int threshold = ((float)spriteInputSize.Width * Config.WrapDetection.edgeThreshold).NearestInt();
+					int threshold = ((float)spriteInputSize.Width * edgeThreshold).NearestInt();
 					WrappedY.Negative = samples[0] >= threshold;
 					WrappedY.Positive = samples[0] >= threshold;
 					Wrapped.Y = WrappedY[0] && WrappedY[1];

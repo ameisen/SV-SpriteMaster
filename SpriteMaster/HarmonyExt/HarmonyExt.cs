@@ -63,21 +63,25 @@ namespace SpriteMaster.HarmonyExt {
 
 					switch (attribute.GenericType) {
 						case HarmonyPatch.Generic.None:
-							@this.Patch(
+							Patch(
+								@this,
 								instanceType,
 								attribute.Method,
 								pre: (attribute.PatchFixation == HarmonyPatch.Fixation.Prefix) ? method : null,
-								post: (attribute.PatchFixation == HarmonyPatch.Fixation.Postfix) ? method : null
+								post: (attribute.PatchFixation == HarmonyPatch.Fixation.Postfix) ? method : null,
+								trans: (attribute.PatchFixation == HarmonyPatch.Fixation.Transpile) ? method : null
 							);
 							break;
 						case HarmonyPatch.Generic.Struct:
 							foreach (var structType in StructTypes) {
-								@this.Patch(
+								Patch(
+									@this,
 									instanceType,
 									structType,
 									attribute.Method,
 									pre: (attribute.PatchFixation == HarmonyPatch.Fixation.Prefix) ? method : null,
-									post: (attribute.PatchFixation == HarmonyPatch.Fixation.Postfix) ? method : null
+									post: (attribute.PatchFixation == HarmonyPatch.Fixation.Postfix) ? method : null,
+									trans: (attribute.PatchFixation == HarmonyPatch.Fixation.Transpile) ? method : null
 								);
 							}
 							break;
@@ -101,8 +105,16 @@ namespace SpriteMaster.HarmonyExt {
 			return type.GetMethods(name, StaticFlags);
 		}
 
+		public static MethodInfo GetStaticMethod (this Type type, string name) {
+			return type.GetMethod(name, StaticFlags);
+		}
+
 		public static MethodEnumerable GetInstanceMethods (this Type type, string name) {
 			return type.GetMethods(name, InstanceFlags);
+		}
+
+		public static MethodInfo GetInstanceMethod (this Type type, string name) {
+			return type.GetMethod(name, InstanceFlags);
 		}
 
 		public static MethodEnumerable GetMethods<T> (string name, BindingFlags bindingFlags) {
@@ -117,7 +129,12 @@ namespace SpriteMaster.HarmonyExt {
 			return typeof(T).GetInstanceMethods(name);
 		}
 
-		private static MethodInfo GetPatchMethod (Type type, string name, MethodInfo method) {
+		private static MethodInfo GetPatchMethod (Type type, string name, MethodInfo method, bool transpile = false) {
+			if (transpile) {
+				var instanceMethod = type.GetInstanceMethod(name);
+				return instanceMethod;
+			}
+
 			var methodParameters = method.GetArguments();
 			var typeMethod = type.GetMethod(name, methodParameters);
 			if (typeMethod == null) {
@@ -161,67 +178,96 @@ namespace SpriteMaster.HarmonyExt {
 
 		internal static int GetPriority (MethodInfo method, int defaultPriority) {
 			try {
-				var priorityAttribute = method.GetCustomAttribute<HarmonyPriority>();
-				return priorityAttribute.info.prioritiy;
+				if (method.GetCustomAttribute<HarmonyPriority>() is var priorityAttribute && priorityAttribute != null) {
+					return priorityAttribute.info.prioritiy;
+				}
 			}
-			catch {
-				return defaultPriority;
-			}
+			catch { }
+			return defaultPriority;
 		}
 
-		private static void Patch(this HarmonyInstance instance, Type type, string name, MethodInfo pre = null, MethodInfo post = null, int priority = Priority.Last) {
+		private static void Patch(this HarmonyInstance instance, Type type, string name, MethodInfo pre = null, MethodInfo post = null, MethodInfo trans = null, int priority = Priority.Last) {
 			var referenceMethod = pre ?? post;
-			var typeMethod = GetPatchMethod(type, name, referenceMethod);
-			instance.Patch(
-				typeMethod,
-				(pre == null) ? null : new HarmonyMethod(pre) { prioritiy = GetPriority(pre, priority) },
-				(post == null) ? null : new HarmonyMethod(post) { prioritiy = GetPriority(post, priority) },
-				null
-			);
+			if (referenceMethod != null) {
+				var typeMethod = GetPatchMethod(type, name, referenceMethod);
+				instance.Patch(
+					typeMethod,
+					(pre == null) ? null : new HarmonyMethod(pre) { prioritiy = GetPriority(pre, priority) },
+					(post == null) ? null : new HarmonyMethod(post) { prioritiy = GetPriority(post, priority) },
+					null
+				);
+			}
+			if (trans != null) {
+				var typeMethod = GetPatchMethod(type, name, referenceMethod, transpile: true);
+				instance.Patch(
+					typeMethod,
+					null,
+					null,
+					new HarmonyMethod(trans)// { prioritiy = GetPriority(trans, priority) }
+				);
+			}
 		}
 
-		public static void Patch<T> (this HarmonyInstance instance, string name, MethodInfo pre = null, MethodInfo post = null, int priority = Priority.Last) {
-			Patch(instance, typeof(T), name, pre, post, priority);
+		public static void Patch<T> (this HarmonyInstance instance, string name, MethodInfo pre = null, MethodInfo post = null, MethodInfo trans = null, int priority = Priority.Last) {
+			Patch(instance, typeof(T), name, pre, post, trans, priority);
 		}
 
-		public static void Patch<T> (this HarmonyInstance instance, string name, MethodEnumerable pre = default, MethodEnumerable post = default, int priority = Priority.Last) {
+		public static void Patch<T> (this HarmonyInstance instance, string name, MethodEnumerable pre = default, MethodEnumerable post = default, MethodEnumerable trans = default, int priority = Priority.Last) {
 			if (pre != null)
 				foreach (var method in pre) {
-					Patch<T>(instance, name, pre: method, post: null, priority);
+					Patch<T>(instance, name, pre: method, post: null, trans: null, priority);
 				}
 			if (post != null)
 				foreach (var method in post) {
-					Patch<T>(instance, name, pre: null, post: method, priority);
+					Patch<T>(instance, name, pre: null, post: method, trans: null, priority);
+				}
+			if (trans != null)
+				foreach (var method in trans) {
+					Patch<T>(instance, name, pre: null, post: null, trans: method, priority);
 				}
 		}
 
-		public static void Patch (this HarmonyInstance instance, Type type, Type genericType, string name, MethodInfo pre = null, MethodInfo post = null, int priority = Priority.Last) {
+		public static void Patch (this HarmonyInstance instance, Type type, Type genericType, string name, MethodInfo pre = null, MethodInfo post = null, MethodInfo trans = null, int priority = Priority.Last) {
 			var referenceMethod = pre ?? post;
-			var typeMethod = GetPatchMethod(type, name, referenceMethod).MakeGenericMethod(genericType);
-			instance.Patch(
-				typeMethod,
-				(pre == null) ? null : new HarmonyMethod(pre.MakeGenericMethod(genericType)) { prioritiy = GetPriority(pre, priority) },
-				(post == null) ? null : new HarmonyMethod(post.MakeGenericMethod(genericType)) { prioritiy = GetPriority(post, priority) },
-				null
-			);
+			if (referenceMethod != null) {
+				var typeMethod = GetPatchMethod(type, name, referenceMethod).MakeGenericMethod(genericType);
+				instance.Patch(
+					typeMethod,
+					(pre == null) ? null : new HarmonyMethod(pre.MakeGenericMethod(genericType)) { prioritiy = GetPriority(pre, priority) },
+					(post == null) ? null : new HarmonyMethod(post.MakeGenericMethod(genericType)) { prioritiy = GetPriority(post, priority) },
+					null
+				);
+			}
+			if (trans != null) {
+				instance.Patch(
+					GetPatchMethod(type, name, referenceMethod, transpile: true).MakeGenericMethod(genericType),
+					null,
+					null,
+					new HarmonyMethod(trans.MakeGenericMethod(genericType)) { prioritiy = GetPriority(trans, priority) }
+				);
+			}
 		}
 
-		public static void Patch<T> (this HarmonyInstance instance, Type genericType, string name, MethodInfo pre = null, MethodInfo post = null, int priority = Priority.Last) {
-			Patch(instance, typeof(T), genericType, name, pre, post, priority);
+		public static void Patch<T> (this HarmonyInstance instance, Type genericType, string name, MethodInfo pre = null, MethodInfo post = null, MethodInfo trans = null, int priority = Priority.Last) {
+			Patch(instance, typeof(T), genericType, name, pre, post, trans, priority);
 		}
 
-		public static void Patch<T, U> (this HarmonyInstance instance, string name, MethodInfo pre = null, MethodInfo post = null, int priority = Priority.Last) where U : struct {
-			Patch(instance, typeof(T), typeof(U), name, pre, post, priority);
+		public static void Patch<T, U> (this HarmonyInstance instance, string name, MethodInfo pre = null, MethodInfo post = null, MethodInfo trans = null, int priority = Priority.Last) where U : struct {
+			Patch(instance, typeof(T), typeof(U), name, pre, post, trans, priority);
 		}
 
-		public static void Patch<T, U> (this HarmonyInstance instance, string name, MethodEnumerable pre = default, MethodEnumerable post = default, int priority = Priority.Last) where U : struct {
+		public static void Patch<T, U> (this HarmonyInstance instance, string name, MethodEnumerable pre = default, MethodEnumerable post = default, MethodEnumerable trans = default, int priority = Priority.Last) where U : struct {
 			if (pre != null)
 				foreach (var method in pre) {
-					Patch<T, U>(instance, name, pre: method, post: null, priority);
+					Patch<T, U>(instance, name, pre: method, post: null, trans: null, priority);
 				}
 			if (post != null)
 				foreach (var method in post) {
-					Patch<T, U>(instance, name, pre: null, post: method, priority);
+					Patch<T, U>(instance, name, pre: null, post: method, trans: null, priority);
+				}
+			if (trans != null)
+				foreach (var method in post) {
+					Patch<T, U>(instance, name, pre: null, post: null, trans: method, priority);
 				}
 		}
 	}

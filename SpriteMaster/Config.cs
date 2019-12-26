@@ -24,6 +24,8 @@ namespace SpriteMaster {
 
 		internal const int MaxSamplers = 16;
 		[ConfigIgnore]
+		internal static bool RendererSupportsAsyncOps = true;
+		[ConfigIgnore]
 		internal static int ClampDimension = BaseMaxTextureDimension; // this is adjustable by the system itself. The user shouldn't be able to touch it.
 		[Comment("The preferred maximum texture edge length, if allowed by the hardware")]
 		internal const int AbsoluteMaxTextureDimension = 16384;
@@ -99,12 +101,40 @@ namespace SpriteMaster {
 			internal static class Padding {
 				internal const bool Enabled = true;
 				internal static int MinimumSizeTexels = 4;
-				internal const bool IgnoreUnknown = true;
+				internal const bool IgnoreUnknown = false;
+				internal static List<string> StrictList = new List<string>() {
+					"LooseSprites\\Cursors"
+				};
 				internal static List<string> Whitelist = new List<string>() {
-					
+					"LooseSprites\\font_bold",
+					"Characters\\Farmer\\hairstyles",
+					"Characters\\Farmer\\pants",
+					"Characters\\Farmer\\shirts",
+					"TileSheets\\weapons",
+					"TileSheets\\bushes",
+					"TerrainFeatures\\grass",
+					"TileSheets\\debris",
+					"TileSheets\\animations",
+					"Maps\\springobjects",
+					"Maps\\summerobjects",
+					"Maps\\winterobjects",
+					"Maps\\fallobjects",
+					"Buildings\\houses",
+					"TileSheets\\furniture",
+					"TerrainFeatures\\tree1_spring",
+					"TerrainFeatures\\tree2_spring",
+					"TerrainFeatures\\tree3_spring",
+					"TerrainFeatures\\tree1_summer",
+					"TerrainFeatures\\tree2_summer",
+					"TerrainFeatures\\tree3_summer",
+					"TerrainFeatures\\tree1_fall",
+					"TerrainFeatures\\tree2_fall",
+					"TerrainFeatures\\tree3_fall",
+					"TerrainFeatures\\tree1_winter",
+					"TerrainFeatures\\tree2_winter",
+					"TerrainFeatures\\tree3_winter",
 				};
 				internal static List<string> Blacklist = new List<string>() {
-					"LooseSprites\\Cursors"
 				};
 			}
 		}
@@ -118,11 +148,11 @@ namespace SpriteMaster {
 		internal static class AsyncScaling {
 			internal static bool Enabled = true;
 			internal static bool EnabledForUnknownTextures = false;
-			internal static bool CanFetchAndLoadSameFrame = true;
-			internal static int MaxLoadsPerFrame = 2;
+			internal const bool CanFetchAndLoadSameFrame = false;
+			internal const int MaxLoadsPerFrame = 1;
 			internal static long MinimumSizeTexels = 0;
 			internal static long ScalingBudgetPerFrameTexels = 2 * 256 * 256;
-			internal static int MaxInFlightTasks = Environment.ProcessorCount;
+			internal const int MaxInFlightTasks = int.MaxValue; // Environment.ProcessorCount;
 		}
 
 		internal static class Cache {

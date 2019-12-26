@@ -15,30 +15,12 @@ using static SpriteMaster.ScaledTexture;
 
 namespace SpriteMaster {
 	internal sealed class Upscaler {
-		private class MetaData {
-			internal readonly ulong Hash;
-
-			internal MetaData (ulong hash) {
-				this.Hash = hash;
-			}
-		}
-
 		internal static void PurgeHash (Texture2D reference) {
-			var meta = reference.Meta();
-			lock (meta) {
-				meta.Hash = 0;
-			}
+			reference.Meta().CachedData = null;
 		}
 
 		internal static ulong GetHash (SpriteInfo input, bool desprite) {
-			var meta = input.Reference.Meta();
-			ulong hash;
-			lock (meta) {
-				hash = meta.Hash;
-				if (hash == 0) {
-					meta.Hash = hash = input.Hash();
-				}
-			}
+			var hash = input.Reference.Meta().GetHash(input);
 			if (desprite) {
 				hash ^= input.Size.Hash();
 			}
@@ -164,6 +146,7 @@ namespace SpriteMaster {
 					var rawData = MemoryMarshal.Cast<byte, int>(rawTextureData.AsSpan());
 
 					var edgeResults = Edge.AnalyzeLegacy(
+						reference: input.Reference,
 						data: rawData,
 						rawSize: input.ReferenceSize,
 						spriteSize: input.Size,
@@ -255,8 +238,7 @@ namespace SpriteMaster {
 								prescaleSize.X <= Config.Resample.Padding.MinimumSizeTexels &&
 								prescaleSize.Y <= Config.Resample.Padding.MinimumSizeTexels
 							) ||
-							(Config.Resample.Padding.IgnoreUnknown && (input.Reference.Name == null || input.Reference.Name == "")) ||
-							(input.Reference.Name != null)
+							(Config.Resample.Padding.IgnoreUnknown && (input.Reference.Name == null || input.Reference.Name == ""))
 						) {
 							shouldPad = Vector2B.False;
 						}
@@ -559,7 +541,8 @@ namespace SpriteMaster {
 					return newTexture;
 				}
 
-				if (Config.AsyncScaling.Enabled && async) {
+				bool isAsync = Config.AsyncScaling.Enabled && async;
+				if (isAsync && !Config.RendererSupportsAsyncOps) {
 					var reference = input.Reference;
 					Action asyncCall = () => {
 						if (reference.IsDisposed) {
@@ -586,6 +569,10 @@ namespace SpriteMaster {
 					ManagedTexture2D newTexture = null;
 					try {
 						newTexture = CreateTexture(bitmapData);
+						if (isAsync) {
+							texture.Texture = newTexture;
+							texture.Finish();
+						}
 						output = newTexture;
 					}
 					catch (Exception ex) {

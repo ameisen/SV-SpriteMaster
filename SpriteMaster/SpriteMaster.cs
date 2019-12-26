@@ -12,8 +12,7 @@ using static SpriteMaster.ScaledTexture;
 
 namespace SpriteMaster {
 	public sealed class SpriteMaster : Mod {
-		public static SpriteMaster Self { get => _Self; }
-		private static SpriteMaster _Self = null;
+		public static SpriteMaster Self { get; private set; } = default;
 
 		// TODO : long for 64-bit?
 		private const uint RequiredMemoryBlock = 256U;
@@ -22,7 +21,7 @@ namespace SpriteMaster {
 		private readonly Thread MemoryPressureThread;
 
 		private void MemoryPressureLoop() {
-			while (true) {
+			for (;;) {
 				try {
 					using var _ = new MemoryFailPoint(unchecked((int)RequiredMemoryBlock));
 					Thread.Sleep(128);
@@ -40,9 +39,11 @@ namespace SpriteMaster {
 		private static string CurrentSeason = "";
 
 		public SpriteMaster () {
-			_Self = this;
+			Contract.AssertNull(Self);
+			Self = this;
 
 			MemoryPressureThread = new Thread(MemoryPressureLoop);
+			MemoryPressureThread.Priority = ThreadPriority.BelowNormal;
 			MemoryPressureThread.IsBackground = true;
 			MemoryPressureThread.Start();
 		}
@@ -55,8 +56,8 @@ namespace SpriteMaster {
 			ConfigureHarmony();
 			help.Events.Input.ButtonPressed += OnButtonPressed;
 
-			help.ConsoleCommands.Add("spritemaster_stats", "Dump SpriteMaster Statistics", (string a, string[] b) => { ManagedTexture2D.DumpStats(); });
-			help.ConsoleCommands.Add("spritemaster_memory", "Dump SpriteMaster Memory", (string a, string[] b) => { Debug.DumpMemory(); });
+			help.ConsoleCommands.Add("spritemaster_stats", "Dump SpriteMaster Statistics", (_, _1) => { ManagedTexture2D.DumpStats(); });
+			help.ConsoleCommands.Add("spritemaster_memory", "Dump SpriteMaster Memory", (_, _1) => { Debug.DumpMemory(); });
 
 			help.Events.GameLoop.DayStarted += OnDayStarted;
 		}

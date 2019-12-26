@@ -9,7 +9,7 @@
     <EnableHarmony>true</EnableHarmony>
     <AssemblyVersion>0.9.12.*</AssemblyVersion>
 		<Deterministic>false</Deterministic>
-		<LangVersion>8.0</LangVersion>
+		<LangVersion>preview</LangVersion>
 		<RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
 		<Platforms>x86</Platforms>
 		<RunAnalyzersDuringLiveAnalysis>false</RunAnalyzersDuringLiveAnalysis>

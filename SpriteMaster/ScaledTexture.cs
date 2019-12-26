@@ -93,9 +93,12 @@ namespace SpriteMaster {
 
 		internal void Purge (Texture2D reference, Bounds? sourceRectangle = null) {
 			try {
-				var Map = reference.Meta().SpriteTable;
-
 				using (Lock.Shared) {
+					var Map = reference.Meta().SpriteTable;
+					if (Map.Count == 0) {
+						return;
+					}
+
 					// TODO handle sourceRectangle meaningfully.
 					using (Lock.Promote) {
 						Debug.InfoLn($"Purging Texture {reference.SafeName()}");
@@ -103,7 +106,7 @@ namespace SpriteMaster {
 						foreach (var scaledTexture in Map.Values) {
 							if (scaledTexture.Texture != null) {
 								lock (scaledTexture) {
-									scaledTexture.Texture.Purge();
+									//scaledTexture.Texture.Dispose();
 									scaledTexture.Texture = null;
 								}
 							}
@@ -381,7 +384,7 @@ namespace SpriteMaster {
 
 		~ScaledTexture() {
 			if (Texture != null) {
-				Texture.Purge();
+				//Texture.Dispose();
 			}
 		}
 
@@ -483,11 +486,9 @@ namespace SpriteMaster {
 				}
 			}
 
-			public void Purge(bool onlySelf = true) {
-			}
-
 			private void OnParentDispose() {
 				if (!IsDisposed) {
+					Debug.InfoLn($"Disposing ManagedTexture2D '{Name}'");
 					Dispose();
 				}
 			}
