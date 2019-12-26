@@ -91,10 +91,15 @@ namespace SpriteMaster.HarmonyExt.Patches {
 			if (width >= graphicsDevice.Viewport.Width && height >= graphicsDevice.Viewport.Height) {
 				width = Math.Min(Config.AbsoluteMaxTextureDimension, width * 2);
 				height = Math.Min(Config.AbsoluteMaxTextureDimension, height * 2);
-				preferredMultiSampleCount = Config.DrawState.EnableMSAA ? Math.Max(2, preferredMultiSampleCount): preferredMultiSampleCount;
-				// This is required to prevent aliasing effects.
-				mipMap = true;
+				preferredMultiSampleCount = Config.DrawState.EnableMSAA ? Math.Max(2, preferredMultiSampleCount) : preferredMultiSampleCount;
 			}
+			else {
+				width = Math.Min(graphicsDevice.Viewport.Width, width * 2);
+				height = Math.Min(graphicsDevice.Viewport.Height, height * 2);
+				preferredMultiSampleCount = Config.DrawState.EnableMSAA ? Math.Max(2, preferredMultiSampleCount) : preferredMultiSampleCount;
+			}
+			// This is required to prevent aliasing effects.
+			mipMap = true;
 			return true;
 		}
 
