@@ -77,7 +77,7 @@ namespace SpriteMaster.HarmonyExt.Patches {
 				CurrentFinalizer.Value = @this;
 
 				if (disposedProperty != null || disposedField != null) {
-					Debug.WarningLn($"Leak Corrected for {@this.GetType().FullName} {@this.ToString()}");
+					//Debug.WarningLn($"Leak Corrected for {@this.GetType().FullName} {@this.ToString()}");
 				}
 
 				try {

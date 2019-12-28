@@ -69,7 +69,7 @@ namespace SpriteMaster {
 
 		internal static class Debug {
 			internal static class Logging {
-				internal const bool LogInfo = true;
+				internal static bool LogInfo = true;
 				internal static bool LogWarnings = true;
 				internal static bool LogErrors = true;
 				internal const bool OwnLogFile = true;
@@ -95,16 +95,16 @@ namespace SpriteMaster {
 			internal static int MaxScale = 5;
 			internal static int MinimumTextureDimensions = 4;
 			internal const bool EnableWrappedAddressing = true;
-			internal const bool UseBlockCompression = true;
+			internal static bool UseBlockCompression = true;
 			internal static CompressionQuality BlockCompressionQuality = CompressionQuality.Highest;
 			internal static int BlockHardAlphaDeviationThreshold = 7;
 			internal static List<string> Blacklist = new List<string>() {
 				"LooseSprites\\Lighting\\"
 			};
 			internal static class Padding {
-				internal const bool Enabled = true;
+				internal static bool Enabled = true;
 				internal static int MinimumSizeTexels = 4;
-				internal const bool IgnoreUnknown = false;
+				internal static bool IgnoreUnknown = false;
 				internal static List<string> StrictList = new List<string>() {
 					"LooseSprites\\Cursors"
 				};
@@ -144,7 +144,7 @@ namespace SpriteMaster {
 
 		internal static class WrapDetection {
 			internal const bool Enabled = true;
-			internal const float edgeThreshold = 0.2f;
+			internal static float edgeThreshold = 0.2f;
 			internal static byte alphaThreshold = 1;
 		}
 
@@ -155,7 +155,7 @@ namespace SpriteMaster {
 			internal const int MaxLoadsPerFrame = 1;
 			internal static long MinimumSizeTexels = 0;
 			internal static long ScalingBudgetPerFrameTexels = 2 * 256 * 256;
-			internal const int MaxInFlightTasks = int.MaxValue; // Environment.ProcessorCount;
+			internal static int MaxInFlightTasks = int.MaxValue; // Environment.ProcessorCount;
 		}
 
 		internal static class MemoryCache {
