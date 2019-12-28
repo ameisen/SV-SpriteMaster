@@ -5,7 +5,7 @@ using System.Security;
 
 namespace SpriteMaster.Types {
 	[System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members")]
-	class ComparableWeakReference<T> : ISerializable, ILongHash where T : class {
+	internal sealed class ComparableWeakReference<T> : ISerializable, ILongHash where T : class {
 		public const int NullHash = 0;
 		public const ulong NullLongHash = LongHash.Null;
 
@@ -25,7 +25,7 @@ namespace SpriteMaster.Types {
 			}
 		}
 
-		private WeakReference<T> _Reference;
+		private readonly WeakReference<T> _Reference;
 
 		private T Target {
 			[SecuritySafeCritical]
@@ -40,10 +40,10 @@ namespace SpriteMaster.Types {
 
 		public ComparableWeakReference (T target) : this(new WeakReference<T>(target)) { }
 
-		public ComparableWeakReference (T target, bool trackResurrection) : this(new WeakReference<T>(target, trackResurrection)) { }
-
 		public ComparableWeakReference (WeakReference<T> reference) {
-			_Reference = reference;
+			T target = null;
+			reference.TryGetTarget(out target);
+			_Reference = new WeakReference<T>(target);
 		}
 
 		internal ComparableWeakReference (SerializationInfo info, StreamingContext context) {
@@ -61,11 +61,6 @@ namespace SpriteMaster.Types {
 
 		public void SetTarget (T target) {
 			_Reference.SetTarget(target);
-		}
-
-		[SecuritySafeCritical]
-		~ComparableWeakReference () {
-			_Reference = null;
 		}
 
 		public void GetObjectData (SerializationInfo info, StreamingContext context) {

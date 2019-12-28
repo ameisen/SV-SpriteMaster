@@ -39,7 +39,7 @@ namespace SpriteMaster {
 		internal static long ForceGarbageCollectAfter = long.MaxValue;
 		internal static bool GarbageCollectAccountUnownedTextures = true;
 		internal static bool GarbageCollectAccountOwnedTexture = true;
-		internal static bool DiscardDuplicates = true;
+		internal static bool DiscardDuplicates = false;
 		internal static int DiscardDuplicatesFrameDelay = 2;
 		internal static List<string> DiscardDuplicatesBlacklist = new List<string>() {
 			"LooseSprites\\Cursors",
@@ -98,6 +98,9 @@ namespace SpriteMaster {
 			internal const bool UseBlockCompression = true;
 			internal static CompressionQuality BlockCompressionQuality = CompressionQuality.Highest;
 			internal static int BlockHardAlphaDeviationThreshold = 7;
+			internal static List<string> Blacklist = new List<string>() {
+				"LooseSprites\\Lighting\\"
+			};
 			internal static class Padding {
 				internal const bool Enabled = true;
 				internal static int MinimumSizeTexels = 4;
@@ -153,6 +156,16 @@ namespace SpriteMaster {
 			internal static long MinimumSizeTexels = 0;
 			internal static long ScalingBudgetPerFrameTexels = 2 * 256 * 256;
 			internal const int MaxInFlightTasks = int.MaxValue; // Environment.ProcessorCount;
+		}
+
+		internal static class MemoryCache {
+			internal static bool Enabled = true;
+			internal enum Algorithm {
+				None = 0,
+				LZ = 1,
+				LZMA = 2
+			}
+			internal static Algorithm Type = Algorithm.LZ;
 		}
 
 		internal static class Cache {

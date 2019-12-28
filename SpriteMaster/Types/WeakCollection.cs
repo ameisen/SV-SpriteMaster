@@ -38,7 +38,7 @@ namespace SpriteMaster.Types {
 				return _List[index].TryGetTarget(out T target) ? target : null;
 			}
 			set {
-				_List[index] = value.MakeWeak();
+				_List[index].SetTarget(value);
 			}
 		}
 

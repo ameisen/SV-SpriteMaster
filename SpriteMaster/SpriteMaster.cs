@@ -15,7 +15,7 @@ namespace SpriteMaster {
 		public static SpriteMaster Self { get; private set; } = default;
 
 		// TODO : long for 64-bit?
-		private const uint RequiredMemoryBlock = 256U;
+		private const uint RequiredMemoryBlock = 16U;
 		private const uint MemoryPressureLimit = uint.MaxValue - (RequiredMemoryBlock * 1024 * 1024);
 		private static readonly string CollectMessage = $"Less than {(RequiredMemoryBlock * 1024 * 1024).AsDataSize(decimals: 0)} available for block allocation, forcing full garbage collection";
 		private readonly Thread MemoryPressureThread;
@@ -29,7 +29,7 @@ namespace SpriteMaster {
 				catch (InsufficientMemoryException) {
 					Debug.WarningLn(CollectMessage);
 					Garbage.Collect(compact: true, blocking: true, background: false);
-					Thread.Sleep(1024);
+					Thread.Sleep(10000);
 				}
 			}
 		}
@@ -59,11 +59,18 @@ namespace SpriteMaster {
 			help.ConsoleCommands.Add("spritemaster_stats", "Dump SpriteMaster Statistics", (_, _1) => { ManagedTexture2D.DumpStats(); });
 			help.ConsoleCommands.Add("spritemaster_memory", "Dump SpriteMaster Memory", (_, _1) => { Debug.DumpMemory(); });
 
+			//help.ConsoleCommands.Add("night", "make it dark", (_, _1) => { help.ConsoleCommands.Trigger("world_settime", new string[] { "2100" }); });
+
 			help.Events.GameLoop.DayStarted += OnDayStarted;
+			// GC after major events
+			help.Events.GameLoop.SaveLoaded += (_, _1) => Garbage.Collect(compact: true, blocking: true, background: false);
 		}
 
 		// SMAPI/CP won't do this, so we do. Purge the cached textures for the previous season on a season change.
 		private static void OnDayStarted(object _, DayStartedEventArgs _1) {
+			// Do a full GC at the start of each day
+			Garbage.Collect(compact: true, blocking: true, background: false);
+			
 			var season = SDate.Now().Season.ToLower();
 			if (season != CurrentSeason) {
 				CurrentSeason = season;

@@ -5,7 +5,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Threading;
 using static SpriteMaster.HarmonyExt.HarmonyExt;
-using static SpriteMaster.ScaledTexture;
 
 namespace SpriteMaster.HarmonyExt.Patches {
 	[SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
@@ -46,7 +45,7 @@ namespace SpriteMaster.HarmonyExt.Patches {
 			}
 			Contract.AssertNull(CurrentFinalizer.Value);
 			if (__instance is GraphicsResource resource) {
-				if (!resource.IsDisposed && !(resource is ManagedTexture2D)) {
+				if (!resource.IsDisposed) {
 					CurrentFinalizer.Value = resource;
 					try {
 						resource.Dispose();
@@ -55,10 +54,10 @@ namespace SpriteMaster.HarmonyExt.Patches {
 						CurrentFinalizer.Value = null;
 					}
 					if (__instance is Texture2D texture) {
-						Debug.ErrorLn($"Leak Detected for {resource.GetType().FullName} {resource.ToString()} ({texture.SizeBytes().AsDataSize()})");
+						Debug.ErrorLn($"Leak Corrected for {resource.GetType().FullName} {resource.ToString()} ({texture.SizeBytes().AsDataSize()})");
 					}
 					else {
-						Debug.ErrorLn($"Leak Detected for {resource.GetType().FullName} {resource.ToString()}");
+						Debug.ErrorLn($"Leak Corrected for {resource.GetType().FullName} {resource.ToString()}");
 					}
 				}
 			}
@@ -78,7 +77,7 @@ namespace SpriteMaster.HarmonyExt.Patches {
 				CurrentFinalizer.Value = @this;
 
 				if (disposedProperty != null || disposedField != null) {
-					Debug.ErrorLn($"Leak Detected for {@this.GetType().FullName} {@this.ToString()}");
+					Debug.WarningLn($"Leak Corrected for {@this.GetType().FullName} {@this.ToString()}");
 				}
 
 				try {

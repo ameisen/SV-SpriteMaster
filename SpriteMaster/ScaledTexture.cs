@@ -266,6 +266,14 @@ namespace SpriteMaster {
 				return scaleTexture;
 			}
 
+			if (texture.Name != null && texture.Name != "") {
+				foreach (var blacklisted in Config.Resample.Blacklist) {
+					if (texture.Name.StartsWith(blacklisted)) {
+						return null;
+					}
+				}
+			}
+
 			bool useAsync = (Config.AsyncScaling.EnabledForUnknownTextures || !texture.Name.IsBlank()) && (texture.Area() >= Config.AsyncScaling.MinimumSizeTexels);
 
 			if (useAsync && Config.AsyncScaling.Enabled && !DrawState.GetUpdateToken(texture.Width * texture.Height)) {
@@ -396,7 +404,7 @@ namespace SpriteMaster {
 				if (!IsReady || Texture == null) {
 					return 0;
 				}
-				return Texture.Width * Texture.Height * sizeof(int);
+				return Texture.SizeBytes();
 			}
 		}
 
