@@ -286,11 +286,7 @@ namespace SpriteMaster {
 
 			bool useAsync = (Config.AsyncScaling.EnabledForUnknownTextures || !texture.Name.IsBlank()) && (texture.Area() >= Config.AsyncScaling.MinimumSizeTexels);
 
-			if (useAsync && Config.AsyncScaling.Enabled && !DrawState.GetUpdateToken(texture.Width * texture.Height)) {
-				return null;
-			}
-
-			if (useAsync && Config.AsyncScaling.Enabled && RemainingAsyncTasks <= 0) {
+			if (useAsync && Config.AsyncScaling.Enabled && !DrawState.GetUpdateToken(texture.Width * texture.Height) && !texture.Meta().HasCachedData) {
 				return null;
 			}
 
@@ -485,8 +481,6 @@ namespace SpriteMaster {
 			}
 		}
 
-		internal static volatile int RemainingAsyncTasks = Config.AsyncScaling.MaxInFlightTasks;
-
 		internal ScaledTexture (string assetName, SpriteInfo textureWrapper, Bounds sourceRectangle, ulong hash, bool isSprite, bool async) {
 			IsSprite = isSprite;
 			Hash = hash;
@@ -503,24 +497,18 @@ namespace SpriteMaster {
 
 			if (async && Config.AsyncScaling.Enabled) {
 				ThreadPool.QueueUserWorkItem((object wrapper) => {
-					--RemainingAsyncTasks;
-					try {
-						Thread.CurrentThread.Priority = ThreadPriority.Lowest;
-						Thread.CurrentThread.Name = "Texture Resampling Thread";
-						Upscaler.Upscale(
-							texture: this,
-							scale: ref refScale,
-							input: (SpriteInfo)wrapper,
-							desprite: IsSprite,
-							hash: Hash,
-							wrapped: ref Wrapped,
-							async: true
-						);
-						// If the upscale fails, the asynchronous action on the render thread automatically cleans up the ScaledTexture.
-					}
-					finally {
-						++RemainingAsyncTasks;
-					}
+					Thread.CurrentThread.Priority = ThreadPriority.Lowest;
+					Thread.CurrentThread.Name = "Texture Resampling Thread";
+					Upscaler.Upscale(
+						texture: this,
+						scale: ref refScale,
+						input: (SpriteInfo)wrapper,
+						desprite: IsSprite,
+						hash: Hash,
+						wrapped: ref Wrapped,
+						async: true
+					);
+					// If the upscale fails, the asynchronous action on the render thread automatically cleans up the ScaledTexture.
 				}, textureWrapper);
 			}
 			else {

@@ -156,7 +156,6 @@ namespace SpriteMaster {
 			internal const int MaxLoadsPerFrame = 1;
 			internal static long MinimumSizeTexels = 0;
 			internal static long ScalingBudgetPerFrameTexels = 2 * 256 * 256;
-			internal static int MaxInFlightTasks = int.MaxValue; // Environment.ProcessorCount;
 		}
 
 		internal static class MemoryCache {

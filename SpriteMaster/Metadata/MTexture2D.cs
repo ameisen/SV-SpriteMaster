@@ -141,6 +141,18 @@ namespace SpriteMaster.Metadata {
 
 		// TODO : this presently is not threadsafe.
 		private readonly WeakReference<byte[]> _CachedData = (Config.MemoryCache.Enabled) ? new WeakReference<byte[]>(null) : null;
+
+		public bool HasCachedData {
+			get {
+				if (!Config.MemoryCache.Enabled)
+					return false;
+
+				using (Lock.Shared) {
+					return (_CachedData.TryGetTarget(out var target) && target != null);
+				}
+			}
+		}
+
 		public byte[] CachedData {
 			get {
 				if (!Config.MemoryCache.Enabled)
