@@ -14,41 +14,6 @@ using xBRZNet2;
 using static SpriteMaster.ScaledTexture;
 
 namespace SpriteMaster {
-	internal struct MapWrapper<T> where T : unmanaged {
-		internal readonly T[] Data;
-		internal readonly int Width;
-		internal readonly int Height;
-		internal readonly int Stride;
-
-		internal MapWrapper(T[] data, int width, int height, int stride) {
-			Data = data;
-			Width = width;
-			Height = height;
-			Stride = stride;
-		}
-
-		internal MapWrapper (T[] data, int width, int height) : this(data, width, height, width) { }
-
-		private readonly uint GetIndex(int x, int y) {
-			var ux = unchecked((uint)x);
-			var uy = unchecked((uint)y);
-			var offset = uy * unchecked((uint)Stride) + ux;
-
-			Contract.AssertLess(offset, unchecked((uint)Data.Length));
-
-			return offset;
-		}
-
-		internal T this[int x, int y] {
-			readonly get {
-				return Data[GetIndex(x, y)];
-			}
-			set {
-				Data[GetIndex(x, y)] = value;
-			}
-		}
-	}
-
 	internal sealed class Upscaler {
 		internal static void PurgeHash (Texture2D reference) {
 			reference.Meta().CachedData = null;
@@ -193,9 +158,7 @@ namespace SpriteMaster {
 						Wrapped: input.Wrapped
 					);
 
-					WrappedX = edgeResults.WrappedX;
-					WrappedY = edgeResults.WrappedY;
-					wrapped = edgeResults.Wrapped;
+					(WrappedX, WrappedY, wrapped) = (edgeResults.WrappedX, edgeResults.WrappedY, edgeResults.Wrapped);
 
 					// Recolor
 					/*
@@ -246,7 +209,7 @@ namespace SpriteMaster {
 					*/
 					// ~Recolor
 
-					wrapped = (wrapped & Config.Resample.EnableWrappedAddressing);
+					wrapped &= Config.Resample.EnableWrappedAddressing;
 
 					if (Config.Debug.Sprite.DumpReference) {
 						using (var filtered = Textures.CreateBitmap(rawData.ToArray(), input.ReferenceSize, PixelFormat.Format32bppArgb)) {

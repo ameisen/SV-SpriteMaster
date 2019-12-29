@@ -281,5 +281,77 @@ namespace SpriteMaster.Extensions {
 
 			return string.Format("{0:0.00}", value) + $" {SuffixTable[suffixIndex]}";
 		}
+
+		internal static byte Unsigned (this sbyte value) {
+			return unchecked((byte)value);
+		}
+
+		internal static ushort Unsigned (this short value) {
+			return unchecked((ushort)value);
+		}
+
+		internal static uint Unsigned (this int value) {
+			return unchecked((uint)value);
+		}
+
+		internal static ulong Unsigned (this long value) {
+			return unchecked((ulong)value);
+		}
+
+		[Obsolete("Bitwise cast is unnecessary")]
+		internal static byte Unsigned (this byte value) {
+			return value;
+		}
+
+		[Obsolete("Bitwise cast is unnecessary")]
+		internal static ushort Unsigned (this ushort value) {
+			return value;
+		}
+
+		[Obsolete("Bitwise cast is unnecessary")]
+		internal static uint Unsigned (this uint value) {
+			return value;
+		}
+
+		[Obsolete("Bitwise cast is unnecessary")]
+		internal static ulong Unsigned (this ulong value) {
+			return value;
+		}
+
+		internal static sbyte Signed (this byte value) {
+			return unchecked((sbyte)value);
+		}
+
+		internal static short Signed (this ushort value) {
+			return unchecked((short)value);
+		}
+
+		internal static int Signed (this uint value) {
+			return unchecked((int)value);
+		}
+
+		internal static long Signed (this ulong value) {
+			return unchecked((long)value);
+		}
+
+		[Obsolete("Bitwise cast is unnecessary")]
+		internal static sbyte Signed (this sbyte value) {
+			return value;
+		}
+
+		[Obsolete("Bitwise cast is unnecessary")]
+		internal static short Signed (this short value) {
+			return value;
+		}
+
+		[Obsolete("Bitwise cast is unnecessary")]
+		internal static int Signed (this int value) {
+			return value;
+		}
+
+		[Obsolete("Bitwise cast is unnecessary")]
+		internal static long Signed (this long value) {
+			return value;
+		}
 	}
 }

@@ -16,12 +16,24 @@ namespace SpriteMaster.Metadata {
 		public readonly SpriteDictionary SpriteTable = new SpriteDictionary();
 		private readonly string UniqueIDString = Interlocked.Increment(ref CurrentID).ToString();
 
-		public long LastAccessFrame { get; private set; } = DrawState.CurrentFrame;
+		private readonly SharedLock Lock = new SharedLock();
+
+		public long _LastAccessFrame = Thread.VolatileRead(ref DrawState.CurrentFrame);
+		public long LastAccessFrame {
+			get {
+				using (Lock.Shared)
+					return Thread.VolatileRead(ref _LastAccessFrame);
+			}
+			private set {
+				using (Lock.Exclusive)
+					Thread.VolatileWrite(ref _LastAccessFrame, value);
+			}
+		}
 		private ulong _Hash = default;
 		public ulong Hash {
 			get {
-				lock (this) {
-					return _Hash;
+				using (Lock.Shared) {
+					return Thread.VolatileRead(ref _Hash);
 				}
 			}
 		}
@@ -133,7 +145,8 @@ namespace SpriteMaster.Metadata {
 			get {
 				if (!Config.MemoryCache.Enabled)
 					return null;
-				lock (this) {
+
+				using (Lock.Shared) {
 					byte[] target = null;
 					if (!_CachedData.TryGetTarget(out target) || target == null) {
 						byte[] compressedBuffer;
@@ -146,7 +159,9 @@ namespace SpriteMaster.Metadata {
 						else {
 							target = null;
 						}
-						_CachedData.SetTarget(target);
+						using (Lock.Promote) {
+							_CachedData.SetTarget(target);
+						}
 					}
 					return target;
 				}
@@ -154,29 +169,42 @@ namespace SpriteMaster.Metadata {
 			set {
 				if (!Config.MemoryCache.Enabled)
 					return;
-				lock (this) {
+				using (Lock.Shared) {
 					if (_CachedData.TryGetTarget(out var target) && target == value) {
 						return;
 					}
-					lock (DataCache) {
-						if (value == null) {
-							DataCache.Remove(UniqueIDString);
+					if (value == null) {
+						using (Lock.Promote) {
 							_CachedData.SetTarget(null);
 						}
-						else {
+						lock (DataCache) {
+							DataCache.Remove(UniqueIDString);
+						}
+					}
+					else {
+						bool queueCompress = false;
+						lock (AlreadyCompressingTable) {
 							if (!AlreadyCompressingTable.TryGetValue(value, out var _)) {
-								try { AlreadyCompressingTable.Add(value, null); } catch { }
-								ThreadPool.QueueUserWorkItem((buffer) => {
-									var compressedData = Compress((byte[])buffer);
-									lock (DataCache) {
-										DataCache[UniqueIDString] = compressedData;
-									}
-								}, value);
+								try { AlreadyCompressingTable.Add(value, null); }
+								catch { }
+								queueCompress = true;
 							}
+						}
+
+						if (queueCompress) {
+							ThreadPool.QueueUserWorkItem((buffer) => {
+								var compressedData = Compress((byte[])buffer);
+								lock (DataCache) {
+									DataCache[UniqueIDString] = compressedData;
+								}
+							}, value);
+						}
+
+						using (Lock.Promote) {
 							_CachedData.SetTarget(value);
 						}
-						_Hash = default;
 					}
+					Thread.VolatileWrite(ref _Hash, default);
 				}
 			}
 		}
@@ -186,11 +214,15 @@ namespace SpriteMaster.Metadata {
 		}
 
 		public ulong GetHash(SpriteInfo info) {
-			lock (this) {
-				if (_Hash == default) {
-					_Hash = info.Hash;
+			using (Lock.Shared) {
+				ulong hash = Thread.VolatileRead(ref _Hash);
+				if (hash == default) {
+					hash = info.Hash;
+					using (Lock.Promote) {
+						Thread.VolatileWrite(ref _Hash, hash);
+					}
 				}
-				return _Hash;
+				return hash;
 			}
 		}
 	}

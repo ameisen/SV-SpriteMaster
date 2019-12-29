@@ -74,13 +74,13 @@ namespace SpriteMaster.Resample {
 
 			void FlipColorBytes (int[] p) {
 				foreach (var i in 0.Until(p.Length)) {
-					uint color = unchecked((uint)p[i]);
+					uint color = p[i].Unsigned();
 					color =
 						(color & 0xFF000000U) |
 						(color & 0x0000FF00U) |
 						((color & 0x00FF0000U) >> 16) |
 						((color & 0x000000FFU) << 16);
-					p[i] = unchecked((int)color);
+					p[i] = color.Signed();
 				}
 			}
 

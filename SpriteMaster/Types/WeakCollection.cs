@@ -295,10 +295,8 @@ namespace SpriteMaster.Types {
 
 		public T Find (Predicate<T> match) {
 			foreach (var item in _List) {
-				if (item.TryGetTarget(out T target)) {
-					if (match.Invoke(target)) {
-						return target;
-					}
+				if (item.TryGetTarget(out T target) && match.Invoke(target)) {
+					return target;
 				}
 			}
 			return default;
