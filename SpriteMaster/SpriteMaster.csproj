@@ -23,10 +23,13 @@
 		<NullableReferenceTypes>true</NullableReferenceTypes>
     <FileAlignment>4096</FileAlignment>
     <NoWarn>0162;7035</NoWarn>
+		<!--<ILMergeToolsPath>$(SolutionDir)packages\ILMerge.3.0.29\tools\net452\</ILMergeToolsPath>-->
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
     <DefineConstants>TRACE</DefineConstants>
+    <DebugType>pdbonly</DebugType>
+    <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
@@ -34,6 +37,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="ilmerge" Version="3.0.29" />
+    <PackageReference Include="ILMerge.MSBuild.Task" Version="1.0.7" />
     <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="3.0.0" />
     <PackageReference Include="System.Data.HashFunction.xxHash" Version="2.0.0" />
     <PackageReference Include="System.Memory" Version="4.5.3" />
@@ -61,6 +66,21 @@
     <None Include="..\LICENSE.MD">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Properties\Settings.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
   </ItemGroup>
 
