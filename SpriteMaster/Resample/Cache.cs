@@ -1,5 +1,7 @@
 ﻿using SpriteMaster.Extensions;
 using SpriteMaster.Types;
+using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Management;
@@ -31,7 +33,7 @@ namespace SpriteMaster.Resample {
 			Saved = 1
 		}
 
-		private static Dictionary<string, SaveState> SavingMap = new Dictionary<string, SaveState>();
+		private static ConcurrentDictionary<string, SaveState> SavingMap = new ConcurrentDictionary<string, SaveState>();
 
 		internal static bool Fetch (
 			string path,
@@ -42,17 +44,22 @@ namespace SpriteMaster.Resample {
 			out Vector2I blockPadding,
 			out int[] data
 		) {
+			size = Vector2I.Zero;
+			format = TextureFormat.Color;
+			wrapped = Vector2B.False;
+			padding = Vector2I.Zero;
+			blockPadding = Vector2I.Zero;
+			data = null;
+
 			if (Config.Cache.Enabled && File.Exists(path)) {
 				int retries = Config.Cache.LockRetries;
 
 				while (retries-- > 0) {
 					if (File.Exists(path)) {
-						lock (SavingMap) {
-							if (SavingMap.TryGetValue(path, out var state)) {
-								if (state != SaveState.Saved) {
-									Thread.Sleep(Config.Cache.LockSleepMS);
-									continue;
-								}
+						if (SavingMap.TryGetValue(path, out var state)) {
+							if (state != SaveState.Saved) {
+								Thread.Sleep(Config.Cache.LockSleepMS);
+								continue;
 							}
 						}
 
@@ -72,35 +79,44 @@ namespace SpriteMaster.Resample {
 								wrapped = header.Wrapped;
 								padding = header.Padding;
 								blockPadding = header.BlockPadding;
+								var dataLength = header.DataLength / sizeof(int);
+								var dataHash = header.DataHash;
 
 								var remainingSize = reader.BaseStream.Length - reader.BaseStream.Position;
-								data = new int[remainingSize / sizeof(int)];
+								if (remainingSize < header.DataLength) {
+									throw new EndOfStreamException("Cache File is corrupted");
+								}
+
+								data = new int[dataLength];
 
 								foreach (int i in 0.Until(data.Length)) {
 									data[i] = reader.ReadInt32();
 								}
+
+								if (data.HashXX() != dataHash) {
+									throw new IOException("Cache File is corrupted");
+								}
 							}
 							return true;
 						}
-						catch (IOException ex) {
-							if (WasLocked(ex)) {
-								Debug.InfoLn($"File was locked when trying to load cache file '{path}': {ex.Message} [{retries} retries]");
-								Thread.Sleep(Config.Cache.LockSleepMS);
-							}
-							else {
-								Debug.WarningLn($"IOException when trying to load cache file '{path}': {ex.Message}");
-								retries = 0;
+						catch (Exception ex) {
+							switch (ex) {
+								case FileNotFoundException _:
+								case EndOfStreamException _:
+								case IOException iox when !WasLocked(iox):
+								default:
+									ex.PrintWarning();
+									try { File.Delete(path); } catch { }
+									return false;
+								case IOException iox when WasLocked(iox):
+									Debug.InfoLn($"File was locked when trying to load cache file '{path}': {ex.Message} [{retries} retries]");
+									Thread.Sleep(Config.Cache.LockSleepMS);
+									break;
 							}
 						}
 					}
 				}
 			}
-			size = Vector2I.Zero;
-			format = TextureFormat.Color;
-			wrapped = Vector2B.False;
-			padding = Vector2I.Zero;
-			blockPadding = Vector2I.Zero;
-			data = null;
 			return false;
 		}
 
@@ -112,6 +128,8 @@ namespace SpriteMaster.Resample {
 			public Vector2B Wrapped;
 			public Vector2I Padding;
 			public Vector2I BlockPadding;
+			public ulong DataHash;
+			public uint DataLength;
 
 			internal static CacheHeader Read(BinaryReader reader) {
 				var newHeader = new CacheHeader();
@@ -153,11 +171,8 @@ namespace SpriteMaster.Resample {
 			int[] data
 		) {
 			if (Config.Cache.Enabled) {
-				lock (SavingMap) {
-					if (SavingMap.ContainsKey(path)) {
-						return false;
-					}
-					SavingMap[path] = SaveState.Saving;
+				if (!SavingMap.TryAdd(path, SaveState.Saving)) {
+					return false;
 				}
 
 				ThreadPool.QueueUserWorkItem((object dataItem) => {
@@ -168,22 +183,22 @@ namespace SpriteMaster.Resample {
 								Format = format,
 								Wrapped = wrapped,
 								Padding = padding,
-								BlockPadding = blockPadding
+								BlockPadding = blockPadding,
+								DataLength = (uint)data.Length * sizeof(int),
+								DataHash = data.HashXX()
 							}.Write(writer);
 
-							foreach (var v in (int[])data) {
+							foreach (var v in data) {
 								writer.Write(v);
 							}
 						}
 						lock (SavingMap) {
-							SavingMap[path] = SaveState.Saved;
+							SavingMap.TryUpdate(path, SaveState.Saved, SaveState.Saving);
 						}
 					}
 					catch {
-						lock (SavingMap) {
-							try { File.Delete(path); } catch { }
-							SavingMap.Remove(path);
-						}
+						try { File.Delete(path); } catch { }
+						SavingMap.TryRemove(path, out var _);
 					}
 				}, data);
 			}

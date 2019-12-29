@@ -329,29 +329,6 @@ namespace SpriteMaster {
 			var textureWrapper = new SpriteInfo(texture, sourceRectangle);
 			ulong hash = Upscaler.GetHash(textureWrapper, isSprite);
 
-			if (Config.EnableCachedHashTextures) {
-				lock (LocalTextureCache) {
-					if (LocalTextureCache.TryGetValue(hash, out var scaledTextureRef)) {
-						if (scaledTextureRef.TryGetTarget(out var cachedTexture)) {
-							Debug.InfoLn($"Using Cached Texture for '{cachedTexture.SafeName()}'");
-							SpriteMap.Add(texture, cachedTexture, sourceRectangle);
-							texture.Disposing += (object sender, EventArgs args) => { cachedTexture.OnParentDispose((Texture2D)sender); };
-							if (!cachedTexture.IsReady || cachedTexture.Texture == null) {
-								return null;
-							}
-							return cachedTexture;
-						}
-						else {
-							LocalTextureCache.Remove(hash);
-						}
-					}
-				}
-			}
-
-			if (TotalMemoryUsage >= Config.MaxMemoryUsage) {
-				Debug.ErrorLn($"Over Max Memory Usage: {TotalMemoryUsage.AsDataSize()}");
-			}
-
 			ScaledTexture newTexture = null;
 			newTexture = new ScaledTexture(
 				assetName: texture.Name,
@@ -361,10 +338,6 @@ namespace SpriteMaster {
 				hash: hash,
 				async: useAsync
 			);
-			if (Config.EnableCachedHashTextures)
-				lock (LocalTextureCache) {
-					LocalTextureCache.Add(hash, newTexture.MakeWeak());
-				}
 			if (useAsync && Config.AsyncScaling.Enabled) {
 				// It adds itself to the relevant maps.
 				if (newTexture.IsReady && newTexture.Texture != null) {
@@ -423,8 +396,6 @@ namespace SpriteMaster {
 				return originalSize.Width * originalSize.Height * sizeof(int);
 			}
 		}
-
-		internal static readonly Dictionary<ulong, WeakScaledTexture> LocalTextureCache = new Dictionary<ulong, WeakScaledTexture>();
 
 		internal static void Purge (Texture2D reference) {
 			Purge<byte>(reference, null, DataRef<byte>.Null);

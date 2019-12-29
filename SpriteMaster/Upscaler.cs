@@ -14,6 +14,41 @@ using xBRZNet2;
 using static SpriteMaster.ScaledTexture;
 
 namespace SpriteMaster {
+	internal struct MapWrapper<T> where T : unmanaged {
+		internal readonly T[] Data;
+		internal readonly int Width;
+		internal readonly int Height;
+		internal readonly int Stride;
+
+		internal MapWrapper(T[] data, int width, int height, int stride) {
+			Data = data;
+			Width = width;
+			Height = height;
+			Stride = stride;
+		}
+
+		internal MapWrapper (T[] data, int width, int height) : this(data, width, height, width) { }
+
+		private readonly uint GetIndex(int x, int y) {
+			var ux = unchecked((uint)x);
+			var uy = unchecked((uint)y);
+			var offset = uy * unchecked((uint)Stride) + ux;
+
+			Contract.AssertLess(offset, unchecked((uint)Data.Length));
+
+			return offset;
+		}
+
+		internal T this[int x, int y] {
+			readonly get {
+				return Data[GetIndex(x, y)];
+			}
+			set {
+				Data[GetIndex(x, y)] = value;
+			}
+		}
+	}
+
 	internal sealed class Upscaler {
 		internal static void PurgeHash (Texture2D reference) {
 			reference.Meta().CachedData = null;
@@ -121,8 +156,13 @@ namespace SpriteMaster {
 
 			int[] bitmapData = null;
 			try {
-				if (Cache.Fetch(cachePath, out var fetchSize, out spriteFormat, out wrapped, out texture.Padding, out texture.BlockPadding, out bitmapData)) {
-					scaledDimensions = newSize = scaledSize = fetchSize;
+				try {
+					if (Cache.Fetch(cachePath, out var fetchSize, out spriteFormat, out wrapped, out texture.Padding, out texture.BlockPadding, out bitmapData)) {
+						scaledDimensions = newSize = scaledSize = fetchSize;
+					}
+				}
+				catch (Exception ex) {
+					ex.PrintWarning();
 				}
 
 				if (bitmapData == null) {
@@ -509,26 +549,15 @@ namespace SpriteMaster {
 						);
 					}
 
-					Cache.Save(cachePath, newSize, spriteFormat, wrapped, texture.Padding, texture.BlockPadding, bitmapData);
+					try {
+						Cache.Save(cachePath, newSize, spriteFormat, wrapped, texture.Padding, texture.BlockPadding, bitmapData);
+					}
+					catch { }
 				}
 
 				var totalSpriteSize = spriteFormat.SizeBytes(newSize.Area);
 				AccumulatedSizeGarbageCompact += totalSpriteSize;
 				AccumulatedSizeGarbageCollect += totalSpriteSize;
-
-				/*
-				if (useBlockCompression) {
-					var blockData = new int[(newSize.Width * newSize.Height) / sizeof(int)];
-					fixed (int* p = bitmapData) {
-						// public static void CompressImage (IntPtr rgba, int width, int height, IntPtr blocks, SquishFlags flags);
-						fixed (int* outData = blockData) {
-							Squish.CompressImage((IntPtr)p, newSize.Width, newSize.Height, (IntPtr)outData, SquishFlags.Dxt5 | SquishFlags.WeightColourByAlpha);
-						}
-					}
-
-					bitmapData = blockData;
-				}
-				*/
 
 				ManagedTexture2D CreateTexture(int[] data) {
 					var newTexture = new ManagedTexture2D(

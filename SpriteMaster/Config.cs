@@ -19,7 +19,7 @@ namespace SpriteMaster {
 
 		internal static readonly string ModuleName = typeof(Config).Namespace;
 
-		internal static bool Enabled = false;
+		internal static bool Enabled = true;
 		internal static SButton ToggleButton = SButton.F11;
 
 		internal const int MaxSamplers = 16;
@@ -32,7 +32,6 @@ namespace SpriteMaster {
 		internal const int BaseMaxTextureDimension = 4096;
 		internal static int PreferredMaxTextureDimension = 8192;
 		internal const bool ClampInvalidBounds = true;
-		internal const uint MaxMemoryUsage = 2048U * 1024U * 1024U;
 		internal const bool EnableCachedHashTextures = false;
 		internal const bool IgnoreUnknownTextures = false;
 		internal static long ForceGarbageCompactAfter = long.MaxValue;
