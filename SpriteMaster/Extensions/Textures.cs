@@ -83,9 +83,15 @@ namespace SpriteMaster.Extensions {
 			if (texture.IsBlockCompressed()) {
 				// TODO : Find a faster way to do this without copying.
 				var byteData = data.CastAs<T, byte>();
+				if (texture.IsDisposed || texture.GraphicsDevice.IsDisposed) {
+					return;
+				}
 				texture.SetData(byteData.ToArray());
 			}
 			else {
+				if (texture.IsDisposed || texture.GraphicsDevice.IsDisposed) {
+					return;
+				}
 				texture.SetData<T>(data);
 			}
 		}

@@ -1,5 +1,8 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using SpriteMaster.Extensions;
+using System;
+using System.Runtime;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster {
@@ -12,6 +15,7 @@ namespace SpriteMaster {
 		public static TextureAddressMode CurrentAddressModeU = DefaultSamplerState.AddressU;
 		public static TextureAddressMode CurrentAddressModeV = DefaultSamplerState.AddressV;
 		public static Blend CurrentBlendSourceMode = BlendState.AlphaBlend.AlphaSourceBlend;
+		public static volatile bool TriggerGC = false;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static void SetCurrentAddressMode (SamplerState samplerState) {
@@ -30,8 +34,32 @@ namespace SpriteMaster {
 			return true;
 		}
 
+		private static bool IsMemoryPressured() {
+			try {
+				var RequiredMemory = (Config.RequiredFreeMemory * 1.5).NearestInt();
+				using var _ = new MemoryFailPoint(RequiredMemory);
+				return false;
+			}
+			catch (Exception ex) when (ex is InsufficientMemoryException) {
+				return true;
+			}
+			catch (Exception ex) {
+				// I'm not sure how we'd get here.
+				ex.PrintWarning();
+				return false;
+			}
+		}
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static void OnPresent () {
+			if (TriggerGC) {
+				ScaledTexture.PurgeTextures((Config.RequiredFreeMemory * Config.RequiredFreeMemoryHysterisis).NearestLong() * 1024 * 1024);
+				//Garbage.Collect();
+				Garbage.Collect(compact: true, blocking: true, background: false);
+
+				TriggerGC = false;
+			}
+			
 			if (Config.AsyncScaling.CanFetchAndLoadSameFrame || !PushedUpdateThisFrame) {
 				ScaledTexture.ProcessPendingActions();
 			}

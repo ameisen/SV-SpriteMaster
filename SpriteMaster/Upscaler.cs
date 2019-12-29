@@ -523,6 +523,9 @@ namespace SpriteMaster {
 				AccumulatedSizeGarbageCollect += totalSpriteSize;
 
 				ManagedTexture2D CreateTexture(int[] data) {
+					if (input.Reference.GraphicsDevice.IsDisposed) {
+						return null;
+					}
 					var newTexture = new ManagedTexture2D(
 						texture: texture,
 						reference: input.Reference,
@@ -551,7 +554,7 @@ namespace SpriteMaster {
 							if (newTexture != null) {
 								newTexture.Dispose();
 							}
-							texture.Destroy(reference);
+							texture.Dispose();
 						}
 					};
 					ScaledTexture.AddPendingAction(asyncCall);

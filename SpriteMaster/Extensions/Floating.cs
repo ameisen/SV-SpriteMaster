@@ -31,6 +31,31 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal static long NearestLong (this float v) {
+			return (long)Math.Round(v);
+		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal static long NearestLong (this double v) {
+			return (long)Math.Round(v);
+		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal static long NextLong (this float v) {
+			return (long)Math.Ceiling(v);
+		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal static long NextLong (this double v) {
+			return (long)Math.Ceiling(v);
+		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal static long TruncateLong (this float v) {
+			return (long)v;
+		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal static long TruncateLong (this double v) {
+			return (long)v;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static int ToCoordinate (this float coordinate) {
 			return coordinate.NearestInt();
 		}

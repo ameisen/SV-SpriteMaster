@@ -15,20 +15,22 @@ namespace SpriteMaster {
 		public static SpriteMaster Self { get; private set; } = default;
 
 		// TODO : long for 64-bit?
-		private const uint RequiredMemoryBlock = 16U;
-		private const uint MemoryPressureLimit = uint.MaxValue - (RequiredMemoryBlock * 1024 * 1024);
-		private static readonly string CollectMessage = $"Less than {(RequiredMemoryBlock * 1024 * 1024).AsDataSize(decimals: 0)} available for block allocation, forcing full garbage collection";
-		private readonly Thread MemoryPressureThread;
+		private readonly Thread MemoryPressureThread = null;
 
 		private void MemoryPressureLoop() {
 			for (;;) {
+				if (DrawState.TriggerGC) {
+					Thread.Sleep(128);
+					continue;
+				}
+
 				try {
-					using var _ = new MemoryFailPoint(unchecked((int)RequiredMemoryBlock));
+					using var _ = new MemoryFailPoint(Config.RequiredFreeMemory);
 					Thread.Sleep(128);
 				}
 				catch (InsufficientMemoryException) {
-					Debug.WarningLn(CollectMessage);
-					Garbage.Collect(compact: true, blocking: true, background: false);
+					Debug.WarningLn($"Less than {(Config.RequiredFreeMemory * 1024 * 1024).AsDataSize(decimals: 0)} available for block allocation, forcing full garbage collection");
+					DrawState.TriggerGC = true;
 					Thread.Sleep(10000);
 				}
 			}
@@ -45,7 +47,6 @@ namespace SpriteMaster {
 			MemoryPressureThread = new Thread(MemoryPressureLoop);
 			MemoryPressureThread.Priority = ThreadPriority.BelowNormal;
 			MemoryPressureThread.IsBackground = true;
-			MemoryPressureThread.Start();
 		}
 
 		public override void Entry (IModHelper help) {
@@ -64,6 +65,8 @@ namespace SpriteMaster {
 			help.Events.GameLoop.DayStarted += OnDayStarted;
 			// GC after major events
 			help.Events.GameLoop.SaveLoaded += (_, _1) => Garbage.Collect(compact: true, blocking: true, background: false);
+
+			MemoryPressureThread.Start();
 		}
 
 		// SMAPI/CP won't do this, so we do. Purge the cached textures for the previous season on a season change.

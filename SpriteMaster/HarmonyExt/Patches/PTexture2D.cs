@@ -85,6 +85,28 @@ namespace SpriteMaster.HarmonyExt.Patches {
 		}
 
 		/*
+		[HarmonyPatch(typeof(Texture), "GetAndValidateSizes", HarmonyPatch.Fixation.Prefix, PriorityLevel.First, HarmonyPatch.Generic.Struct, instance: false)]
+		private unsafe static bool GetAndValidateSizes<T> (int* pSurface, uint* pdwFormatSize, uint* pdwElementSize) where T : struct {
+			if (pSurface == null || pdwFormatSize == null || pdwElementSize == null) {
+				return true;
+			}
+
+			var GetSize = typeof(Texture).GetMethod("GetExpectedByteSizeFromFormat", BindingFlags.Static | BindingFlags.NonPublic);
+
+			var format = *(int*)pSurface;
+			var arguments = new object[] { format };
+			*pdwFormatSize = (uint)(byte)GetSize.Invoke(null, arguments);
+
+			return false;
+		}
+
+		[HarmonyPatch(typeof(Texture), "ValidateTotalSize", HarmonyPatch.Fixation.Prefix, PriorityLevel.First, instance: false)]
+		private unsafe static bool ValidateTotalSize (int* __unnamed000, uint dwLockWidth, uint dwLockHeight, uint dwFormatSize, uint dwElementSize, uint elementCount) {
+			return false;
+		}
+		*/
+
+		/*
 		[HarmonyPatch(typeof(Texture2D), "FromStream", HarmonyPatch.Fixation.Postfix, PriorityLevel.Last)]
 		private static void FromStream(GraphicsDevice graphicsDevice, Stream stream, int width, int height, [MarshalAs(UnmanagedType.U1)] bool zoom) {
 			zoom = zoom;

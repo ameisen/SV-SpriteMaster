@@ -4,6 +4,7 @@ using SpriteMaster.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Management.Instrumentation;
 using System.Reflection;
 
 namespace SpriteMaster.HarmonyExt {
@@ -69,7 +70,8 @@ namespace SpriteMaster.HarmonyExt {
 								attribute.Method,
 								pre: (attribute.PatchFixation == HarmonyPatch.Fixation.Prefix) ? method : null,
 								post: (attribute.PatchFixation == HarmonyPatch.Fixation.Postfix) ? method : null,
-								trans: (attribute.PatchFixation == HarmonyPatch.Fixation.Transpile) ? method : null
+								trans: (attribute.PatchFixation == HarmonyPatch.Fixation.Transpile) ? method : null,
+								instanceMethod: attribute.Instance
 							);
 							break;
 						case HarmonyPatch.Generic.Struct:
@@ -81,7 +83,8 @@ namespace SpriteMaster.HarmonyExt {
 									attribute.Method,
 									pre: (attribute.PatchFixation == HarmonyPatch.Fixation.Prefix) ? method : null,
 									post: (attribute.PatchFixation == HarmonyPatch.Fixation.Postfix) ? method : null,
-									trans: (attribute.PatchFixation == HarmonyPatch.Fixation.Transpile) ? method : null
+									trans: (attribute.PatchFixation == HarmonyPatch.Fixation.Transpile) ? method : null,
+									instanceMethod: attribute.Instance
 								);
 							}
 							break;
@@ -93,7 +96,7 @@ namespace SpriteMaster.HarmonyExt {
 		}
 
 		private static Type[] GetArguments (this MethodInfo method) {
-			var filteredParameters = method.GetParameters().Where(t => !t.Name.StartsWith("__"));
+			var filteredParameters = method.GetParameters().Where(t => !t.Name.StartsWith("__") || t.Name.StartsWith("__unnamed"));
 			return filteredParameters.Select(p => p.ParameterType).ToArray();
 		}
 
@@ -129,8 +132,9 @@ namespace SpriteMaster.HarmonyExt {
 			return typeof(T).GetInstanceMethods(name);
 		}
 
-		private static MethodBase GetPatchMethod (Type type, string name, MethodInfo method, bool transpile = false) {
+		private static MethodBase GetPatchMethod (Type type, string name, MethodInfo method, bool instance, bool transpile = false) {
 			bool constructor = (name == ".ctor");
+			var flags = instance ? InstanceFlags : StaticFlags;
 
 			if (transpile) {
 				if (constructor) {
@@ -147,10 +151,10 @@ namespace SpriteMaster.HarmonyExt {
 			if (typeMethod == null) {
 				MethodBase[] typeMethods;
 				if (constructor) {
-					typeMethods = type.GetConstructors(InstanceFlags);
+					typeMethods = type.GetConstructors(flags);
 				}
 				else {
-					var methods = type.GetMethods(name, InstanceFlags);
+					var methods = type.GetMethods(name, flags);
 					typeMethods = new MethodBase[methods.Count()];
 					foreach (var i in 0.Until(typeMethods.Length)) {
 						typeMethods[i] = methods.ElementAt(i);
@@ -173,6 +177,7 @@ namespace SpriteMaster.HarmonyExt {
 						var methodParameterRef = methodParameter.AddRef();
 						var baseParameter = methodParameter.IsArray ? methodParameter.GetElementType() : methodParameter;
 						if (
+							!(testParameter.IsPointer && methodParameter.IsPointer) &&
 							!testParameterRef.Equals(methodParameterRef) &&
 							!(testBaseParameter.IsGenericParameter && baseParameter.IsGenericParameter) &&
 							!methodParameter.Equals(typeof(object)) && !(testParameter.IsArray && methodParameter.IsArray && baseParameter.Equals(typeof(object)))) {
@@ -204,10 +209,10 @@ namespace SpriteMaster.HarmonyExt {
 			return defaultPriority;
 		}
 
-		private static void Patch(this HarmonyInstance instance, Type type, string name, MethodInfo pre = null, MethodInfo post = null, MethodInfo trans = null, int priority = Priority.Last) {
+		private static void Patch(this HarmonyInstance instance, Type type, string name, MethodInfo pre = null, MethodInfo post = null, MethodInfo trans = null, int priority = Priority.Last, bool instanceMethod = true) {
 			var referenceMethod = pre ?? post;
 			if (referenceMethod != null) {
-				var typeMethod = GetPatchMethod(type, name, referenceMethod) ?? throw new ArgumentException($"Method '{name}' in type '{type.FullName}' could not be found");
+				var typeMethod = GetPatchMethod(type, name, referenceMethod, instance: instanceMethod) ?? throw new ArgumentException($"Method '{name}' in type '{type.FullName}' could not be found");
 				instance.Patch(
 					typeMethod,
 					(pre == null) ? null : new HarmonyMethod(pre) { prioritiy = GetPriority(pre, priority) },
@@ -216,7 +221,7 @@ namespace SpriteMaster.HarmonyExt {
 				);
 			}
 			if (trans != null) {
-				var typeMethod = GetPatchMethod(type, name, referenceMethod, transpile: true) ?? throw new ArgumentException($"Method '{name}' in type '{type.FullName}' could not be found");
+				var typeMethod = GetPatchMethod(type, name, referenceMethod, transpile: true, instance: instanceMethod) ?? throw new ArgumentException($"Method '{name}' in type '{type.FullName}' could not be found");
 				instance.Patch(
 					typeMethod,
 					null,
@@ -245,10 +250,10 @@ namespace SpriteMaster.HarmonyExt {
 				}
 		}
 
-		public static void Patch (this HarmonyInstance instance, Type type, Type genericType, string name, MethodInfo pre = null, MethodInfo post = null, MethodInfo trans = null, int priority = Priority.Last) {
+		public static void Patch (this HarmonyInstance instance, Type type, Type genericType, string name, MethodInfo pre = null, MethodInfo post = null, MethodInfo trans = null, int priority = Priority.Last, bool instanceMethod = true) {
 			var referenceMethod = pre ?? post;
 			if (referenceMethod != null) {
-				var typeMethod = GetPatchMethod(type, name, referenceMethod) ?? throw new ArgumentException($"Method '{name}' in type '{type.FullName}' could not be found");
+				var typeMethod = GetPatchMethod(type, name, referenceMethod, instance: instanceMethod) ?? throw new ArgumentException($"Method '{name}' in type '{type.FullName}' could not be found");
 				var typeMethodInfo = (MethodInfo)typeMethod;
 				instance.Patch(
 					typeMethodInfo.MakeGenericMethod(genericType),
@@ -258,7 +263,7 @@ namespace SpriteMaster.HarmonyExt {
 				);
 			}
 			if (trans != null) {
-				var typeMethod = GetPatchMethod(type, name, referenceMethod, transpile: true) ?? throw new ArgumentException($"Method '{name}' in type '{type.FullName}' could not be found");
+				var typeMethod = GetPatchMethod(type, name, referenceMethod, transpile: true, instance: instanceMethod) ?? throw new ArgumentException($"Method '{name}' in type '{type.FullName}' could not be found");
 				var typeMethodInfo = (MethodInfo)typeMethod;
 				instance.Patch(
 					typeMethodInfo.MakeGenericMethod(genericType),

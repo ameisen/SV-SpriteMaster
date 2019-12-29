@@ -7,7 +7,6 @@ using System.Linq;
 using System.Collections.Generic;
 
 using WeakTexture = System.WeakReference<Microsoft.Xna.Framework.Graphics.Texture2D>;
-using WeakScaledTexture = System.WeakReference<SpriteMaster.ScaledTexture>;
 using SpriteMaster.Types;
 using SpriteMaster.Extensions;
 using TeximpNet.Compression;
@@ -147,7 +146,7 @@ namespace SpriteMaster {
 				using (Lock.Exclusive) {
 					foreach (var purgable in purgeList) {
 						if (purgable.Reference.TryGetTarget(out var reference)) {
-							purgable.Destroy(reference);
+							purgable.Dispose();
 							lock (reference.Meta()) {
 								reference.Meta().SpriteTable.Clear();
 							}
@@ -176,13 +175,15 @@ namespace SpriteMaster {
 		}
 	}
 
-	internal sealed class ScaledTexture {
+	internal sealed class ScaledTexture : IDisposable {
 		// TODO : This can grow unbounded. Should fix.
 		public static readonly SpriteMap SpriteMap = new SpriteMap();
 
 		private static readonly List<Action> PendingActions = Config.AsyncScaling.Enabled ? new List<Action>() : null;
 
 		private static readonly Dictionary<string, WeakTexture> DuplicateTable = Config.DiscardDuplicates ? new Dictionary<string, WeakTexture>() : null;
+
+		private static readonly LinkedList<WeakReference<ScaledTexture>> MostRecentList = new LinkedList<WeakReference<ScaledTexture>>();
 
 		static internal bool ExcludeSprite (Texture2D texture) {
 			return false;// && (texture.Name == "LooseSprites\\Cursors");
@@ -370,6 +371,9 @@ namespace SpriteMaster {
 
 		internal Vector2 AdjustedScale = Vector2.One;
 
+		private LinkedListNode<WeakReference<ScaledTexture>> CurrentRecentNode = null;
+		private bool Disposed = false;
+
 		~ScaledTexture() {
 			if (Texture != null) {
 				//Texture.Dispose();
@@ -401,6 +405,47 @@ namespace SpriteMaster {
 			SpriteMap.Purge(reference, bounds);
 			Upscaler.PurgeHash(reference);
 			SpriteInfo.Purge(reference, bounds, data);
+		}
+
+		internal static void PurgeTextures(long _purgeTotalBytes) {
+			Contract.AssertPositive(_purgeTotalBytes);
+
+			Debug.InfoLn($"Attempting to purge {_purgeTotalBytes.AsDataSize()} from currently loaded textures");
+
+			// For portability purposes
+			if (IntPtr.Size == 8) {
+				var purgeTotalBytes = _purgeTotalBytes;
+				lock (MostRecentList) {
+					while (purgeTotalBytes > 0 && MostRecentList.Count > 0) {
+						if (MostRecentList.Last().TryGetTarget(out var target)) {
+							purgeTotalBytes -= target.MemorySize;
+							target.CurrentRecentNode = null;
+							target.Dispose(true);
+						}
+						MostRecentList.RemoveLast();
+					}
+				}
+			}
+			else {
+				// For 32-bit, truncate down to an integer so this operation goes a bit faster.
+				Contract.AssertLessEqual(_purgeTotalBytes, (long)uint.MaxValue);
+				var purgeTotalBytes = unchecked((uint)_purgeTotalBytes);
+				lock (MostRecentList) {
+					uint totalPurge = 0;
+					while (purgeTotalBytes > 0 && MostRecentList.Count > 0) {
+						if (MostRecentList.Last().TryGetTarget(out var target)) {
+							var textureSize = unchecked((uint)target.MemorySize);
+							Debug.InfoLn($"Purging {target.SafeName()} ({textureSize.AsDataSize()})");
+							purgeTotalBytes -= textureSize;
+							totalPurge += textureSize;
+							target.CurrentRecentNode = null;
+							target.Dispose(true);
+						}
+						MostRecentList.RemoveLast();
+					}
+					Debug.InfoLn($"Total Purged: {totalPurge.AsDataSize()}");
+				}
+			}
 		}
 
 		internal sealed class ManagedTexture2D : Texture2D {
@@ -527,7 +572,7 @@ namespace SpriteMaster {
 					Finish();
 				}
 				else {
-					Destroy(source);
+					Dispose();
 					return;
 				}
 			}
@@ -535,6 +580,10 @@ namespace SpriteMaster {
 			// TODO : I would love to dispose of this texture _now_, but we rely on it disposing to know if we need to dispose of ours.
 			// There is a better way to do this using weak references, I just need to analyze it further. Memory leaks have been a pain so far.
 			source.Disposing += (object sender, EventArgs args) => { OnParentDispose((Texture2D)sender); };
+
+			lock (MostRecentList) {
+				CurrentRecentNode = MostRecentList.AddFirst(this.MakeWeak());
+			}
 		}
 
 		// Async Call
@@ -565,18 +614,51 @@ namespace SpriteMaster {
 			IsReady = true;
 		}
 
-		internal void UpdateReferenceFrame() {
-			this.LastReferencedFrame = DrawState.CurrentFrame; ;
+		internal void UpdateReferenceFrame () {
+			if (Disposed) {
+				return;
+			}
+
+			this.LastReferencedFrame = DrawState.CurrentFrame;
+
+			lock (MostRecentList) {
+				if (CurrentRecentNode != null) {
+					MostRecentList.Remove(CurrentRecentNode);
+					MostRecentList.AddFirst(CurrentRecentNode);
+				}
+				else {
+					CurrentRecentNode = MostRecentList.AddFirst(this.MakeWeak());
+				}
+			}
 		}
 
-		internal void Destroy (Texture2D texture) {
-			SpriteMap.Remove(this, texture);
+		public void Dispose (bool disposeChildren) {
+			if (disposeChildren && Texture != null) {
+				if (!Texture.IsDisposed) {
+					Texture.Dispose();
+				}
+				Texture = null;
+			}
+			Dispose();
+		}
+
+		public void Dispose () {
+			if (Reference.TryGetTarget(out var reference)) {
+				SpriteMap.Remove(this, reference);
+			}
+			if (CurrentRecentNode != null) {
+				lock (MostRecentList) {
+					MostRecentList.Remove(CurrentRecentNode);
+				}
+				CurrentRecentNode = null;
+			}
+			Disposed = true;
 		}
 
 		private void OnParentDispose (Texture2D texture) {
 			Debug.InfoLn($"Parent Texture Disposing: {texture.SafeName()}");
 
-			Destroy(texture);
+			Dispose();
 		}
 	}
 }

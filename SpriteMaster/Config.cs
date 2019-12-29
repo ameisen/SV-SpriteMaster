@@ -31,8 +31,9 @@ namespace SpriteMaster {
 		internal const int AbsoluteMaxTextureDimension = 16384;
 		internal const int BaseMaxTextureDimension = 4096;
 		internal static int PreferredMaxTextureDimension = 8192;
+		internal static int RequiredFreeMemory = 128;
+		internal static double RequiredFreeMemoryHysterisis = 1.5;
 		internal const bool ClampInvalidBounds = true;
-		internal const bool EnableCachedHashTextures = false;
 		internal const bool IgnoreUnknownTextures = false;
 		internal static long ForceGarbageCompactAfter = long.MaxValue;
 		internal static long ForceGarbageCollectAfter = long.MaxValue;
