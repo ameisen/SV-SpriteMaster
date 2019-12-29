@@ -1,11 +1,11 @@
 ﻿using SpriteMaster.Extensions;
 using SpriteMaster.Types;
+using System.Collections.Generic;
 using System.IO;
 using System.Management;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
-using TeximpNet.Compression;
 
 namespace SpriteMaster.Resample {
 	internal static class Cache {
@@ -26,6 +26,13 @@ namespace SpriteMaster.Resample {
 			return Path.Combine(DumpPath, Path.Combine(path));
 		}
 
+		enum SaveState {
+			Saving = 0,
+			Saved = 1
+		}
+
+		private static Dictionary<string, SaveState> SavingMap = new Dictionary<string, SaveState>();
+
 		internal static bool Fetch (
 			string path,
 			out Vector2I size,
@@ -40,6 +47,15 @@ namespace SpriteMaster.Resample {
 
 				while (retries-- > 0) {
 					if (File.Exists(path)) {
+						lock (SavingMap) {
+							if (SavingMap.TryGetValue(path, out var state)) {
+								if (state != SaveState.Saved) {
+									Thread.Sleep(Config.Cache.LockSleepMS);
+									continue;
+								}
+							}
+						}
+
 						// https://stackoverflow.com/questions/1304/how-to-check-for-file-lock
 						bool WasLocked (in IOException ex) {
 							var errorCode = Marshal.GetHRForException(ex) & ((1 << 16) - 1);
@@ -137,6 +153,13 @@ namespace SpriteMaster.Resample {
 			int[] data
 		) {
 			if (Config.Cache.Enabled) {
+				lock (SavingMap) {
+					if (SavingMap.ContainsKey(path)) {
+						return false;
+					}
+					SavingMap[path] = SaveState.Saving;
+				}
+
 				ThreadPool.QueueUserWorkItem((object dataItem) => {
 					try {
 						using (var writer = new BinaryWriter(File.OpenWrite(path))) {
@@ -152,8 +175,16 @@ namespace SpriteMaster.Resample {
 								writer.Write(v);
 							}
 						}
+						lock (SavingMap) {
+							SavingMap[path] = SaveState.Saved;
+						}
 					}
-					catch { }
+					catch {
+						lock (SavingMap) {
+							try { File.Delete(path); } catch { }
+							SavingMap.Remove(path);
+						}
+					}
 				}, data);
 			}
 			return true;
@@ -186,7 +217,7 @@ namespace SpriteMaster.Resample {
 								continue;
 							}
 							var endPath = Path.GetFileName(directory);
-							if (endPath != CacheName && endPath != JunctionCacheName) {
+							if (Config.Cache.Purge || (endPath != CacheName && endPath != JunctionCacheName)) {
 								// If it doesn't match, it's outdated and should be deleted.
 								Directory.Delete(directory, true);
 							}

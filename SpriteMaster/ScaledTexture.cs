@@ -24,33 +24,37 @@ namespace SpriteMaster {
 		}
 
 		internal void Add (Texture2D reference, ScaledTexture texture, Bounds sourceRectangle) {
-			var Map = reference.Meta().SpriteTable;
-			var rectangleHash = SpriteHash(reference, sourceRectangle);
+			lock (reference.Meta()) {
+				var Map = reference.Meta().SpriteTable;
+				var rectangleHash = SpriteHash(reference, sourceRectangle);
 
-			using (Lock.Exclusive) {
-				ScaledTextureReferences.Add(texture);
-				Map.Add(rectangleHash, texture);
+				using (Lock.Exclusive) {
+					ScaledTextureReferences.Add(texture);
+					Map.Add(rectangleHash, texture);
+				}
 			}
 		}
 
 		internal bool TryGet (Texture2D texture, Bounds sourceRectangle, out ScaledTexture result) {
 			result = null;
 
-			var Map = texture.Meta().SpriteTable;
+			lock (texture.Meta()) {
+				var Map = texture.Meta().SpriteTable;
 
-			using (Lock.Shared) {
-				var rectangleHash = SpriteHash(texture, sourceRectangle);
-				if (Map.TryGetValue(rectangleHash, out var scaledTexture)) {
-					if (scaledTexture.Texture != null && scaledTexture.Texture.IsDisposed) {
-						using (Lock.Promote) {
-							Map.Clear();
+				using (Lock.Shared) {
+					var rectangleHash = SpriteHash(texture, sourceRectangle);
+					if (Map.TryGetValue(rectangleHash, out var scaledTexture)) {
+						if (scaledTexture.Texture != null && scaledTexture.Texture.IsDisposed) {
+							using (Lock.Promote) {
+								Map.Clear();
+							}
 						}
-					}
-					else {
-						if (scaledTexture.IsReady) {
-							result = scaledTexture;
+						else {
+							if (scaledTexture.IsReady) {
+								result = scaledTexture;
+							}
+							return true;
 						}
-						return true;
 					}
 				}
 			}
@@ -60,26 +64,28 @@ namespace SpriteMaster {
 
 		internal void Remove (ScaledTexture scaledTexture, Texture2D texture) {
 			try {
-				var Map = texture.Meta().SpriteTable;
+				lock (texture.Meta()) {
+					var Map = texture.Meta().SpriteTable;
 
-				using (Lock.Exclusive) {
+					using (Lock.Exclusive) {
 
-					try {
-						ScaledTextureReferences.Purge();
-						var removeElements = new List<ScaledTexture>();
-						foreach (var element in ScaledTextureReferences) {
-							if (element == scaledTexture) {
-								removeElements.Add(element);
+						try {
+							ScaledTextureReferences.Purge();
+							var removeElements = new List<ScaledTexture>();
+							foreach (var element in ScaledTextureReferences) {
+								if (element == scaledTexture) {
+									removeElements.Add(element);
+								}
+							}
+
+							foreach (var element in removeElements) {
+								ScaledTextureReferences.Remove(element);
 							}
 						}
+						catch { }
 
-						foreach (var element in removeElements) {
-							ScaledTextureReferences.Remove(element);
-						}
+						Map.Clear();
 					}
-					catch { }
-
-					Map.Clear();
 				}
 			}
 			finally {
@@ -94,26 +100,28 @@ namespace SpriteMaster {
 		internal void Purge (Texture2D reference, Bounds? sourceRectangle = null) {
 			try {
 				using (Lock.Shared) {
-					var Map = reference.Meta().SpriteTable;
-					if (Map.Count == 0) {
-						return;
-					}
-
-					// TODO handle sourceRectangle meaningfully.
-					using (Lock.Promote) {
-						Debug.InfoLn($"Purging Texture {reference.SafeName()}");
-
-						foreach (var scaledTexture in Map.Values) {
-							if (scaledTexture.Texture != null) {
-								lock (scaledTexture) {
-									//scaledTexture.Texture.Dispose();
-									scaledTexture.Texture = null;
-								}
-							}
+					lock (reference.Meta()) {
+						var Map = reference.Meta().SpriteTable;
+						if (Map.Count == 0) {
+							return;
 						}
 
-						Map.Clear();
-						// TODO dispose sprites?
+						// TODO handle sourceRectangle meaningfully.
+						using (Lock.Promote) {
+							Debug.InfoLn($"Purging Texture {reference.SafeName()}");
+
+							foreach (var scaledTexture in Map.Values) {
+								if (scaledTexture.Texture != null) {
+									lock (scaledTexture) {
+										//scaledTexture.Texture.Dispose();
+										scaledTexture.Texture = null;
+									}
+								}
+							}
+
+							Map.Clear();
+							// TODO dispose sprites?
+						}
 					}
 				}
 			}
@@ -140,7 +148,9 @@ namespace SpriteMaster {
 					foreach (var purgable in purgeList) {
 						if (purgable.Reference.TryGetTarget(out var reference)) {
 							purgable.Destroy(reference);
-							reference.Meta().SpriteTable.Clear();
+							lock (reference.Meta()) {
+								reference.Meta().SpriteTable.Clear();
+							}
 						}
 					}
 				}

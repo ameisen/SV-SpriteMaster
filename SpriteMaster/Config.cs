@@ -19,7 +19,7 @@ namespace SpriteMaster {
 
 		internal static readonly string ModuleName = typeof(Config).Namespace;
 
-		internal static bool Enabled = true;
+		internal static bool Enabled = false;
 		internal static SButton ToggleButton = SButton.F11;
 
 		internal const int MaxSamplers = 16;
@@ -39,6 +39,8 @@ namespace SpriteMaster {
 		internal static long ForceGarbageCollectAfter = long.MaxValue;
 		internal static bool GarbageCollectAccountUnownedTextures = true;
 		internal static bool GarbageCollectAccountOwnedTexture = true;
+		internal static bool LeakPreventTexture = true;
+		internal static bool LeakPreventAll = true;
 		internal static bool DiscardDuplicates = false;
 		internal static int DiscardDuplicatesFrameDelay = 2;
 		internal static List<string> DiscardDuplicatesBlacklist = new List<string>() {
@@ -169,6 +171,7 @@ namespace SpriteMaster {
 		}
 
 		internal static class Cache {
+			internal const bool Purge = false;
 			internal static bool Enabled = true;
 			internal const int LockRetries = 32;
 			internal const int LockSleepMS = 32;

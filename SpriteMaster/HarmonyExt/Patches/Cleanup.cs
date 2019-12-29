@@ -45,46 +45,50 @@ namespace SpriteMaster.HarmonyExt.Patches {
 			}
 			Contract.AssertNull(CurrentFinalizer.Value);
 			if (__instance is GraphicsResource resource) {
-				if (!resource.IsDisposed) {
-					CurrentFinalizer.Value = resource;
-					try {
-						resource.Dispose();
-					}
-					finally {
-						CurrentFinalizer.Value = null;
-					}
-					if (__instance is Texture2D texture) {
-						Debug.ErrorLn($"Leak Corrected for {resource.GetType().FullName} {resource.ToString()} ({texture.SizeBytes().AsDataSize()})");
-					}
-					else {
-						Debug.ErrorLn($"Leak Corrected for {resource.GetType().FullName} {resource.ToString()}");
+				if (Config.LeakPreventTexture) {
+					if (!resource.IsDisposed) {
+						CurrentFinalizer.Value = resource;
+						try {
+							resource.Dispose();
+						}
+						finally {
+							CurrentFinalizer.Value = null;
+						}
+						if (__instance is Texture2D texture) {
+							Debug.ErrorLn($"Leak Corrected for {resource.GetType().FullName} {resource.ToString()} ({texture.SizeBytes().AsDataSize()})");
+						}
+						else {
+							Debug.ErrorLn($"Leak Corrected for {resource.GetType().FullName} {resource.ToString()}");
+						}
 					}
 				}
 			}
 			else if (__instance is IDisposable @this) {
-				// does it have an 'IsDisposed' like much of XNA?
-				var type = @this.GetType();
-				const BindingFlags bindingAttr = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+				if (Config.LeakPreventAll) {
+					// does it have an 'IsDisposed' like much of XNA?
+					var type = @this.GetType();
+					const BindingFlags bindingAttr = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
-				if (type.TryGetProperty("IsDisposed", out var disposedProperty, bindingAttr) && (bool)disposedProperty.GetValue(@this)) {
-					return;
-				}
-				if (type.TryGetField("IsDisposed", out var disposedField, bindingAttr) && (bool)disposedProperty.GetValue(@this)) {
-					return;
-				}
+					if (type.TryGetProperty("IsDisposed", out var disposedProperty, bindingAttr) && (bool)disposedProperty.GetValue(@this)) {
+						return;
+					}
+					if (type.TryGetField("IsDisposed", out var disposedField, bindingAttr) && (bool)disposedProperty.GetValue(@this)) {
+						return;
+					}
 
-				Contract.AssertNull(CurrentFinalizer.Value);
-				CurrentFinalizer.Value = @this;
+					Contract.AssertNull(CurrentFinalizer.Value);
+					CurrentFinalizer.Value = @this;
 
-				if (disposedProperty != null || disposedField != null) {
-					//Debug.WarningLn($"Leak Corrected for {@this.GetType().FullName} {@this.ToString()}");
-				}
+					if (disposedProperty != null || disposedField != null) {
+						//Debug.WarningLn($"Leak Corrected for {@this.GetType().FullName} {@this.ToString()}");
+					}
 
-				try {
-					@this.Dispose();
-				}
-				finally {
-					CurrentFinalizer.Value = null;
+					try {
+						@this.Dispose();
+					}
+					finally {
+						CurrentFinalizer.Value = null;
+					}
 				}
 			}
 		}

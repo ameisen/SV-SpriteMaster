@@ -55,22 +55,24 @@ namespace SpriteMaster.HarmonyExt.Patches {
 						continue;
 					}
 					var maxTextureSizeProperty = getPrivateField(capabilities, "MaxTextureSize");
-					foreach (var i in Config.AbsoluteMaxTextureDimension.To(Config.BaseMaxTextureDimension)) {
-						if ((int)maxTextureSizeProperty.GetValue(capabilities) < i) {
-							maxTextureSizeProperty.SetValue(capabilities, i);
-							getPrivateField(capabilities, "MaxTextureAspectRatio").SetValue(capabilities, i / 2);
-							try {
-								Config.ClampDimension = i;
-								//Math.Min(i, Config.PreferredMaxTextureDimension);
-								using (var testTexture = new Texture2D(@this.GraphicsDevice, i, i)) {
-									/* do nothing. We want to dispose of it immediately. */
-								}
-								Garbage.Collect(compact: true, blocking: true, background: false);
-								break;
+					for (var currentDimension = Config.AbsoluteMaxTextureDimension; currentDimension >= Config.BaseMaxTextureDimension; currentDimension >>= 1) {
+						maxTextureSizeProperty.SetValue(capabilities, currentDimension);
+						getPrivateField(capabilities, "MaxTextureAspectRatio").SetValue(capabilities, currentDimension / 2);
+						try {
+							Config.ClampDimension = currentDimension;
+							//Math.Min(i, Config.PreferredMaxTextureDimension);
+							using (var testTexture = new Texture2D(@this.GraphicsDevice, currentDimension, currentDimension)) {
+								/* do nothing. We want to dispose of it immediately. */
 							}
-							catch { /* do nothing. resolution unsupported. */ }
 							Garbage.Collect(compact: true, blocking: true, background: false);
+							break;
 						}
+						catch {
+							Config.ClampDimension = Config.BaseMaxTextureDimension;
+							maxTextureSizeProperty.SetValue(capabilities, Config.BaseMaxTextureDimension);
+							getPrivateField(capabilities, "MaxTextureAspectRatio").SetValue(capabilities, Config.BaseMaxTextureDimension / 2);
+						}
+						Garbage.Collect(compact: true, blocking: true, background: false);
 					}
 				}
 			}
