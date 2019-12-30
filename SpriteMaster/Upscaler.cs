@@ -72,7 +72,9 @@ namespace SpriteMaster {
 			var inputSize = desprite ? input.Size.Extent : input.ReferenceSize;
 
 			if (Config.Resample.Scale) {
-				foreach (int s in Config.Resample.MaxScale.Until(scale)) {
+				int originalScale = scale;
+				scale = 2;
+				foreach (int s in originalScale.Until(2)) {
 					var newDimensions = inputSize * s;
 					if (newDimensions.X <= Config.PreferredMaxTextureDimension && newDimensions.Y <= Config.PreferredMaxTextureDimension) {
 						scale = s;

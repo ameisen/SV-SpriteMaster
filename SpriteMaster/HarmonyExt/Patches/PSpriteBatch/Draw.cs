@@ -15,6 +15,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 	static class Draw {
 		private const bool Continue = true;
 		private const bool Stop = false;
+		private const float ScaleAdjust = 0.1f;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static bool Cleanup (this ref Rectangle sourceRectangle, Texture2D reference) {
@@ -29,11 +30,13 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static bool FetchScaledTexture (
 			this Texture2D reference,
+			int expectedScale,
 			ref Rectangle source,
 			out ScaledTexture scaledTexture,
 			bool create = false
 		) {
 			scaledTexture = reference.FetchScaledTexture(
+				expectedScale: expectedScale,
 				source: ref source,
 				create: create
 			);
@@ -42,6 +45,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 
 		private static ScaledTexture FetchScaledTexture (
 			this Texture2D reference,
+			int expectedScale,
 			ref Rectangle source,
 			bool create = false
 		) {
@@ -58,8 +62,8 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 					return null;
 
 				var scaledTexture = create ?
-					ScaledTexture.Get(reference, newSource) :
-					ScaledTexture.Fetch(reference, newSource);
+					ScaledTexture.Get(texture: reference, source: newSource, expectedScale: expectedScale) :
+					ScaledTexture.Fetch(texture: reference, source: newSource, expectedScale: expectedScale);
 				if (scaledTexture != null && scaledTexture.IsReady) {
 					var t = scaledTexture.Texture;
 
@@ -99,11 +103,17 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			var sourceRectangle = source.GetValueOrDefault(new Rectangle(0, 0, texture.Width, texture.Height));
 			var originalSourceRectangle = sourceRectangle;
 
+			sourceRectangle.Validate(reference: texture);
+
+			var expectedScale2D = new Vector2(destination.Width, destination.Height) / new Vector2(sourceRectangle.Width, sourceRectangle.Height);
+			var expectedScale = (Math.Max(expectedScale2D.X, expectedScale2D.Y) + ScaleAdjust).Clamp(2.0f, (float)Config.Resample.MaxScale);
+
 			if (!texture.FetchScaledTexture(
+				expectedScale: expectedScale.NextInt(),
 				source: ref sourceRectangle,
-				out var scaledTexture,
-				create: true)
-			) {
+				scaledTexture: out var scaledTexture,
+				create: true
+			)) {
 				return Continue;
 			}
 			scaledTexture.UpdateReferenceFrame();
@@ -146,6 +156,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static void Adjust(this ref float depth) {
+			return;
 			const float Epsilon = 0.00001f;
 			depth += DrawState.CurrentDepth;
 			DrawState.CurrentDepth += Epsilon;
@@ -171,11 +182,14 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 
 			sourceRectangle.Validate(reference: texture);
 
+			var expectedScale2D = new Vector2(destination.Width, destination.Height) / new Vector2(sourceRectangle.Width, sourceRectangle.Height);
+			var expectedScale = (Math.Max(expectedScale2D.X, expectedScale2D.Y) + ScaleAdjust).Clamp(2.0f, (float)Config.Resample.MaxScale);
+
 			if (!texture.FetchScaledTexture(
+				expectedScale: expectedScale.NextInt(),
 				source: ref sourceRectangle,
-				scaledTexture:
-				out var scaledTexture)
-			) {
+				scaledTexture: out var scaledTexture
+			)) {
 				return Continue;
 			}
 			scaledTexture.UpdateReferenceFrame();
@@ -215,15 +229,18 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 
 			sourceRectangle.Validate(reference: texture);
 
+			var expectedScale = (Math.Max(scale.X, scale.Y) + ScaleAdjust).Clamp(2.0f, (float)Config.Resample.MaxScale);
+
 			ScaledTexture scaledTexture;
 			if (texture is ManagedTexture2D resampledTexture) {
 				scaledTexture = resampledTexture.Texture;
 			}
 			else if (texture.FetchScaledTexture(
+				expectedScale: expectedScale.NextInt(),
 				source: ref sourceRectangle,
 				scaledTexture: out scaledTexture,
-				create: true)
-			) {
+				create: true
+			)) {
 				resampledTexture = scaledTexture.Texture;
 			}
 			else {

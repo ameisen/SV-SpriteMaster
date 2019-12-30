@@ -18,14 +18,14 @@ namespace SpriteMaster {
 		private readonly SharedLock Lock = new SharedLock();
 		private readonly WeakCollection<ScaledTexture> ScaledTextureReferences = new WeakCollection<ScaledTexture>();
 
-		static private ulong SpriteHash (Texture2D texture, Bounds sourceRectangle) {
-			return ScaledTexture.ExcludeSprite(texture) ? 0UL : sourceRectangle.Hash();
+		static private ulong SpriteHash (Texture2D texture, Bounds source, int expectedScale) {
+			return (ScaledTexture.ExcludeSprite(texture) ? 0UL : source.Hash()) ^ unchecked((ulong)expectedScale.GetHashCode());
 		}
 
-		internal void Add (Texture2D reference, ScaledTexture texture, Bounds sourceRectangle) {
+		internal void Add (Texture2D reference, ScaledTexture texture, Bounds source, int expectedScale) {
 			lock (reference.Meta()) {
 				var Map = reference.Meta().SpriteTable;
-				var rectangleHash = SpriteHash(reference, sourceRectangle);
+				var rectangleHash = SpriteHash(texture: reference, source: source, expectedScale: expectedScale);
 
 				using (Lock.Exclusive) {
 					ScaledTextureReferences.Add(texture);
@@ -34,14 +34,14 @@ namespace SpriteMaster {
 			}
 		}
 
-		internal bool TryGet (Texture2D texture, Bounds sourceRectangle, out ScaledTexture result) {
+		internal bool TryGet (Texture2D texture, Bounds source, int expectedScale, out ScaledTexture result) {
 			result = null;
 
 			lock (texture.Meta()) {
 				var Map = texture.Meta().SpriteTable;
 
 				using (Lock.Shared) {
-					var rectangleHash = SpriteHash(texture, sourceRectangle);
+					var rectangleHash = SpriteHash(texture: texture, source: source, expectedScale: expectedScale);
 					if (Map.TryGetValue(rectangleHash, out var scaledTexture)) {
 						if (scaledTexture.Texture != null && scaledTexture.Texture.IsDisposed) {
 							using (Lock.Promote) {
@@ -256,24 +256,24 @@ namespace SpriteMaster {
 			return true;
 		}
 
-		static internal ScaledTexture Fetch (Texture2D texture, Bounds sourceRectangle) {
+		static internal ScaledTexture Fetch (Texture2D texture, Bounds source, int expectedScale) {
 			if (!Validate(texture)) {
 				return null;
 			}
 
-			if (SpriteMap.TryGet(texture, sourceRectangle, out var scaleTexture)) {
+			if (SpriteMap.TryGet(texture, source, expectedScale, out var scaleTexture)) {
 				return scaleTexture;
 			}
 
 			return null;
 		}
 
-		static internal ScaledTexture Get (Texture2D texture, Bounds sourceRectangle) {
+		static internal ScaledTexture Get (Texture2D texture, Bounds source, int expectedScale) {
 			if (!Validate(texture)) {
 				return null;
 			}
 
-			if (SpriteMap.TryGet(texture, sourceRectangle, out var scaleTexture)) {
+			if (SpriteMap.TryGet(texture, source, expectedScale, out var scaleTexture)) {
 				return scaleTexture;
 			}
 
@@ -322,18 +322,19 @@ namespace SpriteMaster {
 				}
 			}
 
-			bool isSprite = !ExcludeSprite(texture) && (!sourceRectangle.Offset.IsZero || sourceRectangle.Extent != texture.Extent());
-			var textureWrapper = new SpriteInfo(texture, sourceRectangle);
+			bool isSprite = !ExcludeSprite(texture) && (!source.Offset.IsZero || source.Extent != texture.Extent());
+			var textureWrapper = new SpriteInfo(texture, source);
 			ulong hash = Upscaler.GetHash(textureWrapper, isSprite);
 
 			ScaledTexture newTexture = null;
 			newTexture = new ScaledTexture(
 				assetName: texture.Name,
 				textureWrapper: textureWrapper,
-				sourceRectangle: sourceRectangle,
+				sourceRectangle: source,
 				isSprite: isSprite,
 				hash: hash,
-				async: useAsync
+				async: useAsync,
+				expectedScale: expectedScale
 			);
 			if (useAsync && Config.AsyncScaling.Enabled) {
 				// It adds itself to the relevant maps.
@@ -526,7 +527,7 @@ namespace SpriteMaster {
 			}
 		}
 
-		internal ScaledTexture (string assetName, SpriteInfo textureWrapper, Bounds sourceRectangle, ulong hash, bool isSprite, bool async) {
+		internal ScaledTexture (string assetName, SpriteInfo textureWrapper, Bounds sourceRectangle, ulong hash, bool isSprite, bool async, int expectedScale) {
 			IsSprite = isSprite;
 			Hash = hash;
 			var source = textureWrapper.Reference;
@@ -534,8 +535,8 @@ namespace SpriteMaster {
 			this.OriginalSourceRectangle = new Bounds(sourceRectangle);
 			this.Reference = source.MakeWeak();
 			this.sourceRectangle = sourceRectangle;
-			this.refScale = 2;
-			SpriteMap.Add(source, this, sourceRectangle);
+			this.refScale = expectedScale;
+			SpriteMap.Add(source, this, sourceRectangle, expectedScale);
 
 			this.Name = source.Name.IsBlank() ? assetName : source.Name;
 			originalSize = IsSprite ? sourceRectangle.Extent : new Vector2I(source);
@@ -558,7 +559,7 @@ namespace SpriteMaster {
 			}
 			else {
 				// TODO store the HD Texture in _this_ object instead. Will confuse things like subtexture updates, though.
-				this.Texture = (ManagedTexture2D)Upscaler.Upscale(
+				this.Texture = Upscaler.Upscale(
 					texture: this,
 					scale: ref refScale,
 					input: textureWrapper,
