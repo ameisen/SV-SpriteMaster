@@ -27,6 +27,10 @@ namespace xBRZNet2.Scalers {
 			//this works because 8 upper bits are free
 			var dst = dstRef;
 			var alphaComponent = BlendComponent(ColorConstant.Shift.Alpha, ColorConstant.Mask.Alpha, n, m, dst, col, gamma: false);
+			if (alphaComponent == 0) {
+				dstRef = 0;
+				return;
+			}
 			var redComponent = BlendComponent(ColorConstant.Shift.Red, ColorConstant.Mask.Red, n, m, dst, col);
 			var greenComponent = BlendComponent(ColorConstant.Shift.Green, ColorConstant.Mask.Green, n, m, dst, col);
 			var blueComponent = BlendComponent(ColorConstant.Shift.Blue, ColorConstant.Mask.Blue, n, m, dst, col);
@@ -99,31 +103,6 @@ namespace xBRZNet2.Scalers {
 					var hardenedAlpha = Curve(channelF);
 
 					outChan = Math.Min(0xFFFF, (int)(hardenedAlpha * 0xFFFF));
-				}
-				else if (false) {
-					double channelF = (double)outChan / (double)0xFFFF;
-
-					//const double exponent = 300.0;
-
-					// alternatively, could use sin(x*pi - (pi/2))
-					//var hardenedAlpha = IMath.Lerp(
-					//	Math.Pow(channelF, exponent),
-					//	Math.Pow(channelF, 1.0 / exponent),
-					//	channelF
-					//);
-					const int iterations = 1;
-					for (int i = 0; i < iterations; ++i) {
-						channelF = Curve(channelF);
-					}
-
-					outChan = Math.Min(0xFFFF, (int)(channelF * 0xFFFF));
-				}
-				else if (false) {
-					double channelF = (double)outChan / (double)0xFFFF;
-
-					channelF = channelF * channelF;
-
-					outChan = Math.Min(0xFFFF, (int)(channelF * 0xFFFF));
 				}
 
 				var component = (outChan.Narrow()) << shift;
@@ -316,12 +295,12 @@ namespace xBRZNet2.Scalers {
 			AlphaBlend(1, 4, ref out_.Ref(Scale - 1, 0), col);
 			AlphaBlend(1, 4, ref out_.Ref(Scale - 2, 2), col);
 			AlphaBlend(3, 4, ref out_.Ref(Scale - 1, 1), col);
+			AlphaBlend(2, 3, ref out_.Ref(3, 3), col);
 			out_.Set(2, Scale - 1, col);
 			out_.Set(3, Scale - 1, col);
 			out_.Set(Scale - 1, 2, col);
 			out_.Set(Scale - 1, 3, col);
 			out_.Set(4, Scale - 1, col);
-			AlphaBlend(2, 3, ref out_.Ref(3, 3), col);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -342,6 +321,87 @@ namespace xBRZNet2.Scalers {
 			AlphaBlend(23, 100, ref out_.Ref(3, 4), col); //0.2306749731
 			//AlphaBlend(8, 1000, ref out_.Ref(4, 2), col); //0.008384061834 -> negligable
 			//AlphaBlend(8, 1000, ref out_.Ref(2, 4), col); //0.008384061834
+		}
+	}
+
+	internal sealed class Scaler6X : IScaler {
+		public new const int Scale = 6;
+		[MethodImpl(MethodImplOptions.AggressiveInlining)] public Scaler6X () : base(Scale) { }
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public override void BlendLineShallow (int col, in OutputMatrix out_) {
+			AlphaBlend(1, 4, ref out_.Ref(Scale - 1, 0), col);
+			AlphaBlend(1, 4, ref out_.Ref(Scale - 2, 2), col);
+			AlphaBlend(1, 4, ref out_.Ref(Scale - 3, 4), col);
+			AlphaBlend(3, 4, ref out_.Ref(Scale - 1, 1), col);
+			AlphaBlend(3, 4, ref out_.Ref(Scale - 2, 3), col);
+			AlphaBlend(3, 4, ref out_.Ref(Scale - 3, 5), col);
+
+			out_.Set(Scale - 1, 2, col);
+			out_.Set(Scale - 1, 3, col);
+			out_.Set(Scale - 1, 4, col);
+			out_.Set(Scale - 2, 5, col);
+			out_.Set(Scale - 2, 4, col);
+			out_.Set(Scale - 2, 5, col);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public override void BlendLineSteep (int col, in OutputMatrix out_) {
+			AlphaBlend(1, 4, ref out_.Ref(0, Scale - 1), col);
+			AlphaBlend(1, 4, ref out_.Ref(2, Scale - 2), col);
+			AlphaBlend(1, 4, ref out_.Ref(4, Scale - 3), col);
+			AlphaBlend(3, 4, ref out_.Ref(1, Scale - 1), col);
+			AlphaBlend(3, 4, ref out_.Ref(3, Scale - 2), col);
+			AlphaBlend(3, 4, ref out_.Ref(5, Scale - 3), col);
+
+			out_.Set(2, Scale - 1, col);
+			out_.Set(3, Scale - 1, col);
+			out_.Set(4, Scale - 1, col);
+			out_.Set(5, Scale - 1, col);
+			out_.Set(4, Scale - 2, col);
+			out_.Set(5, Scale - 2, col);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public override void BlendLineSteepAndShallow (int col, in OutputMatrix out_) {
+			AlphaBlend(1, 4, ref out_.Ref(0, Scale - 1), col);
+			AlphaBlend(1, 4, ref out_.Ref(2, Scale - 2), col);
+			AlphaBlend(3, 4, ref out_.Ref(1, Scale - 1), col);
+			AlphaBlend(3, 4, ref out_.Ref(3, Scale - 2), col);
+			AlphaBlend(1, 4, ref out_.Ref(Scale - 1, 0), col);
+			AlphaBlend(1, 4, ref out_.Ref(Scale - 2, 2), col);
+			AlphaBlend(3, 4, ref out_.Ref(Scale - 1, 1), col);
+			AlphaBlend(3, 4, ref out_.Ref(Scale - 2, 3), col);
+
+			out_.Set(2, Scale - 1, col);
+			out_.Set(3, Scale - 1, col);
+			out_.Set(4, Scale - 1, col);
+			out_.Set(5, Scale - 1, col);
+			out_.Set(4, Scale - 2, col);
+			out_.Set(5, Scale - 2, col);
+			out_.Set(Scale - 1, 2, col);
+			out_.Set(Scale - 1, 3, col);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public override void BlendLineDiagonal (int col, in OutputMatrix out_) {
+			AlphaBlend(1, 2, ref out_.Ref(Scale - 1, Scale / 2), col);
+			AlphaBlend(1, 2, ref out_.Ref(Scale - 2, Scale / 2 + 1), col);
+			AlphaBlend(1, 2, ref out_.Ref(Scale - 3, Scale / 2 + 2), col);
+
+			out_.Set(Scale - 2, Scale - 1, col);
+			out_.Set(Scale - 1, Scale - 1, col);
+			out_.Set(Scale - 1, Scale - 2, col);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public override void BlendCorner (int col, in OutputMatrix out_) {
+			//model a round corner
+			AlphaBlend(97, 100, ref out_.Ref(5, 5), col); //exact: 0.9711013910
+			AlphaBlend(42, 100, ref out_.Ref(4, 5), col); //0.4236372243
+			AlphaBlend(42, 100, ref out_.Ref(5, 4), col); //0.4236372243
+			AlphaBlend(6, 100, ref out_.Ref(5, 3), col); //0.05652034508
+			AlphaBlend(6, 100, ref out_.Ref(3, 5), col); //0.05652034508
 		}
 	}
 }

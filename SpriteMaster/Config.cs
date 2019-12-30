@@ -92,7 +92,7 @@ namespace SpriteMaster {
 		internal static class Resample {
 			internal const bool Smoothing = true;
 			internal const bool Scale = Smoothing;
-			internal static int MaxScale = 5;
+			internal static int MaxScale = 6;
 			internal static int MinimumTextureDimensions = 4;
 			internal const bool EnableWrappedAddressing = true;
 			internal static bool UseBlockCompression = true;

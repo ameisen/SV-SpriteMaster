@@ -10,7 +10,7 @@ namespace xBRZNet2.Scalers {
 		private int _outi;
 		private int _nr;
 
-		private const int MaxScale = 5; // Highest possible scale
+		private const int MaxScale = 6; // Highest possible scale
 		private const int MaxScaleSquared = MaxScale * MaxScale;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

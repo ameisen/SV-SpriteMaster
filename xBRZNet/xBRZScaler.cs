@@ -50,7 +50,7 @@ namespace xBRZNet2 {
 
 	// ReSharper disable once InconsistentNaming
 	public sealed class xBRZScaler {
-		// scaleSize = 2 to 5
+		// scaleSize = 2 to 6
 
 		public xBRZScaler (
 			int scaleMultiplier,
@@ -61,7 +61,7 @@ namespace xBRZNet2 {
 			int[] targetData,
 			in Config configuration
 		) {
-			if (scaleMultiplier < 2 || scaleMultiplier > 5) {
+			if (scaleMultiplier < 2 || scaleMultiplier > 6) {
 				throw new ArgumentOutOfRangeException(nameof(scaleMultiplier));
 			}
 			if (sourceData == null) {

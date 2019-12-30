@@ -7,7 +7,8 @@ namespace xBRZNet2.Scalers {
 			new Scaler2X(),
 			new Scaler3X(),
 			new Scaler4X(),
-			new Scaler5X()
+			new Scaler5X(),
+			new Scaler6X()
 		};
 
 		public static IScaler ToIScaler (this int scaleSize) {
