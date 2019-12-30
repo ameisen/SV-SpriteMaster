@@ -20,7 +20,7 @@ namespace SpriteMaster {
 		}
 
 		internal static ulong GetHash (SpriteInfo input, bool desprite) {
-			var hash = input.Reference.Meta().GetHash(input);
+			var hash = input.Reference.Meta().GetHash(input) ^ unchecked((ulong)input.ExpectedScale);
 			if (desprite) {
 				hash ^= input.Size.Hash();
 			}

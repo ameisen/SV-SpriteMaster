@@ -11,6 +11,7 @@ namespace SpriteMaster {
 		internal readonly Bounds Size;
 		internal readonly Vector2B Wrapped;
 		internal readonly bool BlendEnabled;
+		internal readonly int ExpectedScale;
 		internal byte[] Data { get; private set; } = default;
 		private ulong _Hash = default;
 		public ulong Hash {
@@ -18,7 +19,7 @@ namespace SpriteMaster {
 				if (_Hash == default) {
 					_Hash = Data.Hash();
 				}
-				return _Hash;
+				return _Hash;// ^ unchecked((ulong)ExpectedScale.GetHashCode());
 			}
 		}
 
@@ -90,8 +91,9 @@ namespace SpriteMaster {
 			reference.Meta().CachedData = data;
 		}
 
-		internal SpriteInfo (Texture2D reference, in Bounds dimensions) {
+		internal SpriteInfo (Texture2D reference, in Bounds dimensions, int expectedScale) {
 			ReferenceSize = new Vector2I(reference);
+			ExpectedScale = expectedScale;
 			Size = dimensions;
 			if (Size.Bottom > ReferenceSize.Height) {
 				Size.Height -= (Size.Bottom - ReferenceSize.Height);

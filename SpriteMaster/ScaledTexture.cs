@@ -323,11 +323,10 @@ namespace SpriteMaster {
 			}
 
 			bool isSprite = !ExcludeSprite(texture) && (!source.Offset.IsZero || source.Extent != texture.Extent());
-			var textureWrapper = new SpriteInfo(texture, source);
+			var textureWrapper = new SpriteInfo(reference: texture, dimensions: source, expectedScale: expectedScale);
 			ulong hash = Upscaler.GetHash(textureWrapper, isSprite);
 
-			ScaledTexture newTexture = null;
-			newTexture = new ScaledTexture(
+			var newTexture = new ScaledTexture(
 				assetName: texture.Name,
 				textureWrapper: textureWrapper,
 				sourceRectangle: source,

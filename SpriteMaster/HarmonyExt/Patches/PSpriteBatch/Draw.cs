@@ -81,8 +81,20 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			return null;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static bool Validate(this ManagedTexture2D @this) {
 			return @this != null && !@this.IsDisposed;
+		}
+
+		[Conditional("DEBUG"), MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private static void Validate (this in Rectangle source, Texture2D reference) {
+			if (source.Left < 0 || source.Top < 0 || source.Right >= reference.Width || source.Bottom >= reference.Height) {
+				if (source.Right - reference.Width > 1 || source.Bottom - reference.Height > 1)
+					Debug.WarningLn($"Out of range source '{source}' for texture '{reference.SafeName()}' ({reference.Width}, {reference.Height})");
+			}
+			if (source.Right < source.Left || source.Bottom < source.Top) {
+				Debug.WarningLn($"Inverted range source '{source}' for texture '{reference.SafeName()}'");
+			}
 		}
 
 		// Takes the arguments, and checks to see if the texture is padded. If it is, it is forwarded to the correct draw call, avoiding
@@ -100,15 +112,15 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 		) {
 			texture.Meta().UpdateLastAccess();
 			var sourceRectangle = source.GetValueOrDefault(new Rectangle(0, 0, texture.Width, texture.Height));
-			var originalSourceRectangle = sourceRectangle;
+			var referenceRectangle = sourceRectangle;
 
 			sourceRectangle.Validate(reference: texture);
 
 			var expectedScale2D = new Vector2(destination.Width, destination.Height) / new Vector2(sourceRectangle.Width, sourceRectangle.Height);
-			var expectedScale = (Math.Max(expectedScale2D.X, expectedScale2D.Y) + Config.Resample.ScaleBias).Clamp(2.0f, (float)Config.Resample.MaxScale);
+			var expectedScale = ((Math.Max(expectedScale2D.X, expectedScale2D.Y) + Config.Resample.ScaleBias).Clamp(2.0f, (float)Config.Resample.MaxScale)).NextInt();
 
 			if (!texture.FetchScaledTexture(
-				expectedScale: expectedScale.NextInt(),
+				expectedScale: expectedScale,
 				source: ref sourceRectangle,
 				scaledTexture: out var scaledTexture,
 				create: true
@@ -121,7 +133,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 				// Convert the draw into the other draw style. This has to be done because the padding potentially has
 				// subpixel accuracy when scaled to the destination rectangle.
 
-				var originalSize = new Vector2(originalSourceRectangle.Width, originalSourceRectangle.Height);
+				var originalSize = new Vector2(referenceRectangle.Width, referenceRectangle.Height);
 				var destinationSize = new Vector2(destination.Width, destination.Height);
 				var newScale = destinationSize / originalSize;
 				var newPosition = new Vector2(destination.X, destination.Y);
@@ -142,25 +154,6 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			return Continue;
 		}
 
-		[Conditional("DEBUG"), MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static void Validate(this in Rectangle source, Texture2D reference) {
-			if (source.Left < 0 || source.Top < 0 || source.Right >= reference.Width || source.Bottom >= reference.Height) {
-				if (source.Right - reference.Width > 1 || source.Bottom - reference.Height > 1)
-					Debug.WarningLn($"Out of range source '{source}' for texture '{reference.SafeName()}' ({reference.Width}, {reference.Height})");
-			}
-			if (source.Right < source.Left || source.Bottom < source.Top) {
-				Debug.WarningLn($"Inverted range source '{source}' for texture '{reference.SafeName()}'");
-			}
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static void Adjust(this ref float depth) {
-			return;
-			const float Epsilon = 0.00001f;
-			depth += DrawState.CurrentDepth;
-			DrawState.CurrentDepth += Epsilon;
-		}
-
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static bool OnDraw (
 			this SpriteBatch @this,
@@ -173,8 +166,6 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			SpriteEffects effects,
 			ref float layerDepth
 		) {
-			layerDepth.Adjust();
-
 			texture.Meta().UpdateLastAccess();
 
 			var sourceRectangle = source.GetValueOrDefault(new Rectangle(0, 0, texture.Width, texture.Height));
@@ -182,10 +173,10 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			sourceRectangle.Validate(reference: texture);
 
 			var expectedScale2D = new Vector2(destination.Width, destination.Height) / new Vector2(sourceRectangle.Width, sourceRectangle.Height);
-			var expectedScale = (Math.Max(expectedScale2D.X, expectedScale2D.Y) + Config.Resample.ScaleBias).Clamp(2.0f, (float)Config.Resample.MaxScale);
+			var expectedScale = ((Math.Max(expectedScale2D.X, expectedScale2D.Y) + Config.Resample.ScaleBias).Clamp(2.0f, (float)Config.Resample.MaxScale)).NextInt();
 
 			if (!texture.FetchScaledTexture(
-				expectedScale: expectedScale.NextInt(),
+				expectedScale: expectedScale,
 				source: ref sourceRectangle,
 				scaledTexture: out var scaledTexture
 			)) {
@@ -220,22 +211,20 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			SpriteEffects effects,
 			ref float layerDepth
 		) {
-			layerDepth.Adjust();
-
 			texture.Meta().UpdateLastAccess();
 
 			var sourceRectangle = source.GetValueOrDefault(new Rectangle(0, 0, texture.Width, texture.Height));
 
 			sourceRectangle.Validate(reference: texture);
 
-			var expectedScale = (Math.Max(scale.X, scale.Y) + Config.Resample.ScaleBias).Clamp(2.0f, (float)Config.Resample.MaxScale);
+			var expectedScale = ((Math.Max(scale.X, scale.Y) + Config.Resample.ScaleBias).Clamp(2.0f, (float)Config.Resample.MaxScale)).NextInt();
 
 			ScaledTexture scaledTexture;
 			if (texture is ManagedTexture2D resampledTexture) {
 				scaledTexture = resampledTexture.Texture;
 			}
 			else if (texture.FetchScaledTexture(
-				expectedScale: expectedScale.NextInt(),
+				expectedScale: expectedScale,
 				source: ref sourceRectangle,
 				scaledTexture: out scaledTexture,
 				create: true
