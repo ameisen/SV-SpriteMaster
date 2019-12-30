@@ -1,6 +1,7 @@
 ﻿using Harmony;
 using SpriteMaster.Extensions;
 using SpriteMaster.HarmonyExt;
+using SpriteMaster.Metadata;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
@@ -33,6 +34,7 @@ namespace SpriteMaster {
 					}
 					catch (InsufficientMemoryException) {
 						Debug.WarningLn($"Less than {(Config.RequiredFreeMemory * 1024 * 1024).AsDataSize(decimals: 0)} available for block allocation, forcing full garbage collection");
+						MTexture2D.PurgeDataCache();
 						DrawState.TriggerGC = true;
 						Thread.Sleep(10000);
 					}
@@ -52,6 +54,7 @@ namespace SpriteMaster {
 						Thread.Sleep(32);
 					}
 
+					MTexture2D.PurgeDataCache();
 					DrawState.TriggerGC = true;
 					// TODO : Do other cleanup attempts here.
 				}

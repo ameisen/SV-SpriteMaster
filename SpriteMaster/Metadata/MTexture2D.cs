@@ -10,13 +10,25 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Metadata {
 	internal sealed class MTexture2D {
-		private static readonly MemoryCache DataCache = (Config.MemoryCache.Enabled) ? new MemoryCache(name: "DataCache", config: null) : null;
+		private static readonly object DataCacheLock = new object();
+		private static MemoryCache DataCache = (Config.MemoryCache.Enabled) ? new MemoryCache(name: "DataCache", config: null) : null;
 		private static long CurrentID = 0U;
 
 		public readonly SpriteDictionary SpriteTable = new SpriteDictionary();
 		private readonly string UniqueIDString = Interlocked.Increment(ref CurrentID).ToString();
 
 		private readonly SharedLock Lock = new SharedLock();
+
+		internal static void PurgeDataCache() {
+			if (!Config.MemoryCache.Enabled) {
+				return;
+			}
+
+			lock (DataCacheLock) {
+				DataCache.Dispose();
+				DataCache = new MemoryCache(name: "DataCache", config: null)
+			}
+		}
 
 		public long _LastAccessFrame = Thread.VolatileRead(ref DrawState.CurrentFrame);
 		public long LastAccessFrame {
@@ -162,7 +174,7 @@ namespace SpriteMaster.Metadata {
 					byte[] target = null;
 					if (!_CachedData.TryGetTarget(out target) || target == null) {
 						byte[] compressedBuffer;
-						lock (DataCache) {
+						lock (DataCacheLock) {
 							compressedBuffer = DataCache[UniqueIDString] as byte[];
 						}
 						if (compressedBuffer != null) {
@@ -189,7 +201,7 @@ namespace SpriteMaster.Metadata {
 						using (Lock.Promote) {
 							_CachedData.SetTarget(null);
 						}
-						lock (DataCache) {
+						lock (DataCacheLock) {
 							DataCache.Remove(UniqueIDString);
 						}
 					}
@@ -206,7 +218,7 @@ namespace SpriteMaster.Metadata {
 						if (queueCompress) {
 							ThreadPool.QueueUserWorkItem((buffer) => {
 								var compressedData = Compress((byte[])buffer);
-								lock (DataCache) {
+								lock (DataCacheLock) {
 									DataCache[UniqueIDString] = compressedData;
 								}
 							}, value);
