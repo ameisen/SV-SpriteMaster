@@ -26,7 +26,7 @@ namespace SpriteMaster.Metadata {
 
 			lock (DataCacheLock) {
 				DataCache.Dispose();
-				DataCache = new MemoryCache(name: "DataCache", config: null)
+				DataCache = new MemoryCache(name: "DataCache", config: null);
 			}
 		}
 
