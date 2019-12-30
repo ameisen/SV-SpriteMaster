@@ -375,8 +375,8 @@ namespace SpriteMaster {
 		private bool Disposed = false;
 
 		~ScaledTexture() {
-			if (Texture != null) {
-				//Texture.Dispose();
+			if (!Disposed) {
+				Dispose();
 			}
 		}
 
