@@ -17,6 +17,8 @@ namespace SpriteMaster {
 		public static Blend CurrentBlendSourceMode = BlendState.AlphaBlend.AlphaSourceBlend;
 		public static volatile bool TriggerGC = false;
 
+		public static volatile float CurrentDepth = 0.0f;
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static void SetCurrentAddressMode (SamplerState samplerState) {
 			CurrentAddressModeU = samplerState.AddressU;
@@ -67,11 +69,12 @@ namespace SpriteMaster {
 			FetchedThisFrame = false;
 			PushedUpdateThisFrame = false;
 			++CurrentFrame;
+			CurrentDepth = 0.0f;
 		}
 
 		internal static void OnBegin (
 			SpriteBatch @this,
-			SpriteSortMode sortMode,
+			ref SpriteSortMode sortMode,
 			BlendState blendState,
 			SamplerState samplerState,
 			DepthStencilState depthStencilState,

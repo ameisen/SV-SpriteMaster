@@ -1,8 +1,11 @@
-﻿using System.IO;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Reflection;
 
 namespace SpriteMaster.HarmonyExt.Patches {
-	public static class PlatformHelper {
+	[SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
+	[SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Harmony")]
+	internal static class PlatformHelper {
 		[HarmonyPatch(
 			typeof(TeximpNet.Unmanaged.NvTextureToolsLibrary),
 			"TeximpNet.Unmanaged.PlatformHelper",

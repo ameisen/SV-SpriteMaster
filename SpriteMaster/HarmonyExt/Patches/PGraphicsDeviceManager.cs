@@ -2,12 +2,14 @@
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using System;
-using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using static SpriteMaster.HarmonyExt.HarmonyExt;
 
 namespace SpriteMaster.HarmonyExt.Patches {
-	static class PGraphicsDeviceManager {
+	[SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
+	[SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Harmony")]
+	internal static class PGraphicsDeviceManager {
 
 		// D3DCREATE_MULTITHREADED
 		/*

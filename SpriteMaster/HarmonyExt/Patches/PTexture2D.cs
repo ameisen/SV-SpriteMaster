@@ -11,7 +11,7 @@ using static SpriteMaster.ScaledTexture;
 namespace SpriteMaster.HarmonyExt.Patches {
 	[SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
 	[SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Harmony")]
-	static class PTexture2D {
+	internal static class PTexture2D {
 		private static readonly MethodInfo CopyData;
 		private static readonly Dictionary<Type, MethodInfo> CopyDataGeneric = new Dictionary<Type, MethodInfo>();
 		static PTexture2D () {

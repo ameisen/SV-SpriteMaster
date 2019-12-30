@@ -4,13 +4,18 @@ using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
 using SpriteMaster.Types;
 using System;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using static SpriteMaster.ScaledTexture;
 
 namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 	[SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
 	[SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Harmony")]
 	static class Draw {
+		private const bool Continue = true;
+		private const bool Stop = false;
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static bool Cleanup (this ref Rectangle sourceRectangle, Texture2D reference) {
 			if (Config.ClampInvalidBounds) {
@@ -21,14 +26,29 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			return (sourceRectangle.Height > 0 && sourceRectangle.Width > 0);
 		}
 
-		private static ScaledTexture FetchScaledTexture (
-			this SpriteBatch @this,
-			Texture2D reference,
-			ref Rectangle sourceRectangle,
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private static bool FetchScaledTexture (
+			this Texture2D reference,
+			ref Rectangle source,
+			out ScaledTexture scaledTexture,
 			bool create = false
 		) {
+			scaledTexture = reference.FetchScaledTexture(
+				source: ref source,
+				create: create
+			);
+			return scaledTexture != null;
+		}
+
+		private static ScaledTexture FetchScaledTexture (
+			this Texture2D reference,
+			ref Rectangle source,
+			bool create = false
+		) {
+			var newSource = source;
+
 			try {
-				if (!sourceRectangle.Cleanup(reference))
+				if (!newSource.Cleanup(reference))
 					return null;
 
 				if (reference is RenderTarget2D || reference.Width < 1 || reference.Height < 1)
@@ -38,15 +58,15 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 					return null;
 
 				var scaledTexture = create ?
-					ScaledTexture.Get(reference, sourceRectangle) :
-					ScaledTexture.Fetch(reference, sourceRectangle);
+					ScaledTexture.Get(reference, newSource) :
+					ScaledTexture.Fetch(reference, newSource);
 				if (scaledTexture != null && scaledTexture.IsReady) {
 					var t = scaledTexture.Texture;
 
-					if (t == null || t.IsDisposed)
+					if (!t.Validate())
 						return null;
 
-					sourceRectangle = (Bounds)t.Dimensions;
+					source = (Bounds)t.Dimensions;
 
 					return scaledTexture;
 				}
@@ -58,18 +78,8 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			return null;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static ScaledTexture GetScaledTexture (
-			this SpriteBatch @this,
-			Texture2D reference,
-			ref Rectangle sourceRectangle
-		) {
-			var scaledTexture = @this.FetchScaledTexture(reference, ref sourceRectangle, create: true);
-			if (scaledTexture != null) {
-				return scaledTexture;
-			}
-
-			return null;
+		private static bool Validate(this ManagedTexture2D @this) {
+			return @this != null && !@this.IsDisposed;
 		}
 
 		// Takes the arguments, and checks to see if the texture is padded. If it is, it is forwarded to the correct draw call, avoiding
@@ -89,11 +99,13 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			var sourceRectangle = source.GetValueOrDefault(new Rectangle(0, 0, texture.Width, texture.Height));
 			var originalSourceRectangle = sourceRectangle;
 
-			var scaledTexture = GetScaledTexture(@this, texture, ref sourceRectangle);
-			if (scaledTexture == null) {
-				return true;
+			if (!texture.FetchScaledTexture(
+				source: ref sourceRectangle,
+				out var scaledTexture,
+				create: true)
+			) {
+				return Continue;
 			}
-
 			scaledTexture.UpdateReferenceFrame();
 
 			if (!scaledTexture.Padding.IsZero) {
@@ -116,9 +128,27 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 					effects: effects,
 					layerDepth: layerDepth
 				);
-				return false;
+				return Stop;
 			}
-			return true;
+			return Continue;
+		}
+
+		[Conditional("DEBUG"), MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private static void Validate(this in Rectangle source, Texture2D reference) {
+			if (source.Left < 0 || source.Top < 0 || source.Right >= reference.Width || source.Bottom >= reference.Height) {
+				if (source.Right - reference.Width > 1 || source.Bottom - reference.Height > 1)
+					Debug.WarningLn($"Out of range source '{source}' for texture '{reference.SafeName()}' ({reference.Width}, {reference.Height})");
+			}
+			if (source.Right < source.Left || source.Bottom < source.Top) {
+				Debug.WarningLn($"Inverted range source '{source}' for texture '{reference.SafeName()}'");
+			}
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private static void Adjust(this ref float depth) {
+			if (depth > 1.0f) {
+				Debug.InfoLn($"Layer Depth: {depth}");
+			}
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -133,25 +163,36 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			SpriteEffects effects,
 			float layerDepth
 		) {
+			layerDepth.Adjust();
+
 			texture.Meta().UpdateLastAccess();
+
 			var sourceRectangle = source.GetValueOrDefault(new Rectangle(0, 0, texture.Width, texture.Height));
 
-			var scaledTexture = FetchScaledTexture(@this, texture, ref sourceRectangle);
-			if (scaledTexture == null) {
-				return true;
-			}
+			sourceRectangle.Validate(reference: texture);
 
+			if (!texture.FetchScaledTexture(
+				source: ref sourceRectangle,
+				scaledTexture:
+				out var scaledTexture)
+			) {
+				return Continue;
+			}
 			scaledTexture.UpdateReferenceFrame();
 
-			var t = scaledTexture.Texture;
+			var resampledTexture = scaledTexture.Texture;
+			if (!resampledTexture.Validate()) {
+				return Continue;
+			}
+
 
 			var scaledOrigin = origin / scaledTexture.Scale;
 
 			source = sourceRectangle;
 			origin = scaledOrigin;
-			texture = t;
+			texture = resampledTexture;
 
-			return true;
+			return Continue;
 		}
 
 		internal static bool OnDraw (
@@ -166,26 +207,38 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			SpriteEffects effects,
 			float layerDepth
 		) {
+			layerDepth.Adjust();
+
 			texture.Meta().UpdateLastAccess();
 
 			var sourceRectangle = source.GetValueOrDefault(new Rectangle(0, 0, texture.Width, texture.Height));
-			bool allowPadding = true;
+
+			sourceRectangle.Validate(reference: texture);
 
 			ScaledTexture scaledTexture;
-			Texture2D t;
-			if (texture is ScaledTexture.ManagedTexture2D managedTexture) {
-				scaledTexture = managedTexture.Texture;
-				t = texture;
+			if (texture is ManagedTexture2D resampledTexture) {
+				scaledTexture = resampledTexture.Texture;
+			}
+			else if (texture.FetchScaledTexture(
+				source: ref sourceRectangle,
+				scaledTexture: out scaledTexture,
+				create: true)
+			) {
+				resampledTexture = scaledTexture.Texture;
 			}
 			else {
-				scaledTexture = FetchScaledTexture(@this, texture, ref sourceRectangle, allowPadding);
-				if (scaledTexture == null) {
-					return true;
-				}
-				t = scaledTexture.Texture;
+				resampledTexture = null;
+			}
+
+			if (scaledTexture == null) {
+				return Continue;
 			}
 
 			scaledTexture.UpdateReferenceFrame();
+
+			if (!resampledTexture.Validate()) {
+				return Continue;
+			}
 
 			var adjustedScale = scale / scaledTexture.Scale;
 			var adjustedPosition = position;
@@ -209,12 +262,12 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 				adjustedOrigin *= scaledTexture.Scale;
 			}
 
-			texture = t;
+			texture = resampledTexture;
 			source = sourceRectangle;
 			origin = adjustedOrigin;
 			scale = adjustedScale;
 			position = adjustedPosition;
-			return true;
+			return Continue;
 		}
 	}
 }

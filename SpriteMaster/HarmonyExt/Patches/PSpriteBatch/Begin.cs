@@ -64,8 +64,8 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		[HarmonyPatch("Begin")]
-		internal static bool OnBegin (SpriteBatch __instance, SpriteSortMode sortMode, BlendState blendState, SamplerState samplerState, DepthStencilState depthStencilState, RasterizerState rasterizerState, Effect effect, Matrix transformMatrix) {
-			DrawState.OnBegin(__instance, sortMode, blendState, samplerState, depthStencilState, rasterizerState, effect, transformMatrix);
+		internal static bool OnBegin (SpriteBatch __instance, ref SpriteSortMode sortMode, BlendState blendState, SamplerState samplerState, DepthStencilState depthStencilState, RasterizerState rasterizerState, Effect effect, Matrix transformMatrix) {
+			DrawState.OnBegin(__instance, ref sortMode, blendState, samplerState, depthStencilState, rasterizerState, effect, transformMatrix);
 			return true;
 		}
 	}
