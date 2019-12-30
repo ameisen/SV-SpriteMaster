@@ -8,6 +8,8 @@ using System.Runtime.CompilerServices;
 namespace SpriteMaster.Extensions {
 	internal static class Garbage {
 		private static readonly MethodInfo CompactingCollect = null;
+		internal static volatile bool ManualCollection = false;
+
 		static Garbage () {
 			GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
 
@@ -37,33 +39,40 @@ namespace SpriteMaster.Extensions {
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static void Collect(bool compact = false, bool blocking = false, bool background = true) {
-			Debug.InfoLn("Garbage Collecting");
-			if (compact) {
-				MarkCompact();
-			}
-			var latencyMode = GCSettings.LatencyMode;
 			try {
-				if (blocking) {
-					GCSettings.LatencyMode = GCLatencyMode.Batch;
+				ManualCollection = true;
+
+				Debug.InfoLn("Garbage Collecting");
+				if (compact) {
+					MarkCompact();
 				}
-				if (compact && CompactingCollect != null) {
-					CompactingCollect.Invoke(null, new object[] {
+				var latencyMode = GCSettings.LatencyMode;
+				try {
+					if (blocking) {
+						GCSettings.LatencyMode = GCLatencyMode.Batch;
+					}
+					if (compact && CompactingCollect != null) {
+						CompactingCollect.Invoke(null, new object[] {
 						int.MaxValue,
 						background ? GCCollectionMode.Optimized : GCCollectionMode.Forced,
 						blocking,
 						true
 					});
+					}
+					else {
+						GC.Collect(
+							generation: int.MaxValue,
+							mode: background ? GCCollectionMode.Optimized : GCCollectionMode.Forced,
+							blocking: blocking
+						);
+					}
 				}
-				else {
-					GC.Collect(
-						generation: int.MaxValue,
-						mode: background ? GCCollectionMode.Optimized : GCCollectionMode.Forced,
-						blocking: blocking
-					);
+				finally {
+					GCSettings.LatencyMode = latencyMode;
 				}
 			}
 			finally {
-				GCSettings.LatencyMode = latencyMode;
+				ManualCollection = false;
 			}
 		}
 

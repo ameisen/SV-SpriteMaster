@@ -16,6 +16,8 @@ namespace SpriteMaster {
 
 		// TODO : long for 64-bit?
 		private readonly Thread MemoryPressureThread = null;
+		private readonly Thread GarbageCollectThread = null;
+		private readonly object CollectLock = new object();
 
 		private void MemoryPressureLoop() {
 			for (;;) {
@@ -24,14 +26,34 @@ namespace SpriteMaster {
 					continue;
 				}
 
-				try {
-					using var _ = new MemoryFailPoint(Config.RequiredFreeMemory);
-					Thread.Sleep(128);
+				lock (CollectLock) {
+					try {
+						using var _ = new MemoryFailPoint(Config.RequiredFreeMemory);
+						Thread.Sleep(128);
+					}
+					catch (InsufficientMemoryException) {
+						Debug.WarningLn($"Less than {(Config.RequiredFreeMemory * 1024 * 1024).AsDataSize(decimals: 0)} available for block allocation, forcing full garbage collection");
+						DrawState.TriggerGC = true;
+						Thread.Sleep(10000);
+					}
 				}
-				catch (InsufficientMemoryException) {
-					Debug.WarningLn($"Less than {(Config.RequiredFreeMemory * 1024 * 1024).AsDataSize(decimals: 0)} available for block allocation, forcing full garbage collection");
+			}
+		}
+
+		private void GarbageCheckLoop() {
+			for (; ; ) {
+				GC.RegisterForFullGCNotification(10, 10);
+				GC.WaitForFullGCApproach();
+				if (Garbage.ManualCollection) {
+					continue;
+				}
+				lock (CollectLock) {
+					while (DrawState.TriggerGC) {
+						Thread.Sleep(32);
+					}
+
 					DrawState.TriggerGC = true;
-					Thread.Sleep(10000);
+					// TODO : Do other cleanup attempts here.
 				}
 			}
 		}
@@ -45,8 +67,14 @@ namespace SpriteMaster {
 			Self = this;
 
 			MemoryPressureThread = new Thread(MemoryPressureLoop);
+			MemoryPressureThread.Name = "Memory Pressure Thread";
 			MemoryPressureThread.Priority = ThreadPriority.BelowNormal;
 			MemoryPressureThread.IsBackground = true;
+
+			GarbageCollectThread = new Thread(GarbageCheckLoop);
+			GarbageCollectThread.Name = "Garbage Collection Thread";
+			GarbageCollectThread.Priority = ThreadPriority.BelowNormal;
+			GarbageCollectThread.IsBackground = true;
 		}
 
 		public override void Entry (IModHelper help) {
@@ -67,6 +95,7 @@ namespace SpriteMaster {
 			help.Events.GameLoop.SaveLoaded += (_, _1) => Garbage.Collect(compact: true, blocking: true, background: false);
 
 			MemoryPressureThread.Start();
+			GarbageCollectThread.Start();
 		}
 
 		// SMAPI/CP won't do this, so we do. Purge the cached textures for the previous season on a season change.

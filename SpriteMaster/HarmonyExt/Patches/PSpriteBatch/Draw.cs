@@ -146,9 +146,9 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static void Adjust(this ref float depth) {
-			if (depth > 1.0f) {
-				Debug.InfoLn($"Layer Depth: {depth}");
-			}
+			const float Epsilon = 0.00001f;
+			depth += DrawState.CurrentDepth;
+			DrawState.CurrentDepth += Epsilon;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -161,7 +161,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			float rotation,
 			ref Vector2 origin,
 			SpriteEffects effects,
-			float layerDepth
+			ref float layerDepth
 		) {
 			layerDepth.Adjust();
 
@@ -205,7 +205,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			ref Vector2 origin,
 			ref Vector2 scale,
 			SpriteEffects effects,
-			float layerDepth
+			ref float layerDepth
 		) {
 			layerDepth.Adjust();
 

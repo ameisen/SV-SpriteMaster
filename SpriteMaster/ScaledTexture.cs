@@ -239,13 +239,13 @@ namespace SpriteMaster {
 		}
 
 		private static bool Validate(Texture2D texture) {
-			int textureArea = texture.Width * texture.Height;
+			int textureArea = texture.Area();
 
 			if (textureArea == 0 || texture.IsDisposed) {
 				return false;
 			}
 
-			if (Config.IgnoreUnknownTextures && (texture.Name == null || texture.Name == "")) {
+			if (Config.IgnoreUnknownTextures && texture.Name.IsBlank()) {
 				return false;
 			}
 
@@ -277,7 +277,7 @@ namespace SpriteMaster {
 				return scaleTexture;
 			}
 
-			if (texture.Name != null && texture.Name != "") {
+			if (!texture.Name.IsBlank()) {
 				foreach (var blacklisted in Config.Resample.Blacklist) {
 					if (texture.Name.StartsWith(blacklisted)) {
 						return null;
@@ -287,7 +287,7 @@ namespace SpriteMaster {
 
 			bool useAsync = (Config.AsyncScaling.EnabledForUnknownTextures || !texture.Name.IsBlank()) && (texture.Area() >= Config.AsyncScaling.MinimumSizeTexels);
 
-			if (useAsync && Config.AsyncScaling.Enabled && !DrawState.GetUpdateToken(texture.Width * texture.Height) && !texture.Meta().HasCachedData) {
+			if (useAsync && Config.AsyncScaling.Enabled && !DrawState.GetUpdateToken(texture.Area()) && !texture.Meta().HasCachedData) {
 				return null;
 			}
 
@@ -295,7 +295,7 @@ namespace SpriteMaster {
 				// Check for duplicates with the same name.
 				// TODO : We do have a synchronity issue here. We could purge before an asynchronous task adds the texture.
 				// DiscardDuplicatesFrameDelay
-				if (texture.Name != null && texture.Name != "" && !Config.DiscardDuplicatesBlacklist.Contains(texture.Name)) {
+				if (!texture.Name.IsBlank() && !Config.DiscardDuplicatesBlacklist.Contains(texture.Name)) {
 					try {
 						lock (DuplicateTable) {
 							if (DuplicateTable.TryGetValue(texture.Name, out var weakTexture)) {

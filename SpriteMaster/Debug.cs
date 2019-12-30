@@ -147,12 +147,12 @@ namespace SpriteMaster {
 				ErrorLn("Texture Dump:");
 				foreach (var list in textureDump) {
 					var referenceTexture = list.Key;
-					long originalSize = (referenceTexture.Width * referenceTexture.Height * sizeof(int));
+					long originalSize = (referenceTexture.Area() * sizeof(int));
 					bool referenceDisposed = referenceTexture.IsDisposed;
 					totalOriginalSize += referenceDisposed ? 0 : originalSize;
 					ErrorLn($"SpriteSheet: {referenceTexture.SafeName().Enquote()} :: Original Size: {originalSize.AsDataSize()}{(referenceDisposed ? " [DISPOSED]" : "")}");
 
-					if (referenceTexture.Name != null && referenceTexture.Name != "" && !referenceTexture.IsDisposed) {
+					if (!referenceTexture.Name.IsBlank() && !referenceTexture.IsDisposed) {
 						List<Texture2D> duplicateList;
 						if (!duplicates.TryGetValue(referenceTexture.Name, out duplicateList)) {
 							duplicateList = new List<Texture2D>();
@@ -179,7 +179,7 @@ namespace SpriteMaster {
 					foreach (var duplicate in duplicates) {
 						long size = 0;
 						foreach (var subDuplicate in duplicate.Value) {
-							size += subDuplicate.Width * subDuplicate.Height * sizeof(int);
+							size += subDuplicate.Area() * sizeof(int);
 						}
 
 						ErrorLn($"\t{duplicate.Key.Enquote()} :: {duplicate.Value.Count.Delimit()} duplicates :: Total Size: {size.AsDataSize()}");

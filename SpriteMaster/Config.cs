@@ -35,8 +35,6 @@ namespace SpriteMaster {
 		internal static double RequiredFreeMemoryHysterisis = 1.5;
 		internal const bool ClampInvalidBounds = true;
 		internal const bool IgnoreUnknownTextures = false;
-		internal static long ForceGarbageCompactAfter = long.MaxValue;
-		internal static long ForceGarbageCollectAfter = long.MaxValue;
 		internal static bool GarbageCollectAccountUnownedTextures = true;
 		internal static bool GarbageCollectAccountOwnedTexture = true;
 		internal static bool LeakPreventTexture = true;

@@ -60,7 +60,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch.Patch {
 			float rotation,
 			ref Vector2 origin,
 			SpriteEffects effects,
-			float layerDepth
+			ref float layerDepth
 		) {
 			if (!Config.Enabled)
 				return true;
@@ -73,7 +73,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch.Patch {
 				rotation: rotation,
 				origin: ref origin,
 				effects: effects,
-				layerDepth: layerDepth
+				layerDepth: ref layerDepth
 			);
 		}
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -174,7 +174,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch.Patch {
 				origin: ref origin,
 				scale: ref scale,
 				effects: effects,
-				layerDepth: layerDepth
+				layerDepth: ref layerDepth
 			);
 		}
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

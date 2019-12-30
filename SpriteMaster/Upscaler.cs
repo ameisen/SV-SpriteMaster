@@ -27,10 +27,6 @@ namespace SpriteMaster {
 			return hash;
 		}
 
-		// TODO : Detangle this method.
-		private static long AccumulatedSizeGarbageCompact = 0;
-		private static long AccumulatedSizeGarbageCollect = 0;
-
 		private static readonly WeakSet<Texture2D> GarbageMarkSet = Config.GarbageCollectAccountUnownedTextures ? new WeakSet<Texture2D>() : null;
 
 		// TODO : use MemoryFailPoint class. Extensively.
@@ -59,17 +55,6 @@ namespace SpriteMaster {
 		}
 
 		private static unsafe ManagedTexture2D UpscaleInternal (ScaledTexture texture, ref int scale, SpriteInfo input, bool desprite, ulong hash, ref Vector2B wrapped, bool async) {
-			if (AccumulatedSizeGarbageCompact >= Config.ForceGarbageCompactAfter) {
-				Debug.InfoLn("Forcing Garbage Compaction");
-				Garbage.MarkCompact();
-				AccumulatedSizeGarbageCompact %= Config.ForceGarbageCompactAfter;
-			}
-			if (AccumulatedSizeGarbageCollect >= Config.ForceGarbageCollectAfter) {
-				Debug.InfoLn("Forcing Garbage Collection");
-				Garbage.Collect(compact: true, blocking: false, background: false);
-				AccumulatedSizeGarbageCollect %= Config.ForceGarbageCollectAfter;
-			}
-
 			var rawTextureData = input.Data;
 			var spriteFormat = TextureFormat.Color;
 
@@ -215,9 +200,9 @@ namespace SpriteMaster {
 						using (var filtered = Textures.CreateBitmap(rawData.ToArray(), input.ReferenceSize, PixelFormat.Format32bppArgb)) {
 							using (var submap = (Bitmap)filtered.Clone(input.Size, filtered.PixelFormat)) {
 								var dump = GetDumpBitmap(submap);
-								var path = Cache.GetDumpPath($"{input.Reference.SafeName().Replace("\\", ".")}.{hashString}.reference.png");
+								var path = Cache.GetDumpPath($"{input.Reference.SafeName().Replace("\\", ".").Replace("/", ".")}.{hashString}.reference.png");
 								File.Delete(path);
-								dump.Save(path, System.Drawing.Imaging.ImageFormat.Png);
+								dump.Save(path, ImageFormat.Png);
 							}
 						}
 					}
@@ -241,7 +226,7 @@ namespace SpriteMaster {
 								prescaleSize.X <= Config.Resample.Padding.MinimumSizeTexels &&
 								prescaleSize.Y <= Config.Resample.Padding.MinimumSizeTexels
 							) ||
-							(Config.Resample.Padding.IgnoreUnknown && (input.Reference.Name == null || input.Reference.Name == ""))
+							(Config.Resample.Padding.IgnoreUnknown && !input.Reference.Name.IsBlank())
 						) {
 							shouldPad = Vector2B.False;
 						}
@@ -517,10 +502,6 @@ namespace SpriteMaster {
 					}
 					catch { }
 				}
-
-				var totalSpriteSize = spriteFormat.SizeBytes(newSize.Area);
-				AccumulatedSizeGarbageCompact += totalSpriteSize;
-				AccumulatedSizeGarbageCollect += totalSpriteSize;
 
 				ManagedTexture2D CreateTexture(int[] data) {
 					if (input.Reference.GraphicsDevice.IsDisposed) {
