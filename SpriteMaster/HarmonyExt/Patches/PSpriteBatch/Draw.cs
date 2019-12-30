@@ -15,7 +15,6 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 	static class Draw {
 		private const bool Continue = true;
 		private const bool Stop = false;
-		private const float ScaleAdjust = 0.1f;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static bool Cleanup (this ref Rectangle sourceRectangle, Texture2D reference) {
@@ -106,7 +105,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			sourceRectangle.Validate(reference: texture);
 
 			var expectedScale2D = new Vector2(destination.Width, destination.Height) / new Vector2(sourceRectangle.Width, sourceRectangle.Height);
-			var expectedScale = (Math.Max(expectedScale2D.X, expectedScale2D.Y) + ScaleAdjust).Clamp(2.0f, (float)Config.Resample.MaxScale);
+			var expectedScale = (Math.Max(expectedScale2D.X, expectedScale2D.Y) + Config.Resample.ScaleBias).Clamp(2.0f, (float)Config.Resample.MaxScale);
 
 			if (!texture.FetchScaledTexture(
 				expectedScale: expectedScale.NextInt(),
@@ -183,7 +182,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			sourceRectangle.Validate(reference: texture);
 
 			var expectedScale2D = new Vector2(destination.Width, destination.Height) / new Vector2(sourceRectangle.Width, sourceRectangle.Height);
-			var expectedScale = (Math.Max(expectedScale2D.X, expectedScale2D.Y) + ScaleAdjust).Clamp(2.0f, (float)Config.Resample.MaxScale);
+			var expectedScale = (Math.Max(expectedScale2D.X, expectedScale2D.Y) + Config.Resample.ScaleBias).Clamp(2.0f, (float)Config.Resample.MaxScale);
 
 			if (!texture.FetchScaledTexture(
 				expectedScale: expectedScale.NextInt(),
@@ -229,7 +228,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 
 			sourceRectangle.Validate(reference: texture);
 
-			var expectedScale = (Math.Max(scale.X, scale.Y) + ScaleAdjust).Clamp(2.0f, (float)Config.Resample.MaxScale);
+			var expectedScale = (Math.Max(scale.X, scale.Y) + Config.Resample.ScaleBias).Clamp(2.0f, (float)Config.Resample.MaxScale);
 
 			ScaledTexture scaledTexture;
 			if (texture is ManagedTexture2D resampledTexture) {
