@@ -242,53 +242,81 @@ namespace SpriteMaster {
 			int textureArea = texture.Area();
 
 			if (texture is ManagedTexture2D) {
-				if (!texture.Meta().TracePrinted)
+				if (!texture.Meta().TracePrinted) {
+					texture.Meta().TracePrinted = true;
 					Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', is already scaled");
+				}
 				return false;
 			}
 
 			if (texture is RenderTarget2D) {
-				if (!texture.Meta().TracePrinted)
+				if (!texture.Meta().TracePrinted) {
+					texture.Meta().TracePrinted = true;
 					Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', render targets unsupported");
+				}
 				return false;
 			}
 
 			if (Math.Max(texture.Width, texture.Height) <= Config.Resample.MinimumTextureDimensions) {
-				if (!texture.Meta().TracePrinted)
+				if (!texture.Meta().TracePrinted) {
+					texture.Meta().TracePrinted = true;
 					Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', texture is too small to qualify");
+				}
 				return false;
 			}
 
 			if (textureArea == 0) {
-				if (!texture.Meta().TracePrinted)
+				if (!texture.Meta().TracePrinted) {
+					texture.Meta().TracePrinted = true;
 					Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', zero area");
+				}
 				return false;
 			}
 
 			// TODO pComPtr check?
 			if (texture.IsDisposed || texture.GraphicsDevice.IsDisposed) {
-				if (!texture.Meta().TracePrinted)
+				if (!texture.Meta().TracePrinted) {
+					texture.Meta().TracePrinted = true;
 					Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', Is Zombie");
+				}
 				return false;
 			}
 
 			if (Config.IgnoreUnknownTextures && texture.Name.IsBlank()) {
-				if (!texture.Meta().TracePrinted)
+				if (!texture.Meta().TracePrinted) {
+					texture.Meta().TracePrinted = true;
 					Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', Is Unknown Texture");
+				}
 				return false;
 			}
 
 
 			if (texture.LevelCount > 1) {
-				if (!texture.Meta().TracePrinted)
+				if (!texture.Meta().TracePrinted) {
+					texture.Meta().TracePrinted = true;
 					Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', Multi-Level Textures Unsupported: {texture.LevelCount} levels");
+				}
 				return false;
 			}
 
 			if (!LegalFormat(texture)) {
-				if (!texture.Meta().TracePrinted)
+				if (!texture.Meta().TracePrinted) {
+					texture.Meta().TracePrinted = true;
 					Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', Format Unsupported: {texture.Format}");
+				}
 				return false;
+			}
+
+			if (!texture.Name.IsBlank()) {
+				foreach (var blacklisted in Config.Resample.Blacklist) {
+					if (texture.Name.StartsWith(blacklisted)) {
+						if (!texture.Meta().TracePrinted) {
+							texture.Meta().TracePrinted = true;
+							Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', Is Blacklisted");
+						}
+						return false;
+					}
+				}
 			}
 
 			return true;
@@ -313,16 +341,6 @@ namespace SpriteMaster {
 
 			if (SpriteMap.TryGet(texture, source, expectedScale, out var scaleTexture)) {
 				return scaleTexture;
-			}
-
-			if (!texture.Name.IsBlank()) {
-				foreach (var blacklisted in Config.Resample.Blacklist) {
-					if (texture.Name.StartsWith(blacklisted)) {
-						if (!texture.Meta().TracePrinted)
-							Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', Is Blacklisted");
-						return null;
-					}
-				}
 			}
 
 			bool useAsync = (Config.AsyncScaling.EnabledForUnknownTextures || !texture.Name.IsBlank()) && (texture.Area() >= Config.AsyncScaling.MinimumSizeTexels);

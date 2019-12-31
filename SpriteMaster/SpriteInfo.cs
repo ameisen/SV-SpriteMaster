@@ -23,71 +23,10 @@ namespace SpriteMaster {
 			}
 		}
 
-		private static unsafe byte[] MakeByteArray<T>(DataRef<T> data, int referenceSize = 0) where T : struct {
-			if (data.Data is byte[] byteData) {
-				return byteData;
-			}
-
-			try {
-				referenceSize = (referenceSize == 0) ? (data.Length * typeof(T).Size()) : referenceSize;
-				var newData = new byte[referenceSize];
-
-				var byteSpan = data.Data.CastAs<T, byte>();
-				foreach (var i in 0.Until(referenceSize)) {
-					newData[i] = byteSpan[i];
-				}
-				return newData;
-			}
-			catch (Exception ex) {
-				ex.PrintInfo();
-				return null;
-			}
-		}
-
 		// Attempt to update the bytedata cache for the reference texture, or purge if it that makes more sense or if updating
 		// is not plausible.
 		internal static unsafe void Purge<T>(Texture2D reference, Bounds? bounds, DataRef<T> data) where T : struct {
-			if (data.IsNull) {
-				reference.Meta().CachedData = null;
-				return;
-			}
-
-			var typeSize = typeof(T).Size();
-			var refSize = reference.Area() * typeSize;
-
-			bool forcePurge = false;
-
-			var meta = reference.Meta();
-
-			try {
-				if (Config.MemoryCache.AlwaysFlush) {
-					forcePurge = true;
-				}
-				else if (!bounds.HasValue && data.Offset == 0 && (data.Length * typeSize) >= refSize) {
-					var newByteArray = MakeByteArray(data, refSize);
-					forcePurge |= (newByteArray == null);
-					meta.CachedData = newByteArray;
-				}
-				else if (!bounds.HasValue && meta.CachedData is var currentData && currentData != null) {
-					var byteSpan = data.Data.CastAs<T, byte>();
-					var untilOffset = Math.Min(currentData.Length - data.Offset, data.Length * typeSize);
-					foreach (var i in 0.Until(untilOffset)) {
-						currentData[i + data.Offset] = byteSpan[i];
-					}
-				}
-				else {
-					forcePurge = true;
-				}
-			}
-			catch (Exception ex) {
-				ex.PrintInfo();
-				forcePurge = true;
-			}
-
-			// TODO : maybe we need to purge more often?
-			if (forcePurge) {
-				meta.CachedData = null;
-			}
+			reference.Meta().Purge<T>(reference, bounds, data);
 		}
 
 		// TODO : thread safety?

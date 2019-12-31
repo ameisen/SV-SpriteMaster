@@ -7,10 +7,13 @@ using Ionic.Zlib;
 using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Microsoft.Xna.Framework.Graphics;
+using SpriteMaster.Types;
+using SpriteMaster.Extensions;
 
 namespace SpriteMaster.Metadata {
 	internal sealed class MTexture2D {
-		private static readonly object DataCacheLock = new object();
+		internal static readonly object DataCacheLock = new object();
 		private static MemoryCache DataCache = (Config.MemoryCache.Enabled) ? new MemoryCache(name: "DataCache", config: null) : null;
 		private static long CurrentID = 0U;
 
@@ -163,6 +166,77 @@ namespace SpriteMaster.Metadata {
 
 				using (Lock.Shared) {
 					return (_CachedData.TryGetTarget(out var target) && target != null);
+				}
+			}
+		}
+
+		private static unsafe byte[] MakeByteArray<T> (DataRef<T> data, int referenceSize = 0) where T : struct {
+			if (data.Data is byte[] byteData) {
+				return (byte[])byteData.Clone();
+			}
+
+			try {
+				referenceSize = (referenceSize == 0) ? (data.Length * typeof(T).Size()) : referenceSize;
+				var newData = new byte[referenceSize];
+
+				var byteSpan = data.Data.CastAs<T, byte>();
+				foreach (var i in 0.Until(referenceSize)) {
+					newData[i] = byteSpan[i];
+				}
+				return newData;
+			}
+			catch (Exception ex) {
+				ex.PrintInfo();
+				return null;
+			}
+		}
+
+		public unsafe void Purge<T> (Texture2D reference, Bounds? bounds, DataRef<T> data) where T : struct {
+			lock (this) {
+
+				if (data.IsNull) {
+					CachedData = null;
+					return;
+				}
+
+				var typeSize = typeof(T).Size();
+				var refSize = unchecked((int)reference.SizeBytes());
+
+				bool forcePurge = false;
+
+				try {
+					// TODO : lock isn't granular enough.
+					if (Config.MemoryCache.AlwaysFlush) {
+						forcePurge = true;
+					}
+					else if (!bounds.HasValue && data.Offset == 0 && (data.Length * typeSize) == refSize) {
+						var newByteArray = MakeByteArray(data, refSize);
+						forcePurge |= (newByteArray == null);
+						CachedData = newByteArray;
+					}
+					else if (!bounds.HasValue && CachedData is var currentData && currentData != null) {
+						var byteSpan = data.Data.CastAs<T, byte>();
+						lock (DataCacheLock) {
+							using (Lock.Exclusive) {
+								var untilOffset = Math.Min(currentData.Length - data.Offset, data.Length * typeSize);
+								foreach (var i in 0.Until(untilOffset)) {
+									currentData[i + data.Offset] = byteSpan[i];
+								}
+							}
+						}
+					}
+					else {
+						forcePurge = true;
+					}
+				}
+				catch (Exception ex) {
+					ex.PrintInfo();
+					forcePurge = true;
+				}
+
+				// TODO : maybe we need to purge more often?
+				if (forcePurge) {
+					CachedData = null;
 				}
 			}
 		}
