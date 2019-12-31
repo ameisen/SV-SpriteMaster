@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SpriteMaster.Extensions;
+using System;
 using System.ComponentModel;
 
 namespace SpriteMaster.Types {
@@ -243,7 +244,7 @@ namespace SpriteMaster.Types {
 		}
 
 		public readonly override int GetHashCode () {
-			return X.GetHashCode() ^ Y.GetHashCode() ^ Width.GetHashCode() ^ Height.GetHashCode();
+			return unchecked((int)Hashing.CombineHash(X.GetHashCode(), Y.GetHashCode(), Width.GetHashCode(), Height.GetHashCode()));
 		}
 
 		public readonly override bool Equals (object other) {

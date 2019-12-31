@@ -1,4 +1,6 @@
-﻿namespace SpriteMaster.Types {
+﻿using SpriteMaster.Extensions;
+
+namespace SpriteMaster.Types {
 	internal ref struct DataRef<T> where T : struct {
 		public readonly T[] Data;
 		public readonly int Offset;
@@ -57,7 +59,7 @@
 		}
 
 		public readonly override int GetHashCode () {
-			return Data.GetHashCode() ^ Offset.GetHashCode();
+			return unchecked((int)Hashing.CombineHash(Data.GetHashCode(), Offset.GetHashCode()));
 		}
 	}
 }

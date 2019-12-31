@@ -15,11 +15,11 @@ namespace SpriteMaster {
 			ulong hash = default;
 			
 			foreach (var field in type.GetFields(StaticFlags)) {
-				hash ^= field.GetValue(null).GetLongHashCode();
+				hash = Hashing.CombineHash(hash, field.GetValue(null).GetLongHashCode());
 			}
 
 			foreach (var child in type.GetNestedTypes(StaticFlags)) {
-				hash ^= HashClass(child);
+				hash = Hashing.CombineHash(hash, HashClass(child));
 			}
 
 			return hash;
