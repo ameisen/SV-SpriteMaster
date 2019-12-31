@@ -10,6 +10,7 @@ namespace SpriteMaster.HarmonyExt.Patches {
 	internal static class PRenderTarget2D {
 		[HarmonyPatch("CreateRenderTarget", HarmonyPatch.Fixation.Prefix, PriorityLevel.Last)]
 		private static bool CreateRenderTarget (RenderTarget2D __instance, GraphicsDevice graphicsDevice, ref int width, ref int height, [MarshalAs(UnmanagedType.U1)] ref bool mipMap, SurfaceFormat preferredFormat, DepthFormat preferredDepthFormat, ref int preferredMultiSampleCount, ref RenderTargetUsage usage) {
+			/*
 			const int Scale = 4;
 			const int MSAA = 2;
 			
@@ -25,6 +26,7 @@ namespace SpriteMaster.HarmonyExt.Patches {
 			// This is required to prevent aliasing effects.
 			mipMap = true;
 			//usage = RenderTargetUsage.DiscardContents;
+			*/
 
 			return true;
 		}
