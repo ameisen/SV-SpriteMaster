@@ -60,7 +60,10 @@ namespace SpriteMaster {
 			var meta = reference.Meta();
 
 			try {
-				if (!bounds.HasValue && data.Offset == 0 && (data.Length * typeSize) >= refSize) {
+				if (Config.MemoryCache.AlwaysFlush) {
+					forcePurge = true;
+				}
+				else if (!bounds.HasValue && data.Offset == 0 && (data.Length * typeSize) >= refSize) {
 					var newByteArray = MakeByteArray(data, refSize);
 					forcePurge |= (newByteArray == null);
 					meta.CachedData = newByteArray;
@@ -81,8 +84,9 @@ namespace SpriteMaster {
 				forcePurge = true;
 			}
 
+			// TODO : maybe we need to purge more often?
 			if (forcePurge) {
-				reference.Meta().CachedData = null;
+				meta.CachedData = null;
 			}
 		}
 

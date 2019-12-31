@@ -238,8 +238,26 @@ namespace SpriteMaster {
 			return AllowedFormats.Contains(texture.Format);
 		}
 
-		private static bool Validate(Texture2D texture) {
+		internal static bool Validate(Texture2D texture) {
 			int textureArea = texture.Area();
+
+			if (texture is ManagedTexture2D) {
+				if (!texture.Meta().TracePrinted)
+					Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', is already scaled");
+				return false;
+			}
+
+			if (texture is RenderTarget2D) {
+				if (!texture.Meta().TracePrinted)
+					Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', render targets unsupported");
+				return false;
+			}
+
+			if (Math.Max(texture.Width, texture.Height) <= Config.Resample.MinimumTextureDimensions) {
+				if (!texture.Meta().TracePrinted)
+					Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', texture is too small to qualify");
+				return false;
+			}
 
 			if (textureArea == 0) {
 				if (!texture.Meta().TracePrinted)
@@ -257,6 +275,13 @@ namespace SpriteMaster {
 			if (Config.IgnoreUnknownTextures && texture.Name.IsBlank()) {
 				if (!texture.Meta().TracePrinted)
 					Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', Is Unknown Texture");
+				return false;
+			}
+
+
+			if (texture.LevelCount > 1) {
+				if (!texture.Meta().TracePrinted)
+					Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', Multi-Level Textures Unsupported: {texture.LevelCount} levels");
 				return false;
 			}
 

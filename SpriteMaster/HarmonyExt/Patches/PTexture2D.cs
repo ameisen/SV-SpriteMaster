@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -44,7 +45,11 @@ namespace SpriteMaster.HarmonyExt.Patches {
 				return;
 			}
 
-			ScaledTexture.Purge(__instance, null, new DataRef<T>(data));
+			if (!ScaledTexture.Validate(__instance)) {
+				return;
+			}
+
+			ScaledTexture.Purge(__instance, null, (__instance.LevelCount > 1) ? DataRef<T>.Null : new DataRef<T>(data));
 		}
 
 		/*
@@ -65,7 +70,11 @@ namespace SpriteMaster.HarmonyExt.Patches {
 				return;
 			}
 
-			ScaledTexture.Purge(__instance, null, new DataRef<T>(data, startIndex, elementCount));
+			if (!ScaledTexture.Validate(__instance)) {
+				return;
+			}
+
+			ScaledTexture.Purge(__instance, null, (__instance.LevelCount > 1) ? DataRef<T>.Null : new DataRef<T>(data, startIndex, elementCount));
 		}
 
 		/*
@@ -86,7 +95,11 @@ namespace SpriteMaster.HarmonyExt.Patches {
 				return;
 			}
 
-			ScaledTexture.Purge(__instance, rect, new DataRef<T>(data, startIndex, elementCount));
+			if (!ScaledTexture.Validate(__instance)) {
+				return;
+			}
+
+			ScaledTexture.Purge(__instance, rect, (__instance.LevelCount > 1) ? DataRef<T>.Null : new DataRef<T>(data, startIndex, elementCount));
 		}
 
 		// A horrible, horrible hack to stop a rare-ish crash when zooming or when the device resets. It doesn't appear to originate in SpriteMaster, but SM most certainly
@@ -102,6 +115,7 @@ namespace SpriteMaster.HarmonyExt.Patches {
 					if (resource is Texture2D texture) {
 						Debug.WarningLn("CheckDisposed is going to throw, attempting to restore state");
 
+						// TODO : we should probably use the helper function it calls instead, just in case the user defined a child class.
 						var ctor = texture.GetType().GetConstructor(
 							BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
 							null,

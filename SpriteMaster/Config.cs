@@ -171,6 +171,7 @@ namespace SpriteMaster {
 
 		internal static class MemoryCache {
 			internal static bool Enabled = true;
+			internal static bool AlwaysFlush = false;
 			internal enum Algorithm {
 				None = 0,
 				LZ = 1,

@@ -394,13 +394,13 @@ namespace SpriteMaster {
 						// This should be incredibly rare - we very rarely need to scale back down.
 						using (var filtered = Textures.CreateBitmap(bitmapData, scaledDimensions, PixelFormat.Format32bppArgb)) {
 							using (var resized = filtered.Resize(newSize, System.Drawing.Drawing2D.InterpolationMode.Bicubic)) {
-								var resizedData = resized.LockBits(new Bounds(resized), ImageLockMode.ReadOnly, filtered.PixelFormat);
+								var resizedData = resized.LockBits(new Bounds(resized), ImageLockMode.ReadOnly, resized.PixelFormat);
 
 								try {
 									bitmapData = new int[resized.Width * resized.Height];
 									var dataSize = resizedData.Stride * resizedData.Height;
 									var dataPtr = resizedData.Scan0;
-									var widthSize = resizedData.Width * sizeof(int);
+									var widthSize = resizedData.Width;
 
 									var dataBytes = new byte[dataSize];
 									int offsetSource = 0;
