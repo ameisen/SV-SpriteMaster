@@ -89,7 +89,7 @@ namespace SpriteMaster {
 			}
 			finally {
 				if (scaledTexture.Texture != null && !scaledTexture.Texture.IsDisposed) {
-					Debug.InfoLn($"Disposing Active HD Texture: {scaledTexture.SafeName()}");
+					Debug.TraceLn($"Disposing Active HD Texture: {scaledTexture.SafeName()}");
 
 					//scaledTexture.Texture.Dispose();
 				}
@@ -107,7 +107,7 @@ namespace SpriteMaster {
 
 						// TODO handle sourceRectangle meaningfully.
 						using (Lock.Promote) {
-							Debug.InfoLn($"Purging Texture {reference.SafeName()}");
+							Debug.TraceLn($"Purging Texture {reference.SafeName()}");
 
 							foreach (var scaledTexture in Map.Values) {
 								if (scaledTexture.Texture != null) {
@@ -235,21 +235,34 @@ namespace SpriteMaster {
 		}
 
 		private static bool LegalFormat(Texture2D texture) {
-			return texture.Format == SurfaceFormat.Color;
+			return AllowedFormats.Contains(texture.Format);
 		}
 
 		private static bool Validate(Texture2D texture) {
 			int textureArea = texture.Area();
 
-			if (textureArea == 0 || texture.IsDisposed) {
+			if (textureArea == 0) {
+				if (!texture.Meta().TracePrinted)
+					Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', zero area");
+				return false;
+			}
+
+			// TODO pComPtr check?
+			if (texture.IsDisposed || texture.GraphicsDevice.IsDisposed) {
+				if (!texture.Meta().TracePrinted)
+					Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', Is Zombie");
 				return false;
 			}
 
 			if (Config.IgnoreUnknownTextures && texture.Name.IsBlank()) {
+				if (!texture.Meta().TracePrinted)
+					Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', Is Unknown Texture");
 				return false;
 			}
 
 			if (!LegalFormat(texture)) {
+				if (!texture.Meta().TracePrinted)
+					Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', Format Unsupported: {texture.Format}");
 				return false;
 			}
 
@@ -280,6 +293,8 @@ namespace SpriteMaster {
 			if (!texture.Name.IsBlank()) {
 				foreach (var blacklisted in Config.Resample.Blacklist) {
 					if (texture.Name.StartsWith(blacklisted)) {
+						if (!texture.Meta().TracePrinted)
+							Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', Is Blacklisted");
 						return null;
 					}
 				}
@@ -302,7 +317,7 @@ namespace SpriteMaster {
 								if (weakTexture.TryGetTarget(out var strongTexture)) {
 									// Is it not the same texture, and the previous texture has not been accessed for at least 2 frames?
 									if (strongTexture != texture && (DrawState.CurrentFrame - strongTexture.Meta().LastAccessFrame) > 2) {
-										Debug.InfoLn($"Purging Duplicate Texture '{strongTexture.Name}'");
+										Debug.TraceLn($"Purging Duplicate Texture '{strongTexture.Name}'");
 										DuplicateTable[texture.Name] = texture.MakeWeak();
 										Purge(strongTexture);
 									}
@@ -347,6 +362,10 @@ namespace SpriteMaster {
 			}
 
 		}
+
+		internal static readonly SurfaceFormat[] AllowedFormats = new SurfaceFormat[] {
+			SurfaceFormat.Color
+		};
 
 		internal ManagedTexture2D Texture = null;
 		internal readonly string Name;
@@ -410,7 +429,7 @@ namespace SpriteMaster {
 		internal static void PurgeTextures(long _purgeTotalBytes) {
 			Contract.AssertPositive(_purgeTotalBytes);
 
-			Debug.InfoLn($"Attempting to purge {_purgeTotalBytes.AsDataSize()} from currently loaded textures");
+			Debug.TraceLn($"Attempting to purge {_purgeTotalBytes.AsDataSize()} from currently loaded textures");
 
 			// For portability purposes
 			if (IntPtr.Size == 8) {
@@ -435,7 +454,7 @@ namespace SpriteMaster {
 					while (purgeTotalBytes > 0 && MostRecentList.Count > 0) {
 						if (MostRecentList.Last().TryGetTarget(out var target)) {
 							var textureSize = unchecked((uint)target.MemorySize);
-							Debug.InfoLn($"Purging {target.SafeName()} ({textureSize.AsDataSize()})");
+							Debug.TraceLn($"Purging {target.SafeName()} ({textureSize.AsDataSize()})");
 							purgeTotalBytes -= textureSize;
 							totalPurge += textureSize;
 							target.CurrentRecentNode = null;
@@ -443,7 +462,7 @@ namespace SpriteMaster {
 						}
 						MostRecentList.RemoveLast();
 					}
-					Debug.InfoLn($"Total Purged: {totalPurge.AsDataSize()}");
+					Debug.TraceLn($"Total Purged: {totalPurge.AsDataSize()}");
 				}
 			}
 		}
@@ -456,11 +475,6 @@ namespace SpriteMaster {
 			public readonly WeakReference<Texture2D> Reference;
 			public readonly ScaledTexture Texture;
 			public readonly Vector2I Dimensions;
-
-			[Conditional("DEBUG")]
-			private static void _DumpStats () {
-				DumpStats();
-			}
 
 			internal static void DumpStats() {
 				var currentProcess = Process.GetCurrentProcess();
@@ -482,12 +496,7 @@ namespace SpriteMaster {
 				int[] data = null,
 				string name = null
 			) : base(reference.GraphicsDevice.IsDisposed ? DrawState.Device : reference.GraphicsDevice, dimensions.Width, dimensions.Height, UseMips, format) {
-				if (name != null) {
-					this.Name = name;
-				}
-				else {
-					this.Name = $"{reference.SafeName()} [RESAMPLED {(CompressionFormat)format}]";
-				}
+				this.Name = name ?? $"{reference.SafeName()} [RESAMPLED {(CompressionFormat)format}]";
 
 				Reference = reference.MakeWeak();
 				Texture = texture;
@@ -497,8 +506,6 @@ namespace SpriteMaster {
 
 				TotalAllocatedSize += this.SizeBytes();
 				++TotalManagedTextures;
-
-				//_DumpStats();
 
 				Garbage.MarkOwned(format, dimensions.Area);
 				Disposing += (_, _1) => {
@@ -520,7 +527,7 @@ namespace SpriteMaster {
 
 			private void OnParentDispose() {
 				if (!IsDisposed) {
-					Debug.InfoLn($"Disposing ManagedTexture2D '{Name}'");
+					Debug.TraceLn($"Disposing ManagedTexture2D '{Name}'");
 					Dispose();
 				}
 			}
@@ -603,10 +610,10 @@ namespace SpriteMaster {
 			texture.Disposing += (object sender, EventArgs args) => { TotalMemoryUsage -= (uint)texture.SizeBytes(); };
 
 			if (IsSprite) {
-				Debug.InfoLn($"Creating HD Sprite [{texture.Format} x{refScale}]: {this.SafeName()} {sourceRectangle}");
+				Debug.TraceLn($"Creating HD Sprite [{texture.Format} x{refScale}]: {this.SafeName()} {sourceRectangle}");
 			}
 			else {
-				Debug.InfoLn($"Creating HD Spritesheet [{texture.Format} x{refScale}]: {this.SafeName()}");
+				Debug.TraceLn($"Creating HD Spritesheet [{texture.Format} x{refScale}]: {this.SafeName()}");
 			}
 
 			this.Scale = (Vector2)texture.Dimensions / new Vector2(originalSize.Width, originalSize.Height);
@@ -656,7 +663,7 @@ namespace SpriteMaster {
 		}
 
 		private void OnParentDispose (Texture2D texture) {
-			Debug.InfoLn($"Parent Texture Disposing: {texture.SafeName()}");
+			Debug.TraceLn($"Parent Texture Disposing: {texture.SafeName()}");
 
 			Dispose();
 		}

@@ -33,7 +33,7 @@ namespace SpriteMaster.Extensions {
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static void MarkCompact() {
-			Debug.InfoLn("Marking for Compact");
+			Debug.TraceLn("Marking for Compact");
 			GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
 		}
 
@@ -42,7 +42,7 @@ namespace SpriteMaster.Extensions {
 			try {
 				ManualCollection = true;
 
-				Debug.InfoLn("Garbage Collecting");
+				Debug.TraceLn("Garbage Collecting");
 				if (compact) {
 					MarkCompact();
 				}

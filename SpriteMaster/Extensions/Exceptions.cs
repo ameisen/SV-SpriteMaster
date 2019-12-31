@@ -5,6 +5,11 @@ using System.Runtime.CompilerServices;
 namespace SpriteMaster.Extensions {
 	internal static class Exceptions {
 		[DebuggerStepThrough, DebuggerHidden(), Untraced]
+		internal static void PrintTrace<T> (this T exception, [CallerMemberName] string caller = null) where T : Exception {
+			Debug.Trace(exception: exception, caller: caller);
+		}
+
+		[DebuggerStepThrough, DebuggerHidden(), Untraced]
 		internal static void PrintInfo<T> (this T exception, [CallerMemberName] string caller = null) where T : Exception {
 			Debug.Info(exception: exception, caller: caller);
 		}

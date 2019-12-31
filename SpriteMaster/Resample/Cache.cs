@@ -147,7 +147,7 @@ namespace SpriteMaster.Resample {
 								try { File.Delete(path); } catch { }
 								return false;
 							case IOException iox when WasLocked(iox):
-								Debug.InfoLn($"File was locked when trying to load cache file '{path}': {ex.Message} [{retries} retries]");
+								Debug.TraceLn($"File was locked when trying to load cache file '{path}': {ex.Message} [{retries} retries]");
 								Thread.Sleep(Config.Cache.LockSleepMS);
 								break;
 						}

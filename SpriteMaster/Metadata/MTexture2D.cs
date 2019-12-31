@@ -19,6 +19,8 @@ namespace SpriteMaster.Metadata {
 
 		private readonly SharedLock Lock = new SharedLock();
 
+		public volatile bool TracePrinted = false;
+
 		internal static void PurgeDataCache() {
 			if (!Config.MemoryCache.Enabled) {
 				return;
@@ -193,6 +195,9 @@ namespace SpriteMaster.Metadata {
 			set {
 				if (!Config.MemoryCache.Enabled)
 					return;
+
+				TracePrinted = false;
+
 				using (Lock.Shared) {
 					if (_CachedData.TryGetTarget(out var target) && target == value) {
 						return;
