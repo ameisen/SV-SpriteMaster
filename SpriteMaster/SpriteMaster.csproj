@@ -23,7 +23,9 @@
 		<NullableReferenceTypes>true</NullableReferenceTypes>
     <FileAlignment>512</FileAlignment>
     <NoWarn>0162;7035</NoWarn>
-		<!--<ILMergeToolsPath>$(SolutionDir)packages\ILMerge.3.0.29\tools\net452\</ILMergeToolsPath>-->
+		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+		<OutputPath>bin\$(Configuration)_$(Platform)\</OutputPath>
+		<IgnoreModFilePatterns>\.dll\.config$, ILMerge, runtimes</IgnoreModFilePatterns>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
@@ -139,5 +141,13 @@
       <Private>false</Private>
     </Reference>
   </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="copy /D /V /Y /L $(SolutionDir)Libraries\nvtt.dll $(OutDir)nvtt.dll" />
+  </Target>
+
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Exec Command="set ASMINFO=Properties\AssemblyInfo.cs&#xD;&#xA;echo &quot;%25(Version)&quot;" />
+  </Target>
 
 </Project>
