@@ -58,6 +58,16 @@ namespace SpriteMaster.HarmonyExt {
 				instance
 			) { }
 
+		public HarmonyPatch (Type parent, string childType, string method, bool isChild = false, Fixation fixation = Fixation.Prefix, PriorityLevel priority = PriorityLevel.Average, Generic generic = Generic.None, bool instance = true) :
+			this(
+				isChild ? parent.GetNestedType(childType, BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic) : parent.Assembly.GetType(childType, true),
+				method,
+				fixation,
+				priority,
+				generic,
+				instance
+			) { }
+
 		public HarmonyPatch (string method, Fixation fixation = Fixation.Prefix, PriorityLevel priority = PriorityLevel.Average, Generic generic = Generic.None, bool instance = true) :
 			this(null, method, fixation, priority, generic, instance) { }
 	}

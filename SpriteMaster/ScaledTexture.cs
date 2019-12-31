@@ -19,7 +19,7 @@ namespace SpriteMaster {
 		private readonly WeakCollection<ScaledTexture> ScaledTextureReferences = new WeakCollection<ScaledTexture>();
 
 		static private ulong SpriteHash (Texture2D texture, Bounds source, int expectedScale) {
-			return Hashing.CombineHash((ScaledTexture.ExcludeSprite(texture) ? 0UL : source.Hash(), unchecked((ulong)expectedScale.GetHashCode())));
+			return Hashing.CombineHash(ScaledTexture.ExcludeSprite(texture) ? 0UL : source.Hash(), expectedScale.GetHashCode());
 		}
 
 		internal void Add (Texture2D reference, ScaledTexture texture, Bounds source, int expectedScale) {

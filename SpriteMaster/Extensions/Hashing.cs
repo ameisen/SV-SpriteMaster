@@ -9,11 +9,11 @@ using System.Runtime.CompilerServices;
 namespace SpriteMaster.Extensions {
 	using XRectangle = Microsoft.Xna.Framework.Rectangle;
 	internal static class Hashing {
-		private const ulong HashOffset = 17ul;
-		private const ulong HashFactor = 31ul;
+		private const ulong HashOffset = 17ul << 24;
+		private const ulong HashFactor = 31ul << 24;
 
 		private static ulong AccumulateHash(ulong hash, ulong hashend) {
-			return hash * HashFactor + hashend;
+			return unchecked(hash * HashFactor + hashend);
 		}
 
 		private static ulong AccumulateHash (ulong hash, int hashend) {
@@ -36,16 +36,16 @@ namespace SpriteMaster.Extensions {
 
 				foreach (var subHash in hashes) {
 					switch (subHash) {
-						case char i: hash = AccumulateHash(hash, i.GetLongHashCode()); break;
-						case sbyte i: hash = AccumulateHash(hash, i.GetLongHashCode()); break;
-						case short i: hash = AccumulateHash(hash, i.GetLongHashCode()); break;
-						case int i: hash = AccumulateHash(hash, i.GetLongHashCode()); break;
+						case char i: hash = AccumulateHash(hash, i.GetHashCode()); break;
+						case sbyte i: hash = AccumulateHash(hash, i.GetHashCode()); break;
+						case short i: hash = AccumulateHash(hash, i.GetHashCode()); break;
+						case int i: hash = AccumulateHash(hash, i.GetHashCode()); break;
 						case long i: hash = AccumulateHash(hash, (ulong)i); break;
-						case byte i: hash = AccumulateHash(hash, i.GetLongHashCode()); break;
-						case ushort i: hash = AccumulateHash(hash, i.GetLongHashCode()); break;
-						case uint i: hash = AccumulateHash(hash, i.GetLongHashCode()); break;
+						case byte i: hash = AccumulateHash(hash, i.GetHashCode()); break;
+						case ushort i: hash = AccumulateHash(hash, i.GetHashCode()); break;
+						case uint i: hash = AccumulateHash(hash, i.GetHashCode()); break;
 						case ulong i: hash = AccumulateHash(hash, i); break;
-						default: hash = AccumulateHash(hash, subHash.GetLongHashCode()); break;
+						default: hash = AccumulateHash(hash, subHash.GetHashCode()); break;
 					}
 				}
 				return hash;

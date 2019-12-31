@@ -85,25 +85,26 @@ namespace SpriteMaster {
 		internal static class DrawState {
 			internal static bool SetLinear = true;
 			internal static bool EnableMSAA = true;
-			internal static bool DisableDepthBuffer = true;
-			internal static SurfaceFormat BackbufferFormat = SurfaceFormat.Rgba1010102;
+			internal static bool DisableDepthBuffer = false;
+			internal static SurfaceFormat BackbufferFormat = SurfaceFormat.Color;
 		}
 
 		internal static class Resample {
 			internal const bool Smoothing = true;
 			internal const bool Scale = Smoothing;
+			internal const bool EnableDynamicScale = true;
 			internal static float ScaleBias = 0.1f;
 			internal static int MaxScale = 6;
 			internal static int MinimumTextureDimensions = 4;
 			internal const bool EnableWrappedAddressing = true;
-			internal static bool UseBlockCompression = true;
+			internal const bool UseBlockCompression = false;
 			internal static CompressionQuality BlockCompressionQuality = CompressionQuality.Highest;
 			internal static int BlockHardAlphaDeviationThreshold = 7;
 			internal static List<string> Blacklist = new List<string>() {
 				"LooseSprites\\Lighting\\"
 			};
 			internal static class Padding {
-				internal static bool Enabled = true;
+				internal const bool Enabled = false;
 				internal static int MinimumSizeTexels = 4;
 				internal static bool IgnoreUnknown = false;
 				internal static List<string> StrictList = new List<string>() {

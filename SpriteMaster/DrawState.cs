@@ -17,8 +17,7 @@ namespace SpriteMaster {
 		public static TextureAddressMode CurrentAddressModeV = DefaultSamplerState.AddressV;
 		public static Blend CurrentBlendSourceMode = BlendState.AlphaBlend.AlphaSourceBlend;
 		public static volatile bool TriggerGC = false;
-
-		public static volatile float CurrentDepth = 0.0f;
+		public static SpriteSortMode CurrentSortMode = SpriteSortMode.Deferred;
 
 		internal static GraphicsDevice Device {
 			get {
@@ -76,12 +75,11 @@ namespace SpriteMaster {
 			FetchedThisFrame = false;
 			PushedUpdateThisFrame = false;
 			++CurrentFrame;
-			CurrentDepth = 0.0f;
 		}
 
 		internal static void OnBegin (
 			SpriteBatch @this,
-			ref SpriteSortMode sortMode,
+			SpriteSortMode sortMode,
 			BlendState blendState,
 			SamplerState samplerState,
 			DepthStencilState depthStencilState,
@@ -89,6 +87,7 @@ namespace SpriteMaster {
 			Effect effect,
 			Matrix transformMatrix
 		) {
+			CurrentSortMode = sortMode;
 			SetCurrentAddressMode(samplerState);
 			CurrentBlendSourceMode = blendState.AlphaSourceBlend;
 		}

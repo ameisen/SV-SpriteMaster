@@ -143,6 +143,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 					__instance.GraphicsDevice.SamplerStates[0] = newState;
 					___samplerState = newState;
 				}
+				/*
 				else if (texture is RenderTarget2D) {
 					var newState = new SamplerState() {
 						AddressU = OriginalState.AddressU,
@@ -159,6 +160,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 					__instance.GraphicsDevice.SamplerStates[0] = newState;
 					___samplerState = newState;
 				}
+				*/
 			}
 			catch (Exception ex) {
 				ex.PrintError();
