@@ -7,6 +7,7 @@ using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 using System;
 using System.IO;
+using System.Linq;
 using System.Runtime;
 using System.Threading;
 using static SpriteMaster.ScaledTexture;
@@ -83,18 +84,22 @@ namespace SpriteMaster {
 		private bool IsVersionOutdated(string configVersion) {
 			string referenceVersion = Config.ClearConfigBefore;
 
-			var configStrArray = configVersion.Split('.');
-			var referenceStrArray = referenceVersion.Split('.');
+			var configStrArray = configVersion.Split('.').ToList();
+			var referenceStrArray = referenceVersion.Split('.').ToList();
 
 			try {
-				while (configStrArray.Length > referenceStrArray.Length) {
+				while (configStrArray.Count > referenceStrArray.Count) {
 					referenceStrArray.Add("0");
 				}
-				while (referenceStrArray.Length > configStrArray.Length) {
+				while (referenceStrArray.Count > configStrArray.Count) {
 					configStrArray.Add("0");
 				}
 
-				foreach (var i in 0.Until(configStrArray.Length)) {
+				foreach (var i in 0.Until(configStrArray.Count)) {
+					if (configStrArray[i] == "") {
+						return true;
+					}
+
 					var configElement = int.Parse(configStrArray[i]);
 					var referenceElement = int.Parse(referenceStrArray[i]);
 
