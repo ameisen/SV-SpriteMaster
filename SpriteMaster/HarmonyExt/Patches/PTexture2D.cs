@@ -49,7 +49,7 @@ namespace SpriteMaster.HarmonyExt.Patches {
 				return;
 			}
 
-			ScaledTexture.Purge(__instance, null, (__instance.LevelCount > 1) ? DataRef<T>.Null : new DataRef<T>(data));
+			ScaledTexture.Purge(__instance, null, (__instance.LevelCount > 1) ? DataRef<T>.Null : new DataRef<T>((T[])data.Clone()));
 		}
 
 		/*
@@ -74,7 +74,7 @@ namespace SpriteMaster.HarmonyExt.Patches {
 				return;
 			}
 
-			ScaledTexture.Purge(__instance, null, (__instance.LevelCount > 1) ? DataRef<T>.Null : new DataRef<T>(data, startIndex, elementCount));
+			ScaledTexture.Purge(__instance, null, (__instance.LevelCount > 1) ? DataRef<T>.Null : new DataRef<T>((T[])data.Clone(), startIndex, elementCount));
 		}
 
 		/*
@@ -99,7 +99,7 @@ namespace SpriteMaster.HarmonyExt.Patches {
 				return;
 			}
 
-			ScaledTexture.Purge(__instance, rect, (__instance.LevelCount > 1) ? DataRef<T>.Null : new DataRef<T>(data, startIndex, elementCount));
+			ScaledTexture.Purge(__instance, rect, (__instance.LevelCount > 1) ? DataRef<T>.Null : new DataRef<T>((T[])data.Clone(), startIndex, elementCount));
 		}
 
 		// A horrible, horrible hack to stop a rare-ish crash when zooming or when the device resets. It doesn't appear to originate in SpriteMaster, but SM most certainly
