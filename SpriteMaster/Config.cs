@@ -157,7 +157,7 @@ namespace SpriteMaster {
 			internal const bool CanFetchAndLoadSameFrame = false;
 			internal const int MaxLoadsPerFrame = 1;
 			internal static long MinimumSizeTexels = 0;
-			internal const long ScalingBudgetPerFrameTexels = 16 * 256 * 256;
+			internal static long ScalingBudgetPerFrameTexels = 16 * 256 * 256;
 		}
 
 		internal static class MemoryCache {
@@ -172,7 +172,7 @@ namespace SpriteMaster {
 
 		internal static class Cache {
 			internal const bool Purge = false;
-			internal static bool Enabled = false;
+			internal static bool Enabled = true;
 			internal const int LockRetries = 32;
 			internal const int LockSleepMS = 32;
 		}
