@@ -19,6 +19,15 @@ namespace SpriteMaster {
 
 		internal static readonly string ModuleName = typeof(Config).Namespace;
 
+		[ConfigIgnore]
+		internal static readonly Version CurrentVersionObj = typeof(Config).Assembly.GetName().Version;
+		[ConfigIgnore]
+		internal static readonly string CurrentVersion = CurrentVersionObj.ToString(3);
+
+		internal static string ConfigVersion = "";
+		[ConfigIgnore]
+		internal static string ClearConfigBefore = "0.10.3";
+
 		internal static bool Enabled = true;
 		internal static SButton ToggleButton = SButton.F11;
 
@@ -92,20 +101,20 @@ namespace SpriteMaster {
 		internal static class Resample {
 			internal const bool Smoothing = true;
 			internal const bool Scale = Smoothing;
-			internal const bool EnableDynamicScale = true;
+			internal static bool EnableDynamicScale = true;
 			internal static bool TrimWater = true;
 			internal static float ScaleBias = 0.1f;
 			internal static int MaxScale = 6;
 			internal static int MinimumTextureDimensions = 4;
-			internal const bool EnableWrappedAddressing = true;
-			internal const bool UseBlockCompression = true;
+			internal static bool EnableWrappedAddressing = true;
+			internal static bool UseBlockCompression = true;
 			internal static CompressionQuality BlockCompressionQuality = CompressionQuality.Highest;
 			internal static int BlockHardAlphaDeviationThreshold = 7;
 			internal static List<string> Blacklist = new List<string>() {
 				"LooseSprites\\Lighting\\"
 			};
 			internal static class Padding {
-				internal const bool Enabled = true;
+				internal static bool Enabled = true;
 				internal static int MinimumSizeTexels = 4;
 				internal static bool IgnoreUnknown = false;
 				internal static List<string> StrictList = new List<string>() {

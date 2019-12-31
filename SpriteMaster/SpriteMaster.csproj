@@ -3,11 +3,11 @@
   <PropertyGroup>
     <AssemblyName>SpriteMaster</AssemblyName>
     <RootNamespace>SpriteMaster</RootNamespace>
-    <Version>0.10.2</Version>
+    <Version>0.10.3</Version>
     <TargetFramework>net452</TargetFramework>
     <PlatformTarget>x86</PlatformTarget>
     <EnableHarmony>true</EnableHarmony>
-    <AssemblyVersion>0.10.2.*</AssemblyVersion>
+    <AssemblyVersion>0.10.3.*</AssemblyVersion>
 		<Deterministic>false</Deterministic>
 		<LangVersion>preview</LangVersion>
 		<RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
@@ -18,14 +18,14 @@
 		<Company>Digital Carbide</Company>
 		<PackageLicenseFile>LICENSE.MD</PackageLicenseFile>
 		<Copyright>mkuklinski</Copyright>
-		<FileVersion>0.10.2.0</FileVersion>
+		<FileVersion>0.10.3.0</FileVersion>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<NullableReferenceTypes>true</NullableReferenceTypes>
     <FileAlignment>512</FileAlignment>
     <NoWarn>0162;7035</NoWarn>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 		<OutputPath>bin\$(Configuration)_$(Platform)\</OutputPath>
-		<IgnoreModFilePatterns>\.dll\.config$, ILMerge, runtimes</IgnoreModFilePatterns>
+		<IgnoreModFilePatterns>\.dll\.config$, ILMerge, runtimes, net452</IgnoreModFilePatterns>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
@@ -144,10 +144,6 @@
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <Exec Command="copy /D /V /Y /L $(SolutionDir)Libraries\nvtt.dll $(OutDir)nvtt.dll" />
-  </Target>
-
-  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="set ASMINFO=Properties\AssemblyInfo.cs&#xD;&#xA;echo &quot;%25(Version)&quot;" />
   </Target>
 
 </Project>

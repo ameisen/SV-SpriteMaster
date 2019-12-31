@@ -80,9 +80,48 @@ namespace SpriteMaster {
 			GarbageCollectThread.IsBackground = true;
 		}
 
+		private bool IsVersionOutdated(string configVersion) {
+			string referenceVersion = Config.ClearConfigBefore;
+
+			var configStrArray = configVersion.Split('.');
+			var referenceStrArray = referenceVersion.Split('.');
+
+			try {
+				while (configStrArray.Length > referenceStrArray.Length) {
+					referenceStrArray.Add("0");
+				}
+				while (referenceStrArray.Length > configStrArray.Length) {
+					configStrArray.Add("0");
+				}
+
+				foreach (var i in 0.Until(configStrArray.Length)) {
+					var configElement = int.Parse(configStrArray[i]);
+					var referenceElement = int.Parse(referenceStrArray[i]);
+
+					if (configElement < referenceElement)
+						return true;
+				}
+			}
+			catch {
+				return true;
+			}
+			return false;
+		}
+
 		public override void Entry (IModHelper help) {
 			var ConfigPath = Path.Combine(help.DirectoryPath, ConfigName);
-			SerializeConfig.Load(ConfigPath);
+
+			using (var tempStream = new MemoryStream()) {
+				SerializeConfig.Save(tempStream);
+
+				SerializeConfig.Load(ConfigPath);
+
+				if (IsVersionOutdated(Config.ConfigVersion)) {
+					Debug.WarningLn("config.toml is out of date, rewriting it.");
+					SerializeConfig.Load(tempStream);
+					Config.ConfigVersion = Config.CurrentVersion;
+				}
+			}
 			SerializeConfig.Save(ConfigPath);
 			
 			ConfigureHarmony();

@@ -13,7 +13,7 @@ namespace SpriteMaster {
 
 		private static ulong HashClass (Type type) {
 			ulong hash = default;
-			
+
 			foreach (var field in type.GetFields(StaticFlags)) {
 				hash = Hashing.CombineHash(hash, field.GetValue(null).GetLongHashCode());
 			}
@@ -29,15 +29,8 @@ namespace SpriteMaster {
 			return HashClass(typeof(Config));
 		}
 
-		internal static bool Load (string ConfigPath) {
-			if (!File.Exists(ConfigPath)) {
-				return false;
-			}
-
+		private static bool Parse (DocumentSyntax Data) {
 			try {
-				string ConfigText = File.ReadAllText(ConfigPath);
-				var Data = Toml.Parse(ConfigText, ConfigPath);
-
 				foreach (var table in Data.Tables) {
 					string tableName = "";
 					try {
@@ -278,6 +271,52 @@ namespace SpriteMaster {
 			}
 		}
 
+		internal static bool Load (MemoryStream stream) {
+			try {
+				string ConfigText = System.Text.Encoding.UTF8.GetString(stream.ToArray());
+				var Data = Toml.Parse(ConfigText);
+				return Parse(Data);
+			}
+			catch (Exception ex) {
+				ex.PrintWarning();
+				return false;
+			}
+		}
+
+		internal static bool Load (string ConfigPath) {
+			if (!File.Exists(ConfigPath)) {
+				return false;
+			}
+
+			try {
+				string ConfigText = File.ReadAllText(ConfigPath);
+				var Data = Toml.Parse(ConfigText, ConfigPath);
+				return Parse(Data);
+			}
+			catch (Exception ex) {
+				ex.PrintWarning();
+				return false;
+			}
+		}
+
+		internal static bool Save (MemoryStream stream) {
+			try {
+				var Document = new DocumentSyntax();
+
+				SaveClass(typeof(Config), Document);
+
+				using (var writer = new StreamWriter(stream)) {
+					Document.WriteTo(writer);
+					writer.Flush();
+				}
+			}
+			catch (Exception ex) {
+				ex.PrintWarning();
+				return false;
+			}
+			return true;
+		}
+
 		internal static bool Save (string ConfigPath) {
 			try {
 				var Document = new DocumentSyntax();
@@ -286,6 +325,7 @@ namespace SpriteMaster {
 
 				using (var writer = File.CreateText(ConfigPath)) {
 					Document.WriteTo(writer);
+					writer.Flush();
 				}
 			}
 			catch (Exception ex) {
