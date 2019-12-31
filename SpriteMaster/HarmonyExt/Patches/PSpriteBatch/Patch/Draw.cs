@@ -1,10 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using SpriteMaster.Extensions;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch.Patch {
 	[SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
@@ -24,21 +21,9 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch.Patch {
 		 * 
 		 */
 
-			/*
-		[HarmonyPatch(typeof(Array), "Sort", priority: HarmonyExt.PriorityLevel.First, instance: false, generic: HarmonyPatch.Generic.Struct)]
-		internal static bool ArraySort<T>(T[] array, int index, int length, IComparer<T> comparer) where T : struct {
-			var subArray = new Span<T>(array, index, length).ToArray();
-			var sorted = subArray.OrderBy(v => v, comparer);
-			int i = index;
-			foreach (var value in sorted) {
-				array[i++] = value;
-			}
-			return false;
-		}
-		*/
-
+		/*
 		[HarmonyPatch(typeof(SpriteBatch), "BackToFrontComparer", "Compare", isChild: true, HarmonyPatch.Fixation.Prefix, HarmonyExt.PriorityLevel.First)]
-		internal static bool BFComparer(object __instance, ref int __result, int x, int y) {
+		internal static bool BFComparer (object __instance, ref int __result, int x, int y) {
 			var batch = (SpriteBatch)__instance.GetField("parent");
 			var queue = (object[])batch.GetField("spriteQueue");
 			var DepthGetter = queue.GetType().GetElementType().GetField("Depth", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
@@ -78,70 +63,203 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch.Patch {
 				__result = -1;
 				return false;
 			}
-
 			__result = x.CompareTo(y);
 			return false;
 		}
+		*/
 
-		[HarmonyPatch("InternalDraw", fixation: HarmonyPatch.Fixation.Prefix, priority: HarmonyExt.PriorityLevel.Last)]
-		internal static bool OnInternalDraw (
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[HarmonyPatch("Draw", priority: HarmonyExt.PriorityLevel.First)]
+		internal static bool OnDrawFirst (
 			SpriteBatch __instance,
 			ref Texture2D texture,
-			ref Vector4 destination,
-			ref bool scaleDestination,
+			ref Rectangle destinationRectangle,
 			ref Rectangle? sourceRectangle,
 			Color color,
 			float rotation,
 			ref Vector2 origin,
 			SpriteEffects effects,
-			ref float depth
+			float layerDepth
 		) {
-			//if (!Config.Enabled)
-			//	return true;
-
-			var originalSize = sourceRectangle.GetValueOrDefault(new Rectangle(0, 0, texture.Width, texture.Height));
-
-			// Temporary hack for water.
-			if (texture.Name == "LooseSprites\\Cursors" && originalSize.Right <= 640 && originalSize.Top >= 2000) {
-				//Debug.InfoLn($"Water?: {originalSize.X} {originalSize.Y}");
-				// depth = 0.56
-				//depth -= 0.5f;
+			if (!Config.Enabled)
 				return true;
-			}
 
-			if (texture is RenderTarget2D || originalSize.Width <= 1 || originalSize.Height <= 1 || Math.Max(originalSize.Width, originalSize.Height) <= Config.Resample.MinimumTextureDimensions) {
+			return __instance.OnDrawFirst(
+				texture: ref texture,
+				destination: ref destinationRectangle,
+				source: ref sourceRectangle,
+				color: color,
+				rotation: rotation,
+				origin: ref origin,
+				effects: effects,
+				layerDepth: layerDepth
+			);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[HarmonyPatch("Draw", priority: HarmonyExt.PriorityLevel.Last)]
+		internal static bool OnDrawLast (
+			SpriteBatch __instance,
+			ref Texture2D texture,
+			ref Rectangle destinationRectangle,
+			ref Rectangle? sourceRectangle,
+			Color color,
+			float rotation,
+			ref Vector2 origin,
+			SpriteEffects effects,
+			ref float layerDepth
+		) {
+			if (!Config.Enabled)
 				return true;
-			}
 
-			if (!scaleDestination) {
-				//originalSize = originalSize.ClampTo(new Rectangle(0, 0, texture.Width, texture.Height));
+			return __instance.OnDraw(
+				texture: ref texture,
+				destination: ref destinationRectangle,
+				source: ref sourceRectangle,
+				color: color,
+				rotation: rotation,
+				origin: ref origin,
+				effects: effects,
+				layerDepth: ref layerDepth
+			);
+		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private static bool ForwardDraw (
+			SpriteBatch @this,
+			Texture2D texture,
+			Rectangle destinationRectangle,
+			Color color,
+			Rectangle? sourceRectangle = null,
+			float rotation = 0f,
+			Vector2? origin = null,
+			SpriteEffects effects = SpriteEffects.None,
+			float layerDepth = 0f
+		) {
+			if (!Config.Enabled)
+				return true;
 
-				var destinationSize = new Vector2(destination.Z, destination.W);
-				var newScale = destinationSize / new Vector2(originalSize.Width, originalSize.Height);
-				destination.Z = newScale.X;
-				destination.W = newScale.Y;
-				scaleDestination = true;
-			}
+			@this.Draw(
+				texture: texture,
+				destinationRectangle: destinationRectangle,
+				sourceRectangle: sourceRectangle,
+				color: color,
+				rotation: rotation,
+				origin: origin ?? Vector2.Zero,
+				effects: effects,
+				layerDepth: layerDepth
+			);
 
-			var scale = new Vector2(destination.Z, destination.W);
-			var position = new Vector2(destination.X, destination.Y);
+			return false;
+		}
 
-			if (Config.Enabled) {
-				__instance.OnDraw(
-					texture: ref texture,
-					position: ref position,
-					source: ref sourceRectangle,
-					color: color,
-					rotation: rotation,
-					origin: ref origin,
-					scale: ref scale,
-					effects: effects,
-					layerDepth: ref depth
-				);
-			}
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[HarmonyPatch("Draw", priority: HarmonyExt.PriorityLevel.First)]
+		internal static bool OnDraw (SpriteBatch __instance, Texture2D texture, Rectangle destinationRectangle, Rectangle? sourceRectangle, Color color) {
+			return ForwardDraw(
+				@this: __instance,
+				texture: texture,
+				destinationRectangle: destinationRectangle,
+				sourceRectangle: sourceRectangle,
+				color: color
+			);
+		}
 
-			destination = new Vector4(position, scale.X, scale.Y);
-			return true;
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[HarmonyPatch("Draw", priority: HarmonyExt.PriorityLevel.First)]
+		internal static bool OnDraw (SpriteBatch __instance, Texture2D texture, Rectangle destinationRectangle, Color color) {
+			return ForwardDraw(
+				@this: __instance,
+				texture: texture,
+				destinationRectangle: destinationRectangle,
+				color: color
+			);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private static bool ForwardDraw (
+			SpriteBatch @this,
+			Texture2D texture,
+			Vector2 position,
+			Color color,
+			Rectangle? sourceRectangle = null,
+			float rotation = 0f,
+			Vector2? origin = null,
+			Vector2? scale = null,
+			SpriteEffects effects = SpriteEffects.None,
+			float layerDepth = 0f
+		) {
+			if (!Config.Enabled)
+				return true;
+
+			@this.Draw(
+				texture: texture,
+				position: position,
+				sourceRectangle: sourceRectangle,
+				color: color,
+				rotation: rotation,
+				origin: origin ?? Vector2.Zero,
+				scale: scale ?? Vector2.One,
+				effects: effects,
+				layerDepth: layerDepth
+			);
+
+			return false;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[HarmonyPatch("Draw", priority: HarmonyExt.PriorityLevel.Last)]
+		internal static bool OnDraw (SpriteBatch __instance, ref Texture2D texture, ref Vector2 position, ref Rectangle? sourceRectangle, Color color, float rotation, ref Vector2 origin, ref Vector2 scale, SpriteEffects effects, float layerDepth) {
+			if (!Config.Enabled)
+				return true;
+
+			return __instance.OnDraw(
+				texture: ref texture,
+				position: ref position,
+				source: ref sourceRectangle,
+				color: color,
+				rotation: rotation,
+				origin: ref origin,
+				scale: ref scale,
+				effects: effects,
+				layerDepth: ref layerDepth
+			);
+		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[HarmonyPatch("Draw", priority: HarmonyExt.PriorityLevel.First)]
+		internal static bool OnDraw (SpriteBatch __instance, Texture2D texture, Vector2 position, Rectangle? sourceRectangle, Color color, float rotation, Vector2 origin, float scale, SpriteEffects effects, float layerDepth) {
+			return ForwardDraw(
+				@this: __instance,
+				texture: texture,
+				position: position,
+				sourceRectangle: sourceRectangle,
+				color: color,
+				rotation: rotation,
+				origin: origin,
+				scale: new Vector2(scale),
+				effects: effects,
+				layerDepth: layerDepth
+			);
+		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[HarmonyPatch("Draw", priority: HarmonyExt.PriorityLevel.First)]
+		internal static bool OnDraw (SpriteBatch __instance, Texture2D texture, Vector2 position, Rectangle? sourceRectangle, Color color) {
+			return ForwardDraw(
+				@this: __instance,
+				texture: texture,
+				position: position,
+				sourceRectangle: sourceRectangle,
+				color: color
+			);
+		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[HarmonyPatch("Draw", priority: HarmonyExt.PriorityLevel.First)]
+		internal static bool OnDraw (SpriteBatch __instance, Texture2D texture, Vector2 position, Color color) {
+			return ForwardDraw(
+				@this: __instance,
+				texture: texture,
+				position: position,
+				color: color
+			);
 		}
 	}
 }

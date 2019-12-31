@@ -93,18 +93,19 @@ namespace SpriteMaster {
 			internal const bool Smoothing = true;
 			internal const bool Scale = Smoothing;
 			internal const bool EnableDynamicScale = true;
+			internal static bool TrimWater = true;
 			internal static float ScaleBias = 0.1f;
 			internal static int MaxScale = 6;
 			internal static int MinimumTextureDimensions = 4;
 			internal const bool EnableWrappedAddressing = true;
-			internal const bool UseBlockCompression = false;
+			internal const bool UseBlockCompression = true;
 			internal static CompressionQuality BlockCompressionQuality = CompressionQuality.Highest;
 			internal static int BlockHardAlphaDeviationThreshold = 7;
 			internal static List<string> Blacklist = new List<string>() {
 				"LooseSprites\\Lighting\\"
 			};
 			internal static class Padding {
-				internal const bool Enabled = false;
+				internal const bool Enabled = true;
 				internal static int MinimumSizeTexels = 4;
 				internal static bool IgnoreUnknown = false;
 				internal static List<string> StrictList = new List<string>() {
@@ -156,7 +157,7 @@ namespace SpriteMaster {
 			internal const bool CanFetchAndLoadSameFrame = false;
 			internal const int MaxLoadsPerFrame = 1;
 			internal static long MinimumSizeTexels = 0;
-			internal static long ScalingBudgetPerFrameTexels = 2 * 256 * 256;
+			internal const long ScalingBudgetPerFrameTexels = 16 * 256 * 256;
 		}
 
 		internal static class MemoryCache {
@@ -171,7 +172,7 @@ namespace SpriteMaster {
 
 		internal static class Cache {
 			internal const bool Purge = false;
-			internal static bool Enabled = true;
+			internal static bool Enabled = false;
 			internal const int LockRetries = 32;
 			internal const int LockSleepMS = 32;
 		}

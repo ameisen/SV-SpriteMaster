@@ -9,11 +9,14 @@ using System.Runtime.CompilerServices;
 namespace SpriteMaster.Extensions {
 	using XRectangle = Microsoft.Xna.Framework.Rectangle;
 	internal static class Hashing {
-		private const ulong HashOffset = 17ul << 24;
-		private const ulong HashFactor = 31ul << 24;
+		private const bool UseXorHash = false;
 
 		private static ulong AccumulateHash(ulong hash, ulong hashend) {
-			return unchecked(hash * HashFactor + hashend);
+			if (UseXorHash) {
+				return hash ^ hashend;
+			}
+			// Stolen from C++ Boost.
+			return hash ^ (hashend + 0x9e3779b9ul + (hash << 6) + (hash >> 2));
 		}
 
 		private static ulong AccumulateHash (ulong hash, int hashend) {
@@ -22,7 +25,7 @@ namespace SpriteMaster.Extensions {
 
 		internal static ulong CombineHash(params ulong[] hashes) {
 			unchecked {
-				ulong hash = HashOffset;
+				ulong hash = 0;
 				foreach (var subHash in hashes) {
 					hash = AccumulateHash(hash, subHash);
 				}
@@ -32,7 +35,7 @@ namespace SpriteMaster.Extensions {
 
 		internal static ulong CombineHash (params object[] hashes) {
 			unchecked {
-				ulong hash = HashOffset;
+				ulong hash = 0;
 
 				foreach (var subHash in hashes) {
 					switch (subHash) {

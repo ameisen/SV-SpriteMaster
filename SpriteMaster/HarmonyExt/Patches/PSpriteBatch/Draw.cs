@@ -5,10 +5,13 @@ using SpriteMaster.Metadata;
 using SpriteMaster.Types;
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using static SpriteMaster.ScaledTexture;
 
 namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
+	[SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
+	[SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Harmony")]
 	static class Draw {
 		private const bool Continue = true;
 		private const bool Stop = false;
@@ -54,7 +57,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 				if (reference is RenderTarget2D || reference.Width < 1 || reference.Height < 1)
 					return null;
 
-				if (Math.Max(source.Width, source.Height) <= Config.Resample.MinimumTextureDimensions)
+				if (reference.Extent().MaxOf <= Config.Resample.MinimumTextureDimensions)
 					return null;
 
 				var scaledTexture = create ?
@@ -94,6 +97,124 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			}
 		}
 
+		private static bool IsWater(in Bounds bounds, Texture2D texture) {
+			return bounds.Right <= 640 && bounds.Top >= 2000 && texture.Name == "LooseSprites\\Cursors";
+		}
+
+		// Takes the arguments, and checks to see if the texture is padded. If it is, it is forwarded to the correct draw call, avoiding
+		// intervening mods altering the arguments first.
+		internal static bool OnDrawFirst (
+			this SpriteBatch @this,
+			ref Texture2D texture,
+			ref Rectangle destination,
+			ref Rectangle? source,
+			Color color,
+			float rotation,
+			ref Vector2 origin,
+			SpriteEffects effects,
+			float layerDepth
+		) {
+			texture.Meta().UpdateLastAccess();
+			var sourceRectangle = source.GetValueOrDefault(new Rectangle(0, 0, texture.Width, texture.Height));
+			var referenceRectangle = sourceRectangle;
+
+			if (IsWater(sourceRectangle, texture)) {
+				if (Config.Resample.TrimWater) {
+					sourceRectangle.Height -= 1;
+				}
+			}
+
+			sourceRectangle.Validate(reference: texture);
+
+			var expectedScale2D = new Vector2(destination.Width, destination.Height) / new Vector2(sourceRectangle.Width, sourceRectangle.Height);
+			var expectedScale = ((Math.Max(expectedScale2D.X, expectedScale2D.Y) + Config.Resample.ScaleBias).Clamp(2.0f, (float)Config.Resample.MaxScale)).NextInt();
+
+			if (!texture.FetchScaledTexture(
+				expectedScale: expectedScale,
+				source: ref sourceRectangle,
+				scaledTexture: out var scaledTexture,
+				create: true
+			)) {
+				return Continue;
+			}
+			scaledTexture.UpdateReferenceFrame();
+
+			if (!scaledTexture.Padding.IsZero) {
+				// Convert the draw into the other draw style. This has to be done because the padding potentially has
+				// subpixel accuracy when scaled to the destination rectangle.
+
+				var originalSize = new Vector2(referenceRectangle.Width, referenceRectangle.Height);
+				var destinationSize = new Vector2(destination.Width, destination.Height);
+				var newScale = destinationSize / originalSize;
+				var newPosition = new Vector2(destination.X, destination.Y);
+
+				@this.Draw(
+					texture: texture,
+					position: newPosition,
+					sourceRectangle: source,
+					color: color,
+					rotation: rotation,
+					origin: origin,
+					scale: newScale,
+					effects: effects,
+					layerDepth: layerDepth
+				);
+				return Stop;
+			}
+			return Continue;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal static bool OnDraw (
+			this SpriteBatch @this,
+			ref Texture2D texture,
+			ref Rectangle destination,
+			ref Rectangle? source,
+			Color color,
+			float rotation,
+			ref Vector2 origin,
+			SpriteEffects effects,
+			ref float layerDepth
+		) {
+			texture.Meta().UpdateLastAccess();
+
+			var sourceRectangle = source.GetValueOrDefault(new Rectangle(0, 0, texture.Width, texture.Height));
+
+			if (IsWater(sourceRectangle, texture)) {
+				if (Config.Resample.TrimWater) {
+					sourceRectangle.Height -= 1;
+				}
+			}
+
+			sourceRectangle.Validate(reference: texture);
+
+			var expectedScale2D = new Vector2(destination.Width, destination.Height) / new Vector2(sourceRectangle.Width, sourceRectangle.Height);
+			var expectedScale = ((Math.Max(expectedScale2D.X, expectedScale2D.Y) + Config.Resample.ScaleBias).Clamp(2.0f, (float)Config.Resample.MaxScale)).NextInt();
+
+			if (!texture.FetchScaledTexture(
+				expectedScale: expectedScale,
+				source: ref sourceRectangle,
+				scaledTexture: out var scaledTexture
+			)) {
+				return Continue;
+			}
+			scaledTexture.UpdateReferenceFrame();
+
+			var resampledTexture = scaledTexture.Texture;
+			if (!resampledTexture.Validate()) {
+				return Continue;
+			}
+
+
+			var scaledOrigin = origin / scaledTexture.Scale;
+
+			source = sourceRectangle;
+			origin = scaledOrigin;
+			texture = resampledTexture;
+
+			return Continue;
+		}
+
 		internal static bool OnDraw (
 			this SpriteBatch @this,
 			ref Texture2D texture,
@@ -110,15 +231,29 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 
 			var sourceRectangle = source.GetValueOrDefault(new Rectangle(0, 0, texture.Width, texture.Height));
 
+			var scaleFactor = 1.0f;
+
+			if (IsWater(sourceRectangle, texture)) {
+				if (Config.Resample.TrimWater && sourceRectangle.Height > 4) {
+					//float rescale = (float)sourceRectangle.Height / (float)(sourceRectangle.Height - 4);
+					//sourceRectangle.Height -= 4;
+					//scale.Y *= 0.5f;
+					scaleFactor = 4.0f;
+				}
+			}
+
 			sourceRectangle.Validate(reference: texture);
 
-			var expectedScale = Config.Resample.EnableDynamicScale ? (Math.Max(scale.X, scale.Y) + Config.Resample.ScaleBias).Clamp(2.0f, (float)Config.Resample.MaxScale).NextInt() : Config.Resample.MaxScale;
+			var expectedScale = ((Math.Max(scale.X, scale.Y) * scaleFactor) + Config.Resample.ScaleBias).Clamp(2.0f, (float)Config.Resample.MaxScale).NextInt();
 
-			ManagedTexture2D resampledTexture;
-			if (texture.FetchScaledTexture(
+			ScaledTexture scaledTexture;
+			if (texture is ManagedTexture2D resampledTexture) {
+				scaledTexture = resampledTexture.Texture;
+			}
+			else if (texture.FetchScaledTexture(
 				expectedScale: expectedScale,
 				source: ref sourceRectangle,
-				scaledTexture: out var scaledTexture,
+				scaledTexture: out scaledTexture,
 				create: true
 			)) {
 				resampledTexture = scaledTexture.Texture;

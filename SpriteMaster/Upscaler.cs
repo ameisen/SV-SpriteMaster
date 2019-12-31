@@ -65,11 +65,26 @@ namespace SpriteMaster {
 				};
 			}
 
+			bool isWater = input.Size.Right <= 640 && input.Size.Top >= 2000 && input.Size.Width >= 4 && input.Size.Height >= 4 && texture.Name == "LooseSprites\\Cursors";
+
+			var spriteBounds = input.Size;
+			var textureSize = input.ReferenceSize;
+
+			if (isWater) {
+				spriteBounds.X /= 4;
+				spriteBounds.Y /= 4;
+				spriteBounds.Width /= 4;
+				spriteBounds.Height /= 4;
+
+				textureSize.Width /= 4;
+				textureSize.Height /= 4;
+			}
+
 			wrapped.Set(false);
 
 			ManagedTexture2D output = null;
 
-			var inputSize = desprite ? input.Size.Extent : input.ReferenceSize;
+			var inputSize = desprite ? spriteBounds.Extent : textureSize;
 
 			if (Config.Resample.Scale) {
 				int originalScale = scale;
@@ -86,7 +101,7 @@ namespace SpriteMaster {
 			var scaledSize = inputSize * scale;
 			var newSize = scaledSize.Min(Config.ClampDimension);
 
-			var scaledDimensions = input.Size.Extent * scale; // TODO : should this be (inputSize * scale)?
+			var scaledDimensions = spriteBounds.Extent * scale; // TODO : should this be (inputSize * scale)?
 			texture.UnpaddedSize = newSize;
 
 			texture.AdjustedScale = (Vector2)newSize / inputSize;
@@ -135,13 +150,28 @@ namespace SpriteMaster {
 					Vector2B WrappedX;
 					Vector2B WrappedY;
 
-					var rawData = MemoryMarshal.Cast<byte, int>(rawTextureData.AsSpan());
+					// Water in the game is pre-upscaled by 4... which is weird.
+					Span<int> rawData;
+					if (isWater) {
+						var veryRawData = MemoryMarshal.Cast<byte, int>(rawTextureData.AsSpan());
+						rawData = new Span<int>(new int[veryRawData.Length / 16]);
+						foreach (var y in 0.Until(textureSize.Height)) {
+							var ySourceOffset = (y * 4) * input.ReferenceSize.Width;
+							var yDestinationOffset = y * textureSize.Width;
+							foreach (var x in 0.Until(textureSize.Width)) {
+								rawData[yDestinationOffset + x] = veryRawData[ySourceOffset + (x * 4)];
+							}
+						}
+					}
+					else {
+						rawData = MemoryMarshal.Cast<byte, int>(rawTextureData.AsSpan());
+					}
 
 					var edgeResults = Edge.AnalyzeLegacy(
 						reference: input.Reference,
 						data: rawData,
-						rawSize: input.ReferenceSize,
-						spriteSize: input.Size,
+						rawSize: textureSize,
+						spriteSize: spriteBounds,
 						Wrapped: input.Wrapped
 					);
 
@@ -199,8 +229,8 @@ namespace SpriteMaster {
 					wrapped &= Config.Resample.EnableWrappedAddressing;
 
 					if (Config.Debug.Sprite.DumpReference) {
-						using (var filtered = Textures.CreateBitmap(rawData.ToArray(), input.ReferenceSize, PixelFormat.Format32bppArgb)) {
-							using (var submap = (Bitmap)filtered.Clone(input.Size, filtered.PixelFormat)) {
+						using (var filtered = Textures.CreateBitmap(rawData.ToArray(), textureSize, PixelFormat.Format32bppArgb)) {
+							using (var submap = (Bitmap)filtered.Clone(spriteBounds, filtered.PixelFormat)) {
 								var dump = GetDumpBitmap(submap);
 								var path = Cache.GetDumpPath($"{input.Reference.SafeName().Replace("\\", ".").Replace("/", ".")}.{hashString}.reference.png");
 								File.Delete(path);
@@ -210,18 +240,18 @@ namespace SpriteMaster {
 					}
 
 					if (Config.Resample.Smoothing) {
-						var scalerConfig = new xBRZNet2.Config(wrappedX: wrapped.X && false, wrappedY: wrapped.Y && false);
+						var scalerConfig = new xBRZNet2.Config(wrappedX: (wrapped.X && false) || isWater, wrappedY: (wrapped.Y && false) || isWater);
 
 						// Do we need to pad the sprite?
 						var prescaleData = rawData;
-						var prescaleSize = input.ReferenceSize;
+						var prescaleSize = textureSize;
 
 						var shouldPad = new Vector2B(
 							!(WrappedX.Positive || WrappedX.Negative) && Config.Resample.Padding.Enabled && inputSize.X > 1,
 							!(WrappedY.Positive || WrappedX.Negative) && Config.Resample.Padding.Enabled && inputSize.Y > 1
 						);
 
-						var outputSize = input.Size;
+						var outputSize = spriteBounds;
 
 						if (
 							(
@@ -298,7 +328,7 @@ namespace SpriteMaster {
 
 								foreach (int i in 0.Until(spriteSize.Height)) {
 									int strideOffset = y * paddedSize.Width;
-									int strideOffsetRaw = (i + input.Size.Top) * prescaleSize.Width;
+									int strideOffsetRaw = (i + spriteBounds.Top) * prescaleSize.Width;
 									// Write a padded X line
 									int xOffset = strideOffset;
 									void WritePaddingX () {
@@ -310,7 +340,7 @@ namespace SpriteMaster {
 									}
 									WritePaddingX();
 									foreach (int x in 0.Until(spriteSize.Width)) {
-										paddedData[xOffset++] = rawData[strideOffsetRaw + x + input.Size.Left];
+										paddedData[xOffset++] = rawData[strideOffsetRaw + x + spriteBounds.Left];
 									}
 									WritePaddingX();
 									++y;
