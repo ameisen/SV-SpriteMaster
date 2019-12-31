@@ -21,7 +21,7 @@
 		<FileVersion>0.10.1.0</FileVersion>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<NullableReferenceTypes>true</NullableReferenceTypes>
-    <FileAlignment>4096</FileAlignment>
+    <FileAlignment>512</FileAlignment>
     <NoWarn>0162;7035</NoWarn>
 		<!--<ILMergeToolsPath>$(SolutionDir)packages\ILMerge.3.0.29\tools\net452\</ILMergeToolsPath>-->
   </PropertyGroup>
@@ -34,6 +34,8 @@
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
     <DefineConstants>TRACE;DEBUG</DefineConstants>
+    <DebugType>full</DebugType>
+    <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
 
   <ItemGroup>

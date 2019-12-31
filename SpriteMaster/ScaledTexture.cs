@@ -481,7 +481,7 @@ namespace SpriteMaster {
 				SurfaceFormat format,
 				int[] data = null,
 				string name = null
-			) : base(reference.GraphicsDevice, dimensions.Width, dimensions.Height, UseMips, format) {
+			) : base(reference.GraphicsDevice.IsDisposed ? DrawState.Device : reference.GraphicsDevice, dimensions.Width, dimensions.Height, UseMips, format) {
 				if (name != null) {
 					this.Name = name;
 				}

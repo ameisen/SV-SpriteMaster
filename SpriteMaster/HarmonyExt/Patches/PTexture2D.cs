@@ -1,10 +1,15 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using SpriteMaster.Extensions;
 using SpriteMaster.Types;
+using StardewValley;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using static SpriteMaster.HarmonyExt.HarmonyExt;
 using static SpriteMaster.ScaledTexture;
 
@@ -82,6 +87,41 @@ namespace SpriteMaster.HarmonyExt.Patches {
 			}
 
 			ScaledTexture.Purge(__instance, rect, new DataRef<T>(data, startIndex, elementCount));
+		}
+
+		// A horrible, horrible hack to stop a rare-ish crash when zooming or when the device resets. It doesn't appear to originate in SpriteMaster, but SM most certainly
+		// makes it worse. This will force the texture to regenerate on the fly if it is in a zombie state.
+		[HarmonyPatch("Microsoft.Xna.Framework", "Microsoft.Xna.Framework.Helpers", "CheckDisposed", HarmonyPatch.Fixation.Prefix, PriorityLevel.Last, instance: false)]
+		private static unsafe bool CheckDisposed (object obj, ref IntPtr pComPtr) {
+			if (obj is GraphicsResource resource) {
+				if (pComPtr == IntPtr.Zero || resource.IsDisposed) {
+					if (!resource.IsDisposed) {
+						resource.Dispose();
+					}
+
+					if (resource is Texture2D texture) {
+						Debug.WarningLn("CheckDisposed is going to throw, attempting to restore state");
+
+						var ctor = texture.GetType().GetConstructor(
+							BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+							null,
+							new Type[] {
+								typeof(GraphicsDevice),
+								typeof(int),
+								typeof(int),
+								typeof(bool),
+								typeof(SurfaceFormat)
+							},
+							null
+						);
+
+						ctor.Invoke(texture, new object[] { DrawState.Device, texture.Width, texture.Height, texture.LevelCount > 1, texture.Format });
+						//pComPtr = (IntPtr)(void*)texture.GetField("pComPtr");
+						return false;
+					}
+				}
+			}
+			return true;
 		}
 
 		/*

@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
+using StardewValley;
 using System;
 using System.Runtime;
 using System.Runtime.CompilerServices;
@@ -18,6 +19,12 @@ namespace SpriteMaster {
 		public static volatile bool TriggerGC = false;
 
 		public static volatile float CurrentDepth = 0.0f;
+
+		internal static GraphicsDevice Device {
+			get {
+				return Game1.graphics.GraphicsDevice;
+			}
+		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static void SetCurrentAddressMode (SamplerState samplerState) {

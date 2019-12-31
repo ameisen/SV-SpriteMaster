@@ -37,8 +37,8 @@ namespace SpriteMaster {
 		internal const bool IgnoreUnknownTextures = false;
 		internal static bool GarbageCollectAccountUnownedTextures = true;
 		internal static bool GarbageCollectAccountOwnedTexture = true;
-		internal static bool LeakPreventTexture = true;
-		internal static bool LeakPreventAll = true;
+		internal const bool LeakPreventTexture = false;
+		internal const bool LeakPreventAll = false;
 		internal static bool DiscardDuplicates = false;
 		internal static int DiscardDuplicatesFrameDelay = 2;
 		internal static List<string> DiscardDuplicatesBlacklist = new List<string>() {

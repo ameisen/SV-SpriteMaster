@@ -58,7 +58,7 @@ namespace SpriteMaster.HarmonyExt {
 					var instanceType = attribute.Type;
 					if (instanceType == null) {
 						var instancePar = method.GetParameters().Where(p => p.Name == "__instance");
-						Contract.AssertTrue(instancePar.Count() != 0, $"Harmony Instance Attribute used on method {method.GetFullName()}, but no __instance argument present");
+						Contract.AssertTrue(instancePar.Count() != 0, $"Type not specified for method {method.GetFullName()}, but no __instance argument present");
 						instanceType = instancePar.First().ParameterType.RemoveRef();
 					}
 

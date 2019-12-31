@@ -65,5 +65,9 @@ namespace SpriteMaster.Extensions {
 			method = type.GetMethod(name, bindingAttr);
 			return (method != null);
 		}
+
+		internal static object GetField (this object obj, string name) {
+			return obj.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public).GetValue(obj);
+		}
 	}
 }
