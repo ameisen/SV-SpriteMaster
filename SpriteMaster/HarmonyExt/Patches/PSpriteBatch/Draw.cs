@@ -118,16 +118,17 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			var sourceRectangle = source.GetValueOrDefault(new Rectangle(0, 0, texture.Width, texture.Height));
 			var referenceRectangle = sourceRectangle;
 
+			float scaleFactor = 1.0f;
 			if (IsWater(sourceRectangle, texture)) {
 				if (Config.Resample.TrimWater) {
-					sourceRectangle.Height -= 1;
+					scaleFactor = 4.0f;
 				}
 			}
 
 			sourceRectangle.Validate(reference: texture);
 
 			var expectedScale2D = new Vector2(destination.Width, destination.Height) / new Vector2(sourceRectangle.Width, sourceRectangle.Height);
-			var expectedScale = ((Math.Max(expectedScale2D.X, expectedScale2D.Y) + Config.Resample.ScaleBias).Clamp(2.0f, (float)Config.Resample.MaxScale)).NextInt();
+			var expectedScale = ((Math.Max(expectedScale2D.X, expectedScale2D.Y) * scaleFactor) + Config.Resample.ScaleBias).Clamp(2.0f, (float)Config.Resample.MaxScale).NextInt();
 
 			if (!texture.FetchScaledTexture(
 				expectedScale: expectedScale,
@@ -180,16 +181,17 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 
 			var sourceRectangle = source.GetValueOrDefault(new Rectangle(0, 0, texture.Width, texture.Height));
 
+			float scaleFactor = 1.0f;
 			if (IsWater(sourceRectangle, texture)) {
 				if (Config.Resample.TrimWater) {
-					sourceRectangle.Height -= 1;
+					scaleFactor = 4.0f;
 				}
 			}
 
 			sourceRectangle.Validate(reference: texture);
 
 			var expectedScale2D = new Vector2(destination.Width, destination.Height) / new Vector2(sourceRectangle.Width, sourceRectangle.Height);
-			var expectedScale = ((Math.Max(expectedScale2D.X, expectedScale2D.Y) + Config.Resample.ScaleBias).Clamp(2.0f, (float)Config.Resample.MaxScale)).NextInt();
+			var expectedScale = ((Math.Max(expectedScale2D.X, expectedScale2D.Y) * scaleFactor) + Config.Resample.ScaleBias).Clamp(2.0f, (float)Config.Resample.MaxScale).NextInt();
 
 			if (!texture.FetchScaledTexture(
 				expectedScale: expectedScale,
@@ -234,10 +236,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			var scaleFactor = 1.0f;
 
 			if (IsWater(sourceRectangle, texture)) {
-				if (Config.Resample.TrimWater && sourceRectangle.Height > 4) {
-					//float rescale = (float)sourceRectangle.Height / (float)(sourceRectangle.Height - 4);
-					//sourceRectangle.Height -= 4;
-					//scale.Y *= 0.5f;
+				if (Config.Resample.TrimWater) {
 					scaleFactor = 4.0f;
 				}
 			}
