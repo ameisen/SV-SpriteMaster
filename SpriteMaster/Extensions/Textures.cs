@@ -152,7 +152,7 @@ namespace SpriteMaster.Extensions {
 				var rowSize = newBitmapData.Stride;
 
 				int sourceOffset = 0;
-				foreach (int row in 0.Until(newImage.Height)) {
+				foreach (int row in 0..newImage.Height) {
 					Marshal.Copy(source, sourceOffset, newBitmapPointer, rowElements);
 					sourceOffset += rowElements;
 					newBitmapPointer += rowSize;

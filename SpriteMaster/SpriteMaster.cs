@@ -95,7 +95,7 @@ namespace SpriteMaster {
 					configStrArray.Add("0");
 				}
 
-				foreach (var i in 0.Until(configStrArray.Count)) {
+				foreach (int i in 0..configStrArray.Count) {
 					if (configStrArray[i] == "") {
 						return true;
 					}

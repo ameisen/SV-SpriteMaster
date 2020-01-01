@@ -185,7 +185,7 @@ namespace SpriteMaster.Metadata {
 				var newData = new byte[referenceSize];
 
 				var byteSpan = data.Data.CastAs<T, byte>();
-				foreach (var i in 0.Until(referenceSize)) {
+				foreach (int i in 0..referenceSize) {
 					newData[i] = byteSpan[i];
 				}
 				return newData;
@@ -226,7 +226,7 @@ namespace SpriteMaster.Metadata {
 						lock (DataCacheLock) {
 							using (Lock.Exclusive) {
 								var untilOffset = Math.Min(currentData.Length - data.Offset, data.Length * typeSize);
-								foreach (var i in 0.Until(untilOffset)) {
+								foreach (int i in 0..untilOffset) {
 									currentData[i + data.Offset] = byteSpan[i];
 								}
 								Hash = default;

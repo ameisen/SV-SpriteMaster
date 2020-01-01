@@ -124,10 +124,10 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			ref SamplerState __state
 		) {
 			try {
-				var OriginalState = ___samplerState;
+				var OriginalState = ___samplerState ?? SamplerState.PointClamp;
 				__state = OriginalState;
 
-				if (texture is ManagedTexture2D managedTexture) {
+				if (texture is ManagedTexture2D managedTexture && managedTexture.Texture != null) {
 					var newState = new SamplerState() {
 						AddressU = managedTexture.Texture.Wrapped.X ? TextureAddressMode.Wrap : OriginalState.AddressU,
 						AddressV = managedTexture.Texture.Wrapped.Y ? TextureAddressMode.Wrap : OriginalState.AddressV,
@@ -140,7 +140,9 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 						Filter = (Config.DrawState.SetLinear) ? TextureFilter.Linear : OriginalState.Filter
 					};
 
-					__instance.GraphicsDevice.SamplerStates[0] = newState;
+					if (__instance?.GraphicsDevice?.SamplerStates != null)
+						__instance.GraphicsDevice.SamplerStates[0] = newState;
+
 					___samplerState = newState;
 				}
 				/*
@@ -180,8 +182,13 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			ref SamplerState ___samplerState,
 			ref SamplerState __state
 		) {
+			if (__state == null) {
+				return;
+			}
+
 			try {
-				__instance.GraphicsDevice.SamplerStates[0] = __state;
+				if (__instance?.GraphicsDevice?.SamplerStates != null)
+					__instance.GraphicsDevice.SamplerStates[0] = __state;
 				___samplerState = __state;
 			}
 			catch (Exception ex) {

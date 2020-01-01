@@ -19,10 +19,30 @@ namespace SpriteMaster {
 			reference.Meta().CachedData = null;
 		}
 
+		// https://stackoverflow.com/a/12996028
+		private static ulong HashULong (ulong x) {
+			unchecked {
+				x = (x ^ (x >> 30)) * 0xbf58476d1ce4e5b9ul;
+				x = (x ^ (x >> 27)) * 0x94d049bb133111ebul;
+				x = x ^ (x >> 31);
+			}
+			return x;
+		}
+
 		internal static ulong GetHash (SpriteInfo input, bool desprite) {
-			var hash = Hashing.CombineHash(input.Reference.Meta().GetHash(input), unchecked((ulong)input.ExpectedScale));
+			// Need to make Hashing.CombineHash work better.
+			ulong hash;
+			if (!Config.Resample.EnableDynamicScale) {
+				hash = Hashing.CombineHash(input.Reference.Name?.GetHashCode(), input.Reference.Meta().GetHash(input));
+			}
+			else {
+				hash = Hashing.CombineHash(input.Reference.Name?.GetHashCode(), input.Reference.Meta().GetHash(input), HashULong(unchecked((ulong)input.ExpectedScale)));
+			}
 			if (desprite) {
 				hash = Hashing.CombineHash(hash, input.Size.Hash());
+			}
+			else {
+
 			}
 			return hash;
 		}
@@ -89,7 +109,7 @@ namespace SpriteMaster {
 			if (Config.Resample.Scale) {
 				int originalScale = scale;
 				scale = 2;
-				foreach (int s in originalScale.Until(2)) {
+				foreach (int s in originalScale..2) {
 					var newDimensions = inputSize * s;
 					if (newDimensions.X <= Config.PreferredMaxTextureDimension && newDimensions.Y <= Config.PreferredMaxTextureDimension) {
 						scale = s;
@@ -135,8 +155,8 @@ namespace SpriteMaster {
 				if (bitmapData == null) {
 					Bitmap GetDumpBitmap (Bitmap source) {
 						var dump = (Bitmap)source.Clone();
-						foreach (int y in 0.Until(dump.Height))
-							foreach (int x in 0.Until(dump.Width)) {
+						foreach (int y in 0..dump.Height)
+							foreach (int x in 0..dump.Width) {
 								dump.SetPixel(
 									x, y,
 									Texel.FromARGB(dump.GetPixel(x, y)).Color
@@ -155,10 +175,10 @@ namespace SpriteMaster {
 					if (isWater) {
 						var veryRawData = MemoryMarshal.Cast<byte, int>(rawTextureData.AsSpan());
 						rawData = new Span<int>(new int[veryRawData.Length / 16]);
-						foreach (var y in 0.Until(textureSize.Height)) {
+						foreach (int y in 0..textureSize.Height) {
 							var ySourceOffset = (y * 4) * input.ReferenceSize.Width;
 							var yDestinationOffset = y * textureSize.Width;
-							foreach (var x in 0.Until(textureSize.Width)) {
+							foreach (int x in 0..textureSize.Width) {
 								rawData[yDestinationOffset + x] = veryRawData[ySourceOffset + (x * 4)];
 							}
 						}
@@ -180,9 +200,9 @@ namespace SpriteMaster {
 					// Recolor
 					/*
 					{
-						foreach (int y in input.Size.Top.Until(input.Size.Bottom)) {
+						foreach (int y in input.Size.Top..input.Size.Bottom) {
 							int offsetY = y * input.ReferenceSize.Width;
-							foreach (int x in input.Size.Left.Until(input.Size.Right)) {
+							foreach (int x in input.Size.Left..input.Size.Right) {
 								int offset = offsetY + x;
 
 								var texel = unchecked((uint)rawData[offset]);
@@ -315,9 +335,9 @@ namespace SpriteMaster {
 								void WritePaddingY () {
 									if (!hasPadding.Y)
 										return;
-									foreach (int i in 0.Until(texture.Padding.Y)) {
+									foreach (int i in 0..texture.Padding.Y) {
 										int strideOffset = y * paddedSize.Width;
-										foreach (int x in 0.Until(paddedSize.Width)) {
+										foreach (int x in 0..paddedSize.Width) {
 											paddedData[strideOffset + x] = padConstant;
 										}
 										++y;
@@ -326,7 +346,7 @@ namespace SpriteMaster {
 
 								WritePaddingY();
 
-								foreach (int i in 0.Until(spriteSize.Height)) {
+								foreach (int i in 0..spriteSize.Height) {
 									int strideOffset = y * paddedSize.Width;
 									int strideOffsetRaw = (i + spriteBounds.Top) * prescaleSize.Width;
 									// Write a padded X line
@@ -334,12 +354,12 @@ namespace SpriteMaster {
 									void WritePaddingX () {
 										if (!hasPadding.X)
 											return;
-										foreach (int x in 0.Until(texture.Padding.X)) {
+										foreach (int x in 0..texture.Padding.X) {
 											paddedData[xOffset++] = padConstant;
 										}
 									}
 									WritePaddingX();
-									foreach (int x in 0.Until(spriteSize.Width)) {
+									foreach (int x in 0..spriteSize.Width) {
 										paddedData[xOffset++] = rawData[strideOffsetRaw + x + spriteBounds.Left];
 									}
 									WritePaddingX();
@@ -405,7 +425,7 @@ namespace SpriteMaster {
 									var dataBytes = new byte[dataSize];
 									int offsetSource = 0;
 									int offsetDest = 0;
-									foreach (int y in 0.Until(resizedData.Height)) {
+									foreach (int y in 0..resizedData.Height) {
 										Marshal.Copy(dataPtr + offsetSource, bitmapData, offsetDest, widthSize);
 										offsetSource += resizedData.Stride;
 										offsetDest += widthSize;
@@ -502,7 +522,7 @@ namespace SpriteMaster {
 						}
 
 						bool grayscale = true;
-						foreach (int i in 0.Until(256)) {
+						foreach (int i in 0..256) {
 							if (blue[i] != green[i] || green[i] != red[i]) {
 								grayscale = false;
 								break;

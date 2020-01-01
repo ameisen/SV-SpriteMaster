@@ -43,7 +43,7 @@ namespace SpriteMaster {
 				using (Lock.Shared) {
 					var rectangleHash = SpriteHash(texture: texture, source: source, expectedScale: expectedScale);
 					if (Map.TryGetValue(rectangleHash, out var scaledTexture)) {
-						if (scaledTexture.Texture != null && scaledTexture.Texture.IsDisposed) {
+						if (scaledTexture.Texture?.IsDisposed == true) {
 							using (Lock.Promote) {
 								Map.Clear();
 							}
@@ -110,11 +110,8 @@ namespace SpriteMaster {
 							Debug.TraceLn($"Purging Texture {reference.SafeName()}");
 
 							foreach (var scaledTexture in Map.Values) {
-								if (scaledTexture.Texture != null) {
-									lock (scaledTexture) {
-										//scaledTexture.Texture.Dispose();
-										scaledTexture.Texture = null;
-									}
+								lock (scaledTexture) {
+									scaledTexture.Texture = null;
 								}
 							}
 
@@ -643,7 +640,7 @@ namespace SpriteMaster {
 				texture = Texture;
 			}
 
-			if (texture == null || texture.IsDisposed) {
+			if (texture?.IsDisposed == true) {
 				return;
 			}
 

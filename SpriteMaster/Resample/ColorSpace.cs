@@ -41,7 +41,7 @@ namespace SpriteMaster.Resample {
 		}
 
 		internal static void ConvertSRGBToLinear (Span<int> textureData, Texel.Ordering order = Texel.Ordering.ABGR, double gamma = Gamma) {
-			foreach (int i in 0.Until(textureData.Length)) {
+			foreach (int i in 0..textureData.Length) {
 				var texelValue = textureData[i];
 
 				var texel = Texel.From(texelValue, order);
@@ -75,7 +75,7 @@ namespace SpriteMaster.Resample {
 		}
 
 		internal static void ConvertLinearToSRGB (Span<int> textureData, Texel.Ordering order = Texel.Ordering.ABGR, double gamma = Gamma) {
-			foreach (int i in 0.Until(textureData.Length)) {
+			foreach (int i in 0..textureData.Length) {
 				var texelValue = textureData[i];
 
 				var texel = Texel.From(texelValue, order);

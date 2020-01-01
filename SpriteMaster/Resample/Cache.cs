@@ -127,7 +127,7 @@ namespace SpriteMaster.Resample {
 
 							data = new int[dataLength];
 
-							foreach (int i in 0.Until(data.Length)) {
+							foreach (int i in 0..data.Length) {
 								data[i] = reader.ReadInt32();
 							}
 

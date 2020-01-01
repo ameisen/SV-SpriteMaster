@@ -181,7 +181,7 @@ namespace SpriteMaster.Extensions {
 
 			string result = "";
 			char[] reversedString = valueString.ToCharArray().Reverse();
-			foreach (int i in 0.Until(reversedString.Length)) {
+			foreach (int i in 0..reversedString.Length) {
 				if (i != 0 && Char.IsNumber(reversedString[i]) && (i % delimitCount) == 0) {
 					result += delimiter;
 				}

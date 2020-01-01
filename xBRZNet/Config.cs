@@ -6,7 +6,8 @@ namespace xBRZNet2 {
 	public readonly struct Config : IEquatable<Config> {
 		internal readonly bool WrappedX;
 		internal readonly bool WrappedY;
-		internal readonly bool SRGB;
+		internal readonly bool Gamma;
+		internal readonly bool HasAlpha;
 
 		// These are the default values:
 		internal readonly double LuminanceWeight;
@@ -21,7 +22,8 @@ namespace xBRZNet2 {
 		public Config (
 			bool wrappedX = false,
 			bool wrappedY = false,
-			bool SRGB = true,
+			bool Gamma = true,
+			bool HasAlpha = true,
 			double luminanceWeight = 1.0,
 			double equalColorTolerance = 30.0,
 			double dominantDirectionThreshold = 3.6,
@@ -29,7 +31,8 @@ namespace xBRZNet2 {
 		) {
 			this.WrappedX = wrappedX;
 			this.WrappedY = wrappedY;
-			this.SRGB = SRGB;
+			this.Gamma = Gamma;
+			this.HasAlpha = HasAlpha;
 			this.LuminanceWeight = luminanceWeight;
 			this.EqualColorTolerance = equalColorTolerance;
 			this.DominantDirectionThreshold = dominantDirectionThreshold;

@@ -229,12 +229,12 @@ namespace SpriteMaster.Types {
 
 			int dstOffset = arrayIndex;
 			int dstLastOffset = dstOffset + count;
-			foreach (var i in 0.Until(count)) {
+			foreach (int i in 0..count) {
 				if (_List[i].TryGetTarget(out T target)) {
 					array[dstOffset++] = target;
 				}
 			}
-			foreach (var i in dstOffset.Until(dstLastOffset)) {
+			foreach (int i in dstOffset..dstLastOffset) {
 				array[i] = null;
 			}
 		}
@@ -244,7 +244,7 @@ namespace SpriteMaster.Types {
 			Purge();
 
 			int dstOffset = arrayIndex;
-			foreach (var i in 0.Until(count)) {
+			foreach (int i in 0..count) {
 				array[dstOffset + i] = _List[i];
 			}
 		}
@@ -254,7 +254,7 @@ namespace SpriteMaster.Types {
 			Purge();
 
 			int dstOffset = arrayIndex;
-			foreach (var i in 0.Until(count)) {
+			foreach (int i in 0..count) {
 				array[dstOffset + i] = _List[i];
 			}
 		}
@@ -437,7 +437,7 @@ namespace SpriteMaster.Types {
 		public void Reverse() {
 			Purge();
 
-			foreach (int i in 0.Until(_List.Count)) {
+			foreach (int i in 0.._List.Count) {
 				var swapIndex = _List.Count - (i + 1);
 				var temp = _List[i];
 				_List[i] = _List[swapIndex];

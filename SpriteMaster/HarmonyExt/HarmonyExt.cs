@@ -156,7 +156,7 @@ namespace SpriteMaster.HarmonyExt {
 				else {
 					var methods = type.GetMethods(name, flags);
 					typeMethods = new MethodBase[methods.Count()];
-					foreach (var i in 0.Until(typeMethods.Length)) {
+					foreach (int i in 0..typeMethods.Length) {
 						typeMethods[i] = methods.ElementAt(i);
 					}
 
@@ -169,7 +169,7 @@ namespace SpriteMaster.HarmonyExt {
 					}
 
 					bool found = true;
-					foreach (var i in 0.Until(testParameters.Length)) {
+					foreach (int i in 0..testParameters.Length) {
 						var testParameter = testParameters[i].ParameterType.RemoveRef();
 						var testParameterRef = testParameter.AddRef();
 						var testBaseParameter = testParameter.IsArray ? testParameter.GetElementType() : testParameter;

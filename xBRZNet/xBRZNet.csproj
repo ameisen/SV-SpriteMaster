@@ -73,6 +73,7 @@
     <Compile Include="Blend\BlendType.cs" />
     <Compile Include="Color\ColorDist.cs" />
     <Compile Include="Color\ColorEq.cs" />
+    <Compile Include="Color\ColorSpace.cs" />
     <Compile Include="Common\IMath.cs" />
     <Compile Include="Common\IntPair.cs" />
     <Compile Include="Common\ColorConstant.cs" />

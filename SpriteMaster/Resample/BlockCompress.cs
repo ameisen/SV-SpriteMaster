@@ -73,7 +73,7 @@ namespace SpriteMaster.Resample {
 			var oldFormat = format;
 
 			void FlipColorBytes (int[] p) {
-				foreach (var i in 0.Until(p.Length)) {
+				foreach (int i in 0..p.Length) {
 					uint color = p[i].Unsigned();
 					color =
 						(color & 0xFF000000U) |

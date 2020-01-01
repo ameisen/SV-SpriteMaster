@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using SpriteMaster.Extensions;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
@@ -23,51 +24,56 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch.Patch {
 		 */
 
 		/*
-		[HarmonyPatch(typeof(SpriteBatch), "BackToFrontComparer", "Compare", isChild: true, HarmonyPatch.Fixation.Prefix, HarmonyExt.PriorityLevel.First)]
-		internal static bool BFComparer (object __instance, ref int __result, int x, int y) {
-			var batch = (SpriteBatch)__instance.GetField("parent");
-			var queue = (object[])batch.GetField("spriteQueue");
-			var DepthGetter = queue.GetType().GetElementType().GetField("Depth", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+	[HarmonyPatch(typeof(SpriteBatch), "BackToFrontComparer", "Compare", isChild: true, HarmonyPatch.Fixation.Prefix, HarmonyExt.PriorityLevel.First)]
+	internal static bool BFComparer (object __instance, ref int __result, int x, int y) {
+		var batch = (SpriteBatch)__instance.GetField("parent");
+		var queue = (object[])batch.GetField("spriteQueue");
+		var DepthGetter = queue.GetType().GetElementType().GetField("Depth", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
 
-			var queueGetter = queue.GetType().GetMethod("GetValue", new Type[] { typeof(int) });
+		var queueGetter = queue.GetType().GetMethod("GetValue", new Type[] { typeof(int) });
 
-			var depth = (float)DepthGetter.GetValue(queueGetter.Invoke(queue, new object[] { x }));
-			var depth2 = (float)DepthGetter.GetValue(queueGetter.Invoke(queue, new object[] { y }));
-			if (depth > depth2) {
-				__result = -1;
-				return false;
-			}
-			if (depth < depth2) {
-				__result = 1;
-				return false;
-			}
-
-			__result = y.CompareTo(x);
+		var depth = (float)DepthGetter.GetValue(queueGetter.Invoke(queue, new object[] { x }));
+		var depth2 = (float)DepthGetter.GetValue(queueGetter.Invoke(queue, new object[] { y }));
+		if (depth > depth2) {
+			__result = -1;
+			return false;
+		}
+		if (depth < depth2) {
+			__result = 1;
 			return false;
 		}
 
-		[HarmonyPatch(typeof(SpriteBatch), "FrontToBackComparer", "Compare", isChild: true, HarmonyPatch.Fixation.Prefix, HarmonyExt.PriorityLevel.First)]
-		internal static bool FBComparer (object __instance, ref int __result, int x, int y) {
-			var batch = (SpriteBatch)__instance.GetField("parent");
-			var queue = batch.GetField("spriteQueue");
-			var DepthGetter = queue.GetType().GetElementType().GetField("Depth", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+		// TODO : compare texture
 
-			var queueGetter = queue.GetType().GetMethod("GetValue", new Type[] { typeof(int) });
+		__result = y.CompareTo(x);
+		return false;
+	}
 
-			var depth = (float)DepthGetter.GetValue(queueGetter.Invoke(queue, new object[] { x }));
-			var depth2 = (float)DepthGetter.GetValue(queueGetter.Invoke(queue, new object[] { y }));
-			if (depth > depth2) {
-				__result = 1;
-				return false;
-			}
-			if (depth < depth2) {
-				__result = -1;
-				return false;
-			}
-			__result = x.CompareTo(y);
+	[HarmonyPatch(typeof(SpriteBatch), "FrontToBackComparer", "Compare", isChild: true, HarmonyPatch.Fixation.Prefix, HarmonyExt.PriorityLevel.First)]
+	internal static bool FBComparer (object __instance, ref int __result, int x, int y) {
+		var batch = (SpriteBatch)__instance.GetField("parent");
+		var queue = batch.GetField("spriteQueue");
+		var DepthGetter = queue.GetType().GetElementType().GetField("Depth", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+
+		var queueGetter = queue.GetType().GetMethod("GetValue", new Type[] { typeof(int) });
+
+		var depth = (float)DepthGetter.GetValue(queueGetter.Invoke(queue, new object[] { x }));
+		var depth2 = (float)DepthGetter.GetValue(queueGetter.Invoke(queue, new object[] { y }));
+		if (depth > depth2) {
+			__result = 1;
 			return false;
 		}
-		*/
+		if (depth < depth2) {
+			__result = -1;
+			return false;
+		}
+
+		// TODO : compare texture
+
+		__result = x.CompareTo(y);
+		return false;
+	}
+	*/
 
 		/*
 		[HarmonyPatch("InternalDraw", fixation: HarmonyPatch.Fixation.Prefix, priority: HarmonyExt.PriorityLevel.Last)]

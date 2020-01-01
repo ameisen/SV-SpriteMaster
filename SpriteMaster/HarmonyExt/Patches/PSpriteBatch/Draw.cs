@@ -83,7 +83,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static bool Validate(this ManagedTexture2D @this) {
-			return @this != null && !@this.IsDisposed;
+			return @this?.IsDisposed == false;
 		}
 
 		[Conditional("DEBUG"), MethodImpl(MethodImplOptions.AggressiveInlining)]

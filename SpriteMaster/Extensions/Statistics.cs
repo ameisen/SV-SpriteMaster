@@ -11,13 +11,13 @@ namespace SpriteMaster.Extensions {
 			Contract.AssertLess(endIndex, data.Length);
 
 			double sum = 0.0;
-			foreach (var i in startIndex.Until(endIndex)) {
+			foreach (int i in startIndex..endIndex) {
 				sum += data[i];
 			}
 			sum /= count;
 
 			double meanDifference = 0.0;
-			foreach (var i in startIndex.Until(endIndex)) {
+			foreach (int i in startIndex..endIndex) {
 				var difference = Math.Abs(data[i] - sum);
 				meanDifference = difference * difference;
 			}
