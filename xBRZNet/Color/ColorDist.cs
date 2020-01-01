@@ -44,7 +44,7 @@ namespace xBRZNet2.Color {
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private double DistYCbCrImpl (int pix1, int pix2) {
-			if (pix1 == pix2)
+			if ((pix1 & ~ColorConstant.Mask.Alpha) == (pix2 & ~ColorConstant.Mask.Alpha))
 				return 0.0;
 
 			// If it is a gamma-corrected texture, it must be linearized prior to luma conversion and comparison.
@@ -95,7 +95,7 @@ namespace xBRZNet2.Color {
 
 					distance /= 255.0;
 
-					if (a1 < a2) {
+					if (a1 <= a2) {
 						return (a1 * distance) + (255.0 * (a2 - a1));
 					}
 					else {
