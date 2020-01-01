@@ -26,12 +26,20 @@
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 		<OutputPath>bin\$(Configuration)_$(Platform)\</OutputPath>
 		<IgnoreModFilePatterns>\.dll\.config$, ILMerge, runtimes, net452</IgnoreModFilePatterns>
+		<Configurations>Debug;Release;Development</Configurations>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
     <DefineConstants>TRACE</DefineConstants>
     <DebugType>pdbonly</DebugType>
     <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Development|x86'">
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>pdbonly</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <Optimize>true</Optimize>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
@@ -42,7 +50,13 @@
 
   <ItemGroup>
     <PackageReference Condition="'$(Configuration)'=='Release'" Include="ilmerge" Version="3.0.29" />
+    <PackageReference Include="ilmerge" Condition="'$(Configuration)'=='Development'">
+      <Version>3.0.29</Version>
+    </PackageReference>
     <PackageReference Condition="'$(Configuration)'=='Release'" Include="ILMerge.MSBuild.Task" Version="1.0.7" />
+    <PackageReference Include="ILMerge.MSBuild.Task" Condition="'$(Configuration)'=='Development'">
+      <Version>1.0.7</Version>
+    </PackageReference>
     <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="3.0.0" />
     <PackageReference Include="System.Data.HashFunction.xxHash" Version="2.0.0" />
     <PackageReference Include="System.Memory" Version="4.5.3" />

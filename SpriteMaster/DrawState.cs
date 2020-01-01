@@ -88,8 +88,8 @@ namespace SpriteMaster {
 			Matrix transformMatrix
 		) {
 			CurrentSortMode = sortMode;
-			SetCurrentAddressMode(samplerState);
-			CurrentBlendSourceMode = blendState.AlphaSourceBlend;
+			SetCurrentAddressMode((samplerState == null) ? SamplerState.PointClamp : samplerState);
+			CurrentBlendSourceMode = (blendState == null) ? BlendState.AlphaBlend.AlphaSourceBlend : blendState.AlphaSourceBlend;
 		}
 	}
 }

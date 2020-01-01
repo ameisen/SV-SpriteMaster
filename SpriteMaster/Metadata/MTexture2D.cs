@@ -53,6 +53,11 @@ namespace SpriteMaster.Metadata {
 					return Thread.VolatileRead(ref _Hash);
 				}
 			}
+			private set {
+				using (Lock.Exclusive) {
+					Thread.VolatileWrite(ref _Hash, value);
+				}
+			}
 		}
 
 		/*
@@ -210,11 +215,13 @@ namespace SpriteMaster.Metadata {
 						forcePurge = true;
 					}
 					else if (!bounds.HasValue && data.Offset == 0 && (data.Length * typeSize) == refSize) {
+						Debug.TraceLn("Overriding MTExture2D Cache in Purge");
 						var newByteArray = MakeByteArray(data, refSize);
 						forcePurge |= (newByteArray == null);
 						CachedData = newByteArray;
 					}
 					else if (!bounds.HasValue && CachedData is var currentData && currentData != null) {
+						Debug.TraceLn("Updating MTexture2D Cache in Purge");
 						var byteSpan = data.Data.CastAs<T, byte>();
 						lock (DataCacheLock) {
 							using (Lock.Exclusive) {
@@ -222,6 +229,7 @@ namespace SpriteMaster.Metadata {
 								foreach (var i in 0.Until(untilOffset)) {
 									currentData[i + data.Offset] = byteSpan[i];
 								}
+								Hash = default;
 							}
 						}
 					}
@@ -272,42 +280,49 @@ namespace SpriteMaster.Metadata {
 
 				TracePrinted = false;
 
-				using (Lock.Shared) {
-					if (_CachedData.TryGetTarget(out var target) && target == value) {
-						return;
-					}
-					if (value == null) {
-						using (Lock.Promote) {
-							_CachedData.SetTarget(null);
+				try {
+					using (Lock.Shared) {
+						if (_CachedData.TryGetTarget(out var target) && target == value) {
+							return;
 						}
-						lock (DataCacheLock) {
-							DataCache.Remove(UniqueIDString);
-						}
-					}
-					else {
-						bool queueCompress = false;
-						lock (AlreadyCompressingTable) {
-							if (!AlreadyCompressingTable.TryGetValue(value, out var _)) {
-								try { AlreadyCompressingTable.Add(value, null); }
-								catch { }
-								queueCompress = true;
+						if (value == null) {
+							using (Lock.Promote) {
+								_CachedData.SetTarget(null);
+							}
+							lock (DataCacheLock) {
+								DataCache.Remove(UniqueIDString);
 							}
 						}
-
-						if (queueCompress) {
-							ThreadPool.QueueUserWorkItem((buffer) => {
-								var compressedData = Compress((byte[])buffer);
-								lock (DataCacheLock) {
-									DataCache[UniqueIDString] = compressedData;
+						else {
+							bool queueCompress = false;
+							lock (AlreadyCompressingTable) {
+								if (!AlreadyCompressingTable.TryGetValue(value, out var _)) {
+									try { AlreadyCompressingTable.Add(value, null); }
+									catch { }
+									queueCompress = true;
 								}
-							}, value);
-						}
+							}
 
-						using (Lock.Promote) {
-							_CachedData.SetTarget(value);
+							if (queueCompress) {
+								ThreadPool.QueueUserWorkItem((buffer) => {
+									var compressedData = Compress((byte[])buffer);
+									lock (DataCacheLock) {
+										DataCache[UniqueIDString] = compressedData;
+										using (Lock.Exclusive) {
+											Hash = default;
+										}
+									}
+								}, value);
+							}
+
+							using (Lock.Promote) {
+								_CachedData.SetTarget(value);
+							}
 						}
 					}
-					Thread.VolatileWrite(ref _Hash, default);
+				}
+				finally {
+					Hash = default;
 				}
 			}
 		}
@@ -318,11 +333,11 @@ namespace SpriteMaster.Metadata {
 
 		public ulong GetHash(SpriteInfo info) {
 			using (Lock.Shared) {
-				ulong hash = Thread.VolatileRead(ref _Hash);
+				ulong hash = Hash;
 				if (hash == default) {
 					hash = info.Hash;
 					using (Lock.Promote) {
-						Thread.VolatileWrite(ref _Hash, hash);
+						Hash = hash;
 					}
 				}
 				return hash;
