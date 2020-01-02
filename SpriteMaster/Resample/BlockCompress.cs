@@ -73,7 +73,7 @@ namespace SpriteMaster.Resample {
 
 			void FlipColorBytes (byte[] p) {
 				var span = new Span<byte>(p).CastAs<byte, uint>();
-				foreach (int i in 0..p.Length) {
+				foreach (int i in 0..span.Length) {
 					var color = span[i];
 					color =
 						(color & 0xFF000000U) |
