@@ -295,6 +295,20 @@ namespace SpriteMaster.Types {
 			);
 		}
 
+		public static Vector2I operator & (Vector2I lhs, Vector2I rhs) {
+			return new Vector2I(
+				lhs.X & rhs.X,
+				lhs.Y & rhs.Y
+			);
+		}
+
+		public static Vector2I operator | (Vector2I lhs, Vector2I rhs) {
+			return new Vector2I(
+				lhs.X | rhs.X,
+				lhs.Y | rhs.Y
+			);
+		}
+
 		public static Vector2I operator + (Vector2I lhs, int rhs) {
 			return new Vector2I(
 				lhs.X + rhs,
@@ -327,6 +341,20 @@ namespace SpriteMaster.Types {
 			return new Vector2I(
 				lhs.X % rhs,
 				lhs.Y % rhs
+			);
+		}
+
+		public static Vector2I operator & (Vector2I lhs, int rhs) {
+			return new Vector2I(
+				lhs.X & rhs,
+				lhs.Y & rhs
+			);
+		}
+
+		public static Vector2I operator | (Vector2I lhs, int rhs) {
+			return new Vector2I(
+				lhs.X | rhs,
+				lhs.Y | rhs
 			);
 		}
 

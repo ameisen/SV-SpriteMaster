@@ -424,9 +424,7 @@ namespace SpriteMaster {
 			) & Config.Resample.UseBlockCompression;
 
 			if (requireBlockPadding.Any) {
-				var blockPaddedSize = newSize + new Vector2I(3, 3);
-				blockPaddedSize.X &= ~3;
-				blockPaddedSize.Y &= ~3;
+				var blockPaddedSize = (newSize + 3) & ~3;
 
 				var newBuffer = new byte[blockPaddedSize.Area * sizeof(int)];
 				var intSpanSrc = new Span<byte>(bitmapData).CastAs<byte, int>();
