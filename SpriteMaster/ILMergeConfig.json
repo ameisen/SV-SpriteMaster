@@ -5,7 +5,7 @@
     "KeyFile": null,
     "AlternativeILMergePath": null,
     "InputAssemblies": [
-			"xBRZNet.dll",
+			"xBRZ.dll",
 			"TeximpNet.dll",
 			"Zlib.Portable.dll",
 			"System.Data.HashFunction.xxHash.dll",
