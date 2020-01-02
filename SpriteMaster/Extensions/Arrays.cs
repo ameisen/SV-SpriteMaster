@@ -79,12 +79,12 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static Span<U> CastAs<T, U> (this Span<T> data) where T : struct where U : struct {
+		internal static Span<U> CastAs<T, U> (this in Span<T> data) where T : struct where U : struct {
 			return MemoryMarshal.Cast<T, U>(data);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static ReadOnlySpan<U> CastAs<T, U> (this ReadOnlySpan<T> data) where T : struct where U : struct {
+		internal static ReadOnlySpan<U> CastAs<T, U> (this in ReadOnlySpan<T> data) where T : struct where U : struct {
 			return MemoryMarshal.Cast<T, U>(data);
 		}
 

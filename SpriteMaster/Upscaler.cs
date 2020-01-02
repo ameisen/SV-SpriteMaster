@@ -352,7 +352,7 @@ namespace SpriteMaster {
 							var outData = bitmapData.CastAs<byte, int>();
 							new xBRZ.Scaler(
 								scaleMultiplier: scale,
-								sourceData: in prescaleData,
+								sourceData: prescaleData,
 								sourceWidth: prescaleSize.Width,
 								sourceHeight: prescaleSize.Height,
 								sourceTarget: outputSize,

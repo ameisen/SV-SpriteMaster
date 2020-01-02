@@ -15,7 +15,7 @@ namespace SpriteMaster.xBRZ {
 
 		public Scaler (
 			int scaleMultiplier,
-			in Span<int> sourceData,
+			in ReadOnlySpan<int> sourceData,
 			int sourceWidth,
 			int sourceHeight,
 			in Rectangle? sourceTarget,
@@ -265,8 +265,8 @@ namespace SpriteMaster.xBRZ {
 
 		//scaler policy: see "Scaler2x" reference implementation
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private unsafe void Scale (in Span<int> src, in Span<int> trg) {
-			fixed (int* trgPtr = trg) {
+		private unsafe void Scale (in ReadOnlySpan<int> source, in Span<int> destination) {
+			fixed (int* destinationPtr = destination) {
 
 				int yFirst = sourceTarget.Top;
 				int yLast = sourceTarget.Bottom;
@@ -274,12 +274,10 @@ namespace SpriteMaster.xBRZ {
 				if (yFirst >= yLast)
 					return;
 
-				var trgWidth = targetWidth;
-
 				//temporary buffer for "on the fly preprocessing"
 				var preProcBuffer = stackalloc byte[sourceTarget.Width];
 
-				int GetPixel (in Span<int> src, int stride, int offset) {
+				int GetPixel (in ReadOnlySpan<int> src, int stride, int offset) {
 					// We can try embedded a distance calculation as well. Perhaps instead of a negative stride/offset, we provide a 
 					// negative distance from the edge and just recalculate the stride/offset in that case.
 					// We can scale the alpha reduction by the distance to hopefully correct the edges.
@@ -317,25 +315,25 @@ namespace SpriteMaster.xBRZ {
 
 						//read sequentially from memory as far as possible
 						var ker4 = new Kernel4x4(
-							GetPixel(src, sM1, xM1),
-							GetPixel(src, sM1, x),
-							GetPixel(src, sM1, xP1),
-							GetPixel(src, sM1, xP2),
+							GetPixel(source, sM1, xM1),
+							GetPixel(source, sM1, x),
+							GetPixel(source, sM1, xP1),
+							GetPixel(source, sM1, xP2),
 
-							GetPixel(src, s0, xM1),
-							src[s0 + x],
-							GetPixel(src, s0, xP1),
-							GetPixel(src, s0, xP2),
+							GetPixel(source, s0, xM1),
+							source[s0 + x],
+							GetPixel(source, s0, xP1),
+							GetPixel(source, s0, xP2),
 
-							GetPixel(src, sP1, xM1),
-							GetPixel(src, sP1, x),
-							GetPixel(src, sP1, xP1),
-							GetPixel(src, sP1, xP2),
+							GetPixel(source, sP1, xM1),
+							GetPixel(source, sP1, x),
+							GetPixel(source, sP1, xP1),
+							GetPixel(source, sP1, xP2),
 
-							GetPixel(src, sP2, xM1),
-							GetPixel(src, sP2, x),
-							GetPixel(src, sP2, xP1),
-							GetPixel(src, sP2, xP2)
+							GetPixel(source, sP2, xM1),
+							GetPixel(source, sP2, x),
+							GetPixel(source, sP2, xP1),
+							GetPixel(source, sP2, xP2)
 						);
 
 						var blendResult = PreProcessCorners(in ker4); // writes to blendResult
@@ -361,11 +359,11 @@ namespace SpriteMaster.xBRZ {
 					}
 				}
 
-				outputMatrix = new OutputMatrix(scaler.Scale, trgPtr, trgWidth);
+				outputMatrix = new OutputMatrix(scaler.Scale, destinationPtr, targetWidth);
 
 				for (var y = yFirst; y < yLast; ++y) {
 					//consider MT "striped" access
-					var trgi = scaler.Scale * (y - yFirst) * trgWidth;
+					var trgi = scaler.Scale * (y - yFirst) * targetWidth;
 
 					var sM1 = sourceWidth * getY(y - 1);
 					var s0 = sourceWidth * y; //center line
@@ -384,25 +382,25 @@ namespace SpriteMaster.xBRZ {
 
 						//read sequentially from memory as far as possible
 						var ker4 = new Kernel4x4(
-							GetPixel(src, sM1, xM1),
-							GetPixel(src, sM1, x),
-							GetPixel(src, sM1, xP1),
-							GetPixel(src, sM1, xP2),
+							GetPixel(source, sM1, xM1),
+							GetPixel(source, sM1, x),
+							GetPixel(source, sM1, xP1),
+							GetPixel(source, sM1, xP2),
 
-							GetPixel(src, s0, xM1),
-							src[s0 + x],
-							GetPixel(src, s0, xP1),
-							GetPixel(src, s0, xP2),
+							GetPixel(source, s0, xM1),
+							source[s0 + x],
+							GetPixel(source, s0, xP1),
+							GetPixel(source, s0, xP2),
 
-							GetPixel(src, sP1, xM1),
-							GetPixel(src, sP1, x),
-							GetPixel(src, sP1, xP1),
-							GetPixel(src, sP1, xP2),
+							GetPixel(source, sP1, xM1),
+							GetPixel(source, sP1, x),
+							GetPixel(source, sP1, xP1),
+							GetPixel(source, sP1, xP2),
 
-							GetPixel(src, sP2, xM1),
-							GetPixel(src, sP2, x),
-							GetPixel(src, sP2, xP1),
-							GetPixel(src, sP2, xP2)
+							GetPixel(source, sP2, xM1),
+							GetPixel(source, sP2, x),
+							GetPixel(source, sP2, xP1),
+							GetPixel(source, sP2, xP2)
 						);
 
 						var blendResult = PreProcessCorners(in ker4); // writes to blendResult
@@ -442,7 +440,7 @@ namespace SpriteMaster.xBRZ {
 						//fill block of size scale * scale with the given color
 						//  //place *after* preprocessing step, to not overwrite the
 						//  //results while processing the the last pixel!
-						FillBlock(in trg, trgi, trgWidth, src[s0 + x], scaler.Scale);
+						FillBlock(in destination, trgi, targetWidth, source[s0 + x], scaler.Scale);
 
 						//blend four corners of current pixel
 						if (blendXy == 0)
@@ -450,17 +448,17 @@ namespace SpriteMaster.xBRZ {
 
 						//read sequentially from memory as far as possible
 						var ker3 = new Kernel3x3(
-							GetPixel(src, sM1, xM1),
-							GetPixel(src, sM1, x),
-							GetPixel(src, sM1, xP1),
+							GetPixel(source, sM1, xM1),
+							GetPixel(source, sM1, x),
+							GetPixel(source, sM1, xP1),
 
-							GetPixel(src, s0, xM1),
-							src[s0 + x],
-							GetPixel(src, s0, xP1),
+							GetPixel(source, s0, xM1),
+							source[s0 + x],
+							GetPixel(source, s0, xP1),
 
-							GetPixel(src, sP1, xM1),
-							GetPixel(src, sP1, x),
-							GetPixel(src, sP1, xP1)
+							GetPixel(source, sP1, xM1),
+							GetPixel(source, sP1, x),
+							GetPixel(source, sP1, xP1)
 						);
 
 						ScalePixel(scaler, RotationDegree.R0, in ker3, trgi, blendXy);

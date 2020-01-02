@@ -3,7 +3,7 @@ using System;
 
 namespace SpriteMaster.Extensions {
 	internal static class Statistics {
-		internal static double StandardDeviation (this Span<int> data, int startIndex = 0, int count = 0) {
+		internal static double StandardDeviation (this in Span<int> data, int startIndex = 0, int count = 0) {
 			Contract.AssertPositiveOrZero(startIndex);
 			Contract.AssertLess(startIndex, data.Length);
 			int endIndex = startIndex + count;
