@@ -187,7 +187,7 @@ namespace SpriteMaster.Resample {
 								Wrapped = wrapped,
 								Padding = padding,
 								BlockPadding = blockPadding,
-								DataLength = (uint)data.Length * sizeof(int),
+								DataLength = (uint)data.Length,
 								DataHash = data.HashXX()
 							}.Write(writer);
 

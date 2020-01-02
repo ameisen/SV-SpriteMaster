@@ -5,7 +5,7 @@ using SpriteMaster.xBRZ.Common;
 namespace SpriteMaster.xBRZ.Scalers {
 	//access matrix area, top-left at position "out" for image with given width
 	internal unsafe struct OutputMatrix {
-		private readonly int* _out;
+		private readonly uint* _out;
 		private readonly int _outWidth;
 		private readonly int _n;
 		private int _outi;
@@ -27,7 +27,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 		private const int MaxScaleSquared = MaxScale * MaxScale;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public OutputMatrix (int scale, int* outPtr, int outWidth) {
+		public OutputMatrix (int scale, uint* outPtr, int outWidth) {
 			_n = (scale - 2) * (Rotator.MaxRotations * MaxScaleSquared);
 			_out = outPtr;
 			_outWidth = outWidth;
@@ -48,18 +48,18 @@ namespace SpriteMaster.xBRZ.Scalers {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void Set (int i, int j, int value) {
+		public void Set (int i, int j, uint value) {
 			_out[GetIndex(i, j)] = value;
 		}
 
 		// TODO : I _really_ don't like this but I don't want to fully refactor ScalerImplementations.cs right now.
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public ref int Ref (int i, int j) {
+		public ref uint Ref (int i, int j) {
 			return ref _out[GetIndex(i, j)];
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public int Get (int i, int j) {
+		public uint Get (int i, int j) {
 			return _out[GetIndex(i, j)];
 		}
 

@@ -18,10 +18,10 @@ namespace SpriteMaster.xBRZ.Color {
 		private const bool MultiplyAlpha = false;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static double TexelDiff (int texel1, int texel2, int shift) {
+		private static double TexelDiff (uint texel1, uint texel2, int shift) {
 			unchecked {
-				texel1 = (int)(((uint)texel1 >> shift) & 0xFF);
-				texel2 = (int)(((uint)texel2 >> shift) & 0xFF);
+				texel1 = (texel1 >> shift) & 0xFF;
+				texel2 = (texel2 >> shift) & 0xFF;
 			}
 
 			return Math.Abs(texel1 - texel2);
@@ -29,10 +29,10 @@ namespace SpriteMaster.xBRZ.Color {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static double TexelDiffGamma (int texel1, int texel2, int shift) {
+		private static double TexelDiffGamma (uint texel1, uint texel2, int shift) {
 			unchecked {
-				texel1 = (int)(((uint)texel1 >> shift) & 0xFF);
-				texel2 = (int)(((uint)texel2 >> shift) & 0xFF);
+				texel1 = (texel1 >> shift) & 0xFF;
+				texel2 = (texel2 >> shift) & 0xFF;
 			}
 
 			double t1 = CurrentColorSpace.Linearize(texel1 / 255.0);
@@ -43,13 +43,13 @@ namespace SpriteMaster.xBRZ.Color {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private double DistYCbCrImpl (int pix1, int pix2) {
+		private double DistYCbCrImpl (uint pix1, uint pix2) {
 			if ((pix1 & ~ColorConstant.Mask.Alpha) == (pix2 & ~ColorConstant.Mask.Alpha))
 				return 0.0;
 
 			// If it is a gamma-corrected texture, it must be linearized prior to luma conversion and comparison.
 			var Difference = (Configuration.Gamma) ? 
-				(Func<int, int, int, double>)TexelDiffGamma :
+				(Func<uint, uint, int, double>)TexelDiffGamma :
 				TexelDiff;
 
 			//http://en.wikipedia.org/wiki/YCbCr#ITU-R_BT.601_conversion
@@ -81,7 +81,7 @@ namespace SpriteMaster.xBRZ.Color {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public double DistYCbCr (int pix1, int pix2) {
+		public double DistYCbCr (uint pix1, uint pix2) {
 			if (pix1 == pix2)
 				return 0;
 
@@ -90,8 +90,8 @@ namespace SpriteMaster.xBRZ.Color {
 			// From reference xbrz.cpp
 			if (Configuration.HasAlpha) {
 				unchecked {
-					double a1 = (((uint)pix1 >> ColorConstant.Shift.Alpha) & 0xFF) / 255.0;
-					double a2 = (((uint)pix2 >> ColorConstant.Shift.Alpha) & 0xFF) / 255.0;
+					double a1 = ((pix1 >> ColorConstant.Shift.Alpha) & 0xFF) / 255.0;
+					double a2 = ((pix2 >> ColorConstant.Shift.Alpha) & 0xFF) / 255.0;
 
 					distance /= 255.0;
 

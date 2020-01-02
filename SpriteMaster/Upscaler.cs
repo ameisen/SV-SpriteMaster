@@ -349,10 +349,10 @@ namespace SpriteMaster {
 						}
 						break;
 						case Scaler.xBRZ: {
-							var outData = bitmapData.CastAs<byte, int>();
+							var outData = bitmapData.CastAs<byte, uint>();
 							new xBRZ.Scaler(
 								scaleMultiplier: scale,
-								sourceData: prescaleData,
+								sourceData: prescaleData.CastAs<int, uint>(),
 								sourceWidth: prescaleSize.Width,
 								sourceHeight: prescaleSize.Height,
 								sourceTarget: outputSize,

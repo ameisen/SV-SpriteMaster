@@ -15,11 +15,11 @@ namespace SpriteMaster.xBRZ {
 
 		public Scaler (
 			int scaleMultiplier,
-			in ReadOnlySpan<int> sourceData,
+			in ReadOnlySpan<uint> sourceData,
 			int sourceWidth,
 			int sourceHeight,
 			in Rectangle? sourceTarget,
-			in Span<int> targetData,
+			in Span<uint> targetData,
 			in Config configuration
 		) {
 			if (scaleMultiplier < MinScale || scaleMultiplier > MaxScale) {
@@ -259,14 +259,14 @@ namespace SpriteMaster.xBRZ {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static int Mask (int value, uint mask) {
-			return unchecked((int)((uint)value & mask));
+		private static uint Mask (uint value, uint mask) {
+			return value & mask;
 		}
 
 		//scaler policy: see "Scaler2x" reference implementation
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private unsafe void Scale (in ReadOnlySpan<int> source, in Span<int> destination) {
-			fixed (int* destinationPtr = destination) {
+		private unsafe void Scale (in ReadOnlySpan<uint> source, in Span<uint> destination) {
+			fixed (uint* destinationPtr = destination) {
 
 				int yFirst = sourceTarget.Top;
 				int yLast = sourceTarget.Bottom;
@@ -277,7 +277,7 @@ namespace SpriteMaster.xBRZ {
 				//temporary buffer for "on the fly preprocessing"
 				var preProcBuffer = stackalloc byte[sourceTarget.Width];
 
-				int GetPixel (in ReadOnlySpan<int> src, int stride, int offset) {
+				uint GetPixel (in ReadOnlySpan<uint> src, int stride, int offset) {
 					// We can try embedded a distance calculation as well. Perhaps instead of a negative stride/offset, we provide a 
 					// negative distance from the edge and just recalculate the stride/offset in that case.
 					// We can scale the alpha reduction by the distance to hopefully correct the edges.
@@ -291,7 +291,7 @@ namespace SpriteMaster.xBRZ {
 						return src[stride + offset];
 					stride = (stride < 0) ? -stride : stride;
 					offset = (offset < 0) ? -offset : offset;
-					int sample = src[stride + offset];
+					uint sample = src[stride + offset];
 					const uint mask = 0x00_FF_FF_FFU;
 					return Mask(sample, mask);
 				}

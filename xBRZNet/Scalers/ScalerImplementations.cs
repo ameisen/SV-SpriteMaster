@@ -11,14 +11,14 @@ namespace SpriteMaster.xBRZ.Scalers {
 			Scale = scale;
 		}
 
-		public abstract void BlendLineSteep (int col, in OutputMatrix out_);
-		public abstract void BlendLineSteepAndShallow (int col, in OutputMatrix out_);
-		public abstract void BlendLineShallow (int col, in OutputMatrix out_);
-		public abstract void BlendLineDiagonal (int col, in OutputMatrix out_);
-		public abstract void BlendCorner (int col, in OutputMatrix out_);
+		public abstract void BlendLineSteep (uint col, in OutputMatrix out_);
+		public abstract void BlendLineSteepAndShallow (uint col, in OutputMatrix out_);
+		public abstract void BlendLineShallow (uint col, in OutputMatrix out_);
+		public abstract void BlendLineDiagonal (uint col, in OutputMatrix out_);
+		public abstract void BlendCorner (uint col, in OutputMatrix out_);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected static void AlphaBlend (int n, int m, ref int dstRef, int col) {
+		protected static void AlphaBlend (int n, int m, ref uint dstRef, uint col) {
 			//assert n < 256 : "possible overflow of (col & redMask) * N";
 			//assert m < 256 : "possible overflow of (col & redMask) * N + (dst & redMask) * (M - N)";
 			//assert 0 < n && n < m : "0 < N && N < M";
@@ -34,11 +34,11 @@ namespace SpriteMaster.xBRZ.Scalers {
 			var greenComponent = BlendComponent(ColorConstant.Shift.Green, ColorConstant.Mask.Green, n, m, dst, col);
 			var blueComponent = BlendComponent(ColorConstant.Shift.Blue, ColorConstant.Mask.Blue, n, m, dst, col);
 			var blend = (alphaComponent | redComponent | greenComponent | blueComponent);
-			dstRef = unchecked((int)blend); // MJY: Added required cast but will throw an exception if the asserts at the top are not checked.
+			dstRef = blend; // MJY: Added required cast but will throw an exception if the asserts at the top are not checked.
 		}
 
-		private static readonly int[] ToLinearTable = new int[0x10000];
-		private static readonly int[] ToGammaTable = new int[0x10000];
+		private static readonly uint[] ToLinearTable = new uint[0x10000];
+		private static readonly uint[] ToGammaTable = new uint[0x10000];
 
 		static IScaler() {
 			for (int i = 0; i <= 0xFFFF; ++i) {
@@ -49,23 +49,23 @@ namespace SpriteMaster.xBRZ.Scalers {
 						(finput / 12.92) :
 						Math.Pow((finput + 0.055) / 1.055, 2.4);
 					foutput *= ushort.MaxValue;
-					ToLinearTable[i] = Math.Min((int)foutput, ushort.MaxValue);
+					ToLinearTable[i] = Math.Min((uint)foutput, ushort.MaxValue);
 				}
 				{
 					var foutput = (finput <= 0.00313066844250063) ?
 						(finput * 12.92) :
 						((1.055 * Math.Pow(finput, 1.0 / 2.4)) - 0.055);
 					foutput *= ushort.MaxValue;
-					ToGammaTable[i] = Math.Min((int)foutput, ushort.MaxValue);
+					ToGammaTable[i] = Math.Min((uint)foutput, ushort.MaxValue);
 				}
 			}
 		}
 
-		private static int ToLinear(int input) {
+		private static uint ToLinear(uint input) {
 			return ToLinearTable[input];
 		}
 
-		private static int ToGamma (int input) {
+		private static uint ToGamma (uint input) {
 			return ToGammaTable[input];
 		}
 
@@ -74,10 +74,10 @@ namespace SpriteMaster.xBRZ.Scalers {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static uint BlendComponent (int shift, uint mask, int n, int m, int inPixel, int setPixel, bool gamma = true) {
+		private static uint BlendComponent (int shift, uint mask, int n, int m, uint inPixel, uint setPixel, bool gamma = true) {
 			if (true) {
-				var inChan = ((inPixel.asUnsigned() >> shift) & 0xFF).asSigned().Widen();
-				var setChan = ((setPixel.asUnsigned() >> shift) & 0xFF).asSigned().Widen();
+				var inChan = ((inPixel >> shift) & 0xFF).Widen();
+				var setChan = ((setPixel >> shift) & 0xFF).Widen();
 
 				// TODO : attach to the configuration setting for SRGB
 				if (gamma) {
@@ -85,9 +85,9 @@ namespace SpriteMaster.xBRZ.Scalers {
 					setChan = ToLinear(setChan);
 				}
 
-				var blend = setChan * n + inChan * (m - n);
+				var blend = setChan.asSigned() * n + inChan.asSigned() * (m - n);
 
-				var outChan = ((blend / m).asUnsigned() & 0xFFFF).asSigned();
+				var outChan = (blend / m).asUnsigned() & 0xFFFF;
 
 				if (gamma) {
 					outChan = ToGamma(outChan);
@@ -101,11 +101,11 @@ namespace SpriteMaster.xBRZ.Scalers {
 					// alternatively, could use sin(x*pi - (pi/2))
 					var hardenedAlpha = Curve(channelF);
 
-					outChan = Math.Min(0xFFFF, (int)(hardenedAlpha * 0xFFFF));
+					outChan = Math.Min(0xFFFF, (uint)(hardenedAlpha * 0xFFFF));
 				}
 
 				var component = (outChan.Narrow()) << shift;
-				return component.asUnsigned();
+				return component;
 			}
 			else {
 				/*
@@ -129,31 +129,31 @@ namespace SpriteMaster.xBRZ.Scalers {
 		[MethodImpl(MethodImplOptions.AggressiveInlining)] public Scaler2X () : base(Scale) { }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendLineShallow (int col, in OutputMatrix out_) {
+		public override void BlendLineShallow (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(Scale - 1, 0), col);
 			AlphaBlend(3, 4, ref out_.Ref(Scale - 1, 1), col);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendLineSteep (int col, in OutputMatrix out_) {
+		public override void BlendLineSteep (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(0, Scale - 1), col);
 			AlphaBlend(3, 4, ref out_.Ref(1, Scale - 1), col);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendLineSteepAndShallow (int col, in OutputMatrix out_) {
+		public override void BlendLineSteepAndShallow (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(1, 0), col);
 			AlphaBlend(1, 4, ref out_.Ref(0, 1), col);
 			AlphaBlend(5, 6, ref out_.Ref(1, 1), col); //[!] fixes 7/8 used in xBR
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendLineDiagonal (int col, in OutputMatrix out_) {
+		public override void BlendLineDiagonal (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 2, ref out_.Ref(1, 1), col);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendCorner (int col, in OutputMatrix out_) {
+		public override void BlendCorner (uint col, in OutputMatrix out_) {
 			//model a round corner
 			AlphaBlend(21, 100, ref out_.Ref(1, 1), col); //exact: 1 - pi/4 = 0.2146018366
 		}
@@ -164,7 +164,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 		[MethodImpl(MethodImplOptions.AggressiveInlining)] public Scaler3X () : base(Scale) { }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendLineShallow (int col, in OutputMatrix out_) {
+		public override void BlendLineShallow (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(Scale - 1, 0), col);
 			AlphaBlend(1, 4, ref out_.Ref(Scale - 2, 2), col);
 			AlphaBlend(3, 4, ref out_.Ref(Scale - 1, 1), col);
@@ -172,7 +172,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendLineSteep (int col, in OutputMatrix out_) {
+		public override void BlendLineSteep (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(0, Scale - 1), col);
 			AlphaBlend(1, 4, ref out_.Ref(2, Scale - 2), col);
 			AlphaBlend(3, 4, ref out_.Ref(1, Scale - 1), col);
@@ -180,7 +180,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendLineSteepAndShallow (int col, in OutputMatrix out_) {
+		public override void BlendLineSteepAndShallow (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(2, 0), col);
 			AlphaBlend(1, 4, ref out_.Ref(0, 2), col);
 			AlphaBlend(3, 4, ref out_.Ref(2, 1), col);
@@ -189,14 +189,14 @@ namespace SpriteMaster.xBRZ.Scalers {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendLineDiagonal (int col, in OutputMatrix out_) {
+		public override void BlendLineDiagonal (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 8, ref out_.Ref(1, 2), col);
 			AlphaBlend(1, 8, ref out_.Ref(2, 1), col);
 			AlphaBlend(7, 8, ref out_.Ref(2, 2), col);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendCorner (int col, in OutputMatrix out_) {
+		public override void BlendCorner (uint col, in OutputMatrix out_) {
 			//model a round corner
 			AlphaBlend(45, 100, ref out_.Ref(2, 2), col); //exact: 0.4545939598
 																										//alphaBlend(14, 1000, out.ref(2, 1), col); //0.01413008627 -> negligable
@@ -209,7 +209,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 		[MethodImpl(MethodImplOptions.AggressiveInlining)] public Scaler4X () : base(Scale) { }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendLineShallow (int col, in OutputMatrix out_) {
+		public override void BlendLineShallow (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(Scale - 1, 0), col);
 			AlphaBlend(1, 4, ref out_.Ref(Scale - 2, 2), col);
 			AlphaBlend(3, 4, ref out_.Ref(Scale - 1, 1), col);
@@ -219,7 +219,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendLineSteep (int col, in OutputMatrix out_) {
+		public override void BlendLineSteep (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(0, Scale - 1), col);
 			AlphaBlend(1, 4, ref out_.Ref(2, Scale - 2), col);
 			AlphaBlend(3, 4, ref out_.Ref(1, Scale - 1), col);
@@ -229,7 +229,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendLineSteepAndShallow (int col, in OutputMatrix out_) {
+		public override void BlendLineSteepAndShallow (uint col, in OutputMatrix out_) {
 			AlphaBlend(3, 4, ref out_.Ref(3, 1), col);
 			AlphaBlend(3, 4, ref out_.Ref(1, 3), col);
 			AlphaBlend(1, 4, ref out_.Ref(3, 0), col);
@@ -241,14 +241,14 @@ namespace SpriteMaster.xBRZ.Scalers {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendLineDiagonal (int col, in OutputMatrix out_) {
+		public override void BlendLineDiagonal (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 2, ref out_.Ref(Scale - 1, Scale / 2), col);
 			AlphaBlend(1, 2, ref out_.Ref(Scale - 2, Scale / 2 + 1), col);
 			out_.Set(Scale - 1, Scale - 1, col);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendCorner (int col, in OutputMatrix out_) {
+		public override void BlendCorner (uint col, in OutputMatrix out_) {
 			//model a round corner
 			AlphaBlend(68, 100, ref out_.Ref(3, 3), col); //exact: 0.6848532563
 			AlphaBlend(9, 100, ref out_.Ref(3, 2), col); //0.08677704501
@@ -261,7 +261,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 		[MethodImpl(MethodImplOptions.AggressiveInlining)] public Scaler5X () : base(Scale) { }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendLineShallow (int col, in OutputMatrix out_) {
+		public override void BlendLineShallow (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(Scale - 1, 0), col);
 			AlphaBlend(1, 4, ref out_.Ref(Scale - 2, 2), col);
 			AlphaBlend(1, 4, ref out_.Ref(Scale - 3, 4), col);
@@ -274,7 +274,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendLineSteep (int col, in OutputMatrix out_) {
+		public override void BlendLineSteep (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(0, Scale - 1), col);
 			AlphaBlend(1, 4, ref out_.Ref(2, Scale - 2), col);
 			AlphaBlend(1, 4, ref out_.Ref(4, Scale - 3), col);
@@ -287,7 +287,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendLineSteepAndShallow (int col, in OutputMatrix out_) {
+		public override void BlendLineSteepAndShallow (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(0, Scale - 1), col);
 			AlphaBlend(1, 4, ref out_.Ref(2, Scale - 2), col);
 			AlphaBlend(3, 4, ref out_.Ref(1, Scale - 1), col);
@@ -303,7 +303,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendLineDiagonal (int col, in OutputMatrix out_) {
+		public override void BlendLineDiagonal (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 8, ref out_.Ref(Scale - 1, Scale / 2), col);
 			AlphaBlend(1, 8, ref out_.Ref(Scale - 2, Scale / 2 + 1), col);
 			AlphaBlend(1, 8, ref out_.Ref(Scale - 3, Scale / 2 + 2), col);
@@ -313,7 +313,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendCorner (int col, in OutputMatrix out_) {
+		public override void BlendCorner (uint col, in OutputMatrix out_) {
 			//model a round corner
 			AlphaBlend(86, 100, ref out_.Ref(4, 4), col); //exact: 0.8631434088
 			AlphaBlend(23, 100, ref out_.Ref(4, 3), col); //0.2306749731
@@ -328,7 +328,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 		[MethodImpl(MethodImplOptions.AggressiveInlining)] public Scaler6X () : base(Scale) { }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendLineShallow (int col, in OutputMatrix out_) {
+		public override void BlendLineShallow (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(Scale - 1, 0), col);
 			AlphaBlend(1, 4, ref out_.Ref(Scale - 2, 2), col);
 			AlphaBlend(1, 4, ref out_.Ref(Scale - 3, 4), col);
@@ -345,7 +345,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendLineSteep (int col, in OutputMatrix out_) {
+		public override void BlendLineSteep (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(0, Scale - 1), col);
 			AlphaBlend(1, 4, ref out_.Ref(2, Scale - 2), col);
 			AlphaBlend(1, 4, ref out_.Ref(4, Scale - 3), col);
@@ -362,7 +362,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendLineSteepAndShallow (int col, in OutputMatrix out_) {
+		public override void BlendLineSteepAndShallow (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(0, Scale - 1), col);
 			AlphaBlend(1, 4, ref out_.Ref(2, Scale - 2), col);
 			AlphaBlend(3, 4, ref out_.Ref(1, Scale - 1), col);
@@ -383,7 +383,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendLineDiagonal (int col, in OutputMatrix out_) {
+		public override void BlendLineDiagonal (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 2, ref out_.Ref(Scale - 1, Scale / 2), col);
 			AlphaBlend(1, 2, ref out_.Ref(Scale - 2, Scale / 2 + 1), col);
 			AlphaBlend(1, 2, ref out_.Ref(Scale - 3, Scale / 2 + 2), col);
@@ -394,7 +394,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override void BlendCorner (int col, in OutputMatrix out_) {
+		public override void BlendCorner (uint col, in OutputMatrix out_) {
 			//model a round corner
 			AlphaBlend(97, 100, ref out_.Ref(5, 5), col); //exact: 0.9711013910
 			AlphaBlend(42, 100, ref out_.Ref(4, 5), col); //0.4236372243
