@@ -5,6 +5,8 @@ using System.IO;
 namespace SpriteMaster.Resample {
 	internal static class Recolor {
 		internal static unsafe T[] Enhance<T> (T[] data, Vector2I size) where T : unmanaged {
+			return data;
+
 			lock (typeof(Upscaler)) {
 				fixed (T* ptr = data) {
 					using var bitmapStream = new UnmanagedMemoryStream((byte*)ptr, data.Length * sizeof(T), data.Length * sizeof(T), FileAccess.ReadWrite);
