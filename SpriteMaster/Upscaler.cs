@@ -1,4 +1,5 @@
 ﻿//using ManagedSquish;
+using ImageMagick;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
@@ -10,11 +11,15 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.InteropServices;
-using xBRZNet2;
 using static SpriteMaster.ScaledTexture;
 
 namespace SpriteMaster {
 	internal sealed class Upscaler {
+		internal enum Scaler : int {
+			xBRZ = 0,
+			ImageMagick
+		}
+
 		internal static void PurgeHash (Texture2D reference) {
 			reference.Meta().CachedData = null;
 		}
@@ -121,30 +126,18 @@ namespace SpriteMaster {
 			var scaledSize = inputSize * scale;
 			var newSize = scaledSize.Min(Config.ClampDimension);
 
-			var scaledDimensions = spriteBounds.Extent * scale; // TODO : should this be (inputSize * scale)?
+			var scaledDimensions = spriteBounds.Extent * scale;
 			texture.UnpaddedSize = newSize;
 
 			texture.AdjustedScale = (Vector2)newSize / inputSize;
 
-			/*
-      if (TextureCache.TryGetValue(hash, out Texture2D cachedTexture))
-      {
-        if (!cachedTexture.IsDisposed)
-        {
-          Debug.ErrorLn("Found Cached Texture");
-          return cachedTexture;
-        }
-      }
-      */
-
-			// Apparently, using the filename is not sufficient for hashing cache data. So, we will need to hash the texture data, apparently. This is really messy.
 			var hashString = hash.ToString("x");
 			var cachePath = Cache.GetPath($"{hashString}.cache");
 
 			int[] bitmapData = null;
 			try {
 				try {
-					if (Cache.Fetch(cachePath, out var fetchSize, out spriteFormat, out wrapped, out texture.Padding, out texture.BlockPadding, out bitmapData)) {
+					if (Cache.Fetch(cachePath, out int refScale, out var fetchSize, out spriteFormat, out wrapped, out texture.Padding, out texture.BlockPadding, out bitmapData)) {
 						scaledDimensions = newSize = scaledSize = fetchSize;
 					}
 				}
@@ -197,55 +190,6 @@ namespace SpriteMaster {
 
 					(WrappedX, WrappedY, wrapped) = (edgeResults.WrappedX, edgeResults.WrappedY, edgeResults.Wrapped);
 
-					// Recolor
-					/*
-					{
-						foreach (int y in input.Size.Top..input.Size.Bottom) {
-							int offsetY = y * input.ReferenceSize.Width;
-							foreach (int x in input.Size.Left..input.Size.Right) {
-								int offset = offsetY + x;
-
-								var texel = unchecked((uint)rawData[offset]);
-
-								var bI = (texel >> 16) & 0xFFU;
-								var gI = (texel >> 8) & 0xFFU;
-								var rI = (texel) & 0xFFU;
-
-								var color = new Vector3(
-									(float)rI / 255.0f,
-									(float)gI / 255.0f,
-									(float)bI / 255.0f
-								);
-
-								float Curve (float x) {
-									return (float)((Math.Sin(x * Math.PI - (Math.PI / 2.0))) + 1) / 2;
-								}
-
-								float Recolor (float x) {
-									return Floating.Lerp(x, Curve(x), 0.25f);
-								}
-
-								color.X = Recolor(color.X);
-								color.Y = Recolor(color.Y);
-								color.Z = Recolor(color.Z);
-
-								bI = (uint)Math.Min(255f, color.Z * 255f);
-								gI = (uint)Math.Min(255f, color.Y * 255f);
-								rI = (uint)Math.Min(255f, color.X * 255f);
-
-								texel =
-									(texel & 0xFF000000U) |
-									(bI << 16) |
-									(gI << 8) |
-									(rI);
-
-								rawData[offset] = unchecked((int)texel);
-							}
-						}
-					}
-					*/
-					// ~Recolor
-
 					wrapped &= Config.Resample.EnableWrappedAddressing;
 
 					if (Config.Debug.Sprite.DumpReference) {
@@ -254,13 +198,13 @@ namespace SpriteMaster {
 								var dump = GetDumpBitmap(submap);
 								var path = Cache.GetDumpPath($"{input.Reference.SafeName().Replace("\\", ".").Replace("/", ".")}.{hashString}.reference.png");
 								File.Delete(path);
-								dump.Save(path, ImageFormat.Png);
+								dump.Save(path, System.Drawing.Imaging.ImageFormat.Png);
 							}
 						}
 					}
 
 					if (Config.Resample.Smoothing) {
-						var scalerConfig = new xBRZNet2.Config(wrappedX: (wrapped.X && false) || isWater, wrappedY: (wrapped.Y && false) || isWater);
+						var scalerConfig = new xBRZ.Config(wrappedX: (wrapped.X && false) || isWater, wrappedY: (wrapped.Y && false) || isWater);
 
 						// Do we need to pad the sprite?
 						var prescaleData = rawData;
@@ -378,17 +322,78 @@ namespace SpriteMaster {
 
 						bitmapData = new int[scaledSize.Area];
 
-						// TODO add a stride/mask so it won't write to the block padding area.
 						try {
-							new xBRZScaler(
-								scaleMultiplier: scale,
-								sourceData: prescaleData,
-								sourceWidth: prescaleSize.Width,
-								sourceHeight: prescaleSize.Height,
-								sourceTarget: outputSize,
-								targetData: bitmapData,
-								configuration: scalerConfig
-							);
+							switch (Config.Resample.Scaler) {
+								case Scaler.ImageMagick: {
+									fixed (int* ptr = prescaleData) {
+										using var bitmapStream = new UnmanagedMemoryStream((byte*)ptr, prescaleData.Length * sizeof(int), prescaleData.Length * sizeof(int), FileAccess.Read);
+										using (var image = new MagickImage(bitmapStream, new PixelReadSettings(prescaleSize.Width, prescaleSize.Height, StorageType.Char, PixelMapping.ABGR))) {
+											var magickSize = new MagickGeometry(scaledSize.Width, scaledSize.Height) {
+												IgnoreAspectRatio = true
+											};
+
+											//image.ColorSpace = ImageMagick.ColorSpace.sRGB;
+											//image.ColorType = ColorType.TrueColorAlpha;
+
+											//image.Depth = 8;
+											//image.BitDepth(Channels.Alpha, 8);
+
+											image.HasAlpha = true;
+
+											image.Crop(new MagickGeometry(outputSize.X, outputSize.Y, outputSize.Width, outputSize.Height));
+
+											image.RePage();
+
+											image.FilterType = FilterType.Box;
+											image.Resize(magickSize);
+											//image.Resample(scaledSize.Width, scaledSize.Height);
+
+											image.RePage();
+
+											//image.Endian = Endian.MSB;
+
+											image.Depth = 8;
+											image.BitDepth(Channels.Alpha, 8);
+
+											fixed (int* outPtr = bitmapData) {
+												using var outputStream = new UnmanagedMemoryStream((byte*)outPtr, bitmapData.Length * sizeof(int), bitmapData.Length * sizeof(int), FileAccess.Write);
+												image.Write(outputStream, MagickFormat.Rgba);
+											}
+
+											foreach (int i in 0..bitmapData.Length) {
+												unchecked {
+													var color = (uint)bitmapData[i];
+
+													// RGBA to ABGR
+													color =
+														((color >> 24) & 0xFF) |
+														((color >> 8) & 0xFF00) |
+														((color << 8) & 0xFF0000) |
+														((color << 24) & 0xFF000000);
+
+													bitmapData[i] = (int)color;
+												}
+											}
+										}
+									}
+								} break;
+								case Scaler.xBRZ: {
+									new xBRZ.Scaler(
+										scaleMultiplier: scale,
+										sourceData: prescaleData,
+										sourceWidth: prescaleSize.Width,
+										sourceHeight: prescaleSize.Height,
+										sourceTarget: outputSize,
+										targetData: bitmapData,
+										configuration: scalerConfig
+									);
+
+									bitmapData = Recolor.Enhance(bitmapData, scaledSize);
+
+								} break;
+								default:
+									throw new InvalidOperationException($"Unknown Scaler Type: {Config.Resample.Scaler}");
+							}
 						}
 						catch (Exception ex) {
 							ex.PrintError();
@@ -517,7 +522,7 @@ namespace SpriteMaster {
 						HasAlpha = (alpha[MaxShades - 1] != bitmapData.Length);
 
 						if (HasAlpha && !IsPunchThroughAlpha) {
-							var alphaDeviation = Statistics.StandardDeviation(alpha, MaxShades, 1, MaxShades - 2);
+							var alphaDeviation = Extensions.Statistics.StandardDeviation(alpha, MaxShades, 1, MaxShades - 2);
 							IsMasky = alphaDeviation < Config.Resample.BlockHardAlphaDeviationThreshold;
 						}
 
@@ -550,7 +555,7 @@ namespace SpriteMaster {
 					}
 
 					try {
-						Cache.Save(cachePath, newSize, spriteFormat, wrapped, texture.Padding, texture.BlockPadding, bitmapData);
+						Cache.Save(cachePath, scale, newSize, spriteFormat, wrapped, texture.Padding, texture.BlockPadding, bitmapData);
 					}
 					catch { }
 				}

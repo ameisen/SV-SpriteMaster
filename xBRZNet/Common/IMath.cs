@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
-namespace xBRZNet.Common {
+namespace SpriteMaster.xBRZ.Common {
 	public static class IMath {
 		[DebuggerStepThrough]
 		private ref struct Argument<T> where T : unmanaged {

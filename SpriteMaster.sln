@@ -8,7 +8,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SpriteMaster", "SpriteMaste
 		{84EE293E-B938-4512-8A39-86FFC00ED267} = {84EE293E-B938-4512-8A39-86FFC00ED267}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "xBRZNet", "xBRZNet\xBRZNet.csproj", "{84EE293E-B938-4512-8A39-86FFC00ED267}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "xBRZ", "xBRZNet\xBRZ.csproj", "{84EE293E-B938-4512-8A39-86FFC00ED267}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

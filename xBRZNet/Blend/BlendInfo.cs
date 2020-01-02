@@ -1,32 +1,37 @@
 ﻿using System.Runtime.CompilerServices;
-using xBRZNet2.Common;
+using SpriteMaster.xBRZ.Common;
 
-namespace xBRZNet2.Blend {
+namespace SpriteMaster.xBRZ.Blend {
 	internal static class BlendInfo {
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static char GetTopL (this char b) { return unchecked((char)(b & 0x3)); }
+		public static BlendType GetTopL (this byte b) { unchecked { return (b & 0x3).BlendType(); } }
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static char GetTopR (this char b) { return unchecked((char)((b >> 2) & 0x3)); }
+		public static BlendType GetTopR (this byte b) { unchecked { return ((byte)(b >> 2) & 0x3).BlendType(); } }
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static char GetBottomR (this char b) { return unchecked((char)((b >> 4) & 0x3)); }
+		public static BlendType GetBottomR (this byte b) { unchecked { return ((byte)(b >> 4) & 0x3).BlendType(); } }
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static char GetBottomL (this char b) { return unchecked((char)((b >> 6) & 0x3)); }
+		public static BlendType GetBottomL (this byte b) { unchecked { return ((byte)(b >> 6) & 0x3).BlendType(); } }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static char SetTopL (this char b, char bt) { return unchecked((char)(b | bt)); }
+		public static byte SetTopL (this byte b, BlendType bt) { unchecked { return (byte)(b | bt.Byte()); } }
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static char SetTopR (this char b, char bt) { return unchecked((char)(b | (bt << 2))); }
+		public static byte SetTopR (this byte b, BlendType bt) { unchecked { return (byte)(b | (bt.Byte() << 2)); } }
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static char SetBottomR (this char b, char bt) { return unchecked((char)(b | (bt << 4))); }
+		public static byte SetBottomR (this byte b, BlendType bt) { unchecked { return (byte)(b | (bt.Byte() << 4)); } }
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static char SetBottomL (this char b, char bt) { return unchecked((char)(b | (bt << 6))); }
+		public static byte SetBottomL (this byte b, BlendType bt) { unchecked { return (byte)(b | (bt.Byte() << 6)); } }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static char Rotate (this char b, RotationDegree rotDeg) {
-			var l = (int)rotDeg << 1;
-			var r = 8 - l;
+		public static bool BlendingNeeded(this byte b) { return b != 0; }
 
-			return unchecked((char)(b << l | b >> r));
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static byte Rotate (this byte b, RotationDegree rotDeg) {
+			unchecked {
+				var l = (byte)((byte)rotDeg << 1);
+				var r = (byte)(8 - l);
+
+				return unchecked((byte)(b << l | b >> r));
+			}
 		}
 	}
 }

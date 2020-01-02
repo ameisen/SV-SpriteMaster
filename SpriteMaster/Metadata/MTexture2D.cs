@@ -229,7 +229,7 @@ namespace SpriteMaster.Metadata {
 								foreach (int i in 0..untilOffset) {
 									currentData[i + data.Offset] = byteSpan[i];
 								}
-								Hash = default;
+								Thread.VolatileWrite(ref _Hash, default);
 							}
 						}
 					}
@@ -308,9 +308,7 @@ namespace SpriteMaster.Metadata {
 									var compressedData = Compress((byte[])buffer);
 									lock (DataCacheLock) {
 										DataCache[UniqueIDString] = compressedData;
-										using (Lock.Exclusive) {
-											Hash = default;
-										}
+										Hash = default;
 									}
 								}, value);
 							}
@@ -333,11 +331,11 @@ namespace SpriteMaster.Metadata {
 
 		public ulong GetHash(SpriteInfo info) {
 			using (Lock.Shared) {
-				ulong hash = Hash;
+				ulong hash = Thread.VolatileRead(ref _Hash);
 				if (hash == default) {
 					hash = info.Hash;
 					using (Lock.Promote) {
-						Hash = hash;
+						Thread.VolatileWrite(ref _Hash, hash);
 					}
 				}
 				return hash;

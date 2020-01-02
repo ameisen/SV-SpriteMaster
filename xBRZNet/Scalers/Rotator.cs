@@ -1,7 +1,8 @@
 ﻿using System.Linq;
-using xBRZNet.Common;
+using System.Runtime.CompilerServices;
+using SpriteMaster.xBRZ.Common;
 
-namespace xBRZNet2.Scalers {
+namespace SpriteMaster.xBRZ.Scalers {
 	internal static class Rotator {
 		public const int MaxRotations = 4; // Number of 90 degree rotations
 		public const int MaxPositions = 9;
@@ -10,14 +11,19 @@ namespace xBRZNet2.Scalers {
 		// a = 0, b = 1, c = 2,
 		// d = 3, e = 4, f = 5,
 		// g = 6, h = 7, i = 8;
-		public static readonly int[] _ = new int[MaxRotations * MaxPositions];
+		private static readonly int[] RotationsArray = new int[MaxRotations * MaxPositions];
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static int Get(int index) {
+			return RotationsArray[index];
+		}
 
 		static Rotator () {
 			var rotation = Enumerable.Range(0, MaxPositions).ToArray();
 			var sideLength = IMath.Sqrt(MaxPositions);
 			for (var rot = 0; rot < MaxRotations; rot++) {
 				for (var pos = 0; pos < MaxPositions; pos++) {
-					_[(pos * MaxRotations) + rot] = rotation[pos];
+					RotationsArray[(pos * MaxRotations) + rot] = rotation[pos];
 				}
 				rotation = rotation.RotateClockwise(sideLength);
 			}

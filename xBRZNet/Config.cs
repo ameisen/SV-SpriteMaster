@@ -2,8 +2,10 @@
 using System.Runtime.CompilerServices;
 
 // TODO : Handle X or Y-only scaling, since the game has a lot of 1xY and Xx1 sprites - 1D textures.
-namespace xBRZNet2 {
+namespace SpriteMaster.xBRZ {
 	public readonly struct Config : IEquatable<Config> {
+		internal const int MaxScale = 6;
+
 		internal readonly bool WrappedX;
 		internal readonly bool WrappedY;
 		internal readonly bool Gamma;
@@ -14,6 +16,7 @@ namespace xBRZNet2 {
 		internal readonly double EqualColorTolerance;
 		internal readonly double DominantDirectionThreshold;
 		internal readonly double SteepDirectionThreshold;
+		internal readonly double CenterDirectionBias;
 
 		// Precalculated
 		internal readonly double EqualColorTolerancePow2;
@@ -27,7 +30,8 @@ namespace xBRZNet2 {
 			double luminanceWeight = 1.0,
 			double equalColorTolerance = 30.0,
 			double dominantDirectionThreshold = 3.6,
-			double steepDirectionThreshold = 2.2
+			double steepDirectionThreshold = 2.2,
+			double centerDirectionBias = 4.0
 		) {
 			this.WrappedX = wrappedX;
 			this.WrappedY = wrappedY;
@@ -37,6 +41,7 @@ namespace xBRZNet2 {
 			this.EqualColorTolerance = equalColorTolerance;
 			this.DominantDirectionThreshold = dominantDirectionThreshold;
 			this.SteepDirectionThreshold = steepDirectionThreshold;
+			this.CenterDirectionBias = centerDirectionBias;
 
 			this.EqualColorTolerancePow2 = Math.Pow(EqualColorTolerance, 2.0);
 		}

@@ -8,8 +8,8 @@
     <ProjectGuid>{84EE293E-B938-4512-8A39-86FFC00ED267}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>xBRZNet</RootNamespace>
-    <AssemblyName>xBRZNet</AssemblyName>
+    <RootNamespace>SpriteMaster</RootNamespace>
+    <AssemblyName>xBRZ</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <LangVersion>preview</LangVersion>
@@ -47,6 +47,9 @@
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>pufferchick_xbrz.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
@@ -75,7 +78,6 @@
     <Compile Include="Color\ColorEq.cs" />
     <Compile Include="Color\ColorSpace.cs" />
     <Compile Include="Common\IMath.cs" />
-    <Compile Include="Common\IntPair.cs" />
     <Compile Include="Common\ColorConstant.cs" />
     <Compile Include="Common\RotationDegree.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -86,9 +88,10 @@
     <Compile Include="Scalers\Rotator.cs" />
     <Compile Include="Scalers\ScalerImplementations.cs" />
     <Compile Include="Scalers\ScaleSize.cs" />
-    <Compile Include="xBRZScaler.cs" />
+    <Compile Include="Scaler.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="pufferchick_xbrz.ico" />
     <Content Include="References\xBRZ.java" />
   </ItemGroup>
   <ItemGroup>

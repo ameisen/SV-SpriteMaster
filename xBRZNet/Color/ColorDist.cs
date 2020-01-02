@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
-using xBRZNet.Color;
-using xBRZNet2.Common;
+using SpriteMaster.xBRZ.Color;
+using SpriteMaster.xBRZ.Common;
 
-namespace xBRZNet2.Color {
+namespace SpriteMaster.xBRZ.Color {
 	internal class ColorDist {
 		protected readonly Config Configuration;
 

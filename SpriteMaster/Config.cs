@@ -101,6 +101,7 @@ namespace SpriteMaster {
 		internal static class Resample {
 			internal const bool Smoothing = true;
 			internal const bool Scale = Smoothing;
+			internal const Upscaler.Scaler Scaler = Upscaler.Scaler.xBRZ;
 			internal static bool EnableDynamicScale = true;
 			internal static bool TrimWater = true;
 			internal static float ScaleBias = 0.1f;
@@ -182,7 +183,7 @@ namespace SpriteMaster {
 
 		internal static class Cache {
 			internal const bool Purge = false;
-			internal static bool Enabled = true;
+			internal static bool Enabled = false;
 			internal const int LockRetries = 32;
 			internal const int LockSleepMS = 32;
 		}

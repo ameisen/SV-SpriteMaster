@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace xBRZNet.Color {
+namespace SpriteMaster.xBRZ.Color {
 	internal struct ColorSpace {
 		public struct Double3 {
 			public readonly double R;

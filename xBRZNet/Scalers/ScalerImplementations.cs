@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
-using xBRZNet.Common;
-using xBRZNet2.Common;
+using SpriteMaster.xBRZ.Common;
 
-namespace xBRZNet2.Scalers {
+namespace SpriteMaster.xBRZ.Scalers {
 	internal abstract class IScaler {
 		public readonly int Scale;
 

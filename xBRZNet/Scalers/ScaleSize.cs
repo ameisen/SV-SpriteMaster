@@ -1,6 +1,6 @@
 ﻿using System.Linq;
 
-namespace xBRZNet2.Scalers {
+namespace SpriteMaster.xBRZ.Scalers {
 	internal static class ScaleSize {
 		private static readonly IScaler[] Scalers =
 		{

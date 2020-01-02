@@ -31,6 +31,7 @@ namespace SpriteMaster.Resample {
 		private class CacheHeader {
 			public string Assembly = AssemblyVersion;
 			public ulong ConfigHash = SerializeConfig.Hash();
+			public int RefScale;
 			public Vector2I Size;
 			public TextureFormat? Format;
 			public Vector2B Wrapped;
@@ -78,6 +79,7 @@ namespace SpriteMaster.Resample {
 
 		internal static bool Fetch (
 			string path,
+			out int refScale,
 			out Vector2I size,
 			out TextureFormat format,
 			out Vector2B wrapped,
@@ -85,6 +87,7 @@ namespace SpriteMaster.Resample {
 			out Vector2I blockPadding,
 			out int[] data
 		) {
+			refScale = 0;
 			size = Vector2I.Zero;
 			format = TextureFormat.Color;
 			wrapped = Vector2B.False;
@@ -112,6 +115,7 @@ namespace SpriteMaster.Resample {
 							var header = CacheHeader.Read(reader);
 							header.Validate(path);
 
+							refScale = header.RefScale;
 							size = header.Size;
 							format = header.Format.Value;
 							wrapped = header.Wrapped;
@@ -159,6 +163,7 @@ namespace SpriteMaster.Resample {
 
 		internal static bool Save (
 			string path,
+			int refScale,
 			Vector2I size,
 			TextureFormat format,
 			Vector2B wrapped,
@@ -176,6 +181,7 @@ namespace SpriteMaster.Resample {
 					try {
 						using (var writer = new BinaryWriter(new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None))) {
 							new CacheHeader() {
+								RefScale = refScale,
 								Size = size,
 								Format = format,
 								Wrapped = wrapped,

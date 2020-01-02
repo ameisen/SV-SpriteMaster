@@ -1,4 +1,4 @@
-﻿namespace xBRZNet2.Common {
+﻿namespace SpriteMaster.xBRZ.Common {
 	internal static class ColorConstant {
 		internal static class Shift {
 			public const int Alpha = 24;

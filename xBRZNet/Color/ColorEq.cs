@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 
-namespace xBRZNet2.Color {
+namespace SpriteMaster.xBRZ.Color {
 	internal sealed class ColorEq : ColorDist {
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public ColorEq (in Config configuration) : base(in configuration) { }

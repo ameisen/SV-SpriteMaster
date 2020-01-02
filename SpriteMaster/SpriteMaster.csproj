@@ -27,6 +27,8 @@
 		<OutputPath>bin\$(Configuration)_$(Platform)\</OutputPath>
 		<IgnoreModFilePatterns>\.dll\.config$, ILMerge, runtimes, net452</IgnoreModFilePatterns>
 		<Configurations>Debug;Release;Development</Configurations>
+		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+		<ApplicationIcon>pufferchick_xbrz.ico</ApplicationIcon>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
@@ -57,6 +59,7 @@
     <PackageReference Include="ILMerge.MSBuild.Task" Condition="'$(Configuration)'=='Development'">
       <Version>1.0.7</Version>
     </PackageReference>
+    <PackageReference Include="Magick.NET-Q16-x86" Version="7.15.0" />
     <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="3.0.0" />
     <PackageReference Include="System.Data.HashFunction.xxHash" Version="2.0.0" />
     <PackageReference Include="System.Memory" Version="4.5.3" />
@@ -64,13 +67,6 @@
     <PackageReference Include="TeximpNet" Version="1.4.1" />
     <PackageReference Include="Tomlyn" Version="0.1.1" />
     <PackageReference Include="Zlib.Portable" Version="1.11.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\xBRZNet\xBRZNet.csproj">
-      <EmbedInteropTypes></EmbedInteropTypes>
-      <Private></Private>
-    </ProjectReference>
   </ItemGroup>
 
   <ItemGroup>
@@ -85,6 +81,10 @@
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\xBRZNet\xBRZ.csproj" />
   </ItemGroup>
 
   <ItemGroup>

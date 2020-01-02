@@ -1,7 +1,8 @@
-﻿using System.Runtime.CompilerServices;
-using xBRZNet2.Common;
+﻿using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using SpriteMaster.xBRZ.Common;
 
-namespace xBRZNet2.Scalers {
+namespace SpriteMaster.xBRZ.Scalers {
 	//access matrix area, top-left at position "out" for image with given width
 	internal struct OutputMatrix {
 		private readonly int[] _out;
@@ -10,7 +11,19 @@ namespace xBRZNet2.Scalers {
 		private int _outi;
 		private int _nr;
 
-		private const int MaxScale = 6; // Highest possible scale
+		[ImmutableObject(true)]
+		private struct IntPair {
+			public readonly int i;
+			public readonly int j;
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			internal IntPair(int i, int j) {
+				this.i = i;
+				this.j = j;
+			}
+		}
+
+		private const int MaxScale = Config.MaxScale; // Highest possible scale
 		private const int MaxScaleSquared = MaxScale * MaxScale;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -23,15 +36,15 @@ namespace xBRZNet2.Scalers {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void Move (int rotDeg, int outi) {
-			_nr = _n + rotDeg * MaxScaleSquared;
+		public void Move (RotationDegree rotDeg, int outi) {
+			_nr = _n + (int)rotDeg * MaxScaleSquared;
 			_outi = outi;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private int GetIndex (int i, int j) {
 			var rot = MatrixRotation[_nr + i * MaxScale + j];
-			return (_outi + rot.J + rot.I * _outWidth);
+			return (_outi + rot.j + rot.i * _outWidth);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -76,8 +89,8 @@ namespace xBRZNet2.Scalers {
 			else {
 				//old coordinates before rotation!
 				var old = BuildMatrixRotation(rotDeg - 1, i, j, n);
-				iOld = n - 1 - old.J;
-				jOld = old.I;
+				iOld = n - 1 - old.j;
+				jOld = old.i;
 			}
 
 			return new IntPair(iOld, jOld);
