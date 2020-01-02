@@ -1,12 +1,11 @@
-﻿using ImageMagick;
-using SpriteMaster.Extensions;
-using SpriteMaster.Types;
+﻿using SpriteMaster.Types;
 
 namespace SpriteMaster.Resample {
 	internal static class Recolor {
 		internal static unsafe T[] Enhance<T> (T[] data, Vector2I size) where T : unmanaged {
 			return data;
 
+			/*
 			lock (typeof(Upscaler)) {
 				using var bitmapStream = data.Stream();
 				using (var image = new MagickImage(bitmapStream, new PixelReadSettings(size.Width, size.Height, StorageType.Char, PixelMapping.RGBA))) {
@@ -42,24 +41,9 @@ namespace SpriteMaster.Resample {
 					}
 					return outputArray;
 
-					/*
-					foreach (int i in 0..bitmapData.Length) {
-						unchecked {
-							var color = (uint)bitmapData[i];
-
-							// RGBA to ABGR
-							color =
-								((color >> 24) & 0xFF) |
-								((color >> 8) & 0xFF00) |
-								((color << 8) & 0xFF0000) |
-								((color << 24) & 0xFF000000);
-
-							bitmapData[i] = (int)color;
-						}
-					}
-					*/
 				}
 			}
+			*/
 		}
 	}
 }

@@ -448,17 +448,17 @@ namespace SpriteMaster.xBRZ {
 
 						//read sequentially from memory as far as possible
 						var ker3 = new Kernel3x3(
-							GetPixel(source, sM1, xM1),
-							GetPixel(source, sM1, x),
-							GetPixel(source, sM1, xP1),
+							ker4.A,
+							ker4.B,
+							ker4.C,
 
-							GetPixel(source, s0, xM1),
-							source[s0 + x],
-							GetPixel(source, s0, xP1),
+							ker4.E,
+							ker4.F,
+							ker4.G,
 
-							GetPixel(source, sP1, xM1),
-							GetPixel(source, sP1, x),
-							GetPixel(source, sP1, xP1)
+							ker4.I,
+							ker4.J,
+							ker4.K
 						);
 
 						ScalePixel(scaler, RotationDegree.R0, in ker3, trgi, blendXy);

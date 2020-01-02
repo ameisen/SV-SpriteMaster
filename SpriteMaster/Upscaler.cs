@@ -1,6 +1,4 @@
-﻿//using ManagedSquish;
-using ImageMagick;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
@@ -295,6 +293,8 @@ namespace SpriteMaster {
 				try {
 					switch (Config.Resample.Scaler) {
 						case Scaler.ImageMagick: {
+							throw new NotImplementedException("ImageMagick Scaling is not implemented");
+							/*
 							fixed (int* ptr = prescaleData) {
 								using var bitmapStream = new UnmanagedMemoryStream((byte*)ptr, prescaleData.Length * sizeof(int), prescaleData.Length * sizeof(int), FileAccess.Read);
 								using (var image = new MagickImage(bitmapStream, new PixelReadSettings(prescaleSize.Width, prescaleSize.Height, StorageType.Char, PixelMapping.ABGR))) {
@@ -346,6 +346,7 @@ namespace SpriteMaster {
 									}
 								}
 							}
+							*/
 						}
 						break;
 						case Scaler.xBRZ: {

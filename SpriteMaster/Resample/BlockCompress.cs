@@ -2,7 +2,6 @@
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using System;
-using System.IO;
 using TeximpNet.Compression;
 using TeximpNet.DDS;
 
