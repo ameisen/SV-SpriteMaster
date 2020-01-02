@@ -177,7 +177,7 @@ namespace SpriteMaster.Metadata {
 
 		private static unsafe byte[] MakeByteArray<T> (DataRef<T> data, int referenceSize = 0) where T : struct {
 			if (data.Data is byte[] byteData) {
-				return (byte[])byteData.Clone();
+				return byteData;
 			}
 
 			try {
