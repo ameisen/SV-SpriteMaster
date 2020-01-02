@@ -108,14 +108,14 @@ namespace SpriteMaster {
 			internal static int MaxScale = 6;
 			internal static int MinimumTextureDimensions = 4;
 			internal static bool EnableWrappedAddressing = true;
-			internal static bool UseBlockCompression = true;
+			internal const bool UseBlockCompression = false;
 			internal static CompressionQuality BlockCompressionQuality = CompressionQuality.Highest;
 			internal static int BlockHardAlphaDeviationThreshold = 7;
 			internal static List<string> Blacklist = new List<string>() {
 				"LooseSprites\\Lighting\\"
 			};
 			internal static class Padding {
-				internal static bool Enabled = true;
+				internal const bool Enabled = true;
 				internal static int MinimumSizeTexels = 4;
 				internal static bool IgnoreUnknown = false;
 				internal static List<string> StrictList = new List<string>() {

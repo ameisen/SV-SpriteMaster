@@ -49,7 +49,7 @@ namespace SpriteMaster.Resample {
 						using (var mipData = new MipData(dimensions.Width, dimensions.Height, dimensions.Width * sizeof(int), (IntPtr)p, false)) {
 							compressor.Input.SetData(mipData, true);
 							var memoryBuffer = new byte[((SurfaceFormat)textureFormat).SizeBytes(dimensions.Area)];
-							using (var stream = new MemoryStream(memoryBuffer)) {
+							using (var stream = memoryBuffer.Stream()) {
 								if (compressor.Process(stream)) {
 									format = textureFormat;
 									return memoryBuffer;
