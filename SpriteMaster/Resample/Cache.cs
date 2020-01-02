@@ -85,7 +85,7 @@ namespace SpriteMaster.Resample {
 			out Vector2B wrapped,
 			out Vector2I padding,
 			out Vector2I blockPadding,
-			out int[] data
+			out byte[] data
 		) {
 			refScale = 0;
 			size = Vector2I.Zero;
@@ -121,7 +121,7 @@ namespace SpriteMaster.Resample {
 							wrapped = header.Wrapped;
 							padding = header.Padding;
 							blockPadding = header.BlockPadding;
-							var dataLength = header.DataLength / sizeof(int);
+							var dataLength = header.DataLength;
 							var dataHash = header.DataHash;
 
 							var remainingSize = reader.BaseStream.Length - reader.BaseStream.Position;
@@ -129,10 +129,10 @@ namespace SpriteMaster.Resample {
 								throw new EndOfStreamException("Cache File is corrupted");
 							}
 
-							data = new int[dataLength];
+							data = new byte[dataLength];
 
 							foreach (int i in 0..data.Length) {
-								data[i] = reader.ReadInt32();
+								data[i] = reader.ReadByte();
 							}
 
 							if (data.HashXX() != dataHash) {
@@ -169,7 +169,7 @@ namespace SpriteMaster.Resample {
 			Vector2B wrapped,
 			Vector2I padding,
 			Vector2I blockPadding,
-			int[] data
+			byte[] data
 		) {
 			if (Config.Cache.Enabled) {
 				if (!SavingMap.TryAdd(path, SaveState.Saving)) {
@@ -177,7 +177,7 @@ namespace SpriteMaster.Resample {
 				}
 
 				ThreadPool.QueueUserWorkItem((object dataItem) => {
-					var data = (int[])dataItem;
+					var data = (byte[])dataItem;
 					try {
 						using (var writer = new BinaryWriter(new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None))) {
 							new CacheHeader() {

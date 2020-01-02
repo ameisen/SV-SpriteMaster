@@ -4,8 +4,8 @@ using SpriteMaster.xBRZ.Common;
 
 namespace SpriteMaster.xBRZ.Scalers {
 	//access matrix area, top-left at position "out" for image with given width
-	internal struct OutputMatrix {
-		private readonly int[] _out;
+	internal unsafe struct OutputMatrix {
+		private readonly int* _out;
 		private readonly int _outWidth;
 		private readonly int _n;
 		private int _outi;
@@ -27,7 +27,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 		private const int MaxScaleSquared = MaxScale * MaxScale;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public OutputMatrix (int scale, int[] outPtr, int outWidth) {
+		public OutputMatrix (int scale, int* outPtr, int outWidth) {
 			_n = (scale - 2) * (Rotator.MaxRotations * MaxScaleSquared);
 			_out = outPtr;
 			_outWidth = outWidth;

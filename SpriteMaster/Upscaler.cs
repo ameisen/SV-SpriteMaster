@@ -69,7 +69,7 @@ namespace SpriteMaster {
 			out TextureFormat format,
 			out Vector2I padding,
 			out Vector2I blockPadding,
-			out int[] data
+			out byte[] data
 		) {
 			padding = Vector2I.Zero;
 			blockPadding = Vector2I.Zero;
@@ -79,7 +79,7 @@ namespace SpriteMaster {
 			var inputSize = desprite ? spriteBounds.Extent : textureSize;
 
 			var rawTextureData = input.Data;
-			int[] bitmapData;
+			byte[] bitmapData;
 
 			bool isWater = input.Size.Right <= 640 && input.Size.Top >= 2000 && input.Size.Width >= 4 && input.Size.Height >= 4 && texture.Name == "LooseSprites\\Cursors";
 
@@ -159,7 +159,7 @@ namespace SpriteMaster {
 			wrapped &= Config.Resample.EnableWrappedAddressing;
 
 			if (Config.Debug.Sprite.DumpReference) {
-				using (var filtered = Textures.CreateBitmap(rawData.ToArray(), textureSize, PixelFormat.Format32bppArgb)) {
+				using (var filtered = Textures.CreateBitmap(rawData.CastAs<int, byte>().ToArray(), textureSize, PixelFormat.Format32bppArgb)) {
 					using (var submap = (Bitmap)filtered.Clone(spriteBounds, filtered.PixelFormat)) {
 						var dump = GetDumpBitmap(submap);
 						var path = Cache.GetDumpPath($"{input.Reference.SafeName().Replace("\\", ".").Replace("/", ".")}.{hashString}.reference.png");
@@ -290,7 +290,7 @@ namespace SpriteMaster {
 					}
 				}
 
-				bitmapData = new int[scaledSize.Area];
+				bitmapData = new byte[scaledSize.Area * sizeof(int)];
 
 				try {
 					switch (Config.Resample.Scaler) {
@@ -325,14 +325,14 @@ namespace SpriteMaster {
 									image.Depth = 8;
 									image.BitDepth(Channels.Alpha, 8);
 
-									fixed (int* outPtr = bitmapData) {
-										using var outputStream = new UnmanagedMemoryStream((byte*)outPtr, bitmapData.Length * sizeof(int), bitmapData.Length * sizeof(int), FileAccess.Write);
+									using (var outputStream = bitmapData.Stream()) {
 										image.Write(outputStream, MagickFormat.Rgba);
 									}
 
-									foreach (int i in 0..bitmapData.Length) {
+									var intData = new Span<byte>(bitmapData).CastAs<byte, uint>();
+									foreach (int i in 0..intData.Length) {
 										unchecked {
-											var color = (uint)bitmapData[i];
+											var color = intData[i];
 
 											// RGBA to ABGR
 											color =
@@ -341,7 +341,7 @@ namespace SpriteMaster {
 												((color << 8) & 0xFF0000) |
 												((color << 24) & 0xFF000000);
 
-											bitmapData[i] = (int)color;
+											intData[i] = color;
 										}
 									}
 								}
@@ -349,13 +349,14 @@ namespace SpriteMaster {
 						}
 						break;
 						case Scaler.xBRZ: {
+							var outData = bitmapData.CastAs<byte, int>();
 							new xBRZ.Scaler(
 								scaleMultiplier: scale,
-								sourceData: prescaleData,
+								sourceData: in prescaleData,
 								sourceWidth: prescaleSize.Width,
 								sourceHeight: prescaleSize.Height,
 								sourceTarget: outputSize,
-								targetData: bitmapData,
+								targetData: in outData,
 								configuration: scalerConfig
 							);
 
@@ -374,7 +375,7 @@ namespace SpriteMaster {
 				//ColorSpace.ConvertLinearToSRGB(bitmapData, Texel.Ordering.ARGB);
 			}
 			else {
-				bitmapData = rawData.ToArray();
+				bitmapData = rawData.CastAs<int, byte>().ToArray();
 			}
 
 			if (Config.Debug.Sprite.DumpResample) {
@@ -394,7 +395,7 @@ namespace SpriteMaster {
 						var resizedData = resized.LockBits(new Bounds(resized), ImageLockMode.ReadOnly, resized.PixelFormat);
 
 						try {
-							bitmapData = new int[resized.Width * resized.Height];
+							bitmapData = new byte[resized.Width * resized.Height * sizeof(int)];
 							var dataSize = resizedData.Stride * resizedData.Height;
 							var dataPtr = resizedData.Scan0;
 							var widthSize = resizedData.Width;
@@ -427,7 +428,9 @@ namespace SpriteMaster {
 				blockPaddedSize.X &= ~3;
 				blockPaddedSize.Y &= ~3;
 
-				var newBuffer = new int[blockPaddedSize.Area];
+				var newBuffer = new byte[blockPaddedSize.Area * sizeof(int)];
+				var intSpanSrc = new Span<byte>(bitmapData).CastAs<byte, int>();
+				var intSpanDst = new Span<byte>(newBuffer).CastAs<byte, int>();
 
 				int y;
 				for (y = 0; y < newSize.Y; ++y) {
@@ -435,11 +438,11 @@ namespace SpriteMaster {
 					int bitmapOffset = y * newSize.X;
 					int x;
 					for (x = 0; x < newSize.X; ++x) {
-						newBuffer[newBufferOffset + x] = bitmapData[bitmapOffset + x];
+						intSpanDst[newBufferOffset + x] = intSpanSrc[bitmapOffset + x];
 					}
 					int lastX = x - 1;
 					for (; x < blockPaddedSize.X; ++x) {
-						newBuffer[newBufferOffset + x] = bitmapData[bitmapOffset + lastX];
+						intSpanDst[newBufferOffset + x] = intSpanSrc[bitmapOffset + lastX];
 					}
 				}
 				int lastY = y - 1;
@@ -447,7 +450,7 @@ namespace SpriteMaster {
 				for (; y < blockPaddedSize.Y; ++y) {
 					int newBufferOffset = y * blockPaddedSize.X;
 					for (int x = 0; x < blockPaddedSize.X; ++x) {
-						newBuffer[newBufferOffset + x] = newBuffer[sourceOffset + x];
+						intSpanDst[newBufferOffset + x] = intSpanDst[sourceOffset + x];
 					}
 				}
 
@@ -470,12 +473,14 @@ namespace SpriteMaster {
 				var green = stackalloc int[MaxShades];
 				var red = stackalloc int[MaxShades];
 
+				var intData = bitmapData.CastAs<byte, int>();
+
 				int idx = 0;
-				foreach (var color in bitmapData) {
+				foreach (var color in intData) {
 					var aValue = color.ExtractByte(24);
 					if (aValue == 0) {
 						// Clear out all other colors for alpha of zero.
-						bitmapData[idx] = 0;
+						intData[idx] = 0;
 					}
 					alpha[aValue]++;
 					blue[color.ExtractByte(16)]++;
@@ -485,13 +490,13 @@ namespace SpriteMaster {
 					++idx;
 				}
 
-				hasR = red[0] != bitmapData.Length;
-				hasG = green[0] != bitmapData.Length;
-				hasB = blue[0] != bitmapData.Length;
+				hasR = red[0] != intData.Length;
+				hasG = green[0] != intData.Length;
+				hasB = blue[0] != intData.Length;
 
-				//Debug.WarningLn($"Punch-through Alpha: {bitmapData.Length}");
-				IsPunchThroughAlpha = IsMasky = ((alpha[0] + alpha[MaxShades - 1]) == bitmapData.Length);
-				HasAlpha = (alpha[MaxShades - 1] != bitmapData.Length);
+				//Debug.WarningLn($"Punch-through Alpha: {intData.Length}");
+				IsPunchThroughAlpha = IsMasky = ((alpha[0] + alpha[MaxShades - 1]) == intData.Length);
+				HasAlpha = (alpha[MaxShades - 1] != intData.Length);
 
 				if (HasAlpha && !IsPunchThroughAlpha) {
 					var alphaDeviation = Extensions.Statistics.StandardDeviation(alpha, MaxShades, 1, MaxShades - 2);
@@ -506,7 +511,7 @@ namespace SpriteMaster {
 					}
 				}
 				if (grayscale) {
-					//Debug.WarningLn($"Grayscale: {bitmapData.Length}");
+					//Debug.WarningLn($"Grayscale: {intData.Length}");
 				}
 			}
 
@@ -556,7 +561,7 @@ namespace SpriteMaster {
 		}
 
 		private static unsafe ManagedTexture2D UpscaleInternal (ScaledTexture texture, ref int scale, SpriteInfo input, bool desprite, ulong hash, ref Vector2B wrapped, bool async) {
-			TextureFormat spriteFormat = TextureFormat.Color;
+			var spriteFormat = TextureFormat.Color;
 
 			if (Config.GarbageCollectAccountUnownedTextures && GarbageMarkSet.Add(input.Reference)) {
 				Garbage.Mark(input.Reference);
@@ -572,7 +577,7 @@ namespace SpriteMaster {
 			var textureSize = input.ReferenceSize;
 			var inputSize = desprite ? spriteBounds.Extent : textureSize;
 
-			int[] bitmapData = null;
+			byte[] bitmapData = null;
 			try {
 				var newSize = Vector2I.Zero;
 
@@ -622,7 +627,7 @@ namespace SpriteMaster {
 				texture.UnpaddedSize = newSize - (texture.Padding + texture.BlockPadding);
 				texture.AdjustedScale = (Vector2)texture.UnpaddedSize / inputSize;
 
-				ManagedTexture2D CreateTexture(int[] data) {
+				ManagedTexture2D CreateTexture(byte[] data) {
 					if (input.Reference.GraphicsDevice.IsDisposed) {
 						return null;
 					}
@@ -632,7 +637,7 @@ namespace SpriteMaster {
 						dimensions: newSize,
 						format: spriteFormat
 					);
-					newTexture.SetDataEx(data);
+					newTexture.SetData(data);
 					return newTexture;
 				}
 

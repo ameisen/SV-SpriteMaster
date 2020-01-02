@@ -134,7 +134,7 @@ namespace SpriteMaster.Extensions {
 			return texture.Name.IsBlank() ? "Unknown" : texture.Name;
 		}
 
-		internal static Bitmap CreateBitmap (int[] source, Vector2I size, PixelFormat format = PixelFormat.Format32bppArgb) {
+		internal static Bitmap CreateBitmap (byte[] source, Vector2I size, PixelFormat format = PixelFormat.Format32bppArgb) {
 			var newImage = new Bitmap(size.Width, size.Height, format);
 			var rectangle = new Bounds(newImage);
 			var newBitmapData = newImage.LockBits(rectangle, ImageLockMode.WriteOnly, format);
@@ -153,7 +153,7 @@ namespace SpriteMaster.Extensions {
 
 				int sourceOffset = 0;
 				foreach (int row in 0..newImage.Height) {
-					Marshal.Copy(source, sourceOffset, newBitmapPointer, rowElements);
+					Marshal.Copy(source, sourceOffset, newBitmapPointer, rowElements * sizeof(int));
 					sourceOffset += rowElements;
 					newBitmapPointer += rowSize;
 				}

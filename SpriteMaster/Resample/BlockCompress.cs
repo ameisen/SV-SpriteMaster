@@ -8,7 +8,7 @@ using TeximpNet.DDS;
 
 namespace SpriteMaster.Resample {
 	internal static class BlockCompress {
-		internal static unsafe byte[] Compress (int[] data, ref TextureFormat format, Vector2I dimensions, bool HasAlpha, bool IsPunchThroughAlpha, bool IsMasky, bool HasR, bool HasG, bool HasB) {
+		internal static unsafe byte[] Compress (byte[] data, ref TextureFormat format, Vector2I dimensions, bool HasAlpha, bool IsPunchThroughAlpha, bool IsMasky, bool HasR, bool HasG, bool HasB) {
 			var bitmapData = data;
 			var spriteFormat = format;
 
@@ -45,7 +45,7 @@ namespace SpriteMaster.Resample {
 
 					//public MipData (int width, int height, int rowPitch, IntPtr data, bool ownData = true)
 
-					fixed (int* p = bitmapData) {
+					fixed (byte* p = bitmapData) {
 						using (var mipData = new MipData(dimensions.Width, dimensions.Height, dimensions.Width * sizeof(int), (IntPtr)p, false)) {
 							compressor.Input.SetData(mipData, true);
 							var memoryBuffer = new byte[((SurfaceFormat)textureFormat).SizeBytes(dimensions.Area)];
@@ -69,18 +69,19 @@ namespace SpriteMaster.Resample {
 			return null;
 		}
 
-		internal static unsafe bool Compress (ref int[] data, ref TextureFormat format, Vector2I dimensions, bool HasAlpha, bool IsPunchThroughAlpha, bool IsMasky, bool HasR, bool HasG, bool HasB) {
+		internal static unsafe bool Compress (ref byte[] data, ref TextureFormat format, Vector2I dimensions, bool HasAlpha, bool IsPunchThroughAlpha, bool IsMasky, bool HasR, bool HasG, bool HasB) {
 			var oldFormat = format;
 
-			void FlipColorBytes (int[] p) {
+			void FlipColorBytes (byte[] p) {
+				var span = new Span<byte>(p).CastAs<byte, uint>();
 				foreach (int i in 0..p.Length) {
-					uint color = p[i].Unsigned();
+					var color = span[i];
 					color =
 						(color & 0xFF000000U) |
 						(color & 0x0000FF00U) |
 						((color & 0x00FF0000U) >> 16) |
 						((color & 0x000000FFU) << 16);
-					p[i] = color.Signed();
+					span[i] = color;
 				}
 			}
 
@@ -92,7 +93,7 @@ namespace SpriteMaster.Resample {
 					FlipColorBytes(data);
 					return false;
 				}
-				data = byteData.CastAs<byte, int>().ToArray();
+				data = byteData;
 				return true;
 			}
 			catch {
