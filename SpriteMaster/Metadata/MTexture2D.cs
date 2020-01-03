@@ -69,8 +69,6 @@ namespace SpriteMaster.Metadata {
 			}
 		}
 
-		private static ConditionalWeakTable<byte[], object> AlreadyCompressingTable = (Config.MemoryCache.Enabled && Config.MemoryCache.Async) ? new ConditionalWeakTable<byte[], object>() : null;
-
 		private static readonly MethodInfo ZlibBaseCompressBuffer;
 		static MTexture2D() {
 			ZlibBaseCompressBuffer = typeof(ZlibStream).Assembly.GetType("Ionic.Zlib.ZlibBaseStream").GetMethod("CompressBuffer", BindingFlags.Static | BindingFlags.Public);
@@ -254,18 +252,6 @@ namespace SpriteMaster.Metadata {
 						}
 						else {
 							bool queueCompress = false;
-							// TODO : well this is absolutely not correct. Just because somtehing already being compressed doesn't mean we don't want to update it...
-							/*
-							if (Config.MemoryCache.Type != Config.MemoryCache.Algorithm.None && Config.MemoryCache.Async) {
-								lock (AlreadyCompressingTable) {
-									if (!AlreadyCompressingTable.TryGetValue(value, out var _)) {
-										try { AlreadyCompressingTable.Add(value, null); }
-										catch { }
-										queueCompress = true;
-									}
-								}
-							}
-							*/
 
 							// I suspect this is completing AFTER we get a call to purge again, and so is overwriting what is the correct data.
 							// Doesn't explain why _not_ purging helps, though.
