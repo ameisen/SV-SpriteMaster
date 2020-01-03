@@ -153,69 +153,6 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch.Patch {
 			}
 		}
 
-		/*
-		[HarmonyPatch("InternalDraw", fixation: HarmonyPatch.Fixation.Prefix, priority: HarmonyExt.PriorityLevel.Last)]
-		internal static bool OnInternalDraw (
-			SpriteBatch __instance,
-			ref Texture2D texture,
-			ref Vector4 destination,
-			ref bool scaleDestination,
-			ref Rectangle? sourceRectangle,
-			Color color,
-			float rotation,
-			ref Vector2 origin,
-			SpriteEffects effects,
-			ref float depth
-		) {
-			//if (!Config.Enabled)
-			//	return true;
-
-			var originalSize = sourceRectangle.GetValueOrDefault(new Rectangle(0, 0, texture.Width, texture.Height));
-
-			// Temporary hack for water.
-			if (texture.Name == "LooseSprites\\Cursors" && originalSize.Right <= 640 && originalSize.Top >= 2000) {
-				//Debug.InfoLn($"Water?: {originalSize.X} {originalSize.Y}");
-				// depth = 0.56
-				//depth -= 0.5f;
-				return true;
-			}
-
-			if (texture is RenderTarget2D || originalSize.Width <= 1 || originalSize.Height <= 1 || texture.Width <= 1 || texture.Height <= 1 || Math.Max(originalSize.Width, originalSize.Height) <= Config.Resample.MinimumTextureDimensions) {
-				return true;
-			}
-
-			if (!scaleDestination) {
-				//originalSize = originalSize.ClampTo(new Rectangle(0, 0, texture.Width, texture.Height));
-
-				var destinationSize = new Vector2(destination.Z, destination.W);
-				var newScale = destinationSize / new Vector2(originalSize.Width, originalSize.Height);
-				destination.Z = newScale.X;
-				destination.W = newScale.Y;
-				scaleDestination = true;
-			}
-
-			var scale = new Vector2(destination.Z, destination.W);
-			var position = new Vector2(destination.X, destination.Y);
-
-			if (Config.Enabled) {
-				__instance.OnDraw(
-					texture: ref texture,
-					position: ref position,
-					source: ref sourceRectangle,
-					color: color,
-					rotation: rotation,
-					origin: ref origin,
-					scale: ref scale,
-					effects: effects,
-					layerDepth: ref depth
-				);
-			}
-
-			destination = new Vector4(position, scale.X, scale.Y);
-			return true;
-		}
-		*/
-
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		[HarmonyPatch("Draw", priority: HarmonyExt.PriorityLevel.First)]
 		internal static bool OnDrawFirst (

@@ -140,6 +140,11 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			}
 			scaledTexture.UpdateReferenceFrame();
 
+			var resampledTexture = scaledTexture.Texture;
+			if (!resampledTexture.Validate()) {
+				return Continue;
+			}
+
 			if (!scaledTexture.Padding.IsZero) {
 				// Convert the draw into the other draw style. This has to be done because the padding potentially has
 				// subpixel accuracy when scaled to the destination rectangle.
@@ -150,9 +155,9 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 				var newPosition = new Vector2(destination.X, destination.Y);
 
 				@this.Draw(
-					texture: texture,
+					texture: resampledTexture,
 					position: newPosition,
-					sourceRectangle: source,
+					sourceRectangle: sourceRectangle,
 					color: color,
 					rotation: rotation,
 					origin: origin,
@@ -243,31 +248,28 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 
 			sourceRectangle.Validate(reference: texture);
 
-			var expectedScale = ((Math.Max(scale.X, scale.Y) * scaleFactor) + Config.Resample.ScaleBias).Clamp(2.0f, (float)Config.Resample.MaxScale).NextInt();
-
 			ScaledTexture scaledTexture;
 			if (texture is ManagedTexture2D resampledTexture) {
 				scaledTexture = resampledTexture.Texture;
 			}
 			else if (texture.FetchScaledTexture(
-				expectedScale: expectedScale,
+				expectedScale: ((Math.Max(scale.X, scale.Y) * scaleFactor) + Config.Resample.ScaleBias).Clamp(2.0f, (float)Config.Resample.MaxScale).NextInt(),
 				source: ref sourceRectangle,
 				scaledTexture: out scaledTexture,
 				create: true
 			)) {
+				scaledTexture.UpdateReferenceFrame();
 				resampledTexture = scaledTexture.Texture;
+
+				if (!resampledTexture.Validate()) {
+					return Continue;
+				}
 			}
 			else {
 				resampledTexture = null;
 			}
 
 			if (scaledTexture == null) {
-				return Continue;
-			}
-
-			scaledTexture.UpdateReferenceFrame();
-
-			if (!resampledTexture.Validate()) {
 				return Continue;
 			}
 
