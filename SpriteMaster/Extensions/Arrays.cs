@@ -12,10 +12,6 @@ namespace SpriteMaster.Extensions {
 			private readonly GCHandle Handle;
 			private volatile bool IsDisposed = false;
 
-			private unsafe byte* foo () {
-				return null;
-			}
-
 			private unsafe WrappedUnmanagedMemoryStream(GCHandle handle, int offset, int size, FileAccess access) :
 				base(
 					(byte*)(handle.AddrOfPinnedObject() + (Marshal.SizeOf(typeof(T)) * offset)),
@@ -39,7 +35,7 @@ namespace SpriteMaster.Extensions {
 			}
 
 			~WrappedUnmanagedMemoryStream() {
-				this.Dispose(true);
+				Dispose(true);
 			}
 
 			[SecuritySafeCritical]

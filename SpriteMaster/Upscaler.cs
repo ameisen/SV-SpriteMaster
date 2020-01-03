@@ -58,6 +58,9 @@ namespace SpriteMaster {
 			ScaledTexture texture,
 			SpriteInfo input,
 			bool desprite,
+			bool isWater,
+			in Bounds spriteBounds,
+			in Vector2I textureSize,
 
 			string hashString,
 
@@ -72,24 +75,10 @@ namespace SpriteMaster {
 			padding = Vector2I.Zero;
 			blockPadding = Vector2I.Zero;
 
-			var spriteBounds = input.Size;
-			var textureSize = input.ReferenceSize;
 			var inputSize = desprite ? spriteBounds.Extent : textureSize;
 
 			var rawTextureData = input.Data;
 			byte[] bitmapData;
-
-			bool isWater = input.Size.Right <= 640 && input.Size.Top >= 2000 && input.Size.Width >= 4 && input.Size.Height >= 4 && texture.Name == "LooseSprites\\Cursors";
-
-			if (isWater) {
-				spriteBounds.X /= 4;
-				spriteBounds.Y /= 4;
-				spriteBounds.Width /= 4;
-				spriteBounds.Height /= 4;
-
-				textureSize.Width /= 4;
-				textureSize.Height /= 4;
-			}
 
 			wrapped.Set(false);
 
@@ -576,6 +565,18 @@ namespace SpriteMaster {
 			var textureSize = input.ReferenceSize;
 			var inputSize = desprite ? spriteBounds.Extent : textureSize;
 
+			bool isWater = input.Size.Right <= 640 && input.Size.Top >= 2000 && input.Size.Width >= 4 && input.Size.Height >= 4 && texture.Name == "LooseSprites\\Cursors";
+
+			if (isWater) {
+				spriteBounds.X /= 4;
+				spriteBounds.Y /= 4;
+				spriteBounds.Width /= 4;
+				spriteBounds.Height /= 4;
+
+				textureSize.Width /= 4;
+				textureSize.Height /= 4;
+			}
+
 			byte[] bitmapData = null;
 			try {
 				var newSize = Vector2I.Zero;
@@ -607,6 +608,9 @@ namespace SpriteMaster {
 						texture: texture,
 						input: input,
 						desprite: desprite,
+						isWater: isWater,
+						spriteBounds: in spriteBounds,
+						textureSize: in textureSize,
 						hashString: hashString,
 						wrapped: ref wrapped,
 						scale: ref scale,
