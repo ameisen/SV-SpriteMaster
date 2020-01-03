@@ -23,6 +23,15 @@ namespace SpriteMaster.Metadata {
 		private readonly SharedLock Lock = new SharedLock();
 
 		public volatile bool TracePrinted = false;
+		private long _UpdateToken = 0;
+		public long UpdateToken {
+			get {
+				return Thread.VolatileRead(ref _UpdateToken);
+			}
+			private set {
+				Thread.VolatileWrite(ref _UpdateToken, value);
+			}
+		}
 
 		internal static void PurgeDataCache() {
 			if (!Config.MemoryCache.Enabled) {
@@ -187,6 +196,12 @@ namespace SpriteMaster.Metadata {
 			}
 		}
 
+		private bool CheckUpdateToken(long referenceToken) {
+			using (Lock.Shared) {
+				return UpdateToken == referenceToken;
+			}
+		}
+
 		public byte[] CachedData {
 			get {
 				if (!Config.MemoryCache.Enabled)
@@ -217,6 +232,12 @@ namespace SpriteMaster.Metadata {
 					if (!Config.MemoryCache.Enabled)
 						return;
 
+					long currentUpdateToken;
+					using (Lock.Exclusive) {
+						currentUpdateToken = UpdateToken;
+						UpdateToken = currentUpdateToken + 1;
+					}
+
 					TracePrinted = false;
 
 					using (Lock.Shared) {
@@ -234,6 +255,7 @@ namespace SpriteMaster.Metadata {
 						else {
 							bool queueCompress = false;
 							// TODO : well this is absolutely not correct. Just because somtehing already being compressed doesn't mean we don't want to update it...
+							/*
 							if (Config.MemoryCache.Type != Config.MemoryCache.Algorithm.None && Config.MemoryCache.Async) {
 								lock (AlreadyCompressingTable) {
 									if (!AlreadyCompressingTable.TryGetValue(value, out var _)) {
@@ -243,14 +265,22 @@ namespace SpriteMaster.Metadata {
 									}
 								}
 							}
+							*/
 
 							// I suspect this is completing AFTER we get a call to purge again, and so is overwriting what is the correct data.
 							// Doesn't explain why _not_ purging helps, though.
 							if (Config.MemoryCache.Type != Config.MemoryCache.Algorithm.None && Config.MemoryCache.Async) {
 								if (queueCompress) {
 									ThreadPool.QueueUserWorkItem((buffer) => {
+										if (!CheckUpdateToken(currentUpdateToken)) {
+											return;
+										}
 										var compressedData = Compress((byte[])buffer);
 										using (DataCacheLock.Exclusive) {
+											if (!CheckUpdateToken(currentUpdateToken)) {
+												return;
+											}
+
 											DataCache[UniqueIDString] = compressedData;
 										}
 									}, value);
