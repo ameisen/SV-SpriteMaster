@@ -29,11 +29,6 @@ namespace SpriteMaster {
 			reference.Meta().Purge<T>(reference, bounds, data);
 		}
 
-		// TODO : thread safety?
-		internal static void UpdateCache(Texture2D reference, byte[] data) {
-			reference.Meta().CachedData = data;
-		}
-
 		internal SpriteInfo (Texture2D reference, in Bounds dimensions, int expectedScale) {
 			ReferenceSize = new Vector2I(reference);
 			ExpectedScale = expectedScale;
@@ -46,15 +41,13 @@ namespace SpriteMaster {
 			}
 			Reference = reference;
 
-			if (Data == null) {
-				Data = reference.Meta().CachedData;
-			}
+			Data = reference.Meta().CachedData;
 
 			if (Data == null) {
 				Data = new byte[reference.SizeBytes()];
-				//Debug.InfoLn("Reloading Texture Data");
+				Debug.TraceLn($"Reloading Texture Data: {reference.SafeName()}");
 				reference.GetData(Data);
-				UpdateCache(reference, Data);
+				reference.Meta().CachedData = Data;
 			}
 
 			BlendEnabled = DrawState.CurrentBlendSourceMode != Blend.One;

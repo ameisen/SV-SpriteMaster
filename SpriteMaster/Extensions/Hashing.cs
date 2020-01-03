@@ -189,13 +189,6 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static ulong Hash (this Texture2D texture) {
-			var data = new byte[texture.SizeBytes()];
-			texture.GetData(data);
-			return data.Hash();
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static ulong Hash (this in Rectangle rectangle) {
 			return
 				((ulong)rectangle.X & 0xFFFF) |

@@ -13,7 +13,7 @@ using SpriteMaster.Extensions;
 
 namespace SpriteMaster.Metadata {
 	internal sealed class MTexture2D {
-		internal static readonly object DataCacheLock = new object();
+		internal static readonly SharedLock DataCacheLock = new SharedLock();
 		private static MemoryCache DataCache = (Config.MemoryCache.Enabled) ? new MemoryCache(name: "DataCache", config: null) : null;
 		private static long CurrentID = 0U;
 
@@ -29,7 +29,7 @@ namespace SpriteMaster.Metadata {
 				return;
 			}
 
-			lock (DataCacheLock) {
+			using (DataCacheLock.Shared) {
 				DataCache.Dispose();
 				DataCache = new MemoryCache(name: "DataCache", config: null);
 			}
@@ -59,46 +59,6 @@ namespace SpriteMaster.Metadata {
 				}
 			}
 		}
-
-		/*
-		private byte[] _CachedData = default;
-		public byte[] CachedData {
-			get {
-				lock (this) {
-					return _CachedData;
-				}
-			}
-			set {
-				lock (this) {
-					_CachedData = value;
-					_Hash = default;
-				}
-			}
-		}
-		*/
-
-		/*
-		private CacheType _CachedData = new CacheType(null);
-		public byte[] CachedData {
-			get {
-				lock (this) {
-					if (_CachedData.TryGetTarget(out var target)) {
-						return target;
-					}
-					return null;
-				}
-			}
-			set {
-				lock (this) {
-					if (_CachedData.TryGetTarget(out var target) && target == value) {
-						return;
-					}
-					_CachedData.SetTarget(value);
-					_Hash = default;
-				}
-			}
-		}
-		*/
 
 		private static ConditionalWeakTable<byte[], object> AlreadyCompressingTable = Config.MemoryCache.Enabled ? new ConditionalWeakTable<byte[], object>() : null;
 
@@ -223,7 +183,7 @@ namespace SpriteMaster.Metadata {
 					else if (!bounds.HasValue && CachedData is var currentData && currentData != null) {
 						Debug.TraceLn("Updating MTexture2D Cache in Purge");
 						var byteSpan = data.Data.CastAs<T, byte>();
-						lock (DataCacheLock) {
+						using (DataCacheLock.Exclusive) {
 							using (Lock.Exclusive) {
 								var untilOffset = Math.Min(currentData.Length - data.Offset, data.Length * typeSize);
 								foreach (int i in 0..untilOffset) {
@@ -258,14 +218,14 @@ namespace SpriteMaster.Metadata {
 					byte[] target = null;
 					if (!_CachedData.TryGetTarget(out target) || target == null) {
 						byte[] compressedBuffer;
-						lock (DataCacheLock) {
+						using (DataCacheLock.Shared) {
 							compressedBuffer = DataCache[UniqueIDString] as byte[];
-						}
-						if (compressedBuffer != null) {
-							target = Decompress(compressedBuffer);
-						}
-						else {
-							target = null;
+							if (compressedBuffer != null) {
+								target = Decompress(compressedBuffer);
+							}
+							else {
+								target = null;
+							}
 						}
 						using (Lock.Promote) {
 							_CachedData.SetTarget(target);
@@ -289,7 +249,7 @@ namespace SpriteMaster.Metadata {
 							using (Lock.Promote) {
 								_CachedData.SetTarget(null);
 							}
-							lock (DataCacheLock) {
+							using (DataCacheLock.Exclusive) {
 								DataCache.Remove(UniqueIDString);
 							}
 						}
@@ -306,10 +266,10 @@ namespace SpriteMaster.Metadata {
 							if (queueCompress) {
 								ThreadPool.QueueUserWorkItem((buffer) => {
 									var compressedData = Compress((byte[])buffer);
-									lock (DataCacheLock) {
+									using (DataCacheLock.Exclusive) {
 										DataCache[UniqueIDString] = compressedData;
-										Hash = default;
 									}
+									Hash = default;
 								}, value);
 							}
 
