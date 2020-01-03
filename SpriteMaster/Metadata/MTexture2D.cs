@@ -60,7 +60,7 @@ namespace SpriteMaster.Metadata {
 			}
 		}
 
-		private static ConditionalWeakTable<byte[], object> AlreadyCompressingTable = Config.MemoryCache.Enabled ? new ConditionalWeakTable<byte[], object>() : null;
+		private static ConditionalWeakTable<byte[], object> AlreadyCompressingTable = (Config.MemoryCache.Enabled && Config.MemoryCache.Async) ? new ConditionalWeakTable<byte[], object>() : null;
 
 		private static readonly MethodInfo ZlibBaseCompressBuffer;
 		static MTexture2D() {
@@ -135,36 +135,13 @@ namespace SpriteMaster.Metadata {
 			}
 		}
 
-		private static unsafe byte[] MakeByteArray<T> (DataRef<T> data, int referenceSize = 0) where T : struct {
-			if (data.Data is byte[] byteData) {
-				return byteData;
-			}
-
-			try {
-				referenceSize = (referenceSize == 0) ? (data.Length * typeof(T).Size()) : referenceSize;
-				var newData = new byte[referenceSize];
-
-				var byteSpan = data.Data.CastAs<T, byte>();
-				foreach (int i in 0..referenceSize) {
-					newData[i] = byteSpan[i];
-				}
-				return newData;
-			}
-			catch (Exception ex) {
-				ex.PrintInfo();
-				return null;
-			}
-		}
-
-		public unsafe void Purge<T> (Texture2D reference, Bounds? bounds, DataRef<T> data) where T : struct {
+		public unsafe void Purge (Texture2D reference, Bounds? bounds, DataRef<byte> data) {
 			lock (this) {
-
 				if (data.IsNull) {
 					CachedData = null;
 					return;
 				}
 
-				var typeSize = typeof(T).Size();
 				var refSize = unchecked((int)reference.SizeBytes());
 
 				bool forcePurge = false;
@@ -174,26 +151,27 @@ namespace SpriteMaster.Metadata {
 					if (Config.MemoryCache.AlwaysFlush) {
 						forcePurge = true;
 					}
-					else if (!bounds.HasValue && data.Offset == 0 && (data.Length * typeSize) == refSize) {
-						Debug.TraceLn("Overriding MTExture2D Cache in Purge");
-						var newByteArray = MakeByteArray(data, refSize);
-						forcePurge |= (newByteArray == null);
-						CachedData = newByteArray;
+					else if (!bounds.HasValue && data.Offset == 0 && data.Length == refSize) {
+						Debug.TraceLn("Overriding MTexture2D Cache in Purge");
+						CachedData = data.Data;
 					}
+					// TODO : This doesn't update the compressed cache.
 					else if (!bounds.HasValue && CachedData is var currentData && currentData != null) {
 						Debug.TraceLn("Updating MTexture2D Cache in Purge");
-						var byteSpan = data.Data.CastAs<T, byte>();
+						var byteSpan = data.Data;
 						using (DataCacheLock.Exclusive) {
 							using (Lock.Exclusive) {
-								var untilOffset = Math.Min(currentData.Length - data.Offset, data.Length * typeSize);
+								var untilOffset = Math.Min(currentData.Length - data.Offset, data.Length);
 								foreach (int i in 0..untilOffset) {
 									currentData[i + data.Offset] = byteSpan[i];
 								}
 								Thread.VolatileWrite(ref _Hash, default);
+								CachedData = currentData; // Force it to update the global cache.
 							}
 						}
 					}
 					else {
+						Debug.TraceLn("Forcing full MTexture2D Purge");
 						forcePurge = true;
 					}
 				}
@@ -235,16 +213,16 @@ namespace SpriteMaster.Metadata {
 				}
 			}
 			set {
-				if (!Config.MemoryCache.Enabled)
-					return;
-
-				TracePrinted = false;
-
 				try {
+					if (!Config.MemoryCache.Enabled)
+						return;
+
+					TracePrinted = false;
+
 					using (Lock.Shared) {
-						if (_CachedData.TryGetTarget(out var target) && target == value) {
-							return;
-						}
+						//if (_CachedData.TryGetTarget(out var target) && target == value) {
+						//	return;
+						//}
 						if (value == null) {
 							using (Lock.Promote) {
 								_CachedData.SetTarget(null);
@@ -255,22 +233,31 @@ namespace SpriteMaster.Metadata {
 						}
 						else {
 							bool queueCompress = false;
-							lock (AlreadyCompressingTable) {
-								if (!AlreadyCompressingTable.TryGetValue(value, out var _)) {
-									try { AlreadyCompressingTable.Add(value, null); }
-									catch { }
-									queueCompress = true;
+							// TODO : well this is absolutely not correct. Just because somtehing already being compressed doesn't mean we don't want to update it...
+							if (Config.MemoryCache.Type != Config.MemoryCache.Algorithm.None && Config.MemoryCache.Async) {
+								lock (AlreadyCompressingTable) {
+									if (!AlreadyCompressingTable.TryGetValue(value, out var _)) {
+										try { AlreadyCompressingTable.Add(value, null); }
+										catch { }
+										queueCompress = true;
+									}
 								}
 							}
 
-							if (queueCompress) {
-								ThreadPool.QueueUserWorkItem((buffer) => {
-									var compressedData = Compress((byte[])buffer);
-									using (DataCacheLock.Exclusive) {
-										DataCache[UniqueIDString] = compressedData;
-									}
-									Hash = default;
-								}, value);
+							// I suspect this is completing AFTER we get a call to purge again, and so is overwriting what is the correct data.
+							// Doesn't explain why _not_ purging helps, though.
+							if (Config.MemoryCache.Type != Config.MemoryCache.Algorithm.None && Config.MemoryCache.Async) {
+								if (queueCompress) {
+									ThreadPool.QueueUserWorkItem((buffer) => {
+										var compressedData = Compress((byte[])buffer);
+										using (DataCacheLock.Exclusive) {
+											DataCache[UniqueIDString] = compressedData;
+										}
+									}, value);
+								}
+							}
+							else {
+								DataCache[UniqueIDString] = Compress(value);
 							}
 
 							using (Lock.Promote) {

@@ -111,6 +111,9 @@ namespace SpriteMaster {
 
 							foreach (var scaledTexture in Map.Values) {
 								lock (scaledTexture) {
+									if (scaledTexture.Texture != null) {
+										scaledTexture.Texture.Dispose();
+									}
 									scaledTexture.Texture = null;
 								}
 							}
@@ -457,13 +460,13 @@ namespace SpriteMaster {
 		}
 
 		internal static void Purge (Texture2D reference) {
-			Purge<byte>(reference, null, DataRef<byte>.Null);
+			Purge(reference, null, DataRef<byte>.Null);
 		}
 
-		internal static void Purge<T> (Texture2D reference, Bounds? bounds, DataRef<T> data) where T : struct {
+		internal static void Purge (Texture2D reference, Bounds? bounds, DataRef<byte> data) {
+			SpriteInfo.Purge(reference, bounds, data);
 			SpriteMap.Purge(reference, bounds);
 			Upscaler.PurgeHash(reference);
-			SpriteInfo.Purge(reference, bounds, data);
 		}
 
 		internal static void PurgeTextures(long _purgeTotalBytes) {

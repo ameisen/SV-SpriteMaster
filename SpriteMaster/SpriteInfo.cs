@@ -25,8 +25,8 @@ namespace SpriteMaster {
 
 		// Attempt to update the bytedata cache for the reference texture, or purge if it that makes more sense or if updating
 		// is not plausible.
-		internal static unsafe void Purge<T>(Texture2D reference, Bounds? bounds, DataRef<T> data) where T : struct {
-			reference.Meta().Purge<T>(reference, bounds, data);
+		internal static unsafe void Purge(Texture2D reference, Bounds? bounds, DataRef<byte> data) {
+			reference.Meta().Purge(reference, bounds, data);
 		}
 
 		internal SpriteInfo (Texture2D reference, in Bounds dimensions, int expectedScale) {

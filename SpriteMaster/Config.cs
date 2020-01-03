@@ -179,11 +179,12 @@ namespace SpriteMaster {
 				LZMA = 2
 			}
 			internal static Algorithm Type = Algorithm.LZ;
+			internal static bool Async = false;
 		}
 
 		internal static class Cache {
 			internal const bool Purge = false;
-			internal static bool Enabled = false;
+			internal static bool Enabled = true;
 			internal const int LockRetries = 32;
 			internal const int LockSleepMS = 32;
 		}
