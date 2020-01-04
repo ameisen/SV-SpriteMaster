@@ -24,6 +24,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch.Patch {
 		 * 
 		 */
 
+#if STABLE_SORT
 		private static class Comparer {
 			private static FieldInfo TextureField;
 			private static FieldInfo SpriteField;
@@ -152,6 +153,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch.Patch {
 				__result = x.CompareTo(y);
 			}
 		}
+#endif
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		[HarmonyPatch("Draw", priority: HarmonyExt.PriorityLevel.First)]
