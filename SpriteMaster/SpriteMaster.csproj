@@ -3,11 +3,11 @@
   <PropertyGroup>
     <AssemblyName>SpriteMaster</AssemblyName>
     <RootNamespace>SpriteMaster</RootNamespace>
-    <Version>0.10.4</Version>
+    <Version>0.10.5</Version>
     <TargetFramework>net452</TargetFramework>
     <PlatformTarget>x86</PlatformTarget>
     <EnableHarmony>true</EnableHarmony>
-    <AssemblyVersion>0.10.4.*</AssemblyVersion>
+    <AssemblyVersion>0.10.5.*</AssemblyVersion>
 		<Deterministic>false</Deterministic>
 		<LangVersion>preview</LangVersion>
 		<RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
@@ -18,7 +18,7 @@
 		<Company>Digital Carbide</Company>
 		<PackageLicenseFile>LICENSE.MD</PackageLicenseFile>
 		<Copyright>mkuklinski</Copyright>
-		<FileVersion>0.10.4.0</FileVersion>
+		<FileVersion>0.10.5.0</FileVersion>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<NullableReferenceTypes>true</NullableReferenceTypes>
     <FileAlignment>512</FileAlignment>
@@ -29,6 +29,8 @@
 		<Configurations>Debug;Release;Development</Configurations>
 		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
 		<ApplicationIcon>pufferchick_xbrz.ico</ApplicationIcon>
+		<PackageId>SpriteMaster-SV</PackageId>
+		<Product>SpriteMaster-SV</Product>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
