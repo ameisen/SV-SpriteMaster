@@ -6,7 +6,6 @@ using System;
 using Ionic.Zlib;
 using System.IO;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Types;
 using SpriteMaster.Extensions;
@@ -21,6 +20,9 @@ namespace SpriteMaster.Metadata {
 		private readonly string UniqueIDString = Interlocked.Increment(ref CurrentID).ToString();
 
 		private readonly SharedLock Lock = new SharedLock();
+
+		private volatile int CompressorCount = 0;
+		private readonly Semaphore CompressionSemaphore = new Semaphore(int.MaxValue, int.MaxValue);
 
 		public volatile bool TracePrinted = false;
 		private long _UpdateToken = 0;
@@ -210,6 +212,19 @@ namespace SpriteMaster.Metadata {
 					if (!_CachedData.TryGetTarget(out target) || target == null) {
 						byte[] compressedBuffer;
 						using (DataCacheLock.Shared) {
+							if (Config.MemoryCache.Type != Config.MemoryCache.Algorithm.None && Config.MemoryCache.Async) {
+								using (Lock.Promote) {
+									int count = CompressorCount;
+									if (count > 0) {
+										foreach (int i in 0..count) {
+											CompressionSemaphore.WaitOne();
+										}
+										CompressionSemaphore.Release(count);
+										CompressorCount = 0;
+									}
+								}
+							}
+
 							compressedBuffer = DataCache[UniqueIDString] as byte[];
 							if (compressedBuffer != null) {
 								target = Decompress(compressedBuffer);
@@ -257,19 +272,30 @@ namespace SpriteMaster.Metadata {
 							// Doesn't explain why _not_ purging helps, though.
 							if (Config.MemoryCache.Type != Config.MemoryCache.Algorithm.None && Config.MemoryCache.Async) {
 								if (queueCompress) {
-									ThreadPool.QueueUserWorkItem((buffer) => {
-										if (!CheckUpdateToken(currentUpdateToken)) {
-											return;
-										}
-										var compressedData = Compress((byte[])buffer);
-										using (DataCacheLock.Exclusive) {
-											if (!CheckUpdateToken(currentUpdateToken)) {
-												return;
-											}
+									using (Lock.Promote) {
+										++CompressorCount;
+										CompressionSemaphore.WaitOne();
+										ThreadPool.QueueUserWorkItem((buffer) => {
+											try {
+												if (!CheckUpdateToken(currentUpdateToken)) {
+													return;
+												}
+												var compressedData = Compress((byte[])buffer);
+												using (DataCacheLock.Exclusive) {
+													using (Lock.Exclusive) {
+														if (currentUpdateToken != UpdateToken) {
+															return;
+														}
 
-											DataCache[UniqueIDString] = compressedData;
-										}
-									}, value);
+														DataCache[UniqueIDString] = compressedData;
+													}
+												}
+											}
+											finally {
+												CompressionSemaphore.Release();
+											}
+										}, value);
+									}
 								}
 							}
 							else {
