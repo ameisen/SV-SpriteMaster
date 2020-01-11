@@ -14,7 +14,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "xBRZ", "xBRZNet\xBRZ.csproj
 		{D8AB0188-41C5-4669-AD33-231DA9401FA0} = {D8AB0188-41C5-4669-AD33-231DA9401FA0}
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SpriteMaster.Runtime", "Runtime\SpriteMaster.Runtime.csproj", "{D8AB0188-41C5-4669-AD33-231DA9401FA0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Runtime", "Runtime\Runtime.csproj", "{D8AB0188-41C5-4669-AD33-231DA9401FA0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

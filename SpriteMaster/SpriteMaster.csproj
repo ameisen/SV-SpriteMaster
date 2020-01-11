@@ -3,12 +3,11 @@
   <PropertyGroup>
     <AssemblyName>SpriteMaster</AssemblyName>
     <RootNamespace>SpriteMaster</RootNamespace>
-		<ProjectGuid>{9A19103F-16F7-4668-BE54-9A1E7A4F7556}</ProjectGuid>
-    <Version>0.10.6</Version>
+    <Version>0.10.5</Version>
     <TargetFramework>net45</TargetFramework>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <EnableHarmony>true</EnableHarmony>
-    <AssemblyVersion>0.10.6.*</AssemblyVersion>
+    <AssemblyVersion>0.10.5.*</AssemblyVersion>
 		<Deterministic>false</Deterministic>
 		<LangVersion>preview</LangVersion>
 		<RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
@@ -19,14 +18,14 @@
 		<Company>Digital Carbide</Company>
 		<PackageLicenseFile>LICENSE.MD</PackageLicenseFile>
 		<Copyright>mkuklinski</Copyright>
-		<FileVersion>0.10.6.0</FileVersion>
+		<FileVersion>0.10.5.0</FileVersion>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<NullableReferenceTypes>true</NullableReferenceTypes>
     <FileAlignment>512</FileAlignment>
     <NoWarn>0162;7035</NoWarn>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 		<OutputPath>bin\$(Configuration)_$(Platform)\</OutputPath>
-		<IgnoreModFilePatterns>\.dll\.config$, ILMerge, runtimes</IgnoreModFilePatterns>
+		<IgnoreModFilePatterns>\.dll\.config$, ILMerge, runtimes, net452, net450, net45</IgnoreModFilePatterns>
 		<Configurations>Debug;Release;Development</Configurations>
 		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
 		<ApplicationIcon>pufferchick_xbrz.ico</ApplicationIcon>
@@ -56,7 +55,6 @@
 
   <ItemGroup>
     <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="3.0.0" />
-    <PackageReference Include="System.Data.HashFunction.xxHash" Version="2.0.0" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.7.0" />
     <PackageReference Include="TeximpNet" Version="1.4.1" />
     <PackageReference Include="Tomlyn" Version="0.1.1" />
@@ -77,16 +75,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="$(SolutionDir)\Runtime\SpriteMaster.Runtime.csproj">
-      <Private></Private>
-      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="$(SolutionDir)\xBRZNet\xBRZ.csproj">
-      <Private></Private>
-      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
-    </ProjectReference>
+    <ProjectReference Include="$(SolutionDir)\Runtime\Runtime.csproj" />
+    <ProjectReference Include="$(SolutionDir)\xBRZNet\xBRZ.csproj" />
   </ItemGroup>
-	
+
   <ItemGroup>
     <Reference Update="System.Core">
       <Private>false</Private>

@@ -1,4 +1,4 @@
-﻿namespace SpriteMaster.Harmonize.Patches.PSpriteBatch.Patch {
+﻿namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch.Patch {
 	internal static class StableSort {
 #if STABLE_SORT
 		private static class Comparer {

@@ -2,7 +2,7 @@
   <PropertyGroup>
 		<AssemblyName>xBRZ</AssemblyName>
 		<RootNamespace>SpriteMaster</RootNamespace>
-		<ProjectGuid>{84EE293E-B938-4512-8A39-86FFC00ED267}</ProjectGuid>
+    <ProjectGuid>{84EE293E-B938-4512-8A39-86FFC00ED267}</ProjectGuid>
     <OutputType>Library</OutputType>
 		<TargetFramework>net45</TargetFramework>
     <FileAlignment>512</FileAlignment>
@@ -44,18 +44,12 @@
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="..\LICENSE.md">
+    <None Include="$(SolutionDir)\LICENSE.md">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.7.0" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="$(SolutionDir)\Runtime\SpriteMaster.Runtime.csproj">
-      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
-      <EmbedInteropTypes></EmbedInteropTypes>
-    </ProjectReference>
+    <ProjectReference Include="$(SolutionDir)\Runtime\Runtime.csproj" />
   </ItemGroup>
 </Project>

@@ -1,8 +1,0 @@
-    <PackageReference Condition="'$(Configuration)'=='Release'" Include="ilmerge" Version="3.0.29" />
-    <PackageReference Include="ilmerge" Condition="'$(Configuration)'=='Development'">
-      <Version>3.0.29</Version>
-    </PackageReference>
-    <PackageReference Condition="'$(Configuration)'=='Release'" Include="ILMerge.MSBuild.Task" Version="1.0.7" />
-    <PackageReference Include="ILMerge.MSBuild.Task" Condition="'$(Configuration)'=='Development'">
-      <Version>1.0.7</Version>
-    </PackageReference>

@@ -2,22 +2,49 @@
 using System;
 using System.Linq;
 using System.Reflection;
-using static SpriteMaster.Harmonize.Harmonize;
-using static SpriteMaster.Runtime.Framework;
+using static SpriteMaster.HarmonyExt.HarmonyExt;
 
-namespace SpriteMaster.Harmonize {
+namespace SpriteMaster.HarmonyExt {
 	[AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
 	internal sealed class HarmonizeAttribute : Attribute {
+		public enum Fixation {
+			Prefix,
+			Postfix,
+			Transpile
+		}
+
+		public enum Generic {
+			None,
+			Struct,
+			Class
+		}
+
+		public enum Platform {
+			All = 0,
+			Windows = 1,
+			Linux = 2,
+			Macintosh = 3,
+			Unix = 4
+		}
+
 		public readonly Type Type;
 		public readonly string Method;
-		public readonly int Priority;
-		public readonly AffixType Affix;
-		public readonly GenericType Generic;
+		public readonly int PatchPriority;
+		public readonly Fixation PatchFixation;
+		public readonly Generic GenericType;
 		public readonly bool Instance;
-		public readonly PlatformType ForPlatform;
+		public readonly Platform ForPlatform;
 
-		internal static bool CheckPlatform(PlatformType platform) {
-			return Is(platform);
+		internal static bool CheckPlatform(Platform platform) {
+			return platform switch
+			{
+				Platform.All => true,
+				Platform.Windows => Runtime.IsWindows,
+				Platform.Linux => Runtime.IsLinux,
+				Platform.Macintosh => Runtime.IsMacintosh,
+				Platform.Unix => Runtime.IsUnix,
+				_ => throw new ArgumentOutOfRangeException(nameof(ForPlatform)),
+			};
 		}
 
 		internal bool CheckPlatform() {
@@ -41,50 +68,50 @@ namespace SpriteMaster.Harmonize {
 			return ResolveType(assembly, assembly.GetType(type[0], true), type, offset + 1);
 		}
 
-		public HarmonizeAttribute(Type type, string method, AffixType affix = AffixType.Prefix, PriorityLevel priority = PriorityLevel.Average, GenericType generic = GenericType.None, bool instance = true, PlatformType platform = PlatformType.Any) {
+		public HarmonizeAttribute(Type type, string method, Fixation fixation = Fixation.Prefix, PriorityLevel priority = PriorityLevel.Average, Generic generic = Generic.None, bool instance = true, Platform platform = Platform.All) {
 			Type = type;
 			Method = method;
-			Priority = (int)priority;
-			Affix = affix;
-			Generic = generic;
+			PatchPriority = (int)priority;
+			PatchFixation = fixation;
+			GenericType = generic;
 			Instance = instance;
 			ForPlatform = platform;
 		}
 
-		public HarmonizeAttribute (string assembly, string type, string method, AffixType affix = AffixType.Prefix, PriorityLevel priority = PriorityLevel.Average, GenericType generic = GenericType.None, bool instance = true, PlatformType platform = PlatformType.Any) :
+		public HarmonizeAttribute (string assembly, string type, string method, Fixation fixation = Fixation.Prefix, PriorityLevel priority = PriorityLevel.Average, Generic generic = Generic.None, bool instance = true, Platform platform = Platform.All) :
 			this(
 				CheckPlatform(platform) ? GetAssembly(assembly).GetType(type, true) : null,
 				method,
-				affix,
+				fixation,
 				priority,
 				generic,
 				instance,
 				platform
 			) { }
 
-		public HarmonizeAttribute (Type parent, string type, string method, AffixType affix = AffixType.Prefix, PriorityLevel priority = PriorityLevel.Average, GenericType generic = GenericType.None, bool instance = true, PlatformType platform = PlatformType.Any) :
+		public HarmonizeAttribute (Type parent, string type, string method, Fixation fixation = Fixation.Prefix, PriorityLevel priority = PriorityLevel.Average, Generic generic = Generic.None, bool instance = true, Platform platform = Platform.All) :
 			this(
 				CheckPlatform(platform) ? parent.Assembly.GetType(type, true) : null,
 				method,
-				affix,
+				fixation,
 				priority,
 				generic,
 				instance,
 				platform
 			) { }
 
-		public HarmonizeAttribute (Type parent, string[] type, string method, AffixType affix = AffixType.Prefix, PriorityLevel priority = PriorityLevel.Average, GenericType generic = GenericType.None, bool instance = true, PlatformType platform = PlatformType.Any) :
+		public HarmonizeAttribute (Type parent, string[] type, string method, Fixation fixation = Fixation.Prefix, PriorityLevel priority = PriorityLevel.Average, Generic generic = Generic.None, bool instance = true, Platform platform = Platform.All) :
 			this(
 				CheckPlatform(platform) ? ResolveType(parent.Assembly, type) : null,
 				method,
-				affix,
+				fixation,
 				priority,
 				generic,
 				instance,
 				platform
 			) { }
 
-		public HarmonizeAttribute (string assembly, string[] type, string method, AffixType fixation = AffixType.Prefix, PriorityLevel priority = PriorityLevel.Average, GenericType generic = GenericType.None, bool instance = true, PlatformType platform = PlatformType.Any) :
+		public HarmonizeAttribute (string assembly, string[] type, string method, Fixation fixation = Fixation.Prefix, PriorityLevel priority = PriorityLevel.Average, Generic generic = Generic.None, bool instance = true, Platform platform = Platform.All) :
 			this(
 				CheckPlatform(platform) ? ResolveType(GetAssembly(assembly), type) : null,
 				method,
@@ -95,7 +122,7 @@ namespace SpriteMaster.Harmonize {
 				platform
 			) { }
 
-		public HarmonizeAttribute (string method, AffixType fixation = AffixType.Prefix, PriorityLevel priority = PriorityLevel.Average, GenericType generic = GenericType.None, bool instance = true, PlatformType platform = PlatformType.Any) :
+		public HarmonizeAttribute (string method, Fixation fixation = Fixation.Prefix, PriorityLevel priority = PriorityLevel.Average, Generic generic = Generic.None, bool instance = true, Platform platform = Platform.All) :
 			this(null, method, fixation, priority, generic, instance, platform) { }
 	}
 }

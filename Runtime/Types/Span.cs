@@ -6,7 +6,7 @@ using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace SpriteMaster.Runtime.Types {
+namespace SpriteMaster.Types {
 	[ImmutableObject(true)]
 	public ref struct Span<T> where T : unmanaged {
 		private sealed class CollectionHandle {

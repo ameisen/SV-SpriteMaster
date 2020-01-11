@@ -1,14 +1,11 @@
-﻿using SpriteMaster.Runtime;
-using SpriteMaster.Runtime.Types;
+﻿using SpriteMaster.Types;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using TeximpNet;
 using TeximpNet.Unmanaged;
-using static SpriteMaster.Harmonize.Harmonize;
-using static SpriteMaster.Runtime.Framework;
 
-namespace SpriteMaster.Harmonize.Patches {
+namespace SpriteMaster.HarmonyExt.Patches {
 	[SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
 	[SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Harmony")]
 	internal static class NVTT {
@@ -17,7 +14,7 @@ namespace SpriteMaster.Harmonize.Patches {
 		//private static extern IntPtr dlerror (String fileName, int flags);
 
 		static NVTT () {
-			if (Framework.IsLinux) {
+			if (Runtime.IsLinux) {
 				// This needs to be done because Debian-based systems don't always have a libdl.so, and instead have libdl.so.2.
 				// We need to determine which libdl we actually need to talk to.
 				var dlTypes = Arrays.Of(
@@ -64,8 +61,8 @@ mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null)
 			typeof(NvTextureToolsLibrary),
 			"TeximpNet.Unmanaged.NvTextureToolsLibrary",
 			"EnableCudaAcceleration",
-			AffixType.Prefix,
-			PriorityLevel.Last
+			HarmonizeAttribute.Fixation.Prefix,
+			HarmonyExt.PriorityLevel.Last
 		)]
 		internal static bool EnableCudaAcceleration (IntPtr compressor, ref bool value) {
 			value = false;
@@ -76,8 +73,8 @@ mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null)
 			typeof(NvTextureToolsLibrary),
 			"TeximpNet.Unmanaged.NvTextureToolsLibrary",
 			"IsCudaAccelerationEnabled",
-			AffixType.Postfix,
-			PriorityLevel.Last
+			HarmonizeAttribute.Fixation.Postfix,
+			HarmonyExt.PriorityLevel.Last
 		)]
 		internal static void IsCudaAccelerationEnabled (IntPtr compressor, ref bool __result) {
 			__result = false;
@@ -87,8 +84,8 @@ mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null)
 			typeof(NvTextureToolsLibrary),
 			"TeximpNet.Unmanaged.PlatformHelper",
 			"GetAppBaseDirectory",
-			AffixType.Prefix,
-			PriorityLevel.First
+			HarmonizeAttribute.Fixation.Prefix,
+			HarmonyExt.PriorityLevel.First
 		)]
 		internal static bool GetAppBaseDirectory (ref string __result) {
 			__result = SpriteMaster.AssemblyPath;
@@ -102,9 +99,9 @@ mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null)
 			typeof(NvTextureToolsLibrary),
 			new [] { "TeximpNet.Unmanaged.UnmanagedLibrary", "UnmanagedLinuxLibraryImplementation" },
 			"NativeLoadLibrary",
-			AffixType.Prefix,
-			PriorityLevel.First,
-			platform: PlatformType.Linux
+			HarmonizeAttribute.Fixation.Prefix,
+			HarmonyExt.PriorityLevel.First,
+			platform: HarmonizeAttribute.Platform.Linux
 		)]
 		internal static bool NativeLoadLibrary (UnmanagedLibrary __instance, ref IntPtr __result, String path) {
 			var libraryHandle = dl.open(path, RTLD_NOW);
@@ -127,9 +124,9 @@ mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null)
 			typeof(NvTextureToolsLibrary),
 			new [] { "TeximpNet.Unmanaged.UnmanagedLibrary", "UnmanagedLinuxLibraryImplementation" },
 			"NativeGetProcAddress",
-			AffixType.Prefix,
-			PriorityLevel.First,
-			platform: PlatformType.Linux
+			HarmonizeAttribute.Fixation.Prefix,
+			HarmonyExt.PriorityLevel.First,
+			platform: HarmonizeAttribute.Platform.Linux
 		)]
 		internal static bool NativeGetProcAddress (ref IntPtr __result, IntPtr handle, String functionName) {
 			__result = dl.sym(handle, functionName);
@@ -141,9 +138,9 @@ mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null)
 			typeof(NvTextureToolsLibrary),
 			new [] { "TeximpNet.Unmanaged.UnmanagedLibrary", "UnmanagedLinuxLibraryImplementation" },
 			"NativeFreeLibrary",
-			AffixType.Prefix,
-			PriorityLevel.First,
-			platform: PlatformType.Linux
+			HarmonizeAttribute.Fixation.Prefix,
+			HarmonyExt.PriorityLevel.First,
+			platform: HarmonizeAttribute.Platform.Linux
 		)]
 		internal static bool NativeFreeLibrary (IntPtr handle) {
 			dl.close(handle);

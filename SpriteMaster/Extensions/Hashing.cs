@@ -1,5 +1,5 @@
-﻿using SpriteMaster.Types;
-using SpriteMaster.Runtime.Types;
+﻿using Microsoft.Xna.Framework.Graphics;
+using SpriteMaster.Types;
 using System;
 using System.Data.HashFunction.xxHash;
 using System.Drawing;

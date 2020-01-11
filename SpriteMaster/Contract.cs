@@ -1,5 +1,5 @@
-﻿using SpriteMaster.Runtime.Attributes;
-using SpriteMaster.Runtime.Types;
+﻿using SpriteMaster.Attributes;
+using SpriteMaster.Types;
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;

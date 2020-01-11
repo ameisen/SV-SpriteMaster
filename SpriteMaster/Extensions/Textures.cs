@@ -1,6 +1,5 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Types;
-using SpriteMaster.Runtime.Types;
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;

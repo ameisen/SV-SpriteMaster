@@ -1,11 +1,12 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
-using SpriteMaster.Runtime.Attributes;
+using SpriteMaster.Attributes;
 using SpriteMaster.Extensions;
 using StardewModdingAPI;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster {
@@ -59,7 +60,7 @@ namespace SpriteMaster {
 			if (!Config.Debug.Logging.LogInfo)
 				return;
 			TraceLn($"Exception: {exception.Message}", caller: caller);
-			TraceLn(exception.GetStackTrace().Replace(" at", "\n\tat"), caller: caller);
+			TraceLn(exception.GetStackTrace(), caller: caller);
 		}
 
 		[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden(), Untraced]
@@ -79,7 +80,7 @@ namespace SpriteMaster {
 			if (!Config.Debug.Logging.LogInfo)
 				return;
 			InfoLn($"Exception: {exception.Message}", caller: caller);
-			InfoLn(exception.GetStackTrace().Replace(" at", "\n\tat"), caller: caller);
+			InfoLn(exception.GetStackTrace(), caller: caller);
 		}
 
 		[Conditional("TRACE"), DebuggerStepThrough, DebuggerHidden(), Untraced]
@@ -99,7 +100,7 @@ namespace SpriteMaster {
 			if (!Config.Debug.Logging.LogInfo)
 				return;
 			WarningLn($"Exception: {exception.Message}", caller: caller);
-			WarningLn(exception.GetStackTrace().Replace(" at", "\n\tat"), caller: caller);
+			WarningLn(exception.GetStackTrace(), caller: caller);
 		}
 
 		[DebuggerStepThrough, DebuggerHidden(), Untraced]
@@ -119,7 +120,7 @@ namespace SpriteMaster {
 			if (!Config.Debug.Logging.LogInfo)
 				return;
 			ErrorLn($"Exception: {exception.Message}", caller: caller);
-			ErrorLn(exception.GetStackTrace().Replace(" at", "\n\tat"), caller: caller);
+			ErrorLn(exception.GetStackTrace(), caller: caller);
 		}
 
 		[DebuggerStepThrough, DebuggerHidden(), Untraced]
@@ -230,12 +231,7 @@ namespace SpriteMaster {
 		static private void DebugWriteStr (this TextWriter writer, string str, LogLevel level) {
 			if (Config.Debug.Logging.UseSMAPI) {
 				var strings = str.Split(new[] { '\n', '\r' });
-				if (strings[strings.Length - 1] == "") {
-					strings[strings.Length - 1] = null;
-				}
 				foreach (var line in strings) {
-					if (line == null)
-						continue;
 					SpriteMaster.Self.Monitor.Log(line.TrimEnd(), level);
 				}
 			}

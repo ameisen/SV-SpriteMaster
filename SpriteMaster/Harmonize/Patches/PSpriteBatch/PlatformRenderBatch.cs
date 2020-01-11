@@ -2,13 +2,12 @@
 using SpriteMaster.Extensions;
 using System;
 using System.Diagnostics.CodeAnalysis;
-using static SpriteMaster.Harmonize.Harmonize;
-using static SpriteMaster.Runtime.Framework;
+using static SpriteMaster.HarmonyExt.HarmonyExt;
 using static SpriteMaster.ScaledTexture;
 
 using SpriteBatcher = System.Object;
 
-namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
+namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 	[SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
 	[SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Harmony")]
 	internal static class PlatformRenderBatch {
@@ -54,9 +53,9 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 			"Microsoft.Xna.Framework.Graphics",
 			"Microsoft.Xna.Framework.Graphics.SpriteBatcher",
 			"FlushVertexArray",
-			AffixType.Prefix,
+			HarmonizeAttribute.Fixation.Prefix,
 			PriorityLevel.First,
-			platform: PlatformType.Unix
+			platform: HarmonizeAttribute.Platform.Unix
 		)]
 		internal static bool OnFlushVertexArray (
 			SpriteBatcher __instance,
@@ -87,9 +86,9 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 			"Microsoft.Xna.Framework.Graphics",
 			"Microsoft.Xna.Framework.Graphics.SpriteBatcher",
 			"FlushVertexArray",
-			AffixType.Postfix,
+			HarmonizeAttribute.Fixation.Postfix,
 			PriorityLevel.Last,
-			platform: PlatformType.Unix
+			platform: HarmonizeAttribute.Platform.Unix
 		)]
 		internal static void OnFlushVertexArrayPost (
 			SpriteBatcher __instance,
@@ -115,9 +114,9 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 
 		[Harmonize(
 			"PlatformRenderBatch",
-			AffixType.Prefix,
+			HarmonizeAttribute.Fixation.Prefix,
 			PriorityLevel.First,
-			platform: PlatformType.Windows
+			platform: HarmonizeAttribute.Platform.Windows
 		)]
 		internal static bool OnPlatformRenderBatch (
 			SpriteBatch __instance,
@@ -150,9 +149,9 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 
 		[Harmonize(
 			"PlatformRenderBatch",
-			AffixType.Postfix,
+			HarmonizeAttribute.Fixation.Postfix,
 			PriorityLevel.Last,
-			platform: PlatformType.Windows
+			platform: HarmonizeAttribute.Platform.Windows
 		)]
 		internal static void OnPlatformRenderBatchPost (
 			SpriteBatch __instance,

@@ -9,7 +9,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using static SpriteMaster.ScaledTexture;
 
-namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
+namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 	[SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
 	[SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Harmony")]
 	static class Draw {

@@ -1,8 +1,7 @@
 ﻿using Harmony;
 using SpriteMaster.Extensions;
-using SpriteMaster.Harmonize;
+using SpriteMaster.HarmonyExt;
 using SpriteMaster.Metadata;
-using SpriteMaster.Runtime;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
@@ -25,7 +24,7 @@ namespace SpriteMaster {
 		internal static string AssemblyPath { get; private set; }
 
 		private void MemoryPressureLoop() {
-			if (Framework.NetFramework != Framework.FrameworkType.DotNET) {
+			if (Runtime.Framework != Runtime.FrameworkType.DotNET) {
 				return;
 			}
 
@@ -51,7 +50,7 @@ namespace SpriteMaster {
 		}
 
 		private void GarbageCheckLoop() {
-			if (Framework.NetFramework != Framework.FrameworkType.DotNET) {
+			if (Runtime.Framework != Runtime.FrameworkType.DotNET) {
 				return;
 			}
 

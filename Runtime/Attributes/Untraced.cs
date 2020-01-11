@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 
-namespace SpriteMaster.Runtime.Attributes {
+namespace SpriteMaster.Attributes {
 	// https://stackoverflow.com/a/11898531
 	[AttributeUsage(AttributeTargets.Method, Inherited = false)]
 	public sealed class UntracedAttribute : Attribute { }

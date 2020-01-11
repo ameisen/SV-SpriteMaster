@@ -1,12 +1,12 @@
-﻿using SpriteMaster.Runtime.Types;
+﻿using SpriteMaster.Types;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Text.RegularExpressions;
 
-namespace SpriteMaster.Runtime {
-	public static class Framework {
+namespace SpriteMaster {
+	public static class Runtime {
 		[Pure]
 		private static string ArgVToString(string[] args) {
 			if (args.Length == 0) {
@@ -92,7 +92,7 @@ namespace SpriteMaster.Runtime {
 			};
 		}
 
-		static Framework() {
+		static Runtime() {
 			// Figure out the executing platform
 			Platform = Environment.OSVersion.Platform switch
 			{
@@ -100,7 +100,7 @@ namespace SpriteMaster.Runtime {
 				PlatformID.Unix => GetUnixType(),
 				_ => throw new ApplicationException($"Unknown Platform: {Environment.OSVersion.Platform}"),
 			};
-			NetFramework = Platform switch
+			Framework = Platform switch
 			{
 				PlatformType.Windows => FrameworkType.DotNET,
 				_ => FrameworkType.Mono,
@@ -115,11 +115,7 @@ namespace SpriteMaster.Runtime {
 			// The BSDs, probably FreeBSD
 			BSD,
 			// Mac OS X, Darwin Kernel
-			Macintosh,
-
-			// Not used internally. Used by other folks.
-			Unix,
-			Any
+			Macintosh
 		}
 
 		public enum FrameworkType {
@@ -132,7 +128,7 @@ namespace SpriteMaster.Runtime {
 		[ImmutableObject(true)]
 		public static readonly string FullSystem = Capture1("uname").Trim();
 
-		public static readonly FrameworkType NetFramework;
+		public static readonly FrameworkType Framework;
 		public static readonly PlatformType Platform;
 		public static readonly int Bits = IntPtr.Size * 8;
 
@@ -141,17 +137,5 @@ namespace SpriteMaster.Runtime {
 		public static bool IsLinux => Platform == PlatformType.Linux;
 		public static bool IsBSD => Platform == PlatformType.BSD;
 		public static bool IsMacintosh => Platform == PlatformType.Macintosh;
-
-		public static bool Is (PlatformType platform) {
-			return platform switch {
-				PlatformType.Windows => IsWindows,
-				PlatformType.Linux => IsLinux,
-				PlatformType.BSD => IsBSD,
-				PlatformType.Macintosh => IsMacintosh,
-				PlatformType.Unix => IsUnix,
-				PlatformType.Any => true,
-				_ => throw new ArgumentOutOfRangeException(nameof(platform)),
-			};
-		}
 	}
 }

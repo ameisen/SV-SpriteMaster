@@ -3,7 +3,6 @@ using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
 using SpriteMaster.Resample;
-using SpriteMaster.Runtime.Types;
 using SpriteMaster.Types;
 using System;
 using System.Drawing;

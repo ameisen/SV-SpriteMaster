@@ -2,9 +2,9 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
-using static SpriteMaster.Harmonize.Harmonize;
+using static SpriteMaster.HarmonyExt.HarmonyExt;
 
-namespace SpriteMaster.Harmonize.Patches {
+namespace SpriteMaster.HarmonyExt.Patches {
 	[SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
 	[SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Harmony")]
 

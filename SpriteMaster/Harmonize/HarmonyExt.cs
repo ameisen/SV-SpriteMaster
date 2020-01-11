@@ -1,16 +1,17 @@
 ﻿using Harmony;
 using Microsoft.Xna.Framework;
 using SpriteMaster.Extensions;
-using SpriteMaster.Runtime.Types;
+using SpriteMaster.Types;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Management.Instrumentation;
 using System.Reflection;
 
-namespace SpriteMaster.Harmonize {
+namespace SpriteMaster.HarmonyExt {
 	using MethodEnumerable = IEnumerable<MethodInfo>;
 
-	internal static class Harmonize {
+	internal static class HarmonyExt {
 		private const BindingFlags InstanceFlags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
 		private const BindingFlags StaticFlags = BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public;
 
@@ -28,20 +29,7 @@ namespace SpriteMaster.Harmonize {
 			First = int.MaxValue
 		}
 
-		public enum AffixType {
-			Prefix,
-			Postfix,
-			Transpile
-		}
-
-		public enum GenericType {
-			None,
-			Struct,
-			Unmanaged,
-			Class
-		}
-
-		internal static readonly Type[] UnmanagedTypes = new[] {
+		internal static readonly Type[] StructTypes = new[] {
 			typeof(char),
 			typeof(byte),
 			typeof(sbyte),
@@ -52,86 +40,66 @@ namespace SpriteMaster.Harmonize {
 			typeof(long),
 			typeof(ulong),
 			typeof(float),
-			typeof(double)
-		};
-
-		internal static readonly Type[] StructTypes = new[] {
+			typeof(double)/*,
 			typeof(Vector2),
 			typeof(Vector3),
 			typeof(Vector4),
 			typeof(Color),
 			typeof(System.Drawing.Color)
-		}.Concat(UnmanagedTypes).ToArray();
-
-		private static Type[] GetGenericTypeArray(GenericType genericType) {
-			switch (genericType) {
-				case GenericType.None: return Arrays<Type>.Empty;
-				case GenericType.Struct: return StructTypes;
-				case GenericType.Unmanaged: return UnmanagedTypes;
-				default: throw new ArgumentOutOfRangeException(nameof(genericType));
-			}
-		}
+			*/
+		};
 
 		public static void ApplyPatches(this HarmonyInstance @this) {
 			Contract.AssertNotNull(@this);
-			var assembly = typeof(Harmonize).Assembly;
+			var assembly = typeof(HarmonyExt).Assembly;
 			foreach (var type in assembly.GetTypes()) {
 				foreach (var method in type.GetMethods(StaticFlags)) {
 					try {
-						var attributes = method.GetCustomAttributes().OfType<HarmonizeAttribute>();
-						if (attributes == null || !attributes.Any())
+						var attribute = method.GetCustomAttributes().OfType<HarmonizeAttribute>().FirstOrDefault(); //GetCustomAttribute<HarmonyPatchAttribute>();
+						if (attribute == null)
 							continue;
 
-						try {
-							foreach (var attribute in attributes) {
-								if (!attribute.CheckPlatform())
-									continue;
+						if (!attribute.CheckPlatform())
+							continue;
 
-								Debug.TraceLn($"Patching Method {method.GetFullName()}");
+						Debug.TraceLn($"Patching Method {method.GetFullName()}");
 
-								var instanceType = attribute.Type;
-								if (instanceType == null) {
-									var instancePar = method.GetParameters().Where(p => p.Name == "__instance");
-									Contract.AssertTrue(instancePar.Count() != 0, $"Type not specified for method {method.GetFullName()}, but no __instance argument present");
-									instanceType = instancePar.First().ParameterType.RemoveRef();
-								}
-
-								switch (attribute.Generic) {
-									case GenericType.None:
-										Patch(
-											@this,
-											instanceType,
-											attribute.Method,
-											pre: (attribute.Affix == AffixType.Prefix) ? method : null,
-											post: (attribute.Affix == AffixType.Postfix) ? method : null,
-											trans: (attribute.Affix == AffixType.Transpile) ? method : null,
-											instanceMethod: attribute.Instance
-										);
-										break;
-									case GenericType.Struct:
-									case GenericType.Unmanaged:
-										foreach (var genericType in GetGenericTypeArray(attribute.Generic)) {
-											Debug.TraceLn($"\tGeneric Type: {genericType.FullName}");
-											Patch(
-												@this,
-												instanceType,
-												genericType,
-												attribute.Method,
-												pre: (attribute.Affix == AffixType.Prefix) ? method : null,
-												post: (attribute.Affix == AffixType.Postfix) ? method : null,
-												trans: (attribute.Affix == AffixType.Transpile) ? method : null,
-												instanceMethod: attribute.Instance
-											);
-										}
-										break;
-									default:
-										throw new NotImplementedException("Non-struct Generic Harmony Types unimplemented");
-								}
-							}
+						var instanceType = attribute.Type;
+						if (instanceType == null) {
+							var instancePar = method.GetParameters().Where(p => p.Name == "__instance");
+							Contract.AssertTrue(instancePar.Count() != 0, $"Type not specified for method {method.GetFullName()}, but no __instance argument present");
+							instanceType = instancePar.First().ParameterType.RemoveRef();
 						}
-						catch (Exception ex) {
-							Debug.TraceLn($"Exception Patching Method {method.GetFullName()}");
-							ex.PrintError();
+
+						switch (attribute.GenericType) {
+							case HarmonizeAttribute.Generic.None:
+								Patch(
+									@this,
+									instanceType,
+									attribute.Method,
+									pre: (attribute.PatchFixation == HarmonizeAttribute.Fixation.Prefix) ? method : null,
+									post: (attribute.PatchFixation == HarmonizeAttribute.Fixation.Postfix) ? method : null,
+									trans: (attribute.PatchFixation == HarmonizeAttribute.Fixation.Transpile) ? method : null,
+									instanceMethod: attribute.Instance
+								);
+								break;
+							case HarmonizeAttribute.Generic.Struct:
+								foreach (var structType in StructTypes) {
+									Debug.TraceLn($"\tGeneric Type: {structType.FullName}");
+									Patch(
+										@this,
+										instanceType,
+										structType,
+										attribute.Method,
+										pre: (attribute.PatchFixation == HarmonizeAttribute.Fixation.Prefix) ? method : null,
+										post: (attribute.PatchFixation == HarmonizeAttribute.Fixation.Postfix) ? method : null,
+										trans: (attribute.PatchFixation == HarmonizeAttribute.Fixation.Transpile) ? method : null,
+										instanceMethod: attribute.Instance
+									);
+								}
+								break;
+							default:
+								throw new NotImplementedException("Non-struct Generic Harmony Types unimplemented");
 						}
 					}
 					catch (Exception ex) {

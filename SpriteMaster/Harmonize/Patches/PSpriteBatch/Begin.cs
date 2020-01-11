@@ -1,10 +1,11 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using static SpriteMaster.Harmonize.Harmonize;
+using System.Runtime.CompilerServices;
 
-namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
+namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 	static class Begin {
-		[Harmonize("Begin", fixation: AffixType.Postfix, priority: PriorityLevel.Last)]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[Harmonize("Begin", fixation: HarmonizeAttribute.Fixation.Postfix, priority: HarmonyExt.PriorityLevel.Last)]
 		internal static void OnBegin (SpriteBatch __instance, SpriteSortMode sortMode, BlendState blendState, SamplerState samplerState, DepthStencilState depthStencilState, RasterizerState rasterizerState, Effect effect, Matrix transformMatrix) {
 			DrawState.OnBegin(
 				__instance,

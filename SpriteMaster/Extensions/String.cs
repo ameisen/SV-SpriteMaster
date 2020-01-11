@@ -1,4 +1,4 @@
-﻿using SpriteMaster.Runtime.Types;
+﻿using SpriteMaster.Types;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Extensions {

@@ -1,4 +1,4 @@
-﻿using SpriteMaster.Runtime.Attributes;
+﻿using SpriteMaster.Attributes;
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;

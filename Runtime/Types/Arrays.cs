@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security;
 
-namespace SpriteMaster.Runtime.Types {
+namespace SpriteMaster.Types {
 	public static class Arrays {
 		internal static class EmptyArrayStatic<T> {
 			[ImmutableObject(true)]

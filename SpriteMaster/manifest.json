@@ -1,7 +1,7 @@
 ﻿{
   "Name": "SpriteMaster",
   "Author": "mkukli",
-  "Version": "0.10.6",
+  "Version": "0.10.5",
   "Description": "Resample's sprites on the fly to improve resolution and quality.",
   "UniqueID": "DigitalCarbide.SpriteMaster",
   "EntryDll": "SpriteMaster.dll",

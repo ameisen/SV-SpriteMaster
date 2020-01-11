@@ -1,5 +1,5 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
-using SpriteMaster.Harmonize;
+using SpriteMaster.HarmonyExt;
 using SpriteMaster.Types;
 using System;
 using System.Reflection;
