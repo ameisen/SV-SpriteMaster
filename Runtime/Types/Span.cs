@@ -1,12 +1,10 @@
-﻿using JetBrains.Annotations;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-
-using JBPure = JetBrains.Annotations.PureAttribute;
-using CPure = System.Diagnostics.Contracts.PureAttribute;
 
 namespace SpriteMaster.Types {
 	[ImmutableObject(true)]
@@ -14,17 +12,18 @@ namespace SpriteMaster.Types {
 		private sealed class CollectionHandle {
 			private GCHandle Handle;
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public CollectionHandle (GCHandle handle) {
 				Handle = handle;
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			~CollectionHandle () {
 				Handle.Free();
 			}
 		}
 
 		private readonly CollectionHandle Handle;
-		[CanBeNull]
 		private readonly object PinnedObject;
 		private readonly IntPtr Pointer;
 		public readonly int Length;
@@ -32,7 +31,7 @@ namespace SpriteMaster.Types {
 
 		private readonly static int TypeSize = Marshal.SizeOf(typeof(T));
 
-		[CPure, JBPure]
+		[Pure, MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private readonly int GetOffset(int index) {
 			if (index < 0 || index >= Length) {
 				throw new IndexOutOfRangeException(nameof(index));
@@ -42,17 +41,19 @@ namespace SpriteMaster.Types {
 		}
 
 		public unsafe T this[int index] {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			readonly get {
 				T* ptr = (T*)(Pointer + GetOffset(index));
 				return *ptr;
 			}
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
 				T* ptr = (T*)(Pointer + GetOffset(index));
 				*ptr = value;
 			}
 		}
 
-		[NotNull]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public T[] ToArray() {
 			var result = new T[Length];
 			for (int i = 0; i < Length; ++i) {
@@ -61,18 +62,22 @@ namespace SpriteMaster.Types {
 			return result;
 		}
 
-		[NotNull]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public readonly unsafe ref T GetPinnableReference () {
 			return ref *(T*)Pointer;
 		}
 
-		public Span([NotNull] T[] data) : this(data, data.Length, data.Length * TypeSize) {}
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public Span(T[] data) : this(data, data.Length, data.Length * TypeSize) {}
 
-		public Span ([NotNull] T[] data, int length) : this(data, length, length * TypeSize) { }
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public Span (T[] data, int length) : this(data, length, length * TypeSize) { }
 
-		public Span ([NotNull] object pinnedObject, int size) : this(pinnedObject, size / TypeSize, size) { }
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public Span (object pinnedObject, int size) : this(pinnedObject, size / TypeSize, size) { }
 
-		public Span([NotNull] object pinnedObject, int length, int size) {
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public Span(object pinnedObject, int length, int size) {
 			var handle = GCHandle.Alloc(pinnedObject, GCHandleType.Pinned);
 			try {
 				PinnedObject = pinnedObject;
@@ -88,7 +93,8 @@ namespace SpriteMaster.Types {
 			Handle = new CollectionHandle(handle);
 		}
 
-		public unsafe Span ([NotNull] T* data, int length, int size) {
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public unsafe Span (T* data, int length, int size) {
 			PinnedObject = null;
 			Pointer = (IntPtr)data;
 			Length = length;
@@ -96,9 +102,10 @@ namespace SpriteMaster.Types {
 			Handle = null;
 		}
 
-		public unsafe Span([NotNull] T* data, int length) : this(data, length, length * TypeSize) {}
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public unsafe Span(T* data, int length) : this(data, length, length * TypeSize) {}
 
-		[NotNull]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Span<U> As<U>() where U : unmanaged {
 			// TODO add check for U == T
 			if (PinnedObject == null) {
@@ -110,23 +117,30 @@ namespace SpriteMaster.Types {
 		}
 
 		public unsafe sealed class Enumerator : IEnumerator<T>, IEnumerator {
-			[NotNull]
 			private readonly T* Span;
 			private readonly int Length;
 			private int Index = 0;
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public Enumerator (in Span<T> span) {
 				Span = (T *)span.Pointer;
 				Length = span.Length;
 			}
 
-			public T Current => Span[Index];
+			public T Current {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
+				get { return Span[Index]; }
+			}
 
-			object IEnumerator.Current => Span[Index];
+			object IEnumerator.Current {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
+				get { return Span[Index]; }
+			}
 
-			[CPure, JBPure]
+			[Pure, MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public void Dispose () {}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public bool MoveNext () {
 				++Index;
 				if (Index >= Length) {
@@ -135,12 +149,13 @@ namespace SpriteMaster.Types {
 				return true;
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public void Reset () {
 				Index = 0;
 			}
 		}
 
-		[NotNull]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public readonly IEnumerator<T> GetEnumerator () {
 			return new Enumerator(this);
 		}

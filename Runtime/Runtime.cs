@@ -1,17 +1,14 @@
-﻿using JetBrains.Annotations;
-using SpriteMaster.Types;
+﻿using SpriteMaster.Types;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using System.Text.RegularExpressions;
-
-using JBPure = JetBrains.Annotations.PureAttribute;
-using CPure = System.Diagnostics.Contracts.PureAttribute;
 
 namespace SpriteMaster {
 	public static class Runtime {
-		[CPure, JBPure, NotNull]
-		private static string ArgVToString([NotNull] string[] args) {
+		[Pure]
+		private static string ArgVToString(string[] args) {
 			if (args.Length == 0) {
 				return string.Empty;
 			}
@@ -26,13 +23,11 @@ namespace SpriteMaster {
 			return result.Remove(result.Length - 1);
 		}
 
-		[NotNull]
-		public static Process Open2([NotNull] string command, [NotNull] string arg) {
+		public static Process Open2(string command, string arg) {
 			return Open2(command, Arrays.Singleton(arg));
 		}
 
-		[NotNull]
-		public static Process Open2([NotNull] string command, string[] args = null) {
+		public static Process Open2(string command, string[] args = null) {
 			if (command == null || command == "")
 				throw new ArgumentOutOfRangeException(nameof(command));
 			args ??= Arrays<string>.Empty;
@@ -49,13 +44,11 @@ namespace SpriteMaster {
 			return process;
 		}
 
-		[NotNull]
-		public static string Capture1 ([NotNull] string command, [NotNull] string arg) {
+		public static string Capture1 (string command, string arg) {
 			return Capture1(command, Arrays.Singleton(arg));
 		}
 
-		[NotNull]
-		public static string Capture1([NotNull] string command, string[] args = null) {
+		public static string Capture1(string command, string[] args = null) {
 			using (var process = Open2(command, args)) {
 				return process.StandardOutput.ReadToEnd();
 			}
@@ -63,9 +56,9 @@ namespace SpriteMaster {
 
 		[ImmutableObject(true)]
 		public readonly ref struct Result2 {
-			[ImmutableObject(true), NotNull]
+			[ImmutableObject(true)]
 			public readonly string StandardOutput;
-			[ImmutableObject(true), NotNull]
+			[ImmutableObject(true)]
 			public readonly string StandardError;
 			internal Result2(string StdOut, string StdErr) {
 				StandardOutput = StdOut ?? string.Empty;
@@ -73,13 +66,11 @@ namespace SpriteMaster {
 			}
 		}
 
-		[NotNull]
-		public static Result2 Capture1E ([NotNull] string command, [NotNull] string arg) {
+		public static Result2 Capture1E (string command, string arg) {
 			return Capture1E(command, Arrays.Singleton(arg));
 		}
 
-		[NotNull]
-		public static Result2 Capture1E([NotNull] string command, string[] args = null) {
+		public static Result2 Capture1E(string command, string[] args = null) {
 			using (var process = Open2(command, args)) {
 				return new Result2(
 					process.StandardOutput.ReadToEnd(),
@@ -88,7 +79,7 @@ namespace SpriteMaster {
 			}
 		}
 
-		[CPure, JBPure]
+		[Pure]
 		private static PlatformType GetUnixType() {
 			var system = Capture1("uname", "-s").Trim().ToLowerInvariant();
 
@@ -134,7 +125,7 @@ namespace SpriteMaster {
 			Mono
 		}
 
-		[ImmutableObject(true), NotNull]
+		[ImmutableObject(true)]
 		public static readonly string FullSystem = Capture1("uname").Trim();
 
 		public static readonly FrameworkType Framework;

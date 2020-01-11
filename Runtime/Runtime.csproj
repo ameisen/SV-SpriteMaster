@@ -64,7 +64,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="JetBrains.Annotations" Version="2019.1.3" />
     <PackageReference Include="System.Data.HashFunction.xxHash" Version="2.0.0" />
   </ItemGroup>
 </Project>

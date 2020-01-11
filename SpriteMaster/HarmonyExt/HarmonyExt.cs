@@ -103,6 +103,7 @@ namespace SpriteMaster.HarmonyExt {
 						}
 					}
 					catch (Exception ex) {
+						Debug.TraceLn($"Exception Patching Method {method.GetFullName()}");
 						ex.PrintError();
 						continue;
 					}

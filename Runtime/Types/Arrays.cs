@@ -1,31 +1,26 @@
-﻿using JetBrains.Annotations;
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security;
-using JBPure = JetBrains.Annotations.PureAttribute;
-using Pure = System.Diagnostics.Contracts.PureAttribute;
 
 namespace SpriteMaster.Types {
 	public static class Arrays {
 		internal static class EmptyArrayStatic<T> {
-			[ImmutableObject(true), NotNull]
+			[ImmutableObject(true)]
 			internal static readonly T[] Value = new T[0];
 		}
 
-		[Pure, JBPure, MethodImpl(MethodImplOptions.AggressiveInlining)]
-		[ImmutableObject(true), NotNull]
+		[Pure, MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[ImmutableObject(true)]
 		public static T[] Empty<T> () => EmptyArrayStatic<T>.Value;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		[NotNull]
 		public static T[] Singleton<T> (T value) => new T[] { value };
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		[NotNull]
 		public static T[] Of<T> (params T[] values) => values;
 
 		private sealed class WrappedUnmanagedMemoryStream<T> : UnmanagedMemoryStream {
@@ -110,15 +105,13 @@ namespace SpriteMaster.Types {
 	}
 
 	public static class Arrays<T> {
-		[ImmutableObject(true), NotNull]
+		[ImmutableObject(true)]
 		public static readonly T[] Empty = Arrays.Empty<T>();
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		[NotNull]
 		public static T[] Singleton (T value) => Arrays.Singleton<T>(value);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		[NotNull]
 		public static T[] Of (params T[] values) => Arrays.Of<T>(values);
 	}
 }

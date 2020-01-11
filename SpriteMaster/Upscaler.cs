@@ -55,6 +55,7 @@ namespace SpriteMaster {
 		// TODO : use MemoryFailPoint class. Extensively.
 
 		private static void Trace(string msg) {
+			return;
 			Debug.TraceLn($"[CreateNewTexture] {msg}");
 		}
 
