@@ -55,51 +55,59 @@ namespace SpriteMaster.HarmonyExt {
 			foreach (var type in assembly.GetTypes()) {
 				foreach (var method in type.GetMethods(StaticFlags)) {
 					try {
-						var attribute = method.GetCustomAttributes().OfType<HarmonizeAttribute>().FirstOrDefault(); //GetCustomAttribute<HarmonyPatchAttribute>();
-						if (attribute == null)
+						var attributes = method.GetCustomAttributes().OfType<HarmonizeAttribute>();
+						if (attributes == null || !attributes.Any())
 							continue;
 
-						if (!attribute.CheckPlatform())
-							continue;
+						foreach (var attribute in attributes) {
+							try {
+								if (!attribute.CheckPlatform())
+									continue;
 
-						Debug.TraceLn($"Patching Method {method.GetFullName()}");
+								Debug.TraceLn($"Patching Method {method.GetFullName()}");
 
-						var instanceType = attribute.Type;
-						if (instanceType == null) {
-							var instancePar = method.GetParameters().Where(p => p.Name == "__instance");
-							Contract.AssertTrue(instancePar.Count() != 0, $"Type not specified for method {method.GetFullName()}, but no __instance argument present");
-							instanceType = instancePar.First().ParameterType.RemoveRef();
-						}
-
-						switch (attribute.GenericType) {
-							case HarmonizeAttribute.Generic.None:
-								Patch(
-									@this,
-									instanceType,
-									attribute.Method,
-									pre: (attribute.PatchFixation == HarmonizeAttribute.Fixation.Prefix) ? method : null,
-									post: (attribute.PatchFixation == HarmonizeAttribute.Fixation.Postfix) ? method : null,
-									trans: (attribute.PatchFixation == HarmonizeAttribute.Fixation.Transpile) ? method : null,
-									instanceMethod: attribute.Instance
-								);
-								break;
-							case HarmonizeAttribute.Generic.Struct:
-								foreach (var structType in StructTypes) {
-									Debug.TraceLn($"\tGeneric Type: {structType.FullName}");
-									Patch(
-										@this,
-										instanceType,
-										structType,
-										attribute.Method,
-										pre: (attribute.PatchFixation == HarmonizeAttribute.Fixation.Prefix) ? method : null,
-										post: (attribute.PatchFixation == HarmonizeAttribute.Fixation.Postfix) ? method : null,
-										trans: (attribute.PatchFixation == HarmonizeAttribute.Fixation.Transpile) ? method : null,
-										instanceMethod: attribute.Instance
-									);
+								var instanceType = attribute.Type;
+								if (instanceType == null) {
+									var instancePar = method.GetParameters().Where(p => p.Name == "__instance");
+									Contract.AssertTrue(instancePar.Count() != 0, $"Type not specified for method {method.GetFullName()}, but no __instance argument present");
+									instanceType = instancePar.First().ParameterType.RemoveRef();
 								}
-								break;
-							default:
-								throw new NotImplementedException("Non-struct Generic Harmony Types unimplemented");
+
+								switch (attribute.GenericType) {
+									case HarmonizeAttribute.Generic.None:
+										Patch(
+											@this,
+											instanceType,
+											attribute.Method,
+											pre: (attribute.PatchFixation == HarmonizeAttribute.Fixation.Prefix) ? method : null,
+											post: (attribute.PatchFixation == HarmonizeAttribute.Fixation.Postfix) ? method : null,
+											trans: (attribute.PatchFixation == HarmonizeAttribute.Fixation.Transpile) ? method : null,
+											instanceMethod: attribute.Instance
+										);
+										break;
+									case HarmonizeAttribute.Generic.Struct:
+										foreach (var structType in StructTypes) {
+											Debug.TraceLn($"\tGeneric Type: {structType.FullName}");
+											Patch(
+												@this,
+												instanceType,
+												structType,
+												attribute.Method,
+												pre: (attribute.PatchFixation == HarmonizeAttribute.Fixation.Prefix) ? method : null,
+												post: (attribute.PatchFixation == HarmonizeAttribute.Fixation.Postfix) ? method : null,
+												trans: (attribute.PatchFixation == HarmonizeAttribute.Fixation.Transpile) ? method : null,
+												instanceMethod: attribute.Instance
+											);
+										}
+										break;
+									default:
+										throw new NotImplementedException("Non-struct Generic Harmony Types unimplemented");
+								}
+							}
+							catch (Exception ex) {
+								Debug.TraceLn($"Exception Patching Method {method.GetFullName()}");
+								ex.PrintError();
+							}
 						}
 					}
 					catch (Exception ex) {
