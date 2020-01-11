@@ -6,9 +6,9 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Extensions {
 	using XRectangle = Microsoft.Xna.Framework.Rectangle;
-	internal static class Range {
+	public static class Range {
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static T Clamp<T> (this T v, T min, T max) where T : IComparable, IComparable<T> {
+		public static T Clamp<T> (this T v, T min, T max) where T : IComparable, IComparable<T> {
 			if (v.CompareTo(min) < 0)
 				return min;
 			if (v.CompareTo(max) > 0)
@@ -17,7 +17,7 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static int Clamp (this int v, int min, int max) {
+		public static int Clamp (this int v, int min, int max) {
 			if (v < min)
 				return min;
 			if (v > max)
@@ -26,7 +26,7 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static uint Clamp (this uint v, uint min, uint max) {
+		public static uint Clamp (this uint v, uint min, uint max) {
 			if (v < min)
 				return min;
 			if (v > max)
@@ -35,7 +35,7 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static long Clamp (this long v, long min, long max) {
+		public static long Clamp (this long v, long min, long max) {
 			if (v < min)
 				return min;
 			if (v > max)
@@ -44,7 +44,7 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static ulong Clamp (this ulong v, ulong min, ulong max) {
+		public static ulong Clamp (this ulong v, ulong min, ulong max) {
 			if (v < min)
 				return min;
 			if (v > max)
@@ -53,7 +53,7 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static float Clamp (this float v, float min, float max) {
+		public static float Clamp (this float v, float min, float max) {
 			if (v < min)
 				return min;
 			if (v > max)
@@ -62,7 +62,7 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static double Clamp (this double v, double min, double max) {
+		public static double Clamp (this double v, double min, double max) {
 			if (v < min)
 				return min;
 			if (v > max)
@@ -71,22 +71,22 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static bool WithinInclusive<T> (this T v, T min, T max) where T : IComparable, IComparable<T> {
+		public static bool WithinInclusive<T> (this T v, T min, T max) where T : IComparable, IComparable<T> {
 			return (v.CompareTo(min) >= 0 && v.CompareTo(max) <= 0);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static bool WithinExclusive<T> (this T v, T min, T max) where T : IComparable, IComparable<T> {
+		public static bool WithinExclusive<T> (this T v, T min, T max) where T : IComparable, IComparable<T> {
 			return (v.CompareTo(min) > 0 && v.CompareTo(max) < 0);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static bool Within<T> (this T v, T min, T max) where T : IComparable, IComparable<T> {
+		public static bool Within<T> (this T v, T min, T max) where T : IComparable, IComparable<T> {
 			return WithinInclusive(v, min, max);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static IEnumerable<int> ToInclusive (this int from, int to) {
+		public static IEnumerable<int> ToInclusive (this int from, int to) {
 			if (from >= to) {
 				while (from >= to) {
 					yield return from--;
@@ -100,7 +100,7 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static IEnumerable<long> ToInclusive (this int from, long to) {
+		public static IEnumerable<long> ToInclusive (this int from, long to) {
 			if (from >= to) {
 				while (from >= to) {
 					yield return from--;
@@ -114,7 +114,7 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static IEnumerable<int> ToExclusive (this int from, int to) {
+		public static IEnumerable<int> ToExclusive (this int from, int to) {
 			while (from < to) {
 				yield return from++;
 			}
@@ -124,7 +124,7 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static IEnumerable<long> ToExclusive (this int from, long to) {
+		public static IEnumerable<long> ToExclusive (this int from, long to) {
 			while (from < to) {
 				yield return from++;
 			}
@@ -134,37 +134,37 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static IEnumerable<int> To (this int from, int to) {
+		public static IEnumerable<int> To (this int from, int to) {
 			return ToInclusive(from, to);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static IEnumerable<long> To (this int from, long to) {
+		public static IEnumerable<long> To (this int from, long to) {
 			return ToInclusive(from, to);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static IEnumerable<int> Until (this int from, int to) {
+		public static IEnumerable<int> Until (this int from, int to) {
 			return ToExclusive(from, to);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static IEnumerable<long> Until (this int from, long to) {
+		public static IEnumerable<long> Until (this int from, long to) {
 			return ToExclusive(from, to);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static IEnumerable<int> For (this int from, int count) {
+		public static IEnumerable<int> For (this int from, int count) {
 			return ToExclusive(from, from + count);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static IEnumerable<long> For (this int from, long count) {
+		public static IEnumerable<long> For (this int from, long count) {
 			return ToExclusive(from, from + count);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static IEnumerable<long> ToInclusive (this long from, long to) {
+		public static IEnumerable<long> ToInclusive (this long from, long to) {
 			if (from < to) {
 				while (from <= to) {
 					yield return from++;
@@ -178,7 +178,7 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static IEnumerable<long> ToExclusive (this long from, long to) {
+		public static IEnumerable<long> ToExclusive (this long from, long to) {
 			while (from < to) {
 				yield return from++;
 			}
@@ -188,16 +188,16 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static IEnumerable<long> To (this long from, long to) {
+		public static IEnumerable<long> To (this long from, long to) {
 			return ToInclusive(from, to);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static IEnumerable<long> Until (this long from, long to) {
+		public static IEnumerable<long> Until (this long from, long to) {
 			return ToExclusive(from, to);
 		}
 
-		internal static XRectangle ClampTo (this in XRectangle source, in XRectangle clamp) {
+		public static XRectangle ClampTo (this in XRectangle source, in XRectangle clamp) {
 			var result = new XRectangle(source.X, source.Y, source.Width, source.Height);
 
 			int leftDiff = clamp.Left - result.Left;
@@ -226,22 +226,22 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static bool Matches (this Texture2D texture, in XRectangle rectangle) {
+		public static bool Matches (this Texture2D texture, in XRectangle rectangle) {
 			return rectangle.X == 0 && rectangle.Y == 0 && rectangle.Width == texture.Width && rectangle.Height == texture.Height;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static bool Matches (this Texture2D texture, in Rectangle rectangle) {
+		public static bool Matches (this Texture2D texture, in Rectangle rectangle) {
 			return rectangle.X == 0 && rectangle.Y == 0 && rectangle.Width == texture.Width && rectangle.Height == texture.Height;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static bool Matches (this in XRectangle rectangle, Texture2D texture) {
+		public static bool Matches (this in XRectangle rectangle, Texture2D texture) {
 			return texture.Matches(rectangle);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static bool Matches (this in Rectangle rectangle, Texture2D texture) {
+		public static bool Matches (this in Rectangle rectangle, Texture2D texture) {
 			return texture.Matches(rectangle);
 		}
 	}

@@ -7,7 +7,7 @@ using System.Reflection;
 namespace SpriteMaster.Types {
 	class WeakCollection<T> : ICollection<T>, IEnumerable<T>, IEnumerable, /*ICollection, */IReadOnlyList<T>, IReadOnlyCollection<T> where T : class {
 		static private class Reflect {
-			internal static readonly PropertyInfo IsReadOnly = typeof(List<ComparableWeakReference<T>>).GetProperty("IsReadOnly", BindingFlags.Instance | BindingFlags.NonPublic);
+			public static readonly PropertyInfo IsReadOnly = typeof(List<ComparableWeakReference<T>>).GetProperty("IsReadOnly", BindingFlags.Instance | BindingFlags.NonPublic);
 
 			private static string GetName (string name) {
 				return $"{typeof(WeakCollection<T>).Name}.{name}";
@@ -142,7 +142,7 @@ namespace SpriteMaster.Types {
 		private class ReferenceComparer : IComparer<ComparableWeakReference<T>> {
 			private readonly IComparer<T> Comparer;
 
-			internal ReferenceComparer(IComparer<T> comparer) {
+			public ReferenceComparer(IComparer<T> comparer) {
 				Comparer = comparer;
 			}
 
@@ -519,7 +519,7 @@ namespace SpriteMaster.Types {
 		public sealed class Enumerator : IEnumerator<T> {
 			private readonly IEnumerator<ComparableWeakReference<T>> _Enumerator;
 
-			internal Enumerator (IEnumerator<ComparableWeakReference<T>> enumerator) {
+			public Enumerator (IEnumerator<ComparableWeakReference<T>> enumerator) {
 				_Enumerator = enumerator;
 			}
 

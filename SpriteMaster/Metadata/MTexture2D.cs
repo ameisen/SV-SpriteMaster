@@ -3,12 +3,15 @@
 using System.Runtime.Caching;
 using System.Threading;
 using System;
+#if WITH_ZLIB
 using Ionic.Zlib;
+#endif
 using System.IO;
 using System.Reflection;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Types;
 using SpriteMaster.Extensions;
+using TeximpNet.Compression;
 
 namespace SpriteMaster.Metadata {
 	internal sealed class MTexture2D {
@@ -71,27 +74,54 @@ namespace SpriteMaster.Metadata {
 			}
 		}
 
+#if WITH_ZLIB
 		private static readonly MethodInfo ZlibBaseCompressBuffer;
+#endif
+
 		static MTexture2D() {
+#if WITH_ZLIB
 			ZlibBaseCompressBuffer = typeof(ZlibStream).Assembly.GetType("Ionic.Zlib.ZlibBaseStream").GetMethod("CompressBuffer", BindingFlags.Static | BindingFlags.Public);
 			if (ZlibBaseCompressBuffer == null) {
 				throw new NullReferenceException(nameof(ZlibBaseCompressBuffer));
 			}
+#endif
+		}
+
+		private static byte[] StreamCompress (byte[] data) {
+			using (var val = new MemoryStream()) {
+				using (var compressor = new System.IO.Compression.DeflateStream(val, System.IO.Compression.CompressionLevel.Optimal)) {
+					return val.ToArray();
+				}
+			}
+		}
+
+		private static byte[] StreamDecompress (byte[] data) {
+			using (var val = new MemoryStream()) {
+				using (var compressor = new System.IO.Compression.DeflateStream(val, System.IO.Compression.CompressionMode.Decompress)) {
+					return val.ToArray();
+				}
+			}
 		}
 
 		private static byte[] LZCompress(byte[] data) {
+#if WITH_ZLIB
 			using (var val = new MemoryStream()) {
 				using (var compressor = new DeflateStream(val, CompressionMode.Compress, CompressionLevel.BestCompression)) {
 					ZlibBaseCompressBuffer.Invoke(null, new object[] { data, compressor });
 					return val.ToArray();
 				}
 			}
+#else
+			throw new Exception("SpriteMaster was built with LZ support disabled");
+#endif
 		}
 
 		private static byte[] Compress(byte[] data) {
 			switch (Config.MemoryCache.Type) {
 				case Config.MemoryCache.Algorithm.None:
 					return data;
+				case Config.MemoryCache.Algorithm.COMPRESS:
+					return StreamCompress(data);
 				case Config.MemoryCache.Algorithm.LZ:
 					return LZCompress(data);
 				case Config.MemoryCache.Algorithm.LZMA: {
@@ -113,8 +143,14 @@ namespace SpriteMaster.Metadata {
 			switch (Config.MemoryCache.Type) {
 				case Config.MemoryCache.Algorithm.None:
 					return data;
+				case Config.MemoryCache.Algorithm.COMPRESS:
+					return StreamDecompress(data);
 				case Config.MemoryCache.Algorithm.LZ:
+#if WITh_ZLIB
 					return DeflateStream.UncompressBuffer(data);
+#else
+					throw new Exception("SpriteMaster was built with LZ support disabled");
+#endif
 				case Config.MemoryCache.Algorithm.LZMA: {
 					/*
 					using var outStream = new MemoryStream();

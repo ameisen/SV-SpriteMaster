@@ -72,7 +72,7 @@ namespace SpriteMaster.Resample {
 			var oldFormat = format;
 
 			void FlipColorBytes (byte[] p) {
-				var span = new Span<byte>(p).CastAs<byte, uint>();
+				var span = new Span<byte>(p).As<uint>();
 				foreach (int i in 0..span.Length) {
 					var color = span[i];
 					color =

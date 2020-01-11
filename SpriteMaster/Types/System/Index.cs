@@ -15,7 +15,7 @@ namespace System {
   /// </code>
   /// </remarks>
   public readonly struct Index : IEquatable<Index> {
-    internal readonly Type _originalType;
+    public readonly Type _originalType;
     private readonly long _value;
 
     /// <summary>Construct an Index using a value and indicating if the index is from the start or from the end.</summary>

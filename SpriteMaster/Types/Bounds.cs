@@ -7,7 +7,7 @@ namespace SpriteMaster.Types {
 	using XNARectangle = Microsoft.Xna.Framework.Rectangle;
 	using XTileRectangle = xTile.Dimensions.Rectangle;
 
-	internal struct Bounds :
+	public struct Bounds :
 		ICloneable,
 		IComparable,
 		IComparable<Bounds>,

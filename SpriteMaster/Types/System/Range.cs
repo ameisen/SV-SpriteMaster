@@ -75,36 +75,6 @@ namespace System {
 		/// <summary>Create a Range object starting from first element to the end.</summary>
 		public static Range All => new Range(Index.Start, Index.End);
 
-		/// <summary>Calculate the start offset and length of range object using a collection length.</summary>
-		/// <param name="length">The length of the collection that the range will be used with. length has to be a positive value.</param>
-		/// <remarks>
-		/// For performance reason, we don't validate the input length parameter against negative values.
-		/// It is expected Range will be used with collections which always have non negative length/count.
-		/// We validate the range is inside the length scope though.
-		/// </remarks>
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public (long Offset, long Length) GetOffsetAndLength (int length) {
-			long start;
-			var startIndex = Start;
-			if (startIndex.IsFromEnd)
-				start = length - startIndex.Value;
-			else
-				start = startIndex.Value;
-
-			long end;
-			var endIndex = End;
-			if (endIndex.IsFromEnd)
-				end = length - endIndex.Value;
-			else
-				end = endIndex.Value;
-
-			if ((uint)end > (uint)length || (uint)start > (uint)end) {
-				throw new ArgumentOutOfRangeException(nameof(length));
-			}
-
-			return (start, end - start);
-		}
-
 		public sealed class RangeEnumerator :
 			IEnumerator,
 			IEnumerator<sbyte>,
@@ -121,7 +91,7 @@ namespace System {
 			long End;
 			long _Current;
 
-			internal RangeEnumerator (Index start, Index end) {
+			public RangeEnumerator (Index start, Index end) {
 				originalType = start._originalType;
 				Start = start.Value;
 				End = end.Value;

@@ -32,6 +32,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 		 */
 
 
+			/*
 		private ref struct SpriteInfo {
 			private static readonly Type RealType;
 			private static readonly FieldInfo SourceInfo;
@@ -112,8 +113,87 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 				Reference = reference;
 			}
 		}
+		*/
 
-		[HarmonyPatch("PlatformRenderBatch", HarmonyPatch.Fixation.Prefix, PriorityLevel.First)]
+		[HarmonyPatch("Microsoft.Xna.Framework.Graphics", "Microsoft.Xna.Framework.Graphics.SpriteBatcher", "FlushVertexArray", HarmonyPatch.Fixation.Prefix, PriorityLevel.First, platform: HarmonyPatch.Platform.Unix)]
+		internal static bool OnFlushVertexArray (
+			object __instance,
+			int start,
+			int end,
+			Effect effect,
+			Texture texture,
+			ref SamplerState __state
+		) {
+			try {
+				var OriginalState = texture?.GraphicsDevice?.SamplerStates[0] ?? SamplerState.PointClamp;
+				__state = OriginalState;
+
+				if (texture is ManagedTexture2D managedTexture && managedTexture.Texture != null) {
+					var newState = new SamplerState() {
+						AddressU = managedTexture.Texture.Wrapped.X ? TextureAddressMode.Wrap : OriginalState.AddressU,
+						AddressV = managedTexture.Texture.Wrapped.Y ? TextureAddressMode.Wrap : OriginalState.AddressV,
+						AddressW = OriginalState.AddressW,
+						MaxAnisotropy = OriginalState.MaxAnisotropy,
+						MaxMipLevel = OriginalState.MaxMipLevel,
+						MipMapLevelOfDetailBias = OriginalState.MipMapLevelOfDetailBias,
+						Name = "RescaledSampler",
+						Tag = OriginalState.Tag,
+						Filter = (Config.DrawState.SetLinear) ? TextureFilter.Linear : OriginalState.Filter
+					};
+
+					if (texture?.GraphicsDevice?.SamplerStates != null)
+						texture.GraphicsDevice.SamplerStates[0] = newState;
+				}
+				/*
+				else if (texture is RenderTarget2D) {
+					var newState = new SamplerState() {
+						AddressU = OriginalState.AddressU,
+						AddressV = OriginalState.AddressV,
+						AddressW = OriginalState.AddressW,
+						MaxAnisotropy = OriginalState.MaxAnisotropy,
+						MaxMipLevel = OriginalState.MaxMipLevel,
+						MipMapLevelOfDetailBias = OriginalState.MipMapLevelOfDetailBias,
+						Name = "RescaledSampler",
+						Tag = OriginalState.Tag,
+						Filter = (Config.DrawState.SetLinear) ? TextureFilter.Linear : OriginalState.Filter
+					};
+
+					__instance.GraphicsDevice.SamplerStates[0] = newState;
+					___samplerState = newState;
+				}
+				*/
+			}
+			catch (Exception ex) {
+				ex.PrintError();
+			}
+
+			return true;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[HarmonyPatch("Microsoft.Xna.Framework.Graphics", "Microsoft.Xna.Framework.Graphics.SpriteBatcher", "FlushVertexArray", HarmonyPatch.Fixation.Postfix, PriorityLevel.Last, platform: HarmonyPatch.Platform.Unix)]
+		internal static void OnFlushVertexArrayPost (
+			object __instance,
+			int start,
+			int end,
+			Effect effect,
+			Texture texture,
+			ref SamplerState __state
+		) {
+			if (__state == null) {
+				return;
+			}
+
+			try {
+				if (texture?.GraphicsDevice?.SamplerStates != null)
+					texture.GraphicsDevice.SamplerStates[0] = __state;
+			}
+			catch (Exception ex) {
+				ex.PrintError();
+			}
+		}
+
+		[HarmonyPatch("PlatformRenderBatch", HarmonyPatch.Fixation.Prefix, PriorityLevel.First, platform: HarmonyPatch.Platform.Windows)]
 		internal static bool OnPlatformRenderBatch (
 			SpriteBatch __instance,
 			Texture2D texture,
@@ -172,7 +252,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		[HarmonyPatch("PlatformRenderBatch", HarmonyPatch.Fixation.Postfix, PriorityLevel.Last)]
+		[HarmonyPatch("PlatformRenderBatch", HarmonyPatch.Fixation.Postfix, PriorityLevel.Last, platform: HarmonyPatch.Platform.Windows)]
 		internal static void OnPlatformRenderBatchPost (
 			SpriteBatch __instance,
 			Texture2D texture,

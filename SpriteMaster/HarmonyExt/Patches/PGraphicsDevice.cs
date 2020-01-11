@@ -13,7 +13,7 @@ namespace SpriteMaster.HarmonyExt.Patches {
 			return true;
 		}
 
-		[HarmonyPatch("Present")]
+		[HarmonyPatch("Present", platform: HarmonyPatch.Platform.Windows)]
 		internal static bool Present (GraphicsDevice __instance, Rectangle? sourceRectangle, Rectangle? destinationRectangle, IntPtr overrideWindowHandle) {
 			DrawState.OnPresent();
 			return true;

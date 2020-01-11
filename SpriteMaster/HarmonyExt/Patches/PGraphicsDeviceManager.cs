@@ -32,7 +32,7 @@ namespace SpriteMaster.HarmonyExt.Patches {
 			return true;
 		}
 
-		[HarmonyPatch("ApplyChanges", HarmonyPatch.Fixation.Postfix, PriorityLevel.Last)]
+		[HarmonyPatch("ApplyChanges", HarmonyPatch.Fixation.Postfix, PriorityLevel.Last, platform: HarmonyPatch.Platform.Windows)]
 		internal static void OnApplyChangesPost (GraphicsDeviceManager __instance) {
 			var @this = __instance;
 

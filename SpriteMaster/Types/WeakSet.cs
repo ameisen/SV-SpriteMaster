@@ -4,7 +4,7 @@ using System.Security;
 
 namespace SpriteMaster.Types {
 	[ComVisible(false)]
-	internal class WeakSet<T> where T : class {
+	public class WeakSet<T> where T : class {
 		private const object Sentinel = null;
 
 		private readonly ConditionalWeakTable<T, object> InternalTable = new ConditionalWeakTable<T, object>();

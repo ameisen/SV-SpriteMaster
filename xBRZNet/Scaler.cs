@@ -2,6 +2,7 @@
 using System.Diagnostics.Contracts;
 using System.Drawing;
 using System.Runtime.CompilerServices;
+using SpriteMaster.Types;
 using SpriteMaster.xBRZ.Blend;
 using SpriteMaster.xBRZ.Color;
 using SpriteMaster.xBRZ.Common;
@@ -15,22 +16,24 @@ namespace SpriteMaster.xBRZ {
 
 		public Scaler (
 			int scaleMultiplier,
-			in ReadOnlySpan<uint> sourceData,
+			in Span<uint> sourceData,
 			int sourceWidth,
 			int sourceHeight,
 			in Rectangle? sourceTarget,
-			in Span<uint> targetData,
+			ref Span<uint> targetData,
 			in Config configuration
 		) {
 			if (scaleMultiplier < MinScale || scaleMultiplier > MaxScale) {
 				throw new ArgumentOutOfRangeException(nameof(scaleMultiplier));
 			}
+			/*
 			if (sourceData == null) {
 				throw new ArgumentNullException(nameof(sourceData));
 			}
 			if (targetData == null) {
 				throw new ArgumentNullException(nameof(targetData));
 			}
+			*/
 			if (sourceWidth <= 0) {
 				throw new ArgumentOutOfRangeException(nameof(sourceWidth));
 			}
@@ -56,7 +59,7 @@ namespace SpriteMaster.xBRZ {
 			this.ColorEqualizer = new ColorEq(this.configuration);
 			this.sourceWidth = sourceWidth;
 			this.sourceHeight = sourceHeight;
-			Scale(in sourceData, in targetData);
+			Scale(in sourceData, ref targetData);
 		}
 
 		private readonly Config configuration;
@@ -74,7 +77,7 @@ namespace SpriteMaster.xBRZ {
 
 		//fill block with the given color
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static void FillBlock<T> (in Span<T> trg, int trgi, int pitch, T col, int blockSize) {
+		private static void FillBlock<T> (ref Span<T> trg, int trgi, int pitch, T col, int blockSize) where T : unmanaged {
 			for (var y = 0; y < blockSize; ++y, trgi += pitch) {
 				for (var x = 0; x < blockSize; ++x) {
 					trg[trgi + x] = col;
@@ -265,8 +268,8 @@ namespace SpriteMaster.xBRZ {
 
 		//scaler policy: see "Scaler2x" reference implementation
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private unsafe void Scale (in ReadOnlySpan<uint> source, in Span<uint> destination) {
-			fixed (uint* destinationPtr = destination) {
+		private unsafe void Scale (in Span<uint> source, ref Span<uint> destination) {
+			fixed (uint* destinationPtr = &destination.GetPinnableReference()) {
 
 				int yFirst = sourceTarget.Top;
 				int yLast = sourceTarget.Bottom;
@@ -277,7 +280,7 @@ namespace SpriteMaster.xBRZ {
 				//temporary buffer for "on the fly preprocessing"
 				var preProcBuffer = stackalloc byte[sourceTarget.Width];
 
-				uint GetPixel (in ReadOnlySpan<uint> src, int stride, int offset) {
+				uint GetPixel (in Span<uint> src, int stride, int offset) {
 					// We can try embedded a distance calculation as well. Perhaps instead of a negative stride/offset, we provide a 
 					// negative distance from the edge and just recalculate the stride/offset in that case.
 					// We can scale the alpha reduction by the distance to hopefully correct the edges.
@@ -440,7 +443,7 @@ namespace SpriteMaster.xBRZ {
 						//fill block of size scale * scale with the given color
 						//  //place *after* preprocessing step, to not overwrite the
 						//  //results while processing the the last pixel!
-						FillBlock(in destination, trgi, targetWidth, source[s0 + x], scaler.Scale);
+						FillBlock(ref destination, trgi, targetWidth, source[s0 + x], scaler.Scale);
 
 						//blend four corners of current pixel
 						if (blendXy == 0)

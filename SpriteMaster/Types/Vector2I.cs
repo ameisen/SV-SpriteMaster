@@ -10,7 +10,7 @@ namespace SpriteMaster.Types {
 	using DrawingSize = System.Drawing.Size;
 	using XTileSize = xTile.Dimensions.Size;
 
-	internal struct Vector2I :
+	public struct Vector2I :
 		ICloneable,
 		IComparable,
 		IComparable<Vector2I>,

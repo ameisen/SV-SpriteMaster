@@ -1,13 +1,13 @@
 ﻿using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Extensions {
-	internal static class String {
+	public static class String {
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static bool IsBlank (this string str) {
+		public static bool IsBlank (this string str) {
 			return str == null || str == "";
 		}
 
-		internal static string Reverse (this string str) {
+		public static string Reverse (this string str) {
 			Contract.AssertNotNull(str);
 
 			unsafe {
@@ -23,14 +23,14 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static string Reversed (this string str) {
+		public static string Reversed (this string str) {
 			Contract.AssertNotNull(str);
 			var strArray = str.ToCharArray().Reverse();
 			return new string(strArray);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static string Enquote (this string str, string quote = "\'") {
+		public static string Enquote (this string str, string quote = "\'") {
 			if (str.StartsWith(quote) && str.EndsWith(quote)) {
 				return str;
 			}

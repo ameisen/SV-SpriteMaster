@@ -5,19 +5,19 @@ using System.Threading;
 
 namespace SpriteMaster {
 	[SecuritySafeCritical]
-	internal sealed class SharedLock : CriticalFinalizerObject, IDisposable {
+	public sealed class SharedLock : CriticalFinalizerObject, IDisposable {
 		private ReaderWriterLock Lock = new ReaderWriterLock();
 
-		internal struct SharedCookie : IDisposable {
+		public struct SharedCookie : IDisposable {
 			private ReaderWriterLock Lock;
 
 			[SecuritySafeCritical]
-			internal SharedCookie (ReaderWriterLock rwlock) {
+			public SharedCookie (ReaderWriterLock rwlock) {
 				this.Lock = rwlock;
 				this.Lock.AcquireReaderLock(-1);
 			}
 
-			internal bool IsDisposed {
+			public bool IsDisposed {
 				[SecuritySafeCritical, ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
 				get { return Lock == null; }
 			}
@@ -35,16 +35,16 @@ namespace SpriteMaster {
 				Lock = null;
 			}
 		}
-		internal struct ExclusiveCookie : IDisposable {
+		public struct ExclusiveCookie : IDisposable {
 			private ReaderWriterLock Lock;
 
 			[SecuritySafeCritical]
-			internal ExclusiveCookie (ReaderWriterLock rwlock) {
+			public ExclusiveCookie (ReaderWriterLock rwlock) {
 				this.Lock = rwlock;
 				this.Lock.AcquireWriterLock(-1);
 			}
 
-			internal bool IsDisposed {
+			public bool IsDisposed {
 				[SecuritySafeCritical, ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
 				get { return Lock == null; }
 			}
@@ -63,17 +63,17 @@ namespace SpriteMaster {
 			}
 		}
 
-		internal struct PromotedCookie : IDisposable {
+		public struct PromotedCookie : IDisposable {
 			private ReaderWriterLock Lock;
 			private LockCookie Cookie;
 
 			[SecuritySafeCritical]
-			internal PromotedCookie (ReaderWriterLock rwlock) {
+			public PromotedCookie (ReaderWriterLock rwlock) {
 				this.Lock = rwlock;
 				this.Cookie = this.Lock.UpgradeToWriterLock(-1);
 			}
 
-			internal bool IsDisposed {
+			public bool IsDisposed {
 				[SecuritySafeCritical, ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
 				get { return Lock == null; }
 			}
@@ -97,26 +97,26 @@ namespace SpriteMaster {
 			Lock = null;
 		}
 
-		internal bool IsLocked {
+		public bool IsLocked {
 			[SecuritySafeCritical, ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
 			get { return Lock.IsReaderLockHeld || Lock.IsWriterLockHeld; }
 		}
 
-		internal bool IsSharedLock {
+		public bool IsSharedLock {
 			[SecuritySafeCritical, ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
 			get { return Lock.IsReaderLockHeld; }
 		}
 
-		internal bool IsExclusiveLock {
+		public bool IsExclusiveLock {
 			[SecuritySafeCritical, ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
 			get { return Lock.IsWriterLockHeld; }
 		}
 
-		internal bool IsDisposed {
+		public bool IsDisposed {
 			get { return Lock == null; }
 		}
 
-		internal SharedCookie Shared {
+		public SharedCookie Shared {
 			[SecuritySafeCritical]
 			get {
 				Contract.Assert(!IsLocked);
@@ -124,7 +124,7 @@ namespace SpriteMaster {
 			}
 		}
 
-		internal ExclusiveCookie Exclusive {
+		public ExclusiveCookie Exclusive {
 			[SecuritySafeCritical]
 			get {
 				Contract.Assert(!IsLocked);
@@ -132,7 +132,7 @@ namespace SpriteMaster {
 			}
 		}
 
-		internal PromotedCookie Promote {
+		public PromotedCookie Promote {
 			[SecuritySafeCritical]
 			get {
 				Contract.Assert(!IsExclusiveLock && IsSharedLock);

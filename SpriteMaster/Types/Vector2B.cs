@@ -1,7 +1,7 @@
 ﻿using System;
 
 namespace SpriteMaster.Types {
-	internal struct Vector2B :
+	public struct Vector2B :
 		ICloneable,
 		IComparable,
 		IComparable<Vector2B>,

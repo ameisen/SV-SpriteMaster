@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
+using SpriteMaster.Attributes;
 using SpriteMaster.Extensions;
 using StardewModdingAPI;
 using System;
@@ -9,34 +10,6 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster {
-	// https://stackoverflow.com/a/11898531
-	[AttributeUsage(AttributeTargets.Method, Inherited = false)]
-	public sealed class UntracedAttribute : Attribute { }
-
-	public static class DebugExtensions {
-		[DebuggerStepThrough, DebuggerHidden(), Untraced]
-		public static bool IsUntraced (this MethodBase method) {
-			return method.IsDefined(typeof(UntracedAttribute), true);
-		}
-
-		[DebuggerStepThrough, DebuggerHidden(), Untraced]
-		public static string GetStackTrace (this Exception e) {
-			var tracedFrames = new List<StackFrame>();
-			foreach (var frame in new StackTrace(e, true).GetFrames()) {
-				if (!frame.GetMethod().IsUntraced()) {
-					tracedFrames.Add(frame);
-				}
-			}
-
-			var tracedStrings = new List<string>();
-			foreach (var frame in tracedFrames) {
-				tracedStrings.Add(new StackTrace(frame).ToString());
-			}
-
-			return string.Concat(tracedStrings);
-		}
-	}
-
 	internal static class Debug {
 		private static readonly string ModuleName = typeof(Debug).Namespace;
 

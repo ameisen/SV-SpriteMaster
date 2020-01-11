@@ -54,6 +54,10 @@ namespace SpriteMaster {
 
 		// TODO : use MemoryFailPoint class. Extensively.
 
+		private static void Trace(string msg) {
+			Debug.TraceLn($"[CreateNewTexture] {msg}");
+		}
+
 		private static unsafe void CreateNewTexture (
 			ScaledTexture texture,
 			SpriteInfo input,
@@ -72,6 +76,7 @@ namespace SpriteMaster {
 			out Vector2I blockPadding,
 			out byte[] data
 		) {
+			Trace("Entry");
 			padding = Vector2I.Zero;
 			blockPadding = Vector2I.Zero;
 
@@ -82,6 +87,7 @@ namespace SpriteMaster {
 
 			wrapped.Set(false);
 
+			Trace("Scale Loop");
 			if (Config.Resample.Scale) {
 				int originalScale = scale;
 				scale = 2;
@@ -93,33 +99,46 @@ namespace SpriteMaster {
 					}
 				}
 			}
+			Trace("~Scale Loop");
 
 			var scaledSize = inputSize * scale;
 			var newSize = scaledSize.Min(Config.ClampDimension);
 
 			var scaledDimensions = spriteBounds.Extent * scale;
 
+			Trace("GetDumpBitmap");
 			Bitmap GetDumpBitmap (Bitmap source) {
 				var dump = (Bitmap)source.Clone();
 				foreach (int y in 0..dump.Height)
 					foreach (int x in 0..dump.Width) {
+						var pixel = dump.GetPixel(x, y);
+						var ipixel = (uint)pixel.ToArgb();
+
+						ipixel =
+							(ipixel & 0xFF00FF00) |
+							(ipixel & 0x00FF0000) >> 16 |
+							(ipixel & 0x000000FF) << 16;
+
 						dump.SetPixel(
 							x, y,
-							Texel.FromARGB(dump.GetPixel(x, y)).Color
+							System.Drawing.Color.FromArgb((int)ipixel)
 						);
 					}
 
 				return dump;
+				return null;
 			}
+			Trace("~GetDumpBitmap");
 
 
 			Vector2B WrappedX;
 			Vector2B WrappedY;
 
 			// Water in the game is pre-upscaled by 4... which is weird.
+			Trace("IsWater");
 			Span<int> rawData;
 			if (isWater) {
-				var veryRawData = MemoryMarshal.Cast<byte, int>(rawTextureData.AsSpan());
+				var veryRawData = new Span<byte>(rawTextureData).As<int>();
 				rawData = new Span<int>(new int[veryRawData.Length / 16]);
 				foreach (int y in 0..textureSize.Height) {
 					var ySourceOffset = (y * 4) * input.ReferenceSize.Width;
@@ -130,9 +149,11 @@ namespace SpriteMaster {
 				}
 			}
 			else {
-				rawData = MemoryMarshal.Cast<byte, int>(rawTextureData.AsSpan());
+				rawData = new Span<byte>(rawTextureData).As<int>();
 			}
+			Trace("~IsWater");
 
+			Trace("EdgeResults");
 			var edgeResults = Edge.AnalyzeLegacy(
 				reference: input.Reference,
 				data: rawData,
@@ -140,13 +161,17 @@ namespace SpriteMaster {
 				spriteSize: spriteBounds,
 				Wrapped: input.Wrapped
 			);
+			Trace("~EdgeResults");
 
-			(WrappedX, WrappedY, wrapped) = (edgeResults.WrappedX, edgeResults.WrappedY, edgeResults.Wrapped);
+			WrappedX = edgeResults.WrappedX;
+			WrappedY = edgeResults.WrappedY;
+			wrapped = edgeResults.Wrapped;
 
 			wrapped &= Config.Resample.EnableWrappedAddressing;
 
+			Trace("DumpReference");
 			if (Config.Debug.Sprite.DumpReference) {
-				using (var filtered = Textures.CreateBitmap(rawData.CastAs<int, byte>().ToArray(), textureSize, PixelFormat.Format32bppArgb)) {
+				using (var filtered = Textures.CreateBitmap(rawData.As<byte>().ToArray(), textureSize, PixelFormat.Format32bppArgb)) {
 					using (var submap = (Bitmap)filtered.Clone(spriteBounds, filtered.PixelFormat)) {
 						var dump = GetDumpBitmap(submap);
 						var path = Cache.GetDumpPath($"{input.Reference.SafeName().Replace("\\", ".").Replace("/", ".")}.{hashString}.reference.png");
@@ -155,7 +180,9 @@ namespace SpriteMaster {
 					}
 				}
 			}
+			Trace("~DumpReference");
 
+			Trace("Smoothing");
 			if (Config.Resample.Smoothing) {
 				var scalerConfig = new xBRZ.Config(wrappedX: (wrapped.X && false) || isWater, wrappedY: (wrapped.Y && false) || isWater);
 
@@ -190,6 +217,7 @@ namespace SpriteMaster {
 					}
 				}
 
+				Trace("Padding");
 				if (shouldPad.Any) {
 					int expectedPadding = Math.Max(1, scale / 2);
 
@@ -276,6 +304,7 @@ namespace SpriteMaster {
 						//scaledDimensions = originalPaddedSize * scale;
 					}
 				}
+				Trace("~Padding");
 
 				bitmapData = new byte[scaledSize.Area * sizeof(int)];
 
@@ -339,16 +368,24 @@ namespace SpriteMaster {
 						}
 						break;
 						case Scaler.xBRZ: {
-							var outData = bitmapData.CastAs<byte, uint>();
+							var outData = new Span<byte>(bitmapData).As<uint>();
+
 							new xBRZ.Scaler(
 								scaleMultiplier: scale,
-								sourceData: prescaleData.CastAs<int, uint>(),
+								sourceData: prescaleData.As<uint>(),
 								sourceWidth: prescaleSize.Width,
 								sourceHeight: prescaleSize.Height,
 								sourceTarget: outputSize,
-								targetData: in outData,
+								targetData: ref outData,
 								configuration: scalerConfig
 							);
+
+							fixed (uint* ptr = outData) {
+								byte* bptr = (byte*)ptr;
+								foreach (int i in 0..bitmapData.Length) {
+									bitmapData[i] = bptr[i];
+								}
+							}
 
 							bitmapData = Recolor.Enhance(bitmapData, scaledSize);
 
@@ -365,9 +402,11 @@ namespace SpriteMaster {
 				//ColorSpace.ConvertLinearToSRGB(bitmapData, Texel.Ordering.ARGB);
 			}
 			else {
-				bitmapData = rawData.CastAs<int, byte>().ToArray();
+				bitmapData = rawData.As<byte>().ToArray();
 			}
+			Trace("~Smoothing");
 
+			Trace("DumpResample");
 			if (Config.Debug.Sprite.DumpResample) {
 				using (var filtered = Textures.CreateBitmap(bitmapData, scaledDimensions, PixelFormat.Format32bppArgb)) {
 					using (var dump = GetDumpBitmap(filtered)) {
@@ -377,7 +416,9 @@ namespace SpriteMaster {
 					}
 				}
 			}
+			Trace("~DumpResample");
 
+			Trace("Rescale");
 			if (scaledDimensions != newSize) {
 				// This should be incredibly rare - we very rarely need to scale back down.
 				using (var filtered = Textures.CreateBitmap(bitmapData, scaledDimensions, PixelFormat.Format32bppArgb)) {
@@ -405,6 +446,7 @@ namespace SpriteMaster {
 					}
 				}
 			}
+			Trace("~Rescale");
 
 			// TODO : We can technically allocate the block padding before the scaling phase, and pass it a stride
 			// so it will just ignore the padding areas. That would be more efficient than this.
@@ -413,12 +455,13 @@ namespace SpriteMaster {
 				newSize.Y >= 4 && !BlockCompress.IsBlockMultiple(newSize.Y)
 			) & Config.Resample.UseBlockCompression;
 
+			Trace("BlockPadding");
 			if (requireBlockPadding.Any) {
 				var blockPaddedSize = (newSize + 3) & ~3;
 
 				var newBuffer = new byte[blockPaddedSize.Area * sizeof(int)];
-				var intSpanSrc = new Span<byte>(bitmapData).CastAs<byte, int>();
-				var intSpanDst = new Span<byte>(newBuffer).CastAs<byte, int>();
+				var intSpanSrc = new Span<byte>(bitmapData).As<int>();
+				var intSpanDst = new Span<byte>(newBuffer).As<int>();
 
 				int y;
 				for (y = 0; y < newSize.Y; ++y) {
@@ -446,7 +489,9 @@ namespace SpriteMaster {
 				blockPadding = blockPaddedSize - newSize;
 				newSize = blockPaddedSize;
 			}
+			Trace("~BlockPadding");
 
+			Trace("SpecialCase");
 			// Check for special cases
 			bool HasAlpha = true;
 			bool IsPunchThroughAlpha = false;
@@ -456,13 +501,18 @@ namespace SpriteMaster {
 			bool hasB = true;
 			{
 				const int MaxShades = 256;
+				Trace("StackAlloc");
 				var alpha = stackalloc int[MaxShades];
 				var blue = stackalloc int[MaxShades];
 				var green = stackalloc int[MaxShades];
 				var red = stackalloc int[MaxShades];
+				Trace("~StackAlloc");
 
+				Trace("intData");
 				var intData = bitmapData.CastAs<byte, int>();
+				Trace("~IntData");
 
+				Trace("Loop");
 				int idx = 0;
 				foreach (var color in intData) {
 					var aValue = color.ExtractByte(24);
@@ -477,6 +527,8 @@ namespace SpriteMaster {
 
 					++idx;
 				}
+				Trace("~Loop");
+
 
 				hasR = red[0] != intData.Length;
 				hasG = green[0] != intData.Length;
@@ -486,10 +538,12 @@ namespace SpriteMaster {
 				IsPunchThroughAlpha = IsMasky = ((alpha[0] + alpha[MaxShades - 1]) == intData.Length);
 				HasAlpha = (alpha[MaxShades - 1] != intData.Length);
 
+				Trace("Standard Deviation");
 				if (HasAlpha && !IsPunchThroughAlpha) {
 					var alphaDeviation = Extensions.Statistics.StandardDeviation(alpha, MaxShades, 1, MaxShades - 2);
 					IsMasky = alphaDeviation < Config.Resample.BlockHardAlphaDeviationThreshold;
 				}
+				Trace("~Standard Deviation");
 
 				bool grayscale = true;
 				foreach (int i in 0..256) {
@@ -502,11 +556,13 @@ namespace SpriteMaster {
 					//Debug.WarningLn($"Grayscale: {intData.Length}");
 				}
 			}
+			Trace("~SpecialCase");
 
 			bool useBlockCompression = Config.Resample.UseBlockCompression && BlockCompress.IsBlockMultiple(newSize);
 
 			format = TextureFormat.Color;
 
+			Trace("BlockCompress");
 			if (useBlockCompression) {
 				BlockCompress.Compress(
 					data: ref bitmapData,
@@ -520,6 +576,7 @@ namespace SpriteMaster {
 					HasB: hasB
 				);
 			}
+			Trace("~BlockCompress");
 
 			size = newSize;
 			data = bitmapData;

@@ -1,5 +1,5 @@
 ﻿namespace SpriteMaster.Types {
-	internal static class LongHash {
+	public static class LongHash {
 		public const ulong Null = 0UL;
 
 		public static ulong GetLongHashCode<T>(this T obj) {
@@ -32,7 +32,7 @@
 		}
 	}
 
-	internal interface ILongHash {
+	public interface ILongHash {
 		public ulong GetLongHashCode ();
 	}
 }

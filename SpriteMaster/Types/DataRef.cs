@@ -1,7 +1,7 @@
 ﻿using SpriteMaster.Extensions;
 
 namespace SpriteMaster.Types {
-	internal ref struct DataRef<T> where T : struct {
+	public ref struct DataRef<T> where T : struct {
 		public readonly T[] Data;
 		public readonly int Offset;
 		public readonly int Length;

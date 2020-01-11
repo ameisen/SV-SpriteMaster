@@ -4,9 +4,9 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace SpriteMaster.Extensions {
-	internal static class Reflection {
+	public static class Reflection {
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static int TypeSize<T> (this T obj) {
+		public static int TypeSize<T> (this T obj) {
 			if (typeof(T) is Type) {
 				return Marshal.SizeOf(typeof(T));
 			}
@@ -14,59 +14,59 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static int Size (this Type type) {
+		public static int Size (this Type type) {
 			return Marshal.SizeOf(type);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static T AddRef<T> (this T type) where T : Type {
+		public static T AddRef<T> (this T type) where T : Type {
 			return (T)type.MakeByRefType();
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static T RemoveRef<T> (this T type) where T : Type {
+		public static T RemoveRef<T> (this T type) where T : Type {
 			return (T)(type.IsByRef ? type.GetElementType() : type);
 		}
 
-		internal static string GetFullName (this MethodBase method) {
+		public static string GetFullName (this MethodBase method) {
 			return method.DeclaringType.Name + "::" + method.Name;
 		}
 
-		internal static string GetCurrentMethodName () {
+		public static string GetCurrentMethodName () {
 			return MethodBase.GetCurrentMethod().GetFullName();
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static T GetValue<T> (this FieldInfo field, object instance) {
+		public static T GetValue<T> (this FieldInfo field, object instance) {
 			var result = field.GetValue(instance);
 			return (T)result;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static bool GetAttribute<T> (this MemberInfo member, out T attribute) where T : Attribute {
+		public static bool GetAttribute<T> (this MemberInfo member, out T attribute) where T : Attribute {
 			attribute = member.GetCustomAttribute<T>();
 			return attribute != null;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static bool TryGetField (this Type type, string name, out FieldInfo field, BindingFlags bindingAttr = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic) {
+		public static bool TryGetField (this Type type, string name, out FieldInfo field, BindingFlags bindingAttr = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic) {
 			field = type.GetField(name, bindingAttr);
 			return (field != null);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static bool TryGetProperty (this Type type, string name, out PropertyInfo property, BindingFlags bindingAttr = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic) {
+		public static bool TryGetProperty (this Type type, string name, out PropertyInfo property, BindingFlags bindingAttr = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic) {
 			property = type.GetProperty(name, bindingAttr);
 			return (property != null);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static bool TryGetMethod (this Type type, string name, out MethodInfo method, BindingFlags bindingAttr = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic) {
+		public static bool TryGetMethod (this Type type, string name, out MethodInfo method, BindingFlags bindingAttr = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic) {
 			method = type.GetMethod(name, bindingAttr);
 			return (method != null);
 		}
 
-		internal static object GetField (this object obj, string name) {
+		public static object GetField (this object obj, string name) {
 			return obj.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public).GetValue(obj);
 		}
 	}

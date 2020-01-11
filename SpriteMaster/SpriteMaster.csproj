@@ -4,14 +4,14 @@
     <AssemblyName>SpriteMaster</AssemblyName>
     <RootNamespace>SpriteMaster</RootNamespace>
     <Version>0.10.5</Version>
-    <TargetFramework>net452</TargetFramework>
-    <PlatformTarget>x86</PlatformTarget>
+    <TargetFramework>net45</TargetFramework>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <EnableHarmony>true</EnableHarmony>
     <AssemblyVersion>0.10.5.*</AssemblyVersion>
 		<Deterministic>false</Deterministic>
 		<LangVersion>preview</LangVersion>
 		<RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
-		<Platforms>x86</Platforms>
+		<Platforms>AnyCPU</Platforms>
 		<RunAnalyzersDuringLiveAnalysis>false</RunAnalyzersDuringLiveAnalysis>
 		<RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
 		<Authors>mkuklinski</Authors>
@@ -25,32 +25,37 @@
     <NoWarn>0162;7035</NoWarn>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 		<OutputPath>bin\$(Configuration)_$(Platform)\</OutputPath>
-		<IgnoreModFilePatterns>\.dll\.config$, ILMerge, runtimes, net452</IgnoreModFilePatterns>
+		<IgnoreModFilePatterns>\.dll\.config$, ILMerge, runtimes, net452, net450, net45</IgnoreModFilePatterns>
 		<Configurations>Debug;Release;Development</Configurations>
 		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
 		<ApplicationIcon>pufferchick_xbrz.ico</ApplicationIcon>
 		<PackageId>SpriteMaster-SV</PackageId>
 		<Product>SpriteMaster-SV</Product>
+		<ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <DefineConstants>TRACE</DefineConstants>
     <DebugType>pdbonly</DebugType>
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Development|x86'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Development|AnyCPU'">
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <DebugType>pdbonly</DebugType>
     <DebugSymbols>true</DebugSymbols>
     <Optimize>true</Optimize>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>TRACE;DEBUG</DefineConstants>
     <DebugType>full</DebugType>
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Types\Texel.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Condition="'$(Configuration)'=='Release'" Include="ilmerge" Version="3.0.29" />
@@ -62,12 +67,9 @@
       <Version>1.0.7</Version>
     </PackageReference>
     <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="3.0.0" />
-    <PackageReference Include="System.Data.HashFunction.xxHash" Version="2.0.0" />
-    <PackageReference Include="System.Memory" Version="4.5.3" />
-    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.7.0" />
     <PackageReference Include="TeximpNet" Version="1.4.1" />
     <PackageReference Include="Tomlyn" Version="0.1.1" />
-    <PackageReference Include="Zlib.Portable" Version="1.11.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -85,22 +87,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Runtime\Runtime.csproj" />
     <ProjectReference Include="..\xBRZNet\xBRZ.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Update="Properties\Settings.Designer.cs">
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Settings.settings</DependentUpon>
-    </Compile>
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="Properties\Settings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-    </None>
   </ItemGroup>
 
   <ItemGroup>

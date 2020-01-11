@@ -2,7 +2,7 @@
 
 namespace SpriteMaster.Types {
 	[Obsolete("Not presently being maintained")]
-	internal struct Vector2T<T> : ICloneable where T : struct {
+	public struct Vector2T<T> : ICloneable where T : struct {
 		public T X;
 		public T Y;
 

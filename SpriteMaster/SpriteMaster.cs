@@ -21,7 +21,13 @@ namespace SpriteMaster {
 		private readonly Thread GarbageCollectThread = null;
 		private readonly object CollectLock = new object();
 
+		internal string AssemblyPath { get; private set; }
+
 		private void MemoryPressureLoop() {
+			if (Runtime.Framework != Runtime.FrameworkType.DotNET) {
+				return;
+			}
+
 			for (;;) {
 				if (DrawState.TriggerGC) {
 					Thread.Sleep(128);
@@ -44,21 +50,30 @@ namespace SpriteMaster {
 		}
 
 		private void GarbageCheckLoop() {
-			for (; ; ) {
-				GC.RegisterForFullGCNotification(10, 10);
-				GC.WaitForFullGCApproach();
-				if (Garbage.ManualCollection) {
-					continue;
-				}
-				lock (CollectLock) {
-					while (DrawState.TriggerGC) {
-						Thread.Sleep(32);
-					}
+			if (Runtime.Framework != Runtime.FrameworkType.DotNET) {
+				return;
+			}
 
-					MTexture2D.PurgeDataCache();
-					DrawState.TriggerGC = true;
-					// TODO : Do other cleanup attempts here.
+			try {
+				for (; ; ) {
+					GC.RegisterForFullGCNotification(10, 10);
+					GC.WaitForFullGCApproach();
+					if (Garbage.ManualCollection) {
+						continue;
+					}
+					lock (CollectLock) {
+						while (DrawState.TriggerGC) {
+							Thread.Sleep(32);
+						}
+
+						MTexture2D.PurgeDataCache();
+						DrawState.TriggerGC = true;
+						// TODO : Do other cleanup attempts here.
+					}
 				}
+			}
+			catch {
+				
 			}
 		}
 		
@@ -114,6 +129,8 @@ namespace SpriteMaster {
 		}
 
 		public override void Entry (IModHelper help) {
+			AssemblyPath = help.DirectoryPath;
+
 			var ConfigPath = Path.Combine(help.DirectoryPath, ConfigName);
 
 			using (var tempStream = new MemoryStream()) {

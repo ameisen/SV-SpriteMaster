@@ -5,14 +5,14 @@ using System.Security;
 
 namespace SpriteMaster.Types {
 	[System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members")]
-	internal sealed class ComparableWeakReference<T> : ISerializable, ILongHash where T : class {
+	public sealed class ComparableWeakReference<T> : ISerializable, ILongHash where T : class {
 		public const int NullHash = 0;
 		public const ulong NullLongHash = LongHash.Null;
 
 		static private class Reflect {
-			internal static readonly PropertyInfo Target = typeof(WeakReference<T>).GetProperty("Target", BindingFlags.Instance | BindingFlags.NonPublic);
-			internal static readonly MethodInfo Create = typeof(WeakReference<T>).GetMethod("Create", BindingFlags.Instance | BindingFlags.NonPublic);
-			internal static readonly MethodInfo IsTrackResurrection = typeof(WeakReference<T>).GetMethod("IsTrackResurrection", BindingFlags.Instance | BindingFlags.NonPublic);
+			public static readonly PropertyInfo Target = typeof(WeakReference<T>).GetProperty("Target", BindingFlags.Instance | BindingFlags.NonPublic);
+			public static readonly MethodInfo Create = typeof(WeakReference<T>).GetMethod("Create", BindingFlags.Instance | BindingFlags.NonPublic);
+			public static readonly MethodInfo IsTrackResurrection = typeof(WeakReference<T>).GetMethod("IsTrackResurrection", BindingFlags.Instance | BindingFlags.NonPublic);
 
 			private static string GetName (string name) {
 				return $"{typeof(ComparableWeakReference<T>).Name}.{name}";
@@ -46,7 +46,7 @@ namespace SpriteMaster.Types {
 			_Reference = new WeakReference<T>(target);
 		}
 
-		internal ComparableWeakReference (SerializationInfo info, StreamingContext context) {
+		public ComparableWeakReference (SerializationInfo info, StreamingContext context) {
 			if (info == null) {
 				throw new ArgumentNullException(nameof(info));
 			}

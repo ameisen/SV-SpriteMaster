@@ -27,13 +27,13 @@ namespace SpriteMaster.HarmonyExt.Patches {
 		}
 		*/
 
-		[HarmonyPatch("~GraphicsResource", HarmonyPatch.Fixation.Postfix, PriorityLevel.Last)]
+		[HarmonyPatch("~GraphicsResource", HarmonyPatch.Fixation.Postfix, PriorityLevel.Last, platform: HarmonyPatch.Platform.Windows)]
 		private static void Finalize (GraphicsResource __instance) {
 			FinalizePost(__instance);
 		}
 
 		private static readonly ThreadLocal<object> CurrentFinalizer = new ThreadLocal<object>();
-		[HarmonyPatch("Finalize", HarmonyPatch.Fixation.Prefix, PriorityLevel.First)]
+		[HarmonyPatch("Finalize", HarmonyPatch.Fixation.Prefix, PriorityLevel.First, platform: HarmonyPatch.Platform.Windows)]
 		private static bool FinalizePre (object __instance) {
 			try {
 				return (CurrentFinalizer.Value != __instance);
@@ -41,7 +41,7 @@ namespace SpriteMaster.HarmonyExt.Patches {
 			catch (ObjectDisposedException) { return true; }
 		}
 
-		[HarmonyPatch("Finalize", HarmonyPatch.Fixation.Postfix, PriorityLevel.Last)]
+		[HarmonyPatch("Finalize", HarmonyPatch.Fixation.Postfix, PriorityLevel.Last, platform: HarmonyPatch.Platform.Windows)]
 		private static void FinalizePost (object __instance) {
 			try {
 				if (CurrentFinalizer.Value == __instance) {

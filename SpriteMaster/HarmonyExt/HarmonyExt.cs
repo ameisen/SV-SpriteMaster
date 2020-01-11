@@ -39,12 +39,13 @@ namespace SpriteMaster.HarmonyExt {
 			typeof(long),
 			typeof(ulong),
 			typeof(float),
-			typeof(double),
+			typeof(double)/*,
 			typeof(Vector2),
 			typeof(Vector3),
 			typeof(Vector4),
 			typeof(Color),
 			typeof(System.Drawing.Color)
+			*/
 		};
 
 		public static void ApplyPatches(this HarmonyInstance @this) {
@@ -52,44 +53,57 @@ namespace SpriteMaster.HarmonyExt {
 			var assembly = typeof(HarmonyExt).Assembly;
 			foreach (var type in assembly.GetTypes()) {
 				foreach (var method in type.GetMethods(StaticFlags)) {
-					var attribute = method.GetCustomAttribute<HarmonyPatch>();
-					if (attribute == null) continue;
+					try {
+						var attribute = method.GetCustomAttribute<HarmonyPatch>();
+						if (attribute == null)
+							continue;
 
-					var instanceType = attribute.Type;
-					if (instanceType == null) {
-						var instancePar = method.GetParameters().Where(p => p.Name == "__instance");
-						Contract.AssertTrue(instancePar.Count() != 0, $"Type not specified for method {method.GetFullName()}, but no __instance argument present");
-						instanceType = instancePar.First().ParameterType.RemoveRef();
-					}
+						if (!attribute.CheckPlatform())
+							continue;
 
-					switch (attribute.GenericType) {
-						case HarmonyPatch.Generic.None:
-							Patch(
-								@this,
-								instanceType,
-								attribute.Method,
-								pre: (attribute.PatchFixation == HarmonyPatch.Fixation.Prefix) ? method : null,
-								post: (attribute.PatchFixation == HarmonyPatch.Fixation.Postfix) ? method : null,
-								trans: (attribute.PatchFixation == HarmonyPatch.Fixation.Transpile) ? method : null,
-								instanceMethod: attribute.Instance
-							);
-							break;
-						case HarmonyPatch.Generic.Struct:
-							foreach (var structType in StructTypes) {
+						Debug.TraceLn($"Patching Method {method.GetFullName()}");
+
+						var instanceType = attribute.Type;
+						if (instanceType == null) {
+							var instancePar = method.GetParameters().Where(p => p.Name == "__instance");
+							Contract.AssertTrue(instancePar.Count() != 0, $"Type not specified for method {method.GetFullName()}, but no __instance argument present");
+							instanceType = instancePar.First().ParameterType.RemoveRef();
+						}
+
+						switch (attribute.GenericType) {
+							case HarmonyPatch.Generic.None:
 								Patch(
 									@this,
 									instanceType,
-									structType,
 									attribute.Method,
 									pre: (attribute.PatchFixation == HarmonyPatch.Fixation.Prefix) ? method : null,
 									post: (attribute.PatchFixation == HarmonyPatch.Fixation.Postfix) ? method : null,
 									trans: (attribute.PatchFixation == HarmonyPatch.Fixation.Transpile) ? method : null,
 									instanceMethod: attribute.Instance
 								);
-							}
-							break;
-						default:
-							throw new NotImplementedException("Non-struct Generic Harmony Types unimplemented");
+								break;
+							case HarmonyPatch.Generic.Struct:
+								foreach (var structType in StructTypes) {
+									Debug.TraceLn($"\tGeneric Type: {structType.FullName}");
+									Patch(
+										@this,
+										instanceType,
+										structType,
+										attribute.Method,
+										pre: (attribute.PatchFixation == HarmonyPatch.Fixation.Prefix) ? method : null,
+										post: (attribute.PatchFixation == HarmonyPatch.Fixation.Postfix) ? method : null,
+										trans: (attribute.PatchFixation == HarmonyPatch.Fixation.Transpile) ? method : null,
+										instanceMethod: attribute.Instance
+									);
+								}
+								break;
+							default:
+								throw new NotImplementedException("Non-struct Generic Harmony Types unimplemented");
+						}
+					}
+					catch (Exception ex) {
+						ex.PrintError();
+						continue;
 					}
 				}
 			}

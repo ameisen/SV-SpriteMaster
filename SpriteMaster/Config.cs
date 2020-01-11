@@ -175,10 +175,11 @@ namespace SpriteMaster {
 			internal static bool AlwaysFlush = false;
 			internal enum Algorithm {
 				None = 0,
-				LZ = 1,
-				LZMA = 2
+				COMPRESS = 1,
+				LZ = 2,
+				LZMA = 3
 			}
-			internal static Algorithm Type = Algorithm.LZ;
+			internal static Algorithm Type = Algorithm.COMPRESS;
 			internal static bool Async = true;
 		}
 
