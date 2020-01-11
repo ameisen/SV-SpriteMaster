@@ -18,7 +18,7 @@ namespace SpriteMaster.HarmonyExt.Patches {
 	[SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
 	[SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Harmony")]
 	internal static class PTexture2D {
-		[HarmonyPatchAttribute("SetData", HarmonyPatchAttribute.Fixation.Postfix, PriorityLevel.Last, HarmonyPatchAttribute.Generic.Struct)]
+		[Harmonize("SetData", HarmonizeAttribute.Fixation.Postfix, PriorityLevel.Last, HarmonizeAttribute.Generic.Struct)]
 		private static void OnSetDataPost<T> (Texture2D __instance, T[] data) where T : unmanaged {
 			if (__instance is ManagedTexture2D) {
 				return;
@@ -36,7 +36,7 @@ namespace SpriteMaster.HarmonyExt.Patches {
 			ScaledTexture.Purge(__instance, null, dataRef);
 		}
 
-		[HarmonyPatchAttribute("SetData", HarmonyPatchAttribute.Fixation.Postfix, PriorityLevel.Last, HarmonyPatchAttribute.Generic.Struct)]
+		[Harmonize("SetData", HarmonizeAttribute.Fixation.Postfix, PriorityLevel.Last, HarmonizeAttribute.Generic.Struct)]
 		private static void OnSetDataPost<T> (Texture2D __instance, T[] data, int startIndex, int elementCount) where T : unmanaged {
 			if (__instance is ManagedTexture2D) {
 				return;
@@ -54,7 +54,7 @@ namespace SpriteMaster.HarmonyExt.Patches {
 			ScaledTexture.Purge(__instance, null, dataRef);
 		}
 
-		[HarmonyPatchAttribute("SetData", HarmonyPatchAttribute.Fixation.Postfix, PriorityLevel.Last, HarmonyPatchAttribute.Generic.Struct)]
+		[Harmonize("SetData", HarmonizeAttribute.Fixation.Postfix, PriorityLevel.Last, HarmonizeAttribute.Generic.Struct)]
 		private static void OnSetDataPost<T> (Texture2D __instance, int level, Rectangle? rect, T[] data, int startIndex, int elementCount) where T : unmanaged {
 			if (__instance is ManagedTexture2D) {
 				return;
@@ -74,7 +74,7 @@ namespace SpriteMaster.HarmonyExt.Patches {
 
 		// A horrible, horrible hack to stop a rare-ish crash when zooming or when the device resets. It doesn't appear to originate in SpriteMaster, but SM most certainly
 		// makes it worse. This will force the texture to regenerate on the fly if it is in a zombie state.
-		[HarmonyPatchAttribute("Microsoft.Xna.Framework", "Microsoft.Xna.Framework.Helpers", "CheckDisposed", HarmonyPatchAttribute.Fixation.Prefix, PriorityLevel.Last, instance: false, platform: HarmonyPatchAttribute.Platform.Windows)]
+		[Harmonize("Microsoft.Xna.Framework", "Microsoft.Xna.Framework.Helpers", "CheckDisposed", HarmonizeAttribute.Fixation.Prefix, PriorityLevel.Last, instance: false, platform: HarmonizeAttribute.Platform.Windows)]
 		private static unsafe bool CheckDisposed (object obj, ref IntPtr pComPtr) {
 			if (obj is GraphicsResource resource) {
 				if (pComPtr == IntPtr.Zero || resource.IsDisposed) {

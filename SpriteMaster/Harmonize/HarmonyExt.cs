@@ -55,7 +55,7 @@ namespace SpriteMaster.HarmonyExt {
 			foreach (var type in assembly.GetTypes()) {
 				foreach (var method in type.GetMethods(StaticFlags)) {
 					try {
-						var attribute = method.GetCustomAttribute<HarmonyPatchAttribute>();
+						var attribute = method.GetCustomAttributes().OfType<HarmonizeAttribute>().FirstOrDefault(); //GetCustomAttribute<HarmonyPatchAttribute>();
 						if (attribute == null)
 							continue;
 
@@ -72,18 +72,18 @@ namespace SpriteMaster.HarmonyExt {
 						}
 
 						switch (attribute.GenericType) {
-							case HarmonyPatchAttribute.Generic.None:
+							case HarmonizeAttribute.Generic.None:
 								Patch(
 									@this,
 									instanceType,
 									attribute.Method,
-									pre: (attribute.PatchFixation == HarmonyPatchAttribute.Fixation.Prefix) ? method : null,
-									post: (attribute.PatchFixation == HarmonyPatchAttribute.Fixation.Postfix) ? method : null,
-									trans: (attribute.PatchFixation == HarmonyPatchAttribute.Fixation.Transpile) ? method : null,
+									pre: (attribute.PatchFixation == HarmonizeAttribute.Fixation.Prefix) ? method : null,
+									post: (attribute.PatchFixation == HarmonizeAttribute.Fixation.Postfix) ? method : null,
+									trans: (attribute.PatchFixation == HarmonizeAttribute.Fixation.Transpile) ? method : null,
 									instanceMethod: attribute.Instance
 								);
 								break;
-							case HarmonyPatchAttribute.Generic.Struct:
+							case HarmonizeAttribute.Generic.Struct:
 								foreach (var structType in StructTypes) {
 									Debug.TraceLn($"\tGeneric Type: {structType.FullName}");
 									Patch(
@@ -91,9 +91,9 @@ namespace SpriteMaster.HarmonyExt {
 										instanceType,
 										structType,
 										attribute.Method,
-										pre: (attribute.PatchFixation == HarmonyPatchAttribute.Fixation.Prefix) ? method : null,
-										post: (attribute.PatchFixation == HarmonyPatchAttribute.Fixation.Postfix) ? method : null,
-										trans: (attribute.PatchFixation == HarmonyPatchAttribute.Fixation.Transpile) ? method : null,
+										pre: (attribute.PatchFixation == HarmonizeAttribute.Fixation.Prefix) ? method : null,
+										post: (attribute.PatchFixation == HarmonizeAttribute.Fixation.Postfix) ? method : null,
+										trans: (attribute.PatchFixation == HarmonizeAttribute.Fixation.Transpile) ? method : null,
 										instanceMethod: attribute.Instance
 									);
 								}
