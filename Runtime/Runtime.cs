@@ -115,7 +115,11 @@ namespace SpriteMaster {
 			// The BSDs, probably FreeBSD
 			BSD,
 			// Mac OS X, Darwin Kernel
-			Macintosh
+			Macintosh,
+
+			// Not used internally. Used by other folks.
+			Unix,
+			Any
 		}
 
 		public enum FrameworkType {
@@ -137,5 +141,17 @@ namespace SpriteMaster {
 		public static bool IsLinux => Platform == PlatformType.Linux;
 		public static bool IsBSD => Platform == PlatformType.BSD;
 		public static bool IsMacintosh => Platform == PlatformType.Macintosh;
+
+		public static bool Is (PlatformType platform) {
+			return platform switch {
+				PlatformType.Windows => IsWindows,
+				PlatformType.Linux => IsLinux,
+				PlatformType.BSD => IsBSD,
+				PlatformType.Macintosh => IsMacintosh,
+				PlatformType.Unix => IsUnix,
+				PlatformType.Any => true,
+				_ => throw new ArgumentOutOfRangeException(nameof(platform)),
+			};
+		}
 	}
 }

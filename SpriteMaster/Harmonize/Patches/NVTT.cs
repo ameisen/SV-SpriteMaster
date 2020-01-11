@@ -4,8 +4,10 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using TeximpNet;
 using TeximpNet.Unmanaged;
+using static SpriteMaster.Harmonize.Harmonize;
+using static SpriteMaster.Runtime;
 
-namespace SpriteMaster.HarmonyExt.Patches {
+namespace SpriteMaster.Harmonize.Patches {
 	[SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
 	[SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Harmony")]
 	internal static class NVTT {
@@ -61,8 +63,8 @@ mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null)
 			typeof(NvTextureToolsLibrary),
 			"TeximpNet.Unmanaged.NvTextureToolsLibrary",
 			"EnableCudaAcceleration",
-			HarmonizeAttribute.Fixation.Prefix,
-			HarmonyExt.PriorityLevel.Last
+			AffixType.Prefix,
+			PriorityLevel.Last
 		)]
 		internal static bool EnableCudaAcceleration (IntPtr compressor, ref bool value) {
 			value = false;
@@ -73,8 +75,8 @@ mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null)
 			typeof(NvTextureToolsLibrary),
 			"TeximpNet.Unmanaged.NvTextureToolsLibrary",
 			"IsCudaAccelerationEnabled",
-			HarmonizeAttribute.Fixation.Postfix,
-			HarmonyExt.PriorityLevel.Last
+			AffixType.Postfix,
+			PriorityLevel.Last
 		)]
 		internal static void IsCudaAccelerationEnabled (IntPtr compressor, ref bool __result) {
 			__result = false;
@@ -84,8 +86,8 @@ mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null)
 			typeof(NvTextureToolsLibrary),
 			"TeximpNet.Unmanaged.PlatformHelper",
 			"GetAppBaseDirectory",
-			HarmonizeAttribute.Fixation.Prefix,
-			HarmonyExt.PriorityLevel.First
+			AffixType.Prefix,
+			PriorityLevel.First
 		)]
 		internal static bool GetAppBaseDirectory (ref string __result) {
 			__result = SpriteMaster.AssemblyPath;
@@ -99,9 +101,9 @@ mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null)
 			typeof(NvTextureToolsLibrary),
 			new [] { "TeximpNet.Unmanaged.UnmanagedLibrary", "UnmanagedLinuxLibraryImplementation" },
 			"NativeLoadLibrary",
-			HarmonizeAttribute.Fixation.Prefix,
-			HarmonyExt.PriorityLevel.First,
-			platform: HarmonizeAttribute.Platform.Linux
+			AffixType.Prefix,
+			PriorityLevel.First,
+			platform: PlatformType.Linux
 		)]
 		internal static bool NativeLoadLibrary (UnmanagedLibrary __instance, ref IntPtr __result, String path) {
 			var libraryHandle = dl.open(path, RTLD_NOW);
@@ -124,9 +126,9 @@ mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null)
 			typeof(NvTextureToolsLibrary),
 			new [] { "TeximpNet.Unmanaged.UnmanagedLibrary", "UnmanagedLinuxLibraryImplementation" },
 			"NativeGetProcAddress",
-			HarmonizeAttribute.Fixation.Prefix,
-			HarmonyExt.PriorityLevel.First,
-			platform: HarmonizeAttribute.Platform.Linux
+			AffixType.Prefix,
+			PriorityLevel.First,
+			platform: PlatformType.Linux
 		)]
 		internal static bool NativeGetProcAddress (ref IntPtr __result, IntPtr handle, String functionName) {
 			__result = dl.sym(handle, functionName);
@@ -138,9 +140,9 @@ mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null)
 			typeof(NvTextureToolsLibrary),
 			new [] { "TeximpNet.Unmanaged.UnmanagedLibrary", "UnmanagedLinuxLibraryImplementation" },
 			"NativeFreeLibrary",
-			HarmonizeAttribute.Fixation.Prefix,
-			HarmonyExt.PriorityLevel.First,
-			platform: HarmonizeAttribute.Platform.Linux
+			AffixType.Prefix,
+			PriorityLevel.First,
+			platform: PlatformType.Linux
 		)]
 		internal static bool NativeFreeLibrary (IntPtr handle) {
 			dl.close(handle);

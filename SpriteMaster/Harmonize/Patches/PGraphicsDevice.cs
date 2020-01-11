@@ -2,8 +2,9 @@
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Diagnostics.CodeAnalysis;
+using static SpriteMaster.Runtime;
 
-namespace SpriteMaster.HarmonyExt.Patches {
+namespace SpriteMaster.Harmonize.Patches {
 	[SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
 	[SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Harmony")]
 	internal static class PGraphicsDevice {
@@ -13,7 +14,7 @@ namespace SpriteMaster.HarmonyExt.Patches {
 			return true;
 		}
 
-		[Harmonize("Present", platform: HarmonizeAttribute.Platform.Windows)]
+		[Harmonize("Present", platform: PlatformType.Windows)]
 		internal static bool Present (GraphicsDevice __instance, Rectangle? sourceRectangle, Rectangle? destinationRectangle, IntPtr overrideWindowHandle) {
 			DrawState.OnPresent();
 			return true;
