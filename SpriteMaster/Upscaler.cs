@@ -175,7 +175,7 @@ namespace SpriteMaster {
 				using (var filtered = Textures.CreateBitmap(rawData.As<byte>().ToArray(), textureSize, PixelFormat.Format32bppArgb)) {
 					using (var submap = (Bitmap)filtered.Clone(spriteBounds, filtered.PixelFormat)) {
 						var dump = GetDumpBitmap(submap);
-						var path = Cache.GetDumpPath($"{input.Reference.SafeName().Replace("\\", ".").Replace("/", ".")}.{hashString}.reference.png");
+						var path = Cache.GetDumpPath($"{input.Reference.SafeName().Replace("/", ".")}.{hashString}.reference.png");
 						File.Delete(path);
 						dump.Save(path, System.Drawing.Imaging.ImageFormat.Png);
 					}
@@ -410,7 +410,7 @@ namespace SpriteMaster {
 			if (Config.Debug.Sprite.DumpResample) {
 				using (var filtered = Textures.CreateBitmap(bitmapData, scaledDimensions, PixelFormat.Format32bppArgb)) {
 					using (var dump = GetDumpBitmap(filtered)) {
-						var path = Cache.GetDumpPath($"{input.Reference.SafeName().Replace("\\", ".")}.{hashString}.resample-{WrappedX}-{WrappedY}-{padding.X}-{padding.Y}.png");
+						var path = Cache.GetDumpPath($"{input.Reference.SafeName().Replace("/", ".")}.{hashString}.resample-{WrappedX}-{WrappedY}-{padding.X}-{padding.Y}.png");
 						File.Delete(path);
 						dump.Save(path, System.Drawing.Imaging.ImageFormat.Png);
 					}

@@ -7,11 +7,9 @@ using System;
 using Ionic.Zlib;
 #endif
 using System.IO;
-using System.Reflection;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Types;
 using SpriteMaster.Extensions;
-using TeximpNet.Compression;
 
 namespace SpriteMaster.Metadata {
 	internal sealed class MTexture2D {

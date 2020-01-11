@@ -478,14 +478,19 @@ namespace SpriteMaster {
 			if (IntPtr.Size == 8) {
 				var purgeTotalBytes = _purgeTotalBytes;
 				lock (MostRecentList) {
+					long totalPurge = 0;
 					while (purgeTotalBytes > 0 && MostRecentList.Count > 0) {
 						if (MostRecentList.Last().TryGetTarget(out var target)) {
-							purgeTotalBytes -= target.MemorySize;
+							var textureSize = unchecked((long)target.MemorySize);
+							Debug.TraceLn($"Purging {target.SafeName()} ({textureSize.AsDataSize()})");
+							purgeTotalBytes -= textureSize;
+							totalPurge += textureSize;
 							target.CurrentRecentNode = null;
 							target.Dispose(true);
 						}
 						MostRecentList.RemoveLast();
 					}
+					Debug.TraceLn($"Total Purged: {totalPurge.AsDataSize()}");
 				}
 			}
 			else {

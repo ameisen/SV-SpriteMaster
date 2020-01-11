@@ -16,7 +16,6 @@ namespace SpriteMaster {
 	public sealed class SpriteMaster : Mod {
 		public static SpriteMaster Self { get; private set; } = default;
 
-		// TODO : long for 64-bit?
 		private readonly Thread MemoryPressureThread = null;
 		private readonly Thread GarbageCollectThread = null;
 		private readonly object CollectLock = new object();

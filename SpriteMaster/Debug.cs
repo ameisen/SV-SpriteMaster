@@ -231,7 +231,13 @@ namespace SpriteMaster {
 		static private void DebugWriteStr (this TextWriter writer, string str, LogLevel level) {
 			if (Config.Debug.Logging.UseSMAPI) {
 				var strings = str.Split(new[] { '\n', '\r' });
+				var lastIndex = strings.Length - 1;
+				if (strings[lastIndex] == "") {
+					strings[lastIndex] = null;
+				}
 				foreach (var line in strings) {
+					if (line == null)
+						continue;
 					SpriteMaster.Self.Monitor.Log(line.TrimEnd(), level);
 				}
 			}
