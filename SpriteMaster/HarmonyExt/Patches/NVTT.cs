@@ -57,11 +57,11 @@ mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null)
 
 		// NVTT's CUDA compressor for block compression is _not_ threadsafe. I have a version locally from a while back that I made threadsafe,
 		// but I never validated it and am not comfortable jamming it in here.
-		[HarmonyPatch(
+		[HarmonyPatchAttribute(
 			typeof(NvTextureToolsLibrary),
 			"TeximpNet.Unmanaged.NvTextureToolsLibrary",
 			"EnableCudaAcceleration",
-			HarmonyPatch.Fixation.Prefix,
+			HarmonyPatchAttribute.Fixation.Prefix,
 			HarmonyExt.PriorityLevel.Last
 		)]
 		internal static bool EnableCudaAcceleration (IntPtr compressor, ref bool value) {
@@ -69,22 +69,22 @@ mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null)
 			return true;
 		}
 
-		[HarmonyPatch(
+		[HarmonyPatchAttribute(
 			typeof(NvTextureToolsLibrary),
 			"TeximpNet.Unmanaged.NvTextureToolsLibrary",
 			"IsCudaAccelerationEnabled",
-			HarmonyPatch.Fixation.Postfix,
+			HarmonyPatchAttribute.Fixation.Postfix,
 			HarmonyExt.PriorityLevel.Last
 		)]
 		internal static void IsCudaAccelerationEnabled (IntPtr compressor, ref bool __result) {
 			__result = false;
 		}
 
-		[HarmonyPatch(
+		[HarmonyPatchAttribute(
 			typeof(NvTextureToolsLibrary),
 			"TeximpNet.Unmanaged.PlatformHelper",
 			"GetAppBaseDirectory",
-			HarmonyPatch.Fixation.Prefix,
+			HarmonyPatchAttribute.Fixation.Prefix,
 			HarmonyExt.PriorityLevel.First
 		)]
 		internal static bool GetAppBaseDirectory (ref string __result) {
@@ -95,13 +95,13 @@ mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null)
 
 		private const int RTLD_NOW = 2;
 
-		[HarmonyPatch(
+		[HarmonyPatchAttribute(
 			typeof(NvTextureToolsLibrary),
 			new [] { "TeximpNet.Unmanaged.UnmanagedLibrary", "UnmanagedLinuxLibraryImplementation" },
 			"NativeLoadLibrary",
-			HarmonyPatch.Fixation.Prefix,
+			HarmonyPatchAttribute.Fixation.Prefix,
 			HarmonyExt.PriorityLevel.First,
-			platform: HarmonyPatch.Platform.Linux
+			platform: HarmonyPatchAttribute.Platform.Linux
 		)]
 		internal static bool NativeLoadLibrary (UnmanagedLibrary __instance, ref IntPtr __result, String path) {
 			var libraryHandle = dl.open(path, RTLD_NOW);
@@ -120,13 +120,13 @@ mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null)
 			return false;
 		}
 
-		[HarmonyPatch(
+		[HarmonyPatchAttribute(
 			typeof(NvTextureToolsLibrary),
 			new [] { "TeximpNet.Unmanaged.UnmanagedLibrary", "UnmanagedLinuxLibraryImplementation" },
 			"NativeGetProcAddress",
-			HarmonyPatch.Fixation.Prefix,
+			HarmonyPatchAttribute.Fixation.Prefix,
 			HarmonyExt.PriorityLevel.First,
-			platform: HarmonyPatch.Platform.Linux
+			platform: HarmonyPatchAttribute.Platform.Linux
 		)]
 		internal static bool NativeGetProcAddress (ref IntPtr __result, IntPtr handle, String functionName) {
 			__result = dl.sym(handle, functionName);
@@ -134,13 +134,13 @@ mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null)
 			return false;
 		}
 
-		[HarmonyPatch(
+		[HarmonyPatchAttribute(
 			typeof(NvTextureToolsLibrary),
 			new [] { "TeximpNet.Unmanaged.UnmanagedLibrary", "UnmanagedLinuxLibraryImplementation" },
 			"NativeFreeLibrary",
-			HarmonyPatch.Fixation.Prefix,
+			HarmonyPatchAttribute.Fixation.Prefix,
 			HarmonyExt.PriorityLevel.First,
-			platform: HarmonyPatch.Platform.Linux
+			platform: HarmonyPatchAttribute.Platform.Linux
 		)]
 		internal static bool NativeFreeLibrary (IntPtr handle) {
 			dl.close(handle);

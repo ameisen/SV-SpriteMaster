@@ -230,7 +230,10 @@ namespace SpriteMaster {
 		[DebuggerStepThrough, DebuggerHidden(), Untraced]
 		static private void DebugWriteStr (this TextWriter writer, string str, LogLevel level) {
 			if (Config.Debug.Logging.UseSMAPI) {
-				SpriteMaster.Self.Monitor.Log(str.TrimEnd(), level);
+				var strings = str.Split(new[] { '\n', '\r' });
+				foreach (var line in strings) {
+					SpriteMaster.Self.Monitor.Log(line.TrimEnd(), level);
+				}
 			}
 			else {
 				var strings = str.Split('\n');

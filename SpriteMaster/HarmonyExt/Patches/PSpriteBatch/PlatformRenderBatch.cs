@@ -49,13 +49,13 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			return reference;
 		}
 
-		[HarmonyPatch(
+		[HarmonyPatchAttribute(
 			"Microsoft.Xna.Framework.Graphics",
 			"Microsoft.Xna.Framework.Graphics.SpriteBatcher",
 			"FlushVertexArray",
-			HarmonyPatch.Fixation.Prefix,
+			HarmonyPatchAttribute.Fixation.Prefix,
 			PriorityLevel.First,
-			platform: HarmonyPatch.Platform.Unix
+			platform: HarmonyPatchAttribute.Platform.Unix
 		)]
 		internal static bool OnFlushVertexArray (
 			SpriteBatcher __instance,
@@ -82,13 +82,13 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			return true;
 		}
 
-		[HarmonyPatch(
+		[HarmonyPatchAttribute(
 			"Microsoft.Xna.Framework.Graphics",
 			"Microsoft.Xna.Framework.Graphics.SpriteBatcher",
 			"FlushVertexArray",
-			HarmonyPatch.Fixation.Postfix,
+			HarmonyPatchAttribute.Fixation.Postfix,
 			PriorityLevel.Last,
-			platform: HarmonyPatch.Platform.Unix
+			platform: HarmonyPatchAttribute.Platform.Unix
 		)]
 		internal static void OnFlushVertexArrayPost (
 			SpriteBatcher __instance,
@@ -112,11 +112,11 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			}
 		}
 
-		[HarmonyPatch(
+		[HarmonyPatchAttribute(
 			"PlatformRenderBatch",
-			HarmonyPatch.Fixation.Prefix,
+			HarmonyPatchAttribute.Fixation.Prefix,
 			PriorityLevel.First,
-			platform: HarmonyPatch.Platform.Windows
+			platform: HarmonyPatchAttribute.Platform.Windows
 		)]
 		internal static bool OnPlatformRenderBatch (
 			SpriteBatch __instance,
@@ -147,11 +147,11 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 			return true;
 		}
 
-		[HarmonyPatch(
+		[HarmonyPatchAttribute(
 			"PlatformRenderBatch",
-			HarmonyPatch.Fixation.Postfix,
+			HarmonyPatchAttribute.Fixation.Postfix,
 			PriorityLevel.Last,
-			platform: HarmonyPatch.Platform.Windows
+			platform: HarmonyPatchAttribute.Platform.Windows
 		)]
 		internal static void OnPlatformRenderBatchPost (
 			SpriteBatch __instance,

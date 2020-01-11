@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 using static SpriteMaster.HarmonyExt.HarmonyExt;
 
 namespace SpriteMaster.HarmonyExt {
-	class HarmonyPatch : HarmonyAttribute {
+	class HarmonyPatchAttribute : HarmonyAttribute {
 		public enum Fixation {
 			Prefix,
 			Postfix,
@@ -68,7 +68,7 @@ namespace SpriteMaster.HarmonyExt {
 			return ResolveType(assembly, assembly.GetType(type[0], true), type, offset + 1);
 		}
 
-		public HarmonyPatch(Type type, string method, Fixation fixation = Fixation.Prefix, PriorityLevel priority = PriorityLevel.Average, Generic generic = Generic.None, bool instance = true, Platform platform = Platform.All) {
+		public HarmonyPatchAttribute(Type type, string method, Fixation fixation = Fixation.Prefix, PriorityLevel priority = PriorityLevel.Average, Generic generic = Generic.None, bool instance = true, Platform platform = Platform.All) {
 			Type = type;
 			Method = method;
 			PatchPriority = (int)priority;
@@ -78,7 +78,7 @@ namespace SpriteMaster.HarmonyExt {
 			ForPlatform = platform;
 		}
 
-		public HarmonyPatch (string assembly, string type, string method, Fixation fixation = Fixation.Prefix, PriorityLevel priority = PriorityLevel.Average, Generic generic = Generic.None, bool instance = true, Platform platform = Platform.All) :
+		public HarmonyPatchAttribute (string assembly, string type, string method, Fixation fixation = Fixation.Prefix, PriorityLevel priority = PriorityLevel.Average, Generic generic = Generic.None, bool instance = true, Platform platform = Platform.All) :
 			this(
 				CheckPlatform(platform) ? GetAssembly(assembly).GetType(type, true) : null,
 				method,
@@ -89,7 +89,7 @@ namespace SpriteMaster.HarmonyExt {
 				platform
 			) { }
 
-		public HarmonyPatch (Type parent, string type, string method, Fixation fixation = Fixation.Prefix, PriorityLevel priority = PriorityLevel.Average, Generic generic = Generic.None, bool instance = true, Platform platform = Platform.All) :
+		public HarmonyPatchAttribute (Type parent, string type, string method, Fixation fixation = Fixation.Prefix, PriorityLevel priority = PriorityLevel.Average, Generic generic = Generic.None, bool instance = true, Platform platform = Platform.All) :
 			this(
 				CheckPlatform(platform) ? parent.Assembly.GetType(type, true) : null,
 				method,
@@ -100,7 +100,7 @@ namespace SpriteMaster.HarmonyExt {
 				platform
 			) { }
 
-		public HarmonyPatch (Type parent, string[] type, string method, Fixation fixation = Fixation.Prefix, PriorityLevel priority = PriorityLevel.Average, Generic generic = Generic.None, bool instance = true, Platform platform = Platform.All) :
+		public HarmonyPatchAttribute (Type parent, string[] type, string method, Fixation fixation = Fixation.Prefix, PriorityLevel priority = PriorityLevel.Average, Generic generic = Generic.None, bool instance = true, Platform platform = Platform.All) :
 			this(
 				CheckPlatform(platform) ? ResolveType(parent.Assembly, type) : null,
 				method,
@@ -111,7 +111,7 @@ namespace SpriteMaster.HarmonyExt {
 				platform
 			) { }
 
-		public HarmonyPatch (string assembly, string[] type, string method, Fixation fixation = Fixation.Prefix, PriorityLevel priority = PriorityLevel.Average, Generic generic = Generic.None, bool instance = true, Platform platform = Platform.All) :
+		public HarmonyPatchAttribute (string assembly, string[] type, string method, Fixation fixation = Fixation.Prefix, PriorityLevel priority = PriorityLevel.Average, Generic generic = Generic.None, bool instance = true, Platform platform = Platform.All) :
 			this(
 				CheckPlatform(platform) ? ResolveType(GetAssembly(assembly), type) : null,
 				method,
@@ -122,7 +122,7 @@ namespace SpriteMaster.HarmonyExt {
 				platform
 			) { }
 
-		public HarmonyPatch (string method, Fixation fixation = Fixation.Prefix, PriorityLevel priority = PriorityLevel.Average, Generic generic = Generic.None, bool instance = true, Platform platform = Platform.All) :
+		public HarmonyPatchAttribute (string method, Fixation fixation = Fixation.Prefix, PriorityLevel priority = PriorityLevel.Average, Generic generic = Generic.None, bool instance = true, Platform platform = Platform.All) :
 			this(null, method, fixation, priority, generic, instance, platform) { }
 	}
 }

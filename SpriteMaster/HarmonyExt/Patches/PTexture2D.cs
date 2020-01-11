@@ -18,7 +18,7 @@ namespace SpriteMaster.HarmonyExt.Patches {
 	[SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
 	[SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Harmony")]
 	internal static class PTexture2D {
-		[HarmonyPatch("SetData", HarmonyPatch.Fixation.Postfix, PriorityLevel.Last, HarmonyPatch.Generic.Struct)]
+		[HarmonyPatchAttribute("SetData", HarmonyPatchAttribute.Fixation.Postfix, PriorityLevel.Last, HarmonyPatchAttribute.Generic.Struct)]
 		private static void OnSetDataPost<T> (Texture2D __instance, T[] data) where T : unmanaged {
 			if (__instance is ManagedTexture2D) {
 				return;
@@ -36,7 +36,7 @@ namespace SpriteMaster.HarmonyExt.Patches {
 			ScaledTexture.Purge(__instance, null, dataRef);
 		}
 
-		[HarmonyPatch("SetData", HarmonyPatch.Fixation.Postfix, PriorityLevel.Last, HarmonyPatch.Generic.Struct)]
+		[HarmonyPatchAttribute("SetData", HarmonyPatchAttribute.Fixation.Postfix, PriorityLevel.Last, HarmonyPatchAttribute.Generic.Struct)]
 		private static void OnSetDataPost<T> (Texture2D __instance, T[] data, int startIndex, int elementCount) where T : unmanaged {
 			if (__instance is ManagedTexture2D) {
 				return;
@@ -54,7 +54,7 @@ namespace SpriteMaster.HarmonyExt.Patches {
 			ScaledTexture.Purge(__instance, null, dataRef);
 		}
 
-		[HarmonyPatch("SetData", HarmonyPatch.Fixation.Postfix, PriorityLevel.Last, HarmonyPatch.Generic.Struct)]
+		[HarmonyPatchAttribute("SetData", HarmonyPatchAttribute.Fixation.Postfix, PriorityLevel.Last, HarmonyPatchAttribute.Generic.Struct)]
 		private static void OnSetDataPost<T> (Texture2D __instance, int level, Rectangle? rect, T[] data, int startIndex, int elementCount) where T : unmanaged {
 			if (__instance is ManagedTexture2D) {
 				return;
@@ -74,7 +74,7 @@ namespace SpriteMaster.HarmonyExt.Patches {
 
 		// A horrible, horrible hack to stop a rare-ish crash when zooming or when the device resets. It doesn't appear to originate in SpriteMaster, but SM most certainly
 		// makes it worse. This will force the texture to regenerate on the fly if it is in a zombie state.
-		[HarmonyPatch("Microsoft.Xna.Framework", "Microsoft.Xna.Framework.Helpers", "CheckDisposed", HarmonyPatch.Fixation.Prefix, PriorityLevel.Last, instance: false, platform: HarmonyPatch.Platform.Windows)]
+		[HarmonyPatchAttribute("Microsoft.Xna.Framework", "Microsoft.Xna.Framework.Helpers", "CheckDisposed", HarmonyPatchAttribute.Fixation.Prefix, PriorityLevel.Last, instance: false, platform: HarmonyPatchAttribute.Platform.Windows)]
 		private static unsafe bool CheckDisposed (object obj, ref IntPtr pComPtr) {
 			if (obj is GraphicsResource resource) {
 				if (pComPtr == IntPtr.Zero || resource.IsDisposed) {

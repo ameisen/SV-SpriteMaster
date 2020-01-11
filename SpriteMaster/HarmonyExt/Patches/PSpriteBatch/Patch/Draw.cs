@@ -24,7 +24,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch.Patch {
 		 * 
 		 */
 
-		[HarmonyPatch("Draw", priority: HarmonyExt.PriorityLevel.First)]
+		[HarmonyPatchAttribute("Draw", priority: HarmonyExt.PriorityLevel.First)]
 		internal static bool OnDrawFirst (
 			SpriteBatch __instance,
 			ref Texture2D texture,
@@ -51,7 +51,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch.Patch {
 			);
 		}
 
-		[HarmonyPatch("Draw", priority: HarmonyExt.PriorityLevel.Last)]
+		[HarmonyPatchAttribute("Draw", priority: HarmonyExt.PriorityLevel.Last)]
 		internal static bool OnDrawLast (
 			SpriteBatch __instance,
 			ref Texture2D texture,
@@ -106,7 +106,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch.Patch {
 			return false;
 		}
 
-		[HarmonyPatch("Draw", priority: HarmonyExt.PriorityLevel.First)]
+		[HarmonyPatchAttribute("Draw", priority: HarmonyExt.PriorityLevel.First)]
 		internal static bool OnDraw (SpriteBatch __instance, Texture2D texture, Rectangle destinationRectangle, Rectangle? sourceRectangle, Color color) {
 			return ForwardDraw(
 				@this: __instance,
@@ -117,7 +117,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch.Patch {
 			);
 		}
 
-		[HarmonyPatch("Draw", priority: HarmonyExt.PriorityLevel.First)]
+		[HarmonyPatchAttribute("Draw", priority: HarmonyExt.PriorityLevel.First)]
 		internal static bool OnDraw (SpriteBatch __instance, Texture2D texture, Rectangle destinationRectangle, Color color) {
 			return ForwardDraw(
 				@this: __instance,
@@ -159,7 +159,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch.Patch {
 		}
 
 
-		[HarmonyPatch("Draw", priority: HarmonyExt.PriorityLevel.Last)]
+		[HarmonyPatchAttribute("Draw", priority: HarmonyExt.PriorityLevel.Last)]
 		internal static bool OnDraw (SpriteBatch __instance, ref Texture2D texture, ref Vector2 position, ref Rectangle? sourceRectangle, Color color, float rotation, ref Vector2 origin, ref Vector2 scale, SpriteEffects effects, float layerDepth) {
 			if (!Config.Enabled)
 				return true;
@@ -177,7 +177,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch.Patch {
 			);
 		}
 
-		[HarmonyPatch("Draw", priority: HarmonyExt.PriorityLevel.First)]
+		[HarmonyPatchAttribute("Draw", priority: HarmonyExt.PriorityLevel.First)]
 		internal static bool OnDraw (SpriteBatch __instance, Texture2D texture, Vector2 position, Rectangle? sourceRectangle, Color color, float rotation, Vector2 origin, float scale, SpriteEffects effects, float layerDepth) {
 			return ForwardDraw(
 				@this: __instance,
@@ -193,7 +193,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch.Patch {
 			);
 		}
 
-		[HarmonyPatch("Draw", priority: HarmonyExt.PriorityLevel.First)]
+		[HarmonyPatchAttribute("Draw", priority: HarmonyExt.PriorityLevel.First)]
 		internal static bool OnDraw (SpriteBatch __instance, Texture2D texture, Vector2 position, Rectangle? sourceRectangle, Color color) {
 			return ForwardDraw(
 				@this: __instance,
@@ -204,7 +204,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch.Patch {
 			);
 		}
 
-		[HarmonyPatch("Draw", priority: HarmonyExt.PriorityLevel.First)]
+		[HarmonyPatchAttribute("Draw", priority: HarmonyExt.PriorityLevel.First)]
 		internal static bool OnDraw (SpriteBatch __instance, Texture2D texture, Vector2 position, Color color) {
 			return ForwardDraw(
 				@this: __instance,

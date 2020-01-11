@@ -20,7 +20,7 @@ namespace SpriteMaster.HarmonyExt.Patches {
 		}
 		*/
 
-		[HarmonyPatch("ApplyChanges", HarmonyPatch.Fixation.Prefix, PriorityLevel.First)]
+		[HarmonyPatchAttribute("ApplyChanges", HarmonyPatchAttribute.Fixation.Prefix, PriorityLevel.First)]
 		internal static bool OnApplyChanges (GraphicsDeviceManager __instance) {
 			var @this = __instance;
 
@@ -33,7 +33,7 @@ namespace SpriteMaster.HarmonyExt.Patches {
 			return true;
 		}
 
-		[HarmonyPatch("ApplyChanges", HarmonyPatch.Fixation.Postfix, PriorityLevel.Last, platform: HarmonyPatch.Platform.Windows)]
+		[HarmonyPatchAttribute("ApplyChanges", HarmonyPatchAttribute.Fixation.Postfix, PriorityLevel.Last, platform: HarmonyPatchAttribute.Platform.Windows)]
 		internal static void OnApplyChangesPost (GraphicsDeviceManager __instance) {
 			var @this = __instance;
 
