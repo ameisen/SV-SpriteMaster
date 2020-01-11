@@ -52,7 +52,17 @@ namespace SpriteMaster.HarmonyExt {
 		}
 
 		private static Assembly GetAssembly(string name) {
-			return AppDomain.CurrentDomain.GetAssemblies().Single(assembly => assembly.GetName().Name == name);
+			if (Runtime.IsUnix && name.StartsWith("Microsoft.Xna.Framework")) {
+				name = "MonoGame.Framework";
+			}
+
+			try {
+				return AppDomain.CurrentDomain.GetAssemblies().Single(assembly => assembly.GetName().Name == name);
+			}
+			catch {
+				Debug.ErrorLn($"Assembly Not Found For Harmonize: {name}");
+				throw;
+			}
 		}
 
 		private static Type ResolveType(Assembly assembly, Type parent, string[] type, int offset = 0) {

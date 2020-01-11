@@ -51,8 +51,8 @@ namespace SpriteMaster {
 		internal static bool DiscardDuplicates = false;
 		internal static int DiscardDuplicatesFrameDelay = 2;
 		internal static List<string> DiscardDuplicatesBlacklist = new List<string>() {
-			"LooseSprites\\Cursors",
-			"Minigames\\TitleButtons"
+			"LooseSprites/Cursors",
+			"Minigames/TitleButtons"
 		};
 
 		internal enum Configuration {
@@ -112,43 +112,43 @@ namespace SpriteMaster {
 			internal static CompressionQuality BlockCompressionQuality = CompressionQuality.Highest;
 			internal static int BlockHardAlphaDeviationThreshold = 7;
 			internal static List<string> Blacklist = new List<string>() {
-				"LooseSprites\\Lighting\\"
+				"LooseSprites/Lighting/"
 			};
 			internal static class Padding {
 				internal static bool Enabled = true;
 				internal static int MinimumSizeTexels = 4;
 				internal static bool IgnoreUnknown = false;
 				internal static List<string> StrictList = new List<string>() {
-					"LooseSprites\\Cursors"
+					"LooseSprites/Cursors"
 				};
 				internal static List<string> Whitelist = new List<string>() {
-					"LooseSprites\\font_bold",
-					"Characters\\Farmer\\hairstyles",
-					"Characters\\Farmer\\pants",
-					"Characters\\Farmer\\shirts",
-					"TileSheets\\weapons",
-					"TileSheets\\bushes",
-					"TerrainFeatures\\grass",
-					"TileSheets\\debris",
-					"TileSheets\\animations",
-					"Maps\\springobjects",
-					"Maps\\summerobjects",
-					"Maps\\winterobjects",
-					"Maps\\fallobjects",
-					"Buildings\\houses",
-					"TileSheets\\furniture",
-					"TerrainFeatures\\tree1_spring",
-					"TerrainFeatures\\tree2_spring",
-					"TerrainFeatures\\tree3_spring",
-					"TerrainFeatures\\tree1_summer",
-					"TerrainFeatures\\tree2_summer",
-					"TerrainFeatures\\tree3_summer",
-					"TerrainFeatures\\tree1_fall",
-					"TerrainFeatures\\tree2_fall",
-					"TerrainFeatures\\tree3_fall",
-					"TerrainFeatures\\tree1_winter",
-					"TerrainFeatures\\tree2_winter",
-					"TerrainFeatures\\tree3_winter",
+					"LooseSprites/font_bold",
+					"Characters/Farmer/hairstyles",
+					"Characters/Farmer/pants",
+					"Characters/Farmer/shirts",
+					"TileSheets/weapons",
+					"TileSheets/bushes",
+					"TerrainFeatures/grass",
+					"TileSheets/debris",
+					"TileSheets/animations",
+					"Maps/springobjects",
+					"Maps/summerobjects",
+					"Maps/winterobjects",
+					"Maps/fallobjects",
+					"Buildings/houses",
+					"TileSheets/furniture",
+					"TerrainFeatures/tree1_spring",
+					"TerrainFeatures/tree2_spring",
+					"TerrainFeatures/tree3_spring",
+					"TerrainFeatures/tree1_summer",
+					"TerrainFeatures/tree2_summer",
+					"TerrainFeatures/tree3_summer",
+					"TerrainFeatures/tree1_fall",
+					"TerrainFeatures/tree2_fall",
+					"TerrainFeatures/tree3_fall",
+					"TerrainFeatures/tree1_winter",
+					"TerrainFeatures/tree2_winter",
+					"TerrainFeatures/tree3_winter",
 				};
 				internal static List<string> Blacklist = new List<string>() {
 				};

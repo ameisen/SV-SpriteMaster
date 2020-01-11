@@ -126,12 +126,12 @@ namespace SpriteMaster.Extensions {
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static string SafeName (this Texture2D texture) {
-			return texture.Name.IsBlank() ? "Unknown" : texture.Name;
+			return texture.Name.IsBlank() ? "Unknown" : texture.Name.Replace("\\", "/");
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static string SafeName (this ScaledTexture texture) {
-			return texture.Name.IsBlank() ? "Unknown" : texture.Name;
+			return texture.Name.IsBlank() ? "Unknown" : texture.Name.Replace("\\", "/");
 		}
 
 		internal static Bitmap CreateBitmap (byte[] source, Vector2I size, PixelFormat format = PixelFormat.Format32bppArgb) {

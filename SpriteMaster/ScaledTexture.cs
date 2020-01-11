@@ -186,7 +186,7 @@ namespace SpriteMaster {
 		private static readonly LinkedList<WeakReference<ScaledTexture>> MostRecentList = new LinkedList<WeakReference<ScaledTexture>>();
 
 		static internal bool ExcludeSprite (Texture2D texture) {
-			return false;// && (texture.Name == "LooseSprites\\Cursors");
+			return false;// && (texture.SafeName() == "LooseSprites/Cursors");
 		}
 
 		static internal bool HasPendingActions () {
@@ -309,7 +309,7 @@ namespace SpriteMaster {
 
 			if (!texture.Name.IsBlank()) {
 				foreach (var blacklisted in Config.Resample.Blacklist) {
-					if (texture.Name.StartsWith(blacklisted)) {
+					if (texture.SafeName().StartsWith(blacklisted)) {
 						if (!texture.Meta().TracePrinted) {
 							texture.Meta().TracePrinted = true;
 							Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', Is Blacklisted");
@@ -353,24 +353,24 @@ namespace SpriteMaster {
 				// Check for duplicates with the same name.
 				// TODO : We do have a synchronity issue here. We could purge before an asynchronous task adds the texture.
 				// DiscardDuplicatesFrameDelay
-				if (!texture.Name.IsBlank() && !Config.DiscardDuplicatesBlacklist.Contains(texture.Name)) {
+				if (!texture.Name.IsBlank() && !Config.DiscardDuplicatesBlacklist.Contains(texture.SafeName())) {
 					try {
 						lock (DuplicateTable) {
-							if (DuplicateTable.TryGetValue(texture.Name, out var weakTexture)) {
+							if (DuplicateTable.TryGetValue(texture.SafeName(), out var weakTexture)) {
 								if (weakTexture.TryGetTarget(out var strongTexture)) {
 									// Is it not the same texture, and the previous texture has not been accessed for at least 2 frames?
 									if (strongTexture != texture && (DrawState.CurrentFrame - strongTexture.Meta().LastAccessFrame) > 2) {
-										Debug.TraceLn($"Purging Duplicate Texture '{strongTexture.Name}'");
-										DuplicateTable[texture.Name] = texture.MakeWeak();
+										Debug.TraceLn($"Purging Duplicate Texture '{strongTexture.SafeName()}'");
+										DuplicateTable[texture.SafeName()] = texture.MakeWeak();
 										Purge(strongTexture);
 									}
 								}
 								else {
-									DuplicateTable[texture.Name] = texture.MakeWeak();
+									DuplicateTable[texture.SafeName()] = texture.MakeWeak();
 								}
 							}
 							else {
-								DuplicateTable.Add(texture.Name, texture.MakeWeak());
+								DuplicateTable.Add(texture.SafeName(), texture.MakeWeak());
 							}
 						}
 					}
@@ -385,7 +385,7 @@ namespace SpriteMaster {
 			ulong hash = Upscaler.GetHash(textureWrapper, isSprite);
 
 			var newTexture = new ScaledTexture(
-				assetName: texture.Name,
+				assetName: texture.SafeName(),
 				textureWrapper: textureWrapper,
 				sourceRectangle: source,
 				isSprite: isSprite,
@@ -587,7 +587,7 @@ namespace SpriteMaster {
 			this.refScale = expectedScale;
 			SpriteMap.Add(source, this, sourceRectangle, expectedScale);
 
-			this.Name = source.Name.IsBlank() ? assetName : source.Name;
+			this.Name = source.Name.IsBlank() ? assetName : source.SafeName();
 			originalSize = IsSprite ? sourceRectangle.Extent : new Vector2I(source);
 
 			if (async && Config.AsyncScaling.Enabled) {

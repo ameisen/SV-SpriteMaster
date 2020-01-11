@@ -36,10 +36,10 @@ namespace SpriteMaster {
 			// Need to make Hashing.CombineHash work better.
 			ulong hash;
 			if (!Config.Resample.EnableDynamicScale) {
-				hash = Hashing.CombineHash(input.Reference.Name?.GetHashCode(), input.Reference.Meta().GetHash(input));
+				hash = Hashing.CombineHash(input.Reference.SafeName()?.GetHashCode(), input.Reference.Meta().GetHash(input));
 			}
 			else {
-				hash = Hashing.CombineHash(input.Reference.Name?.GetHashCode(), input.Reference.Meta().GetHash(input), HashULong(unchecked((ulong)input.ExpectedScale)));
+				hash = Hashing.CombineHash(input.Reference.SafeName()?.GetHashCode(), input.Reference.Meta().GetHash(input), HashULong(unchecked((ulong)input.ExpectedScale)));
 			}
 			if (desprite) {
 				hash = Hashing.CombineHash(hash, input.Size.Hash());
@@ -210,10 +210,10 @@ namespace SpriteMaster {
 
 				// TODO : make X and Y variants of the whitelist and blacklist
 				if (input.Reference.Name != null) {
-					if (Config.Resample.Padding.Whitelist.Contains(input.Reference.Name)) {
+					if (Config.Resample.Padding.Whitelist.Contains(input.Reference.SafeName())) {
 						shouldPad = Vector2B.True;
 					}
-					else if (Config.Resample.Padding.Blacklist.Contains(input.Reference.Name)) {
+					else if (Config.Resample.Padding.Blacklist.Contains(input.Reference.SafeName())) {
 						shouldPad = Vector2B.False;
 					}
 				}
@@ -622,7 +622,7 @@ namespace SpriteMaster {
 			var textureSize = input.ReferenceSize;
 			var inputSize = desprite ? spriteBounds.Extent : textureSize;
 
-			bool isWater = input.Size.Right <= 640 && input.Size.Top >= 2000 && input.Size.Width >= 4 && input.Size.Height >= 4 && texture.Name == "LooseSprites\\Cursors";
+			bool isWater = input.Size.Right <= 640 && input.Size.Top >= 2000 && input.Size.Width >= 4 && input.Size.Height >= 4 && texture.SafeName() == "LooseSprites/Cursors";
 
 			if (isWater) {
 				spriteBounds.X /= 4;

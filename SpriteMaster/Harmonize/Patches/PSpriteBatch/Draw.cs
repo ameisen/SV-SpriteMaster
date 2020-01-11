@@ -98,7 +98,7 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 		}
 
 		private static bool IsWater(in Bounds bounds, Texture2D texture) {
-			return bounds.Right <= 640 && bounds.Top >= 2000 && texture.Name == "LooseSprites\\Cursors";
+			return bounds.Right <= 640 && bounds.Top >= 2000 && texture.SafeName() == "LooseSprites/Cursors";
 		}
 
 		// Takes the arguments, and checks to see if the texture is padded. If it is, it is forwarded to the correct draw call, avoiding

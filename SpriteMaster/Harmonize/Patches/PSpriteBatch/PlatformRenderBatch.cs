@@ -25,8 +25,6 @@ namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
 					Filter = (Config.DrawState.SetLinear) ? TextureFilter.Linear : reference.Filter
 				};
 
-				Debug.TraceLn("Updating Sampler State");
-
 				return newState;
 			}
 

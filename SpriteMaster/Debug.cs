@@ -151,9 +151,9 @@ namespace SpriteMaster {
 
 					if (!referenceTexture.Name.IsBlank() && !referenceTexture.IsDisposed) {
 						List<Texture2D> duplicateList;
-						if (!duplicates.TryGetValue(referenceTexture.Name, out duplicateList)) {
+						if (!duplicates.TryGetValue(referenceTexture.SafeName(), out duplicateList)) {
 							duplicateList = new List<Texture2D>();
-							duplicates.Add(referenceTexture.Name, duplicateList);
+							duplicates.Add(referenceTexture.SafeName(), duplicateList);
 						}
 						duplicateList.Add(referenceTexture);
 						haveDuplicates = haveDuplicates || (duplicateList.Count > 1);
