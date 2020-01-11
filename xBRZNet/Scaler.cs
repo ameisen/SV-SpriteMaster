@@ -2,7 +2,7 @@
 using System.Diagnostics.Contracts;
 using System.Drawing;
 using System.Runtime.CompilerServices;
-using SpriteMaster.Types;
+using SpriteMaster.Runtime.Types;
 using SpriteMaster.xBRZ.Blend;
 using SpriteMaster.xBRZ.Color;
 using SpriteMaster.xBRZ.Common;

@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
+using SpriteMaster.Runtime.Types;
 using System;
 
 namespace SpriteMaster.Resample {

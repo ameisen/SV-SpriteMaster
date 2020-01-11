@@ -1,11 +1,12 @@
-﻿using SpriteMaster.Types;
+﻿using SpriteMaster.Runtime;
+using SpriteMaster.Runtime.Types;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using TeximpNet;
 using TeximpNet.Unmanaged;
 using static SpriteMaster.Harmonize.Harmonize;
-using static SpriteMaster.Runtime;
+using static SpriteMaster.Runtime.Framework;
 
 namespace SpriteMaster.Harmonize.Patches {
 	[SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
@@ -16,7 +17,7 @@ namespace SpriteMaster.Harmonize.Patches {
 		//private static extern IntPtr dlerror (String fileName, int flags);
 
 		static NVTT () {
-			if (Runtime.IsLinux) {
+			if (Framework.IsLinux) {
 				// This needs to be done because Debian-based systems don't always have a libdl.so, and instead have libdl.so.2.
 				// We need to determine which libdl we actually need to talk to.
 				var dlTypes = Arrays.Of(

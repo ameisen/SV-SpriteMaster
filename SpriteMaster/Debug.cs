@@ -1,12 +1,11 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
-using SpriteMaster.Attributes;
+using SpriteMaster.Runtime.Attributes;
 using SpriteMaster.Extensions;
 using StardewModdingAPI;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster {

@@ -2,7 +2,7 @@
   <PropertyGroup>
 		<AssemblyName>xBRZ</AssemblyName>
 		<RootNamespace>SpriteMaster</RootNamespace>
-    <ProjectGuid>{84EE293E-B938-4512-8A39-86FFC00ED267}</ProjectGuid>
+		<ProjectGuid>{84EE293E-B938-4512-8A39-86FFC00ED267}</ProjectGuid>
     <OutputType>Library</OutputType>
 		<TargetFramework>net45</TargetFramework>
     <FileAlignment>512</FileAlignment>
@@ -14,11 +14,7 @@
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 		<ApplicationIcon>pufferchick_xbrz.ico</ApplicationIcon>
 		<DebugSymbols>true</DebugSymbols>
-		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <TargetFrameworkProfile />
-		<LangVersion>preview</LangVersion>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
     <OutputPath>bin\Debug\</OutputPath>
@@ -48,23 +44,18 @@
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="System.ComponentModel.Composition" />
-    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=4.0.6.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.4.7.0\lib\netstandard1.0\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
-      <Private>True</Private>
-      <SpecificVersion>True</SpecificVersion>
-    </Reference>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Properties\" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="..\LICENSE.md">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Runtime\Runtime.csproj" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.7.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(SolutionDir)\Runtime\SpriteMaster.Runtime.csproj">
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+      <EmbedInteropTypes></EmbedInteropTypes>
+    </ProjectReference>
   </ItemGroup>
 </Project>

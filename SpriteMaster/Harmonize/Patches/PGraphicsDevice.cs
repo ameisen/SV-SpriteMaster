@@ -2,7 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Diagnostics.CodeAnalysis;
-using static SpriteMaster.Runtime;
+using static SpriteMaster.Runtime.Framework;
 
 namespace SpriteMaster.Harmonize.Patches {
 	[SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]

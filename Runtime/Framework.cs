@@ -1,12 +1,12 @@
-﻿using SpriteMaster.Types;
+﻿using SpriteMaster.Runtime.Types;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Text.RegularExpressions;
 
-namespace SpriteMaster {
-	public static class Runtime {
+namespace SpriteMaster.Runtime {
+	public static class Framework {
 		[Pure]
 		private static string ArgVToString(string[] args) {
 			if (args.Length == 0) {
@@ -92,7 +92,7 @@ namespace SpriteMaster {
 			};
 		}
 
-		static Runtime() {
+		static Framework() {
 			// Figure out the executing platform
 			Platform = Environment.OSVersion.Platform switch
 			{
@@ -100,7 +100,7 @@ namespace SpriteMaster {
 				PlatformID.Unix => GetUnixType(),
 				_ => throw new ApplicationException($"Unknown Platform: {Environment.OSVersion.Platform}"),
 			};
-			Framework = Platform switch
+			NetFramework = Platform switch
 			{
 				PlatformType.Windows => FrameworkType.DotNET,
 				_ => FrameworkType.Mono,
@@ -132,7 +132,7 @@ namespace SpriteMaster {
 		[ImmutableObject(true)]
 		public static readonly string FullSystem = Capture1("uname").Trim();
 
-		public static readonly FrameworkType Framework;
+		public static readonly FrameworkType NetFramework;
 		public static readonly PlatformType Platform;
 		public static readonly int Bits = IntPtr.Size * 8;
 

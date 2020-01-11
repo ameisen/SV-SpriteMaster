@@ -1,11 +1,12 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Types;
+using SpriteMaster.Runtime.Types;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using static SpriteMaster.Harmonize.Harmonize;
-using static SpriteMaster.Runtime;
+using static SpriteMaster.Runtime.Framework;
 using static SpriteMaster.ScaledTexture;
 
 namespace SpriteMaster.Harmonize.Patches {

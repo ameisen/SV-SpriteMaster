@@ -1,4 +1,4 @@
-﻿using SpriteMaster.Types;
+﻿using SpriteMaster.Runtime.Types;
 using System;
 using System.Runtime.CompilerServices;
 

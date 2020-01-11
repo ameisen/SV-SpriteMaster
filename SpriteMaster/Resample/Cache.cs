@@ -1,4 +1,5 @@
 ﻿using SpriteMaster.Extensions;
+using SpriteMaster.Runtime;
 using SpriteMaster.Types;
 using System;
 using System.Collections.Concurrent;
@@ -251,7 +252,7 @@ namespace SpriteMaster.Resample {
 					// Create the directory path
 					Directory.CreateDirectory(LocalDataPath);
 
-					if (Runtime.IsWindows) {
+					if (Framework.IsWindows) {
 						var dir = new DirectoryInfo(LocalDataPath);
 						if ((dir.Attributes & FileAttributes.Compressed) == 0) {
 							var objectPath = $"Win32_Directory.Name='{dir.FullName.Replace("\\", @"\\").TrimEnd('\\')}'";

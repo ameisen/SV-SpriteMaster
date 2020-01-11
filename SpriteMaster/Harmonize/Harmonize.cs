@@ -1,7 +1,7 @@
 ﻿using Harmony;
 using Microsoft.Xna.Framework;
 using SpriteMaster.Extensions;
-using SpriteMaster.Types;
+using SpriteMaster.Runtime.Types;
 using System;
 using System.Collections.Generic;
 using System.Linq;

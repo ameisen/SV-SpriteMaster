@@ -3,7 +3,7 @@ using SpriteMaster.Extensions;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using static SpriteMaster.Harmonize.Harmonize;
-using static SpriteMaster.Runtime;
+using static SpriteMaster.Runtime.Framework;
 using static SpriteMaster.ScaledTexture;
 
 using SpriteBatcher = System.Object;

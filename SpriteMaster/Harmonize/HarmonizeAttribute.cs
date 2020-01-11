@@ -3,7 +3,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 using static SpriteMaster.Harmonize.Harmonize;
-using static SpriteMaster.Runtime;
+using static SpriteMaster.Runtime.Framework;
 
 namespace SpriteMaster.Harmonize {
 	[AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
