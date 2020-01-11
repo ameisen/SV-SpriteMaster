@@ -251,14 +251,16 @@ namespace SpriteMaster.Resample {
 					// Create the directory path
 					Directory.CreateDirectory(LocalDataPath);
 
-					var dir = new DirectoryInfo(LocalDataPath);
-					if ((dir.Attributes & FileAttributes.Compressed) == 0) {
-						var objectPath = $"Win32_Directory.Name='{dir.FullName.Replace("\\", @"\\").TrimEnd('\\')}'";
-						using (var obj = new ManagementObject(objectPath)) {
-							using (obj.InvokeMethod("Compress", null, null)) {
-								// I don't really care about the return value, 
-								// if we enabled it great but it can also be done manually
-								// if really needed
+					if (Runtime.IsWindows) {
+						var dir = new DirectoryInfo(LocalDataPath);
+						if ((dir.Attributes & FileAttributes.Compressed) == 0) {
+							var objectPath = $"Win32_Directory.Name='{dir.FullName.Replace("\\", @"\\").TrimEnd('\\')}'";
+							using (var obj = new ManagementObject(objectPath)) {
+								using (obj.InvokeMethod("Compress", null, null)) {
+									// I don't really care about the return value, 
+									// if we enabled it great but it can also be done manually
+									// if really needed
+								}
 							}
 						}
 					}

@@ -56,14 +56,15 @@ mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null)
 		private static libdl dl = null;
 
 		[HarmonyPatch(
-			typeof(TeximpNet.Unmanaged.NvTextureToolsLibrary),
+			typeof(NvTextureToolsLibrary),
 			"TeximpNet.Unmanaged.PlatformHelper",
 			"GetAppBaseDirectory",
 			HarmonyPatch.Fixation.Prefix,
 			HarmonyExt.PriorityLevel.First
 		)]
 		internal static bool GetAppBaseDirectory (ref string __result) {
-			__result = SpriteMaster.Self.AssemblyPath;
+			__result = SpriteMaster.AssemblyPath;
+			Debug.TraceLn($"GetAppBaseDirectory: {__result}");
 			return false;
 		}
 
@@ -71,7 +72,7 @@ mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null)
 
 		[HarmonyPatch(
 			typeof(NvTextureToolsLibrary),
-			new [] { "TeximpNet.Unmanaged.UnmanagedLibrary", "UnmanagedWindowsLibraryImplementation" },
+			new [] { "TeximpNet.Unmanaged.UnmanagedLibrary", "UnmanagedLinuxLibraryImplementation" },
 			"NativeLoadLibrary",
 			HarmonyPatch.Fixation.Prefix,
 			HarmonyExt.PriorityLevel.First,
@@ -96,7 +97,7 @@ mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null)
 
 		[HarmonyPatch(
 			typeof(NvTextureToolsLibrary),
-			new [] { "TeximpNet.Unmanaged.UnmanagedLibrary", "UnmanagedWindowsLibraryImplementation" },
+			new [] { "TeximpNet.Unmanaged.UnmanagedLibrary", "UnmanagedLinuxLibraryImplementation" },
 			"NativeGetProcAddress",
 			HarmonyPatch.Fixation.Prefix,
 			HarmonyExt.PriorityLevel.First,
@@ -110,7 +111,7 @@ mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null)
 
 		[HarmonyPatch(
 			typeof(NvTextureToolsLibrary),
-			new [] { "TeximpNet.Unmanaged.UnmanagedLibrary", "UnmanagedWindowsLibraryImplementation" },
+			new [] { "TeximpNet.Unmanaged.UnmanagedLibrary", "UnmanagedLinuxLibraryImplementation" },
 			"NativeFreeLibrary",
 			HarmonyPatch.Fixation.Prefix,
 			HarmonyExt.PriorityLevel.First,

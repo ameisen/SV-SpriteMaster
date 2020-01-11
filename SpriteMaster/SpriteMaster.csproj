@@ -146,7 +146,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="copy /D /V /Y /L $(SolutionDir)Libraries\nvtt.dll $(OutDir)nvtt.dll" />
+    <Exec Command="copy /D /V /Y /L $(SolutionDir)Libraries\nvtt.dll $(OutDir)nvtt.dll&#xD;&#xA;copy /D /V /Y /L $(SolutionDir)Libraries\libnvtt.so $(OutDir)libnvtt.so&#xD;&#xA;copy /D /V /Y /L $(SolutionDir)Libraries\libnvtt.dylib $(OutDir)libnvtt.dylib" />
   </Target>
 
 </Project>

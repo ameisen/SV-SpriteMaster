@@ -21,7 +21,7 @@ namespace SpriteMaster {
 		private readonly Thread GarbageCollectThread = null;
 		private readonly object CollectLock = new object();
 
-		internal string AssemblyPath { get; private set; }
+		internal static string AssemblyPath { get; private set; }
 
 		private void MemoryPressureLoop() {
 			if (Runtime.Framework != Runtime.FrameworkType.DotNET) {
