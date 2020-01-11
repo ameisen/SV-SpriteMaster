@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
+using SpriteMaster.Types;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
@@ -47,7 +48,7 @@ namespace SpriteMaster.HarmonyExt.Patches {
 
 				var capabilitiesMember = capabilitiesProperty.GetValue(device);
 
-				object[] capabilitiesList = new object[] {
+				var capabilitiesList = new [] {
 					getPrivateField(capabilitiesMember, "HiDef", instance: false).GetValue(capabilitiesMember),
 					capabilitiesMember
 				};

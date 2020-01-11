@@ -222,7 +222,7 @@ namespace SpriteMaster.Resample {
 		static Cache () {
 			// Delete any old caches.
 			try {
-				foreach (var root in new string[] { Config.LocalRoot }) {
+				foreach (var root in new [] { Config.LocalRoot }) {
 					var directories = Directory.EnumerateDirectories(root);
 					foreach (var directory in directories) {
 						try {

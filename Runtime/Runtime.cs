@@ -28,14 +28,14 @@ namespace SpriteMaster {
 
 		[NotNull]
 		public static Process Open2([NotNull] string command, [NotNull] string arg) {
-			return Open2(command, new string[] { arg });
+			return Open2(command, Arrays.Singleton(arg));
 		}
 
 		[NotNull]
 		public static Process Open2([NotNull] string command, string[] args = null) {
 			if (command == null || command == "")
 				throw new ArgumentOutOfRangeException(nameof(command));
-			args ??= Array<string>.Empty;
+			args ??= Arrays<string>.Empty;
 
 			var process = new Process {
 				StartInfo = {
@@ -51,7 +51,7 @@ namespace SpriteMaster {
 
 		[NotNull]
 		public static string Capture1 ([NotNull] string command, [NotNull] string arg) {
-			return Capture1(command, new string[] { arg });
+			return Capture1(command, Arrays.Singleton(arg));
 		}
 
 		[NotNull]
@@ -75,7 +75,7 @@ namespace SpriteMaster {
 
 		[NotNull]
 		public static Result2 Capture1E ([NotNull] string command, [NotNull] string arg) {
-			return Capture1E(command, new string[] { arg });
+			return Capture1E(command, Arrays.Singleton(arg));
 		}
 
 		[NotNull]

@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.HarmonyExt;
+using SpriteMaster.Types;
 using System;
 using System.Reflection;
 using System.Runtime;
@@ -53,10 +54,10 @@ namespace SpriteMaster.Extensions {
 					}
 					if (compact && CompactingCollect != null) {
 						CompactingCollect.Invoke(null, new object[] {
-						int.MaxValue,
-						background ? GCCollectionMode.Optimized : GCCollectionMode.Forced,
-						blocking,
-						true
+							int.MaxValue,
+							background ? GCCollectionMode.Optimized : GCCollectionMode.Forced,
+							blocking,
+							true
 					});
 					}
 					else {

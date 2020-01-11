@@ -89,7 +89,7 @@ namespace SpriteMaster.HarmonyExt.Patches {
 						var ctor = texture.GetType().GetConstructor(
 							BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
 							null,
-							new Type[] {
+							new [] {
 								typeof(GraphicsDevice),
 								typeof(int),
 								typeof(int),

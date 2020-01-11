@@ -1,4 +1,5 @@
 ﻿using SpriteMaster.Attributes;
+using SpriteMaster.Types;
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -38,7 +39,7 @@ namespace SpriteMaster {
 				throw new ArgumentOutOfRangeException("Provided assert exception type is not a subclass of Exception");
 			}
 			if (!predicate) {
-				throw (ArgumentOutOfRangeException)Activator.CreateInstance(exception ?? typeof(ArgumentOutOfRangeException), new object[] { message });
+				throw (ArgumentOutOfRangeException)Activator.CreateInstance(exception ?? typeof(ArgumentOutOfRangeException), Arrays.Singleton(message));
 			}
 		}
 

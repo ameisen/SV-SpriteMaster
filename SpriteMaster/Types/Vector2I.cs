@@ -363,7 +363,7 @@ namespace SpriteMaster.Types {
 		}
 
 		public readonly int CompareTo (Vector2I other) {
-			var results = new int[] {
+			var results = new [] {
 				X.CompareTo(other.X),
 				Y.CompareTo(other.Y)
 			};
@@ -376,7 +376,7 @@ namespace SpriteMaster.Types {
 		}
 
 		public readonly int CompareTo (DrawingPoint other) {
-			var results = new int[] {
+			var results = new [] {
 				X.CompareTo(other.X),
 				Y.CompareTo(other.Y)
 			};
@@ -389,7 +389,7 @@ namespace SpriteMaster.Types {
 		}
 
 		public readonly int CompareTo (XNAPoint other) {
-			var results = new int[] {
+			var results = new [] {
 				X.CompareTo(other.X),
 				Y.CompareTo(other.Y)
 			};
@@ -402,7 +402,7 @@ namespace SpriteMaster.Types {
 		}
 
 		public readonly int CompareTo (XTilePoint other) {
-			var results = new int[] {
+			var results = new [] {
 				X.CompareTo(other.X),
 				Y.CompareTo(other.Y)
 			};
@@ -415,7 +415,7 @@ namespace SpriteMaster.Types {
 		}
 
 		public readonly int CompareTo (DrawingSize other) {
-			var results = new int[] {
+			var results = new [] {
 				X.CompareTo(other.Width),
 				Y.CompareTo(other.Height)
 			};
@@ -428,7 +428,7 @@ namespace SpriteMaster.Types {
 		}
 
 		public readonly int CompareTo (XTileSize other) {
-			var results = new int[] {
+			var results = new [] {
 				X.CompareTo(other.Width),
 				Y.CompareTo(other.Height)
 			};

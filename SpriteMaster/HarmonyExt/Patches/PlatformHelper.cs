@@ -1,5 +1,5 @@
-﻿using System;
-using System.Diagnostics;
+﻿using SpriteMaster.Types;
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using TeximpNet;
@@ -17,12 +17,12 @@ namespace SpriteMaster.HarmonyExt.Patches {
 			if (Runtime.IsLinux) {
 				// This needs to be done because Debian-based systems don't always have a libdl.so, and instead have libdl.so.2.
 				// We need to determine which libdl we actually need to talk to.
-				var dlTypes = new Type[] {
+				var dlTypes = Arrays.Of(
 					typeof(libdlbase),
 					typeof(libdl2),
 					typeof(libdl227),
 					typeof(libdl1)
-				};
+				);
 
 				foreach (var dlType in dlTypes) {
 					var newDL = (libdl)Activator.CreateInstance(dlType);
@@ -72,7 +72,7 @@ mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null)
 
 		[HarmonyPatch(
 			typeof(NvTextureToolsLibrary),
-			new string[] { "TeximpNet.Unmanaged.UnmanagedLibrary", "UnmanagedWindowsLibraryImplementation" },
+			new [] { "TeximpNet.Unmanaged.UnmanagedLibrary", "UnmanagedWindowsLibraryImplementation" },
 			"NativeLoadLibrary",
 			HarmonyPatch.Fixation.Prefix,
 			HarmonyExt.PriorityLevel.First,
@@ -97,7 +97,7 @@ mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null)
 
 		[HarmonyPatch(
 			typeof(NvTextureToolsLibrary),
-			new string[] { "TeximpNet.Unmanaged.UnmanagedLibrary", "UnmanagedWindowsLibraryImplementation" },
+			new [] { "TeximpNet.Unmanaged.UnmanagedLibrary", "UnmanagedWindowsLibraryImplementation" },
 			"NativeGetProcAddress",
 			HarmonyPatch.Fixation.Prefix,
 			HarmonyExt.PriorityLevel.First,
@@ -111,7 +111,7 @@ mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null)
 
 		[HarmonyPatch(
 			typeof(NvTextureToolsLibrary),
-			new string[] { "TeximpNet.Unmanaged.UnmanagedLibrary", "UnmanagedWindowsLibraryImplementation" },
+			new [] { "TeximpNet.Unmanaged.UnmanagedLibrary", "UnmanagedWindowsLibraryImplementation" },
 			"NativeFreeLibrary",
 			HarmonyPatch.Fixation.Prefix,
 			HarmonyExt.PriorityLevel.First,

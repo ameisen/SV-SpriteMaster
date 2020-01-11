@@ -169,7 +169,7 @@ namespace SpriteMaster.Types {
 		}
 
 		public readonly int CompareTo (Bounds other) {
-			var results = new int[] {
+			var results = new [] {
 				X.CompareTo(other.X),
 				Y.CompareTo(other.Y),
 				Width.CompareTo(other.Width),
@@ -184,7 +184,7 @@ namespace SpriteMaster.Types {
 		}
 
 		public readonly int CompareTo (DrawingRectangle other) {
-			var results = new int[] {
+			var results = new [] {
 				X.CompareTo(other.X),
 				Y.CompareTo(other.Y),
 				Width.CompareTo(other.Width),
@@ -199,7 +199,7 @@ namespace SpriteMaster.Types {
 		}
 
 		public readonly int CompareTo (XNARectangle other) {
-			var results = new int[] {
+			var results = new [] {
 				X.CompareTo(other.X),
 				Y.CompareTo(other.Y),
 				Width.CompareTo(other.Width),
@@ -214,7 +214,7 @@ namespace SpriteMaster.Types {
 		}
 
 		public readonly int CompareTo (XTileRectangle other) {
-			var results = new int[] {
+			var results = new [] {
 				X.CompareTo(other.X),
 				Y.CompareTo(other.Y),
 				Width.CompareTo(other.Width),

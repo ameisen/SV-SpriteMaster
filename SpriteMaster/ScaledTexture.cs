@@ -406,7 +406,7 @@ namespace SpriteMaster {
 
 		}
 
-		internal static readonly SurfaceFormat[] AllowedFormats = new SurfaceFormat[] {
+		internal static readonly SurfaceFormat[] AllowedFormats = new [] {
 			SurfaceFormat.Color
 		};
 
