@@ -64,7 +64,6 @@ mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null)
 		)]
 		internal static bool GetAppBaseDirectory (ref string __result) {
 			__result = SpriteMaster.Self.AssemblyPath;
-			Debug.ErrorLn($"Directory: {__result}");
 			return false;
 		}
 
