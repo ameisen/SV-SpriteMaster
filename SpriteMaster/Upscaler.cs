@@ -373,8 +373,7 @@ namespace SpriteMaster {
 							new xBRZ.Scaler(
 								scaleMultiplier: scale,
 								sourceData: prescaleData.As<uint>(),
-								sourceWidth: prescaleSize.Width,
-								sourceHeight: prescaleSize.Height,
+								sourceSize: prescaleSize,
 								sourceTarget: outputSize,
 								targetData: ref outData,
 								configuration: scalerConfig

@@ -17,8 +17,7 @@ namespace SpriteMaster.xBRZ {
 		public Scaler (
 			int scaleMultiplier,
 			in Span<uint> sourceData,
-			int sourceWidth,
-			int sourceHeight,
+			in Point sourceSize,
 			in Rectangle? sourceTarget,
 			ref Span<uint> targetData,
 			in Config configuration
@@ -34,17 +33,14 @@ namespace SpriteMaster.xBRZ {
 				throw new ArgumentNullException(nameof(targetData));
 			}
 			*/
-			if (sourceWidth <= 0) {
-				throw new ArgumentOutOfRangeException(nameof(sourceWidth));
+			if (sourceSize.X <= 0 || sourceSize.Y <= 0) {
+				throw new ArgumentOutOfRangeException(nameof(sourceSize));
 			}
-			if (sourceHeight <= 0) {
-				throw new ArgumentOutOfRangeException(nameof(sourceHeight));
-			}
-			if (sourceWidth * sourceHeight > sourceData.Length) {
+			if (sourceSize.X * sourceSize.Y > sourceData.Length) {
 				throw new ArgumentOutOfRangeException(nameof(sourceData));
 			}
-			this.sourceTarget = sourceTarget.GetValueOrDefault(new Rectangle(0, 0, sourceWidth, sourceHeight));
-			if (this.sourceTarget.Right > sourceWidth || this.sourceTarget.Bottom > sourceHeight) {
+			this.sourceTarget = sourceTarget.GetValueOrDefault(new Rectangle(0, 0, sourceSize.X, sourceSize.Y));
+			if (this.sourceTarget.Right > sourceSize.X || this.sourceTarget.Bottom > sourceSize.Y) {
 				throw new ArgumentOutOfRangeException(nameof(sourceTarget));
 			}
 			this.targetWidth = this.sourceTarget.Width * scaleMultiplier;
@@ -57,8 +53,7 @@ namespace SpriteMaster.xBRZ {
 			this.configuration = configuration;
 			this.ColorDistance = new ColorDist(this.configuration);
 			this.ColorEqualizer = new ColorEq(this.configuration);
-			this.sourceWidth = sourceWidth;
-			this.sourceHeight = sourceHeight;
+			this.sourceSize = sourceSize;
 			Scale(in sourceData, ref targetData);
 		}
 
@@ -69,8 +64,7 @@ namespace SpriteMaster.xBRZ {
 		private readonly ColorDist ColorDistance;
 		private readonly ColorEq ColorEqualizer;
 
-		private readonly int sourceWidth;
-		private readonly int sourceHeight;
+		private readonly Point sourceSize;
 		private readonly Rectangle sourceTarget;
 		private readonly int targetWidth;
 		private readonly int targetHeight;
@@ -306,10 +300,10 @@ namespace SpriteMaster.xBRZ {
 				if (yFirst > 0) {
 					var y = yFirst - 1;
 
-					var sM1 = sourceWidth * getY(y - 1);
-					var s0 = sourceWidth * y; //center line
-					var sP1 = sourceWidth * getY(y + 1);
-					var sP2 = sourceWidth * getY(y + 2);
+					var sM1 = sourceSize.X * getY(y - 1);
+					var s0 = sourceSize.X * y; //center line
+					var sP1 = sourceSize.X * getY(y + 1);
+					var sP2 = sourceSize.X * getY(y + 2);
 
 					for (var x = sourceTarget.Left; x < sourceTarget.Right; ++x) {
 						var xM1 = getX(x - 1);
@@ -368,10 +362,10 @@ namespace SpriteMaster.xBRZ {
 					//consider MT "striped" access
 					var trgi = scaler.Scale * (y - yFirst) * targetWidth;
 
-					var sM1 = sourceWidth * getY(y - 1);
-					var s0 = sourceWidth * y; //center line
-					var sP1 = sourceWidth * getY(y + 1);
-					var sP2 = sourceWidth * getY(y + 2);
+					var sM1 = sourceSize.X * getY(y - 1);
+					var s0 = sourceSize.X * y; //center line
+					var sP1 = sourceSize.X * getY(y + 1);
+					var sP2 = sourceSize.X * getY(y + 2);
 
 					byte blendXy1 = 0;
 
