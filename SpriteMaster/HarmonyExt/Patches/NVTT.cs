@@ -8,12 +8,12 @@ using TeximpNet.Unmanaged;
 namespace SpriteMaster.HarmonyExt.Patches {
 	[SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
 	[SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Harmony")]
-	internal static class PlatformHelper {
+	internal static class NVTT {
 
 		//[DllImport("__Internal")]
 		//private static extern IntPtr dlerror (String fileName, int flags);
 
-		static PlatformHelper () {
+		static NVTT () {
 			if (Runtime.IsLinux) {
 				// This needs to be done because Debian-based systems don't always have a libdl.so, and instead have libdl.so.2.
 				// We need to determine which libdl we actually need to talk to.
@@ -54,6 +54,31 @@ mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null)
 		*/
 
 		private static libdl dl = null;
+
+		// NVTT's CUDA compressor for block compression is _not_ threadsafe. I have a version locally from a while back that I made threadsafe,
+		// but I never validated it and am not comfortable jamming it in here.
+		[HarmonyPatch(
+			typeof(NvTextureToolsLibrary),
+			"TeximpNet.Unmanaged.NvTextureToolsLibrary",
+			"EnableCudaAcceleration",
+			HarmonyPatch.Fixation.Prefix,
+			HarmonyExt.PriorityLevel.Last
+		)]
+		internal static bool EnableCudaAcceleration (IntPtr compressor, ref bool value) {
+			value = false;
+			return true;
+		}
+
+		[HarmonyPatch(
+			typeof(NvTextureToolsLibrary),
+			"TeximpNet.Unmanaged.NvTextureToolsLibrary",
+			"IsCudaAccelerationEnabled",
+			HarmonyPatch.Fixation.Postfix,
+			HarmonyExt.PriorityLevel.Last
+		)]
+		internal static void IsCudaAccelerationEnabled (IntPtr compressor, ref bool __result) {
+			__result = false;
+		}
 
 		[HarmonyPatch(
 			typeof(NvTextureToolsLibrary),
