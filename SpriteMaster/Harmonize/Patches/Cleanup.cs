@@ -4,29 +4,12 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Threading;
-using static SpriteMaster.HarmonyExt.HarmonyExt;
+using static SpriteMaster.Harmonize.Harmonize;
 
-namespace SpriteMaster.HarmonyExt.Patches {
+namespace SpriteMaster.Harmonize.Patches {
 	[SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
 	[SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Harmony")]
 	internal static class Cleanup {
-		/*
-		[HarmonyPatch("~Texture2D", HarmonyPatch.Fixation.Postfix, PriorityLevel.Last)]
-		private static void Finalize (Texture2D __instance) {
-			FinalizePost(__instance);
-		}
-
-		[HarmonyPatch("~Texture3D", HarmonyPatch.Fixation.Postfix, PriorityLevel.Last)]
-		private static void Finalize (Texture3D __instance) {
-			FinalizePost(__instance);
-		}
-
-		[HarmonyPatch("~TextureCube", HarmonyPatch.Fixation.Postfix, PriorityLevel.Last)]
-		private static void Finalize (TextureCube __instance) {
-			FinalizePost(__instance);
-		}
-		*/
-
 		[Harmonize("~GraphicsResource", HarmonizeAttribute.Fixation.Postfix, PriorityLevel.Last, platform: HarmonizeAttribute.Platform.Windows)]
 		private static void Finalize (GraphicsResource __instance) {
 			FinalizePost(__instance);

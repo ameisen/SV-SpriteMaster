@@ -8,10 +8,10 @@ using System.Linq;
 using System.Management.Instrumentation;
 using System.Reflection;
 
-namespace SpriteMaster.HarmonyExt {
+namespace SpriteMaster.Harmonize {
 	using MethodEnumerable = IEnumerable<MethodInfo>;
 
-	internal static class HarmonyExt {
+	internal static class Harmonize {
 		private const BindingFlags InstanceFlags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
 		private const BindingFlags StaticFlags = BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public;
 
@@ -51,7 +51,7 @@ namespace SpriteMaster.HarmonyExt {
 
 		public static void ApplyPatches(this HarmonyInstance @this) {
 			Contract.AssertNotNull(@this);
-			var assembly = typeof(HarmonyExt).Assembly;
+			var assembly = typeof(Harmonize).Assembly;
 			foreach (var type in assembly.GetTypes()) {
 				foreach (var method in type.GetMethods(StaticFlags)) {
 					try {

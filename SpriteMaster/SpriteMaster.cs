@@ -1,6 +1,6 @@
 ﻿using Harmony;
 using SpriteMaster.Extensions;
-using SpriteMaster.HarmonyExt;
+using SpriteMaster.Harmonize;
 using SpriteMaster.Metadata;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;

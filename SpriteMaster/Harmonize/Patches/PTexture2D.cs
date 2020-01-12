@@ -1,20 +1,13 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using SpriteMaster.Extensions;
 using SpriteMaster.Types;
-using StardewValley;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using static SpriteMaster.HarmonyExt.HarmonyExt;
+using static SpriteMaster.Harmonize.Harmonize;
 using static SpriteMaster.ScaledTexture;
 
-namespace SpriteMaster.HarmonyExt.Patches {
+namespace SpriteMaster.Harmonize.Patches {
 	[SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
 	[SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Harmony")]
 	internal static class PTexture2D {

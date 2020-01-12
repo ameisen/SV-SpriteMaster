@@ -2,9 +2,9 @@
 using System;
 using System.Linq;
 using System.Reflection;
-using static SpriteMaster.HarmonyExt.HarmonyExt;
+using static SpriteMaster.Harmonize.Harmonize;
 
-namespace SpriteMaster.HarmonyExt {
+namespace SpriteMaster.Harmonize {
 	[AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
 	internal sealed class HarmonizeAttribute : Attribute {
 		public enum Fixation {

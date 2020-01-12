@@ -2,12 +2,12 @@
 using SpriteMaster.Extensions;
 using System;
 using System.Diagnostics.CodeAnalysis;
-using static SpriteMaster.HarmonyExt.HarmonyExt;
+using static SpriteMaster.Harmonize.Harmonize;
 using static SpriteMaster.ScaledTexture;
 
 using SpriteBatcher = System.Object;
 
-namespace SpriteMaster.HarmonyExt.Patches.PSpriteBatch {
+namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 	[SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
 	[SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Harmony")]
 	internal static class PlatformRenderBatch {
