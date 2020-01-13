@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using SpriteMaster.Extensions;
 using System;
+using System.Diagnostics;
 
 namespace SpriteMaster.Types {
 	using DrawingPoint = System.Drawing.Point;
@@ -10,6 +11,7 @@ namespace SpriteMaster.Types {
 	using DrawingSize = System.Drawing.Size;
 	using XTileSize = xTile.Dimensions.Size;
 
+	[DebuggerDisplay("[{X}, {Y}}")]
 	public struct Vector2I :
 		ICloneable,
 		IComparable,
@@ -454,7 +456,7 @@ namespace SpriteMaster.Types {
 		}
 
 		public readonly override int GetHashCode () {
-			return unchecked((int)Hashing.CombineHash(X.GetHashCode(), Y.GetHashCode()));
+			return unchecked((int)Hash.Combine(X.GetHashCode(), Y.GetHashCode()));
 		}
 
 		public readonly override bool Equals (object other) {

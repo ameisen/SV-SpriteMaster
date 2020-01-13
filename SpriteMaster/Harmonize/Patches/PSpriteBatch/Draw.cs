@@ -17,9 +17,9 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 		private const bool Stop = false;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static bool Cleanup (this ref Rectangle sourceRectangle, Texture2D reference) {
+		private static bool Cleanup (this ref Bounds sourceRectangle, Texture2D reference) {
 			if (Config.ClampInvalidBounds) {
-				sourceRectangle = sourceRectangle.ClampTo(new Rectangle(0, 0, reference.Width, reference.Height));
+				sourceRectangle = ((Rectangle)sourceRectangle).ClampTo(new Rectangle(0, 0, reference.Width, reference.Height));
 			}
 
 			// Let's just skip potentially invalid draws since I have no idea what to do with them.
@@ -30,7 +30,7 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 		private static bool FetchScaledTexture (
 			this Texture2D reference,
 			int expectedScale,
-			ref Rectangle source,
+			ref Bounds source,
 			out ScaledTexture scaledTexture,
 			bool create = false
 		) {
@@ -45,7 +45,7 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 		private static ScaledTexture FetchScaledTexture (
 			this Texture2D reference,
 			int expectedScale,
-			ref Rectangle source,
+			ref Bounds source,
 			bool create = false
 		) {
 			var newSource = source;
@@ -97,8 +97,25 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static bool IsWater(in Bounds bounds, Texture2D texture) {
 			return bounds.Right <= 640 && bounds.Top >= 2000 && texture.SafeName() == "LooseSprites/Cursors";
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private static void GetDrawParameters(Texture2D texture, in Rectangle? source, out Bounds bounds, out float scaleFactor) {
+			texture.Meta().UpdateLastAccess();
+			var sourceRectangle = source.GetValueOrDefault(new Rectangle(0, 0, texture.Width, texture.Height));
+
+			scaleFactor = 1.0f;
+			if (IsWater(sourceRectangle, texture)) {
+				if (Config.Resample.TrimWater) {
+					scaleFactor = 4.0f;
+				}
+			}
+
+			sourceRectangle.Validate(reference: texture);
+			bounds = sourceRectangle;
 		}
 
 		// Takes the arguments, and checks to see if the texture is padded. If it is, it is forwarded to the correct draw call, avoiding
@@ -114,18 +131,13 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 			SpriteEffects effects,
 			float layerDepth
 		) {
-			texture.Meta().UpdateLastAccess();
-			var sourceRectangle = source.GetValueOrDefault(new Rectangle(0, 0, texture.Width, texture.Height));
+			GetDrawParameters(
+				texture: texture,
+				source: source,
+				bounds: out var sourceRectangle,
+				scaleFactor: out var scaleFactor
+			);
 			var referenceRectangle = sourceRectangle;
-
-			float scaleFactor = 1.0f;
-			if (IsWater(sourceRectangle, texture)) {
-				if (Config.Resample.TrimWater) {
-					scaleFactor = 4.0f;
-				}
-			}
-
-			sourceRectangle.Validate(reference: texture);
 
 			var expectedScale2D = new Vector2(destination.Width, destination.Height) / new Vector2(sourceRectangle.Width, sourceRectangle.Height);
 			var expectedScale = ((Math.Max(expectedScale2D.X, expectedScale2D.Y) * scaleFactor) + Config.Resample.ScaleBias).Clamp(2.0f, (float)Config.Resample.MaxScale).NextInt();
@@ -182,18 +194,12 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 			SpriteEffects effects,
 			ref float layerDepth
 		) {
-			texture.Meta().UpdateLastAccess();
-
-			var sourceRectangle = source.GetValueOrDefault(new Rectangle(0, 0, texture.Width, texture.Height));
-
-			float scaleFactor = 1.0f;
-			if (IsWater(sourceRectangle, texture)) {
-				if (Config.Resample.TrimWater) {
-					scaleFactor = 4.0f;
-				}
-			}
-
-			sourceRectangle.Validate(reference: texture);
+			GetDrawParameters(
+				texture: texture,
+				source: source,
+				bounds: out var sourceRectangle,
+				scaleFactor: out var scaleFactor
+			);
 
 			var expectedScale2D = new Vector2(destination.Width, destination.Height) / new Vector2(sourceRectangle.Width, sourceRectangle.Height);
 			var expectedScale = ((Math.Max(expectedScale2D.X, expectedScale2D.Y) * scaleFactor) + Config.Resample.ScaleBias).Clamp(2.0f, (float)Config.Resample.MaxScale).NextInt();
@@ -234,19 +240,12 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 			SpriteEffects effects,
 			ref float layerDepth
 		) {
-			texture.Meta().UpdateLastAccess();
-
-			var sourceRectangle = source.GetValueOrDefault(new Rectangle(0, 0, texture.Width, texture.Height));
-
-			var scaleFactor = 1.0f;
-
-			if (IsWater(sourceRectangle, texture)) {
-				if (Config.Resample.TrimWater) {
-					scaleFactor = 4.0f;
-				}
-			}
-
-			sourceRectangle.Validate(reference: texture);
+			GetDrawParameters(
+				texture: texture,
+				source: source,
+				bounds: out var sourceRectangle,
+				scaleFactor: out var scaleFactor
+			);
 
 			ScaledTexture scaledTexture;
 			if (texture is ManagedTexture2D resampledTexture) {

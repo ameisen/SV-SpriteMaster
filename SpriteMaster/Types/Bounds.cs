@@ -244,7 +244,7 @@ namespace SpriteMaster.Types {
 		}
 
 		public readonly override int GetHashCode () {
-			return unchecked((int)Hashing.CombineHash(X.GetHashCode(), Y.GetHashCode(), Width.GetHashCode(), Height.GetHashCode()));
+			return unchecked((int)Hash.Combine(X.GetHashCode(), Y.GetHashCode(), Width.GetHashCode(), Height.GetHashCode()));
 		}
 
 		public readonly override bool Equals (object other) {

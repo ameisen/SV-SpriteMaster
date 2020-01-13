@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace SpriteMaster.Types {
+	[DebuggerDisplay("[{X}, {Y}}")]
 	public struct Vector2B :
 		ICloneable,
 		IComparable,

@@ -15,17 +15,17 @@ namespace SpriteMaster {
 			ulong hash = default;
 
 			foreach (var field in type.GetFields(StaticFlags)) {
-				hash = Hashing.CombineHash(hash, field.GetValue(null).GetLongHashCode());
+				hash = Hash.Combine(hash, field.GetValue(null).GetLongHashCode());
 			}
 
 			foreach (var child in type.GetNestedTypes(StaticFlags)) {
-				hash = Hashing.CombineHash(hash, HashClass(child));
+				hash = Hash.Combine(hash, HashClass(child));
 			}
 
 			return hash;
 		}
 
-		internal static ulong Hash () {
+		internal static ulong GetWideHashCode () {
 			return HashClass(typeof(Config));
 		}
 

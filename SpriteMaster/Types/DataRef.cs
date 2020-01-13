@@ -59,7 +59,7 @@ namespace SpriteMaster.Types {
 		}
 
 		public readonly override int GetHashCode () {
-			return unchecked((int)Hashing.CombineHash(Data.GetHashCode(), Offset.GetHashCode()));
+			return unchecked((int)Hash.Combine(Data.GetHashCode(), Offset.GetHashCode()));
 		}
 	}
 }

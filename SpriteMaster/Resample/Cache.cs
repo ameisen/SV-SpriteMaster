@@ -30,7 +30,7 @@ namespace SpriteMaster.Resample {
 
 		private class CacheHeader {
 			public string Assembly = AssemblyVersion;
-			public ulong ConfigHash = SerializeConfig.Hash();
+			public ulong ConfigHash = SerializeConfig.GetWideHashCode();
 			public int RefScale;
 			public Vector2I Size;
 			public TextureFormat? Format;

@@ -19,7 +19,7 @@ namespace SpriteMaster {
 		private readonly WeakCollection<ScaledTexture> ScaledTextureReferences = new WeakCollection<ScaledTexture>();
 
 		static private ulong SpriteHash (Texture2D texture, Bounds source, int expectedScale) {
-			return Hashing.CombineHash(ScaledTexture.ExcludeSprite(texture) ? 0UL : source.Hash(), expectedScale.GetHashCode());
+			return Hash.Combine(ScaledTexture.ExcludeSprite(texture) ? 0UL : source.Hash(), expectedScale.GetHashCode());
 		}
 
 		internal void Add (Texture2D reference, ScaledTexture texture, Bounds source, int expectedScale) {
@@ -132,12 +132,16 @@ namespace SpriteMaster {
 				var purgeList = new List<ScaledTexture>();
 				using (Lock.Shared) {
 					foreach (var scaledTexture in ScaledTextureReferences) {
+						if (scaledTexture.Anonymous())
+							continue;
+						var textureName = scaledTexture.SafeName().ToLowerInvariant();
 						if (
-							(scaledTexture.Name.ToLower().Contains("spring") ||
-							scaledTexture.Name.ToLower().Contains("summer") ||
-							scaledTexture.Name.ToLower().Contains("fall") ||
-							scaledTexture.Name.ToLower().Contains("winter")) &&
-							!scaledTexture.Name.ToLower().Contains(season.ToLower())
+							(
+								textureName.Contains("spring") ||
+								textureName.Contains("summer") ||
+								textureName.Contains("fall") ||
+								textureName.Contains("winter")
+							) && !textureName.Contains(season.ToLowerInvariant())
 						) {
 							purgeList.Add(scaledTexture);
 						}
@@ -282,7 +286,7 @@ namespace SpriteMaster {
 				return false;
 			}
 
-			if (Config.IgnoreUnknownTextures && texture.Name.IsBlank()) {
+			if (Config.IgnoreUnknownTextures && texture.Anonymous()) {
 				if (!texture.Meta().TracePrinted) {
 					texture.Meta().TracePrinted = true;
 					Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', Is Unknown Texture");
@@ -307,7 +311,7 @@ namespace SpriteMaster {
 				return false;
 			}
 
-			if (!texture.Name.IsBlank()) {
+			if (!texture.Anonymous()) {
 				foreach (var blacklisted in Config.Resample.Blacklist) {
 					if (texture.SafeName().StartsWith(blacklisted)) {
 						if (!texture.Meta().TracePrinted) {
@@ -343,7 +347,7 @@ namespace SpriteMaster {
 				return scaleTexture;
 			}
 
-			bool useAsync = (Config.AsyncScaling.EnabledForUnknownTextures || !texture.Name.IsBlank()) && (texture.Area() >= Config.AsyncScaling.MinimumSizeTexels);
+			bool useAsync = (Config.AsyncScaling.EnabledForUnknownTextures || !texture.Anonymous()) && (texture.Area() >= Config.AsyncScaling.MinimumSizeTexels);
 
 			if (useAsync && Config.AsyncScaling.Enabled && !DrawState.GetUpdateToken(texture.Area()) && !texture.Meta().HasCachedData) {
 				return null;
@@ -353,7 +357,7 @@ namespace SpriteMaster {
 				// Check for duplicates with the same name.
 				// TODO : We do have a synchronity issue here. We could purge before an asynchronous task adds the texture.
 				// DiscardDuplicatesFrameDelay
-				if (!texture.Name.IsBlank() && !Config.DiscardDuplicatesBlacklist.Contains(texture.SafeName())) {
+				if (!texture.Anonymous() && !Config.DiscardDuplicatesBlacklist.Contains(texture.SafeName())) {
 					try {
 						lock (DuplicateTable) {
 							if (DuplicateTable.TryGetValue(texture.SafeName(), out var weakTexture)) {
@@ -429,7 +433,7 @@ namespace SpriteMaster {
 		private readonly Bounds sourceRectangle;
 		private int refScale;
 
-		internal long LastReferencedFrame = DrawState.CurrentFrame;
+		internal ulong LastReferencedFrame = DrawState.CurrentFrame;
 
 		internal Vector2 AdjustedScale = Vector2.One;
 
@@ -592,7 +596,7 @@ namespace SpriteMaster {
 			this.refScale = expectedScale;
 			SpriteMap.Add(source, this, sourceRectangle, expectedScale);
 
-			this.Name = source.Name.IsBlank() ? assetName : source.SafeName();
+			this.Name = source.Anonymous() ? assetName.SafeName() : source.SafeName();
 			originalSize = IsSprite ? sourceRectangle.Extent : new Vector2I(source);
 
 			if (async && Config.AsyncScaling.Enabled) {

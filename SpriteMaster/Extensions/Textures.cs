@@ -96,7 +96,7 @@ namespace SpriteMaster.Extensions {
 			}
 		}
 
-		internal static Bitmap Resize (this Bitmap source, Vector2I size, InterpolationMode filter = InterpolationMode.HighQualityBicubic, bool discard = true) {
+		internal static Bitmap Resize (this Bitmap source, in Vector2I size, InterpolationMode filter = InterpolationMode.HighQualityBicubic, bool discard = true) {
 			if (size == new Vector2I(source)) {
 				try {
 					return new Bitmap(source);
@@ -125,16 +125,30 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal static bool Anonymous (this Texture2D texture) {
+			return texture.Name.IsBlank();
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal static bool Anonymous (this ScaledTexture texture) {
+			return texture.Name.IsBlank();
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal static string SafeName (this string name) {
+			return name.IsBlank() ? "Unknown" : name.Replace("\\", "/");
+		}
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static string SafeName (this Texture2D texture) {
-			return texture.Name.IsBlank() ? "Unknown" : texture.Name.Replace("\\", "/");
+			return texture.Name.SafeName();
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static string SafeName (this ScaledTexture texture) {
-			return texture.Name.IsBlank() ? "Unknown" : texture.Name.Replace("\\", "/");
+			return texture.Name.SafeName();
 		}
 
-		internal static Bitmap CreateBitmap (byte[] source, Vector2I size, PixelFormat format = PixelFormat.Format32bppArgb) {
+		internal static Bitmap CreateBitmap (byte[] source, in Vector2I size, PixelFormat format = PixelFormat.Format32bppArgb) {
 			var newImage = new Bitmap(size.Width, size.Height, format);
 			var rectangle = new Bounds(newImage);
 			var newBitmapData = newImage.LockBits(rectangle, ImageLockMode.WriteOnly, format);

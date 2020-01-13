@@ -5,9 +5,11 @@ using SpriteMaster.Metadata;
 using SpriteMaster.Resample;
 using SpriteMaster.Types;
 using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using static SpriteMaster.ScaledTexture;
 
@@ -18,12 +20,17 @@ namespace SpriteMaster {
 			ImageMagick
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static void PurgeHash (Texture2D reference) {
 			reference.Meta().CachedData = null;
 		}
 
 		// https://stackoverflow.com/a/12996028
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static ulong HashULong (ulong x) {
+			if (x == 0) {
+				x = ulong.MaxValue;
+			}
 			unchecked {
 				x = (x ^ (x >> 30)) * 0xbf58476d1ce4e5b9ul;
 				x = (x ^ (x >> 27)) * 0x94d049bb133111ebul;
@@ -32,20 +39,19 @@ namespace SpriteMaster {
 			return x;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static ulong GetHash (SpriteInfo input, bool desprite) {
 			// Need to make Hashing.CombineHash work better.
-			ulong hash;
-			if (!Config.Resample.EnableDynamicScale) {
-				hash = Hashing.CombineHash(input.Reference.SafeName()?.GetHashCode(), input.Reference.Meta().GetHash(input));
-			}
-			else {
-				hash = Hashing.CombineHash(input.Reference.SafeName()?.GetHashCode(), input.Reference.Meta().GetHash(input), HashULong(unchecked((ulong)input.ExpectedScale)));
-			}
-			if (desprite) {
-				hash = Hashing.CombineHash(hash, input.Size.Hash());
-			}
-			else {
+			ulong hash = Hash.Combine(input.Reference.SafeName()?.GetHashCode(), input.Reference.Meta().GetHash(input));
 
+			if (Config.Resample.EnableDynamicScale) {
+				unchecked {
+					hash = Hash.Combine(hash, HashULong((ulong)input.ExpectedScale));
+				}
+			}
+
+			if (desprite) {
+				hash = Hash.Combine(hash, input.Size.Hash());
 			}
 			return hash;
 		}
@@ -54,8 +60,9 @@ namespace SpriteMaster {
 
 		// TODO : use MemoryFailPoint class. Extensively.
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[Conditional("REALLY_TRACE")]
 		private static void Trace(string msg) {
-			return;
 			Debug.TraceLn($"[CreateNewTexture] {msg}");
 		}
 
@@ -203,13 +210,13 @@ namespace SpriteMaster {
 						prescaleSize.X <= Config.Resample.Padding.MinimumSizeTexels &&
 						prescaleSize.Y <= Config.Resample.Padding.MinimumSizeTexels
 					) ||
-					(Config.Resample.Padding.IgnoreUnknown && !input.Reference.Name.IsBlank())
+					(Config.Resample.Padding.IgnoreUnknown && !input.Reference.Anonymous())
 				) {
 					shouldPad = Vector2B.False;
 				}
 
 				// TODO : make X and Y variants of the whitelist and blacklist
-				if (input.Reference.Name != null) {
+				if (!input.Reference.Anonymous()) {
 					if (Config.Resample.Padding.Whitelist.Contains(input.Reference.SafeName())) {
 						shouldPad = Vector2B.True;
 					}

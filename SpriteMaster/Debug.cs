@@ -149,7 +149,7 @@ namespace SpriteMaster {
 					totalOriginalSize += referenceDisposed ? 0 : originalSize;
 					ErrorLn($"SpriteSheet: {referenceTexture.SafeName().Enquote()} :: Original Size: {originalSize.AsDataSize()}{(referenceDisposed ? " [DISPOSED]" : "")}");
 
-					if (!referenceTexture.Name.IsBlank() && !referenceTexture.IsDisposed) {
+					if (!referenceTexture.Anonymous() && !referenceTexture.IsDisposed) {
 						List<Texture2D> duplicateList;
 						if (!duplicates.TryGetValue(referenceTexture.SafeName(), out duplicateList)) {
 							duplicateList = new List<Texture2D>();

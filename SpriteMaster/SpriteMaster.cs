@@ -16,17 +16,14 @@ namespace SpriteMaster {
 	public sealed class SpriteMaster : Mod {
 		public static SpriteMaster Self { get; private set; } = default;
 
+		private static readonly bool DotNet = (Runtime.Framework == Runtime.FrameworkType.DotNET);
 		private readonly Thread MemoryPressureThread = null;
 		private readonly Thread GarbageCollectThread = null;
-		private readonly object CollectLock = new object();
+		private readonly object CollectLock = DotNet ? new object () : null;
 
 		internal static string AssemblyPath { get; private set; }
 
 		private void MemoryPressureLoop() {
-			if (Runtime.Framework != Runtime.FrameworkType.DotNET) {
-				return;
-			}
-
 			for (;;) {
 				if (DrawState.TriggerGC) {
 					Thread.Sleep(128);
@@ -49,10 +46,6 @@ namespace SpriteMaster {
 		}
 
 		private void GarbageCheckLoop() {
-			if (Runtime.Framework != Runtime.FrameworkType.DotNET) {
-				return;
-			}
-
 			try {
 				for (; ; ) {
 					GC.RegisterForFullGCNotification(10, 10);
@@ -76,23 +69,25 @@ namespace SpriteMaster {
 			}
 		}
 		
-		private static readonly string ConfigName = "config.toml";
+		private const string ConfigName = "config.toml";
 
-		private static string CurrentSeason = "";
+		private static volatile string CurrentSeason = "";
 
 		public SpriteMaster () {
 			Contract.AssertNull(Self);
 			Self = this;
 
-			MemoryPressureThread = new Thread(MemoryPressureLoop);
-			MemoryPressureThread.Name = "Memory Pressure Thread";
-			MemoryPressureThread.Priority = ThreadPriority.BelowNormal;
-			MemoryPressureThread.IsBackground = true;
+			if (DotNet) {
+				MemoryPressureThread = new Thread(MemoryPressureLoop);
+				MemoryPressureThread.Name = "Memory Pressure Thread";
+				MemoryPressureThread.Priority = ThreadPriority.BelowNormal;
+				MemoryPressureThread.IsBackground = true;
 
-			GarbageCollectThread = new Thread(GarbageCheckLoop);
-			GarbageCollectThread.Name = "Garbage Collection Thread";
-			GarbageCollectThread.Priority = ThreadPriority.BelowNormal;
-			GarbageCollectThread.IsBackground = true;
+				GarbageCollectThread = new Thread(GarbageCheckLoop);
+				GarbageCollectThread.Name = "Garbage Collection Thread";
+				GarbageCollectThread.Priority = ThreadPriority.BelowNormal;
+				GarbageCollectThread.IsBackground = true;
+			}
 		}
 
 		private bool IsVersionOutdated(string configVersion) {

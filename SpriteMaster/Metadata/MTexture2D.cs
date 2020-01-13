@@ -7,7 +7,9 @@ using System;
 using Ionic.Zlib;
 #endif
 using System.IO;
+
 using Microsoft.Xna.Framework.Graphics;
+
 using SpriteMaster.Types;
 using SpriteMaster.Extensions;
 
@@ -26,15 +28,7 @@ namespace SpriteMaster.Metadata {
 		private readonly Semaphore CompressionSemaphore = new Semaphore(int.MaxValue, int.MaxValue);
 
 		public volatile bool TracePrinted = false;
-		private long _UpdateToken = 0;
-		public long UpdateToken {
-			get {
-				return Thread.VolatileRead(ref _UpdateToken);
-			}
-			private set {
-				Thread.VolatileWrite(ref _UpdateToken, value);
-			}
-		}
+		public Volatile<ulong> UpdateToken { get; private set; } = 0;
 
 		internal static void PurgeDataCache() {
 			if (!Config.MemoryCache.Enabled) {
@@ -47,30 +41,8 @@ namespace SpriteMaster.Metadata {
 			}
 		}
 
-		public long _LastAccessFrame = Thread.VolatileRead(ref DrawState.CurrentFrame);
-		public long LastAccessFrame {
-			get {
-				using (Lock.Shared)
-					return Thread.VolatileRead(ref _LastAccessFrame);
-			}
-			private set {
-				using (Lock.Exclusive)
-					Thread.VolatileWrite(ref _LastAccessFrame, value);
-			}
-		}
-		private ulong _Hash = default;
-		public ulong Hash {
-			get {
-				using (Lock.Shared) {
-					return Thread.VolatileRead(ref _Hash);
-				}
-			}
-			private set {
-				using (Lock.Exclusive) {
-					Thread.VolatileWrite(ref _Hash, value);
-				}
-			}
-		}
+		public Volatile<ulong> LastAccessFrame { get; private set; } = (ulong)DrawState.CurrentFrame;
+		internal Volatile<ulong> Hash { get; private set; } = Hashing.Default;
 
 #if WITH_ZLIB
 		private static readonly MethodInfo ZlibBaseCompressBuffer;
@@ -208,7 +180,7 @@ namespace SpriteMaster.Metadata {
 								foreach (int i in 0..untilOffset) {
 									currentData[i + data.Offset] = byteSpan[i];
 								}
-								Thread.VolatileWrite(ref _Hash, default);
+								Hash = Hashing.Default;
 								CachedData = currentData; // Force it to update the global cache.
 							}
 						}
@@ -230,7 +202,7 @@ namespace SpriteMaster.Metadata {
 			}
 		}
 
-		private bool CheckUpdateToken(long referenceToken) {
+		private bool CheckUpdateToken(ulong referenceToken) {
 			using (Lock.Shared) {
 				return UpdateToken == referenceToken;
 			}
@@ -279,7 +251,7 @@ namespace SpriteMaster.Metadata {
 					if (!Config.MemoryCache.Enabled)
 						return;
 
-					long currentUpdateToken;
+					ulong currentUpdateToken;
 					using (Lock.Exclusive) {
 						currentUpdateToken = UpdateToken;
 						UpdateToken = currentUpdateToken + 1;
@@ -354,11 +326,11 @@ namespace SpriteMaster.Metadata {
 
 		public ulong GetHash(SpriteInfo info) {
 			using (Lock.Shared) {
-				ulong hash = Thread.VolatileRead(ref _Hash);
-				if (hash == default) {
+				ulong hash = Hash;
+				if (hash == Hashing.Default) {
 					hash = info.Hash;
 					using (Lock.Promote) {
-						Thread.VolatileWrite(ref _Hash, hash);
+						Hash = hash;
 					}
 				}
 				return hash;

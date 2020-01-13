@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace SpriteMaster.Types {
 	[Obsolete("Not presently being maintained")]
+	[DebuggerDisplay("[{X}, {Y}}")]
 	public struct Vector2T<T> : ICloneable where T : struct {
 		public T X;
 		public T Y;

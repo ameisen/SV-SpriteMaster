@@ -3,23 +3,35 @@ using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
 using SpriteMaster.Types;
 using System;
+using System.Threading;
 
 namespace SpriteMaster {
-	internal sealed class SpriteInfo {
+	internal sealed class SpriteInfo : IDisposable {
 		internal readonly Texture2D Reference;
 		internal readonly Vector2I ReferenceSize;
 		internal readonly Bounds Size;
 		internal readonly Vector2B Wrapped;
 		internal readonly bool BlendEnabled;
 		internal readonly int ExpectedScale;
-		internal byte[] Data { get; private set; } = default;
-		private ulong _Hash = default;
+
+		private object _Data = default;
+		internal byte[] Data {
+			get {
+				return (byte[])Thread.VolatileRead(ref _Data);
+			}
+			private set {
+				Thread.VolatileWrite(ref _Data, value);
+			}
+		}
+		private Volatile<ulong> _Hash = Hashing.Default;
 		public ulong Hash {
 			get {
-				if (_Hash == default) {
-					_Hash = Data.Hash();
+				ulong hash = _Hash;
+				if (hash == Hashing.Default) {
+					hash = Data.Hash();
 				}
-				return _Hash;// ^ unchecked((ulong)ExpectedScale.GetHashCode());
+				_Hash = hash;
+				return hash;// ^ unchecked((ulong)ExpectedScale.GetHashCode());
 			}
 		}
 
@@ -57,8 +69,9 @@ namespace SpriteMaster {
 			);
 		}
 
-		internal void Dispose () {
+		public void Dispose () {
 			Data = default;
+			_Hash = Hashing.Default;
 		}
 	}
 }
