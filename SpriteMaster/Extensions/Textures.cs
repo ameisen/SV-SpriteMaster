@@ -136,7 +136,7 @@ namespace SpriteMaster.Extensions {
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static string SafeName (this string name) {
-			return name.IsBlank() ? "Unknown" : name.Replace("\\", "/");
+			return name.IsBlank() ? "Unknown" : name.Replace("\\", "/").Replace("//", "/");
 		}
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static string SafeName (this Texture2D texture) {
