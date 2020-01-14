@@ -129,7 +129,7 @@ namespace SpriteMaster.Resample {
 							// var algorithm = SystemCompression ? Compression.Algorithm.None : Config.Cache.Compress;
 
 							var remainingSize = reader.BaseStream.Length - reader.BaseStream.Position;
-							if (remainingSize < uncompressedDataLength) {
+							if (remainingSize < dataLength) {
 								throw new EndOfStreamException("Cache File is corrupted");
 							}
 
