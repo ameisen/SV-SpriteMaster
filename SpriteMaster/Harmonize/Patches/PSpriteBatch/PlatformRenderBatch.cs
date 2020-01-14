@@ -13,6 +13,10 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 	internal static class PlatformRenderBatch {
 		private static SamplerState GetNewSamplerState(Texture texture, SamplerState reference) {
 			if (texture is ManagedTexture2D managedTexture && managedTexture.Texture != null) {
+				if (!Config.DrawState.SetLinear) {
+					return reference;
+				}
+
 				var newState = new SamplerState() {
 					AddressU = managedTexture.Texture.Wrapped.X ? TextureAddressMode.Wrap : reference.AddressU,
 					AddressV = managedTexture.Texture.Wrapped.Y ? TextureAddressMode.Wrap : reference.AddressV,
@@ -102,7 +106,7 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 			}
 
 			try {
-				if (____device?.SamplerStates != null)
+				if (____device?.SamplerStates != null && ____device.SamplerStates[0] != __state)
 					____device.SamplerStates[0] = __state;
 			}
 			catch (Exception ex) {
@@ -165,7 +169,7 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 			}
 
 			try {
-				if (__instance?.GraphicsDevice?.SamplerStates != null)
+				if (__instance?.GraphicsDevice?.SamplerStates != null && __instance.GraphicsDevice.SamplerStates[0] != __state)
 					__instance.GraphicsDevice.SamplerStates[0] = __state;
 				___samplerState = __state;
 			}

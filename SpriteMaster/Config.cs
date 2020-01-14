@@ -91,7 +91,7 @@ namespace SpriteMaster {
 
 		internal static class DrawState {
 			internal static bool SetLinear = true;
-			internal static bool EnableMSAA = true;
+			internal static bool EnableMSAA = false;
 			internal static bool DisableDepthBuffer = false;
 			internal static SurfaceFormat BackbufferFormat = SurfaceFormat.Color;
 		}
