@@ -648,7 +648,7 @@ namespace SpriteMaster {
 							texture.Dispose();
 						}
 					};
-					ScaledTexture.AddPendingAction(asyncCall);
+					SynchronizedTasks.AddPendingLoad(asyncCall, bitmapData.Length);
 					return null;
 				}
 				else {

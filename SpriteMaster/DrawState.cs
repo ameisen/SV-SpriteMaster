@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using StardewValley;
+using System;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster {
@@ -17,6 +18,9 @@ namespace SpriteMaster {
 		public static Blend CurrentBlendSourceMode = BlendState.AlphaBlend.AlphaSourceBlend;
 		public static volatile bool TriggerGC = false;
 		public static SpriteSortMode CurrentSortMode = SpriteSortMode.Deferred;
+		public static TimeSpan FrameRate = new TimeSpan(166_667); // default 60hz
+
+		private static DateTime FrameStartTime = DateTime.Now;
 
 		internal static GraphicsDevice Device {
 			get {
@@ -50,10 +54,22 @@ namespace SpriteMaster {
 
 				TriggerGC = false;
 			}
-			
+
+			var duration = DateTime.Now - FrameStartTime;
+			FrameStartTime = DateTime.Now;
+
 			if (Config.AsyncScaling.CanFetchAndLoadSameFrame || !PushedUpdateThisFrame) {
-				ScaledTexture.ProcessPendingActions();
+				var remaining = FrameRate - duration;
+
+				// Unfortunately, the game appears to call 'present' as late as possible (which also causes vblank to miss, bad!
+				// So we have to lie about the remaining time.
+				remaining = new TimeSpan(FrameRate.Ticks / 2);
+
+				Debug.ErrorLn($"Remaining Frame Time: {remaining}");
+
+				SynchronizedTasks.ProcessPendingActions(remaining);
 			}
+
 			RemainingTexelFetchBudget = Config.AsyncScaling.ScalingBudgetPerFrameTexels;
 			FetchedThisFrame = false;
 			PushedUpdateThisFrame = false;

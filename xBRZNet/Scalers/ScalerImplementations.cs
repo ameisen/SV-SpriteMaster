@@ -94,7 +94,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 				}
 
 				// Value is now in the range of 0 to 0xFFFF
-				if (!gamma && false) {
+				if (!gamma) {
 					// If it's alpha, let's try hardening the edges.
 					float channelF = (float)outChan / (float)0xFFFF;
 

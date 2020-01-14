@@ -23,6 +23,9 @@ namespace SpriteMaster.Harmonize.Patches {
 		internal static bool OnApplyChanges (GraphicsDeviceManager __instance) {
 			var @this = __instance;
 
+			var rate = (TimeSpan?)@this?.GetField("game")?.GetProperty("TargetElapsedTime");
+			DrawState.FrameRate.ConditionalSet(rate);
+
 			@this.PreferMultiSampling = Config.DrawState.EnableMSAA;
 			@this.SynchronizeWithVerticalRetrace = true;
 			@this.PreferredBackBufferFormat = Config.DrawState.BackbufferFormat;

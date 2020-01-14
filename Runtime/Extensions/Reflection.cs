@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SpriteMaster.Types;
+using System;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -66,8 +67,70 @@ namespace SpriteMaster.Extensions {
 			return (method != null);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static object GetField (this object obj, string name) {
-			return obj.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public).GetValue(obj);
+			return obj?.GetType().GetField(
+				name,
+				BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.FlattenHierarchy
+			)?.GetValue(obj);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static object GetProperty (this object obj, string name) {
+			return obj?.GetType().GetProperty(
+				name,
+				BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.FlattenHierarchy
+			)?.GetValue(obj);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static T CreateInstance<T> (this Type _) {
+			return Activator.CreateInstance<T>();
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static T CreateInstance<T> (this Type _, params object[] parameters) {
+			return (T)Activator.CreateInstance(typeof(T), parameters);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static T CreateInstance<T> (this Type<T> _) {
+			return Activator.CreateInstance<T>();
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static T CreateInstance<T> (this Type<T> _, params object[] parameters) {
+			return (T)Activator.CreateInstance(typeof(T), parameters);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static T CreateInstance<T> () {
+			return Activator.CreateInstance<T>();
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static T CreateInstance<T> (params object[] parameters) {
+			return (T)Activator.CreateInstance(typeof(T), parameters);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static T Invoke<T> (this MethodInfo method, object obj) {
+			return (T)method.Invoke(obj, Arrays<object>.Empty);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static T Invoke<T> (this MethodInfo method, object obj, params object[] args) {
+			return (T)method.Invoke(obj, args);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static T InvokeMethod<T> (this object obj, MethodInfo method) {
+			return (T)method.Invoke(obj, Arrays<object>.Empty);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static T InvokeMethod<T> (this object obj, MethodInfo method, params object[] args) {
+			return (T)method.Invoke(obj, args);
 		}
 	}
 }

@@ -164,8 +164,9 @@ namespace SpriteMaster {
 			internal static bool Enabled = true;
 			internal static bool EnabledForUnknownTextures = false;
 			internal static bool ForceSynchronousLoads = Runtime.IsUnix;
-			internal const bool CanFetchAndLoadSameFrame = false;
-			internal const int MaxLoadsPerFrame = 1;
+			internal static bool ThrottledSynchronousLoads = true;
+			internal const bool CanFetchAndLoadSameFrame = true;
+			internal const int MaxLoadsPerFrame = int.MaxValue;
 			internal static long MinimumSizeTexels = 0;
 			internal static long ScalingBudgetPerFrameTexels = 16 * 256 * 256;
 		}

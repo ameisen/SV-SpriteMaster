@@ -18,36 +18,9 @@ namespace SpriteMaster {
 		// TODO : This can grow unbounded. Should fix.
 		public static readonly SpriteMap SpriteMap = new SpriteMap();
 
-		private static List<Action> PendingActions = Config.AsyncScaling.Enabled ? new List<Action>() : null;
-
 		private static readonly Dictionary<string, WeakTexture> DuplicateTable = Config.DiscardDuplicates ? new Dictionary<string, WeakTexture>() : null;
 
 		private static readonly LinkedList<WeakReference<ScaledTexture>> MostRecentList = new LinkedList<WeakReference<ScaledTexture>>();
-
-		static internal void AddPendingAction (in Action action) {
-			lock (PendingActions) {
-				PendingActions.Add(action);
-			}
-		}
-
-		static internal void ProcessPendingActions () {
-			if (!Config.AsyncScaling.Enabled) {
-				return;
-			}
-
-			List<Action> pendingActions;
-			lock (PendingActions) {
-				if (PendingActions.Count == 0) {
-					return;
-				}
-				pendingActions = PendingActions;
-				PendingActions = new List<Action>();
-			}
-
-			foreach (var action in pendingActions) {
-				action.Invoke();
-			}
-		}
 
 		private static bool LegalFormat(Texture2D texture) {
 			return AllowedFormats.Contains(texture.Format);

@@ -20,7 +20,6 @@ namespace SpriteMaster {
 		private readonly Thread MemoryPressureThread = null;
 		private readonly Thread GarbageCollectThread = null;
 		private readonly object CollectLock = DotNet ? new object () : null;
-
 		internal static string AssemblyPath { get; private set; }
 
 		private void MemoryPressureLoop() {
