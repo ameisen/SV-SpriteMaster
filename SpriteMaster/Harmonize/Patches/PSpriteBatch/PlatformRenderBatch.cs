@@ -12,24 +12,27 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 	[SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Harmony")]
 	internal static class PlatformRenderBatch {
 		private static SamplerState GetNewSamplerState(Texture texture, SamplerState reference) {
-			if (texture is ManagedTexture2D managedTexture && managedTexture.Texture != null) {
-				if (!Config.DrawState.SetLinear) {
-					return reference;
-				}
+			if (!Config.DrawState.SetLinear) {
+				return reference;
+			}
 
+			if (texture is ManagedTexture2D managedTexture && managedTexture.Texture != null) {
+				return SamplerState.LinearClamp;
+				/*
 				var newState = new SamplerState() {
-					AddressU = managedTexture.Texture.Wrapped.X ? TextureAddressMode.Wrap : reference.AddressU,
-					AddressV = managedTexture.Texture.Wrapped.Y ? TextureAddressMode.Wrap : reference.AddressV,
+					AddressU = reference.AddressU,
+					AddressV = reference.AddressV,
 					AddressW = reference.AddressW,
 					MaxAnisotropy = reference.MaxAnisotropy,
 					MaxMipLevel = reference.MaxMipLevel,
 					MipMapLevelOfDetailBias = reference.MipMapLevelOfDetailBias,
 					Name = "RescaledSampler",
 					Tag = reference.Tag,
-					Filter = (Config.DrawState.SetLinear) ? TextureFilter.Linear : reference.Filter
+					Filter = TextureFilter.Linear
 				};
 
 				return newState;
+				*/
 			}
 			else if (reference.Filter == TextureFilter.Linear) {
 				return SamplerState.PointClamp;
