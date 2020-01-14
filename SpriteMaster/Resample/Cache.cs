@@ -177,6 +177,7 @@ namespace SpriteMaster.Resample {
 
 				ThreadPool.QueueUserWorkItem((object dataItem) => {
 					Thread.CurrentThread.Priority = ThreadPriority.Lowest;
+					using var _ = new AsyncTracker($"File Cache Write {path}");
 					var data = (byte[])dataItem;
 					try {
 						using (var writer = new BinaryWriter(new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None))) {

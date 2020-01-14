@@ -413,6 +413,7 @@ namespace SpriteMaster {
 			if (async && Config.AsyncScaling.Enabled) {
 				ThreadPool.QueueUserWorkItem((object wrapper) => {
 					Thread.CurrentThread.Priority = ThreadPriority.Lowest;
+					using var _ = new AsyncTracker($"Resampling {Name} [{sourceRectangle}]");
 					Thread.CurrentThread.Name = "Texture Resampling Thread";
 					Upscaler.Upscale(
 						texture: this,

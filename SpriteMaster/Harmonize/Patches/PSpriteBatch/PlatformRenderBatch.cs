@@ -31,6 +31,9 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 
 				return newState;
 			}
+			else if (reference.Filter == TextureFilter.Linear) {
+				return SamplerState.PointClamp;
+			}
 
 			/*
 			else if (texture is RenderTarget2D) {
@@ -65,12 +68,10 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 			int end,
 			Effect effect,
 			Texture texture,
-			GraphicsDevice ____device,
-			ref SamplerState __state
+			GraphicsDevice ____device
 		) {
 			try {
 				var OriginalState = ____device?.SamplerStates[0] ?? SamplerState.PointClamp;
-				__state = OriginalState;
 
 				var newState = GetNewSamplerState(texture, OriginalState);
 
@@ -85,36 +86,6 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 		}
 
 		[Harmonize(
-			"Microsoft.Xna.Framework.Graphics",
-			"Microsoft.Xna.Framework.Graphics.SpriteBatcher",
-			"FlushVertexArray",
-			HarmonizeAttribute.Fixation.Postfix,
-			PriorityLevel.Last,
-			platform: HarmonizeAttribute.Platform.Unix
-		)]
-		internal static void OnFlushVertexArrayPost (
-			SpriteBatcher __instance,
-			int start,
-			int end,
-			Effect effect,
-			Texture texture,
-			GraphicsDevice ____device,
-			ref SamplerState __state
-		) {
-			if (__state == null) {
-				return;
-			}
-
-			try {
-				if (____device?.SamplerStates != null && ____device.SamplerStates[0] != __state)
-					____device.SamplerStates[0] = __state;
-			}
-			catch (Exception ex) {
-				ex.PrintError();
-			}
-		}
-
-		[Harmonize(
 			"PlatformRenderBatch",
 			HarmonizeAttribute.Fixation.Prefix,
 			PriorityLevel.First,
@@ -126,12 +97,10 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 			object[] sprites,
 			int offset,
 			int count,
-			ref SamplerState ___samplerState,
-			ref SamplerState __state
+			ref SamplerState ___samplerState
 		) {
 			try {
 				var OriginalState = ___samplerState ?? SamplerState.PointClamp;
-				__state = OriginalState;
 
 				var newState = GetNewSamplerState(texture, OriginalState);
 
@@ -147,35 +116,6 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 			}
 
 			return true;
-		}
-
-		[Harmonize(
-			"PlatformRenderBatch",
-			HarmonizeAttribute.Fixation.Postfix,
-			PriorityLevel.Last,
-			platform: HarmonizeAttribute.Platform.Windows
-		)]
-		internal static void OnPlatformRenderBatchPost (
-			SpriteBatch __instance,
-			Texture2D texture,
-			object[] sprites,
-			int offset,
-			int count,
-			ref SamplerState ___samplerState,
-			ref SamplerState __state
-		) {
-			if (__state == null) {
-				return;
-			}
-
-			try {
-				if (__instance?.GraphicsDevice?.SamplerStates != null && __instance.GraphicsDevice.SamplerStates[0] != __state)
-					__instance.GraphicsDevice.SamplerStates[0] = __state;
-				___samplerState = __state;
-			}
-			catch (Exception ex) {
-				ex.PrintError();
-			}
 		}
 	}
 }

@@ -3,8 +3,6 @@ using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using StardewValley;
-using System;
-using System.Runtime;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster {
@@ -41,22 +39,6 @@ namespace SpriteMaster {
 			FetchedThisFrame = true;
 			RemainingTexelFetchBudget -= texels;
 			return true;
-		}
-
-		private static bool IsMemoryPressured() {
-			try {
-				var RequiredMemory = (Config.RequiredFreeMemory * 1.5).NearestInt();
-				using var _ = new MemoryFailPoint(RequiredMemory);
-				return false;
-			}
-			catch (Exception ex) when (ex is InsufficientMemoryException) {
-				return true;
-			}
-			catch (Exception ex) {
-				// I'm not sure how we'd get here.
-				ex.PrintWarning();
-				return false;
-			}
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
