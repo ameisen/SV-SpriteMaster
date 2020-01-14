@@ -628,7 +628,7 @@ namespace SpriteMaster {
 				}
 
 				bool isAsync = Config.AsyncScaling.Enabled && async;
-				if (isAsync && !Config.AsyncScaling.ForceSynchronousLoads) {
+				if (isAsync && Config.AsyncScaling.ForceSynchronousLoads) {
 					var reference = input.Reference;
 					Action asyncCall = () => {
 						if (reference.IsDisposed) {
