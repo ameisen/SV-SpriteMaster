@@ -206,7 +206,7 @@ namespace SpriteMaster.xBRZ {
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private int clampX (int x) {
 			x -= sourceTarget.Left;
-			if (configuration.WrappedX) {
+			if (configuration.Wrapped.X) {
 				x = (x + sourceTarget.Width) % sourceTarget.Width;
 			}
 			else {
@@ -218,7 +218,7 @@ namespace SpriteMaster.xBRZ {
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private int clampY (int y) {
 			y -= sourceTarget.Top;
-			if (configuration.WrappedY) {
+			if (configuration.Wrapped.Y) {
 				y = (y + sourceTarget.Height) % sourceTarget.Height;
 			}
 			else {
@@ -230,7 +230,7 @@ namespace SpriteMaster.xBRZ {
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private bool legalX (int x) {
 			return true;
-			if (configuration.WrappedX) {
+			if (configuration.Wrapped.X) {
 				return true;
 			}
 			return x >= sourceTarget.Left && x < sourceTarget.Right;
@@ -239,7 +239,7 @@ namespace SpriteMaster.xBRZ {
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private bool legalY (int y) {
 			return true;
-			if (configuration.WrappedY) {
+			if (configuration.Wrapped.Y) {
 				return true;
 			}
 			return y >= sourceTarget.Top && y < sourceTarget.Bottom;
@@ -350,7 +350,7 @@ namespace SpriteMaster.xBRZ {
 						if (x + 1 < sourceTarget.Right) {
 							preProcBuffer[adjustedX + 1] = preProcBuffer[adjustedX + 1].SetTopL(blendResult.K);
 						}
-						else if (configuration.WrappedX) {
+						else if (configuration.Wrapped.X) {
 							preProcBuffer[0] = preProcBuffer[0].SetTopL(blendResult.K);
 						}
 					}
@@ -430,7 +430,7 @@ namespace SpriteMaster.xBRZ {
 							//set 3rd known corner for (x + 1, y)
 							preProcBuffer[adjustedX + 1] = preProcBuffer[adjustedX + 1].SetBottomL(blendResult.G);
 						}
-						else if (configuration.WrappedX) {
+						else if (configuration.Wrapped.X) {
 							preProcBuffer[0] = preProcBuffer[0].SetBottomL(blendResult.G);
 						}
 

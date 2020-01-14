@@ -26,14 +26,12 @@ namespace SpriteMaster {
 
 		internal static string ConfigVersion = "";
 		[ConfigIgnore]
-		internal static string ClearConfigBefore = "0.10.3";
+		internal static string ClearConfigBefore = "0.10.6";
 
 		internal static bool Enabled = true;
 		internal static SButton ToggleButton = SButton.F11;
 
 		internal const int MaxSamplers = 16;
-		[ConfigIgnore]
-		internal static bool RendererSupportsAsyncOps = true;
 		[ConfigIgnore]
 		internal static int ClampDimension = BaseMaxTextureDimension; // this is adjustable by the system itself. The user shouldn't be able to touch it.
 		[Comment("The preferred maximum texture edge length, if allowed by the hardware")]
@@ -46,8 +44,8 @@ namespace SpriteMaster {
 		internal const bool IgnoreUnknownTextures = false;
 		internal static bool GarbageCollectAccountUnownedTextures = true;
 		internal static bool GarbageCollectAccountOwnedTexture = true;
-		internal static bool LeakPreventTexture = true;
-		internal static bool LeakPreventAll = true;
+		internal static bool LeakPreventTexture = false;
+		internal static bool LeakPreventAll = false;
 		internal static bool DiscardDuplicates = false;
 		internal static int DiscardDuplicatesFrameDelay = 2;
 		internal static List<string> DiscardDuplicatesBlacklist = new List<string>() {
@@ -164,6 +162,7 @@ namespace SpriteMaster {
 		internal static class AsyncScaling {
 			internal static bool Enabled = true;
 			internal static bool EnabledForUnknownTextures = false;
+			internal static bool ForceSynchronousLoads = Runtime.IsUnix;
 			internal const bool CanFetchAndLoadSameFrame = false;
 			internal const int MaxLoadsPerFrame = 1;
 			internal static long MinimumSizeTexels = 0;

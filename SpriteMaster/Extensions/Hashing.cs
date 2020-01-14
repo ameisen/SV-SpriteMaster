@@ -99,8 +99,8 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static ulong HashFNV1 (this byte[] data, int start, int length) {
-			return new Span<byte>(data, start, length).HashFNV1();
+		public static ulong HashFNV1 (this byte[] data,/* int start,*/ int length) {
+			return new Span<byte>(data, /*start, */length).HashFNV1();
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

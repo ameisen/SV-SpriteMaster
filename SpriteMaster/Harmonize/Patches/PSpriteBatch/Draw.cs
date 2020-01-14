@@ -69,7 +69,7 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 					if (!t.Validate())
 						return null;
 
-					source = (Bounds)t.Dimensions;
+					source = t.Dimensions;
 
 					return scaledTexture;
 				}
@@ -250,6 +250,7 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 			ScaledTexture scaledTexture;
 			if (texture is ManagedTexture2D resampledTexture) {
 				scaledTexture = resampledTexture.Texture;
+				sourceRectangle = resampledTexture.Dimensions;
 			}
 			else if (texture.FetchScaledTexture(
 				expectedScale: ((Math.Max(scale.X, scale.Y) * scaleFactor) + Config.Resample.ScaleBias).Clamp(2.0f, (float)Config.Resample.MaxScale).NextInt(),

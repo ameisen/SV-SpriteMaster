@@ -74,10 +74,10 @@ namespace SpriteMaster.Types {
 		public Span (T[] data, int length) : this(data, length, length * TypeSize) { }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public Span (object pinnedObject, int size) : this(pinnedObject, size / TypeSize, size) { }
+		private Span (object pinnedObject, int size) : this(pinnedObject, size / TypeSize, size) { }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public Span(object pinnedObject, int length, int size) {
+		private Span(object pinnedObject, int length, int size) {
 			var handle = GCHandle.Alloc(pinnedObject, GCHandleType.Pinned);
 			try {
 				PinnedObject = pinnedObject;
