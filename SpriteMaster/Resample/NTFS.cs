@@ -9,7 +9,7 @@ namespace SpriteMaster.Resample {
 				return false;
 			try {
 				var dir = new DirectoryInfo(path);
-				if (true || (dir.Attributes & FileAttributes.Compressed) == 0) {
+				if ((dir.Attributes & FileAttributes.Compressed) == 0) {
 					var objectPath = $"Win32_Directory.Name='{dir.FullName.Replace("\\", @"\\").TrimEnd('\\')}'";
 
 					// I am switching this to use reflection does it doesn't try to search for these assemblies on Unix.
