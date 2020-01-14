@@ -178,7 +178,7 @@ namespace SpriteMaster {
 				LZ = 2,
 				LZMA = 3
 			}
-			internal static Algorithm Type = Algorithm.COMPRESS;
+			internal static Algorithm Type = Algorithm.LZ;
 			internal static bool Async = true;
 		}
 

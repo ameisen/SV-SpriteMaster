@@ -3,15 +3,14 @@
 using System.Runtime.Caching;
 using System.Threading;
 using System;
-#if WITH_ZLIB
 using Ionic.Zlib;
-#endif
 using System.IO;
 
 using Microsoft.Xna.Framework.Graphics;
 
 using SpriteMaster.Types;
 using SpriteMaster.Extensions;
+using System.Reflection;
 
 namespace SpriteMaster.Metadata {
 	internal sealed class MTexture2D {
@@ -44,17 +43,13 @@ namespace SpriteMaster.Metadata {
 		public Volatile<ulong> LastAccessFrame { get; private set; } = (ulong)DrawState.CurrentFrame;
 		internal Volatile<ulong> Hash { get; private set; } = Hashing.Default;
 
-#if WITH_ZLIB
 		private static readonly MethodInfo ZlibBaseCompressBuffer;
-#endif
 
 		static MTexture2D() {
-#if WITH_ZLIB
 			ZlibBaseCompressBuffer = typeof(ZlibStream).Assembly.GetType("Ionic.Zlib.ZlibBaseStream").GetMethod("CompressBuffer", BindingFlags.Static | BindingFlags.Public);
 			if (ZlibBaseCompressBuffer == null) {
 				throw new NullReferenceException(nameof(ZlibBaseCompressBuffer));
 			}
-#endif
 		}
 
 		private static byte[] StreamCompress (byte[] data) {
@@ -74,16 +69,12 @@ namespace SpriteMaster.Metadata {
 		}
 
 		private static byte[] LZCompress(byte[] data) {
-#if WITH_ZLIB
 			using (var val = new MemoryStream()) {
 				using (var compressor = new DeflateStream(val, CompressionMode.Compress, CompressionLevel.BestCompression)) {
 					ZlibBaseCompressBuffer.Invoke(null, new object[] { data, compressor });
 					return val.ToArray();
 				}
 			}
-#else
-			throw new Exception("SpriteMaster was built with LZ support disabled");
-#endif
 		}
 
 		private static byte[] Compress(byte[] data) {
@@ -116,11 +107,7 @@ namespace SpriteMaster.Metadata {
 				case Config.MemoryCache.Algorithm.COMPRESS:
 					return StreamDecompress(data);
 				case Config.MemoryCache.Algorithm.LZ:
-#if WITh_ZLIB
 					return DeflateStream.UncompressBuffer(data);
-#else
-					throw new Exception("SpriteMaster was built with LZ support disabled");
-#endif
 				case Config.MemoryCache.Algorithm.LZMA: {
 					/*
 					using var outStream = new MemoryStream();
@@ -282,6 +269,7 @@ namespace SpriteMaster.Metadata {
 										++CompressorCount;
 										CompressionSemaphore.WaitOne();
 										ThreadPool.QueueUserWorkItem((buffer) => {
+											Thread.CurrentThread.Priority = ThreadPriority.Lowest;
 											try {
 												if (!CheckUpdateToken(currentUpdateToken)) {
 													return;

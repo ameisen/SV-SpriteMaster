@@ -2,7 +2,6 @@
 using SpriteMaster.Types;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.IO;
 using System.Management;
 using System.Runtime.CompilerServices;
@@ -177,6 +176,7 @@ namespace SpriteMaster.Resample {
 				}
 
 				ThreadPool.QueueUserWorkItem((object dataItem) => {
+					Thread.CurrentThread.Priority = ThreadPriority.Lowest;
 					var data = (byte[])dataItem;
 					try {
 						using (var writer = new BinaryWriter(new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None))) {
@@ -252,17 +252,7 @@ namespace SpriteMaster.Resample {
 					Directory.CreateDirectory(LocalDataPath);
 
 					if (Runtime.IsWindows) {
-						var dir = new DirectoryInfo(LocalDataPath);
-						if ((dir.Attributes & FileAttributes.Compressed) == 0) {
-							var objectPath = $"Win32_Directory.Name='{dir.FullName.Replace("\\", @"\\").TrimEnd('\\')}'";
-							using (var obj = new ManagementObject(objectPath)) {
-								using (obj.InvokeMethod("Compress", null, null)) {
-									// I don't really care about the return value, 
-									// if we enabled it great but it can also be done manually
-									// if really needed
-								}
-							}
-						}
+						NTFS.CompressDirectory(LocalDataPath);
 					}
 				}
 				catch (Exception ex) {
