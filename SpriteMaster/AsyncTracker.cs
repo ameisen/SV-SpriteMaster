@@ -13,6 +13,7 @@ namespace SpriteMaster {
 
 		[Conditional("TRACE")]
 		private static void DumpTrackers() {
+#if TRACE
 			if (Trackers.Count == 0) {
 				Debug.TraceLn("No Asynchronous Tasks In Flight");
 				return;
@@ -24,6 +25,7 @@ namespace SpriteMaster {
 			}
 			output.TrimEnd('\n');
 			Debug.TraceLn(output);
+#endif
 		}
 
 		public AsyncTracker (string name) {
