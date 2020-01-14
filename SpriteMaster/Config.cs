@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
+using SpriteMaster.Extensions;
 using StardewModdingAPI;
 using System;
 using System.Collections.Generic;
@@ -26,7 +27,7 @@ namespace SpriteMaster {
 
 		internal static string ConfigVersion = "";
 		[ConfigIgnore]
-		internal static string ClearConfigBefore = "0.10.6";
+		internal static string ClearConfigBefore = "0.11.0";
 
 		internal static bool Enabled = true;
 		internal static SButton ToggleButton = SButton.F11;
@@ -172,21 +173,17 @@ namespace SpriteMaster {
 		internal static class MemoryCache {
 			internal static bool Enabled = true;
 			internal static bool AlwaysFlush = false;
-			internal enum Algorithm {
-				None = 0,
-				COMPRESS = 1,
-				LZ = 2,
-				LZMA = 3
-			}
-			internal static Algorithm Type = Algorithm.LZ;
+			internal static Compression.Algorithm Compress = Compression.Algorithm.LZ;
 			internal static bool Async = true;
 		}
 
-		internal static class Cache {
+		internal static class FileCache {
 			internal const bool Purge = false;
 			internal static bool Enabled = true;
 			internal const int LockRetries = 32;
 			internal const int LockSleepMS = 32;
+			internal static Compression.Algorithm Compress = Compression.Algorithm.LZ;
+			internal static bool ForceCompress = false;
 		}
 	}
 }

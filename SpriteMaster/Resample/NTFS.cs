@@ -30,7 +30,13 @@ namespace SpriteMaster.Resample {
 			catch {
 				return false;
 			}
-			return true;
+			try {
+				var dir = new DirectoryInfo(path);
+				return (dir.Attributes & FileAttributes.Compressed) != 0;
+			}
+			catch {
+				return false;
+			}
 		}
 	}
 }

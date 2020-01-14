@@ -43,86 +43,6 @@ namespace SpriteMaster.Metadata {
 		public Volatile<ulong> LastAccessFrame { get; private set; } = (ulong)DrawState.CurrentFrame;
 		internal Volatile<ulong> Hash { get; private set; } = Hashing.Default;
 
-		private static readonly MethodInfo ZlibBaseCompressBuffer;
-
-		static MTexture2D() {
-			ZlibBaseCompressBuffer = typeof(ZlibStream).Assembly.GetType("Ionic.Zlib.ZlibBaseStream").GetMethod("CompressBuffer", BindingFlags.Static | BindingFlags.Public);
-			if (ZlibBaseCompressBuffer == null) {
-				throw new NullReferenceException(nameof(ZlibBaseCompressBuffer));
-			}
-		}
-
-		private static byte[] StreamCompress (byte[] data) {
-			using (var val = new MemoryStream()) {
-				using (var compressor = new System.IO.Compression.DeflateStream(val, System.IO.Compression.CompressionLevel.Optimal)) {
-					return val.ToArray();
-				}
-			}
-		}
-
-		private static byte[] StreamDecompress (byte[] data) {
-			using (var val = new MemoryStream()) {
-				using (var compressor = new System.IO.Compression.DeflateStream(val, System.IO.Compression.CompressionMode.Decompress)) {
-					return val.ToArray();
-				}
-			}
-		}
-
-		private static byte[] LZCompress(byte[] data) {
-			using (var val = new MemoryStream()) {
-				using (var compressor = new DeflateStream(val, CompressionMode.Compress, CompressionLevel.BestCompression)) {
-					ZlibBaseCompressBuffer.Invoke(null, new object[] { data, compressor });
-					return val.ToArray();
-				}
-			}
-		}
-
-		private static byte[] Compress(byte[] data) {
-			switch (Config.MemoryCache.Type) {
-				case Config.MemoryCache.Algorithm.None:
-					return data;
-				case Config.MemoryCache.Algorithm.COMPRESS:
-					return StreamCompress(data);
-				case Config.MemoryCache.Algorithm.LZ:
-					return LZCompress(data);
-				case Config.MemoryCache.Algorithm.LZMA: {
-					/*
-					using var outStream = new MemoryStream();
-					using (var inStream = new XZCompressStream(outStream)) {
-						inStream.Write(data, 0, data.Length);
-					}
-					return outStream.ToArray();
-					*/
-					throw new NotImplementedException("LZMA support not yet implemented.");
-				}
-				default:
-					throw new Exception($"Unknown Compression Algorithm: {Config.MemoryCache.Type}");
-			}
-		}
-
-		private static byte[] Decompress(byte[] data) {
-			switch (Config.MemoryCache.Type) {
-				case Config.MemoryCache.Algorithm.None:
-					return data;
-				case Config.MemoryCache.Algorithm.COMPRESS:
-					return StreamDecompress(data);
-				case Config.MemoryCache.Algorithm.LZ:
-					return DeflateStream.UncompressBuffer(data);
-				case Config.MemoryCache.Algorithm.LZMA: {
-					/*
-					using var outStream = new MemoryStream();
-					using (var inStream = new XZDecompressStream(outStream)) {
-						inStream.Read(data, 0, data.Length);
-					}
-					return outStream.ToArray();
-					*/
-					throw new NotImplementedException("LZMA support not yet implemented.");
-				}
-				default:
-					throw new Exception($"Unknown Compression Algorithm: {Config.MemoryCache.Type}");
-			}
-		}
-
 		// TODO : this presently is not threadsafe.
 		private readonly WeakReference<byte[]> _CachedData = (Config.MemoryCache.Enabled) ? new WeakReference<byte[]>(null) : null;
 
@@ -205,7 +125,7 @@ namespace SpriteMaster.Metadata {
 					if (!_CachedData.TryGetTarget(out target) || target == null) {
 						byte[] compressedBuffer;
 						using (DataCacheLock.Shared) {
-							if (Config.MemoryCache.Type != Config.MemoryCache.Algorithm.None && Config.MemoryCache.Async) {
+							if (Config.MemoryCache.Compress != Compression.Algorithm.None && Config.MemoryCache.Async) {
 								using (Lock.Promote) {
 									int count = CompressorCount;
 									if (count > 0) {
@@ -220,7 +140,7 @@ namespace SpriteMaster.Metadata {
 
 							compressedBuffer = DataCache[UniqueIDString] as byte[];
 							if (compressedBuffer != null) {
-								target = Decompress(compressedBuffer);
+								target = Compression.Decompress(compressedBuffer, Config.MemoryCache.Compress);
 							}
 							else {
 								target = null;
@@ -263,7 +183,7 @@ namespace SpriteMaster.Metadata {
 
 							// I suspect this is completing AFTER we get a call to purge again, and so is overwriting what is the correct data.
 							// Doesn't explain why _not_ purging helps, though.
-							if (Config.MemoryCache.Type != Config.MemoryCache.Algorithm.None && Config.MemoryCache.Async) {
+							if (Config.MemoryCache.Compress != Compression.Algorithm.None && Config.MemoryCache.Async) {
 								if (queueCompress) {
 									using (Lock.Promote) {
 										++CompressorCount;
@@ -275,7 +195,7 @@ namespace SpriteMaster.Metadata {
 												if (!CheckUpdateToken(currentUpdateToken)) {
 													return;
 												}
-												var compressedData = Compress((byte[])buffer);
+												var compressedData = Compression.Compress((byte[])buffer, Config.MemoryCache.Compress);
 												using (DataCacheLock.Exclusive) {
 													using (Lock.Exclusive) {
 														if (currentUpdateToken != UpdateToken) {
@@ -294,7 +214,7 @@ namespace SpriteMaster.Metadata {
 								}
 							}
 							else {
-								DataCache[UniqueIDString] = Compress(value);
+								DataCache[UniqueIDString] = Compression.Compress(value, Config.MemoryCache.Compress);
 							}
 
 							using (Lock.Promote) {

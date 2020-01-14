@@ -36,7 +36,7 @@
   <PropertyGroup>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <PackageId>SpriteMaster Runtime</PackageId>
-    <Version>0.10.6</Version>
+    <Version>0.11.0</Version>
     <Authors>Digital Carbide</Authors>
     <Product>SpriteMaster-SV</Product>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>

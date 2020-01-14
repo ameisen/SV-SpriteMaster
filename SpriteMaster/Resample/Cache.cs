@@ -3,7 +3,6 @@ using SpriteMaster.Types;
 using System;
 using System.Collections.Concurrent;
 using System.IO;
-using System.Management;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -16,6 +15,8 @@ namespace SpriteMaster.Resample {
 		private static readonly string CacheName = $"{TextureCacheName}_{AssemblyVersion}";
 		private static readonly string LocalDataPath = Path.Combine(Config.LocalRoot, CacheName);
 		private static readonly string DumpPath = Path.Combine(LocalDataPath, "dump");
+
+		private static bool SystemCompression = false;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static string GetPath (params string[] path) {
@@ -37,6 +38,7 @@ namespace SpriteMaster.Resample {
 			public Vector2I Padding;
 			public Vector2I BlockPadding;
 			public ulong DataHash;
+			public uint UncompressedDataLength;
 			public uint DataLength;
 
 			internal static CacheHeader Read (BinaryReader reader) {
@@ -94,12 +96,12 @@ namespace SpriteMaster.Resample {
 			blockPadding = Vector2I.Zero;
 			data = null;
 
-			if (Config.Cache.Enabled && File.Exists(path)) {
-				int retries = Config.Cache.LockRetries;
+			if (Config.FileCache.Enabled && File.Exists(path)) {
+				int retries = Config.FileCache.LockRetries;
 
 				while (retries-- > 0) {
 					if (SavingMap.TryGetValue(path, out var state) && state != SaveState.Saved) {
-						Thread.Sleep(Config.Cache.LockSleepMS);
+						Thread.Sleep(Config.FileCache.LockSleepMS);
 						continue;
 					}
 
@@ -120,18 +122,32 @@ namespace SpriteMaster.Resample {
 							wrapped = header.Wrapped;
 							padding = header.Padding;
 							blockPadding = header.BlockPadding;
+							var uncompressedDataLength = header.UncompressedDataLength;
 							var dataLength = header.DataLength;
 							var dataHash = header.DataHash;
 
+							// var algorithm = SystemCompression ? Compression.Algorithm.None : Config.Cache.Compress;
+
 							var remainingSize = reader.BaseStream.Length - reader.BaseStream.Position;
-							if (remainingSize < header.DataLength) {
+							if (remainingSize < uncompressedDataLength) {
 								throw new EndOfStreamException("Cache File is corrupted");
 							}
 
-							data = new byte[dataLength];
+							if (dataLength == uncompressedDataLength) {
+								data = new byte[dataLength];
 
-							foreach (int i in 0..data.Length) {
-								data[i] = reader.ReadByte();
+								foreach (int i in 0..data.Length) {
+									data[i] = reader.ReadByte();
+								}
+							}
+							else {
+								var compressedData = new byte[dataLength];
+
+								foreach (int i in 0..compressedData.Length) {
+									compressedData[i] = reader.ReadByte();
+								}
+
+								data = Compression.Decompress(compressedData, Config.FileCache.Compress);
 							}
 
 							if (data.HashXX() != dataHash) {
@@ -151,7 +167,7 @@ namespace SpriteMaster.Resample {
 								return false;
 							case IOException iox when WasLocked(iox):
 								Debug.TraceLn($"File was locked when trying to load cache file '{path}': {ex.Message} [{retries} retries]");
-								Thread.Sleep(Config.Cache.LockSleepMS);
+								Thread.Sleep(Config.FileCache.LockSleepMS);
 								break;
 						}
 					}
@@ -170,7 +186,7 @@ namespace SpriteMaster.Resample {
 			Vector2I blockPadding,
 			byte[] data
 		) {
-			if (Config.Cache.Enabled) {
+			if (Config.FileCache.Enabled) {
 				if (!SavingMap.TryAdd(path, SaveState.Saving)) {
 					return false;
 				}
@@ -181,6 +197,15 @@ namespace SpriteMaster.Resample {
 					var data = (byte[])dataItem;
 					try {
 						using (var writer = new BinaryWriter(new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None))) {
+
+							var algorithm = (SystemCompression && !Config.FileCache.ForceCompress) ? Compression.Algorithm.None : Config.FileCache.Compress;
+
+							var compressedData = Compression.Compress(data, algorithm);
+
+							if (compressedData.Length >= data.Length) {
+								compressedData = data;
+							}
+
 							new CacheHeader() {
 								RefScale = refScale,
 								Size = size,
@@ -188,11 +213,12 @@ namespace SpriteMaster.Resample {
 								Wrapped = wrapped,
 								Padding = padding,
 								BlockPadding = blockPadding,
-								DataLength = (uint)data.Length,
+								UncompressedDataLength = (uint)data.Length,
+								DataLength = (uint)compressedData.Length,
 								DataHash = data.HashXX()
 							}.Write(writer);
 
-							foreach (var v in data) {
+							foreach (var v in compressedData) {
 								writer.Write(v);
 							}
 						}
@@ -234,7 +260,7 @@ namespace SpriteMaster.Resample {
 								continue;
 							}
 							var endPath = Path.GetFileName(directory);
-							if (Config.Cache.Purge || (endPath != CacheName && endPath != JunctionCacheName)) {
+							if (Config.FileCache.Purge || (endPath != CacheName && endPath != JunctionCacheName)) {
 								// If it doesn't match, it's outdated and should be deleted.
 								Directory.Delete(directory, true);
 							}
@@ -245,15 +271,19 @@ namespace SpriteMaster.Resample {
 			}
 			catch { /* Ignore failures */ }
 
-			if (Config.Cache.Enabled) {
+			if (Config.FileCache.Enabled) {
 				// Mark the directory as compressed because this is very space wasteful and we are currently not performing compression.
 				// https://stackoverflow.com/questions/624125/compress-a-folder-using-ntfs-compression-in-net
 				try {
 					// Create the directory path
 					Directory.CreateDirectory(LocalDataPath);
-
+				}
+				catch (Exception ex) {
+					ex.PrintWarning();
+				}
+				try {
 					if (Runtime.IsWindows) {
-						NTFS.CompressDirectory(LocalDataPath);
+						SystemCompression = NTFS.CompressDirectory(LocalDataPath);
 					}
 				}
 				catch (Exception ex) {
