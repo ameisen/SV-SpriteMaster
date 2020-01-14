@@ -152,8 +152,10 @@ namespace SpriteMaster {
 			// GC after major events
 			help.Events.GameLoop.SaveLoaded += (_, _1) => Garbage.Collect(compact: true, blocking: true, background: false);
 
-			MemoryPressureThread.Start();
-			GarbageCollectThread.Start();
+			if (MemoryPressureThread != null)
+				MemoryPressureThread.Start();
+			if (GarbageCollectThread != null)
+				GarbageCollectThread.Start();
 		}
 
 		// SMAPI/CP won't do this, so we do. Purge the cached textures for the previous season on a season change.
