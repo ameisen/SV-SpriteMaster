@@ -7,12 +7,34 @@ using TeximpNet.DDS;
 
 namespace SpriteMaster.Resample {
 	internal static class BlockCompress {
-		internal static unsafe byte[] Compress (byte[] data, ref TextureFormat format, Vector2I dimensions, bool HasAlpha, bool IsPunchThroughAlpha, bool IsMasky, bool HasR, bool HasG, bool HasB) {
-			var bitmapData = data;
-			var spriteFormat = format;
+		// We set this to false if block compression fails, as we assume that for whatever reason nvtt does not work on that system.
+		private static bool BlockCompressionFunctional = true;
 
-			var oldSpriteFormat = spriteFormat;
+		private static void FlipColorBytes (byte[] p) {
+			var span = new Span<byte>(p).As<uint>();
+			foreach (int i in 0..span.Length) {
+				var color = span[i];
+				color =
+					(color & 0xFF000000U) |
+					(color & 0x0000FF00U) |
+					((color & 0x00FF0000U) >> 16) |
+					((color & 0x000000FFU) << 16);
+				span[i] = color;
+			}
+		}
+
+		internal static unsafe byte[] Compress (byte[] data, ref TextureFormat format, Vector2I dimensions, bool HasAlpha, bool IsPunchThroughAlpha, bool IsMasky, bool HasR, bool HasG, bool HasB) {
+			if (!BlockCompressionFunctional) {
+				return null;
+			}
+
+			var oldSpriteFormat = format;
+
+			FlipColorBytes(data);
+
 			try {
+				var bitmapData = data;
+
 				using (var compressor = new Compressor()) {
 					compressor.Input.AlphaMode = (HasAlpha) ? AlphaMode.Premultiplied : AlphaMode.None;
 					compressor.Input.GenerateMipmaps = false;
@@ -63,40 +85,26 @@ namespace SpriteMaster.Resample {
 			}
 			catch (Exception ex) {
 				ex.PrintWarning();
-				format = oldSpriteFormat;
+				BlockCompressionFunctional = false;
 			}
+			format = oldSpriteFormat;
+			FlipColorBytes(data);
 			return null;
 		}
 
 		internal static unsafe bool Compress (ref byte[] data, ref TextureFormat format, Vector2I dimensions, bool HasAlpha, bool IsPunchThroughAlpha, bool IsMasky, bool HasR, bool HasG, bool HasB) {
 			var oldFormat = format;
 
-			void FlipColorBytes (byte[] p) {
-				var span = new Span<byte>(p).As<uint>();
-				foreach (int i in 0..span.Length) {
-					var color = span[i];
-					color =
-						(color & 0xFF000000U) |
-						(color & 0x0000FF00U) |
-						((color & 0x00FF0000U) >> 16) |
-						((color & 0x000000FFU) << 16);
-					span[i] = color;
-				}
-			}
-
 			try {
 				// We do this ourselves because TexImpNet's allocator has an overflow bug which causes the conversion to fail if it converts it itself.
-				FlipColorBytes(data);
 				var byteData = Compress(data, ref format, dimensions, HasAlpha, IsPunchThroughAlpha, IsMasky, HasR, HasG, HasB);
 				if (byteData == null) {
-					FlipColorBytes(data);
 					return false;
 				}
 				data = byteData;
 				return true;
 			}
 			catch {
-				FlipColorBytes(data);
 				format = oldFormat;
 				return false;
 			}
