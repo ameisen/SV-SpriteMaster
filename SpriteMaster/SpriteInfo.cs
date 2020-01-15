@@ -14,15 +14,7 @@ namespace SpriteMaster {
 		internal readonly bool BlendEnabled;
 		internal readonly int ExpectedScale;
 
-		private object _Data = default;
-		internal byte[] Data {
-			get {
-				return (byte[])Thread.VolatileRead(ref _Data);
-			}
-			private set {
-				Thread.VolatileWrite(ref _Data, value);
-			}
-		}
+		internal byte[] Data = default;
 		private Volatile<ulong> _Hash = Hashing.Default;
 		public ulong Hash {
 			get {

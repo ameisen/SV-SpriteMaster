@@ -65,8 +65,6 @@ namespace SpriteMaster {
 				// So we have to lie about the remaining time.
 				remaining = new TimeSpan(FrameRate.Ticks / 2);
 
-				Debug.ErrorLn($"Remaining Frame Time: {remaining}");
-
 				SynchronizedTasks.ProcessPendingActions(remaining);
 			}
 

@@ -4,9 +4,11 @@ using System.Diagnostics;
 
 namespace SpriteMaster {
 	internal sealed class AsyncTracker : IDisposable {
+		private const bool Enabled = false;
+
 #if DEBUG
-		private static readonly object TrackerLock = new object();
-		private static readonly HashSet<AsyncTracker> Trackers = new HashSet<AsyncTracker>();
+		private static readonly object TrackerLock = Enabled ? new object() : null;
+		private static readonly HashSet<AsyncTracker> Trackers = Enabled ? new HashSet<AsyncTracker>() : null;
 
 		private readonly string Name;
 #endif
@@ -14,6 +16,8 @@ namespace SpriteMaster {
 		[Conditional("DEBUG")]
 		private static void DumpTrackers() {
 #if DEBUG
+			if (!Enabled) return;
+
 			if (Trackers.Count == 0) {
 				Debug.TraceLn("No Asynchronous Tasks In Flight");
 				return;
@@ -29,6 +33,8 @@ namespace SpriteMaster {
 		}
 
 		public AsyncTracker (string name) {
+			if (!Enabled) return;
+
 #if DEBUG
 			Name = name;
 			lock (TrackerLock) {
@@ -39,6 +45,8 @@ namespace SpriteMaster {
 		}
 
 		public void Dispose () {
+			if (!Enabled) return;
+
 #if DEBUG
 			lock (TrackerLock) {
 				Trackers.Remove(this);

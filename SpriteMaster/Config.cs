@@ -107,7 +107,7 @@ namespace SpriteMaster {
 			internal static int MaxScale = 6;
 			internal static int MinimumTextureDimensions = 4;
 			internal static bool EnableWrappedAddressing = true;
-			internal static bool UseBlockCompression = true;
+			internal static bool UseBlockCompression = !Runtime.IsMacintosh; // I cannot build a proper libnvtt for OSX presently.
 			internal static CompressionQuality BlockCompressionQuality = CompressionQuality.Highest;
 			internal static int BlockHardAlphaDeviationThreshold = 7;
 			internal static List<string> Blacklist = new List<string>() {
