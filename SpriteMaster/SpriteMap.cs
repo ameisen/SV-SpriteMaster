@@ -3,16 +3,19 @@ using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
 using SpriteMaster.Types;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace SpriteMaster {
 	internal sealed class SpriteMap {
 		private readonly SharedLock Lock = new SharedLock();
 		private readonly WeakCollection<ScaledTexture> ScaledTextureReferences = new WeakCollection<ScaledTexture>();
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		static private ulong SpriteHash (Texture2D texture, Bounds source, int expectedScale) {
 			return Hash.Combine(source.Hash(), expectedScale.GetHashCode());
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal void Add (Texture2D reference, ScaledTexture texture, Bounds source, int expectedScale) {
 			lock (reference.Meta()) {
 				var Map = reference.Meta().SpriteTable;
@@ -25,6 +28,7 @@ namespace SpriteMaster {
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal bool TryGet (Texture2D texture, Bounds source, int expectedScale, out ScaledTexture result) {
 			result = null;
 
@@ -52,6 +56,7 @@ namespace SpriteMaster {
 			return false;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal void Remove (ScaledTexture scaledTexture, Texture2D texture) {
 			try {
 				lock (texture.Meta()) {
@@ -87,6 +92,7 @@ namespace SpriteMaster {
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal void Purge (Texture2D reference, Bounds? sourceRectangle = null) {
 			try {
 				using (Lock.Shared) {
@@ -118,6 +124,7 @@ namespace SpriteMaster {
 			catch { }
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal void SeasonPurge (string season) {
 			try {
 				var purgeList = new List<ScaledTexture>();

@@ -1,9 +1,11 @@
 ﻿using SpriteMaster.Types;
 using System;
 using System.IO;
+using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Extensions {
 	internal static class BinarySerialize {
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static void Write<T> (this BinaryWriter stream, T value) {
 			switch (value) {
 				case string v:
@@ -64,6 +66,7 @@ namespace SpriteMaster.Extensions {
 			throw new ArgumentException($"Type {typeof(T).FullName} cannot be serialized by BinaryWriter");
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static object Read (this BinaryReader stream, Type type) {
 			switch (type) {
 				case var _ when type.Equals(typeof(string)):
@@ -106,6 +109,7 @@ namespace SpriteMaster.Extensions {
 			throw new ArgumentException($"Type {type.FullName} cannot be serialized by BinaryReader");
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static T Read<T> (this BinaryReader stream) {
 			return (T)Read(stream, typeof(T));
 		}

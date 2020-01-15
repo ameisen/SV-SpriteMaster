@@ -19,11 +19,11 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static bool Cleanup (this ref Bounds sourceRectangle, Texture2D reference) {
 			if (Config.ClampInvalidBounds) {
-				sourceRectangle = ((Rectangle)sourceRectangle).ClampTo(new Rectangle(0, 0, reference.Width, reference.Height));
+				sourceRectangle = sourceRectangle.ClampTo(new Bounds(reference.Width, reference.Height));
 			}
 
 			// Let's just skip potentially invalid draws since I have no idea what to do with them.
-			return (sourceRectangle.Height > 0 && sourceRectangle.Width > 0);
+			return !sourceRectangle.Degenerate;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

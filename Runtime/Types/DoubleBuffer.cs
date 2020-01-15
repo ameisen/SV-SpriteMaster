@@ -1,5 +1,6 @@
 ﻿using SpriteMaster.Extensions;
 using System;
+using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Types {
 	public sealed class DoubleBuffer<T> {
@@ -24,11 +25,13 @@ namespace SpriteMaster.Types {
 			Reflection.CreateInstance<T>(parameters)
 		) { }
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Swap() {
 			CurrentBuffer += 1;
 			CurrentBuffer &= 1;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static implicit operator T (DoubleBuffer<T> buffer) {
 			return buffer.Current;
 		}

@@ -23,6 +23,7 @@ namespace SpriteMaster {
 		private static DateTime FrameStartTime = DateTime.Now;
 
 		internal static GraphicsDevice Device {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				return Game1.graphics.GraphicsDevice;
 			}
@@ -74,6 +75,7 @@ namespace SpriteMaster {
 			++CurrentFrame;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static void OnBegin (
 			SpriteBatch @this,
 			SpriteSortMode sortMode,

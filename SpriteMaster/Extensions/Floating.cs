@@ -63,12 +63,14 @@ namespace SpriteMaster.Extensions {
 			return v.Clamp(0.0, 1.0);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static float Lerp (this float x, float y, float s) {
-			return x * (1 - s) + y * s;
+			return x * (1.0f - s) + y * s;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static double Lerp (this double x, double y, double s) {
-			return x * (1 - s) + y * s;
+			return x * (1.0 - s) + y * s;
 		}
 	}
 }

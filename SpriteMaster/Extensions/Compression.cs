@@ -1,11 +1,7 @@
 ﻿using Ionic.Zlib;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Extensions {
 	internal static class Compression {
@@ -27,6 +23,7 @@ namespace SpriteMaster.Extensions {
 
 		// https://stackoverflow.com/questions/39191950/how-to-compress-a-byte-array-without-stream-or-system-io
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static byte[] StreamCompress (byte[] data) {
 			using (var val = new MemoryStream()) {
 				using (var compressor = new System.IO.Compression.DeflateStream(val, System.IO.Compression.CompressionLevel.Optimal)) {
@@ -36,6 +33,7 @@ namespace SpriteMaster.Extensions {
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static byte[] StreamDecompress (byte[] data) {
 			using (var dataStream = new MemoryStream(data)) {
 				using (var val = new MemoryStream()) {
@@ -47,6 +45,7 @@ namespace SpriteMaster.Extensions {
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static byte[] StreamDecompress (byte[] data, int size) {
 			using (var dataStream = new MemoryStream(data)) {
 				var output = new byte[size];
@@ -59,20 +58,22 @@ namespace SpriteMaster.Extensions {
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static byte[] LZCompress (byte[] data) {
 			using (var val = new MemoryStream()) {
 				using (var compressor = new DeflateStream(val, CompressionMode.Compress, CompressionLevel.BestCompression)) {
-					//ZlibBaseCompressBuffer.Invoke(null, new object[] { data, compressor });
 					compressor.Write(data, 0, data.Length);
 				}
 				return val.ToArray();
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static byte[] LZDecompress (byte[] data) {
 			return DeflateStream.UncompressBuffer(data);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static byte[] LZDecompress (byte[] data, int size) {
 			using (var dataStream = new MemoryStream(data)) {
 				var output = new byte[size];
@@ -85,6 +86,7 @@ namespace SpriteMaster.Extensions {
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static byte[] Compress(this byte[] data, Algorithm algorithm = Algorithm.LZ) {
 			switch (algorithm) {
 				case Algorithm.None:
@@ -99,6 +101,7 @@ namespace SpriteMaster.Extensions {
 			throw new Exception($"Unknown Compression Algorithm: {algorithm}");
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static byte[] Decompress (this byte[] data, int size, Algorithm algorithm = Algorithm.LZ) {
 			switch (algorithm) {
 				case Algorithm.None:
@@ -113,6 +116,7 @@ namespace SpriteMaster.Extensions {
 			throw new Exception($"Unknown Compression Algorithm: {algorithm}");
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static byte[] Decompress(this byte[] data, Algorithm algorithm = Algorithm.LZ) {
 			switch (algorithm) {
 				case Algorithm.None:

@@ -1,12 +1,10 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
-using SpriteMaster.Attributes;
 using SpriteMaster.Extensions;
 using StardewModdingAPI;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster {
@@ -43,19 +41,19 @@ namespace SpriteMaster {
 
 		// Logging Stuff
 
-		[DebuggerStepThrough, DebuggerHidden(), Untraced]
+		[DebuggerStepThrough, DebuggerHidden()]
 		static private string Format(this string memberName, bool format = true) {
 			return (!format || memberName == null) ? "" : $"[{memberName}] ";
 		}
 
-		[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden(), Untraced]
+		[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden()]
 		static internal void Trace (string message, bool format = true, [CallerMemberName] string caller = null) {
 			if (!Config.Debug.Logging.LogInfo)
 				return;
 			Console.Error.DebugWriteStr($"{caller.Format(format)}{message}", LogLevel.Debug);
 		}
 
-		[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden(), Untraced]
+		[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden()]
 		static internal void Trace<T> (T exception, [CallerMemberName] string caller = null) where T : Exception {
 			if (!Config.Debug.Logging.LogInfo)
 				return;
@@ -63,19 +61,19 @@ namespace SpriteMaster {
 			TraceLn(exception.GetStackTrace(), caller: caller);
 		}
 
-		[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden(), Untraced]
+		[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden()]
 		static internal void TraceLn (string message, bool format = true, [CallerMemberName] string caller = null) {
 			Trace($"{message}\n", format, caller);
 		}
 
-		[Conditional("TRACE"), DebuggerStepThrough, DebuggerHidden(), Untraced]
+		[Conditional("TRACE"), DebuggerStepThrough, DebuggerHidden()]
 		static internal void Info (string message, bool format = true, [CallerMemberName] string caller = null) {
 			if (!Config.Debug.Logging.LogInfo)
 				return;
 			Console.Error.DebugWriteStr($"{caller.Format(format)}{message}", LogLevel.Info);
 		}
 
-		[Conditional("TRACE"), DebuggerStepThrough, DebuggerHidden(), Untraced]
+		[Conditional("TRACE"), DebuggerStepThrough, DebuggerHidden()]
 		static internal void Info<T>(T exception, [CallerMemberName] string caller = null) where T : Exception {
 			if (!Config.Debug.Logging.LogInfo)
 				return;
@@ -83,19 +81,39 @@ namespace SpriteMaster {
 			InfoLn(exception.GetStackTrace(), caller: caller);
 		}
 
-		[Conditional("TRACE"), DebuggerStepThrough, DebuggerHidden(), Untraced]
+		[Conditional("TRACE"), DebuggerStepThrough, DebuggerHidden()]
 		static internal void InfoLn (string message, bool format = true, [CallerMemberName] string caller = null) {
 			Info($"{message}\n", format, caller);
 		}
 
-		[DebuggerStepThrough, DebuggerHidden(), Untraced]
+		[DebuggerStepThrough, DebuggerHidden()]
+		static internal void Message (string message, bool format = true, [CallerMemberName] string caller = null) {
+			if (!Config.Debug.Logging.LogInfo)
+				return;
+			Console.Error.DebugWriteStr($"{caller.Format(format)}{message}", LogLevel.Info);
+		}
+
+		[DebuggerStepThrough, DebuggerHidden()]
+		static internal void Message<T> (T exception, [CallerMemberName] string caller = null) where T : Exception {
+			if (!Config.Debug.Logging.LogInfo)
+				return;
+			MessageLn($"Exception: {exception.Message}", caller: caller);
+			MessageLn(exception.GetStackTrace(), caller: caller);
+		}
+
+		[DebuggerStepThrough, DebuggerHidden()]
+		static internal void MessageLn (string message, bool format = true, [CallerMemberName] string caller = null) {
+			Message($"{message}\n", format, caller);
+		}
+
+		[DebuggerStepThrough, DebuggerHidden()]
 		static internal void Warning (string message, bool format = true, [CallerMemberName] string caller = null) {
 			if (!Config.Debug.Logging.LogWarnings)
 				return;
 			Console.Error.DebugWrite(LogLevel.Warn, $"{caller.Format(format)}{message}");
 		}
 
-		[DebuggerStepThrough, DebuggerHidden(), Untraced]
+		[DebuggerStepThrough, DebuggerHidden()]
 		static internal void Warning<T> (T exception, [CallerMemberName] string caller = null) where T : Exception {
 			if (!Config.Debug.Logging.LogInfo)
 				return;
@@ -103,19 +121,19 @@ namespace SpriteMaster {
 			WarningLn(exception.GetStackTrace(), caller: caller);
 		}
 
-		[DebuggerStepThrough, DebuggerHidden(), Untraced]
+		[DebuggerStepThrough, DebuggerHidden()]
 		static internal void WarningLn (string message, bool format = true, [CallerMemberName] string caller = null) {
 			Warning($"{message}\n", format, caller);
 		}
 
-		[DebuggerStepThrough, DebuggerHidden(), Untraced]
+		[DebuggerStepThrough, DebuggerHidden()]
 		static internal void Error (string message, bool format = true, [CallerMemberName] string caller = null) {
 			if (!Config.Debug.Logging.LogErrors)
 				return;
 			Console.Error.DebugWrite(LogLevel.Error, $"{caller.Format(format)}{message}");
 		}
 
-		[DebuggerStepThrough, DebuggerHidden(), Untraced]
+		[DebuggerStepThrough, DebuggerHidden()]
 		static internal void Error<T> (T exception, [CallerMemberName] string caller = null) where T : Exception {
 			if (!Config.Debug.Logging.LogInfo)
 				return;
@@ -123,12 +141,12 @@ namespace SpriteMaster {
 			ErrorLn(exception.GetStackTrace(), caller: caller);
 		}
 
-		[DebuggerStepThrough, DebuggerHidden(), Untraced]
+		[DebuggerStepThrough, DebuggerHidden()]
 		static internal void ErrorLn (string message, bool format = true, [CallerMemberName] string caller = null) {
 			Error($"{message}\n", format, caller);
 		}
 
-		[DebuggerStepThrough, DebuggerHidden(), Untraced]
+		[DebuggerStepThrough, DebuggerHidden()]
 		static internal void Flush () {
 			Console.Error.FlushAsync();
 		}
@@ -187,7 +205,7 @@ namespace SpriteMaster {
 			}
 		}
 
-		[DebuggerStepThrough, DebuggerHidden(), Untraced]
+		[DebuggerStepThrough, DebuggerHidden()]
 		static private ConsoleColor GetColor(this LogLevel @this) {
 			return @this switch {
 				LogLevel.Debug => Color.Trace,
@@ -198,7 +216,7 @@ namespace SpriteMaster {
 			};
 		}
 
-		[DebuggerStepThrough, DebuggerHidden(), Untraced]
+		[DebuggerStepThrough, DebuggerHidden()]
 		static private void DebugWrite (this TextWriter writer, LogLevel level, string str) {
 			lock (writer) {
 				if (LogFile != null) {
@@ -227,7 +245,7 @@ namespace SpriteMaster {
 			}
 		}
 
-		[DebuggerStepThrough, DebuggerHidden(), Untraced]
+		[DebuggerStepThrough, DebuggerHidden()]
 		static private void DebugWriteStr (this TextWriter writer, string str, LogLevel level) {
 			if (Config.Debug.Logging.UseSMAPI) {
 				var strings = str.Split(new[] { '\n', '\r' });

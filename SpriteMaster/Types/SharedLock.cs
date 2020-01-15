@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.ConstrainedExecution;
 using System.Security;
 using System.Threading;
@@ -12,6 +13,7 @@ namespace SpriteMaster {
 			private ReaderWriterLock Lock;
 
 			[SecuritySafeCritical]
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public SharedCookie (ReaderWriterLock rwlock) {
 				this.Lock = rwlock;
 				this.Lock.AcquireReaderLock(-1);
@@ -19,10 +21,12 @@ namespace SpriteMaster {
 
 			public bool IsDisposed {
 				[SecuritySafeCritical, ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get { return Lock == null; }
 			}
 
 			[SecuritySafeCritical, ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public void Dispose () {
 				if (Lock == null) {
 					return;
@@ -39,6 +43,7 @@ namespace SpriteMaster {
 			private ReaderWriterLock Lock;
 
 			[SecuritySafeCritical]
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public ExclusiveCookie (ReaderWriterLock rwlock) {
 				this.Lock = rwlock;
 				this.Lock.AcquireWriterLock(-1);
@@ -46,10 +51,12 @@ namespace SpriteMaster {
 
 			public bool IsDisposed {
 				[SecuritySafeCritical, ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get { return Lock == null; }
 			}
 
 			[SecuritySafeCritical, ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public void Dispose () {
 				if (Lock == null) {
 					return;
@@ -68,6 +75,7 @@ namespace SpriteMaster {
 			private LockCookie Cookie;
 
 			[SecuritySafeCritical]
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public PromotedCookie (ReaderWriterLock rwlock) {
 				this.Lock = rwlock;
 				this.Cookie = this.Lock.UpgradeToWriterLock(-1);
@@ -75,10 +83,12 @@ namespace SpriteMaster {
 
 			public bool IsDisposed {
 				[SecuritySafeCritical, ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get { return Lock == null; }
 			}
 
 			[SecuritySafeCritical, ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public void Dispose () {
 				if (Lock == null) {
 					return;
@@ -92,6 +102,7 @@ namespace SpriteMaster {
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		~SharedLock () {
 			Dispose();
 			Lock = null;
@@ -99,25 +110,31 @@ namespace SpriteMaster {
 
 		public bool IsLocked {
 			[SecuritySafeCritical, ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get { return Lock.IsReaderLockHeld || Lock.IsWriterLockHeld; }
 		}
 
 		public bool IsSharedLock {
 			[SecuritySafeCritical, ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get { return Lock.IsReaderLockHeld; }
 		}
 
 		public bool IsExclusiveLock {
 			[SecuritySafeCritical, ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get { return Lock.IsWriterLockHeld; }
 		}
 
 		public bool IsDisposed {
+			[SecuritySafeCritical, ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get { return Lock == null; }
 		}
 
 		public SharedCookie Shared {
 			[SecuritySafeCritical]
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				Contract.Assert(!IsLocked);
 				return new SharedCookie(Lock);
@@ -126,6 +143,7 @@ namespace SpriteMaster {
 
 		public ExclusiveCookie Exclusive {
 			[SecuritySafeCritical]
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				Contract.Assert(!IsLocked);
 				return new ExclusiveCookie(Lock);
@@ -134,6 +152,7 @@ namespace SpriteMaster {
 
 		public PromotedCookie Promote {
 			[SecuritySafeCritical]
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				Contract.Assert(!IsExclusiveLock && IsSharedLock);
 				return new PromotedCookie(Lock);
@@ -141,6 +160,7 @@ namespace SpriteMaster {
 		}
 
 		[SecuritySafeCritical, ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Dispose () {
 			if (Lock == null) {
 				return;

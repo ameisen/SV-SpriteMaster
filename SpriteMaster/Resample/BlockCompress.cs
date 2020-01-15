@@ -2,6 +2,7 @@
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using System;
+using System.Runtime.CompilerServices;
 using TeximpNet.Compression;
 using TeximpNet.DDS;
 
@@ -10,6 +11,7 @@ namespace SpriteMaster.Resample {
 		// We set this to false if block compression fails, as we assume that for whatever reason nvtt does not work on that system.
 		private static bool BlockCompressionFunctional = true;
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static void FlipColorBytes (byte[] p) {
 			var span = new Span<byte>(p).As<uint>();
 			foreach (int i in 0..span.Length) {
@@ -23,6 +25,7 @@ namespace SpriteMaster.Resample {
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static unsafe byte[] Compress (byte[] data, ref TextureFormat format, Vector2I dimensions, bool HasAlpha, bool IsPunchThroughAlpha, bool IsMasky, bool HasR, bool HasG, bool HasB) {
 			if (!BlockCompressionFunctional) {
 				return null;
@@ -92,6 +95,7 @@ namespace SpriteMaster.Resample {
 			return null;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static unsafe bool Compress (ref byte[] data, ref TextureFormat format, Vector2I dimensions, bool HasAlpha, bool IsPunchThroughAlpha, bool IsMasky, bool HasR, bool HasG, bool HasB) {
 			var oldFormat = format;
 
@@ -110,10 +114,12 @@ namespace SpriteMaster.Resample {
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static bool IsBlockMultiple(int value) {
 			return (value % 4) == 0;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static bool IsBlockMultiple (Vector2I value) {
 			return IsBlockMultiple(value.X) && IsBlockMultiple(value.Y);
 		}

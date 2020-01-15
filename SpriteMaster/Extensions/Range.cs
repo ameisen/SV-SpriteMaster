@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
+using SpriteMaster.Types;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -197,8 +198,9 @@ namespace SpriteMaster.Extensions {
 			return ToExclusive(from, to);
 		}
 
-		public static XRectangle ClampTo (this in XRectangle source, in XRectangle clamp) {
-			var result = new XRectangle(source.X, source.Y, source.Width, source.Height);
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static Bounds ClampTo (this in Bounds source, in Bounds clamp) {
+			var result = new Bounds(source.X, source.Y, source.Width, source.Height);
 
 			int leftDiff = clamp.Left - result.Left;
 			if (leftDiff > 0) {

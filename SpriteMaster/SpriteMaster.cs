@@ -5,6 +5,7 @@ using SpriteMaster.Metadata;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
+using StardewValley;
 using System;
 using System.IO;
 using System.Linq;

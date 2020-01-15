@@ -19,6 +19,7 @@ namespace SpriteMaster.Extensions {
 			return new Vector2I(texture.Width, texture.Height);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static long SizeBytes (this SurfaceFormat format, int texels) {
 			switch (format) {
 				case SurfaceFormat.Dxt1:

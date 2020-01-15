@@ -3,7 +3,7 @@ using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
 using SpriteMaster.Types;
 using System;
-using System.Threading;
+using System.Runtime.CompilerServices;
 
 namespace SpriteMaster {
 	internal sealed class SpriteInfo : IDisposable {
@@ -17,6 +17,7 @@ namespace SpriteMaster {
 		internal byte[] Data = default;
 		private Volatile<ulong> _Hash = Hashing.Default;
 		public ulong Hash {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				ulong hash = _Hash;
 				if (hash == Hashing.Default) {
@@ -29,10 +30,12 @@ namespace SpriteMaster {
 
 		// Attempt to update the bytedata cache for the reference texture, or purge if it that makes more sense or if updating
 		// is not plausible.
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static unsafe void Purge(Texture2D reference, Bounds? bounds, DataRef<byte> data) {
 			reference.Meta().Purge(reference, bounds, data);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal SpriteInfo (Texture2D reference, in Bounds dimensions, int expectedScale) {
 			ReferenceSize = new Vector2I(reference);
 			ExpectedScale = expectedScale;
@@ -61,6 +64,7 @@ namespace SpriteMaster {
 			);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Dispose () {
 			Data = default;
 			_Hash = Hashing.Default;

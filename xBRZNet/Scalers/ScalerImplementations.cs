@@ -61,14 +61,17 @@ namespace SpriteMaster.xBRZ.Scalers {
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static uint ToLinear(uint input) {
 			return ToLinearTable[input];
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static uint ToGamma (uint input) {
 			return ToGammaTable[input];
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static double Curve (double x) {
 			return ((Math.Sin(x * Math.PI - (Math.PI / 2.0))) + 1) / 2;
 		}

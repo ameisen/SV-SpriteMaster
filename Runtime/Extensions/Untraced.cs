@@ -3,21 +3,17 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 
-namespace SpriteMaster.Attributes {
-	// https://stackoverflow.com/a/11898531
-	[AttributeUsage(AttributeTargets.Method, Inherited = false)]
-	public sealed class UntracedAttribute : Attribute { }
-
-	public static class DebugExtensions {
-		[DebuggerStepThrough, DebuggerHidden(), Untraced]
+namespace SpriteMaster.Extensions {
+	public static class Untraced {
+		[DebuggerStepThrough, DebuggerHidden()]
 		public static bool IsUntraced (this MethodBase method) {
 			if (method == null) {
 				return false;
 			}
-			return method.IsDefined(typeof(UntracedAttribute), true);
+			return method.IsDefined(typeof(DebuggerStepThroughAttribute), true) || method.IsDefined(typeof(DebuggerHiddenAttribute), true);
 		}
 
-		[DebuggerStepThrough, DebuggerHidden(), Untraced]
+		[DebuggerStepThrough, DebuggerHidden()]
 		public static string GetStackTrace (this Exception e) {
 			var tracedFrames = new List<StackFrame>();
 			foreach (var frame in new StackTrace(e, true).GetFrames()) {

@@ -14,6 +14,7 @@ namespace SpriteMaster.xBRZ {
 		public const int MinScale = 2;
 		public const int MaxScale = Config.MaxScale;
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Scaler (
 			int scaleMultiplier,
 			in Span<uint> sourceData,
@@ -81,6 +82,7 @@ namespace SpriteMaster.xBRZ {
 
 		//detect blend direction
 		[Pure]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private BlendResult PreProcessCorners (in Kernel4x4 ker) {
 			var result = new BlendResult();
 
@@ -125,6 +127,7 @@ namespace SpriteMaster.xBRZ {
 				-------------
 				blendInfo: result of preprocessing all four corners of pixel "e"
 		*/
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private unsafe void ScalePixel (IScaler scaler, RotationDegree rotDeg, in Kernel3x3 ker, int trgi, byte blendInfo) {
 			var blend = blendInfo.Rotate(rotDeg);
 

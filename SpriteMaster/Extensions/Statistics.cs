@@ -1,9 +1,11 @@
 ﻿
 using SpriteMaster.Types;
 using System;
+using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Extensions {
 	public static class Statistics {
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static double StandardDeviation (this in Span<int> data, int startIndex = 0, int count = 0) {
 			Contract.AssertPositiveOrZero(startIndex);
 			Contract.AssertLess(startIndex, data.Length);
@@ -28,6 +30,7 @@ namespace SpriteMaster.Extensions {
 			return meanDifference;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static unsafe double StandardDeviation (int* data, int length, int startIndex = 0, int count = 0) {
 			//return StandardDeviation(new Span<int>(data, length), startIndex: startIndex, count: count);
 

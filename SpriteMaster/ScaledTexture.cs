@@ -12,6 +12,7 @@ using SpriteMaster.Extensions;
 using TeximpNet.Compression;
 using System.Diagnostics;
 using SpriteMaster.Metadata;
+using System.Runtime.CompilerServices;
 
 namespace SpriteMaster {
 	internal sealed class ScaledTexture : IDisposable {
@@ -22,10 +23,12 @@ namespace SpriteMaster {
 
 		private static readonly LinkedList<WeakReference<ScaledTexture>> MostRecentList = new LinkedList<WeakReference<ScaledTexture>>();
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static bool LegalFormat(Texture2D texture) {
 			return AllowedFormats.Contains(texture.Format);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static bool Validate(Texture2D texture) {
 			int textureArea = texture.Area();
 
@@ -110,6 +113,7 @@ namespace SpriteMaster {
 			return true;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		static internal ScaledTexture Fetch (Texture2D texture, Bounds source, int expectedScale) {
 			if (!Validate(texture)) {
 				return null;
@@ -122,6 +126,7 @@ namespace SpriteMaster {
 			return null;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		static internal ScaledTexture Get (Texture2D texture, Bounds source, int expectedScale) {
 			if (!Validate(texture)) {
 				return null;
@@ -194,7 +199,7 @@ namespace SpriteMaster {
 
 		}
 
-		internal static readonly SurfaceFormat[] AllowedFormats = new [] {
+		internal static readonly SurfaceFormat[] AllowedFormats = {
 			SurfaceFormat.Color
 		};
 
@@ -224,6 +229,7 @@ namespace SpriteMaster {
 		private LinkedListNode<WeakReference<ScaledTexture>> CurrentRecentNode = null;
 		private bool Disposed = false;
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		~ScaledTexture() {
 			if (!Disposed) {
 				Dispose();
@@ -233,6 +239,7 @@ namespace SpriteMaster {
 		internal static volatile uint TotalMemoryUsage = 0;
 
 		internal long MemorySize {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				if (!IsReady || Texture == null) {
 					return 0;
@@ -242,21 +249,25 @@ namespace SpriteMaster {
 		}
 
 		internal long OriginalMemorySize {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				return originalSize.Width * originalSize.Height * sizeof(int);
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static void Purge (Texture2D reference) {
 			Purge(reference, null, DataRef<byte>.Null);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static void Purge (Texture2D reference, Bounds? bounds, DataRef<byte> data) {
 			SpriteInfo.Purge(reference, bounds, data);
 			SpriteMap.Purge(reference, bounds);
 			Upscaler.PurgeHash(reference);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static void PurgeTextures(long _purgeTotalBytes) {
 			Contract.AssertPositive(_purgeTotalBytes);
 
@@ -324,6 +335,7 @@ namespace SpriteMaster {
 				Debug.InfoLn($"GC Allocated Memory    : {gca.AsDataSize()}");
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public ManagedTexture2D (
 				ScaledTexture texture,
 				Texture2D reference,
@@ -355,12 +367,14 @@ namespace SpriteMaster {
 				}
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			~ManagedTexture2D() {
 				if (!IsDisposed) {
 					Dispose(false);
 				}
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			private void OnParentDispose() {
 				if (!IsDisposed) {
 					Debug.TraceLn($"Disposing ManagedTexture2D '{Name}'");
@@ -369,6 +383,7 @@ namespace SpriteMaster {
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal ScaledTexture (string assetName, SpriteInfo textureWrapper, Bounds sourceRectangle, ulong hash, bool isSprite, bool async, int expectedScale) {
 			IsSprite = isSprite;
 			Hash = hash;
@@ -431,6 +446,7 @@ namespace SpriteMaster {
 		}
 
 		// Async Call
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal void Finish () {
 			ManagedTexture2D texture;
 			lock (this) {
@@ -458,6 +474,7 @@ namespace SpriteMaster {
 			IsReady = true;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal void UpdateReferenceFrame () {
 			if (Disposed) {
 				return;
@@ -476,6 +493,7 @@ namespace SpriteMaster {
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Dispose (bool disposeChildren) {
 			if (disposeChildren && Texture != null) {
 				if (!Texture.IsDisposed) {
@@ -486,6 +504,7 @@ namespace SpriteMaster {
 			Dispose();
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Dispose () {
 			if (Reference.TryGetTarget(out var reference)) {
 				SpriteMap.Remove(this, reference);
@@ -499,6 +518,7 @@ namespace SpriteMaster {
 			Disposed = true;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void OnParentDispose (Texture2D texture) {
 			Debug.TraceLn($"Parent Texture Disposing: {texture.SafeName()}");
 

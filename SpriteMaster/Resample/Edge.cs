@@ -2,6 +2,7 @@
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using System;
+using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Resample {
 	internal static class Edge {
@@ -12,6 +13,7 @@ namespace SpriteMaster.Resample {
 			public readonly Vector2B EdgeX;
 			public readonly Vector2B EdgeY;
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			internal Results(
 				Vector2B wrapped,
 				Vector2B wrappedX,
@@ -27,6 +29,7 @@ namespace SpriteMaster.Resample {
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static unsafe Results AnalyzeLegacy (Texture2D reference, in Span<int> data, Bounds rawSize, Bounds spriteSize, Vector2B Wrapped) {
 			float edgeThreshold = Config.WrapDetection.edgeThreshold;
 

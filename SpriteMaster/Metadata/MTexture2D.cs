@@ -11,6 +11,7 @@ using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Types;
 using SpriteMaster.Extensions;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Metadata {
 	internal sealed class MTexture2D {
@@ -29,6 +30,7 @@ namespace SpriteMaster.Metadata {
 		public volatile bool TracePrinted = false;
 		public Volatile<ulong> UpdateToken { get; private set; } = 0;
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static void PurgeDataCache() {
 			if (!Config.MemoryCache.Enabled) {
 				return;
@@ -47,6 +49,7 @@ namespace SpriteMaster.Metadata {
 		private readonly WeakReference<byte[]> _CachedData = (Config.MemoryCache.Enabled) ? new WeakReference<byte[]>(null) : null;
 
 		public bool HasCachedData {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				if (!Config.MemoryCache.Enabled)
 					return false;
@@ -57,6 +60,7 @@ namespace SpriteMaster.Metadata {
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public unsafe void Purge (Texture2D reference, Bounds? bounds, DataRef<byte> data) {
 			lock (this) {
 				if (data.IsNull) {
@@ -109,6 +113,7 @@ namespace SpriteMaster.Metadata {
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private bool CheckUpdateToken(ulong referenceToken) {
 			using (Lock.Shared) {
 				return UpdateToken == referenceToken;
@@ -116,6 +121,7 @@ namespace SpriteMaster.Metadata {
 		}
 
 		public byte[] CachedData {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				if (!Config.MemoryCache.Enabled)
 					return null;
@@ -153,6 +159,7 @@ namespace SpriteMaster.Metadata {
 					return target;
 				}
 			}
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
 				try {
 					if (!Config.MemoryCache.Enabled)
@@ -229,10 +236,12 @@ namespace SpriteMaster.Metadata {
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void UpdateLastAccess() {
 			LastAccessFrame = DrawState.CurrentFrame;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public ulong GetHash(SpriteInfo info) {
 			using (Lock.Shared) {
 				ulong hash = Hash;

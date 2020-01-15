@@ -41,6 +41,7 @@ namespace SpriteMaster.Resample {
 			public uint UncompressedDataLength;
 			public uint DataLength;
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			internal static CacheHeader Read (BinaryReader reader) {
 				var newHeader = new CacheHeader();
 
@@ -54,12 +55,14 @@ namespace SpriteMaster.Resample {
 				return newHeader;
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			internal void Write (BinaryWriter writer) {
 				foreach (var field in typeof(CacheHeader).GetFields()) {
 					writer.Write(field.GetValue(this));
 				}
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			internal void Validate (string path) {
 				if (Assembly != AssemblyVersion) {
 					throw new IOException($"Texture Cache File out of date '{path}'");
@@ -76,8 +79,9 @@ namespace SpriteMaster.Resample {
 			Saved = 1
 		}
 
-		private static ConcurrentDictionary<string, SaveState> SavingMap = new ConcurrentDictionary<string, SaveState>();
+		private static ConcurrentDictionary<string, SaveState> SavingMap = Config.FileCache.Enabled ? new ConcurrentDictionary<string, SaveState>() : null;
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static bool Fetch (
 			string path,
 			out int refScale,
@@ -176,6 +180,7 @@ namespace SpriteMaster.Resample {
 			return false;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static bool Save (
 			string path,
 			int refScale,
@@ -186,50 +191,51 @@ namespace SpriteMaster.Resample {
 			Vector2I blockPadding,
 			byte[] data
 		) {
-			if (Config.FileCache.Enabled) {
-				if (!SavingMap.TryAdd(path, SaveState.Saving)) {
-					return false;
-				}
-
-				ThreadPool.QueueUserWorkItem((object dataItem) => {
-					Thread.CurrentThread.Priority = ThreadPriority.BelowNormal;
-					using var _ = new AsyncTracker($"File Cache Write {path}");
-					var data = (byte[])dataItem;
-					try {
-						using (var writer = new BinaryWriter(new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None))) {
-
-							var algorithm = (SystemCompression && !Config.FileCache.ForceCompress) ? Compression.Algorithm.None : Config.FileCache.Compress;
-
-							var compressedData = Compression.Compress(data, algorithm);
-
-							if (compressedData.Length >= data.Length) {
-								compressedData = data;
-							}
-
-							new CacheHeader() {
-								RefScale = refScale,
-								Size = size,
-								Format = format,
-								Wrapped = wrapped,
-								Padding = padding,
-								BlockPadding = blockPadding,
-								UncompressedDataLength = (uint)data.Length,
-								DataLength = (uint)compressedData.Length,
-								DataHash = data.HashXX()
-							}.Write(writer);
-
-							foreach (var v in compressedData) {
-								writer.Write(v);
-							}
-						}
-						SavingMap.TryUpdate(path, SaveState.Saved, SaveState.Saving);
-					}
-					catch {
-						try { File.Delete(path); } catch { }
-						SavingMap.TryRemove(path, out var _);
-					}
-				}, data);
+			if (!Config.FileCache.Enabled) {
+				return true;
 			}
+			if (!SavingMap.TryAdd(path, SaveState.Saving)) {
+				return false;
+			}
+
+			ThreadPool.QueueUserWorkItem((object dataItem) => {
+				Thread.CurrentThread.Priority = ThreadPriority.BelowNormal;
+				using var _ = new AsyncTracker($"File Cache Write {path}");
+				var data = (byte[])dataItem;
+				try {
+					using (var writer = new BinaryWriter(new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None))) {
+
+						var algorithm = (SystemCompression && !Config.FileCache.ForceCompress) ? Compression.Algorithm.None : Config.FileCache.Compress;
+
+						var compressedData = Compression.Compress(data, algorithm);
+
+						if (compressedData.Length >= data.Length) {
+							compressedData = data;
+						}
+
+						new CacheHeader() {
+							RefScale = refScale,
+							Size = size,
+							Format = format,
+							Wrapped = wrapped,
+							Padding = padding,
+							BlockPadding = blockPadding,
+							UncompressedDataLength = (uint)data.Length,
+							DataLength = (uint)compressedData.Length,
+							DataHash = data.HashXX()
+						}.Write(writer);
+
+						foreach (var v in compressedData) {
+							writer.Write(v);
+						}
+					}
+					SavingMap.TryUpdate(path, SaveState.Saved, SaveState.Saving);
+				}
+				catch {
+					try { File.Delete(path); } catch { }
+					SavingMap.TryRemove(path, out var _);
+				}
+			}, data);
 			return true;
 		}
 
@@ -241,6 +247,7 @@ namespace SpriteMaster.Resample {
 		[DllImport("kernel32.dll")]
 		static extern bool CreateSymbolicLink (string Link, string Target, LinkType Type);
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static bool IsSymbolic (string path) {
 			var pathInfo = new FileInfo(path);
 			return pathInfo.Attributes.HasFlag(FileAttributes.ReparsePoint);

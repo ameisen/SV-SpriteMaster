@@ -181,13 +181,14 @@ namespace System {
     }
 
     // The following private constructors mainly created for perf reason to avoid the checks
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private Index (long value, Type type) {
       _originalType = type;
       _value = value;
     }
 
     /// <summary>Create an Index pointing at first element.</summary>
-    public static Index Start => new Index(0, typeof(int));
+    public static Index Start => new Index(0L, typeof(int));
 
     /// <summary>Create an Index pointing at beyond last element.</summary>
     public static Index End => new Index(~0, typeof(int));
@@ -229,17 +230,10 @@ namespace System {
     }
 
     /// <summary>Returns the index value.</summary>
-    public long Value {
-      get {
-        if (_value < 0)
-          return ~_value;
-        else
-          return _value;
-      }
-    }
+    public readonly long Value => (_value < 0) ? ~_value : _value;
 
     /// <summary>Indicates whether the index is from the start or the end.</summary>
-    public bool IsFromEnd => _value < 0;
+    public readonly bool IsFromEnd => _value < 0;
 
     /// <summary>Calculate the offset from the start using the giving collection length.</summary>
     /// <param name="length">The length of the collection that the Index will be used with. length has to be a positive value</param>
@@ -264,40 +258,52 @@ namespace System {
 
     /// <summary>Indicates whether the current Index object is equal to another object of the same type.</summary>
     /// <param name="value">An object to compare with this object</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public override bool Equals (object? value) => value is Index && _value == ((Index)value)._value;
 
     /// <summary>Indicates whether the current Index object is equal to another Index object.</summary>
     /// <param name="other">An object to compare with this object</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool Equals (Index other) => _value == other._value;
 
     /// <summary>Returns the hash code for this instance.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public override int GetHashCode () => _value.GetHashCode();
 
     /// <summary>Converts integer number to an Index.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator Index (sbyte value) => FromStart(value, typeof(sbyte));
 
     /// <summary>Converts integer number to an Index.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator Index (short value) => FromStart(value, typeof(short));
 
     /// <summary>Converts integer number to an Index.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator Index (int value) => FromStart(value, typeof(int));
 
     /// <summary>Converts integer number to an Index.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)] 
     public static implicit operator Index (long value) => FromStart(value, typeof(long));
 
     /// <summary>Converts integer number to an Index.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)] 
     public static implicit operator Index (byte value) => FromStart(value, typeof(byte));
 
     /// <summary>Converts integer number to an Index.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)] 
     public static implicit operator Index (ushort value) => FromStart(value, typeof(ushort));
 
     /// <summary>Converts integer number to an Index.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator Index (uint value) => FromStart(value, typeof(uint));
 
     /// <summary>Converts integer number to an Index.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator Index (ulong value) => FromStart(unchecked((long)value), typeof(ulong));
 
     /// <summary>Converts the value of the current Index object to its equivalent string representation.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public override string ToString () {
       if (IsFromEnd)
         return "^" + ((ulong)Value).ToString();

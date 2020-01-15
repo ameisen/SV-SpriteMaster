@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.xBRZ.Scalers {
 	internal static class ScaleSize {
@@ -11,6 +12,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 			new Scaler6X()
 		};
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static IScaler ToIScaler (this int scaleSize) {
 			// MJY: Need value checks to assure scaleSize is between 2-5 inclusive.
 			return Scalers.Single(s => s.Scale == scaleSize);

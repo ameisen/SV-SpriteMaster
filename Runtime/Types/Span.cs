@@ -33,9 +33,11 @@ namespace SpriteMaster.Types {
 
 		[Pure, MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private readonly int GetOffset(int index) {
+#if DEBUG
 			if (index < 0 || index >= Length) {
 				throw new IndexOutOfRangeException(nameof(index));
 			}
+#endif
 
 			return index * TypeSize;
 		}
