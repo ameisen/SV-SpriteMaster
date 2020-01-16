@@ -118,6 +118,7 @@ namespace SpriteMaster {
 		// TODO : use MemoryFailPoint class. Extensively.
 		private static unsafe void CreateNewTexture (
 			ScaledTexture texture,
+			bool async,
 			SpriteInfo input,
 			bool desprite,
 			bool isWater,
@@ -403,7 +404,8 @@ namespace SpriteMaster {
 
 			format = TextureFormat.Color;
 
-			if (Config.Resample.UseBlockCompression && newSize.MinOf >= 4) {
+			// We don't want to use block compression if asynchronous loads are enabled but this is not an asynchronous load... unless that is explicitly enabled.
+			if (Config.Resample.UseBlockCompression && newSize.MinOf >= 4 && (Config.Resample.BlockCompressSynchronized || async || !Config.AsyncScaling.Enabled)) {
 				// TODO : We can technically allocate the block padding before the scaling phase, and pass it a stride
 				// so it will just ignore the padding areas. That would be more efficient than this.
 
@@ -588,6 +590,7 @@ namespace SpriteMaster {
 
 				if (bitmapData == null) {
 					CreateNewTexture(
+						async: async,
 						texture: texture,
 						input: input,
 						desprite: desprite,
