@@ -98,8 +98,8 @@ namespace SpriteMaster {
 		}
 
 		internal static class Resample {
-			internal const bool Smoothing = true;
-			internal const bool Scale = Smoothing;
+			internal static bool Smoothing = true;
+			internal static bool Scale = Smoothing;
 			internal const Upscaler.Scaler Scaler = Upscaler.Scaler.xBRZ;
 			internal static bool EnableDynamicScale = true;
 			internal static bool TrimWater = true;
@@ -165,8 +165,8 @@ namespace SpriteMaster {
 			internal static bool EnabledForUnknownTextures = false;
 			internal static bool ForceSynchronousLoads = Runtime.IsUnix;
 			internal static bool ThrottledSynchronousLoads = true;
-			internal const bool CanFetchAndLoadSameFrame = true;
-			internal const int MaxLoadsPerFrame = int.MaxValue;
+			internal static bool CanFetchAndLoadSameFrame = true;
+			internal static int MaxLoadsPerFrame = int.MaxValue;
 			internal static long MinimumSizeTexels = 0;
 			internal static long ScalingBudgetPerFrameTexels = 16 * 256 * 256;
 		}
