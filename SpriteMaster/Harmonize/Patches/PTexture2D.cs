@@ -1,68 +1,91 @@
-﻿using Microsoft.Xna.Framework;
+﻿#define ASYNC_SETDATA
+
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Types;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using static SpriteMaster.Harmonize.Harmonize;
-using static SpriteMaster.ScaledTexture;
 
 namespace SpriteMaster.Harmonize.Patches {
 	[SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
 	[SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Harmony")]
 	internal static class PTexture2D {
+		// Always returns a duplicate of the array, since we do not own the source array.
+		// It performs a shallow copy, which is fine.
+		private static byte[] GetByteArray<T>(T[] data) where T : unmanaged {
+			if (data == null) {
+				return null;
+			}
+
+			if (data is byte[] _data) {
+				return (byte[])_data.Clone();
+			}
+			else {
+				return new Span<T>(data).As<byte>().ToArray();
+			}
+		}
+
+		private static bool Cacheable(Texture2D texture) {
+			return texture.LevelCount <= 1;
+		}
+
+		private static void SetDataPurge<T>(Texture2D texture, Rectangle? rect, T[] data, int startIndex, int elementCount) where T : unmanaged {
+			if (texture is ManagedTexture2D) {
+				return;
+			}
+
+			if (!ScaledTexture.Validate(texture)) {
+				return;
+			}
+
+			var byteData = Cacheable(texture) ? GetByteArray(data) : null;
+			var elementSize = Marshal.SizeOf(typeof(T));
+
+			ScaledTexture.Purge(
+				reference: texture,
+				bounds: rect,
+				data: new DataRef<byte>(
+					data: byteData,
+					offset: startIndex * elementSize,
+					length: elementCount * elementSize
+				)
+			);
+		}
+
 		[Harmonize("SetData", HarmonizeAttribute.Fixation.Postfix, PriorityLevel.Last, HarmonizeAttribute.Generic.Struct)]
 		private static void OnSetDataPost<T> (Texture2D __instance, T[] data) where T : unmanaged {
-			if (__instance is ManagedTexture2D) {
-				return;
-			}
-
-			if (!ScaledTexture.Validate(__instance)) {
-				return;
-			}
-
-			var dataRef = DataRef<byte>.Null;
-			if (__instance.LevelCount <= 1) {
-				dataRef = (byte[])new Span<T>(data).As<byte>().ToArray().Clone();
-			}
-
-			ScaledTexture.Purge(__instance, null, dataRef);
+			SetDataPurge(
+				__instance,
+				null,
+				data,
+				0,
+				data.Length
+			);
 		}
 
 		[Harmonize("SetData", HarmonizeAttribute.Fixation.Postfix, PriorityLevel.Last, HarmonizeAttribute.Generic.Struct)]
 		private static void OnSetDataPost<T> (Texture2D __instance, T[] data, int startIndex, int elementCount) where T : unmanaged {
-			if (__instance is ManagedTexture2D) {
-				return;
-			}
-
-			if (!ScaledTexture.Validate(__instance)) {
-				return;
-			}
-
-			var dataRef = DataRef<byte>.Null;
-			if (__instance.LevelCount <= 1) {
-				dataRef = new DataRef<byte>((byte[])new Span<T>(data).As<byte>().ToArray().Clone(), startIndex, elementCount);
-			}
-
-			ScaledTexture.Purge(__instance, null, dataRef);
+			SetDataPurge(
+				__instance,
+				null,
+				data,
+				startIndex,
+				elementCount
+			);
 		}
 
 		[Harmonize("SetData", HarmonizeAttribute.Fixation.Postfix, PriorityLevel.Last, HarmonizeAttribute.Generic.Struct)]
 		private static void OnSetDataPost<T> (Texture2D __instance, int level, Rectangle? rect, T[] data, int startIndex, int elementCount) where T : unmanaged {
-			if (__instance is ManagedTexture2D) {
-				return;
-			}
-
-			if (!ScaledTexture.Validate(__instance)) {
-				return;
-			}
-
-			var dataRef = DataRef<byte>.Null;
-			if (__instance.LevelCount <= 1) {
-				dataRef = new DataRef<byte>((byte[])new Span<T>(data).As<byte>().ToArray().Clone(), startIndex, elementCount);
-			}
-
-			ScaledTexture.Purge(__instance, rect, dataRef);
+			SetDataPurge(
+				__instance,
+				rect,
+				data,
+				startIndex,
+				elementCount
+			);
 		}
 
 		// A horrible, horrible hack to stop a rare-ish crash when zooming or when the device resets. It doesn't appear to originate in SpriteMaster, but SM most certainly

@@ -32,7 +32,7 @@ namespace SpriteMaster {
 					return;
 				}
 
-				Contract.Assert(Lock.IsReaderLockHeld && !Lock.IsWriterLockHeld);
+				//Contract.Assert(Lock.IsReaderLockHeld && !Lock.IsWriterLockHeld);
 				if (Lock.IsReaderLockHeld) {
 					Lock.ReleaseReaderLock();
 				}
@@ -62,7 +62,7 @@ namespace SpriteMaster {
 					return;
 				}
 
-				Contract.Assert(!Lock.IsReaderLockHeld && Lock.IsWriterLockHeld);
+				//Contract.Assert(!Lock.IsReaderLockHeld && Lock.IsWriterLockHeld);
 				if (Lock.IsWriterLockHeld) {
 					Lock.ReleaseWriterLock();
 				}
@@ -94,7 +94,7 @@ namespace SpriteMaster {
 					return;
 				}
 
-				Contract.AssertTrue(Lock.IsWriterLockHeld);
+				//Contract.AssertTrue(Lock.IsWriterLockHeld);
 				if (Lock.IsWriterLockHeld) {
 					Lock.DowngradeFromWriterLock(ref Cookie);
 				}
@@ -136,7 +136,7 @@ namespace SpriteMaster {
 			[SecuritySafeCritical]
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
-				Contract.Assert(!IsLocked);
+				//Contract.Assert(!IsLocked);
 				return new SharedCookie(Lock);
 			}
 		}
@@ -145,7 +145,7 @@ namespace SpriteMaster {
 			[SecuritySafeCritical]
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
-				Contract.Assert(!IsLocked);
+				//Contract.Assert(!IsLocked);
 				return new ExclusiveCookie(Lock);
 			}
 		}
@@ -154,7 +154,7 @@ namespace SpriteMaster {
 			[SecuritySafeCritical]
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
-				Contract.Assert(!IsExclusiveLock && IsSharedLock);
+				//Contract.Assert(!IsExclusiveLock && IsSharedLock);
 				return new PromotedCookie(Lock);
 			}
 		}

@@ -195,14 +195,13 @@ namespace SpriteMaster.Metadata {
 									using (Lock.Promote) {
 										++CompressorCount;
 										CompressionSemaphore.WaitOne();
-										ThreadPool.QueueUserWorkItem((buffer) => {
-											Thread.CurrentThread.Priority = ThreadPriority.BelowNormal;
+										ThreadQueue.Queue((buffer) => {
 											using var _ = new AsyncTracker($"Texture Cache Compress {UniqueIDString}");
 											try {
 												if (!CheckUpdateToken(currentUpdateToken)) {
 													return;
 												}
-												var compressedData = Compression.Compress((byte[])buffer, Config.MemoryCache.Compress);
+												var compressedData = Compression.Compress(buffer, Config.MemoryCache.Compress);
 												using (DataCacheLock.Exclusive) {
 													using (Lock.Exclusive) {
 														if (currentUpdateToken != UpdateToken) {

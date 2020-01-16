@@ -58,7 +58,7 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static long SizeBytes (this ScaledTexture.ManagedTexture2D texture) {
+		internal static long SizeBytes (this ManagedTexture2D texture) {
 			return (long)texture.Area() * 4;
 		}
 

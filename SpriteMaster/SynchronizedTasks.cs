@@ -1,6 +1,7 @@
 ﻿using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using System;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using ActionList = System.Collections.Generic.List<System.Action>;
 using LoadList = System.Collections.Generic.List<SpriteMaster.TextureAction>;
@@ -12,15 +13,17 @@ namespace SpriteMaster {
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static void AddPendingAction (in Action action) {
-			lock (PendingActions) {
-				PendingActions.Current.Add(action);
+			var current = PendingActions.Current;
+			lock (current) {
+				current.Add(action);
 			}
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static void AddPendingLoad (in Action action, int texels) {
-			lock (PendingLoads) {
-				PendingLoads.Current.Add(new TextureAction(action, texels));
+			var current = PendingLoads.Current;
+			lock (current) {
+				current.Add(new TextureAction(action, texels));
 			}
 		}
 
@@ -47,60 +50,61 @@ namespace SpriteMaster {
 		internal static void ProcessPendingActions (in TimeSpan remainingTime) {
 			var startTime = DateTime.Now;
 			{
-				ActionList pendingActions = null;
-				lock (PendingActions) {
-					var currentPendingActions = PendingActions.Current;
-					if (currentPendingActions.Count > 0) {
-						pendingActions = currentPendingActions;
-						PendingActions.Swap();
-					}
+				var pendingActions = PendingActions.Current;
+				bool invoke;
+				lock (pendingActions) {
+					invoke = pendingActions.Any();
 				}
 
-				if (pendingActions != null) {
-					foreach (var action in pendingActions) {
-						action.Invoke();
+				if (invoke) {
+					PendingActions.SwapAtomic();
+					lock (pendingActions) {
+						foreach (var action in pendingActions) {
+							action.Invoke();
+						}
+						pendingActions.Clear();
 					}
-					pendingActions.Clear();
 				}
 			}
 
 			if (Config.AsyncScaling.Enabled) {
-				LoadList pendingLoads = null;
-				lock (PendingLoads) {
-					var currentPendingLoads = PendingLoads.Current;
-					if (currentPendingLoads.Count > 0) {
-						pendingLoads = currentPendingLoads;
-						PendingLoads.Swap();
-					}
+				var pendingLoads = PendingLoads.Current;
+				bool invoke;
+				lock (pendingLoads) {
+					invoke = pendingLoads.Any();
 				}
 
-				if (pendingLoads != null) {
-					if (Config.AsyncScaling.ThrottledSynchronousLoads) {
-						int processed = 0;
-						foreach (var action in pendingLoads) {
-							var estimate = action.EstimateDuration();
-							if (processed > 0 && (DateTime.Now - startTime) + estimate > remainingTime) {
-								break;
+				if (invoke) {
+					PendingLoads.SwapAtomic();
+					lock (pendingLoads) {
+						if (Config.AsyncScaling.ThrottledSynchronousLoads) {
+							int processed = 0;
+							foreach (var action in pendingLoads) {
+								var estimate = action.EstimateDuration();
+								if (processed > 0 && (DateTime.Now - startTime) + estimate > remainingTime) {
+									break;
+								}
+
+								var start = DateTime.Now;
+								action.Invoke();
+								var duration = DateTime.Now - start;
+								AddDuration(action, duration);
+
+								++processed;
 							}
 
-							var start = DateTime.Now;
-							action.Invoke();
-							var duration = DateTime.Now - start;
-							AddDuration(action, duration);
-
-							++processed;
-						}
-
-						if (processed < pendingLoads.Count) {
-							lock (PendingLoads) {
-								PendingLoads.Current.AddRange(pendingLoads.GetRange(processed, pendingLoads.Count - processed));
+							// TODO : I'm not sure if this is necessary. The next frame, it'll probably come back around again to this buffer.
+							if (processed < pendingLoads.Count) {
+								var current = PendingLoads.Current;
+								lock (current) {
+									current.AddRange(pendingLoads.GetRange(processed, pendingLoads.Count - processed));
+								}
 							}
 						}
-						pendingLoads.Clear();
-					}
-					else {
-						foreach (var action in pendingLoads) {
-							action.Invoke();
+						else {
+							foreach (var action in pendingLoads) {
+								action.Invoke();
+							}
 						}
 						pendingLoads.Clear();
 					}

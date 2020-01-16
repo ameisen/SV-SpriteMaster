@@ -9,13 +9,11 @@ using System.Collections.Generic;
 using WeakTexture = System.WeakReference<Microsoft.Xna.Framework.Graphics.Texture2D>;
 using SpriteMaster.Types;
 using SpriteMaster.Extensions;
-using TeximpNet.Compression;
-using System.Diagnostics;
 using SpriteMaster.Metadata;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster {
-	internal sealed class ScaledTexture : IDisposable {
+	internal sealed partial class ScaledTexture : IDisposable {
 		// TODO : This can grow unbounded. Should fix.
 		public static readonly SpriteMap SpriteMap = new SpriteMap();
 
@@ -314,75 +312,6 @@ namespace SpriteMaster {
 			}
 		}
 
-		internal sealed class ManagedTexture2D : Texture2D {
-			private static long TotalAllocatedSize = 0;
-			private static int TotalManagedTextures = 0;
-			private const bool UseMips = false;
-
-			public readonly WeakReference<Texture2D> Reference;
-			public readonly ScaledTexture Texture;
-			public readonly Vector2I Dimensions;
-
-			internal static void DumpStats() {
-				var currentProcess = Process.GetCurrentProcess();
-				var workingSet = currentProcess.WorkingSet64;
-				var vmem = currentProcess.VirtualMemorySize64;
-				var gca = GC.GetTotalMemory(false);
-				Debug.InfoLn($"Total Managed Textures : {TotalManagedTextures}");
-				Debug.InfoLn($"Total Texture Size     : {TotalAllocatedSize.AsDataSize()}");
-				Debug.InfoLn($"Process Working Set    : {workingSet.AsDataSize()}");
-				Debug.InfoLn($"Process Virtual Memory : {vmem.AsDataSize()}");
-				Debug.InfoLn($"GC Allocated Memory    : {gca.AsDataSize()}");
-			}
-
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			public ManagedTexture2D (
-				ScaledTexture texture,
-				Texture2D reference,
-				Vector2I dimensions,
-				SurfaceFormat format,
-				int[] data = null,
-				string name = null
-			) : base(reference.GraphicsDevice.IsDisposed ? DrawState.Device : reference.GraphicsDevice, dimensions.Width, dimensions.Height, UseMips, format) {
-				this.Name = name ?? $"{reference.SafeName()} [RESAMPLED {(CompressionFormat)format}]";
-
-				Reference = reference.MakeWeak();
-				Texture = texture;
-				Dimensions = dimensions - texture.BlockPadding;
-
-				reference.Disposing += (_, _1) => OnParentDispose();
-
-				TotalAllocatedSize += this.SizeBytes();
-				++TotalManagedTextures;
-
-				Garbage.MarkOwned(format, dimensions.Area);
-				Disposing += (_, _1) => {
-					Garbage.UnmarkOwned(format, dimensions.Area);
-					TotalAllocatedSize -= this.SizeBytes();
-					--TotalManagedTextures;
-				};
-
-				if (data != null) {
-					this.SetDataEx(data);
-				}
-			}
-
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			~ManagedTexture2D() {
-				if (!IsDisposed) {
-					Dispose(false);
-				}
-			}
-
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			private void OnParentDispose() {
-				if (!IsDisposed) {
-					Debug.TraceLn($"Disposing ManagedTexture2D '{Name}'");
-					Dispose();
-				}
-			}
-		}
-
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal ScaledTexture (string assetName, SpriteInfo textureWrapper, Bounds sourceRectangle, ulong hash, bool isSprite, bool async, int expectedScale) {
 			IsSprite = isSprite;
@@ -399,14 +328,14 @@ namespace SpriteMaster {
 			originalSize = IsSprite ? sourceRectangle.Extent : new Vector2I(source);
 
 			if (async && Config.AsyncScaling.Enabled) {
-				ThreadPool.QueueUserWorkItem((object wrapper) => {
+				ThreadQueue.Queue((SpriteInfo wrapper) => {
 					Thread.CurrentThread.Priority = ThreadPriority.Lowest;
 					using var _ = new AsyncTracker($"Resampling {Name} [{sourceRectangle}]");
 					Thread.CurrentThread.Name = "Texture Resampling Thread";
 					Upscaler.Upscale(
 						texture: this,
 						scale: ref refScale,
-						input: (SpriteInfo)wrapper,
+						input: wrapper,
 						desprite: IsSprite,
 						hash: Hash,
 						wrapped: ref Wrapped,
