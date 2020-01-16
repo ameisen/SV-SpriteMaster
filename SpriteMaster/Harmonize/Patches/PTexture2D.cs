@@ -29,12 +29,10 @@ namespace SpriteMaster.Harmonize.Patches {
 		// It performs a shallow copy, which is fine.
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static unsafe byte[] GetByteArray<T>(T[] data, out int typeSize) where T : struct {
-			if (data == null) {
-				typeSize = Marshal.SizeOf(typeof(T));
-				return null;
-			}
-
 			switch (data) {
+				case null:
+					typeSize = Marshal.SizeOf(typeof(T));
+					return null;
 				case byte[] byteData:
 					typeSize = sizeof(byte);
 					return (byte[])byteData.Clone();
@@ -96,6 +94,7 @@ namespace SpriteMaster.Harmonize.Patches {
 
 		[Harmonize("SetData", HarmonizeAttribute.Fixation.Postfix, PriorityLevel.Last, HarmonizeAttribute.Generic.Struct)]
 		private static void OnSetDataPost<T> (Texture2D __instance, T[] data) where T : struct {
+			using var _ = Performance.Track("SetData1");
 			SetDataPurge(
 				__instance,
 				null,
@@ -107,6 +106,7 @@ namespace SpriteMaster.Harmonize.Patches {
 
 		[Harmonize("SetData", HarmonizeAttribute.Fixation.Postfix, PriorityLevel.Last, HarmonizeAttribute.Generic.Struct)]
 		private static void OnSetDataPost<T> (Texture2D __instance, T[] data, int startIndex, int elementCount) where T : struct {
+			using var _ = Performance.Track("SetData3");
 			SetDataPurge(
 				__instance,
 				null,
@@ -118,6 +118,7 @@ namespace SpriteMaster.Harmonize.Patches {
 
 		[Harmonize("SetData", HarmonizeAttribute.Fixation.Postfix, PriorityLevel.Last, HarmonizeAttribute.Generic.Struct)]
 		private static void OnSetDataPost<T> (Texture2D __instance, int level, Rectangle? rect, T[] data, int startIndex, int elementCount) where T : struct {
+			using var _ = Performance.Track("SetData4");
 			SetDataPurge(
 				__instance,
 				rect,

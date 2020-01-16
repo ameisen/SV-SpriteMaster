@@ -14,9 +14,9 @@ namespace SpriteMaster {
 
 			[SecuritySafeCritical]
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			public SharedCookie (ReaderWriterLock rwlock) {
+			public SharedCookie (ReaderWriterLock rwlock, int timeout) {
 				this.Lock = rwlock;
-				this.Lock.AcquireReaderLock(-1);
+				this.Lock.AcquireReaderLock(timeout);
 			}
 
 			public bool IsDisposed {
@@ -44,9 +44,9 @@ namespace SpriteMaster {
 
 			[SecuritySafeCritical]
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			public ExclusiveCookie (ReaderWriterLock rwlock) {
+			public ExclusiveCookie (ReaderWriterLock rwlock, int timeout) {
 				this.Lock = rwlock;
-				this.Lock.AcquireWriterLock(-1);
+				this.Lock.AcquireWriterLock(timeout);
 			}
 
 			public bool IsDisposed {
@@ -76,9 +76,9 @@ namespace SpriteMaster {
 
 			[SecuritySafeCritical]
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			public PromotedCookie (ReaderWriterLock rwlock) {
+			public PromotedCookie (ReaderWriterLock rwlock, int timeout) {
 				this.Lock = rwlock;
-				this.Cookie = this.Lock.UpgradeToWriterLock(-1);
+				this.Cookie = this.Lock.UpgradeToWriterLock(timeout);
 			}
 
 			public bool IsDisposed {
@@ -137,7 +137,21 @@ namespace SpriteMaster {
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				//Contract.Assert(!IsLocked);
-				return new SharedCookie(Lock);
+				return new SharedCookie(Lock, -1);
+			}
+		}
+
+		public SharedCookie? TryShared {
+			[SecuritySafeCritical]
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			get {
+				//Contract.Assert(!IsLocked);
+				try {
+					return new SharedCookie(Lock, 0);
+				}
+				catch {
+					return null;
+				}
 			}
 		}
 
@@ -146,7 +160,21 @@ namespace SpriteMaster {
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				//Contract.Assert(!IsLocked);
-				return new ExclusiveCookie(Lock);
+				return new ExclusiveCookie(Lock, -1);
+			}
+		}
+
+		public ExclusiveCookie? TryExclusive {
+			[SecuritySafeCritical]
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			get {
+				//Contract.Assert(!IsLocked);
+				try {
+					return new ExclusiveCookie(Lock, 0);
+				}
+				catch {
+					return null;
+				}
 			}
 		}
 
@@ -155,7 +183,21 @@ namespace SpriteMaster {
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				//Contract.Assert(!IsExclusiveLock && IsSharedLock);
-				return new PromotedCookie(Lock);
+				return new PromotedCookie(Lock, -1);
+			}
+		}
+
+		public PromotedCookie? TryPromote {
+			[SecuritySafeCritical]
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			get {
+				//Contract.Assert(!IsExclusiveLock && IsSharedLock);
+				try {
+					return new PromotedCookie(Lock, 0);
+				}
+				catch {
+					return null;
+				}
 			}
 		}
 

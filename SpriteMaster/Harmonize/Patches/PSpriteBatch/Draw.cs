@@ -131,6 +131,8 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 			SpriteEffects effects,
 			float layerDepth
 		) {
+			using var _ = Performance.Track();
+
 			GetDrawParameters(
 				texture: texture,
 				source: source,
@@ -194,6 +196,8 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 			SpriteEffects effects,
 			ref float layerDepth
 		) {
+			using var _ = Performance.Track("OnDraw0");
+
 			GetDrawParameters(
 				texture: texture,
 				source: source,
@@ -240,6 +244,8 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 			SpriteEffects effects,
 			ref float layerDepth
 		) {
+			using var _ = Performance.Track("OnDraw1");
+
 			GetDrawParameters(
 				texture: texture,
 				source: source,

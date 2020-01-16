@@ -126,6 +126,8 @@ namespace SpriteMaster {
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		static internal ScaledTexture Get (Texture2D texture, Bounds source, int expectedScale) {
+			using var _ = Performance.Track();
+
 			if (!Validate(texture)) {
 				return null;
 			}
@@ -172,8 +174,19 @@ namespace SpriteMaster {
 			}
 
 			bool isSprite = (!source.Offset.IsZero || source.Extent != texture.Extent());
-			var textureWrapper = new SpriteInfo(reference: texture, dimensions: source, expectedScale: expectedScale);
-			ulong hash = Upscaler.GetHash(textureWrapper, isSprite);
+			SpriteInfo textureWrapper;
+			ulong hash;
+
+			using (Performance.Track("new SpriteInfo"))
+				textureWrapper = new SpriteInfo(reference: texture, dimensions: source, expectedScale: expectedScale);
+
+			// If this is null, it can only happen due to something being blocked, so we should try again later.
+			if (textureWrapper.Data == null) {
+				return null;
+			}
+
+			using (Performance.Track("Upscaler.GetHash"))
+				hash = Upscaler.GetHash(textureWrapper, isSprite);
 
 			var newTexture = new ScaledTexture(
 				assetName: texture.SafeName(),
@@ -314,6 +327,8 @@ namespace SpriteMaster {
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal ScaledTexture (string assetName, SpriteInfo textureWrapper, Bounds sourceRectangle, ulong hash, bool isSprite, bool async, int expectedScale) {
+			using var _ = Performance.Track();
+
 			IsSprite = isSprite;
 			Hash = hash;
 			var source = textureWrapper.Reference;

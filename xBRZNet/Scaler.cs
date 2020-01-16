@@ -233,19 +233,23 @@ namespace SpriteMaster.xBRZ {
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private bool legalX (int x) {
 			return true;
+			/*
 			if (configuration.Wrapped.X) {
 				return true;
 			}
 			return x >= sourceTarget.Left && x < sourceTarget.Right;
+			*/
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private bool legalY (int y) {
 			return true;
+			/*
 			if (configuration.Wrapped.Y) {
 				return true;
 			}
 			return y >= sourceTarget.Top && y < sourceTarget.Bottom;
+			*/
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -115,6 +115,55 @@ namespace SpriteMaster.Metadata {
 			}
 		}
 
+		public static readonly byte[] BlockedSentinel = new byte[1] { 0xFF };
+
+		public byte[] CachedDataNonBlocking {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			get {
+				if (!Config.MemoryCache.Enabled)
+					return null;
+
+				//Lock.Tr
+				using (Lock.TryShared) {
+					byte[] target = null;
+					if (!_CachedData.TryGetTarget(out target) || target == null) {
+						byte[] compressedBuffer;
+						using (DataCacheLock.TryShared) {
+							if (Config.MemoryCache.Compress != Compression.Algorithm.None && Config.MemoryCache.Async) {
+								bool handledCompression = false;
+								using (Lock.TryPromote) {
+									handledCompression = CompressorCount <= 0;
+								}
+								if (!handledCompression) {
+									return BlockedSentinel;
+								}
+							}
+
+							compressedBuffer = DataCache[UniqueIDString] as byte[];
+							if (compressedBuffer != null) {
+								target = Compression.Decompress(compressedBuffer, Config.MemoryCache.Compress);
+							}
+							else {
+								target = null;
+							}
+						}
+						if (target != null) {
+							bool promoted = false;
+							using (Lock.TryPromote) {
+								_CachedData.SetTarget(target);
+								promoted = true;
+							}
+							if (!promoted) {
+								return BlockedSentinel;
+							}
+						}
+					}
+					return target;
+				}
+				return BlockedSentinel;
+			}
+		}
+
 		public byte[] CachedData {
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {

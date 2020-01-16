@@ -48,13 +48,16 @@ namespace SpriteMaster {
 			}
 			Reference = reference;
 
-			Data = reference.Meta().CachedData;
+			Data = reference.Meta().CachedDataNonBlocking;
 
 			if (Data == null) {
 				Data = new byte[reference.SizeBytes()];
 				Debug.TraceLn($"Reloading Texture Data: {reference.SafeName()}");
 				reference.GetData(Data);
 				reference.Meta().CachedData = Data;
+			}
+			else if (Data == MTexture2D.BlockedSentinel) {
+				Data = null;
 			}
 
 			BlendEnabled = DrawState.CurrentBlendSourceMode != Blend.One;
