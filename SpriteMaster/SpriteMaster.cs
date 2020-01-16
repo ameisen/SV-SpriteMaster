@@ -140,9 +140,9 @@ namespace SpriteMaster {
 				}
 			}
 
-			if (Config.ShowIntroMessage) {
+			if (Config.ShowIntroMessage || true) {
 				help.Events.GameLoop.GameLaunched += (_, _1) => {
-					Game1.drawLetterMessage("Welcome to SpriteMaster!\nSpriteMaster must resample sprites as it sees them and thus some lag will likely be apparent at the start of the game, upon entering new areas, and when new sprites are seen.\n\nPlease be patient, and please do not take this as an indication that your computer is incapable of running SpriteMaster.\n\nPlease Enjoy!".Replace("\n", "^"));
+					Game1.drawLetterMessage("Welcome to SpriteMaster!\nSpriteMaster must resample sprites as it sees them and thus some lag will likely be apparent at the start of the game, upon entering new areas, and when new sprites are seen.\n\nPlease be patient and please do not take this as an indication that your computer is incapable of running SpriteMaster.\n\nPlease Enjoy!".Replace("\n", "^"));
 				};
 				Config.ShowIntroMessage = false;
 			}
