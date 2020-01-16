@@ -81,15 +81,21 @@ namespace SpriteMaster {
 
 		[Pure]
 		private static PlatformType GetUnixType() {
-			var system = Capture1("uname", "-s").Trim().ToLowerInvariant();
+			try {
+				var system = Capture1("uname", "-s").Trim().ToLowerInvariant();
 
-			return system switch
-			{
-				var _ when system.Contains("darwin") => PlatformType.Macintosh,
-				var _ when system.Contains("linux") => PlatformType.Linux,
-				var _ when system.Contains("msys") || system.Contains("mingw") => PlatformType.Windows,// This is actually Windows.
-				_ => PlatformType.BSD,// We assume that if it isn't darwin or linux, it's probably BSD.
-			};
+				return system switch
+				{
+					var _ when system.Contains("darwin") => PlatformType.Macintosh,
+					var _ when system.Contains("linux") => PlatformType.Linux,
+					var _ when system.Contains("msys") || system.Contains("mingw") => PlatformType.Windows,// This is actually Windows.
+					_ => PlatformType.BSD,// We assume that if it isn't darwin or linux, it's probably BSD.
+				};
+			}
+			catch {
+				// if for some reason uname fails... we should probably just assume that it is linux, to be safe.
+				return PlatformType.Linux;
+			}
 		}
 
 		static Runtime() {
