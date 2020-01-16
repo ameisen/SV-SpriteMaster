@@ -105,6 +105,17 @@ namespace SpriteMaster {
 				PlatformType.Windows => FrameworkType.DotNET,
 				_ => FrameworkType.Mono,
 			};
+
+			try {
+				FullSystem = Platform switch
+				{
+					PlatformType.Windows => "Windows",
+					_ => Capture1("uname").Trim()
+				};
+			}
+			catch {
+				FullSystem = "Unknown";
+			}
 		}
 
 		public enum PlatformType {
@@ -126,7 +137,7 @@ namespace SpriteMaster {
 		}
 
 		[ImmutableObject(true)]
-		public static readonly string FullSystem = Capture1("uname").Trim();
+		public static readonly string FullSystem;
 
 		public static readonly FrameworkType Framework;
 		public static readonly PlatformType Platform;
