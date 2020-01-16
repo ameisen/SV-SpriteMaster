@@ -40,13 +40,12 @@ namespace SpriteMaster.Harmonize {
 			typeof(long),
 			typeof(ulong),
 			typeof(float),
-			typeof(double)/*,
+			typeof(double),
 			typeof(Vector2),
 			typeof(Vector3),
 			typeof(Vector4),
 			typeof(Color),
 			typeof(System.Drawing.Color)
-			*/
 		};
 
 		public static void ApplyPatches(this HarmonyInstance @this) {
