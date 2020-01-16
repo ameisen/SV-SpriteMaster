@@ -47,6 +47,7 @@ namespace SpriteMaster {
 		internal static bool GarbageCollectAccountOwnedTexture = true;
 		internal static bool LeakPreventTexture = false;
 		internal static bool LeakPreventAll = false;
+		internal static bool ShowIntroMessage = true;
 		internal static bool DiscardDuplicates = false;
 		internal static int DiscardDuplicatesFrameDelay = 2;
 		internal static List<string> DiscardDuplicatesBlacklist = new List<string>() {
@@ -162,7 +163,7 @@ namespace SpriteMaster {
 		}
 
 		internal static class AsyncScaling {
-			internal static bool Enabled = true;
+			internal const bool Enabled = true;
 			internal static bool EnabledForUnknownTextures = false;
 			internal static bool ForceSynchronousLoads = Runtime.IsUnix;
 			internal static bool ThrottledSynchronousLoads = true;

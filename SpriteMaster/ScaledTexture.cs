@@ -211,7 +211,8 @@ namespace SpriteMaster {
 		}
 
 		internal static readonly SurfaceFormat[] AllowedFormats = {
-			SurfaceFormat.Color
+			SurfaceFormat.Color,
+			//SurfaceFormat.Dxt3 // fonts
 		};
 
 		internal ManagedTexture2D Texture = null;

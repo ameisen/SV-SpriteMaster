@@ -7,7 +7,6 @@ using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using static SpriteMaster.ScaledTexture;
 
 namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 	[SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]

@@ -4,6 +4,7 @@ using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using StardewValley;
 using System;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster {
@@ -19,6 +20,7 @@ namespace SpriteMaster {
 		public static volatile bool TriggerGC = false;
 		public static SpriteSortMode CurrentSortMode = SpriteSortMode.Deferred;
 		public static TimeSpan FrameRate = new TimeSpan(166_667); // default 60hz
+		public static bool ForceSynchronous = false;
 
 		private static DateTime FrameStartTime = DateTime.Now;
 
@@ -89,6 +91,19 @@ namespace SpriteMaster {
 			CurrentSortMode = sortMode;
 			SetCurrentAddressMode(samplerState ?? SamplerState.PointClamp);
 			CurrentBlendSourceMode = (blendState ?? BlendState.AlphaBlend).AlphaSourceBlend;
+
+			var device = @this.GraphicsDevice;
+			var renderTargets = device.GetRenderTargets();
+			var renderTarget = renderTargets.Any() ? renderTargets[0].RenderTarget : null;
+
+			//if (renderTarget is RenderTarget2D target && target.RenderTargetUsage != RenderTargetUsage.DiscardContents) {
+			//	Debug.WarningLn("Non-Discarding RTT");
+			//}
+
+			ForceSynchronous = renderTarget switch {
+				null => false,
+				_ => true
+			};
 		}
 	}
 }
