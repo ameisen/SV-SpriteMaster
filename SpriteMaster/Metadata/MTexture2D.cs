@@ -3,14 +3,9 @@
 using System.Runtime.Caching;
 using System.Threading;
 using System;
-using Ionic.Zlib;
-using System.IO;
-
 using Microsoft.Xna.Framework.Graphics;
-
 using SpriteMaster.Types;
 using SpriteMaster.Extensions;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Metadata {
