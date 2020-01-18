@@ -17,7 +17,7 @@ namespace SpriteMaster.Metadata {
 		public readonly SpriteDictionary SpriteTable = new SpriteDictionary();
 		private readonly string UniqueIDString = Interlocked.Increment(ref CurrentID).ToString();
 
-		private readonly SharedLock Lock = new SharedLock();
+		public readonly SharedLock Lock = new SharedLock();
 
 		private volatile int CompressorCount = 0;
 		private readonly Semaphore CompressionSemaphore = new Semaphore(int.MaxValue, int.MaxValue);
@@ -57,7 +57,7 @@ namespace SpriteMaster.Metadata {
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public unsafe void Purge (Texture2D reference, Bounds? bounds, DataRef<byte> data) {
-			lock (this) {
+			using (Lock.Exclusive) {
 				if (data.IsNull) {
 					CachedData = null;
 					return;
@@ -81,7 +81,7 @@ namespace SpriteMaster.Metadata {
 						Debug.TraceLn("Updating MTexture2D Cache in Purge");
 						var byteSpan = data.Data;
 						using (DataCacheLock.Exclusive) {
-							using (Lock.Exclusive) {
+							/*using (Lock.Exclusive)*/ {
 								var untilOffset = Math.Min(currentData.Length - data.Offset, data.Length);
 								foreach (int i in 0..untilOffset) {
 									currentData[i + data.Offset] = byteSpan[i];

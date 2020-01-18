@@ -22,6 +22,9 @@ namespace SpriteMaster {
 
 		internal static readonly string ModuleName = typeof(Config).Namespace;
 
+		internal const bool IgnoreConfig = true;
+		internal const bool SkipIntro = IgnoreConfig;
+
 		[ConfigIgnore]
 		internal static readonly Version CurrentVersionObj = typeof(Config).Assembly.GetName().Version;
 		[ConfigIgnore]
@@ -104,7 +107,7 @@ namespace SpriteMaster {
 			internal static bool Smoothing = true;
 			internal static bool Scale = Smoothing;
 			internal const Upscaler.Scaler Scaler = Upscaler.Scaler.xBRZ;
-			internal const bool EnableDynamicScale = false;
+			internal const bool EnableDynamicScale = true;
 			internal static bool TrimWater = true;
 			internal static float ScaleBias = 0.1f;
 			internal static int MaxScale = 6;
@@ -121,7 +124,7 @@ namespace SpriteMaster {
 				internal static bool Enabled = DevEnabled && (!Runtime.IsMacintosh || MacSupported) && true; // I cannot build a proper libnvtt for OSX presently.
 				[ConfigIgnore]
 				private const bool MacSupported = false;
-				private const bool DevEnabled = false;
+				private const bool DevEnabled = true;
 				internal static bool Synchronized = false;
 				internal static CompressionQuality Quality = CompressionQuality.Highest;
 				internal static int HardAlphaDeviationThreshold = 7;
@@ -131,7 +134,7 @@ namespace SpriteMaster {
 			};
 			internal static class Padding {
 				internal static bool Enabled = DevEnabled && true;
-				private const bool DevEnabled = false;
+				private const bool DevEnabled = true;
 				internal static int MinimumSizeTexels = 4;
 				internal static bool IgnoreUnknown = false;
 				internal static List<string> StrictList = new List<string>() {
@@ -190,7 +193,7 @@ namespace SpriteMaster {
 
 		internal static class MemoryCache {
 			internal static bool Enabled = DevEnabled && true;
-			private const bool DevEnabled = false;
+			private const bool DevEnabled = true;
 			internal static bool AlwaysFlush = false;
 			internal static Compression.Algorithm Compress = Compression.Algorithm.LZ;
 			internal static bool Async = true;
@@ -199,7 +202,7 @@ namespace SpriteMaster {
 		internal static class FileCache {
 			internal const bool Purge = false;
 			internal static bool Enabled = DevEnabled && true;
-			private const bool DevEnabled = false;
+			private const bool DevEnabled = true;
 			internal const int LockRetries = 32;
 			internal const int LockSleepMS = 32;
 			internal static Compression.Algorithm Compress = Compression.Algorithm.LZ;

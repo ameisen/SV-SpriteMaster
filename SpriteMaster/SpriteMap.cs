@@ -3,6 +3,7 @@ using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
 using SpriteMaster.Types;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster {
@@ -17,13 +18,13 @@ namespace SpriteMaster {
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal void Add (Texture2D reference, ScaledTexture texture, Bounds source, int expectedScale) {
-			lock (reference.Meta()) {
-				var Map = reference.Meta().SpriteTable;
-				var rectangleHash = SpriteHash(texture: reference, source: source, expectedScale: expectedScale);
+			var rectangleHash = SpriteHash(texture: reference, source: source, expectedScale: expectedScale);
 
-				using (Lock.Exclusive) {
-					ScaledTextureReferences.Add(texture);
-					Map.Add(rectangleHash, texture);
+			var meta = reference.Meta();
+			using (Lock.Exclusive) {
+				ScaledTextureReferences.Add(texture);
+				using (meta.Lock.Exclusive) {
+					meta.SpriteTable.Add(rectangleHash, texture);
 				}
 			}
 		}
@@ -31,24 +32,22 @@ namespace SpriteMaster {
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal bool TryGet (Texture2D texture, Bounds source, int expectedScale, out ScaledTexture result) {
 			result = null;
+			var rectangleHash = SpriteHash(texture: texture, source: source, expectedScale: expectedScale);
 
-			lock (texture.Meta()) {
-				var Map = texture.Meta().SpriteTable;
-
-				using (Lock.Shared) {
-					var rectangleHash = SpriteHash(texture: texture, source: source, expectedScale: expectedScale);
-					if (Map.TryGetValue(rectangleHash, out var scaledTexture)) {
-						if (scaledTexture.Texture?.IsDisposed == true) {
-							using (Lock.Promote) {
-								Map.Clear();
-							}
+			var meta = texture.Meta();
+			var Map = meta.SpriteTable;
+			using (meta.Lock.Shared) {
+				if (Map.TryGetValue(rectangleHash, out var scaledTexture)) {
+					if (scaledTexture.Texture?.IsDisposed == true) {
+						using (meta.Lock.Promote) {
+							Map.Clear();
 						}
-						else {
-							if (scaledTexture.IsReady) {
-								result = scaledTexture;
-							}
-							return true;
+					}
+					else {
+						if (scaledTexture.IsReady) {
+							result = scaledTexture;
 						}
+						return true;
 					}
 				}
 			}
@@ -59,27 +58,26 @@ namespace SpriteMaster {
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal void Remove (ScaledTexture scaledTexture, Texture2D texture) {
 			try {
-				lock (texture.Meta()) {
-					var Map = texture.Meta().SpriteTable;
+				var meta = texture.Meta();
 
-					using (Lock.Exclusive) {
-
-						try {
-							ScaledTextureReferences.Purge();
-							var removeElements = new List<ScaledTexture>();
-							foreach (var element in ScaledTextureReferences) {
-								if (element == scaledTexture) {
-									removeElements.Add(element);
-								}
-							}
-
-							foreach (var element in removeElements) {
-								ScaledTextureReferences.Remove(element);
+				using (Lock.Exclusive) {
+					try {
+						ScaledTextureReferences.Purge();
+						var removeElements = new List<ScaledTexture>();
+						foreach (var element in ScaledTextureReferences) {
+							if (element == scaledTexture) {
+								removeElements.Add(element);
 							}
 						}
-						catch { }
 
-						Map.Clear();
+						foreach (var element in removeElements) {
+							ScaledTextureReferences.Remove(element);
+						}
+					}
+					catch { }
+
+					using (meta.Lock.Exclusive) {
+						meta.SpriteTable.Clear();
 					}
 				}
 			}
@@ -95,29 +93,30 @@ namespace SpriteMaster {
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal void Purge (Texture2D reference, Bounds? sourceRectangle = null) {
 			try {
-				using (Lock.Shared) {
-					lock (reference.Meta()) {
-						var Map = reference.Meta().SpriteTable;
-						if (Map.Count == 0) {
-							return;
-						}
+				var meta = reference.Meta();
+				var Map = meta.SpriteTable;
+				using (meta.Lock.Shared) {
+					if (!Map.Any()) {
+						return;
+					}
 
-						// TODO handle sourceRectangle meaningfully.
-						using (Lock.Promote) {
-							Debug.TraceLn($"Purging Texture {reference.SafeName()}");
+					// TODO handle sourceRectangle meaningfully.
+					using (Lock.Exclusive) {
+						Debug.TraceLn($"Purging Texture {reference.SafeName()}");
 
-							foreach (var scaledTexture in Map.Values) {
-								lock (scaledTexture) {
-									if (scaledTexture.Texture != null) {
-										scaledTexture.Texture.Dispose();
-									}
-									scaledTexture.Texture = null;
+						foreach (var scaledTexture in Map.Values) {
+							lock (scaledTexture) {
+								if (scaledTexture.Texture != null) {
+									scaledTexture.Texture.Dispose();
 								}
+								scaledTexture.Texture = null;
 							}
-
-							Map.Clear();
-							// TODO dispose sprites?
 						}
+
+						using (meta.Lock.Promote) {
+							Map.Clear();
+						}
+						// TODO dispose sprites?
 					}
 				}
 			}
@@ -144,13 +143,14 @@ namespace SpriteMaster {
 							purgeList.Add(scaledTexture);
 						}
 					}
-				}
-				using (Lock.Exclusive) {
-					foreach (var purgable in purgeList) {
-						if (purgable.Reference.TryGetTarget(out var reference)) {
-							purgable.Dispose();
-							lock (reference.Meta()) {
-								reference.Meta().SpriteTable.Clear();
+					using (Lock.Promote) {
+						foreach (var purgable in purgeList) {
+							if (purgable.Reference.TryGetTarget(out var reference)) {
+								purgable.Dispose();
+								var meta = reference.Meta();
+								using (meta.Lock.Exclusive) {
+									meta.SpriteTable.Clear();
+								}
 							}
 						}
 					}

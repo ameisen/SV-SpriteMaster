@@ -48,6 +48,17 @@ namespace SpriteMaster.Types {
 			return index * TypeSize;
 		}
 
+		[Pure, MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private readonly uint GetOffset (uint index) {
+#if DEBUG
+			if (index >= unchecked((uint)Length)) {
+				throw new IndexOutOfRangeException(nameof(index));
+			}
+#endif
+
+			return index * unchecked((uint)TypeSize);
+		}
+
 		public unsafe T this[int index] {
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			readonly get {
@@ -57,6 +68,19 @@ namespace SpriteMaster.Types {
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
 				T* ptr = (T*)(Pointer + GetOffset(index));
+				*ptr = value;
+			}
+		}
+
+		public unsafe T this[uint index] {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			readonly get {
+				T* ptr = (T*)(Pointer + unchecked((int)GetOffset(index)));
+				return *ptr;
+			}
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			set {
+				T* ptr = (T*)(Pointer + unchecked((int)GetOffset(index)));
 				*ptr = value;
 			}
 		}

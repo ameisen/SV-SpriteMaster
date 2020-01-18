@@ -132,7 +132,8 @@ namespace SpriteMaster {
 			using (var tempStream = new MemoryStream()) {
 				SerializeConfig.Save(tempStream);
 
-				SerializeConfig.Load(ConfigPath);
+				if (!Config.IgnoreConfig)
+					SerializeConfig.Load(ConfigPath);
 
 				if (IsVersionOutdated(Config.ConfigVersion)) {
 					Debug.WarningLn("config.toml is out of date, rewriting it.");
@@ -141,7 +142,7 @@ namespace SpriteMaster {
 				}
 			}
 
-			if (Config.ShowIntroMessage) {
+			if (Config.ShowIntroMessage && !Config.SkipIntro) {
 				help.Events.GameLoop.GameLaunched += (_, _1) => {
 					Game1.drawLetterMessage("Welcome to SpriteMaster!\nSpriteMaster must resample sprites as it sees them and thus some lag will likely be apparent at the start of the game, upon entering new areas, and when new sprites are seen.\n\nPlease be patient and do not take this as an indication that your computer is incapable of running SpriteMaster.\n\nEnjoy!".Replace("\n", "^"));
 				};

@@ -113,10 +113,6 @@ namespace SpriteMaster {
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		static internal ScaledTexture Fetch (Texture2D texture, Bounds source, int expectedScale) {
-			if (!Validate(texture)) {
-				return null;
-			}
-
 			if (SpriteMap.TryGet(texture, source, expectedScale, out var scaleTexture)) {
 				return scaleTexture;
 			}
@@ -149,12 +145,12 @@ namespace SpriteMaster {
 		static internal ScaledTexture Get (Texture2D texture, Bounds source, int expectedScale) {
 			using var _ = Performance.Track();
 
-			if (!Validate(texture)) {
-				return null;
-			}
-
 			if (SpriteMap.TryGet(texture, source, expectedScale, out var scaleTexture)) {
 				return scaleTexture;
+			}
+
+			if (!Validate(texture)) {
+				return null;
 			}
 
 			bool useAsync = (Config.AsyncScaling.EnabledForUnknownTextures || !texture.Anonymous()) && (texture.Area() >= Config.AsyncScaling.MinimumSizeTexels);
@@ -166,7 +162,7 @@ namespace SpriteMaster {
 			var estimatedDuration = GetTimer(texture: texture, async: useAsync).Estimate(texture.Area());
 			// The divisor is applied against the actual remaining time, basically giving us less time here to account for things being a little off
 			// in the running averages.
-			const float multiplier = 0.85f;
+			const float multiplier = 0.75f;
 			var remainingTime = DrawState.RemainingFrameTime(multiplier: multiplier);
 			if (DrawState.PushedUpdateWithin(1) && estimatedDuration >= remainingTime) {
 				return null;
@@ -252,7 +248,7 @@ namespace SpriteMaster {
 
 		internal static readonly SurfaceFormat[] AllowedFormats = {
 			SurfaceFormat.Color,
-			SurfaceFormat.Dxt3 // fonts
+			//SurfaceFormat.Dxt3 // fonts
 		};
 
 		internal ManagedTexture2D Texture = null;
@@ -491,6 +487,10 @@ namespace SpriteMaster {
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Dispose () {
+			if (Disposed) {
+				return;
+			}
+
 			if (Reference.TryGetTarget(out var reference)) {
 				SpriteMap.Remove(this, reference);
 			}

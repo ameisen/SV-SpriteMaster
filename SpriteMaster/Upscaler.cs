@@ -115,6 +115,80 @@ namespace SpriteMaster {
 			}
 		}
 
+		private const uint WaterBlock = 4;
+		private const uint FontBlock = 1;
+
+		private static bool IsFont (SpriteInfo input) {
+			switch (input.Reference.Format) {
+				case SurfaceFormat.Dxt1:
+				case SurfaceFormat.Dxt3:
+				case SurfaceFormat.Dxt5:
+					return Math.Min(input.Size.Extent.MinOf, input.ReferenceSize.MinOf) >= FontBlock;
+				default:
+					return false;
+			}
+		}
+
+		private static bool IsWater(SpriteInfo input) {
+			return input.Size.Right <= 640 && input.Size.Top >= 2000 && input.Size.Extent.MinOf >= WaterBlock && input.Reference.SafeName() == "LooseSprites/Cursors";
+		}
+
+		private static Span<int> DownSample (byte[] data, in Bounds bounds, uint referenceWidth, uint block, bool blend = false) {
+			uint blockSize = block * block;
+			uint halfBlock = blend ? 0 : (block >> 1);
+			var blockOffset = bounds.Offset * (int)block;
+			var blockExtent = bounds.Extent * (int)block;
+
+			// Rescale the data down, doing an effective point sample from 4x4 blocks to 1 texel.
+			var veryRawData = new Span<byte>(data).As<uint>();
+			var rawData = new Span<int>(new int[bounds.Area]);
+			foreach (uint y in 0..bounds.Extent.Height) {
+				var ySourceOffset = (((y * block) + (uint)blockOffset.Y) + halfBlock) * referenceWidth;
+				var yDestinationOffset = y * (uint)bounds.Extent.X;
+				foreach (uint x in 0..bounds.Extent.Width) {
+					if (blend) {
+						uint max_a = 0;
+						uint a = 0;
+						uint b = 0;
+						uint g = 0;
+						uint r = 0;
+						var ySourceOffsetAdjusted = ySourceOffset;
+						foreach (uint innerY in 0..block) {
+							foreach (uint innerX in 0..block) {
+								var sample = veryRawData[ySourceOffsetAdjusted + ((x * block) + (uint)blockOffset.X + innerX)];
+								var aa = (sample >> 24) & 0xFFU;
+								max_a = Math.Max(aa, max_a);
+								a += aa;
+								b += (sample >> 16) & 0xFFU;
+								g += (sample >> 8) & 0xFFU;
+								r += sample & 0xFFU;
+							}
+							ySourceOffsetAdjusted += referenceWidth;
+						}
+
+						a /= (uint)blockSize;
+						b /= (uint)blockSize;
+						g /= (uint)blockSize;
+						r /= (uint)blockSize;
+
+						a = (a * 3u + max_a) >> 2;
+
+						rawData[yDestinationOffset + x] = (int)(
+							(a & 0xFFU) << 24 |
+							(b & 0xFFU) << 16 |
+							(g & 0xFFU) << 8 |
+							(r & 0xFFU)
+						);
+					}
+					else {
+						rawData[yDestinationOffset + x] = unchecked((int)veryRawData[ySourceOffset + ((x * block) + (uint)blockOffset.X + halfBlock)]);
+					}
+				}
+			}
+
+			return rawData;
+		}
+
 		// TODO : use MemoryFailPoint class. Extensively.
 		private static unsafe void CreateNewTexture (
 			ScaledTexture texture,
@@ -122,6 +196,7 @@ namespace SpriteMaster {
 			SpriteInfo input,
 			bool desprite,
 			bool isWater,
+			bool isFont,
 			in Bounds spriteBounds,
 			in Vector2I textureSize,
 
@@ -138,7 +213,11 @@ namespace SpriteMaster {
 			padding = Vector2I.Zero;
 			blockPadding = Vector2I.Zero;
 
-			var inputSize = desprite ? spriteBounds.Extent : textureSize;
+			var rawSize = textureSize;
+			Bounds rawBounds = textureSize;
+
+			var inputSize = desprite ? spriteBounds.Extent : rawSize;
+			var inputBounds = desprite ? spriteBounds : rawSize;
 
 			var rawTextureData = input.Data;
 
@@ -149,23 +228,20 @@ namespace SpriteMaster {
 				case SurfaceFormat.Dxt5:
 					//rawTextureData = BlockCompress.Decompress(rawTextureData, input);
 					
-
-					// lol test
+					// This... actually is faster than our version in dotNet...
 					using (var tempTexture = new Texture2D(DrawState.Device, input.Reference.Width, input.Reference.Height, false, input.Reference.Format)) {
 						tempTexture.SetData(rawTextureData);
 						using (var pngStream = new MemoryStream()) {
 							tempTexture.SaveAsPng(pngStream, tempTexture.Width, tempTexture.Height);
+							//using (var fileStream = new FileStream("D:\\font.png", FileMode.Create)) {
+							//	tempTexture.SaveAsPng(fileStream, tempTexture.Width, tempTexture.Height);
+							//}
 							pngStream.Flush();
 							using (var pngTexture = Texture2D.FromStream(DrawState.Device, pngStream)) {
 								rawTextureData = new byte[pngTexture.Width * pngTexture.Height * sizeof(int)];
 								pngTexture.GetData(rawTextureData);
 							}
 						}
-					}
-
-					var intData = rawTextureData.AsSpan().As<uint>();
-					foreach (int i in 0..intData.Length) {
-						intData[i] = intData[i] | 0x00FF0000U;
 					}
 
 					downsample = true;
@@ -175,6 +251,10 @@ namespace SpriteMaster {
 			byte[] bitmapData;
 
 			wrapped.Set(false);
+
+			if (isFont) {
+				scale = Config.Resample.MaxScale;
+			}
 
 			if (Config.Resample.Scale) {
 				int originalScale = scale;
@@ -195,17 +275,17 @@ namespace SpriteMaster {
 
 			// Water in the game is pre-upscaled by 4... which is weird.
 			Span<int> rawData;
-			if (isWater) {
-				// Rescale the data down, doing an effective point sample from 4x4 blocks to 1 texel.
-				var veryRawData = new Span<byte>(rawTextureData).As<int>();
-				rawData = new Span<int>(new int[veryRawData.Length / 16]);
-				foreach (int y in 0..textureSize.Height) {
-					var ySourceOffset = (y * sizeof(int)) * input.ReferenceSize.Width;
-					var yDestinationOffset = y * textureSize.Width;
-					foreach (int x in 0..textureSize.Width) {
-						rawData[yDestinationOffset + x] = veryRawData[ySourceOffset + (x * sizeof(int))];
-					}
-				}
+			if (isWater && WaterBlock != 1) {
+				rawData = DownSample(data: rawTextureData, bounds: inputBounds, referenceWidth: (uint)input.ReferenceSize.Width, block: WaterBlock);
+				rawSize = inputBounds.Extent;
+				rawBounds = rawSize;
+				inputBounds = rawSize;
+			}
+			else if (isFont && FontBlock != 1) {
+				rawData = DownSample(data: rawTextureData, bounds: inputBounds, referenceWidth: (uint)input.ReferenceSize.Width, block: FontBlock, blend: true);
+				rawSize = inputBounds.Extent;
+				rawBounds = rawSize;
+				inputBounds = rawSize;
 			}
 			else {
 				rawData = new Span<byte>(rawTextureData).As<int>();
@@ -214,8 +294,8 @@ namespace SpriteMaster {
 			var edgeResults = Edge.AnalyzeLegacy(
 				reference: input.Reference,
 				data: rawData,
-				rawSize: textureSize,
-				spriteSize: spriteBounds,
+				rawSize: rawBounds,
+				spriteSize: inputBounds,
 				Wrapped: input.Wrapped
 			);
 
@@ -224,8 +304,8 @@ namespace SpriteMaster {
 			wrapped = edgeResults.Wrapped & Config.Resample.EnableWrappedAddressing;
 
 			if (Config.Debug.Sprite.DumpReference) {
-				using (var filtered = Textures.CreateBitmap(rawData.As<byte>().ToArray(), textureSize, PixelFormat.Format32bppArgb)) {
-					using (var submap = filtered.Clone(spriteBounds, filtered.PixelFormat)) {
+				using (var filtered = Textures.CreateBitmap(rawData.As<byte>().ToArray(), rawSize, PixelFormat.Format32bppArgb)) {
+					using (var submap = filtered.Clone(inputBounds, filtered.PixelFormat)) {
 						var dump = GetDumpBitmap(submap);
 						var path = Cache.GetDumpPath($"{input.Reference.SafeName().Replace("/", ".")}.{hashString}.reference.png");
 						File.Delete(path);
@@ -236,9 +316,9 @@ namespace SpriteMaster {
 
 			if (Config.Resample.Smoothing) {
 				var prescaleData = rawData;
-				var prescaleSize = textureSize;
+				var prescaleSize = rawSize;
 
-				var outputSize = spriteBounds;
+				var outputSize = inputBounds;
 
 				// Do we need to pad the sprite?
 				if (Config.Resample.Padding.Enabled) {
@@ -323,7 +403,7 @@ namespace SpriteMaster {
 
 							foreach (int i in 0..spriteSize.Height) {
 								int strideOffset = y * paddedSize.Width;
-								int strideOffsetRaw = (i + spriteBounds.Top) * prescaleSize.Width;
+								int strideOffsetRaw = (i + inputBounds.Top) * prescaleSize.Width;
 								// Write a padded X line
 								int xOffset = strideOffset;
 								void WritePaddingX () {
@@ -335,7 +415,7 @@ namespace SpriteMaster {
 								}
 								WritePaddingX();
 								foreach (int x in 0..spriteSize.Width) {
-									paddedData[xOffset++] = rawData[strideOffsetRaw + x + spriteBounds.Left];
+									paddedData[xOffset++] = rawData[strideOffsetRaw + x + inputBounds.Left];
 								}
 								WritePaddingX();
 								++y;
@@ -581,16 +661,25 @@ namespace SpriteMaster {
 			var textureSize = input.ReferenceSize;
 			var inputSize = desprite ? spriteBounds.Extent : textureSize;
 
-			bool isWater = input.Size.Right <= 640 && input.Size.Top >= 2000 && input.Size.Width >= 4 && input.Size.Height >= 4 && texture.SafeName() == "LooseSprites/Cursors";
+			var isWater = desprite && IsWater(input);
+			var isFont = desprite && !isWater && IsFont(input);
 
-			if (isWater) {
-				spriteBounds.X /= 4;
-				spriteBounds.Y /= 4;
-				spriteBounds.Width /= 4;
-				spriteBounds.Height /= 4;
+			int BlockSize = 1;
+			unchecked {
+				if (isWater)
+					BlockSize = (int)WaterBlock;
+				else if (isFont)
+					BlockSize = (int)FontBlock;
+			}
 
-				textureSize.Width /= 4;
-				textureSize.Height /= 4;
+			if (BlockSize > 1) {
+				spriteBounds.X /= BlockSize;
+				spriteBounds.Y /= BlockSize;
+				spriteBounds.Width /= BlockSize;
+				spriteBounds.Height /= BlockSize;
+
+				textureSize.Width /= BlockSize;
+				textureSize.Height /= BlockSize;
 			}
 
 			byte[] bitmapData = null;
@@ -626,6 +715,7 @@ namespace SpriteMaster {
 						input: input,
 						desprite: desprite,
 						isWater: isWater,
+						isFont: isFont,
 						spriteBounds: in spriteBounds,
 						textureSize: in textureSize,
 						hashString: hashString,
