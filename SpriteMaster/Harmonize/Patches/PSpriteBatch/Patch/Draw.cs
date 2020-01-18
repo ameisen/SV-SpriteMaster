@@ -34,7 +34,8 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch.Patch {
 			float rotation,
 			ref Vector2 origin,
 			SpriteEffects effects,
-			float layerDepth
+			float layerDepth,
+			ref ManagedTexture2D __state
 		) {
 			if (!Config.Enabled)
 				return true;
@@ -47,7 +48,8 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch.Patch {
 				rotation: rotation,
 				origin: ref origin,
 				effects: effects,
-				layerDepth: layerDepth
+				layerDepth: layerDepth,
+				__state: ref __state
 			);
 		}
 
@@ -61,7 +63,8 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch.Patch {
 			float rotation,
 			ref Vector2 origin,
 			SpriteEffects effects,
-			ref float layerDepth
+			ref float layerDepth,
+			ref ManagedTexture2D __state
 		) {
 			if (!Config.Enabled)
 				return true;
@@ -74,7 +77,8 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch.Patch {
 				rotation: rotation,
 				origin: ref origin,
 				effects: effects,
-				layerDepth: ref layerDepth
+				layerDepth: ref layerDepth,
+				__state: ref __state
 			);
 		}
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

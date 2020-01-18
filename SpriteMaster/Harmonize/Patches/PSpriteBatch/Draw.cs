@@ -128,7 +128,8 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 			float rotation,
 			ref Vector2 origin,
 			SpriteEffects effects,
-			float layerDepth
+			float layerDepth,
+			ref ManagedTexture2D __state
 		) {
 			using var _ = Performance.Track();
 
@@ -180,6 +181,7 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 				);
 				return Stop;
 			}
+			__state = resampledTexture;
 			return Continue;
 		}
 
@@ -193,32 +195,44 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 			float rotation,
 			ref Vector2 origin,
 			SpriteEffects effects,
-			ref float layerDepth
+			ref float layerDepth,
+			ref ManagedTexture2D __state
 		) {
 			using var _ = Performance.Track("OnDraw0");
 
-			GetDrawParameters(
-				texture: texture,
-				source: source,
-				bounds: out var sourceRectangle,
-				scaleFactor: out var scaleFactor
-			);
+			Bounds sourceRectangle;
+			ScaledTexture scaledTexture;
+			ManagedTexture2D resampledTexture;
 
-			var expectedScale2D = new Vector2(destination.Width, destination.Height) / new Vector2(sourceRectangle.Width, sourceRectangle.Height);
-			var expectedScale = ((Math.Max(expectedScale2D.X, expectedScale2D.Y) * scaleFactor) + Config.Resample.ScaleBias).Clamp(2.0f, (float)Config.Resample.MaxScale).NextInt();
+			if (__state == null) {
+				GetDrawParameters(
+					texture: texture,
+					source: source,
+					bounds: out sourceRectangle,
+					scaleFactor: out var scaleFactor
+				);
 
-			if (!texture.FetchScaledTexture(
-				expectedScale: expectedScale,
-				source: ref sourceRectangle,
-				scaledTexture: out var scaledTexture
-			)) {
-				return Continue;
+				var expectedScale2D = new Vector2(destination.Width, destination.Height) / new Vector2(sourceRectangle.Width, sourceRectangle.Height);
+				var expectedScale = ((Math.Max(expectedScale2D.X, expectedScale2D.Y) * scaleFactor) + Config.Resample.ScaleBias).Clamp(2.0f, (float)Config.Resample.MaxScale).NextInt();
+
+				if (!texture.FetchScaledTexture(
+					expectedScale: expectedScale,
+					source: ref sourceRectangle,
+					scaledTexture: out scaledTexture
+				)) {
+					return Continue;
+				}
+				scaledTexture.UpdateReferenceFrame();
+
+				resampledTexture = scaledTexture.Texture;
+				if (!resampledTexture.Validate()) {
+					return Continue;
+				}
 			}
-			scaledTexture.UpdateReferenceFrame();
-
-			var resampledTexture = scaledTexture.Texture;
-			if (!resampledTexture.Validate()) {
-				return Continue;
+			else {
+				resampledTexture = __state;
+				scaledTexture = resampledTexture.Texture;
+				sourceRectangle = resampledTexture.Dimensions;
 			}
 
 

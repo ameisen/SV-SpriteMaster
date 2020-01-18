@@ -25,6 +25,8 @@ namespace SpriteMaster.Metadata {
 		public volatile bool TracePrinted = false;
 		public Volatile<ulong> UpdateToken { get; private set; } = 0;
 
+		public bool ScaleValid = true;
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static void PurgeDataCache() {
 			if (!Config.MemoryCache.Enabled) {

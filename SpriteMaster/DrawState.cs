@@ -10,7 +10,6 @@ using System.Runtime.CompilerServices;
 namespace SpriteMaster {
 	internal static class DrawState {
 		private static readonly SamplerState DefaultSamplerState = SamplerState.LinearClamp;
-		private static bool FetchedThisFrame = false;
 		private static bool _PushedUpdateThisFrame = false;
 		internal static bool PushedUpdateThisFrame {
 			get {
@@ -54,12 +53,6 @@ namespace SpriteMaster {
 			CurrentAddressModeV = samplerState.AddressV;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static bool GetUpdateToken (int texels) {
-			FetchedThisFrame = true;
-			return true;
-		}
-
 		internal static bool PushedUpdateWithin(int frames) {
 			return (long)((ulong)CurrentFrame - LastPushedUpdateFrame) <= frames;
 		}
@@ -67,7 +60,7 @@ namespace SpriteMaster {
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static TimeSpan RemainingFrameTime(float multiplier = 1.0f, in TimeSpan? offset = null) {
-			return ActualRemainingFrameTime().Multiply(multiplier) - (BaselineFrameTime + (offset ?? TimeSpan.Zero));
+			return (ActualRemainingFrameTime() - (BaselineFrameTime + (offset ?? TimeSpan.Zero))).Multiply(multiplier);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -119,7 +112,6 @@ namespace SpriteMaster {
 				SynchronizedTasks.ProcessPendingActions(remaining);
 			}
 
-			FetchedThisFrame = false;
 			if (!PushedUpdateThisFrame) {
 				var duration = DateTime.Now - FrameStartTime;
 				// Throw out garbage values.

@@ -52,12 +52,6 @@ namespace SpriteMaster {
 		internal static bool LeakPreventTexture = false;
 		internal static bool LeakPreventAll = false;
 		internal static bool ShowIntroMessage = true;
-		internal static bool DiscardDuplicates = false;
-		internal static int DiscardDuplicatesFrameDelay = 2;
-		internal static List<string> DiscardDuplicatesBlacklist = new List<string>() {
-			"LooseSprites/Cursors",
-			"Minigames/TitleButtons"
-		};
 
 		internal enum Configuration {
 			Debug,

@@ -17,8 +17,6 @@ namespace SpriteMaster {
 		// TODO : This can grow unbounded. Should fix.
 		public static readonly SpriteMap SpriteMap = new SpriteMap();
 
-		private static readonly Dictionary<string, WeakTexture> DuplicateTable = Config.DiscardDuplicates ? new Dictionary<string, WeakTexture>() : null;
-
 		private static readonly LinkedList<WeakReference<ScaledTexture>> MostRecentList = new LinkedList<WeakReference<ScaledTexture>>();
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -28,82 +26,85 @@ namespace SpriteMaster {
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static bool Validate(Texture2D texture) {
-			int textureArea = texture.Area();
+			var meta = texture.Meta();
+			if (!meta.ScaleValid) {
+				return false;
+			}
 
 			if (texture is ManagedTexture2D) {
-				if (!texture.Meta().TracePrinted) {
-					texture.Meta().TracePrinted = true;
+				if (!meta.TracePrinted) {
+					meta.TracePrinted = true;
 					Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', is already scaled");
 				}
-				return false;
+				return meta.ScaleValid = false;
 			}
 
 			if (texture is RenderTarget2D) {
-				if (!texture.Meta().TracePrinted) {
-					texture.Meta().TracePrinted = true;
+				if (!meta.TracePrinted) {
+					meta.TracePrinted = true;
 					Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', render targets unsupported");
 				}
-				return false;
+				return meta.ScaleValid = false;
 			}
 
 			if (Math.Max(texture.Width, texture.Height) <= Config.Resample.MinimumTextureDimensions) {
-				if (!texture.Meta().TracePrinted) {
-					texture.Meta().TracePrinted = true;
+				if (!meta.TracePrinted) {
+					meta.TracePrinted = true;
 					Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', texture is too small to qualify");
 				}
-				return false;
+				return meta.ScaleValid = false;
 			}
 
-			if (textureArea == 0) {
-				if (!texture.Meta().TracePrinted) {
-					texture.Meta().TracePrinted = true;
+			if (texture.Area() == 0) {
+				if (!meta.TracePrinted) {
+					meta.TracePrinted = true;
 					Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', zero area");
 				}
-				return false;
+				return meta.ScaleValid = false;
 			}
 
 			// TODO pComPtr check?
 			if (texture.IsDisposed || texture.GraphicsDevice.IsDisposed) {
-				if (!texture.Meta().TracePrinted) {
-					texture.Meta().TracePrinted = true;
+				if (!meta.TracePrinted) {
+					meta.TracePrinted = true;
 					Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', Is Zombie");
 				}
-				return false;
+				return meta.ScaleValid = false;
 			}
 
 			if (Config.IgnoreUnknownTextures && texture.Anonymous()) {
-				if (!texture.Meta().TracePrinted) {
-					texture.Meta().TracePrinted = true;
+				if (!meta.TracePrinted) {
+					meta.TracePrinted = true;
 					Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', Is Unknown Texture");
 				}
-				return false;
+				return meta.ScaleValid = false;
 			}
 
 
 			if (texture.LevelCount > 1) {
-				if (!texture.Meta().TracePrinted) {
-					texture.Meta().TracePrinted = true;
+				if (!meta.TracePrinted) {
+					meta.TracePrinted = true;
 					Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', Multi-Level Textures Unsupported: {texture.LevelCount} levels");
 				}
-				return false;
+				return meta.ScaleValid = false;
 			}
 
 			if (!LegalFormat(texture)) {
-				if (!texture.Meta().TracePrinted) {
-					texture.Meta().TracePrinted = true;
+				if (!meta.TracePrinted) {
+					meta.TracePrinted = true;
 					Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', Format Unsupported: {texture.Format}");
 				}
-				return false;
+				return meta.ScaleValid = false;
 			}
 
 			if (!texture.Anonymous()) {
 				foreach (var blacklisted in Config.Resample.Blacklist) {
 					if (texture.SafeName().StartsWith(blacklisted)) {
-						if (!texture.Meta().TracePrinted) {
-							texture.Meta().TracePrinted = true;
+						if (!meta.TracePrinted) {
+							meta.TracePrinted = true;
 							Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', Is Blacklisted");
 						}
-						return false;
+						return meta.ScaleValid = false;
 					}
 				}
 			}
@@ -154,14 +155,9 @@ namespace SpriteMaster {
 			}
 
 			bool useAsync = (Config.AsyncScaling.EnabledForUnknownTextures || !texture.Anonymous()) && (texture.Area() >= Config.AsyncScaling.MinimumSizeTexels);
-
-			if (useAsync && Config.AsyncScaling.Enabled && !DrawState.GetUpdateToken(texture.Area()) && !texture.Meta().HasCachedData) {
-				return null;
-			}
+			// !texture.Meta().HasCachedData
 
 			var estimatedDuration = GetTimer(texture: texture, async: useAsync).Estimate(texture.Area());
-			// The divisor is applied against the actual remaining time, basically giving us less time here to account for things being a little off
-			// in the running averages.
 			const float multiplier = 0.75f;
 			var remainingTime = DrawState.RemainingFrameTime(multiplier: multiplier);
 			if (DrawState.PushedUpdateWithin(1) && estimatedDuration >= remainingTime) {
@@ -170,37 +166,6 @@ namespace SpriteMaster {
 
 			// TODO : We should really only populate the average when we are performing an expensive operation like GetData.
 			var begin = DateTime.Now;
-
-			if (Config.DiscardDuplicates) {
-				// Check for duplicates with the same name.
-				// TODO : We do have a synchronity issue here. We could purge before an asynchronous task adds the texture.
-				// DiscardDuplicatesFrameDelay
-				if (!texture.Anonymous() && !Config.DiscardDuplicatesBlacklist.Contains(texture.SafeName())) {
-					try {
-						lock (DuplicateTable) {
-							if (DuplicateTable.TryGetValue(texture.SafeName(), out var weakTexture)) {
-								if (weakTexture.TryGetTarget(out var strongTexture)) {
-									// Is it not the same texture, and the previous texture has not been accessed for at least 2 frames?
-									if (strongTexture != texture && (DrawState.CurrentFrame - strongTexture.Meta().LastAccessFrame) > 2) {
-										Debug.TraceLn($"Purging Duplicate Texture '{strongTexture.SafeName()}'");
-										DuplicateTable[texture.SafeName()] = texture.MakeWeak();
-										Purge(strongTexture);
-									}
-								}
-								else {
-									DuplicateTable[texture.SafeName()] = texture.MakeWeak();
-								}
-							}
-							else {
-								DuplicateTable.Add(texture.SafeName(), texture.MakeWeak());
-							}
-						}
-					}
-					catch (Exception ex) {
-						ex.PrintWarning();
-					}
-				}
-			}
 
 			bool isSprite = (!source.Offset.IsZero || source.Extent != texture.Extent());
 			SpriteInfo textureWrapper;
