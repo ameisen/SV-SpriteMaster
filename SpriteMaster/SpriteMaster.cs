@@ -8,6 +8,7 @@ using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 using StardewValley;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime;
@@ -142,13 +143,12 @@ namespace SpriteMaster {
 
 			if (Config.ShowIntroMessage) {
 				help.Events.GameLoop.GameLaunched += (_, _1) => {
-					Game1.drawLetterMessage("Welcome to SpriteMaster!\nSpriteMaster must resample sprites as it sees them and thus some lag will likely be apparent at the start of the game, upon entering new areas, and when new sprites are seen.\n\nPlease be patient and please do not take this as an indication that your computer is incapable of running SpriteMaster.\n\nPlease Enjoy!".Replace("\n", "^"));
+					Game1.drawLetterMessage("Welcome to SpriteMaster!\nSpriteMaster must resample sprites as it sees them and thus some lag will likely be apparent at the start of the game, upon entering new areas, and when new sprites are seen.\n\nPlease be patient and do not take this as an indication that your computer is incapable of running SpriteMaster.\n\nEnjoy!".Replace("\n", "^"));
 				};
 				Config.ShowIntroMessage = false;
 			}
 
 			SerializeConfig.Save(ConfigPath);
-
 
 			ConfigureHarmony();
 			help.Events.Input.ButtonPressed += OnButtonPressed;

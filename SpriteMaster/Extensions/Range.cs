@@ -9,81 +9,57 @@ namespace SpriteMaster.Extensions {
 	using XRectangle = Microsoft.Xna.Framework.Rectangle;
 	public static class Range {
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static T Clamp<T> (this T v, T min, T max) where T : IComparable, IComparable<T> {
-			if (v.CompareTo(min) < 0)
-				return min;
-			if (v.CompareTo(max) > 0)
-				return max;
-			return v;
+		public static T Clamp<T> (this T value, T min, T max) where T : IComparable, IComparable<T> {
+			return (value.CompareTo(min) < 0) ?
+				min :
+				(value.CompareTo(max) > 0) ?
+					max :
+					value;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static int Clamp (this int v, int min, int max) {
-			if (v < min)
-				return min;
-			if (v > max)
-				return max;
-			return v;
+		public static int Clamp (this int value, int min, int max) {
+			return (value < min) ? min : (value > max) ? max : value;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static uint Clamp (this uint v, uint min, uint max) {
-			if (v < min)
-				return min;
-			if (v > max)
-				return max;
-			return v;
+		public static uint Clamp (this uint value, uint min, uint max) {
+			return (value < min) ? min : (value > max) ? max : value;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static long Clamp (this long v, long min, long max) {
-			if (v < min)
-				return min;
-			if (v > max)
-				return max;
-			return v;
+		public static long Clamp (this long value, long min, long max) {
+			return (value < min) ? min : (value > max) ? max : value;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static ulong Clamp (this ulong v, ulong min, ulong max) {
-			if (v < min)
-				return min;
-			if (v > max)
-				return max;
-			return v;
+		public static ulong Clamp (this ulong value, ulong min, ulong max) {
+			return (value < min) ? min : (value > max) ? max : value;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static float Clamp (this float v, float min, float max) {
-			if (v < min)
-				return min;
-			if (v > max)
-				return max;
-			return v;
+		public static float Clamp (this float value, float min, float max) {
+			return (value < min) ? min : (value > max) ? max : value;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static double Clamp (this double v, double min, double max) {
-			if (v < min)
-				return min;
-			if (v > max)
-				return max;
-			return v;
+		public static double Clamp (this double value, double min, double max) {
+			return (value < min) ? min : (value > max) ? max : value;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static bool WithinInclusive<T> (this T v, T min, T max) where T : IComparable, IComparable<T> {
-			return (v.CompareTo(min) >= 0 && v.CompareTo(max) <= 0);
+		public static bool WithinInclusive<T> (this T value, T min, T max) where T : IComparable, IComparable<T> {
+			return (value.CompareTo(min) >= 0 && value.CompareTo(max) <= 0);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static bool WithinExclusive<T> (this T v, T min, T max) where T : IComparable, IComparable<T> {
-			return (v.CompareTo(min) > 0 && v.CompareTo(max) < 0);
+		public static bool WithinExclusive<T> (this T value, T min, T max) where T : IComparable, IComparable<T> {
+			return (value.CompareTo(min) > 0 && value.CompareTo(max) < 0);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static bool Within<T> (this T v, T min, T max) where T : IComparable, IComparable<T> {
-			return WithinInclusive(v, min, max);
+		public static bool Within<T> (this T value, T min, T max) where T : IComparable, IComparable<T> {
+			return WithinInclusive(value, min, max);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

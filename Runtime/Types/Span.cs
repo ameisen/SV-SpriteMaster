@@ -7,6 +7,12 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace SpriteMaster.Types {
+	public static class Extensions {
+		public static Span<T> AsSpan<T>(this T[] data) where T : unmanaged {
+			return new Span<T>(data);
+		}
+	}
+
 	[ImmutableObject(true)]
 	public ref struct Span<T> where T : unmanaged {
 		private sealed class CollectionHandle {

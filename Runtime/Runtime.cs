@@ -154,5 +154,9 @@ namespace SpriteMaster {
 		public static bool IsLinux => Platform == PlatformType.Linux;
 		public static bool IsBSD => Platform == PlatformType.BSD;
 		public static bool IsMacintosh => Platform == PlatformType.Macintosh;
+
+		public static bool IsMonoGame => Framework == FrameworkType.Mono;
+
+		public static bool IsXNA => Framework == FrameworkType.DotNET;
 	}
 }

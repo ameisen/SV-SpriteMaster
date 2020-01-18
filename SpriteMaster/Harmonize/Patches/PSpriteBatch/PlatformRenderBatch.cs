@@ -18,21 +18,6 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 
 			if (texture is ManagedTexture2D managedTexture && managedTexture.Texture != null) {
 				return SamplerState.LinearClamp;
-				/*
-				var newState = new SamplerState() {
-					AddressU = reference.AddressU,
-					AddressV = reference.AddressV,
-					AddressW = reference.AddressW,
-					MaxAnisotropy = reference.MaxAnisotropy,
-					MaxMipLevel = reference.MaxMipLevel,
-					MipMapLevelOfDetailBias = reference.MipMapLevelOfDetailBias,
-					Name = "RescaledSampler",
-					Tag = reference.Tag,
-					Filter = TextureFilter.Linear
-				};
-
-				return newState;
-				*/
 			}
 			else if (reference.Filter == TextureFilter.Linear) {
 				return SamplerState.PointClamp;

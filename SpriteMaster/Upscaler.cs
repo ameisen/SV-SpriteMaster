@@ -141,6 +141,37 @@ namespace SpriteMaster {
 			var inputSize = desprite ? spriteBounds.Extent : textureSize;
 
 			var rawTextureData = input.Data;
+
+			bool downsample = false;
+			switch (input.Reference.Format) {
+				case SurfaceFormat.Dxt1:
+				case SurfaceFormat.Dxt3:
+				case SurfaceFormat.Dxt5:
+					//rawTextureData = BlockCompress.Decompress(rawTextureData, input);
+					
+
+					// lol test
+					using (var tempTexture = new Texture2D(DrawState.Device, input.Reference.Width, input.Reference.Height, false, input.Reference.Format)) {
+						tempTexture.SetData(rawTextureData);
+						using (var pngStream = new MemoryStream()) {
+							tempTexture.SaveAsPng(pngStream, tempTexture.Width, tempTexture.Height);
+							pngStream.Flush();
+							using (var pngTexture = Texture2D.FromStream(DrawState.Device, pngStream)) {
+								rawTextureData = new byte[pngTexture.Width * pngTexture.Height * sizeof(int)];
+								pngTexture.GetData(rawTextureData);
+							}
+						}
+					}
+
+					var intData = rawTextureData.AsSpan().As<uint>();
+					foreach (int i in 0..intData.Length) {
+						intData[i] = intData[i] | 0x00FF0000U;
+					}
+
+					downsample = true;
+					break;
+			}
+
 			byte[] bitmapData;
 
 			wrapped.Set(false);
@@ -214,7 +245,7 @@ namespace SpriteMaster {
 					var shouldPad = new Vector2B(
 						!(WrappedX.Positive || WrappedX.Negative) && inputSize.X > 1,
 						!(WrappedY.Positive || WrappedX.Negative) && inputSize.Y > 1
-					);
+					) | downsample;
 
 					if (
 						(
@@ -405,7 +436,7 @@ namespace SpriteMaster {
 			format = TextureFormat.Color;
 
 			// We don't want to use block compression if asynchronous loads are enabled but this is not an asynchronous load... unless that is explicitly enabled.
-			if (Config.Resample.UseBlockCompression && newSize.MinOf >= 4 && (Config.Resample.BlockCompressSynchronized || async || !Config.AsyncScaling.Enabled)) {
+			if (Config.Resample.BlockCompression.Enabled && newSize.MinOf >= 4 && (Config.Resample.BlockCompression.Synchronized || async || !Config.AsyncScaling.Enabled)) {
 				// TODO : We can technically allocate the block padding before the scaling phase, and pass it a stride
 				// so it will just ignore the padding areas. That would be more efficient than this.
 
@@ -455,7 +486,7 @@ namespace SpriteMaster {
 
 					if (HasAlpha && !IsPunchThroughAlpha) {
 						var alphaDeviation = Statistics.StandardDeviation(alpha, MaxShades, 1, MaxShades - 2);
-						IsMasky = alphaDeviation < Config.Resample.BlockHardAlphaDeviationThreshold;
+						IsMasky = alphaDeviation < Config.Resample.BlockCompression.HardAlphaDeviationThreshold;
 					}
 				}
 

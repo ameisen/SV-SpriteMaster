@@ -13,6 +13,8 @@ namespace SpriteMaster {
 		internal readonly Vector2B Wrapped;
 		internal readonly bool BlendEnabled;
 		internal readonly int ExpectedScale;
+		// For statistics and throttling
+		internal readonly bool WasCached;
 
 		internal byte[] Data = default;
 		private Volatile<ulong> _Hash = Hashing.Default;
@@ -36,6 +38,11 @@ namespace SpriteMaster {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal static bool IsCached(Texture2D reference) {
+			return reference.Meta().CachedDataNonBlocking != null;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal SpriteInfo (Texture2D reference, in Bounds dimensions, int expectedScale) {
 			ReferenceSize = new Vector2I(reference);
 			ExpectedScale = expectedScale;
@@ -55,9 +62,14 @@ namespace SpriteMaster {
 				Debug.TraceLn($"Reloading Texture Data: {reference.SafeName()}");
 				reference.GetData(Data);
 				reference.Meta().CachedData = Data;
+				WasCached = false;
 			}
 			else if (Data == MTexture2D.BlockedSentinel) {
 				Data = null;
+				WasCached = false;
+			}
+			else {
+				WasCached = true;
 			}
 
 			BlendEnabled = DrawState.CurrentBlendSourceMode != Blend.One;

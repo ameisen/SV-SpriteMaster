@@ -27,24 +27,7 @@ namespace SpriteMaster {
 			}
 		}
 
-		private static double DurationPerTexel = 0.0;
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static void AddDuration(TextureAction action, in TimeSpan duration) {
-			// This isn't a true running average - we'd lose too much precision over time when the sample count got too high, and I'm lazy.
-
-			if (action.Texels == 0) {
-				return;
-			}
-
-			DurationPerTexel += (double)duration.Ticks / action.Texels;
-			DurationPerTexel *= 0.5;
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static TimeSpan EstimateDuration(this TextureAction action) {
-			return new TimeSpan((DurationPerTexel * action.Texels).NextInt());
-		}
+		private static readonly TexelTimer TexelAverage = new TexelTimer();
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static void ProcessPendingActions (in TimeSpan remainingTime) {
@@ -80,15 +63,16 @@ namespace SpriteMaster {
 						if (Config.AsyncScaling.ThrottledSynchronousLoads) {
 							int processed = 0;
 							foreach (var action in pendingLoads) {
-								var estimate = action.EstimateDuration();
-								if (processed > 0 && (DateTime.Now - startTime) + estimate > remainingTime) {
+								var estimate = TexelAverage.Estimate(action);
+								if (DrawState.PushedUpdateWithin(1) && (DateTime.Now - startTime) + estimate > remainingTime) {
 									break;
 								}
 
+								DrawState.PushedUpdateThisFrame = true;
 								var start = DateTime.Now;
 								action.Invoke();
 								var duration = DateTime.Now - start;
-								AddDuration(action, duration);
+								TexelAverage.Add(action, duration);
 
 								++processed;
 							}

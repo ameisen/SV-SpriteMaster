@@ -124,6 +124,27 @@ namespace SpriteMaster {
 			return null;
 		}
 
+		private static readonly TexelTimer TexelAverage = new TexelTimer();
+		private static readonly TexelTimer TexelAverageCached = new TexelTimer();
+		private static readonly TexelTimer TexelAverageSync = new TexelTimer();
+		private static readonly TexelTimer TexelAverageCachedSync = new TexelTimer();
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private static TexelTimer GetTimer(bool cached, bool async) {
+			if (async) {
+				return cached ? TexelAverageCached : TexelAverage;
+			}
+			else {
+				return cached ? TexelAverageCachedSync : TexelAverageSync;
+			}
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private static TexelTimer GetTimer(Texture2D texture, bool async) {
+			var IsCached = SpriteInfo.IsCached(texture);
+			return GetTimer(IsCached, async);
+		}
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		static internal ScaledTexture Get (Texture2D texture, Bounds source, int expectedScale) {
 			using var _ = Performance.Track();
@@ -141,6 +162,18 @@ namespace SpriteMaster {
 			if (useAsync && Config.AsyncScaling.Enabled && !DrawState.GetUpdateToken(texture.Area()) && !texture.Meta().HasCachedData) {
 				return null;
 			}
+
+			var estimatedDuration = GetTimer(texture: texture, async: useAsync).Estimate(texture.Area());
+			// The divisor is applied against the actual remaining time, basically giving us less time here to account for things being a little off
+			// in the running averages.
+			const float multiplier = 0.85f;
+			var remainingTime = DrawState.RemainingFrameTime(multiplier: multiplier);
+			if (DrawState.PushedUpdateWithin(1) && estimatedDuration >= remainingTime) {
+				return null;
+			}
+
+			// TODO : We should really only populate the average when we are performing an expensive operation like GetData.
+			var begin = DateTime.Now;
 
 			if (Config.DiscardDuplicates) {
 				// Check for duplicates with the same name.
@@ -185,34 +218,41 @@ namespace SpriteMaster {
 				return null;
 			}
 
-			using (Performance.Track("Upscaler.GetHash"))
-				hash = Upscaler.GetHash(textureWrapper, isSprite);
+			DrawState.PushedUpdateThisFrame = true;
 
-			var newTexture = new ScaledTexture(
-				assetName: texture.SafeName(),
-				textureWrapper: textureWrapper,
-				sourceRectangle: source,
-				isSprite: isSprite,
-				hash: hash,
-				async: useAsync,
-				expectedScale: expectedScale
-			);
-			if (useAsync && Config.AsyncScaling.Enabled) {
-				// It adds itself to the relevant maps.
-				if (newTexture.IsReady && newTexture.Texture != null) {
+			try {
+				using (Performance.Track("Upscaler.GetHash"))
+					hash = Upscaler.GetHash(textureWrapper, isSprite);
+
+				var newTexture = new ScaledTexture(
+					assetName: texture.SafeName(),
+					textureWrapper: textureWrapper,
+					sourceRectangle: source,
+					isSprite: isSprite,
+					hash: hash,
+					async: useAsync,
+					expectedScale: expectedScale
+				);
+				if (useAsync && Config.AsyncScaling.Enabled) {
+					// It adds itself to the relevant maps.
+					if (newTexture.IsReady && newTexture.Texture != null) {
+						return newTexture;
+					}
+					return null;
+				}
+				else {
 					return newTexture;
 				}
-				return null;
 			}
-			else {
-				return newTexture;
+			finally {
+				var averager = GetTimer(cached: textureWrapper.WasCached, async: useAsync);
+				averager.Add(texture.Area(), DateTime.Now - begin);
 			}
-
 		}
 
 		internal static readonly SurfaceFormat[] AllowedFormats = {
 			SurfaceFormat.Color,
-			//SurfaceFormat.Dxt3 // fonts
+			SurfaceFormat.Dxt3 // fonts
 		};
 
 		internal ManagedTexture2D Texture = null;
