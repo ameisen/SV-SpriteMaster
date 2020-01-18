@@ -151,6 +151,16 @@ namespace SpriteMaster.Types {
 		public Bounds (System.Drawing.Bitmap bmp) : this(bmp.Width, bmp.Height) { }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public bool Overlaps(in Bounds other) {
+			return !(
+				other.Left > Right ||
+				other.Right < Left ||
+				other.Top > Bottom ||
+				other.Bottom < Top
+			);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public readonly Bounds Clone () {
 			return new Bounds(this);
 		}

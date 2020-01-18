@@ -102,18 +102,36 @@ namespace SpriteMaster {
 					// TODO : handle sourceRectangle meaningfully.
 					Debug.TraceLn($"Purging Texture {reference.SafeName()}");
 
-					foreach (var scaledTexture in Map.Values) {
+					bool hasSourceRect = sourceRectangle.HasValue;
+
+					var removeTexture = hasSourceRect ? new List<ulong>() : null;
+
+					foreach (var pairs in Map) {
+						var scaledTexture = pairs.Value;
 						lock (scaledTexture) {
+							if (sourceRectangle.HasValue && !scaledTexture.OriginalSourceRectangle.Overlaps(sourceRectangle.Value)) {
+								continue;
+							}
 							if (scaledTexture.Texture != null) {
 								// TODO : should this be locked?
 								scaledTexture.Texture.Dispose();
 							}
 							scaledTexture.Texture = null;
+							if (hasSourceRect) {
+								removeTexture.Add(pairs.Key);
+							}
 						}
 					}
 
 					using (meta.Lock.Promote) {
-						Map.Clear();
+						if (hasSourceRect) {
+							foreach (var hash in removeTexture) {
+								Map.Remove(hash);
+							}
+						}
+						else {
+							Map.Clear();
+						}
 					}
 					// : TODO dispose sprites?
 				}

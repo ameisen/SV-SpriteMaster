@@ -36,12 +36,12 @@
   <PropertyGroup>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <PackageId>SpriteMaster Runtime</PackageId>
-    <Version>0.11.1</Version>
+    <Version>0.11.3</Version>
     <Authors>Digital Carbide</Authors>
     <Product>SpriteMaster-SV</Product>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
-    <AssemblyVersion>0.11.1.0</AssemblyVersion>
-    <FileVersion>0.11.1.0</FileVersion>
+    <AssemblyVersion>0.11.3.0</AssemblyVersion>
+    <FileVersion>0.11.3.0</FileVersion>
   </PropertyGroup>
   <ItemGroup>
     <None Include="$(SolutionDir)\LICENSE.md">
