@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.ConstrainedExecution;
 using System.Security;
@@ -15,8 +16,9 @@ namespace SpriteMaster {
 			[SecuritySafeCritical]
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public SharedCookie (ReaderWriterLock rwlock, int timeout) {
-				this.Lock = rwlock;
-				this.Lock.AcquireReaderLock(timeout);
+				Lock = null;
+				rwlock.AcquireReaderLock(timeout);
+				Lock = rwlock;
 			}
 
 			public bool IsDisposed {
@@ -32,10 +34,8 @@ namespace SpriteMaster {
 					return;
 				}
 
-				//Contract.Assert(Lock.IsReaderLockHeld && !Lock.IsWriterLockHeld);
-				if (Lock.IsReaderLockHeld) {
-					Lock.ReleaseReaderLock();
-				}
+				Lock.ReleaseReaderLock();
+
 				Lock = null;
 			}
 		}
@@ -45,8 +45,9 @@ namespace SpriteMaster {
 			[SecuritySafeCritical]
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public ExclusiveCookie (ReaderWriterLock rwlock, int timeout) {
-				this.Lock = rwlock;
-				this.Lock.AcquireWriterLock(timeout);
+				Lock = null;
+				rwlock.AcquireWriterLock(timeout);
+				Lock = rwlock;
 			}
 
 			public bool IsDisposed {
@@ -62,10 +63,8 @@ namespace SpriteMaster {
 					return;
 				}
 
-				//Contract.Assert(!Lock.IsReaderLockHeld && Lock.IsWriterLockHeld);
-				if (Lock.IsWriterLockHeld) {
-					Lock.ReleaseWriterLock();
-				}
+				Lock.ReleaseWriterLock();
+
 				Lock = null;
 			}
 		}
@@ -77,8 +76,9 @@ namespace SpriteMaster {
 			[SecuritySafeCritical]
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public PromotedCookie (ReaderWriterLock rwlock, int timeout) {
-				this.Lock = rwlock;
-				this.Cookie = this.Lock.UpgradeToWriterLock(timeout);
+				Lock = null;
+				this.Cookie = rwlock.UpgradeToWriterLock(timeout);
+				Lock = rwlock;
 			}
 
 			public bool IsDisposed {
@@ -94,10 +94,8 @@ namespace SpriteMaster {
 					return;
 				}
 
-				//Contract.AssertTrue(Lock.IsWriterLockHeld);
-				if (Lock.IsWriterLockHeld) {
-					Lock.DowngradeFromWriterLock(ref Cookie);
-				}
+				Lock.DowngradeFromWriterLock(ref Cookie);
+
 				Lock = null;
 			}
 		}
@@ -136,7 +134,6 @@ namespace SpriteMaster {
 			[SecuritySafeCritical]
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
-				//Contract.Assert(!IsLocked);
 				return new SharedCookie(Lock, -1);
 			}
 		}
@@ -145,7 +142,6 @@ namespace SpriteMaster {
 			[SecuritySafeCritical]
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
-				//Contract.Assert(!IsLocked);
 				try {
 					return new SharedCookie(Lock, 0);
 				}
@@ -159,7 +155,6 @@ namespace SpriteMaster {
 			[SecuritySafeCritical]
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
-				//Contract.Assert(!IsLocked);
 				return new ExclusiveCookie(Lock, -1);
 			}
 		}
@@ -168,7 +163,6 @@ namespace SpriteMaster {
 			[SecuritySafeCritical]
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
-				//Contract.Assert(!IsLocked);
 				try {
 					return new ExclusiveCookie(Lock, 0);
 				}

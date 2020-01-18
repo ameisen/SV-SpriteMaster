@@ -275,7 +275,7 @@ namespace SpriteMaster {
 		internal Vector2 AdjustedScale = Vector2.One;
 
 		private LinkedListNode<WeakReference<ScaledTexture>> CurrentRecentNode = null;
-		private bool Disposed = false;
+		private volatile bool Disposed = false;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		~ScaledTexture() {

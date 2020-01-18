@@ -75,10 +75,9 @@ namespace SpriteMaster {
 						}
 					}
 					catch { }
-
-					using (meta.Lock.Exclusive) {
-						meta.SpriteTable.Clear();
-					}
+				}
+				using (meta.Lock.Exclusive) {
+					meta.SpriteTable.Clear();
 				}
 			}
 			finally {
@@ -100,24 +99,23 @@ namespace SpriteMaster {
 						return;
 					}
 
-					// TODO handle sourceRectangle meaningfully.
-					using (Lock.Exclusive) {
-						Debug.TraceLn($"Purging Texture {reference.SafeName()}");
+					// TODO : handle sourceRectangle meaningfully.
+					Debug.TraceLn($"Purging Texture {reference.SafeName()}");
 
-						foreach (var scaledTexture in Map.Values) {
-							lock (scaledTexture) {
-								if (scaledTexture.Texture != null) {
-									scaledTexture.Texture.Dispose();
-								}
-								scaledTexture.Texture = null;
+					foreach (var scaledTexture in Map.Values) {
+						lock (scaledTexture) {
+							if (scaledTexture.Texture != null) {
+								// TODO : should this be locked?
+								scaledTexture.Texture.Dispose();
 							}
+							scaledTexture.Texture = null;
 						}
-
-						using (meta.Lock.Promote) {
-							Map.Clear();
-						}
-						// TODO dispose sprites?
 					}
+
+					using (meta.Lock.Promote) {
+						Map.Clear();
+					}
+					// : TODO dispose sprites?
 				}
 			}
 			catch { }
@@ -143,15 +141,13 @@ namespace SpriteMaster {
 							purgeList.Add(scaledTexture);
 						}
 					}
-					using (Lock.Promote) {
-						foreach (var purgable in purgeList) {
-							if (purgable.Reference.TryGetTarget(out var reference)) {
-								purgable.Dispose();
-								var meta = reference.Meta();
-								using (meta.Lock.Exclusive) {
-									meta.SpriteTable.Clear();
-								}
-							}
+				}
+				foreach (var purgable in purgeList) {
+					if (purgable.Reference.TryGetTarget(out var reference)) {
+						purgable.Dispose();
+						var meta = reference.Meta();
+						using (meta.Lock.Exclusive) {
+							meta.SpriteTable.Clear();
 						}
 					}
 				}
