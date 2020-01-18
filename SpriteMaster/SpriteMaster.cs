@@ -1,5 +1,4 @@
 ﻿using Harmony;
-using Microsoft.Xna.Framework;
 using SpriteMaster.Extensions;
 using SpriteMaster.Harmonize;
 using SpriteMaster.Metadata;
@@ -8,12 +7,10 @@ using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 using StardewValley;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime;
 using System.Threading;
-using static SpriteMaster.ScaledTexture;
 
 namespace SpriteMaster {
 	public sealed class SpriteMaster : Mod {

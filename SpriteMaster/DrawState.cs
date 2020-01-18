@@ -1,11 +1,9 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
-using SpriteMaster.Resample;
 using SpriteMaster.Types;
 using StardewValley;
 using System;
-using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
@@ -13,7 +11,6 @@ namespace SpriteMaster {
 	internal static class DrawState {
 		private static readonly SamplerState DefaultSamplerState = SamplerState.LinearClamp;
 		private static bool FetchedThisFrame = false;
-		private static long RemainingTexelFetchBudget = Config.AsyncScaling.ScalingBudgetPerFrameTexels;
 		private static bool _PushedUpdateThisFrame = false;
 		internal static bool PushedUpdateThisFrame {
 			get {
@@ -59,12 +56,7 @@ namespace SpriteMaster {
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static bool GetUpdateToken (int texels) {
-			if (FetchedThisFrame && texels > RemainingTexelFetchBudget) {
-				return false;
-			}
-
 			FetchedThisFrame = true;
-			RemainingTexelFetchBudget -= texels;
 			return true;
 		}
 
@@ -127,7 +119,6 @@ namespace SpriteMaster {
 				SynchronizedTasks.ProcessPendingActions(remaining);
 			}
 
-			RemainingTexelFetchBudget = Config.AsyncScaling.ScalingBudgetPerFrameTexels;
 			FetchedThisFrame = false;
 			if (!PushedUpdateThisFrame) {
 				var duration = DateTime.Now - FrameStartTime;

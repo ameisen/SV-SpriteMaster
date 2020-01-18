@@ -1,6 +1,5 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
-using SpriteMaster.Resample;
 using SpriteMaster.Types;
 using StardewModdingAPI;
 using System;
@@ -22,7 +21,7 @@ namespace SpriteMaster {
 
 		internal static readonly string ModuleName = typeof(Config).Namespace;
 
-		internal const bool IgnoreConfig = true;
+		internal const bool IgnoreConfig = false;
 		internal const bool SkipIntro = IgnoreConfig;
 
 		[ConfigIgnore]
@@ -188,7 +187,6 @@ namespace SpriteMaster {
 			internal static bool CanFetchAndLoadSameFrame = true;
 			internal static int MaxLoadsPerFrame = int.MaxValue;
 			internal static long MinimumSizeTexels = 0;
-			internal static long ScalingBudgetPerFrameTexels = 16 * 256 * 256;
 		}
 
 		internal static class MemoryCache {
