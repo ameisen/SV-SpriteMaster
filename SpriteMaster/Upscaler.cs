@@ -137,7 +137,6 @@ namespace SpriteMaster {
 			uint blockSize = block * block;
 			uint halfBlock = blend ? 0 : (block >> 1);
 			var blockOffset = bounds.Offset * (int)block;
-			var blockExtent = bounds.Extent * (int)block;
 
 			// Rescale the data down, doing an effective point sample from 4x4 blocks to 1 texel.
 			var veryRawData = new Span<byte>(data).As<uint>();
