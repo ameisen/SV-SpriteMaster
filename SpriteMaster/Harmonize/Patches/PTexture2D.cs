@@ -70,6 +70,7 @@ namespace SpriteMaster.Harmonize.Patches {
 
 #if ASYNC_SETDATA
 			ThreadQueue.Queue((data) =>
+				Thread.CurrentThread.Priority = ThreadPriority.BelowNormal;
 				ScaledTexture.Purge(
 					reference: texture,
 					bounds: rect,

@@ -7,7 +7,7 @@ namespace SpriteMaster {
 		private double DurationPerTexel = 0.0;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal void Add(int texels, in TimeSpan duration) {
+		internal void Add(int texels, TimeSpan duration) {
 			// This isn't a true running average - we'd lose too much precision over time when the sample count got too high, and I'm lazy.
 			// Avoid a division by zero
 			if (texels == 0) {
@@ -19,7 +19,7 @@ namespace SpriteMaster {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal void Add (TextureAction action, in TimeSpan duration) {
+		internal void Add (TextureAction action, TimeSpan duration) {
 			Add(action.Texels, duration);
 		}
 

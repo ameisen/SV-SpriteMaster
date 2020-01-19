@@ -11,8 +11,6 @@ namespace SpriteMaster {
 	internal static class Debug {
 		private static readonly string ModuleName = typeof(Debug).Namespace;
 
-		private const bool AlwaysFlush = false;
-
 		private static class Color {
 			internal const ConsoleColor Trace = ConsoleColor.Gray;
 			internal const ConsoleColor Info = ConsoleColor.White;
@@ -50,7 +48,7 @@ namespace SpriteMaster {
 		static internal void Trace (string message, bool format = true, [CallerMemberName] string caller = null) {
 			if (!Config.Debug.Logging.LogInfo)
 				return;
-			Console.Error.DebugWriteStr($"{caller.Format(format)}{message}", LogLevel.Debug);
+			DebugWriteStr($"{caller.Format(format)}{message}", LogLevel.Debug);
 		}
 
 		[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden()]
@@ -70,7 +68,7 @@ namespace SpriteMaster {
 		static internal void Info (string message, bool format = true, [CallerMemberName] string caller = null) {
 			if (!Config.Debug.Logging.LogInfo)
 				return;
-			Console.Error.DebugWriteStr($"{caller.Format(format)}{message}", LogLevel.Info);
+			DebugWriteStr($"{caller.Format(format)}{message}", LogLevel.Info);
 		}
 
 		[Conditional("TRACE"), DebuggerStepThrough, DebuggerHidden()]
@@ -90,7 +88,7 @@ namespace SpriteMaster {
 		static internal void Message (string message, bool format = true, [CallerMemberName] string caller = null) {
 			if (!Config.Debug.Logging.LogInfo)
 				return;
-			Console.Error.DebugWriteStr($"{caller.Format(format)}{message}", LogLevel.Info);
+			DebugWriteStr($"{caller.Format(format)}{message}", LogLevel.Info);
 		}
 
 		[DebuggerStepThrough, DebuggerHidden()]
@@ -110,7 +108,7 @@ namespace SpriteMaster {
 		static internal void Warning (string message, bool format = true, [CallerMemberName] string caller = null) {
 			if (!Config.Debug.Logging.LogWarnings)
 				return;
-			Console.Error.DebugWrite(LogLevel.Warn, $"{caller.Format(format)}{message}");
+			DebugWrite(LogLevel.Warn, $"{caller.Format(format)}{message}");
 		}
 
 		[DebuggerStepThrough, DebuggerHidden()]
@@ -130,7 +128,7 @@ namespace SpriteMaster {
 		static internal void Error (string message, bool format = true, [CallerMemberName] string caller = null) {
 			if (!Config.Debug.Logging.LogErrors)
 				return;
-			Console.Error.DebugWrite(LogLevel.Error, $"{caller.Format(format)}{message}");
+			DebugWrite(LogLevel.Error, $"{caller.Format(format)}{message}");
 		}
 
 		[DebuggerStepThrough, DebuggerHidden()]
@@ -168,8 +166,7 @@ namespace SpriteMaster {
 					ErrorLn($"SpriteSheet: {referenceTexture.SafeName().Enquote()} :: Original Size: {originalSize.AsDataSize()}{(referenceDisposed ? " [DISPOSED]" : "")}");
 
 					if (!referenceTexture.Anonymous() && !referenceTexture.IsDisposed) {
-						List<Texture2D> duplicateList;
-						if (!duplicates.TryGetValue(referenceTexture.SafeName(), out duplicateList)) {
+						if (!duplicates.TryGetValue(referenceTexture.SafeName(), out var duplicateList)) {
 							duplicateList = new List<Texture2D>();
 							duplicates.Add(referenceTexture.SafeName(), duplicateList);
 						}
@@ -217,60 +214,43 @@ namespace SpriteMaster {
 		}
 
 		[DebuggerStepThrough, DebuggerHidden()]
-		static private void DebugWrite (this TextWriter writer, LogLevel level, string str) {
-			lock (writer) {
-				if (LogFile != null) {
-					try {
-						var prefix = level switch{
-							LogLevel.Debug => 'T',
-							LogLevel.Info => 'I',
-							LogLevel.Warn => 'W',
-							LogLevel.Error => 'E',
-							_ => '?',
-						};
-
-						LogFile.Write($"[{prefix}] {str}");
-					}
-					catch { /* ignore errors */ }
-				}
-
-				var originalColor = Console.ForegroundColor;
-				Console.ForegroundColor = level.GetColor();
+		static private void DebugWrite (LogLevel level, string str) {
+			if (LogFile != null) {
 				try {
-					writer.DebugWriteStr(str, level);
+					var prefix = level switch{
+						LogLevel.Debug => 'T',
+						LogLevel.Info => 'I',
+						LogLevel.Warn => 'W',
+						LogLevel.Error => 'E',
+						_ => '?',
+					};
+
+					LogFile.Write($"[{prefix}] {str}");
 				}
-				finally {
-					Console.ForegroundColor = originalColor;
-				}
+				catch { /* ignore errors */ }
+			}
+
+			var originalColor = Console.ForegroundColor;
+			Console.ForegroundColor = level.GetColor();
+			try {
+				DebugWriteStr(str, level);
+			}
+			finally {
+				Console.ForegroundColor = originalColor;
 			}
 		}
 
 		[DebuggerStepThrough, DebuggerHidden()]
-		static private void DebugWriteStr (this TextWriter writer, string str, LogLevel level) {
-			if (Config.Debug.Logging.UseSMAPI) {
-				var strings = str.Split(new[] { '\n', '\r' });
-				var lastIndex = strings.Length - 1;
-				if (strings[lastIndex] == "") {
-					strings[lastIndex] = null;
-				}
-				foreach (var line in strings) {
-					if (line == null)
-						continue;
-					SpriteMaster.Self.Monitor.Log(line.TrimEnd(), level);
-				}
+		static private void DebugWriteStr (string str, LogLevel level) {
+			var strings = str.Split(new[] { '\n', '\r' });
+			var lastIndex = strings.Length - 1;
+			if (strings[lastIndex] == "") {
+				strings[lastIndex] = null;
 			}
-			else {
-				var strings = str.Split('\n');
-				foreach (var line in strings) {
-					if (line == "") {
-						writer.Write("\n");
-					}
-					else {
-						writer.Write($"[{ModuleName}] {line}");
-					}
-				}
-				if (AlwaysFlush)
-					writer.FlushAsync();
+			foreach (var line in strings) {
+				if (line == null)
+					continue;
+				SpriteMaster.Self.Monitor.Log(line.TrimEnd(), level);
 			}
 		}
 	}

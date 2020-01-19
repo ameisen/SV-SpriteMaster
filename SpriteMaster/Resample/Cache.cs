@@ -11,12 +11,14 @@ namespace SpriteMaster.Resample {
 	internal static class Cache {
 		private static readonly string TextureCacheName = "TextureCache";
 		private static readonly string JunctionCacheName = $"{TextureCacheName}_Current";
-		private static readonly string AssemblyVersion = typeof(Upscaler).Assembly.GetName().Version.ToString();
+		private static readonly Version AssemblyVersion = typeof(Upscaler).Assembly.GetName().Version;
+		private static readonly Version RuntimeVersion = typeof(Runtime).Assembly.GetName().Version;
+		private static readonly ulong AssemblyHash = AssemblyVersion.GetHashCode().Fuse(RuntimeVersion.GetHashCode()).Unsigned();
 		private static readonly string CacheName = $"{TextureCacheName}_{AssemblyVersion}";
 		private static readonly string LocalDataPath = Path.Combine(Config.LocalRoot, CacheName);
 		private static readonly string DumpPath = Path.Combine(LocalDataPath, "dump");
 
-		private static bool SystemCompression = false;
+		private static readonly bool SystemCompression = false;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static string GetPath (params string[] path) {
@@ -28,10 +30,11 @@ namespace SpriteMaster.Resample {
 			return Path.Combine(DumpPath, Path.Combine(path));
 		}
 
+		[StructLayout(LayoutKind.Sequential, Pack = 1)]
 		private class CacheHeader {
-			public string Assembly = AssemblyVersion;
+			public ulong Assembly = AssemblyHash;
 			public ulong ConfigHash = SerializeConfig.GetWideHashCode();
-			public int RefScale;
+			public uint RefScale;
 			public Vector2I Size;
 			public TextureFormat? Format;
 			public Vector2B Wrapped;
@@ -64,7 +67,7 @@ namespace SpriteMaster.Resample {
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			internal void Validate (string path) {
-				if (Assembly != AssemblyVersion) {
+				if (Assembly != AssemblyHash) {
 					throw new IOException($"Texture Cache File out of date '{path}'");
 				}
 
@@ -79,12 +82,12 @@ namespace SpriteMaster.Resample {
 			Saved = 1
 		}
 
-		private static ConcurrentDictionary<string, SaveState> SavingMap = Config.FileCache.Enabled ? new ConcurrentDictionary<string, SaveState>() : null;
+		private static readonly ConcurrentDictionary<string, SaveState> SavingMap = Config.FileCache.Enabled ? new ConcurrentDictionary<string, SaveState>() : null;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static bool Fetch (
 			string path,
-			out int refScale,
+			out uint refScale,
 			out Vector2I size,
 			out TextureFormat format,
 			out Vector2B wrapped,
@@ -110,7 +113,7 @@ namespace SpriteMaster.Resample {
 					}
 
 					// https://stackoverflow.com/questions/1304/how-to-check-for-file-lock
-					bool WasLocked (in IOException ex) {
+					static bool WasLocked (IOException ex) {
 						var errorCode = Marshal.GetHRForException(ex) & ((1 << 16) - 1);
 						return errorCode == 32 || errorCode == 33;
 					}
@@ -130,32 +133,17 @@ namespace SpriteMaster.Resample {
 							var dataLength = header.DataLength;
 							var dataHash = header.DataHash;
 
-							// var algorithm = SystemCompression ? Compression.Algorithm.None : Config.Cache.Compress;
+							var rawData = reader.ReadBytes((int)dataLength);
 
-							var remainingSize = reader.BaseStream.Length - reader.BaseStream.Position;
-							if (remainingSize < dataLength) {
-								throw new EndOfStreamException("Cache File is corrupted");
+							if (rawData.HashXX() != dataHash) {
+								throw new IOException("Cache File is corrupted");
 							}
 
 							if (dataLength == uncompressedDataLength) {
-								data = new byte[dataLength];
-
-								foreach (int i in 0..data.Length) {
-									data[i] = reader.ReadByte();
-								}
+								data = rawData;
 							}
 							else {
-								var compressedData = new byte[dataLength];
-
-								foreach (int i in 0..compressedData.Length) {
-									compressedData[i] = reader.ReadByte();
-								}
-
-								data = Compression.Decompress(compressedData, Config.FileCache.Compress);
-							}
-
-							if (data.HashXX() != dataHash) {
-								throw new IOException("Cache File is corrupted");
+								data = Compression.Decompress(rawData, Config.FileCache.Compress);
 							}
 						}
 						return true;
@@ -183,7 +171,7 @@ namespace SpriteMaster.Resample {
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static bool Save (
 			string path,
-			int refScale,
+			uint refScale,
 			Vector2I size,
 			TextureFormat format,
 			Vector2B wrapped,
@@ -199,6 +187,7 @@ namespace SpriteMaster.Resample {
 			}
 
 			ThreadQueue.Queue((data) => {
+				Thread.CurrentThread.Priority = ThreadPriority.BelowNormal;
 				using var _ = new AsyncTracker($"File Cache Write {path}");
 				try {
 					using (var writer = new BinaryWriter(new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None))) {
@@ -220,12 +209,10 @@ namespace SpriteMaster.Resample {
 							BlockPadding = blockPadding,
 							UncompressedDataLength = (uint)data.Length,
 							DataLength = (uint)compressedData.Length,
-							DataHash = data.HashXX()
+							DataHash = compressedData.HashXX()
 						}.Write(writer);
 
-						foreach (var v in compressedData) {
-							writer.Write(v);
-						}
+						writer.Write(compressedData);
 					}
 					SavingMap.TryUpdate(path, SaveState.Saved, SaveState.Saving);
 				}

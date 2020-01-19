@@ -93,10 +93,10 @@ namespace System {
 			IEnumerator<uint>,
 			IEnumerator<ulong>
 		{
-			Type originalType;
-			long Start;
-			long End;
-			long _Current;
+			readonly Type originalType;
+			readonly long Start;
+			readonly long End;
+			private long _Current;
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public RangeEnumerator (Index start, Index end) {

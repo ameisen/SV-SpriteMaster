@@ -32,11 +32,13 @@ namespace SpriteMaster.Resample {
 			return surfaceFormat.SizeBytes(area);
 		}
 
+		internal static readonly SurfaceFormat SF_DXT1a = SurfaceFormatExt.GetSurfaceFormat("Dxt1a");
+
 		internal static readonly TextureFormat Color = new TextureFormat(SurfaceFormat.Color, CompressionFormat.BGRA);
 		internal static readonly TextureFormat DXT5 = new TextureFormat(SurfaceFormat.Dxt5, CompressionFormat.DXT5);
 		internal static readonly TextureFormat DXT3 = new TextureFormat(SurfaceFormat.Dxt3, CompressionFormat.DXT3);
 		// https://github.com/labnation/MonoGame/blob/master/MonoGame.Framework/Graphics/SurfaceFormat.cs#L126
-		internal static readonly TextureFormat DXT1a = new TextureFormat(SurfaceFormatExt.GetSurfaceFormat("Dxt1a"), CompressionFormat.DXT1a);
+		internal static readonly TextureFormat DXT1a = new TextureFormat(SF_DXT1a, CompressionFormat.DXT1a);
 		internal static readonly TextureFormat DXT1 = new TextureFormat(SurfaceFormat.Dxt1, CompressionFormat.DXT1);
 
 		private static TextureFormat SupportedOr(TextureFormat format, TextureFormat other) {

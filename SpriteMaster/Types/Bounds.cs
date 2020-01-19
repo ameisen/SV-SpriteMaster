@@ -229,18 +229,13 @@ namespace SpriteMaster.Types {
 		}
 
 		readonly int IComparable.CompareTo (object other) {
-			switch (other) {
-				case Bounds bounds:
-					return CompareTo(bounds);
-				case DrawingRectangle rect:
-					return CompareTo(rect);
-				case XNARectangle rect:
-					return CompareTo(rect);
-				case XTileRectangle rect:
-					return CompareTo(rect);
-				default:
-					throw new ArgumentException();
-			}
+			return other switch {
+				Bounds bounds => CompareTo(bounds),
+				DrawingRectangle rect => CompareTo(rect),
+				XNARectangle rect => CompareTo(rect),
+				XTileRectangle rect => CompareTo(rect),
+				_ => throw new ArgumentException(),
+			};
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -250,18 +245,13 @@ namespace SpriteMaster.Types {
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public readonly override bool Equals (object other) {
-			switch (other) {
-				case Bounds bounds:
-					return Equals(bounds);
-				case DrawingRectangle rect:
-					return Equals(rect);
-				case XNARectangle rect:
-					return Equals(rect);
-				case XTileRectangle rect:
-					return Equals(rect);
-				default:
-					throw new ArgumentException();
-			}
+			return other switch {
+				Bounds bounds => Equals(bounds),
+				DrawingRectangle rect => Equals(rect),
+				XNARectangle rect => Equals(rect),
+				XTileRectangle rect => Equals(rect),
+				_ => throw new ArgumentException(),
+			};
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

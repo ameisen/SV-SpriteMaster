@@ -5,13 +5,11 @@ using SpriteMaster.Metadata;
 using SpriteMaster.Resample;
 using SpriteMaster.Types;
 using System;
-using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using static SpriteMaster.ScaledTexture;
 
 namespace SpriteMaster {
 	internal sealed class Upscaler {
@@ -34,7 +32,7 @@ namespace SpriteMaster {
 			unchecked {
 				x = (x ^ (x >> 30)) * 0xbf58476d1ce4e5b9ul;
 				x = (x ^ (x >> 27)) * 0x94d049bb133111ebul;
-				x = x ^ (x >> 31);
+				x ^= x >> 31;
 			}
 			return x;
 		}
@@ -88,13 +86,13 @@ namespace SpriteMaster {
 			private static int Depth = 0;
 #endif
 
+#if REALLY_TRACE
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			[Conditional("REALLY_TRACE")]
 			private static void Trace (string msg) {
-#if REALLY_TRACE
 				Debug.TraceLn($"[CreateNewTexture] {new string(' ', Depth)}{msg}");
-#endif
 			}
+#endif
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			internal Tracer (string name) {
@@ -202,7 +200,7 @@ namespace SpriteMaster {
 			string hashString,
 
 			ref Vector2B wrapped,
-			ref int scale,
+			ref uint scale,
 			out Vector2I size,
 			out TextureFormat format,
 			out Vector2I padding,
@@ -220,7 +218,6 @@ namespace SpriteMaster {
 
 			var rawTextureData = input.Data;
 
-			bool downsample = false;
 			switch (input.Reference.Format) {
 				case SurfaceFormat.Dxt1:
 				case SurfaceFormat.Dxt3:
@@ -230,20 +227,16 @@ namespace SpriteMaster {
 					// This... actually is faster than our version in dotNet...
 					using (var tempTexture = new Texture2D(DrawState.Device, input.Reference.Width, input.Reference.Height, false, input.Reference.Format)) {
 						tempTexture.SetData(rawTextureData);
-						using (var pngStream = new MemoryStream()) {
-							tempTexture.SaveAsPng(pngStream, tempTexture.Width, tempTexture.Height);
-							//using (var fileStream = new FileStream("D:\\font.png", FileMode.Create)) {
-							//	tempTexture.SaveAsPng(fileStream, tempTexture.Width, tempTexture.Height);
-							//}
-							pngStream.Flush();
-							using (var pngTexture = Texture2D.FromStream(DrawState.Device, pngStream)) {
-								rawTextureData = new byte[pngTexture.Width * pngTexture.Height * sizeof(int)];
-								pngTexture.GetData(rawTextureData);
-							}
-						}
+						using var pngStream = new MemoryStream();
+						tempTexture.SaveAsPng(pngStream, tempTexture.Width, tempTexture.Height);
+						//using (var fileStream = new FileStream("D:\\font.png", FileMode.Create)) {
+						//	tempTexture.SaveAsPng(fileStream, tempTexture.Width, tempTexture.Height);
+						//}
+						pngStream.Flush();
+						using var pngTexture = Texture2D.FromStream(DrawState.Device, pngStream);
+						rawTextureData = new byte[pngTexture.Width * pngTexture.Height * sizeof(int)];
+						pngTexture.GetData(rawTextureData);
 					}
-
-					downsample = true;
 					break;
 			}
 
@@ -256,9 +249,9 @@ namespace SpriteMaster {
 			}
 
 			if (Config.Resample.Scale) {
-				int originalScale = scale;
+				var originalScale = scale;
 				scale = 2;
-				foreach (int s in originalScale..2) {
+				foreach (uint s in originalScale..2U) {
 					var newDimensions = inputSize * s;
 					if (newDimensions.X <= Config.PreferredMaxTextureDimension && newDimensions.Y <= Config.PreferredMaxTextureDimension) {
 						scale = s;
@@ -287,7 +280,7 @@ namespace SpriteMaster {
 				inputBounds = rawSize;
 			}
 			else {
-				rawData = new Span<byte>(rawTextureData).As<int>();
+				rawData = rawTextureData.AsSpan().As<int>();
 			}
 
 			var edgeResults = Edge.AnalyzeLegacy(
@@ -303,14 +296,12 @@ namespace SpriteMaster {
 			wrapped = edgeResults.Wrapped & Config.Resample.EnableWrappedAddressing;
 
 			if (Config.Debug.Sprite.DumpReference) {
-				using (var filtered = Textures.CreateBitmap(rawData.As<byte>().ToArray(), rawSize, PixelFormat.Format32bppArgb)) {
-					using (var submap = filtered.Clone(inputBounds, filtered.PixelFormat)) {
-						var dump = GetDumpBitmap(submap);
-						var path = Cache.GetDumpPath($"{input.Reference.SafeName().Replace("/", ".")}.{hashString}.reference.png");
-						File.Delete(path);
-						dump.Save(path, ImageFormat.Png);
-					}
-				}
+				using var filtered = Textures.CreateBitmap(rawData.As<byte>().ToArray(), rawSize, PixelFormat.Format32bppArgb);
+				using var submap = filtered.Clone(inputBounds, filtered.PixelFormat);
+				var dump = GetDumpBitmap(submap);
+				var path = Cache.GetDumpPath($"{input.Reference.SafeName().Replace("/", ".")}.{hashString}.reference.png");
+				File.Delete(path);
+				dump.Save(path, ImageFormat.Png);
 			}
 
 			if (Config.Resample.Smoothing) {
@@ -324,7 +315,7 @@ namespace SpriteMaster {
 					var shouldPad = new Vector2B(
 						!(WrappedX.Positive || WrappedX.Negative) && inputSize.X > 1,
 						!(WrappedY.Positive || WrappedX.Negative) && inputSize.Y > 1
-					) | downsample;
+					);
 
 					if (
 						(
@@ -347,8 +338,8 @@ namespace SpriteMaster {
 					}
 
 					if (shouldPad.Any) {
-						int expectedPadding = Math.Max(1, scale / 2);
-						int expectedPaddingBoth = expectedPadding * 2;
+						var expectedPadding = Math.Max(1U, scale / 2);
+						var expectedPaddingBoth = expectedPadding * 2;
 
 						// TODO we only need to pad the edge that has texels. Double padding is wasteful.
 						var paddedSize = inputSize;
@@ -361,8 +352,8 @@ namespace SpriteMaster {
 								shouldPad.X = false;
 							}
 							else {
-								paddedSize.X += expectedPaddingBoth;
-								actualPadding.X = expectedPadding;
+								paddedSize.X += (int)expectedPaddingBoth;
+								actualPadding.X = (int)expectedPadding;
 							}
 						}
 						if (shouldPad.Y) {
@@ -370,8 +361,8 @@ namespace SpriteMaster {
 								shouldPad.Y = false;
 							}
 							else {
-								paddedSize.Y += expectedPaddingBoth;
-								actualPadding.Y = expectedPadding;
+								paddedSize.Y += (int)expectedPaddingBoth;
+								actualPadding.Y = (int)expectedPadding;
 							}
 						}
 
@@ -390,7 +381,7 @@ namespace SpriteMaster {
 								if (!hasPadding.Y)
 									return;
 								foreach (int i in 0..actualPadding.Y) {
-									int strideOffset = y * paddedSize.Width;
+									var strideOffset = y * paddedSize.Width;
 									foreach (int x in 0..paddedSize.Width) {
 										paddedData[strideOffset + x] = padConstant;
 									}
@@ -401,10 +392,10 @@ namespace SpriteMaster {
 							WritePaddingY();
 
 							foreach (int i in 0..spriteSize.Height) {
-								int strideOffset = y * paddedSize.Width;
-								int strideOffsetRaw = (i + inputBounds.Top) * prescaleSize.Width;
+								var strideOffset = y * paddedSize.Width;
+								var strideOffsetRaw = (i + inputBounds.Top) * prescaleSize.Width;
 								// Write a padded X line
-								int xOffset = strideOffset;
+								var xOffset = strideOffset;
 								void WritePaddingX () {
 									if (!hasPadding.X)
 										return;
@@ -422,7 +413,7 @@ namespace SpriteMaster {
 
 							WritePaddingY();
 
-							prescaleData = new Span<int>(paddedData);
+							prescaleData = paddedData.AsSpan();
 							prescaleSize = paddedSize;
 							scaledDimensions = scaledSize = newSize = prescaleSize * scale;
 							outputSize = prescaleSize;
@@ -440,7 +431,7 @@ namespace SpriteMaster {
 						}
 						break;
 						case Scaler.xBRZ: {
-							var outData = new Span<byte>(bitmapData).As<uint>();
+							var outData = bitmapData.AsSpan().As<uint>();
 
 							var scalerConfig = new xBRZ.Config(
 								wrapped: (wrapped & false) | isWater
@@ -474,48 +465,44 @@ namespace SpriteMaster {
 			}
 
 			if (Config.Debug.Sprite.DumpResample) {
-				using (var filtered = Textures.CreateBitmap(bitmapData, scaledDimensions, PixelFormat.Format32bppArgb)) {
-					using (var dump = GetDumpBitmap(filtered)) {
-						var path = Cache.GetDumpPath($"{input.Reference.SafeName().Replace("/", ".")}.{hashString}.resample-{WrappedX}-{WrappedY}-{padding.X}-{padding.Y}.png");
-						File.Delete(path);
-						dump.Save(path, ImageFormat.Png);
-					}
-				}
+				using var filtered = Textures.CreateBitmap(bitmapData, scaledDimensions, PixelFormat.Format32bppArgb);
+				using var dump = GetDumpBitmap(filtered);
+				var path = Cache.GetDumpPath($"{input.Reference.SafeName().Replace("/", ".")}.{hashString}.resample-{WrappedX}-{WrappedY}-{padding.X}-{padding.Y}.png");
+				File.Delete(path);
+				dump.Save(path, ImageFormat.Png);
 			}
 
 			if (scaledDimensions != newSize) {
 				Debug.TraceLn($"Sprite {texture.SafeName()} requires rescaling");
 				// This should be incredibly rare - we very rarely need to scale back down.
-				using (var filtered = Textures.CreateBitmap(bitmapData, scaledDimensions, PixelFormat.Format32bppArgb)) {
-					using (var resized = filtered.Resize(newSize, System.Drawing.Drawing2D.InterpolationMode.Bicubic)) {
-						var resizedData = resized.LockBits(new Bounds(resized), ImageLockMode.ReadOnly, resized.PixelFormat);
+				using var filtered = Textures.CreateBitmap(bitmapData, scaledDimensions, PixelFormat.Format32bppArgb);
+				using var resized = filtered.Resize(newSize, System.Drawing.Drawing2D.InterpolationMode.Bicubic);
+				var resizedData = resized.LockBits(new Bounds(resized), ImageLockMode.ReadOnly, resized.PixelFormat);
 
-						try {
-							bitmapData = new byte[resized.Width * resized.Height * sizeof(int)];
-							var dataSize = resizedData.Stride * resizedData.Height;
-							var dataPtr = resizedData.Scan0;
-							var widthSize = resizedData.Width;
+				try {
+					bitmapData = new byte[resized.Width * resized.Height * sizeof(int)];
+					var dataSize = resizedData.Stride * resizedData.Height;
+					var dataPtr = resizedData.Scan0;
+					var widthSize = resizedData.Width;
 
-							var dataBytes = new byte[dataSize];
-							int offsetSource = 0;
-							int offsetDest = 0;
-							foreach (int y in 0..resizedData.Height) {
-								Marshal.Copy(dataPtr + offsetSource, bitmapData, offsetDest, widthSize);
-								offsetSource += resizedData.Stride;
-								offsetDest += widthSize;
-							}
-						}
-						finally {
-							resized.UnlockBits(resizedData);
-						}
+					var dataBytes = new byte[dataSize];
+					int offsetSource = 0;
+					int offsetDest = 0;
+					foreach (int y in 0..resizedData.Height) {
+						Marshal.Copy(dataPtr + offsetSource, bitmapData, offsetDest, widthSize);
+						offsetSource += resizedData.Stride;
+						offsetDest += widthSize;
 					}
+				}
+				finally {
+					resized.UnlockBits(resizedData);
 				}
 			}
 
 			format = TextureFormat.Color;
 
 			// We don't want to use block compression if asynchronous loads are enabled but this is not an asynchronous load... unless that is explicitly enabled.
-			if (Config.Resample.BlockCompression.Enabled && newSize.MinOf >= 4 && (Config.Resample.BlockCompression.Synchronized || async || !Config.AsyncScaling.Enabled)) {
+			if (Config.Resample.BlockCompression.Enabled && (Config.Resample.BlockCompression.Synchronized || !Config.AsyncScaling.Enabled || async) && newSize.MinOf >= 4) {
 				// TODO : We can technically allocate the block padding before the scaling phase, and pass it a stride
 				// so it will just ignore the padding areas. That would be more efficient than this.
 
@@ -537,21 +524,11 @@ namespace SpriteMaster {
 
 					var intData = bitmapData.CastAs<byte, uint>();
 
-					int idx = 0;
 					foreach (var color in intData) {
-						var aValue = color.ExtractByte(24);
-						/*
-						if (aValue == 0) {
-							// Clear out all other colors for alpha of zero.
-							intData[idx] = 0;
-						}
-						*/
-						alpha[aValue]++;
+						alpha[color.ExtractByte(24)]++;
 						blue[color.ExtractByte(16)]++;
 						green[color.ExtractByte(8)]++;
 						red[color.ExtractByte(0)]++;
-
-						++idx;
 					}
 
 
@@ -573,13 +550,13 @@ namespace SpriteMaster {
 					var blockPaddedSize = (newSize + 3) & ~3;
 
 					var newBuffer = new byte[blockPaddedSize.Area * sizeof(int)];
-					var intSpanSrc = new Span<byte>(bitmapData).As<int>();
-					var intSpanDst = new Span<byte>(newBuffer).As<int>();
+					var intSpanSrc = bitmapData.AsSpan().As<int>();
+					var intSpanDst = newBuffer.AsSpan().As<int>();
 
 					int y;
 					for (y = 0; y < newSize.Y; ++y) {
-						int newBufferOffset = y * blockPaddedSize.X;
-						int bitmapOffset = y * newSize.X;
+						var newBufferOffset = y * blockPaddedSize.X;
+						var bitmapOffset = y * newSize.X;
 						int x;
 						for (x = 0; x < newSize.X; ++x) {
 							intSpanDst[newBufferOffset + x] = intSpanSrc[bitmapOffset + x];
@@ -589,8 +566,8 @@ namespace SpriteMaster {
 							intSpanDst[newBufferOffset + x] = intSpanSrc[bitmapOffset + lastX];
 						}
 					}
-					int lastY = y - 1;
-					int sourceOffset = lastY * newSize.X;
+					var lastY = y - 1;
+					var sourceOffset = lastY * newSize.X;
 					for (; y < blockPaddedSize.Y; ++y) {
 						int newBufferOffset = y * blockPaddedSize.X;
 						for (int x = 0; x < blockPaddedSize.X; ++x) {
@@ -620,7 +597,7 @@ namespace SpriteMaster {
 			data = bitmapData;
 		}
 
-		internal static ManagedTexture2D Upscale (ScaledTexture texture, ref int scale, SpriteInfo input, bool desprite, ulong hash, ref Vector2B wrapped, bool async) {
+		internal static ManagedTexture2D Upscale (ScaledTexture texture, ref uint scale, SpriteInfo input, bool desprite, ulong hash, ref Vector2B wrapped, bool async) {
 			// Try to process the texture twice. Garbage collect after a failure, maybe it'll work then.
 			foreach (var _ in 0.To(1)) {
 				try {
@@ -643,12 +620,12 @@ namespace SpriteMaster {
 			return null;
 		}
 
-		private static unsafe ManagedTexture2D UpscaleInternal (ScaledTexture texture, ref int scale, SpriteInfo input, bool desprite, ulong hash, ref Vector2B wrapped, bool async) {
+		private static unsafe ManagedTexture2D UpscaleInternal (ScaledTexture texture, ref uint scale, SpriteInfo input, bool desprite, ulong hash, ref Vector2B wrapped, bool async) {
 			var spriteFormat = TextureFormat.Color;
 
 			if (Config.GarbageCollectAccountUnownedTextures && GarbageMarkSet.Add(input.Reference)) {
 				Garbage.Mark(input.Reference);
-				input.Reference.Disposing += (object obj, EventArgs args) => {
+				input.Reference.Disposing += (obj, _) => {
 					Garbage.Unmark((Texture2D)obj);
 				};
 			}
@@ -663,22 +640,12 @@ namespace SpriteMaster {
 			var isWater = desprite && IsWater(input);
 			var isFont = desprite && !isWater && IsFont(input);
 
-			int BlockSize = 1;
-			unchecked {
-				if (isWater)
-					BlockSize = (int)WaterBlock;
-				else if (isFont)
-					BlockSize = (int)FontBlock;
-			}
+			var BlockSize = isWater ? WaterBlock : isFont ? FontBlock : 0U;
 
-			if (BlockSize > 1) {
-				spriteBounds.X /= BlockSize;
-				spriteBounds.Y /= BlockSize;
-				spriteBounds.Width /= BlockSize;
-				spriteBounds.Height /= BlockSize;
-
-				textureSize.Width /= BlockSize;
-				textureSize.Height /= BlockSize;
+			if (BlockSize != 0) {
+				spriteBounds.Offset /= BlockSize;
+				spriteBounds.Extent /= BlockSize;
+				textureSize /= BlockSize;
 			}
 
 			byte[] bitmapData = null;
@@ -750,10 +717,10 @@ namespace SpriteMaster {
 					return newTexture;
 				}
 
-				bool isAsync = Config.AsyncScaling.Enabled && async;
+				var isAsync = Config.AsyncScaling.Enabled && async;
 				if (isAsync && Config.AsyncScaling.ForceSynchronousLoads) {
 					var reference = input.Reference;
-					Action asyncCall = () => {
+					void asyncCall () {
 						if (reference.IsDisposed) {
 							return;
 						}
@@ -770,7 +737,7 @@ namespace SpriteMaster {
 							}
 							texture.Dispose();
 						}
-					};
+					}
 					SynchronizedTasks.AddPendingLoad(asyncCall, bitmapData.Length);
 					return null;
 				}

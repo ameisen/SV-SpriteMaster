@@ -15,34 +15,21 @@ namespace SpriteMaster.Types {
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static T Read(ref T value) {
-			switch (value) {
-				case double v:
-					return (T)(object)Thread.VolatileRead(ref v);
-				case UIntPtr v:
-					return (T)(object)Thread.VolatileRead(ref v);
-				case IntPtr v:
-					return (T)(object)Thread.VolatileRead(ref v);
-				case uint v:
-					return (T)(object)Thread.VolatileRead(ref v);
-				case ushort v:
-					return (T)(object)Thread.VolatileRead(ref v);
-				case float v:
-					return (T)(object)Thread.VolatileRead(ref v);
-				case long v:
-					return (T)(object)Thread.VolatileRead(ref v);
-				case sbyte v:
-					return (T)(object)Thread.VolatileRead(ref v);
-				case byte v:
-					return (T)(object)Thread.VolatileRead(ref v);
-				case short v:
-					return (T)(object)Thread.VolatileRead(ref v);
-				case int v:
-					return (T)(object)Thread.VolatileRead(ref v);
-				case object v:
-					return (T)Thread.VolatileRead(ref v);
-				default:
-					throw new Exception($"Type {value.GetType()} is not a volatile-capable type");
-			}
+			return value switch {
+				double v => (T)(object)Thread.VolatileRead(ref v),
+				UIntPtr v => (T)(object)Thread.VolatileRead(ref v),
+				IntPtr v => (T)(object)Thread.VolatileRead(ref v),
+				uint v => (T)(object)Thread.VolatileRead(ref v),
+				ushort v => (T)(object)Thread.VolatileRead(ref v),
+				float v => (T)(object)Thread.VolatileRead(ref v),
+				long v => (T)(object)Thread.VolatileRead(ref v),
+				sbyte v => (T)(object)Thread.VolatileRead(ref v),
+				byte v => (T)(object)Thread.VolatileRead(ref v),
+				short v => (T)(object)Thread.VolatileRead(ref v),
+				int v => (T)(object)Thread.VolatileRead(ref v),
+				object v => (T)Thread.VolatileRead(ref v),
+				_ => throw new Exception($"Type {value.GetType()} is not a volatile-capable type"),
+			};
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -79,11 +66,11 @@ namespace SpriteMaster.Types {
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public int CompareTo (object obj) {
-			switch (obj) {
-				case T value: return CompareTo(value);
-				case Volatile<T> value: return CompareTo(value);
-			}
-			throw new ArgumentException($"{obj} is neither type {typeof(T)} nor {typeof(Volatile<T>)}");
+			return obj switch {
+				T value => CompareTo(value),
+				Volatile<T> value => CompareTo(value),
+				_ => throw new ArgumentException($"{obj} is neither type {typeof(T)} nor {typeof(Volatile<T>)}"),
+			};
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -103,11 +90,11 @@ namespace SpriteMaster.Types {
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public override bool Equals (object obj) {
-			switch (obj) {
-				case T value: return Equals(value);
-				case Volatile<T> value: return Equals(value);
-			}
-			throw new ArgumentException($"{obj} is neither type {typeof(T)} nor {typeof(Volatile<T>)}");
+			return obj switch {
+				T value => Equals(value),
+				Volatile<T> value => Equals(value),
+				_ => throw new ArgumentException($"{obj} is neither type {typeof(T)} nor {typeof(Volatile<T>)}"),
+			};
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

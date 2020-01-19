@@ -28,7 +28,7 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static bool FetchScaledTexture (
 			this Texture2D reference,
-			int expectedScale,
+			uint expectedScale,
 			ref Bounds source,
 			out ScaledTexture scaledTexture,
 			bool create = false
@@ -43,7 +43,7 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 
 		private static ScaledTexture FetchScaledTexture (
 			this Texture2D reference,
-			int expectedScale,
+			uint expectedScale,
 			ref Bounds source,
 			bool create = false
 		) {
@@ -142,7 +142,7 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 			var referenceRectangle = sourceRectangle;
 
 			var expectedScale2D = new Vector2(destination.Width, destination.Height) / new Vector2(sourceRectangle.Width, sourceRectangle.Height);
-			var expectedScale = ((Math.Max(expectedScale2D.X, expectedScale2D.Y) * scaleFactor) + Config.Resample.ScaleBias).Clamp(2.0f, (float)Config.Resample.MaxScale).NextInt();
+			var expectedScale = (uint)((Math.Max(expectedScale2D.X, expectedScale2D.Y) * scaleFactor) + Config.Resample.ScaleBias).Clamp(2.0f, (float)Config.Resample.MaxScale).NextInt();
 
 			if (!texture.FetchScaledTexture(
 				expectedScale: expectedScale,
@@ -213,7 +213,7 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 				);
 
 				var expectedScale2D = new Vector2(destination.Width, destination.Height) / new Vector2(sourceRectangle.Width, sourceRectangle.Height);
-				var expectedScale = ((Math.Max(expectedScale2D.X, expectedScale2D.Y) * scaleFactor) + Config.Resample.ScaleBias).Clamp(2.0f, (float)Config.Resample.MaxScale).NextInt();
+				var expectedScale = (uint)((Math.Max(expectedScale2D.X, expectedScale2D.Y) * scaleFactor) + Config.Resample.ScaleBias).Clamp(2.0f, (float)Config.Resample.MaxScale).NextInt();
 
 				if (!texture.FetchScaledTexture(
 					expectedScale: expectedScale,
@@ -272,7 +272,7 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 				sourceRectangle = resampledTexture.Dimensions;
 			}
 			else if (texture.FetchScaledTexture(
-				expectedScale: ((Math.Max(scale.X, scale.Y) * scaleFactor) + Config.Resample.ScaleBias).Clamp(2.0f, (float)Config.Resample.MaxScale).NextInt(),
+				expectedScale: (uint)((Math.Max(scale.X, scale.Y) * scaleFactor) + Config.Resample.ScaleBias).Clamp(2.0f, (float)Config.Resample.MaxScale).NextInt(),
 				source: ref sourceRectangle,
 				scaledTexture: out scaledTexture,
 				create: true

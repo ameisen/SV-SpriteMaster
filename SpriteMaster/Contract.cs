@@ -62,7 +62,7 @@ namespace SpriteMaster {
 		static internal void AssertEqual<T, U> (this T value, in U reference, in string message = null, Type exception = null)
 			where T : IComparable, IComparable<U>, IEquatable<U>
 			where U : IComparable, IComparable<T>, IEquatable<T> {
-			bool Predicate (in T value, in U reference) {
+			static bool Predicate (in T value, in U reference) {
 				if (typeof(T).IsSubclassOf(typeof(IEquatable<U>))) {
 					return value.Equals(reference);
 				}
@@ -78,7 +78,7 @@ namespace SpriteMaster {
 		static internal void AssertNotEqual<T, U> (this T value, in U reference, in string message = null, Type exception = null)
 			where T : IComparable, IComparable<U>, IEquatable<U>
 			where U : IComparable, IComparable<T>, IEquatable<T> {
-			bool Predicate (in T value, in U reference) {
+			static bool Predicate (in T value, in U reference) {
 				if (typeof(T).IsSubclassOf(typeof(IEquatable<U>))) {
 					return !value.Equals(reference);
 				}
@@ -94,7 +94,7 @@ namespace SpriteMaster {
 		static internal void AssertGreater<T, U> (this T value, in U reference, in string message = null, Type exception = null)
 			where T : IComparable, IComparable<U>
 			where U : IComparable, IComparable<T> {
-			bool Predicate (in T value, in U reference) {
+			static bool Predicate (in T value, in U reference) {
 				return value.CompareTo(reference) > 0;
 			}
 
@@ -105,7 +105,7 @@ namespace SpriteMaster {
 		static internal void AssertGreaterEqual<T, U> (this T value, in U reference, in string message = null, Type exception = null)
 			where T : IComparable, IComparable<U>
 			where U : IComparable, IComparable<T> {
-			bool Predicate (in T value, in U reference) {
+			static bool Predicate (in T value, in U reference) {
 				return value.CompareTo(reference) >= 0;
 			}
 
@@ -116,7 +116,7 @@ namespace SpriteMaster {
 		static internal void AssertLess<T, U> (this T value, in U reference, in string message = null, Type exception = null)
 			where T : IComparable, IComparable<U>
 			where U : IComparable, IComparable<T> {
-			bool Predicate (in T value, in U reference) {
+			static bool Predicate (in T value, in U reference) {
 				return value.CompareTo(reference) < 0;
 			}
 
@@ -127,7 +127,7 @@ namespace SpriteMaster {
 		static internal void AssertLessEqual<T, U> (this T value, in U reference, in string message = null, Type exception = null)
 			where T : IComparable, IComparable<U>
 			where U : IComparable, IComparable<T> {
-			bool Predicate (in T value, in U reference) {
+			static bool Predicate (in T value, in U reference) {
 				return value.CompareTo(reference) <= 0;
 			}
 

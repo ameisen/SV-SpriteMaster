@@ -1,5 +1,4 @@
-﻿using Microsoft.Xna.Framework.Graphics;
-using SpriteMaster.Types;
+﻿using SpriteMaster.Types;
 using System;
 using System.Data.HashFunction.xxHash;
 using System.Drawing;
@@ -53,24 +52,11 @@ namespace SpriteMaster.Extensions {
 				ulong hash = 0;
 
 				foreach (var subHash in hashes) {
-					switch (subHash) {
-						case char _:
-						case sbyte _:
-						case short _:
-						case int _:
-						case byte _:
-						case ushort _:
-						case uint _:
-						default:
-							hash = Accumulate(hash, subHash.GetHashCode());
-							break;
-						case long i:
-							hash = Accumulate(hash, (ulong)i);
-							break;
-						case ulong i:
-							hash = Accumulate(hash, i);
-							break;
-					}
+					hash = subHash switch {
+						long i => Accumulate(hash, (ulong)i),
+						ulong i => Accumulate(hash, i),
+						_ => Accumulate(hash, subHash.GetHashCode()),
+					};
 				}
 				return hash;
 			}
@@ -128,17 +114,15 @@ namespace SpriteMaster.Extensions {
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static unsafe ulong HashXX (this in Span<byte> data) {
 			fixed (byte* p = &data.GetPinnableReference()) {
-				using (var stream = new UnmanagedMemoryStream(p, data.Length)) {
-					return HasherXX.ComputeHash(stream).Hash.HashXXCompute();
-				}
+				using var stream = new UnmanagedMemoryStream(p, data.Length);
+				return HasherXX.ComputeHash(stream).Hash.HashXXCompute();
 			}
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static ulong HashXX (this byte[] data, int start, int length) {
-			using (var stream = new MemoryStream(data, start, length)) {
-				return HasherXX.ComputeHash(stream).Hash.HashXXCompute();
-			}
+			using var stream = new MemoryStream(data, start, length);
+			return HasherXX.ComputeHash(stream).Hash.HashXXCompute();
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

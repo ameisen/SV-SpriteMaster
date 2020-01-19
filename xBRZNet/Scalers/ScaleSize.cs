@@ -13,7 +13,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 		};
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static IScaler ToIScaler (this int scaleSize) {
+		public static IScaler ToIScaler (this uint scaleSize) {
 			// MJY: Need value checks to assure scaleSize is between 2-5 inclusive.
 			return Scalers.Single(s => s.Scale == scaleSize);
 		}

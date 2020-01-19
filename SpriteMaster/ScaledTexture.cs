@@ -113,7 +113,7 @@ namespace SpriteMaster {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		static internal ScaledTexture Fetch (Texture2D texture, Bounds source, int expectedScale) {
+		static internal ScaledTexture Fetch (Texture2D texture, Bounds source, uint expectedScale) {
 			if (SpriteMap.TryGet(texture, source, expectedScale, out var scaleTexture)) {
 				return scaleTexture;
 			}
@@ -143,7 +143,7 @@ namespace SpriteMaster {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		static internal ScaledTexture Get (Texture2D texture, Bounds source, int expectedScale) {
+		static internal ScaledTexture Get (Texture2D texture, Bounds source, uint expectedScale) {
 			using var _ = Performance.Track();
 
 			if (SpriteMap.TryGet(texture, source, expectedScale, out var scaleTexture)) {
@@ -233,7 +233,7 @@ namespace SpriteMaster {
 		internal Vector2I BlockPadding = Vector2I.Zero;
 		private readonly Vector2I originalSize;
 		private readonly Bounds sourceRectangle;
-		private int refScale;
+		private uint refScale;
 
 		internal ulong LastReferencedFrame = DrawState.CurrentFrame;
 
@@ -328,7 +328,7 @@ namespace SpriteMaster {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal ScaledTexture (string assetName, SpriteInfo textureWrapper, Bounds sourceRectangle, ulong hash, bool isSprite, bool async, int expectedScale) {
+		internal ScaledTexture (string assetName, SpriteInfo textureWrapper, Bounds sourceRectangle, ulong hash, bool isSprite, bool async, uint expectedScale) {
 			using var _ = Performance.Track();
 
 			IsSprite = isSprite;

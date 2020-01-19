@@ -4,7 +4,9 @@ using System.Diagnostics;
 
 namespace SpriteMaster {
 	internal sealed class AsyncTracker : IDisposable {
+#if DEBUG
 		private const bool Enabled = false;
+#endif
 
 #if DEBUG
 		private static readonly object TrackerLock = Enabled ? new object() : null;
@@ -13,9 +15,9 @@ namespace SpriteMaster {
 		private readonly string Name;
 #endif
 
+#if DEBUG
 		[Conditional("DEBUG")]
 		private static void DumpTrackers() {
-#if DEBUG
 			if (!Enabled) return;
 
 			if (Trackers.Count == 0) {
@@ -29,13 +31,13 @@ namespace SpriteMaster {
 			}
 			output.TrimEnd('\n');
 			Debug.TraceLn(output);
-#endif
 		}
+#endif
 
 		public AsyncTracker (string name) {
+#if DEBUG
 			if (!Enabled) return;
 
-#if DEBUG
 			Name = name;
 			lock (TrackerLock) {
 				Trackers.Add(this);
@@ -45,9 +47,9 @@ namespace SpriteMaster {
 		}
 
 		public void Dispose () {
+#if DEBUG
 			if (!Enabled) return;
 
-#if DEBUG
 			lock (TrackerLock) {
 				Trackers.Remove(this);
 				DumpTrackers();

@@ -49,9 +49,8 @@ namespace SpriteMaster {
 		}
 
 		public static string Capture1(string command, string[] args = null) {
-			using (var process = Open2(command, args)) {
-				return process.StandardOutput.ReadToEnd();
-			}
+			using var process = Open2(command, args);
+			return process.StandardOutput.ReadToEnd();
 		}
 
 		[ImmutableObject(true)]
@@ -71,12 +70,11 @@ namespace SpriteMaster {
 		}
 
 		public static Result2 Capture1E(string command, string[] args = null) {
-			using (var process = Open2(command, args)) {
-				return new Result2(
-					process.StandardOutput.ReadToEnd(),
-					process.StandardError.ReadToEnd()
-				);
-			}
+			using var process = Open2(command, args);
+			return new Result2(
+				process.StandardOutput.ReadToEnd(),
+				process.StandardError.ReadToEnd()
+			);
 		}
 
 		[Pure]
@@ -84,8 +82,7 @@ namespace SpriteMaster {
 			try {
 				var system = Capture1("uname", "-s").Trim().ToLowerInvariant();
 
-				return system switch
-				{
+				return system switch {
 					var _ when system.Contains("darwin") => PlatformType.Macintosh,
 					var _ when system.Contains("linux") => PlatformType.Linux,
 					var _ when system.Contains("msys") || system.Contains("mingw") => PlatformType.Windows,// This is actually Windows.

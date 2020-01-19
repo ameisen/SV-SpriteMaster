@@ -21,10 +21,10 @@ namespace SpriteMaster.Extensions {
 					continue;
 				// +		method	{Void Collect(Int32, System.GCCollectionMode, Boolean, Boolean)}	System.Reflection.MethodInfo {System.Reflection.RuntimeMethodInfo}
 				if (
-					methodParameters[0].ParameterType == typeof(Int32) &&
-					methodParameters[1].ParameterType == typeof(System.GCCollectionMode) &&
-					methodParameters[2].ParameterType == typeof(Boolean) &&
-					methodParameters[3].ParameterType == typeof(Boolean)
+					methodParameters[0].ParameterType == typeof(int) &&
+					methodParameters[1].ParameterType == typeof(GCCollectionMode) &&
+					methodParameters[2].ParameterType == typeof(bool) &&
+					methodParameters[3].ParameterType == typeof(bool)
 				) {
 					CompactingCollect = method;
 					break;

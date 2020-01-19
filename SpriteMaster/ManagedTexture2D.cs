@@ -34,7 +34,6 @@ namespace SpriteMaster {
 			Texture2D reference,
 			Vector2I dimensions,
 			SurfaceFormat format,
-			int[] data = null,
 			string name = null
 		) : base(reference.GraphicsDevice.IsDisposed ? DrawState.Device : reference.GraphicsDevice, dimensions.Width, dimensions.Height, UseMips, format) {
 			this.Name = name ?? $"{reference.SafeName()} [RESAMPLED {(CompressionFormat)format}]";
@@ -54,10 +53,6 @@ namespace SpriteMaster {
 				TotalAllocatedSize -= this.SizeBytes();
 				--TotalManagedTextures;
 			};
-
-			if (data != null) {
-				this.SetDataEx(data);
-			}
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

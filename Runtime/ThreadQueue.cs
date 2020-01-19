@@ -8,7 +8,6 @@ namespace SpriteMaster {
 	// C#'s Thread Queue can block when inserting a task if no free threads are free. This prevents said blocking.
 	public static class ThreadQueue {
 		private const ThreadPriority QueueHandlerPriority = ThreadPriority.BelowNormal;
-		private const ThreadPriority QueuePriority = ThreadPriority.BelowNormal;
 
 		public delegate void QueueFunctor<T> (T state) where T : class;
 

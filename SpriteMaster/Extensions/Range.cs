@@ -1,12 +1,9 @@
-﻿using Microsoft.Xna.Framework.Graphics;
-using SpriteMaster.Types;
+﻿using SpriteMaster.Types;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Extensions {
-	using XRectangle = Microsoft.Xna.Framework.Rectangle;
 	public static class Range {
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static T Clamp<T> (this T value, T min, T max) where T : IComparable, IComparable<T> {
@@ -201,26 +198,6 @@ namespace SpriteMaster.Extensions {
 			}
 
 			return result;
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static bool Matches (this Texture2D texture, in XRectangle rectangle) {
-			return rectangle.X == 0 && rectangle.Y == 0 && rectangle.Width == texture.Width && rectangle.Height == texture.Height;
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static bool Matches (this Texture2D texture, in Rectangle rectangle) {
-			return rectangle.X == 0 && rectangle.Y == 0 && rectangle.Width == texture.Width && rectangle.Height == texture.Height;
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static bool Matches (this in XRectangle rectangle, Texture2D texture) {
-			return texture.Matches(rectangle);
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static bool Matches (this in Rectangle rectangle, Texture2D texture) {
-			return texture.Matches(rectangle);
 		}
 	}
 }

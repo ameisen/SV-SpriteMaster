@@ -29,7 +29,7 @@ namespace SpriteMaster {
 		private static readonly TexelTimer TexelAverage = new TexelTimer();
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static void ProcessPendingActions (in TimeSpan remainingTime) {
+		internal static void ProcessPendingActions (TimeSpan remainingTime) {
 			var startTime = DateTime.Now;
 			{
 				var pendingActions = PendingActions.Current;

@@ -59,7 +59,7 @@ namespace SpriteMaster {
 
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static TimeSpan RemainingFrameTime(float multiplier = 1.0f, in TimeSpan? offset = null) {
+		internal static TimeSpan RemainingFrameTime(float multiplier = 1.0f, TimeSpan? offset = null) {
 			return (ActualRemainingFrameTime() - (BaselineFrameTime + (offset ?? TimeSpan.Zero))).Multiply(multiplier);
 		}
 

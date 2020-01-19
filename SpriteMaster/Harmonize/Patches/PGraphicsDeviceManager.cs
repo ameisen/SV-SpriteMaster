@@ -55,7 +55,7 @@ namespace SpriteMaster.Harmonize.Patches {
 			}
 
 			try {
-				FieldInfo getPrivateField (object obj, string name, bool instance = true) {
+				static FieldInfo getPrivateField (object obj, string name, bool instance = true) {
 					return obj.GetType().GetField(name, BindingFlags.NonPublic | BindingFlags.Public | (instance ? BindingFlags.Instance : BindingFlags.Static));
 				}
 

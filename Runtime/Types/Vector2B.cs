@@ -22,7 +22,6 @@ namespace SpriteMaster.Types {
 		*/
 
 		private const byte ZeroByte = 0;
-		private const byte OneByte = 1;
 		private const byte X_Bit = 0;
 		private const byte Y_Bit = 1;
 		private const byte X_Value = 1 << X_Bit;
@@ -30,40 +29,40 @@ namespace SpriteMaster.Types {
 		private const byte All_Value = X_Value | Y_Value;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static byte _GetX(bool value) {
+		private static byte GetX(bool value) {
 			return value ? X_Value : ZeroByte;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static byte _GetY (bool value) {
+		private static byte GetY (bool value) {
 			return value ? Y_Value : ZeroByte;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static byte _Get(bool x, bool y) {
-			return (byte)(_GetX(x) | _GetY(y));
+		private static byte Get(bool x, bool y) {
+			return (byte)(GetX(x) | GetY(y));
 		}
 
-		private byte Value;
+		public byte Packed;
 
 		public bool X {
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			readonly get {
-				return (byte)(Value & X_Value) != ZeroByte;
+				return (byte)(Packed & X_Value) != ZeroByte;
 			}
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
-				Value.SetBit(X_Bit, value);
+				Packed.SetBit(X_Bit, value);
 			}
 		}
 		public bool Y {
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			readonly get {
-				return (byte)(Value & Y_Value) != ZeroByte;
+				return (byte)(Packed & Y_Value) != ZeroByte;
 			}
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
-				Value.SetBit(Y_Bit, value);
+				Packed.SetBit(Y_Bit, value);
 			}
 		}
 
@@ -73,9 +72,9 @@ namespace SpriteMaster.Types {
 		public bool Negative { [MethodImpl(MethodImplOptions.AggressiveInlining)] readonly get => X; [MethodImpl(MethodImplOptions.AggressiveInlining)] set { X = value; } }
 		public bool Positive { [MethodImpl(MethodImplOptions.AggressiveInlining)] readonly get => Y; [MethodImpl(MethodImplOptions.AggressiveInlining)] set { Y = value; } }
 
-		public readonly bool None => Value == ZeroByte;
-		public readonly bool Any => Value != ZeroByte;
-		public readonly bool All => Value == All_Value;
+		public readonly bool None => Packed == ZeroByte;
+		public readonly bool Any => Packed != ZeroByte;
+		public readonly bool All => Packed == All_Value;
 
 		public bool this[int index] {
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -85,7 +84,7 @@ namespace SpriteMaster.Types {
 					throw new IndexOutOfRangeException(nameof(index));
 				}
 #endif
-				return Value.GetBit(index);
+				return Packed.GetBit(index);
 			}
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
@@ -95,39 +94,39 @@ namespace SpriteMaster.Types {
 				}
 #endif
 				// https://graphics.stanford.edu/~seander/bithacks.html#ConditionalSetOrClearBitsWithoutBranching
-				Value.SetBit(index, value);
+				Packed.SetBit(index, value);
 			}
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private Vector2B (byte value) {
-			Value = value;
+		public Vector2B (byte value) {
+			Packed = value;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public Vector2B (bool x, bool y) : this(_Get(x, y)) {}
+		public Vector2B (bool x, bool y) : this(Get(x, y)) {}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Vector2B (bool value) : this(value ? All_Value : ZeroByte) { }
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public Vector2B (Vector2B vec) : this(vec.Value) {}
+		public Vector2B (Vector2B vec) : this(vec.Packed) {}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Vector2B Set (Vector2B vec) {
-			Value = vec.Value;
+			Packed = vec.Packed;
 			return this;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Vector2B Set (bool x, bool y) {
-			Value = _Get(x, y);
+			Packed = Get(x, y);
 			return this;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Vector2B Set (bool v) {
-			Value = v ? All_Value : ZeroByte;
+			Packed = v ? All_Value : ZeroByte;
 			return this;
 		}
 
@@ -143,7 +142,7 @@ namespace SpriteMaster.Types {
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static Vector2B operator & (Vector2B lhs, Vector2B rhs) {
-			return new Vector2B((byte)(lhs.Value & rhs.Value));
+			return new Vector2B((byte)(lhs.Packed & rhs.Packed));
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -153,7 +152,7 @@ namespace SpriteMaster.Types {
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static Vector2B operator | (Vector2B lhs, Vector2B rhs) {
-			return new Vector2B((byte)(lhs.Value | rhs.Value));
+			return new Vector2B((byte)(lhs.Packed | rhs.Packed));
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -176,22 +175,22 @@ namespace SpriteMaster.Types {
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public readonly int CompareTo (Vector2B other) {
-			return Value.CompareTo(other.Value);
+			return Packed.CompareTo(other.Packed);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public readonly bool Equals (Vector2B other) {
-			return Value == other.Value;
+			return Packed == other.Packed;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public int CompareTo (bool other) {
-			return Value.CompareTo(other ? All_Value : ZeroByte);
+			return Packed.CompareTo(other ? All_Value : ZeroByte);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public bool Equals (bool other) {
-			return Value == (other ? All_Value : ZeroByte);
+			return Packed == (other ? All_Value : ZeroByte);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

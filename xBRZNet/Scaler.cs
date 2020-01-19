@@ -11,12 +11,12 @@ using SpriteMaster.xBRZ.Scalers;
 namespace SpriteMaster.xBRZ {
 	// ReSharper disable once InconsistentNaming
 	public sealed class Scaler {
-		public const int MinScale = 2;
-		public const int MaxScale = Config.MaxScale;
+		public const uint MinScale = 2;
+		public const uint MaxScale = Config.MaxScale;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Scaler (
-			int scaleMultiplier,
+			uint scaleMultiplier,
 			in Span<uint> sourceData,
 			in Point sourceSize,
 			in Rectangle? sourceTarget,
@@ -44,8 +44,8 @@ namespace SpriteMaster.xBRZ {
 			if (this.sourceTarget.Right > sourceSize.X || this.sourceTarget.Bottom > sourceSize.Y) {
 				throw new ArgumentOutOfRangeException(nameof(sourceTarget));
 			}
-			this.targetWidth = this.sourceTarget.Width * scaleMultiplier;
-			this.targetHeight = this.sourceTarget.Height * scaleMultiplier;
+			this.targetWidth = this.sourceTarget.Width * (int)scaleMultiplier;
+			this.targetHeight = this.sourceTarget.Height * (int)scaleMultiplier;
 			if (targetWidth * targetHeight > targetData.Length) {
 				throw new ArgumentOutOfRangeException(nameof(targetData));
 			}
@@ -281,7 +281,7 @@ namespace SpriteMaster.xBRZ {
 				//temporary buffer for "on the fly preprocessing"
 				var preProcBuffer = stackalloc byte[sourceTarget.Width];
 
-				uint GetPixel (in Span<uint> src, int stride, int offset) {
+				static uint GetPixel (in Span<uint> src, int stride, int offset) {
 					// We can try embedded a distance calculation as well. Perhaps instead of a negative stride/offset, we provide a 
 					// negative distance from the edge and just recalculate the stride/offset in that case.
 					// We can scale the alpha reduction by the distance to hopefully correct the edges.

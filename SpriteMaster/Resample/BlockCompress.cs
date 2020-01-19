@@ -39,51 +39,48 @@ namespace SpriteMaster.Resample {
 			try {
 				var bitmapData = data;
 
-				using (var compressor = new Compressor()) {
-					compressor.Input.AlphaMode = (HasAlpha) ? AlphaMode.Premultiplied : AlphaMode.None;
-					compressor.Input.GenerateMipmaps = false;
-					var textureFormat =
-						(!HasAlpha) ?
-							TextureFormat.NoAlpha :
-							((false && IsPunchThroughAlpha && Config.Resample.BlockCompression.Quality != CompressionQuality.Fastest) ?
-								TextureFormat.WithPunchthroughAlpha :
-								(IsMasky ?
-									TextureFormat.WithHardAlpha :
-									TextureFormat.WithAlpha));
-					compressor.Compression.Format = textureFormat;
-					compressor.Compression.Quality = Config.Resample.BlockCompression.Quality;
-					compressor.Compression.SetQuantization(true, true, IsPunchThroughAlpha);
+				using var compressor = new Compressor();
+				compressor.Input.AlphaMode = (HasAlpha) ? AlphaMode.Premultiplied : AlphaMode.None;
+				compressor.Input.GenerateMipmaps = false;
+				var textureFormat =
+					(!HasAlpha) ?
+						TextureFormat.NoAlpha :
+						((false && IsPunchThroughAlpha && Config.Resample.BlockCompression.Quality != CompressionQuality.Fastest) ?
+							TextureFormat.WithPunchthroughAlpha :
+							(IsMasky ?
+								TextureFormat.WithHardAlpha :
+								TextureFormat.WithAlpha));
+				compressor.Compression.Format = textureFormat;
+				compressor.Compression.Quality = Config.Resample.BlockCompression.Quality;
+				compressor.Compression.SetQuantization(true, true, IsPunchThroughAlpha);
 
-					{
-						compressor.Compression.GetColorWeights(out var r, out var g, out var b, out var a);
-						a = HasAlpha ? (a * 20.0f) : 0.0f;
-						// Relative luminance of the various channels.
-						r = HasR ? (r * 0.2126f) : 0.0f;
-						g = HasG ? (g * 0.7152f) : 0.0f;
-						b = HasB ? (b * 0.0722f) : 0.0f;
+				{
+					compressor.Compression.GetColorWeights(out var r, out var g, out var b, out var a);
+					a = HasAlpha ? (a * 20.0f) : 0.0f;
+					// Relative luminance of the various channels.
+					r = HasR ? (r * 0.2126f) : 0.0f;
+					g = HasG ? (g * 0.7152f) : 0.0f;
+					b = HasB ? (b * 0.0722f) : 0.0f;
 
-						compressor.Compression.SetColorWeights(r, g, b, a);
+					compressor.Compression.SetColorWeights(r, g, b, a);
+				}
+
+				compressor.Output.IsSRGBColorSpace = true;
+				compressor.Output.OutputHeader = false;
+
+				//public MipData (int width, int height, int rowPitch, IntPtr data, bool ownData = true)
+
+				fixed (byte* p = bitmapData) {
+					using var mipData = new MipData(dimensions.Width, dimensions.Height, dimensions.Width * sizeof(int), (IntPtr)p, false);
+					compressor.Input.SetData(mipData, true);
+					var memoryBuffer = new byte[((SurfaceFormat)textureFormat).SizeBytes(dimensions.Area)];
+					using var stream = memoryBuffer.Stream();
+					if (compressor.Process(stream)) {
+						format = textureFormat;
+						return memoryBuffer;
 					}
-
-					compressor.Output.IsSRGBColorSpace = true;
-					compressor.Output.OutputHeader = false;
-
-					//public MipData (int width, int height, int rowPitch, IntPtr data, bool ownData = true)
-
-					fixed (byte* p = bitmapData) {
-						using (var mipData = new MipData(dimensions.Width, dimensions.Height, dimensions.Width * sizeof(int), (IntPtr)p, false)) {
-							compressor.Input.SetData(mipData, true);
-							var memoryBuffer = new byte[((SurfaceFormat)textureFormat).SizeBytes(dimensions.Area)];
-							using (var stream = memoryBuffer.Stream()) {
-								if (compressor.Process(stream)) {
-									format = textureFormat;
-									return memoryBuffer;
-								}
-								else {
-									Debug.WarningLn($"Failed to use {(CompressionFormat)textureFormat} compression: " + compressor.LastErrorString);
-								}
-							}
-						}
+					else {
+						Debug.WarningLn($"Failed to use {(CompressionFormat)textureFormat} compression: " + compressor.LastErrorString);
 					}
 				}
 			}

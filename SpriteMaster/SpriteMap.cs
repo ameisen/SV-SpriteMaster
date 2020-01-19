@@ -12,12 +12,12 @@ namespace SpriteMaster {
 		private readonly WeakCollection<ScaledTexture> ScaledTextureReferences = new WeakCollection<ScaledTexture>();
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		static private ulong SpriteHash (Texture2D texture, Bounds source, int expectedScale) {
+		static private ulong SpriteHash (Texture2D texture, Bounds source, uint expectedScale) {
 			return Hash.Combine(source.Hash(), expectedScale.GetHashCode());
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal void Add (Texture2D reference, ScaledTexture texture, Bounds source, int expectedScale) {
+		internal void Add (Texture2D reference, ScaledTexture texture, Bounds source, uint expectedScale) {
 			var rectangleHash = SpriteHash(texture: reference, source: source, expectedScale: expectedScale);
 
 			var meta = reference.Meta();
@@ -30,7 +30,7 @@ namespace SpriteMaster {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal bool TryGet (Texture2D texture, Bounds source, int expectedScale, out ScaledTexture result) {
+		internal bool TryGet (Texture2D texture, Bounds source, uint expectedScale, out ScaledTexture result) {
 			result = null;
 			var rectangleHash = SpriteHash(texture: texture, source: source, expectedScale: expectedScale);
 
@@ -178,8 +178,7 @@ namespace SpriteMaster {
 
 			foreach (var scaledTexture in ScaledTextureReferences) {
 				if (scaledTexture.Reference.TryGetTarget(out var referenceTexture)) {
-					List<ScaledTexture> resultList;
-					if (!result.TryGetValue(referenceTexture, out resultList)) {
+					if (!result.TryGetValue(referenceTexture, out var resultList)) {
 						resultList = new List<ScaledTexture>();
 						result.Add(referenceTexture, resultList);
 					}

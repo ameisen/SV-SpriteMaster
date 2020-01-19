@@ -20,7 +20,7 @@ namespace SpriteMaster.Types {
 			}
 		}
 
-		private List<ComparableWeakReference<T>> _List;
+		private readonly List<ComparableWeakReference<T>> _List;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static ComparableWeakReference<T> Weak (T obj) {
@@ -91,7 +91,7 @@ namespace SpriteMaster.Types {
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Add (T item) {
-			_List.Add((item == null) ? null : item.MakeWeak());
+			_List.Add(item?.MakeWeak());
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -107,7 +107,7 @@ namespace SpriteMaster.Types {
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void AddRange (IEnumerable<T> collection) {
 			foreach (T item in collection) {
-				_List.Add((item == null) ? null : item.MakeWeak());
+				_List.Add(item?.MakeWeak());
 			}
 		}
 
@@ -252,7 +252,7 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private void _Check_CopyTo<U>(U[] array, int arrayIndex, int count) where U : class {
+		private void Check_CopyTo<U>(U[] array, int arrayIndex, int count) where U : class {
 			_ = array ?? throw new ArgumentNullException(nameof(array));
 			if (arrayIndex < 0)
 				throw new ArgumentOutOfRangeException(nameof(arrayIndex));
@@ -264,7 +264,7 @@ namespace SpriteMaster.Types {
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void CopyTo(T[] array, int arrayIndex, int count) {
-			_Check_CopyTo(array, arrayIndex, count);
+			Check_CopyTo(array, arrayIndex, count);
 			Purge();
 
 			int dstOffset = arrayIndex;
@@ -281,7 +281,7 @@ namespace SpriteMaster.Types {
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void CopyTo (WeakReference<T>[] array, int arrayIndex, int count) {
-			_Check_CopyTo(array, arrayIndex, count);
+			Check_CopyTo(array, arrayIndex, count);
 			Purge();
 
 			int dstOffset = arrayIndex;
@@ -292,7 +292,7 @@ namespace SpriteMaster.Types {
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void CopyTo (ComparableWeakReference<T>[] array, int arrayIndex, int count) {
-			_Check_CopyTo(array, arrayIndex, count);
+			Check_CopyTo(array, arrayIndex, count);
 			Purge();
 
 			int dstOffset = arrayIndex;

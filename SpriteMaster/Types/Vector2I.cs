@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 
 namespace SpriteMaster.Types {
 	using DrawingPoint = System.Drawing.Point;
-	using XNAPoint = Microsoft.Xna.Framework.Point;
+	using XNAPoint = Point;
 	using XTilePoint = xTile.Dimensions.Location;
 
 	using DrawingSize = System.Drawing.Size;
@@ -40,6 +40,8 @@ namespace SpriteMaster.Types {
 		private fixed int Value[2];
 		[FieldOffset(0)]
 		private long LongValue;
+
+		public long Packed { readonly get => LongValue; set => LongValue = value; }
 
 		public int X { [MethodImpl(MethodImplOptions.AggressiveInlining)] readonly get => Value[0]; [MethodImpl(MethodImplOptions.AggressiveInlining)] set { Value[0] = value; } }
 		public int Y { [MethodImpl(MethodImplOptions.AggressiveInlining)] readonly get => Value[1]; [MethodImpl(MethodImplOptions.AggressiveInlining)] set { Value[1] = value; } }
@@ -399,6 +401,62 @@ namespace SpriteMaster.Types {
 			return new Vector2I(
 				lhs.X | rhs,
 				lhs.Y | rhs
+			);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static Vector2I operator + (Vector2I lhs, uint rhs) {
+			return new Vector2I(
+				lhs.X + (int)rhs,
+				lhs.Y + (int)rhs
+			);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static Vector2I operator - (Vector2I lhs, uint rhs) {
+			return new Vector2I(
+				lhs.X - (int)rhs,
+				lhs.Y - (int)rhs
+			);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static Vector2I operator * (Vector2I lhs, uint rhs) {
+			return new Vector2I(
+				lhs.X * (int)rhs,
+				lhs.Y * (int)rhs
+			);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static Vector2I operator / (Vector2I lhs, uint rhs) {
+			return new Vector2I(
+				lhs.X / (int)rhs,
+				lhs.Y / (int)rhs
+			);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static Vector2I operator % (Vector2I lhs, uint rhs) {
+			return new Vector2I(
+				lhs.X % (int)rhs,
+				lhs.Y % (int)rhs
+			);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static Vector2I operator & (Vector2I lhs, uint rhs) {
+			return new Vector2I(
+				lhs.X & (int)rhs,
+				lhs.Y & (int)rhs
+			);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static Vector2I operator | (Vector2I lhs, uint rhs) {
+			return new Vector2I(
+				lhs.X | (int)rhs,
+				lhs.Y | (int)rhs
 			);
 		}
 

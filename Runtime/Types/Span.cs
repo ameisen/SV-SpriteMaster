@@ -31,7 +31,7 @@ namespace SpriteMaster.Types {
 
 		private readonly CollectionHandle Handle;
 		private readonly object PinnedObject;
-		private readonly IntPtr Pointer;
+		public readonly IntPtr Pointer;
 		public readonly int Length;
 		private readonly int Size;
 

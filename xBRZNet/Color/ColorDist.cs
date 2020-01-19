@@ -94,14 +94,13 @@ namespace SpriteMaster.xBRZ.Color {
 					double a1 = ((pix1 >> ColorConstant.Shift.Alpha) & 0xFF) / 255.0;
 					double a2 = ((pix2 >> ColorConstant.Shift.Alpha) & 0xFF) / 255.0;
 
-					distance /= 255.0;
+					if (a1 > a2) {
+						double temp = a1;
+						a1 = a2;
+						a2 = temp;
+					}
 
-					if (a1 <= a2) {
-						return (a1 * distance) + (255.0 * (a2 - a1));
-					}
-					else {
-						return (a2 * distance) + (255.0 * (a1 - a2));
-					}
+					return (a1 * (distance / 255.0)) + (255.0 * (a2 - a1));
 				}
 			}
 

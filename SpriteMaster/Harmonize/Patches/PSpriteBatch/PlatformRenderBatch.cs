@@ -22,22 +22,6 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 				return SamplerState.PointClamp;
 			}
 
-			/*
-			else if (texture is RenderTarget2D) {
-				var newState = new SamplerState() {
-					AddressU = OriginalState.AddressU,
-					AddressV = OriginalState.AddressV,
-					AddressW = OriginalState.AddressW,
-					MaxAnisotropy = OriginalState.MaxAnisotropy,
-					MaxMipLevel = OriginalState.MaxMipLevel,
-					MipMapLevelOfDetailBias = OriginalState.MipMapLevelOfDetailBias,
-					Name = "RescaledSampler",
-					Tag = OriginalState.Tag,
-					Filter = (Config.DrawState.SetLinear) ? TextureFilter.Linear : OriginalState.Filter
-				};
-			}
-			*/
-
 			return reference;
 		}
 

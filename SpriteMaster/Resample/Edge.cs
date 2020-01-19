@@ -47,7 +47,7 @@ namespace SpriteMaster.Resample {
 			var WrappedY = new Vector2B(Wrapped.Y);
 
 			if (Config.WrapDetection.Enabled && Config.Resample.EnableWrappedAddressing) {
-				byte GetAlpha (in int sample) {
+				static byte GetAlpha (in int sample) {
 					return unchecked((byte)(((uint)sample >> 24) & 0xFF));
 				}
 

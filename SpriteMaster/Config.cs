@@ -80,7 +80,6 @@ namespace SpriteMaster {
 				internal static bool LogWarnings = true;
 				internal static bool LogErrors = true;
 				internal const bool OwnLogFile = true;
-				internal const bool UseSMAPI = true;
 			}
 
 			internal static class Sprite {
@@ -103,7 +102,7 @@ namespace SpriteMaster {
 			internal const bool EnableDynamicScale = true;
 			internal static bool TrimWater = true;
 			internal static float ScaleBias = 0.1f;
-			internal static int MaxScale = 6;
+			internal static uint MaxScale = 6;
 			internal static int MinimumTextureDimensions = 4;
 			internal static bool EnableWrappedAddressing = true;
 			internal static readonly List<SurfaceFormat> SupportedFormats = new List<SurfaceFormat>() {

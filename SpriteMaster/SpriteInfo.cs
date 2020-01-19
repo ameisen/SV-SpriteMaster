@@ -12,7 +12,7 @@ namespace SpriteMaster {
 		internal readonly Bounds Size;
 		internal readonly Vector2B Wrapped;
 		internal readonly bool BlendEnabled;
-		internal readonly int ExpectedScale;
+		internal readonly uint ExpectedScale;
 		// For statistics and throttling
 		internal readonly bool WasCached;
 
@@ -43,7 +43,7 @@ namespace SpriteMaster {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal SpriteInfo (Texture2D reference, in Bounds dimensions, int expectedScale) {
+		internal SpriteInfo (Texture2D reference, in Bounds dimensions, uint expectedScale) {
 			ReferenceSize = new Vector2I(reference);
 			ExpectedScale = expectedScale;
 			Size = dimensions;

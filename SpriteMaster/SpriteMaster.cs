@@ -77,15 +77,17 @@ namespace SpriteMaster {
 			Self = this;
 
 			if (DotNet) {
-				MemoryPressureThread = new Thread(MemoryPressureLoop);
-				MemoryPressureThread.Name = "Memory Pressure Thread";
-				MemoryPressureThread.Priority = ThreadPriority.BelowNormal;
-				MemoryPressureThread.IsBackground = true;
+				MemoryPressureThread = new Thread(MemoryPressureLoop) {
+					Name = "Memory Pressure Thread",
+					Priority = ThreadPriority.BelowNormal,
+					IsBackground = true
+				};
 
-				GarbageCollectThread = new Thread(GarbageCheckLoop);
-				GarbageCollectThread.Name = "Garbage Collection Thread";
-				GarbageCollectThread.Priority = ThreadPriority.BelowNormal;
-				GarbageCollectThread.IsBackground = true;
+				GarbageCollectThread = new Thread(GarbageCheckLoop) {
+					Name = "Garbage Collection Thread",
+					Priority = ThreadPriority.BelowNormal,
+					IsBackground = true
+				};
 			}
 		}
 
