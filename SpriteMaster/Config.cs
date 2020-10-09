@@ -186,7 +186,7 @@ namespace SpriteMaster {
 			internal static bool Enabled = DevEnabled && true;
 			private const bool DevEnabled = true;
 			internal static bool AlwaysFlush = false;
-			internal static Compression.Algorithm Compress = Compression.Algorithm.LZ;
+			internal static Compression.Algorithm Compress = Compression.Algorithm.LZMA;
 			internal static bool Async = true;
 		}
 
@@ -196,7 +196,7 @@ namespace SpriteMaster {
 			private const bool DevEnabled = true;
 			internal const int LockRetries = 32;
 			internal const int LockSleepMS = 32;
-			internal static Compression.Algorithm Compress = Compression.Algorithm.LZ;
+			internal static Compression.Algorithm Compress = Compression.Algorithm.LZMA;
 			internal static bool ForceCompress = false;
 		}
 	}

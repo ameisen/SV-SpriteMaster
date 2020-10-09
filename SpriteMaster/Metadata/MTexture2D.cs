@@ -33,7 +33,7 @@ namespace SpriteMaster.Metadata {
 				return;
 			}
 
-			using (DataCacheLock.Shared) {
+			using (DataCacheLock.Exclusive) {
 				DataCache.Dispose();
 				DataCache = new MemoryCache(name: "DataCache", config: null);
 			}
@@ -43,6 +43,7 @@ namespace SpriteMaster.Metadata {
 		internal VolatileULong Hash { get; private set; } = Hashing.Default;
 
 		// TODO : this presently is not threadsafe.
+		private int CachedDataLength = -1;
 		private readonly WeakReference<byte[]> _CachedData = (Config.MemoryCache.Enabled) ? new WeakReference<byte[]>(null) : null;
 
 		public bool HasCachedData {
@@ -143,7 +144,7 @@ namespace SpriteMaster.Metadata {
 
 							compressedBuffer = DataCache[UniqueIDString] as byte[];
 							if (compressedBuffer != null) {
-								target = Compression.Decompress(compressedBuffer, Config.MemoryCache.Compress);
+								target = Compression.Decompress(compressedBuffer, CachedDataLength, Config.MemoryCache.Compress);
 							}
 							else {
 								target = null;
@@ -192,7 +193,7 @@ namespace SpriteMaster.Metadata {
 
 							compressedBuffer = DataCache[UniqueIDString] as byte[];
 							if (compressedBuffer != null) {
-								target = Compression.Decompress(compressedBuffer, Config.MemoryCache.Compress);
+								target = Compression.Decompress(compressedBuffer, CachedDataLength, Config.MemoryCache.Compress);
 							}
 							else {
 								target = null;
@@ -208,6 +209,8 @@ namespace SpriteMaster.Metadata {
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
 				try {
+					CachedDataLength = (value != null) ? value.Length : -1;
+
 					if (!Config.MemoryCache.Enabled)
 						return;
 

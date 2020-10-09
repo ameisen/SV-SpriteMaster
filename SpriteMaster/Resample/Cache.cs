@@ -163,7 +163,7 @@ namespace SpriteMaster.Resample {
 								data = rawData;
 							}
 							else {
-								data = Compression.Decompress(rawData, Config.FileCache.Compress);
+								data = Compression.Decompress(rawData, (int)uncompressedDataLength, Config.FileCache.Compress);
 							}
 						}
 						return true;
