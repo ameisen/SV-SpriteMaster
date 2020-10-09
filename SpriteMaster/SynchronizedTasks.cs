@@ -39,7 +39,7 @@ namespace SpriteMaster {
 				}
 
 				if (invoke) {
-					PendingActions.SwapAtomic();
+					PendingActions.Swap();
 					lock (pendingActions) {
 						foreach (var action in pendingActions) {
 							action.Invoke();
@@ -57,7 +57,7 @@ namespace SpriteMaster {
 				}
 
 				if (invoke) {
-					PendingLoads.SwapAtomic();
+					PendingLoads.Swap();
 					lock (pendingLoads) {
 						if (Config.AsyncScaling.ThrottledSynchronousLoads) {
 							int processed = 0;

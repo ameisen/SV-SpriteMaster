@@ -23,7 +23,7 @@ namespace SpriteMaster.Metadata {
 		private readonly Semaphore CompressionSemaphore = new Semaphore(int.MaxValue, int.MaxValue);
 
 		public volatile bool TracePrinted = false;
-		public Volatile<ulong> UpdateToken { get; private set; } = 0;
+		public VolatileULong UpdateToken { get; private set; } = 0;
 
 		public bool ScaleValid = true;
 
@@ -39,8 +39,8 @@ namespace SpriteMaster.Metadata {
 			}
 		}
 
-		public Volatile<ulong> LastAccessFrame { get; private set; } = (ulong)DrawState.CurrentFrame;
-		internal Volatile<ulong> Hash { get; private set; } = Hashing.Default;
+		public VolatileULong LastAccessFrame { get; private set; } = (ulong)DrawState.CurrentFrame;
+		internal VolatileULong Hash { get; private set; } = Hashing.Default;
 
 		// TODO : this presently is not threadsafe.
 		private readonly WeakReference<byte[]> _CachedData = (Config.MemoryCache.Enabled) ? new WeakReference<byte[]>(null) : null;

@@ -1,4 +1,5 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <AssemblyName>SpriteMaster</AssemblyName>
@@ -24,15 +25,16 @@
     <FileAlignment>512</FileAlignment>
     <NoWarn>0162;7035</NoWarn>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-		<OutputPath>bin\$(Configuration)_$(Platform)\</OutputPath>
+		<OutputPath>bin\$(Configuration)\</OutputPath>
 		<IgnoreModFilePatterns>\.dll\.config$, ILMerge, runtimes, net452, net450, net45</IgnoreModFilePatterns>
 		<Configurations>Debug;Release;Development</Configurations>
-		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+		<AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
 		<ApplicationIcon>pufferchick_xbrz.ico</ApplicationIcon>
 		<PackageId>SpriteMaster-SV</PackageId>
 		<Product>SpriteMaster-SV</Product>
 		<DebugType>portable</DebugType>
 		<ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
+		<NeutralLanguage>English (United States)</NeutralLanguage>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -51,10 +53,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="3.0.0" />
-    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.7.0" />
-    <PackageReference Include="TeximpNet" Version="1.4.1" />
-    <PackageReference Include="Tomlyn" Version="0.1.1" />
+    <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="3.2.2" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="5.0.0-rc.1.20451.14" />
+    <PackageReference Include="TeximpNet" Version="1.4.3" />
+    <PackageReference Include="Tomlyn" Version="0.1.2" />
     <PackageReference Include="Zlib.Portable" Version="1.11.0" />
   </ItemGroup>
 
