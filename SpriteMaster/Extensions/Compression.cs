@@ -73,6 +73,7 @@ namespace SpriteMaster.Extensions {
 				internal static byte[] Compress(byte[] data) {
 					using var val = new MemoryStream(CompressedLengthEstimate(data));
 					using (var compressor = new DeflateStream(val, CompressionMode.Compress, CompressionLevel.BestCompression)) {
+						compressor.Strategy = CompressionStrategy.Filtered;
 						compressor.Write(data, 0, data.Length);
 					}
 					return val.ToArray();
