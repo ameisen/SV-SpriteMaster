@@ -1,19 +1,14 @@
-﻿using Ionic.Zlib;
-using SevenZip.Compression.LZMA;
-using System;
-using System.Dynamic;
-using System.IO;
-using System.Linq;
+﻿using System;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Extensions {
 	internal static class Compression {
 		internal enum Algorithm {
 			None = 0,
-			Compress = 1,
-			Deflate = 2,
-			LZMA = 3,
-			Zstd = 4,
+			Compress,
+			Deflate,
+			LZMA,
+			Zstd,
 			Best = Zstd,
 		}
 
@@ -21,31 +16,19 @@ namespace SpriteMaster.Extensions {
 
 		internal static Algorithm GetPreferredAlgorithm(Algorithm fromAlgorithm = Algorithm.Best) {
 			for (int i = (int)fromAlgorithm; i > 0; --i) {
-				var testAlgorithm = (Algorithm)i;
+				var algorithm = (Algorithm)i;
 
-				switch (testAlgorithm) {
-					case Algorithm.Compress:
-						if (Compressors.SystemIO.IsSupported) {
-							return testAlgorithm;
-						}
-						break;
-					case Algorithm.Deflate:
-						if (Compressors.Deflate.IsSupported) {
-							return testAlgorithm;
-						}
-						break;
-					case Algorithm.LZMA:
-						if (Compressors.LZMA.IsSupported) {
-							return testAlgorithm;
-						}
-						break;
-					case Algorithm.Zstd:
-						if (Compressors.Zstd.IsSupported) {
-							return testAlgorithm;
-						}
-						break;
-					default:
-						break;
+				bool supported = algorithm switch
+				{
+					Algorithm.Compress => Compressors.SystemIO.IsSupported,
+					Algorithm.Deflate => Compressors.Deflate.IsSupported,
+					Algorithm.LZMA => Compressors.LZMA.IsSupported,
+					Algorithm.Zstd => Compressors.Zstd.IsSupported,
+					_ => false
+				};
+
+				if (supported) {
+					return algorithm;
 				}
 			}
 

@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SpriteMaster.Extensions.Compressors {
 	// TODO : Implement a continual training dictionary so each stream doesn't require its own dictionary for in-memory compression.
