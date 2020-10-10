@@ -256,6 +256,8 @@ namespace SpriteMaster.Resample {
 		private static bool IsSymbolic (string path) => new FileInfo(path).Attributes.HasFlag(FileAttributes.ReparsePoint);
 
 		static Cache () {
+			Config.FileCache.Compress = Compression.GetPreferredAlgorithm(Config.FileCache.Compress);
+
 			// Delete any old caches.
 			try {
 				foreach (var root in new [] { Config.LocalRoot }) {

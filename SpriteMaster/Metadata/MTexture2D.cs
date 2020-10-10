@@ -10,6 +10,10 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Metadata {
 	internal sealed class MTexture2D {
+		static MTexture2D() {
+			Config.MemoryCache.Compress = Compression.GetPreferredAlgorithm(Config.MemoryCache.Compress);
+		}
+
 		internal static readonly SharedLock DataCacheLock = new SharedLock();
 		private static MemoryCache DataCache = (Config.MemoryCache.Enabled) ? new MemoryCache(name: "DataCache", config: null) : null;
 		private static long CurrentID = 0U;
