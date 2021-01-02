@@ -58,7 +58,6 @@
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="5.0.0-rc.1.20451.14" />
     <PackageReference Include="TeximpNet" Version="1.4.3" />
     <PackageReference Include="Tomlyn" Version="0.1.2" />
-    <PackageReference Include="Zlib.Portable" Version="1.11.0" />
     <PackageReference Include="ZstdNet" Version="1.3.3" />
   </ItemGroup>
 
@@ -138,5 +137,11 @@
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <Exec Command="copy /D /V /Y /L $(SolutionDir)Libraries\nvtt.dll $(OutDir)nvtt.dll&#xD;&#xA;copy /D /V /Y /L $(SolutionDir)Libraries\libnvtt.so $(OutDir)libnvtt.so&#xD;&#xA;copy /D /V /Y /L $(SolutionDir)Libraries\libnvtt.dylib $(OutDir)libnvtt.dylib" />
   </Target>
+
+  <ItemGroup>
+    <Reference Update="Stardew Valley">
+      <Aliases>destination</Aliases>
+    </Reference>
+  </ItemGroup>
 
 </Project>

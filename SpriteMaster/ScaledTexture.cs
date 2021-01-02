@@ -15,9 +15,9 @@ using System.Runtime.CompilerServices;
 namespace SpriteMaster {
 	internal sealed partial class ScaledTexture : IDisposable {
 		// TODO : This can grow unbounded. Should fix.
-		public static readonly SpriteMap SpriteMap = new SpriteMap();
+		public static readonly SpriteMap SpriteMap = new();
 
-		private static readonly LinkedList<WeakReference<ScaledTexture>> MostRecentList = new LinkedList<WeakReference<ScaledTexture>>();
+		private static readonly LinkedList<WeakReference<ScaledTexture>> MostRecentList = new();
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static bool LegalFormat(Texture2D texture) {
@@ -121,10 +121,10 @@ namespace SpriteMaster {
 			return null;
 		}
 
-		private static readonly TexelTimer TexelAverage = new TexelTimer();
-		private static readonly TexelTimer TexelAverageCached = new TexelTimer();
-		private static readonly TexelTimer TexelAverageSync = new TexelTimer();
-		private static readonly TexelTimer TexelAverageCachedSync = new TexelTimer();
+		private static readonly TexelTimer TexelAverage = new();
+		private static readonly TexelTimer TexelAverageCached = new();
+		private static readonly TexelTimer TexelAverageSync = new();
+		private static readonly TexelTimer TexelAverageCachedSync = new();
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static TexelTimer GetTimer(bool cached, bool async) {
@@ -222,7 +222,7 @@ namespace SpriteMaster {
 		internal readonly bool IsSprite;
 		internal volatile bool IsReady = false;
 
-		internal Vector2B Wrapped = new Vector2B(false);
+		internal Vector2B Wrapped = Vector2B.False;
 
 		internal readonly WeakTexture Reference;
 		internal readonly Bounds OriginalSourceRectangle;

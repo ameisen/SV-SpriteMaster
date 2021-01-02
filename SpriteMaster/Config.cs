@@ -18,6 +18,17 @@ namespace SpriteMaster {
 		}
 
 		internal sealed class ConfigIgnoreAttribute : Attribute { }
+		internal sealed class ConfigRetainAttribute : Attribute { }
+
+		internal sealed class ConfigOldNameAttribute : Attribute
+		{
+			public readonly string Name;
+
+			public ConfigOldNameAttribute(string name)
+			{
+				Name = name;
+			}
+		}
 
 		internal static readonly string ModuleName = typeof(Config).Namespace;
 
@@ -51,6 +62,7 @@ namespace SpriteMaster {
 		internal static bool GarbageCollectAccountOwnedTexture = true;
 		internal static bool LeakPreventTexture = false;
 		internal static bool LeakPreventAll = false;
+		[ConfigRetain]
 		internal static bool ShowIntroMessage = true;
 
 		internal enum Configuration {
@@ -105,7 +117,7 @@ namespace SpriteMaster {
 			internal static uint MaxScale = 6;
 			internal static int MinimumTextureDimensions = 4;
 			internal static bool EnableWrappedAddressing = true;
-			internal static readonly List<SurfaceFormat> SupportedFormats = new List<SurfaceFormat>() {
+			internal static readonly List<SurfaceFormat> SupportedFormats = new() {
 				SurfaceFormat.Color,
 				SurfaceFormat.Dxt5,
 				SurfaceFormat.Dxt3,
@@ -121,7 +133,7 @@ namespace SpriteMaster {
 				internal static CompressionQuality Quality = CompressionQuality.Highest;
 				internal static int HardAlphaDeviationThreshold = 7;
 			}
-			internal static List<string> Blacklist = new List<string>() {
+			internal static List<string> Blacklist = new() {
 				"LooseSprites/Lighting/"
 			};
 			internal static class Padding {
@@ -129,10 +141,10 @@ namespace SpriteMaster {
 				private const bool DevEnabled = true;
 				internal static int MinimumSizeTexels = 4;
 				internal static bool IgnoreUnknown = false;
-				internal static List<string> StrictList = new List<string>() {
+				internal static List<string> StrictList = new() {
 					"LooseSprites/Cursors"
 				};
-				internal static List<string> Whitelist = new List<string>() {
+				internal static List<string> Whitelist = new() {
 					"LooseSprites/font_bold",
 					"Characters/Farmer/hairstyles",
 					"Characters/Farmer/pants",
@@ -161,7 +173,7 @@ namespace SpriteMaster {
 					"TerrainFeatures/tree2_winter",
 					"TerrainFeatures/tree3_winter",
 				};
-				internal static List<string> Blacklist = new List<string>() {
+				internal static List<string> Blacklist = new() {
 				};
 			}
 		}

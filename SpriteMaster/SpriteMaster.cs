@@ -19,13 +19,13 @@ namespace SpriteMaster {
 		private static readonly bool DotNet = (Runtime.Framework == Runtime.FrameworkType.DotNET);
 		private readonly Thread MemoryPressureThread = null;
 		private readonly Thread GarbageCollectThread = null;
-		private readonly object CollectLock = DotNet ? new object () : null;
+		private readonly object CollectLock = DotNet ? new() : null;
 		internal static string AssemblyPath { get; private set; }
 
 		private void MemoryPressureLoop() {
 			for (;;) {
-				if (DrawState.TriggerGC) {
-					Thread.Sleep(128);
+				if (DrawState.TriggerGC && DrawState.TriggerGC.Wait())
+				{
 					continue;
 				}
 
@@ -37,7 +37,7 @@ namespace SpriteMaster {
 					catch (InsufficientMemoryException) {
 						Debug.WarningLn($"Less than {(Config.RequiredFreeMemory * 1024 * 1024).AsDataSize(decimals: 0)} available for block allocation, forcing full garbage collection");
 						MTexture2D.PurgeDataCache();
-						DrawState.TriggerGC = true;
+						DrawState.TriggerGC.Set(true);
 						Thread.Sleep(10000);
 					}
 				}
@@ -50,15 +50,17 @@ namespace SpriteMaster {
 					GC.RegisterForFullGCNotification(10, 10);
 					GC.WaitForFullGCApproach();
 					if (Garbage.ManualCollection) {
+						Thread.Sleep(128);
 						continue;
 					}
 					lock (CollectLock) {
-						while (DrawState.TriggerGC) {
-							Thread.Sleep(32);
+						if (DrawState.TriggerGC && DrawState.TriggerGC.Wait())
+						{
+							continue;
 						}
 
 						MTexture2D.PurgeDataCache();
-						DrawState.TriggerGC = true;
+						DrawState.TriggerGC.Set(true);
 						// TODO : Do other cleanup attempts here.
 					}
 				}
@@ -136,7 +138,8 @@ namespace SpriteMaster {
 
 				if (IsVersionOutdated(Config.ConfigVersion)) {
 					Debug.WarningLn("config.toml is out of date, rewriting it.");
-					SerializeConfig.Load(tempStream);
+
+					SerializeConfig.Load(tempStream, retain: true);
 					Config.ConfigVersion = Config.CurrentVersion;
 				}
 			}

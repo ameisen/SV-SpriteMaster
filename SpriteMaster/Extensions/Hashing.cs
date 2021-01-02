@@ -65,10 +65,10 @@ namespace SpriteMaster.Extensions {
 
 		// FNV-1a hash.
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static ulong HashFNV1 (this byte[] data) => new Span<byte>(data).HashFNV1();
+		public static ulong HashFNV1 (this byte[] data) => new Types.Span<byte>(data).HashFNV1();
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static ulong HashFNV1 (this in Span<byte> data) {
+		public static ulong HashFNV1 (this in Types.Span<byte> data) {
 			const ulong prime = 0x100000001b3;
 			ulong hash = 0xcbf29ce484222325;
 			foreach (byte octet in data) {
@@ -80,13 +80,13 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static ulong HashFNV1 (this byte[] data,/* int start,*/ int length) => new Span<byte>(data, /*start, */length).HashFNV1();
+		public static ulong HashFNV1 (this byte[] data,/* int start,*/ int length) => new Types.Span<byte>(data, /*start, */length).HashFNV1();
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static ulong HashFNV1<T> (this T[] data) where T : unmanaged => data.CastAs<T, byte>().HashFNV1();
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static unsafe ulong HashFNV1<T> (this in Span<T> data) where T : unmanaged => data.As<byte>().HashFNV1();
+		public static unsafe ulong HashFNV1<T> (this in Types.Span<T> data) where T : unmanaged => data.As<byte>().HashFNV1();
 
 		private static readonly IxxHash HasherXX = xxHashFactory.Instance.Create(new xxHashConfig() { HashSizeInBits = 64 });
 
@@ -97,7 +97,7 @@ namespace SpriteMaster.Extensions {
 		public static ulong HashXX (this byte[] data) => HasherXX.ComputeHash(data).Hash.HashXXCompute();
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static unsafe ulong HashXX (this in Span<byte> data) {
+		public static unsafe ulong HashXX (this in Types.Span<byte> data) {
 			fixed (byte* p = &data.GetPinnableReference()) {
 				using var stream = new UnmanagedMemoryStream(p, data.Length);
 				return HasherXX.ComputeHash(stream).Hash.HashXXCompute();
@@ -114,13 +114,13 @@ namespace SpriteMaster.Extensions {
 		public static ulong HashXX<T> (this T[] data) where T : unmanaged => data.CastAs<T, byte>().HashXX();
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static ulong HashXX<T> (this in Span<T> data) where T : unmanaged => data.As<byte>().HashXX();
+		public static ulong HashXX<T> (this in Types.Span<T> data) where T : unmanaged => data.As<byte>().HashXX();
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static ulong Hash (this byte[] data) => data.HashXX();//return data.HashFNV1();
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static ulong Hash (this in Span<byte> data) => data.HashXX();
+		public static ulong Hash (this in Types.Span<byte> data) => data.HashXX();
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static ulong Hash (this byte[] data, int start, int length) => data.HashXX(start, length);//return data.HashFNV1();
@@ -129,7 +129,7 @@ namespace SpriteMaster.Extensions {
 		public static ulong Hash<T> (this T[] data) where T : unmanaged => data.HashXX();
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static ulong Hash<T> (this in Span<T> data) where T : unmanaged => data.HashXX();
+		public static ulong Hash<T> (this in Types.Span<T> data) where T : unmanaged => data.HashXX();
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static ulong Hash (this in Rectangle rectangle) =>

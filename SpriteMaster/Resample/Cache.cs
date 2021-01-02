@@ -102,7 +102,7 @@ namespace SpriteMaster.Resample {
 			Saved = 1
 		}
 
-		private static readonly ConcurrentDictionary<string, SaveState> SavingMap = Config.FileCache.Enabled ? new ConcurrentDictionary<string, SaveState>() : null;
+		private static readonly ConcurrentDictionary<string, SaveState> SavingMap = Config.FileCache.Enabled ? new() : null;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static bool Fetch (

@@ -54,7 +54,7 @@ namespace SpriteMaster {
 			return hash;
 		}
 
-		private static readonly WeakSet<Texture2D> GarbageMarkSet = Config.GarbageCollectAccountUnownedTextures ? new WeakSet<Texture2D>() : null;
+		private static readonly WeakSet<Texture2D> GarbageMarkSet = Config.GarbageCollectAccountUnownedTextures ? new() : null;
 
 		// This basically just changes it from AXYZ to AZYX, which is what's expected in output.
 		private static Bitmap GetDumpBitmap (Bitmap source) {
@@ -131,14 +131,14 @@ namespace SpriteMaster {
 			return input.Size.Right <= 640 && input.Size.Top >= 2000 && input.Size.Extent.MinOf >= WaterBlock && input.Reference.SafeName() == "LooseSprites/Cursors";
 		}
 
-		private static Span<int> DownSample (byte[] data, in Bounds bounds, uint referenceWidth, uint block, bool blend = false) {
+		private static Types.Span<int> DownSample (byte[] data, in Bounds bounds, uint referenceWidth, uint block, bool blend = false) {
 			uint blockSize = block * block;
 			uint halfBlock = blend ? 0 : (block >> 1);
 			var blockOffset = bounds.Offset * (int)block;
 
 			// Rescale the data down, doing an effective point sample from 4x4 blocks to 1 texel.
-			var veryRawData = new Span<byte>(data).As<uint>();
-			var rawData = new Span<int>(new int[bounds.Area]);
+			var veryRawData = new Types.Span<byte>(data).As<uint>();
+			var rawData = new Types.Span<int>(new int[bounds.Area]);
 			foreach (uint y in 0..bounds.Extent.Height) {
 				var ySourceOffset = (((y * block) + (uint)blockOffset.Y) + halfBlock) * referenceWidth;
 				var yDestinationOffset = y * (uint)bounds.Extent.X;
@@ -266,7 +266,7 @@ namespace SpriteMaster {
 			var scaledDimensions = spriteBounds.Extent * scale;
 
 			// Water in the game is pre-upscaled by 4... which is weird.
-			Span<int> rawData;
+			Types.Span<int> rawData;
 			if (isWater && WaterBlock != 1) {
 				rawData = DownSample(data: rawTextureData, bounds: inputBounds, referenceWidth: (uint)input.ReferenceSize.Width, block: WaterBlock);
 				rawSize = inputBounds.Extent;
