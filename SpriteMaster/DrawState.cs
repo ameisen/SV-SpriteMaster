@@ -100,7 +100,7 @@ namespace SpriteMaster {
 			*/
 
 			if (TriggerGC) {
-				ScaledTexture.PurgeTextures((Config.RequiredFreeMemory * Config.RequiredFreeMemoryHysterisis).NearestLong() * 1024 * 1024);
+				ScaledTexture.PurgeTextures((Config.Garbage.RequiredFreeMemory * Config.Garbage.RequiredFreeMemoryHysterisis).NearestLong() * 1024 * 1024);
 				//Garbage.Collect();
 				Garbage.Collect(compact: true, blocking: true, background: false);
 
@@ -110,7 +110,7 @@ namespace SpriteMaster {
 			if (Config.AsyncScaling.CanFetchAndLoadSameFrame || !PushedUpdateThisFrame) {
 				var remaining = ActualRemainingFrameTime();
 				if (remaining < TimeSpan.Zero) {
-					Debug.TraceLn($"Over Time: {-remaining.TotalMilliseconds}");
+					//Debug.TraceLn($"Over Time: {-remaining.TotalMilliseconds}");
 				}
 				SynchronizedTasks.ProcessPendingActions(remaining);
 			}

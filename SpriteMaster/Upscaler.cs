@@ -54,7 +54,7 @@ namespace SpriteMaster {
 			return hash;
 		}
 
-		private static readonly WeakSet<Texture2D> GarbageMarkSet = Config.GarbageCollectAccountUnownedTextures ? new() : null;
+		private static readonly WeakSet<Texture2D> GarbageMarkSet = Config.Garbage.CollectAccountUnownedTextures ? new() : null;
 
 		// This basically just changes it from AXYZ to AZYX, which is what's expected in output.
 		private static Bitmap GetDumpBitmap (Bitmap source) {
@@ -128,7 +128,12 @@ namespace SpriteMaster {
 		}
 
 		private static bool IsWater(SpriteInfo input) {
-			return input.Size.Right <= 640 && input.Size.Top >= 2000 && input.Size.Extent.MinOf >= WaterBlock && input.Reference.SafeName() == "LooseSprites/Cursors";
+			var bounds = input.Size;
+			var texture = input.Reference;
+			if (bounds.Right <= 640 && bounds.Top >= 2000 && bounds.Extent.MinOf >= WaterBlock && texture.SafeName() == "LooseSprites/Cursors") {
+				return true;
+			}
+			return false;
 		}
 
 		private static Types.Span<int> DownSample (byte[] data, in Bounds bounds, uint referenceWidth, uint block, bool blend = false) {
@@ -332,7 +337,7 @@ namespace SpriteMaster {
 						if (Config.Resample.Padding.Whitelist.Contains(input.Reference.SafeName())) {
 							shouldPad = Vector2B.True;
 						}
-						else if (Config.Resample.Padding.Blacklist.Contains(input.Reference.SafeName())) {
+						else if (isWater || Config.Resample.Padding.Blacklist.Contains(input.Reference.SafeName())) {
 							shouldPad = Vector2B.False;
 						}
 					}
@@ -623,7 +628,7 @@ namespace SpriteMaster {
 		private static unsafe ManagedTexture2D UpscaleInternal (ScaledTexture texture, ref uint scale, SpriteInfo input, bool desprite, ulong hash, ref Vector2B wrapped, bool async) {
 			var spriteFormat = TextureFormat.Color;
 
-			if (Config.GarbageCollectAccountUnownedTextures && GarbageMarkSet.Add(input.Reference)) {
+			if (Config.Garbage.CollectAccountUnownedTextures && GarbageMarkSet.Add(input.Reference)) {
 				Garbage.Mark(input.Reference);
 				input.Reference.Disposing += (obj, _) => {
 					Garbage.Unmark((Texture2D)obj);
@@ -675,24 +680,30 @@ namespace SpriteMaster {
 				}
 
 				if (bitmapData == null) {
-					CreateNewTexture(
-						async: async,
-						texture: texture,
-						input: input,
-						desprite: desprite,
-						isWater: isWater,
-						isFont: isFont,
-						spriteBounds: in spriteBounds,
-						textureSize: in textureSize,
-						hashString: hashString,
-						wrapped: ref wrapped,
-						scale: ref scale,
-						size: out newSize,
-						format: out spriteFormat,
-						padding: out texture.Padding,
-						blockPadding: out texture.BlockPadding,
-						data: out bitmapData
-					);
+					try {
+						CreateNewTexture(
+							async: async,
+							texture: texture,
+							input: input,
+							desprite: desprite,
+							isWater: isWater,
+							isFont: isFont,
+							spriteBounds: in spriteBounds,
+							textureSize: in textureSize,
+							hashString: hashString,
+							wrapped: ref wrapped,
+							scale: ref scale,
+							size: out newSize,
+							format: out spriteFormat,
+							padding: out texture.Padding,
+							blockPadding: out texture.BlockPadding,
+							data: out bitmapData
+						);
+					}
+					catch (OutOfMemoryException) {
+						Debug.Error($"OutOfMemoryException thrown trying to create texture [texture: {texture.SafeName()}, bounds: {spriteBounds}, textureSize: {textureSize}, scale: {scale}]");
+						throw;
+					}
 
 					try {
 						Cache.Save(cachePath, scale, newSize, spriteFormat, wrapped, texture.Padding, texture.BlockPadding, bitmapData);

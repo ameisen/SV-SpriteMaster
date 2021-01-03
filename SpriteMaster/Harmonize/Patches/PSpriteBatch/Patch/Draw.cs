@@ -30,7 +30,7 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch.Patch {
 			Color color,
 			float rotation,
 			ref Vector2 origin,
-			SpriteEffects effects,
+			ref SpriteEffects effects,
 			float layerDepth,
 			ref ManagedTexture2D __state
 		) {
@@ -44,7 +44,7 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch.Patch {
 				color: color,
 				rotation: rotation,
 				origin: ref origin,
-				effects: effects,
+				effects: ref effects,
 				layerDepth: layerDepth,
 				__state: ref __state
 			);
@@ -59,7 +59,7 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch.Patch {
 			Color color,
 			float rotation,
 			ref Vector2 origin,
-			SpriteEffects effects,
+			ref SpriteEffects effects,
 			ref float layerDepth,
 			ref ManagedTexture2D __state
 		) {
@@ -73,7 +73,7 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch.Patch {
 				color: color,
 				rotation: rotation,
 				origin: ref origin,
-				effects: effects,
+				effects: ref effects,
 				layerDepth: ref layerDepth,
 				__state: ref __state
 			);

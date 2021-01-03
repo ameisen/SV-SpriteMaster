@@ -81,6 +81,7 @@ namespace SpriteMaster.Resample {
 					}
 					else {
 						Debug.WarningLn($"Failed to use {(CompressionFormat)textureFormat} compression: " + compressor.LastErrorString);
+						Debug.WarningLn($"Dimensions: [{dimensions.Width}, {dimensions.Height}]");
 					}
 				}
 			}
