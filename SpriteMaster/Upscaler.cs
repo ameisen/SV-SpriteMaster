@@ -38,7 +38,7 @@ namespace SpriteMaster {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static ulong GetHash (SpriteInfo input, bool desprite) {
+		internal static ulong GetHash (SpriteInfo input, TextureType textureType) {
 			// Need to make Hashing.CombineHash work better.
 			ulong hash = Hash.Combine(input.Reference.SafeName()?.GetHashCode(), input.Reference.Meta().GetHash(input));
 
@@ -48,7 +48,7 @@ namespace SpriteMaster {
 				}
 			}
 
-			if (desprite) {
+			if (textureType == TextureType.Sprite) {
 				hash = Hash.Combine(hash, input.Size.Hash());
 			}
 			return hash;
@@ -196,7 +196,7 @@ namespace SpriteMaster {
 			ScaledTexture texture,
 			bool async,
 			SpriteInfo input,
-			bool desprite,
+			TextureType textureType,
 			bool isWater,
 			bool isFont,
 			in Bounds spriteBounds,
@@ -218,8 +218,22 @@ namespace SpriteMaster {
 			var rawSize = textureSize;
 			Bounds rawBounds = textureSize;
 
-			var inputSize = desprite ? spriteBounds.Extent : rawSize;
-			var inputBounds = desprite ? spriteBounds : rawSize;
+			Vector2I inputSize;
+			Bounds inputBounds;
+			switch (textureType) {
+				case TextureType.Sprite:
+					inputSize = spriteBounds.Extent;
+					inputBounds = spriteBounds;
+					break;
+				case TextureType.Image:
+					inputSize = rawSize;
+					inputBounds = rawSize;
+					break;
+				case TextureType.SlicedImage:
+					throw new NotImplementedException("Sliced Images not yet implemented");
+				default:
+					throw new NotImplementedException("Unknown Texture Type provided");
+			}
 
 			var rawTextureData = input.Data;
 
@@ -602,7 +616,7 @@ namespace SpriteMaster {
 			data = bitmapData;
 		}
 
-		internal static ManagedTexture2D Upscale (ScaledTexture texture, ref uint scale, SpriteInfo input, bool desprite, ulong hash, ref Vector2B wrapped, bool async) {
+		internal static ManagedTexture2D Upscale (ScaledTexture texture, ref uint scale, SpriteInfo input, TextureType textureType, ulong hash, ref Vector2B wrapped, bool async) {
 			// Try to process the texture twice. Garbage collect after a failure, maybe it'll work then.
 			foreach (var _ in 0.To(1)) {
 				try {
@@ -610,7 +624,7 @@ namespace SpriteMaster {
 						texture: texture,
 						scale: ref scale,
 						input: input,
-						desprite: desprite,
+						textureType: textureType,
 						hash: hash,
 						wrapped: ref wrapped,
 						async: async
@@ -625,7 +639,7 @@ namespace SpriteMaster {
 			return null;
 		}
 
-		private static unsafe ManagedTexture2D UpscaleInternal (ScaledTexture texture, ref uint scale, SpriteInfo input, bool desprite, ulong hash, ref Vector2B wrapped, bool async) {
+		private static unsafe ManagedTexture2D UpscaleInternal (ScaledTexture texture, ref uint scale, SpriteInfo input, TextureType textureType, ulong hash, ref Vector2B wrapped, bool async) {
 			var spriteFormat = TextureFormat.Color;
 
 			if (Config.Garbage.CollectAccountUnownedTextures && GarbageMarkSet.Add(input.Reference)) {
@@ -640,10 +654,15 @@ namespace SpriteMaster {
 
 			var spriteBounds = input.Size;
 			var textureSize = input.ReferenceSize;
-			var inputSize = desprite ? spriteBounds.Extent : textureSize;
+			var inputSize = textureType switch {
+				TextureType.Sprite => spriteBounds.Extent,
+				TextureType.Image => textureSize,
+				TextureType.SlicedImage => throw new NotImplementedException("Sliced Images not yet implemented"),
+				_ => throw new NotImplementedException("Unknown Image Type provided")
+			};
 
-			var isWater = desprite && IsWater(input);
-			var isFont = desprite && !isWater && IsFont(input);
+			var isWater = (textureType == TextureType.Sprite) && IsWater(input);
+			var isFont = (textureType == TextureType.Sprite) && !isWater && IsFont(input);
 
 			var BlockSize = isWater ? WaterBlock : isFont ? FontBlock : 0U;
 
@@ -685,7 +704,7 @@ namespace SpriteMaster {
 							async: async,
 							texture: texture,
 							input: input,
-							desprite: desprite,
+							textureType: textureType,
 							isWater: isWater,
 							isFont: isFont,
 							spriteBounds: in spriteBounds,
