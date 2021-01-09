@@ -14,7 +14,7 @@
     <NeutralLanguage>en-US</NeutralLanguage>
 		<ProjectGuid>{D8AB0188-41C5-4669-AD33-231DA9401FA0}</ProjectGuid>
     <OutputType>Library</OutputType>
-		<TargetFramework>net45</TargetFramework>
+		<TargetFramework>net452</TargetFramework>
     <FileAlignment>512</FileAlignment>
     <LangVersion>preview</LangVersion>
     <PlatformTarget>AnyCPU</PlatformTarget>

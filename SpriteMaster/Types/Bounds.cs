@@ -204,7 +204,7 @@ namespace SpriteMaster.Types {
 		public static implicit operator Bounds (in XTileRectangle rect) => new Bounds(rect);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public override readonly string ToString () => $"[{X}, {Y}, {InvertedWidth}, {InvertedHeight}]";
+		public override readonly string ToString () => $"[[{X}, {Y}] [{InvertedWidth}, {InvertedHeight}]]";
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public readonly int CompareTo (Bounds other) {

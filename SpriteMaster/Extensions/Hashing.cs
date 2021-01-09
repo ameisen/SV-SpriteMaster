@@ -13,24 +13,13 @@ namespace SpriteMaster.Extensions {
 	}
 
 	public static class Hash {
-		public enum CombineType {
-			Xor,
-			Boost
-		}
-		public const CombineType DefaultCombineType = CombineType.Boost;
-
 		public const ulong Default = _HashValues.Default;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static ulong Accumulate (ulong hash, ulong hashend) => DefaultCombineType switch {
-			CombineType.Xor => hash ^ hashend,
-			// Stolen from C++ Boost.
-			CombineType.Boost => hash ^ (hashend + 0x9e3779b9ul + (hash << 6) + (hash >> 2)),
-			_ => throw new Exception($"Unknown Combine Type {DefaultCombineType}")
-		};
+		public static ulong Accumulate(ulong hash, ulong hashend) => hash ^ (hashend + 0x9e3779b9ul + (hash << 6) + (hash >> 2));
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static ulong Accumulate (ulong hash, int hashend) => Accumulate(hash, unchecked((ulong)hashend));
+		public static ulong Accumulate (ulong hash, int hashend) => Accumulate(hash, unchecked((ulong)hashend));
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static ulong Combine (params ulong[] hashes) {
@@ -111,6 +100,16 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static ulong HashXX(this Stream stream) {
+			return HasherXX.ComputeHash(stream).Hash.HashXXCompute();
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static ulong HashXX(this MemoryStream stream) {
+			return HasherXX.ComputeHash(stream).Hash.HashXXCompute();
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static ulong HashXX<T> (this T[] data) where T : unmanaged => data.CastAs<T, byte>().HashXX();
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -130,6 +129,12 @@ namespace SpriteMaster.Extensions {
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static ulong Hash<T> (this in Types.Span<T> data) where T : unmanaged => data.HashXX();
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static ulong Hash(this Stream stream) => stream.HashXX();
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static ulong Hash(this MemoryStream stream) => stream.HashXX();
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static ulong Hash (this in Rectangle rectangle) =>
