@@ -1,40 +1,14 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <Project Sdk="Microsoft.NET.Sdk">
+	<Import Project="$(SolutionDir)SpriteMasterCommon.props" />
 
   <PropertyGroup>
     <AssemblyName>SpriteMaster</AssemblyName>
-    <RootNamespace>SpriteMaster</RootNamespace>
-    <Version>0.12.0</Version>
-    <TargetFramework>net452</TargetFramework>
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <EnableHarmony>true</EnableHarmony>
-    <AssemblyVersion>0.12.0.*</AssemblyVersion>
-		<Deterministic>false</Deterministic>
-		<LangVersion>preview</LangVersion>
 		<RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
-		<Platforms>AnyCPU</Platforms>
-		<RunAnalyzersDuringLiveAnalysis>false</RunAnalyzersDuringLiveAnalysis>
-		<RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
-		<Authors>mkuklinski</Authors>
-		<Company>Digital Carbide</Company>
-		<PackageLicenseFile>LICENSE.MD</PackageLicenseFile>
-		<Copyright>mkuklinski</Copyright>
-		<FileVersion>0.12.0.0</FileVersion>
-		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-		<NullableReferenceTypes>true</NullableReferenceTypes>
-    <FileAlignment>512</FileAlignment>
     <NoWarn>0162;7035</NoWarn>
-		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-		<OutputPath>bin\$(Configuration)\</OutputPath>
 		<IgnoreModFilePatterns>\.dll\.config$, ILMerge, runtimes, net452, net450, net45</IgnoreModFilePatterns>
 		<Configurations>Debug;Release;Development</Configurations>
-		<AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
-		<ApplicationIcon>pufferchick_xbrz.ico</ApplicationIcon>
-		<PackageId>SpriteMaster-SV</PackageId>
-		<Product>SpriteMaster-SV</Product>
-		<DebugType>portable</DebugType>
-		<ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
-		<NeutralLanguage>English (United States)</NeutralLanguage>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -78,6 +52,21 @@
   <ItemGroup>
     <ProjectReference Include="$(SolutionDir)\Runtime\Runtime.csproj" />
     <ProjectReference Include="$(SolutionDir)\xBRZNet\xBRZ.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Properties\Settings.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
   </ItemGroup>
 
   <ItemGroup>

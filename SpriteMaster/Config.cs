@@ -42,7 +42,7 @@ namespace SpriteMaster {
 
 		internal static string ConfigVersion = "";
 		[ConfigIgnore]
-		internal static string ClearConfigBefore = "0.13.0";
+		internal static string ClearConfigBefore = "0.12.0.0";
 
 		internal static bool Enabled = true;
 		internal static SButton ToggleButton = SButton.F11;
