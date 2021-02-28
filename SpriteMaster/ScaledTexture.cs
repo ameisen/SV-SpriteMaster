@@ -414,7 +414,7 @@ namespace SpriteMaster {
 				texture = Texture;
 			}
 
-			if (texture?.IsDisposed == true) {
+			if (texture == null || texture.IsDisposed) {
 				return;
 			}
 
