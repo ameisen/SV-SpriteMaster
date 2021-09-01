@@ -1,4 +1,4 @@
-﻿using Harmony;
+﻿using HarmonyLib;
 using Microsoft.Xna.Framework;
 using SpriteMaster.Extensions;
 using System;
@@ -46,7 +46,7 @@ namespace SpriteMaster.Harmonize {
 			typeof(System.Drawing.Color)
 		};
 
-		public static void ApplyPatches(this HarmonyInstance @this) {
+		public static void ApplyPatches(this Harmony @this) {
 			Contract.AssertNotNull(@this);
 			var assembly = typeof(Harmonize).Assembly;
 			foreach (var type in assembly.GetTypes()) {
@@ -223,21 +223,21 @@ namespace SpriteMaster.Harmonize {
 		internal static int GetPriority (MethodInfo method, int defaultPriority) {
 			try {
 				if (method.GetCustomAttribute<HarmonyPriority>() is var priorityAttribute && priorityAttribute != null) {
-					return priorityAttribute.info.prioritiy;
+					return priorityAttribute.info.priority;
 				}
 			}
 			catch { }
 			return defaultPriority;
 		}
 
-		private static void Patch(this HarmonyInstance instance, Type type, string name, MethodInfo pre = null, MethodInfo post = null, MethodInfo trans = null, int priority = Priority.Last, bool instanceMethod = true) {
+		private static void Patch(this Harmony instance, Type type, string name, MethodInfo pre = null, MethodInfo post = null, MethodInfo trans = null, int priority = Priority.Last, bool instanceMethod = true) {
 			var referenceMethod = pre ?? post;
 			if (referenceMethod != null) {
 				var typeMethod = GetPatchMethod(type, name, referenceMethod, instance: instanceMethod) ?? throw new ArgumentException($"Method '{name}' in type '{type.FullName}' could not be found");
 				instance.Patch(
 					typeMethod,
-					(pre == null) ? null : new HarmonyMethod(pre) { prioritiy = GetPriority(pre, priority) },
-					(post == null) ? null : new HarmonyMethod(post) { prioritiy = GetPriority(post, priority) },
+					(pre == null) ? null : new HarmonyMethod(pre, GetPriority(pre, priority)),
+					(post == null) ? null : new HarmonyMethod(post, GetPriority(post, priority)),
 					null
 				);
 			}
@@ -252,15 +252,15 @@ namespace SpriteMaster.Harmonize {
 			}
 		}
 
-		public static void Patch (this HarmonyInstance instance, Type type, Type genericType, string name, MethodInfo pre = null, MethodInfo post = null, MethodInfo trans = null, int priority = Priority.Last, bool instanceMethod = true) {
+		public static void Patch (this Harmony instance, Type type, Type genericType, string name, MethodInfo pre = null, MethodInfo post = null, MethodInfo trans = null, int priority = Priority.Last, bool instanceMethod = true) {
 			var referenceMethod = pre ?? post;
 			if (referenceMethod != null) {
 				var typeMethod = GetPatchMethod(type, name, referenceMethod, instance: instanceMethod) ?? throw new ArgumentException($"Method '{name}' in type '{type.FullName}' could not be found");
 				var typeMethodInfo = (MethodInfo)typeMethod;
 				instance.Patch(
 					typeMethodInfo.MakeGenericMethod(genericType),
-					(pre == null) ? null : new HarmonyMethod(pre.MakeGenericMethod(genericType)) { prioritiy = GetPriority(pre, priority) },
-					(post == null) ? null : new HarmonyMethod(post.MakeGenericMethod(genericType)) { prioritiy = GetPriority(post, priority) },
+					(pre == null) ? null : new HarmonyMethod(pre.MakeGenericMethod(genericType), GetPriority(pre, priority)),
+					(post == null) ? null : new HarmonyMethod(post.MakeGenericMethod(genericType), GetPriority(post, priority)),
 					null
 				);
 			}
@@ -271,7 +271,7 @@ namespace SpriteMaster.Harmonize {
 					typeMethodInfo.MakeGenericMethod(genericType),
 					null,
 					null,
-					new HarmonyMethod(trans.MakeGenericMethod(genericType)) { prioritiy = GetPriority(trans, priority) }
+					new HarmonyMethod(trans.MakeGenericMethod(genericType), GetPriority(trans, priority))
 				);
 			}
 		}

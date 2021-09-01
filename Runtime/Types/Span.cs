@@ -78,12 +78,24 @@ namespace SpriteMaster.Types {
 
 		public unsafe T this[uint index] {
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			readonly get {
+			readonly get 
+			{
+				if (index >= Length || index < 0)
+                {
+					throw new ArgumentOutOfRangeException();
+                }
+
 				T* ptr = (T*)(Pointer + unchecked((int)GetOffset(index)));
 				return *ptr;
 			}
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			set {
+			set
+			{
+				if (index >= Length || index < 0)
+				{
+					throw new ArgumentOutOfRangeException();
+				}
+
 				T* ptr = (T*)(Pointer + unchecked((int)GetOffset(index)));
 				*ptr = value;
 			}
