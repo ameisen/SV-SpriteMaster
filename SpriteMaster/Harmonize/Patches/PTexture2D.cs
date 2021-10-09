@@ -134,7 +134,7 @@ namespace SpriteMaster.Harmonize.Patches {
 
 		// A horrible, horrible hack to stop a rare-ish crash when zooming or when the device resets. It doesn't appear to originate in SpriteMaster, but SM most certainly
 		// makes it worse. This will force the texture to regenerate on the fly if it is in a zombie state.
-		[Harmonize("Microsoft.Xna.Framework", "Microsoft.Xna.Framework.Helpers", "CheckDisposed", HarmonizeAttribute.Fixation.Prefix, PriorityLevel.Last, instance: false, platform: HarmonizeAttribute.Platform.Windows)]
+		[Harmonize("Microsoft.Xna.Framework", "Microsoft.Xna.Framework.Helpers", "CheckDisposed", HarmonizeAttribute.Fixation.Prefix, PriorityLevel.Last, instance: false, platform: HarmonizeAttribute.Platform.XNA)]
 		private static unsafe bool CheckDisposed (object obj, ref IntPtr pComPtr) {
 			if (obj is ManagedTexture2D) {
 				return true;

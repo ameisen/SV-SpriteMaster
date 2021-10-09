@@ -48,18 +48,21 @@ namespace SpriteMaster.Harmonize {
 
 		public static void ApplyPatches(this Harmony @this) {
 			Contract.AssertNotNull(@this);
+			Debug.TraceLn("Applying Patches");
 			var assembly = typeof(Harmonize).Assembly;
 			foreach (var type in assembly.GetTypes()) {
 				foreach (var method in type.GetMethods(StaticFlags)) {
 					try {
 						var attributes = method.GetCustomAttributes().OfType<HarmonizeAttribute>();
-						if (attributes == null || !attributes.Any())
+						if (!attributes?.Any() ?? false) {
 							continue;
+						}
 
 						foreach (var attribute in attributes) {
 							try {
-								if (!attribute.CheckPlatform())
+								if (!attribute.CheckPlatform()) {
 									continue;
+								}
 
 								Debug.TraceLn($"Patching Method {method.GetFullName()}");
 
@@ -75,7 +78,7 @@ namespace SpriteMaster.Harmonize {
 										Patch(
 											@this,
 											instanceType,
-											attribute.Method,
+											attribute.Name,
 											pre: (attribute.PatchFixation == HarmonizeAttribute.Fixation.Prefix) ? method : null,
 											post: (attribute.PatchFixation == HarmonizeAttribute.Fixation.Postfix) ? method : null,
 											trans: (attribute.PatchFixation == HarmonizeAttribute.Fixation.Transpile) ? method : null,
@@ -89,7 +92,7 @@ namespace SpriteMaster.Harmonize {
 												@this,
 												instanceType,
 												structType,
-												attribute.Method,
+												attribute.Name,
 												pre: (attribute.PatchFixation == HarmonizeAttribute.Fixation.Prefix) ? method : null,
 												post: (attribute.PatchFixation == HarmonizeAttribute.Fixation.Postfix) ? method : null,
 												trans: (attribute.PatchFixation == HarmonizeAttribute.Fixation.Transpile) ? method : null,
@@ -114,6 +117,7 @@ namespace SpriteMaster.Harmonize {
 					}
 				}
 			}
+			Debug.TraceLn("Done Applying Patches");
 		}
 
 		private static Type[] GetArguments (this MethodInfo method) {

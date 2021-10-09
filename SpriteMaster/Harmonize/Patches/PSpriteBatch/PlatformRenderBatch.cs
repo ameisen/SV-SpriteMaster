@@ -31,7 +31,7 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 			"FlushVertexArray",
 			HarmonizeAttribute.Fixation.Prefix,
 			PriorityLevel.First,
-			platform: HarmonizeAttribute.Platform.Unix
+			platform: HarmonizeAttribute.Platform.MonoGame
 		)]
 		internal static bool OnFlushVertexArray (
 			SpriteBatcher __instance,
@@ -60,7 +60,7 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 			"PlatformRenderBatch",
 			HarmonizeAttribute.Fixation.Prefix,
 			PriorityLevel.First,
-			platform: HarmonizeAttribute.Platform.Windows
+			platform: HarmonizeAttribute.Platform.XNA
 		)]
 		internal static bool OnPlatformRenderBatch (
 			SpriteBatch __instance,

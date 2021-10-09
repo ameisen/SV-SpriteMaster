@@ -21,14 +21,16 @@ namespace SpriteMaster.Harmonize {
 
 		public enum Platform {
 			All = 0,
-			Windows = 1,
-			Linux = 2,
-			Macintosh = 3,
-			Unix = 4
+			Windows,
+			Linux,
+			Macintosh,
+			Unix,
+			XNA,
+			MonoGame
 		}
 
 		public readonly Type Type;
-		public readonly string Method;
+		public readonly string Name;
 		public readonly int PatchPriority;
 		public readonly Fixation PatchFixation;
 		public readonly Generic GenericType;
@@ -43,6 +45,8 @@ namespace SpriteMaster.Harmonize {
 				Platform.Linux => Runtime.IsLinux,
 				Platform.Macintosh => Runtime.IsMacintosh,
 				Platform.Unix => Runtime.IsUnix,
+				Platform.XNA => Runtime.IsXNA,
+				Platform.MonoGame => Runtime.IsMonoGame,
 				_ => throw new ArgumentOutOfRangeException(nameof(ForPlatform)),
 			};
 		}
@@ -52,7 +56,7 @@ namespace SpriteMaster.Harmonize {
 		}
 
 		private static Assembly GetAssembly(string name) {
-			if (Runtime.IsUnix && name.StartsWith("Microsoft.Xna.Framework")) {
+			if (Runtime.IsMonoGame && name.StartsWith("Microsoft.Xna.Framework")) {
 				name = "MonoGame.Framework";
 			}
 
@@ -80,7 +84,7 @@ namespace SpriteMaster.Harmonize {
 
 		public HarmonizeAttribute(Type type, string method, Fixation fixation = Fixation.Prefix, PriorityLevel priority = PriorityLevel.Average, Generic generic = Generic.None, bool instance = true, Platform platform = Platform.All) {
 			Type = type;
-			Method = method;
+			Name = method;
 			PatchPriority = (int)priority;
 			PatchFixation = fixation;
 			GenericType = generic;

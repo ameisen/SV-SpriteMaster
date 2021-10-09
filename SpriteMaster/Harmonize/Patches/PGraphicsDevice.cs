@@ -14,7 +14,7 @@ namespace SpriteMaster.Harmonize.Patches {
 			return true;
 		}
 
-		[Harmonize("Present", fixation: HarmonizeAttribute.Fixation.Prefix, priority: PriorityLevel.Last, platform: HarmonizeAttribute.Platform.Windows)]
+		[Harmonize("Present", fixation: HarmonizeAttribute.Fixation.Prefix, priority: PriorityLevel.Last, platform: HarmonizeAttribute.Platform.XNA)]
 		internal static bool Present (GraphicsDevice __instance, Rectangle? sourceRectangle, Rectangle? destinationRectangle, IntPtr overrideWindowHandle) {
 			DrawState.OnPresent();
 			return true;
@@ -25,7 +25,7 @@ namespace SpriteMaster.Harmonize.Patches {
 			DrawState.OnPresentPost();
 		}
 
-		[Harmonize("Present", fixation: HarmonizeAttribute.Fixation.Postfix, priority: PriorityLevel.First, platform: HarmonizeAttribute.Platform.Windows)]
+		[Harmonize("Present", fixation: HarmonizeAttribute.Fixation.Postfix, priority: PriorityLevel.First, platform: HarmonizeAttribute.Platform.XNA)]
 		internal static void PresentPost (GraphicsDevice __instance, Rectangle? sourceRectangle, Rectangle? destinationRectangle, IntPtr overrideWindowHandle) {
 			DrawState.OnPresentPost();
 		}

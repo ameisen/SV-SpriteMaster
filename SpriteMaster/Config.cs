@@ -201,7 +201,7 @@ namespace SpriteMaster {
 		internal static class AsyncScaling {
 			internal const bool Enabled = true;
 			internal static bool EnabledForUnknownTextures = false;
-			internal static bool ForceSynchronousLoads = Runtime.IsUnix;
+			internal static bool ForceSynchronousLoads = Runtime.IsMonoGame;
 			internal static bool ThrottledSynchronousLoads = true;
 			internal static bool CanFetchAndLoadSameFrame = true;
 			internal static int MaxLoadsPerFrame = int.MaxValue;

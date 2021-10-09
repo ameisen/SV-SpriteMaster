@@ -18,7 +18,7 @@ namespace SpriteMaster {
 	public sealed class SpriteMaster : Mod {
 		public static SpriteMaster Self { get; private set; } = default;
 
-		private static readonly bool DotNet = (Runtime.Framework == Runtime.FrameworkType.DotNET);
+		private static readonly bool DotNet = (Runtime.Framework != Runtime.FrameworkType.Mono);
 		private readonly Thread MemoryPressureThread = null;
 		private readonly Thread GarbageCollectThread = null;
 		private readonly object CollectLock = DotNet ? new() : null;

@@ -27,16 +27,10 @@
 		<NoWarn>1815</NoWarn>
 	</PropertyGroup>
 	<ItemGroup>
-	  <Compile Remove="System\Index.cs" />
-	  <Compile Remove="System\Range.cs" />
-	</ItemGroup>
-	<ItemGroup>
 		<None Include="$(SolutionDir)\LICENSE.md">
 			<Pack>True</Pack>
 			<PackagePath></PackagePath>
 		</None>
-		<None Include="System\Index.cs" />
-		<None Include="System\Range.cs" />
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="System.Data.HashFunction.xxHash" Version="2.0.0" />
