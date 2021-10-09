@@ -6,6 +6,7 @@ using SpriteMaster.Resample;
 using SpriteMaster.Types;
 using System;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.CompilerServices;
@@ -15,6 +16,8 @@ namespace SpriteMaster {
 	internal sealed class Upscaler {
 		internal enum Scaler : int {
 			xBRZ = 0,
+			Bilinear,
+			Bicubic,
 			ImageMagick
 		}
 
@@ -193,6 +196,35 @@ namespace SpriteMaster {
 		}
 
 		// TODO : use MemoryFailPoint class. Extensively.
+
+		private static byte[] ExtractBitmap(Bitmap image) {
+			var resizedData = image.LockBits(new Bounds(image), ImageLockMode.ReadOnly, image.PixelFormat);
+
+			// TODO : what if PixelFormat doesn't match sizeof(int)?
+			byte[] data = null;
+
+			try {
+				data = new byte[image.Width * image.Height * sizeof(int)];
+				var dataSize = resizedData.Stride * resizedData.Height;
+				var dataPtr = resizedData.Scan0;
+				var widthSize = resizedData.Width;
+
+				var dataBytes = new byte[dataSize];
+				int offsetSource = 0;
+				int offsetDest = 0;
+				foreach (int y in 0.RangeTo(resizedData.Height)) {
+					Marshal.Copy(dataPtr + offsetSource, data, offsetDest, widthSize);
+					offsetSource += resizedData.Stride;
+					offsetDest += widthSize;
+				}
+			}
+			finally {
+				image.UnlockBits(resizedData);
+			}
+
+			return data;
+		}
+
 		private static unsafe void CreateNewTexture (
 			ScaledTexture texture,
 			bool async,
@@ -446,10 +478,6 @@ namespace SpriteMaster {
 
 				try {
 					switch (Config.Resample.Scaler) {
-						case Scaler.ImageMagick: {
-							throw new NotImplementedException("ImageMagick Scaling is not implemented");
-						}
-						break;
 						case Scaler.xBRZ: {
 							var outData = bitmapData.AsFixedSpan().As<uint>();
 
@@ -468,6 +496,36 @@ namespace SpriteMaster {
 
 							bitmapData = Recolor.Enhance(bitmapData, scaledSize);
 
+						}
+						break;
+						case Scaler.ImageMagick: {
+							throw new NotImplementedException("ImageMagick Scaling is not implemented");
+						}
+						break;
+						case Scaler.Bilinear:
+						case Scaler.Bicubic: {
+							// TODO : use our own implementation eventually
+							using var bitmap = Textures.CreateBitmap(bitmapData, prescaleSize, PixelFormat.Format32bppArgb);
+							using var newBitmap = new Bitmap(scaledSize.X, scaledSize.Y);
+							newBitmap.SetResolution(bitmap.HorizontalResolution, bitmap.VerticalResolution);
+							using (var graphics = Graphics.FromImage(newBitmap)) {
+								graphics.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
+								graphics.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
+								graphics.InterpolationMode = Config.Resample.Scaler switch {
+									Scaler.Bilinear => InterpolationMode.HighQualityBilinear,
+									Scaler.Bicubic => InterpolationMode.HighQualityBicubic,
+									_ => throw new NotImplementedException("Attempted to scale bilinear or bicubic but the scaler type changed part-way through")
+								};
+								graphics.SmoothingMode = SmoothingMode.HighQuality;
+								graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+
+								using (var wrapMode = new ImageAttributes()) {
+									wrapMode.SetWrapMode(WrapMode.TileFlipXY);
+									graphics.DrawImage(bitmap, new System.Drawing.Rectangle(System.Drawing.Point.Empty, scaledSize), 0, 0, bitmap.Width, bitmap.Height, GraphicsUnit.Pixel, wrapMode);
+								}
+							}
+
+							bitmapData = ExtractBitmap(newBitmap);
 						}
 						break;
 						default:
@@ -496,27 +554,9 @@ namespace SpriteMaster {
 				Debug.TraceLn($"Sprite {texture.SafeName()} requires rescaling");
 				// This should be incredibly rare - we very rarely need to scale back down.
 				using var filtered = Textures.CreateBitmap(bitmapData, scaledDimensions, PixelFormat.Format32bppArgb);
-				using var resized = filtered.Resize(newSize, System.Drawing.Drawing2D.InterpolationMode.Bicubic);
-				var resizedData = resized.LockBits(new Bounds(resized), ImageLockMode.ReadOnly, resized.PixelFormat);
+				using var resized = filtered.Resize(newSize, System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic);
 
-				try {
-					bitmapData = new byte[resized.Width * resized.Height * sizeof(int)];
-					var dataSize = resizedData.Stride * resizedData.Height;
-					var dataPtr = resizedData.Scan0;
-					var widthSize = resizedData.Width;
-
-					var dataBytes = new byte[dataSize];
-					int offsetSource = 0;
-					int offsetDest = 0;
-					foreach (int y in 0.RangeTo(resizedData.Height)) {
-						Marshal.Copy(dataPtr + offsetSource, bitmapData, offsetDest, widthSize);
-						offsetSource += resizedData.Stride;
-						offsetDest += widthSize;
-					}
-				}
-				finally {
-					resized.UnlockBits(resizedData);
-				}
+				bitmapData = ExtractBitmap(resized);
 			}
 
 			format = TextureFormat.Color;
@@ -755,7 +795,7 @@ namespace SpriteMaster {
 				}
 
 				var isAsync = Config.AsyncScaling.Enabled && async;
-				if (isAsync && Config.AsyncScaling.ForceSynchronousLoads) {
+				if (isAsync && !Config.AsyncScaling.ForceSynchronousStores) {
 					var reference = input.Reference;
 					void asyncCall () {
 						if (reference.IsDisposed) {

@@ -30,7 +30,7 @@ namespace SpriteMaster {
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		internal static void ProcessPendingActions (TimeSpan remainingTime) {
-			var startTime = DateTime.Now;
+			var watch = System.Diagnostics.Stopwatch.StartNew();
 			{
 				var pendingActions = PendingActions.Current;
 				bool invoke;
@@ -63,14 +63,14 @@ namespace SpriteMaster {
 							int processed = 0;
 							foreach (var action in pendingLoads) {
 								var estimate = TexelAverage.Estimate(action);
-								if (DrawState.PushedUpdateWithin(1) && (DateTime.Now - startTime) + estimate > remainingTime) {
+								if (DrawState.PushedUpdateWithin(1) && watch.Elapsed + estimate > remainingTime) {
 									break;
 								}
 
 								DrawState.PushedUpdateThisFrame = true;
-								var start = DateTime.Now;
+								var start = watch.Elapsed;
 								action.Invoke();
-								var duration = DateTime.Now - start;
+								var duration = watch.Elapsed - start;
 								TexelAverage.Add(action, duration);
 
 								++processed;

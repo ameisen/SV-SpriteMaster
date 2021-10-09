@@ -59,6 +59,7 @@ namespace SpriteMaster.Harmonize.Patches {
 
 			DrawState.UpdateDeviceManager(@this);
 
+			@this.GraphicsProfile = GraphicsProfile.HiDef;
 			@this.PreferMultiSampling = Config.DrawState.EnableMSAA;
 			@this.SynchronizeWithVerticalRetrace = true;
 			@this.PreferredBackBufferFormat = Config.DrawState.BackbufferFormat;

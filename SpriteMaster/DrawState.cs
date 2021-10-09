@@ -35,7 +35,9 @@ namespace SpriteMaster {
 		internal static TimeSpan ExpectedFrameTime { get; private set; } = new(166_667); // default 60hz
 		internal static bool ForceSynchronous = false;
 
-		private static DateTime FrameStartTime = DateTime.Now;
+		private static System.Diagnostics.Stopwatch FrameStopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+		private const int BaselineFrameTimeRunningCount = 20;
 		private static TimeSpan BaselineFrameTime = TimeSpan.Zero;
 
 		internal static void UpdateDeviceManager(GraphicsDeviceManager manager) {
@@ -63,12 +65,13 @@ namespace SpriteMaster {
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		internal static TimeSpan RemainingFrameTime(float multiplier = 1.0f, TimeSpan? offset = null) {
-			return (ActualRemainingFrameTime() - (BaselineFrameTime + (offset ?? TimeSpan.Zero))).Multiply(multiplier);
+			var actualRemainingTime = ActualRemainingFrameTime();
+			return (actualRemainingTime - (BaselineFrameTime + (offset ?? TimeSpan.Zero))).Multiply(multiplier);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		private static TimeSpan ActualRemainingFrameTime () {
-			return ExpectedFrameTime - (DateTime.Now - FrameStartTime);
+			return ExpectedFrameTime - FrameStopwatch.Elapsed;
 		}
 
 		//static bool testOnce = true;
@@ -109,17 +112,20 @@ namespace SpriteMaster {
 
 			if (Config.AsyncScaling.CanFetchAndLoadSameFrame || !PushedUpdateThisFrame) {
 				var remaining = ActualRemainingFrameTime();
-				if (remaining < TimeSpan.Zero) {
-					//Debug.TraceLn($"Over Time: {-remaining.TotalMilliseconds}");
-				}
 				SynchronizedTasks.ProcessPendingActions(remaining);
 			}
 
 			if (!PushedUpdateThisFrame) {
-				var duration = DateTime.Now - FrameStartTime;
+				var duration = FrameStopwatch.Elapsed;
 				// Throw out garbage values.
 				if (duration <= (ExpectedFrameTime + ExpectedFrameTime)) {
-					BaselineFrameTime = (BaselineFrameTime + duration).Halve();
+					var mean = BaselineFrameTime;
+					mean -= mean / BaselineFrameTimeRunningCount;
+					mean += duration / BaselineFrameTimeRunningCount;
+					BaselineFrameTime = mean;
+
+					// TODO : fix me, this doesn't work particularly well so I've disabled it.
+					BaselineFrameTime = TimeSpan.Zero;
 				}
 			}
 			else {
@@ -130,7 +136,7 @@ namespace SpriteMaster {
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		internal static void OnPresentPost() {
-			FrameStartTime = DateTime.Now;
+			FrameStopwatch.Restart();
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]

@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 
@@ -144,6 +145,31 @@ namespace SpriteMaster {
 				}
 			}
 
+			// Determine the renderer
+			// https://community.monogame.net/t/solved-how-to-determine-if-the-app-is-using-desktop-gl-or-dx/10494/2
+			if (GameFramework == GameFrameworkType.XNA) {
+				// XNA is built upon D3D9
+				Renderer = RendererType.D3D9;
+			}
+			else {
+				try {
+					var gameAssembly = AppDomain.CurrentDomain.GetAssemblies().Single(assembly => assembly.GetName().Name == "MonoGame.Framework");
+					var shaderType = gameAssembly.GetType("Microsoft.Xna.Framework.Graphics.Shader");
+					var profileProperty = shaderType.GetProperty("Profile");
+					var profile = (int)profileProperty.GetValue(null);
+					Renderer = profile switch {
+						0 => RendererType.OpenGL,
+						1 => RendererType.D3D11,
+						_ => throw new ApplicationException($"Unknown Shader Profile: {profile}")
+					};
+				}
+				catch {
+					// Uh, I guess default to D3D9?
+					// It will never be 'right', but it will probably be 'safe'
+					Renderer = RendererType.D3D9;
+				}
+			}
+
 			try {
 				FullSystem = Platform switch
 				{
@@ -181,11 +207,18 @@ namespace SpriteMaster {
 			MonoGame
 		}
 
+		public enum RendererType {
+			OpenGL,
+			D3D9,
+			D3D11
+		}
+
 		[ImmutableObject(true)]
 		public static readonly string FullSystem;
 
 		public static readonly FrameworkType Framework;
 		public static readonly GameFrameworkType GameFramework;
+		public static readonly RendererType Renderer;
 		public static readonly PlatformType Platform;
 		public static readonly int Bits = IntPtr.Size * 8;
 
@@ -197,5 +230,10 @@ namespace SpriteMaster {
 
 		public static bool IsMonoGame => GameFramework == GameFrameworkType.MonoGame;
 		public static bool IsXNA => GameFramework == GameFrameworkType.XNA;
+
+		public static class Capabilities {
+			public static bool AsyncStores => Renderer != RendererType.OpenGL;
+			public static bool AsynchronousRenderingAPI => Renderer == RendererType.D3D11;
+		}
 	}
 }

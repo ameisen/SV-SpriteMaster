@@ -80,12 +80,12 @@ namespace SpriteMaster.Metadata {
 						forcePurge = true;
 					}
 					else if (!bounds.HasValue && data.Offset == 0 && data.Length == refSize) {
-						Debug.TraceLn("Overriding MTexture2D Cache in Purge");
+						Debug.TraceLn($"Overriding MTexture2D '{reference.SafeName()}' Cache in Purge: {bounds.HasValue}, {data.Offset}, {data.Length}");
 						CachedData = data.Data;
 					}
 					// TODO : This doesn't update the compressed cache.
 					else if (!bounds.HasValue && CachedData is var currentData && currentData != null) {
-						Debug.TraceLn("Updating MTexture2D Cache in Purge");
+						Debug.TraceLn($"Updating MTexture2D '{reference.SafeName()}' Cache in Purge: {bounds.HasValue}, {currentData}");
 						var byteSpan = data.Data;
 						using (DataCacheLock.Exclusive) {
 							/*using (Lock.Exclusive)*/ {
@@ -99,7 +99,7 @@ namespace SpriteMaster.Metadata {
 						}
 					}
 					else {
-						Debug.TraceLn("Forcing full MTexture2D Purge");
+						Debug.TraceLn($"Forcing full MTexture2D '{reference.SafeName()}' Purge");
 						forcePurge = true;
 					}
 				}

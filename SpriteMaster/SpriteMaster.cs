@@ -155,8 +155,9 @@ namespace SpriteMaster {
 			using (var tempStream = new MemoryStream()) {
 				SerializeConfig.Save(tempStream);
 
-				if (!Config.IgnoreConfig)
+				if (!Config.IgnoreConfig) {
 					SerializeConfig.Load(ConfigPath);
+				}
 
 				if (IsVersionOutdated(Config.ConfigVersion)) {
 					Debug.WarningLn("config.toml is out of date, rewriting it.");

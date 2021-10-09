@@ -126,6 +126,8 @@ namespace SpriteMaster {
 		private static readonly TexelTimer TexelAverageSync = new();
 		private static readonly TexelTimer TexelAverageCachedSync = new();
 
+		private static readonly TimeSpan MinTimeSpan = TimeSpan.FromMilliseconds(-64.0);
+
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		private static TexelTimer GetTimer(bool cached, bool async) {
 			if (async) {
@@ -154,18 +156,24 @@ namespace SpriteMaster {
 				return null;
 			}
 
-			bool useAsync = (Config.AsyncScaling.EnabledForUnknownTextures || !texture.Anonymous()) && (texture.Area() >= Config.AsyncScaling.MinimumSizeTexels);
+			bool useAsync = (Config.AsyncScaling.EnabledForUnknownTextures || !texture.Anonymous()) && (source.Area >= Config.AsyncScaling.MinimumSizeTexels);
 			// !texture.Meta().HasCachedData
 
-			var estimatedDuration = GetTimer(texture: texture, async: useAsync).Estimate(texture.Area());
-			const float multiplier = 0.75f;
-			var remainingTime = DrawState.RemainingFrameTime(multiplier: multiplier);
-			if (DrawState.PushedUpdateWithin(1) && estimatedDuration >= remainingTime) {
-				return null;
+			if (Config.Resample.UseFrametimeStalling && DrawState.PushedUpdateWithin(0)) {
+				var estimatedDuration = GetTimer(texture: texture, async: useAsync).Estimate(source.Area);
+				const float multiplier = 1.0f;
+				var remainingTime = DrawState.RemainingFrameTime(multiplier: multiplier);
+				if (estimatedDuration.Ticks != 0 && estimatedDuration >= remainingTime && remainingTime > MinTimeSpan) {
+					Debug.TraceLn($"Not enough frame time left to begin resampling '{texture.SafeName()}' ({estimatedDuration.TotalMilliseconds} >= {remainingTime.TotalMilliseconds})");
+					return null;
+				}
+				else {
+					Debug.TraceLn($"Remaining Time: {remainingTime.TotalMilliseconds}");
+				}
 			}
 
 			// TODO : We should really only populate the average when we are performing an expensive operation like GetData.
-			var begin = DateTime.Now;
+			var watch = System.Diagnostics.Stopwatch.StartNew();
 
 			TextureType textureType;
 			if (!source.Offset.IsZero || source.Extent != texture.Extent()) {
@@ -177,19 +185,24 @@ namespace SpriteMaster {
 			SpriteInfo textureWrapper;
 			ulong hash;
 
-			using (Performance.Track("new SpriteInfo"))
+			using (Performance.Track("new SpriteInfo")) {
 				textureWrapper = new SpriteInfo(reference: texture, dimensions: source, expectedScale: expectedScale);
+			}
 
 			// If this is null, it can only happen due to something being blocked, so we should try again later.
 			if (textureWrapper.Data == null) {
+				Debug.TraceLn($"Texture Data fetch for '{texture.SafeName()}' was blocked; retrying later");
 				return null;
 			}
+
+			Debug.TraceLn($"Beginning Rescale Process for '{texture.SafeName()}'");
 
 			DrawState.PushedUpdateThisFrame = true;
 
 			try {
-				using (Performance.Track("Upscaler.GetHash"))
+				using (Performance.Track("Upscaler.GetHash")) {
 					hash = Upscaler.GetHash(textureWrapper, textureType);
+				}
 
 				var newTexture = new ScaledTexture(
 					assetName: texture.SafeName(),
@@ -212,8 +225,10 @@ namespace SpriteMaster {
 				}
 			}
 			finally {
+				watch.Stop();
+				var duration = watch.Elapsed;
 				var averager = GetTimer(cached: textureWrapper.WasCached, async: useAsync);
-				averager.Add(texture.Area(), DateTime.Now - begin);
+				averager.Add(source.Area, duration);
 			}
 		}
 
@@ -425,16 +440,16 @@ namespace SpriteMaster {
 
 			switch (TexType) {
 				case TextureType.Sprite:
-					Debug.TraceLn($"Creating HD Sprite [{texture.Format} x{refScale}]: {this.SafeName()} {sourceRectangle}");
+					Debug.TraceLn($"Creating Sprite [{texture.Format} x{refScale}]: {this.SafeName()} {sourceRectangle}");
 					break;
 				case TextureType.Image:
-					Debug.TraceLn($"Creating HD Image [{texture.Format} x{refScale}]: {this.SafeName()}");
+					Debug.TraceLn($"Creating Image [{texture.Format} x{refScale}]: {this.SafeName()}");
 					break;
 				case TextureType.SlicedImage:
-					Debug.TraceLn($"Creating HD Sliced Image [{texture.Format} x{refScale}]: {this.SafeName()}");
+					Debug.TraceLn($"Creating Sliced Image [{texture.Format} x{refScale}]: {this.SafeName()}");
 					break;
 				default:
-					Debug.TraceLn($"Creating HD UNKNOWN [{texture.Format} x{refScale}]: {this.SafeName()}");
+					Debug.TraceLn($"Creating UNKNOWN [{texture.Format} x{refScale}]: {this.SafeName()}");
 					break;
 			}
 

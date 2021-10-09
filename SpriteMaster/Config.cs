@@ -42,7 +42,7 @@ namespace SpriteMaster {
 
 		internal static string ConfigVersion = "";
 		[ConfigIgnore]
-		internal static string ClearConfigBefore = "0.12.0.0";
+		internal static string ClearConfigBefore = "0.13.0.0";
 
 		internal static bool Enabled = true;
 		internal static SButton ToggleButton = SButton.F11;
@@ -127,6 +127,7 @@ namespace SpriteMaster {
 			internal static uint MaxScale = 6;
 			internal static int MinimumTextureDimensions = 4;
 			internal static bool EnableWrappedAddressing = true;
+			internal static bool UseFrametimeStalling = true;
 			internal static readonly List<SurfaceFormat> SupportedFormats = new() {
 				SurfaceFormat.Color,
 				SurfaceFormat.Dxt5,
@@ -201,10 +202,9 @@ namespace SpriteMaster {
 		internal static class AsyncScaling {
 			internal const bool Enabled = true;
 			internal static bool EnabledForUnknownTextures = false;
-			internal static bool ForceSynchronousLoads = Runtime.IsMonoGame;
+			internal static bool ForceSynchronousStores = !Runtime.Capabilities.AsyncStores;
 			internal static bool ThrottledSynchronousLoads = true;
 			internal static bool CanFetchAndLoadSameFrame = true;
-			internal static int MaxLoadsPerFrame = int.MaxValue;
 			internal static long MinimumSizeTexels = 0;
 		}
 
@@ -212,7 +212,7 @@ namespace SpriteMaster {
 			internal static bool Enabled = DevEnabled && true;
 			private const bool DevEnabled = true;
 			internal static bool AlwaysFlush = false;
-			internal static Compression.Algorithm Compress = Compression.BestAlgorithm;
+			internal static Compression.Algorithm Compress = (Runtime.Bits == 64) ? Compression.Algorithm.None : Compression.BestAlgorithm;
 			internal static bool Async = true;
 		}
 
