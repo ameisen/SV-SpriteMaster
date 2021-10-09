@@ -42,29 +42,29 @@ namespace SpriteMaster.Extensions.Compressors {
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		private static SevenZip.Compression.LZMA.Encoder GetEncoder() {
 			return new SevenZip.Compression.LZMA.Encoder();
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		private static SevenZip.Compression.LZMA.Decoder GetDecoder() {
 			var decoder = new SevenZip.Compression.LZMA.Decoder();
 			decoder.SetDecoderProperties(Data.Properties);
 			return decoder;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		internal static int CompressedLengthEstimate(byte[] data) {
 			return data.Length >> 1;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		internal static int DecompressedLengthEstimate(byte[] data) {
 			return data.Length << 1;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		internal static byte[] Compress(byte[] data) {
 			using var output = new MemoryStream(CompressedLengthEstimate(data));
 
@@ -78,7 +78,7 @@ namespace SpriteMaster.Extensions.Compressors {
 			return output.ToArray();
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		internal static unsafe byte[] Decompress(byte[] data) {
 			using var output = new MemoryStream(DecompressedLengthEstimate(data));
 
@@ -91,7 +91,7 @@ namespace SpriteMaster.Extensions.Compressors {
 			return output.ToArray();
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		internal static byte[] Decompress(byte[] data, int size) {
 			var output = new byte[size];
 			using var outputStream = new MemoryStream(output);

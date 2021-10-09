@@ -13,7 +13,7 @@ namespace SpriteMaster.Resample {
 			public readonly Vector2B EdgeX;
 			public readonly Vector2B EdgeY;
 
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			internal Results(
 				Vector2B wrapped,
 				Vector2B wrappedX,
@@ -29,8 +29,8 @@ namespace SpriteMaster.Resample {
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static unsafe Results AnalyzeLegacy (Texture2D reference, in Types.Span<int> data, Bounds rawSize, Bounds spriteSize, Vector2B Wrapped) {
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
+		internal static unsafe Results AnalyzeLegacy (Texture2D reference, in FixedSpan<int> data, Bounds rawSize, Bounds spriteSize, Vector2B Wrapped) {
 			Vector2B boundsInverted = Vector2B.False;
 
 			if (spriteSize.Width < 0 || spriteSize.Height < 0) {
@@ -76,9 +76,9 @@ namespace SpriteMaster.Resample {
 				long numSamples = 0;
 				double meanAlphaF = 0.0f;
 				if (!Wrapped.X || !Wrapped.Y) {
-					foreach (int y in 0..spriteInputSize.Height) {
+					foreach (int y in 0.RangeTo(spriteInputSize.Height)) {
 						int offset = (y + spriteInputSize.Top) * rawInputSize.Width + spriteInputSize.Left;
-						foreach (int x in 0..spriteInputSize.Width) {
+						foreach (int x in 0.RangeTo(spriteInputSize.Width)) {
 							int address = offset + x;
 							int sample = data[address];
 							meanAlphaF += GetAlpha(sample);
@@ -94,7 +94,7 @@ namespace SpriteMaster.Resample {
 				// Both edges must meet the threshold.
 				if (!Wrapped.X) {
 					var samples = stackalloc int[] { 0, 0 };
-					foreach (int y in 0..spriteInputSize.Height) {
+					foreach (int y in 0.RangeTo(spriteInputSize.Height)) {
 						int offset = (y + spriteInputSize.Top) * rawInputSize.Width + spriteInputSize.Left;
 						int sample0 = data[offset];
 						int sample1 = data[offset + (spriteInputSize.Width - 1)];
@@ -115,9 +115,9 @@ namespace SpriteMaster.Resample {
 					var samples = stackalloc int[] { 0, 0 };
 					var offsets = stackalloc int[] { spriteInputSize.Top * rawInputSize.Width, (spriteInputSize.Bottom - 1) * rawInputSize.Width };
 					int sampler = 0;
-					foreach (int i in 0..2) {
+					foreach (int i in 0.RangeTo(2)) {
 						var yOffset = offsets[i];
-						foreach (int x in 0..spriteInputSize.Width) {
+						foreach (int x in 0.RangeTo(spriteInputSize.Width)) {
 							int offset = yOffset + x + spriteInputSize.Left;
 							int sample = data[offset];
 							if (GetAlpha(sample) >= alphaThreshold) {

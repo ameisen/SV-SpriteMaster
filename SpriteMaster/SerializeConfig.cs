@@ -171,7 +171,7 @@ namespace SpriteMaster {
 											var configValue = ((StringValueSyntax)value.Value).Value.Trim();
 
 											bool found = false;
-											foreach (int index in 0..enumNames.Length) {
+											foreach (int index in 0.RangeTo(enumNames.Length)) {
 												if (enumNames[index] == configValue) {
 													field.SetValue(null, values.GetValue(index));
 													found = true;

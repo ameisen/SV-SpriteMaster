@@ -41,7 +41,7 @@ namespace SpriteMaster.Extensions {
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 #if NETFRAMEWORK && (NET20 || NET35 || NET40 || NET45)
 		[Conditional("FALSE")]
 #endif
@@ -101,31 +101,31 @@ namespace SpriteMaster.Extensions {
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public static void Mark(long size) {
 			Contract.AssertPositiveOrZero(size);
 			GC.AddMemoryPressure(size);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public static void Mark (Texture2D texture) {
 			Contract.AssertNotNull(texture);
 			Mark(texture.SizeBytes());
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public static void Unmark(long size) {
 			Contract.AssertPositiveOrZero(size);
 			GC.RemoveMemoryPressure(size);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public static void Unmark (Texture2D texture) {
 			Contract.AssertNotNull(texture);
 			Unmark(texture.SizeBytes());
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public static void MarkOwned(SurfaceFormat format, int texels) {
 			if (!Config.Garbage.CollectAccountOwnedTextures)
 				return;
@@ -134,7 +134,7 @@ namespace SpriteMaster.Extensions {
 			Mark(size);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public static void UnmarkOwned (SurfaceFormat format, int texels) {
 			if (!Config.Garbage.CollectAccountOwnedTextures)
 				return;
@@ -143,7 +143,7 @@ namespace SpriteMaster.Extensions {
 			Unmark(size);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public static void MarkUnowned (SurfaceFormat format, int texels) {
 			if (!Config.Garbage.CollectAccountUnownedTextures)
 				return;
@@ -152,7 +152,7 @@ namespace SpriteMaster.Extensions {
 			Mark(size);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public static void UnmarkUnowned (SurfaceFormat format, int texels) {
 			if (!Config.Garbage.CollectAccountUnownedTextures)
 				return;

@@ -78,7 +78,7 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch.Patch {
 				__state: ref __state
 			);
 		}
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		private static bool ForwardDraw (
 			SpriteBatch @this,
 			Texture2D texture,
@@ -128,7 +128,7 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch.Patch {
 			);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		private static bool ForwardDraw (
 			SpriteBatch @this,
 			Texture2D texture,

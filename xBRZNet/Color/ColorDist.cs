@@ -12,12 +12,12 @@ namespace SpriteMaster.xBRZ.Color {
 		// TODO : Only sRGB presently has the linearizer/delinearizer implemented.
 		private static readonly ColorSpace CurrentColorSpace = ColorSpace.sRGB_Precise;
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public ColorDist (in Config cfg) {
 			Configuration = cfg;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		private static double TexelDiff (uint texel1, uint texel2, int shift) {
 			unchecked {
 				texel1 = (texel1 >> shift) & 0xFF;
@@ -28,7 +28,7 @@ namespace SpriteMaster.xBRZ.Color {
 			//return (unchecked((int)((uint)texel1 & mask)) - unchecked((int)((uint)texel2 & mask))) >> shift;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		private static double TexelDiffGamma (uint texel1, uint texel2, int shift) {
 			unchecked {
 				texel1 = (texel1 >> shift) & 0xFF;
@@ -42,7 +42,7 @@ namespace SpriteMaster.xBRZ.Color {
 			//return (unchecked((int)((uint)texel1 & mask)) - unchecked((int)((uint)texel2 & mask))) >> shift;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		private double DistYCbCrImpl (uint pix1, uint pix2) {
 			if ((pix1 & ~ColorConstant.Mask.Alpha) == (pix2 & ~ColorConstant.Mask.Alpha))
 				return 0.0;
@@ -81,7 +81,7 @@ namespace SpriteMaster.xBRZ.Color {
 			return Math.Pow(Configuration.LuminanceWeight * y, 2) + Math.Pow(cB, 2) + Math.Pow(cR, 2);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public double DistYCbCr (uint pix1, uint pix2) {
 			if (pix1 == pix2)
 				return 0;

@@ -19,12 +19,12 @@ namespace SpriteMaster {
 
 		private static readonly LinkedList<WeakReference<ScaledTexture>> MostRecentList = new();
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		private static bool LegalFormat(Texture2D texture) {
 			return AllowedFormats.Contains(texture.Format);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		internal static bool Validate(Texture2D texture) {
 			var meta = texture.Meta();
 			if (!meta.ScaleValid) {
@@ -112,7 +112,7 @@ namespace SpriteMaster {
 			return true;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		static internal ScaledTexture Fetch (Texture2D texture, Bounds source, uint expectedScale) {
 			if (SpriteMap.TryGet(texture, source, expectedScale, out var scaleTexture)) {
 				return scaleTexture;
@@ -126,7 +126,7 @@ namespace SpriteMaster {
 		private static readonly TexelTimer TexelAverageSync = new();
 		private static readonly TexelTimer TexelAverageCachedSync = new();
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		private static TexelTimer GetTimer(bool cached, bool async) {
 			if (async) {
 				return cached ? TexelAverageCached : TexelAverage;
@@ -136,13 +136,13 @@ namespace SpriteMaster {
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		private static TexelTimer GetTimer(Texture2D texture, bool async) {
 			var IsCached = SpriteInfo.IsCached(texture);
 			return GetTimer(IsCached, async);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		static internal ScaledTexture Get (Texture2D texture, Bounds source, uint expectedScale) {
 			using var _ = Performance.Track();
 
@@ -248,7 +248,7 @@ namespace SpriteMaster {
 		private LinkedListNode<WeakReference<ScaledTexture>> CurrentRecentNode = null;
 		private volatile bool Disposed = false;
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		~ScaledTexture() {
 			if (!Disposed) {
 				Dispose();
@@ -258,7 +258,7 @@ namespace SpriteMaster {
 		internal static volatile uint TotalMemoryUsage = 0;
 
 		internal long MemorySize {
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			get {
 				if (!IsReady || Texture == null) {
 					return 0;
@@ -268,25 +268,25 @@ namespace SpriteMaster {
 		}
 
 		internal long OriginalMemorySize {
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			get {
 				return originalSize.Width * originalSize.Height * sizeof(int);
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		internal static void Purge (Texture2D reference) {
 			Purge(reference, null, DataRef<byte>.Null);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		internal static void Purge (Texture2D reference, Bounds? bounds, DataRef<byte> data) {
 			SpriteInfo.Purge(reference, bounds, data);
 			SpriteMap.Purge(reference, bounds);
 			Upscaler.PurgeHash(reference);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		internal static void PurgeTextures(long _purgeTotalBytes) {
 			Contract.AssertPositive(_purgeTotalBytes);
 
@@ -333,7 +333,7 @@ namespace SpriteMaster {
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		internal ScaledTexture (string assetName, SpriteInfo textureWrapper, Bounds sourceRectangle, ulong hash, TextureType textureType, bool async, uint expectedScale) {
 			using var _ = Performance.Track();
 
@@ -407,7 +407,7 @@ namespace SpriteMaster {
 		}
 
 		// Async Call
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		internal void Finish () {
 			ManagedTexture2D texture;
 			lock (this) {
@@ -443,7 +443,7 @@ namespace SpriteMaster {
 			IsReady = true;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		internal void UpdateReferenceFrame () {
 			if (Disposed) {
 				return;
@@ -462,7 +462,7 @@ namespace SpriteMaster {
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public void Dispose (bool disposeChildren) {
 			if (disposeChildren && Texture != null) {
 				if (!Texture.IsDisposed) {
@@ -473,7 +473,7 @@ namespace SpriteMaster {
 			Dispose();
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public void Dispose () {
 			if (Disposed) {
 				return;
@@ -491,7 +491,7 @@ namespace SpriteMaster {
 			Disposed = true;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		private void OnParentDispose (Texture2D texture) {
 			Debug.TraceLn($"Parent Texture Disposing: {texture.SafeName()}");
 

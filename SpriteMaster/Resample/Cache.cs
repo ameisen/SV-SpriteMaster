@@ -20,10 +20,10 @@ namespace SpriteMaster.Resample {
 
 		private static readonly bool SystemCompression = false;
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		internal static string GetPath (params string[] path) => Path.Combine(LocalDataPath, Path.Combine(path));
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		internal static string GetDumpPath (params string[] path) => Path.Combine(DumpPath, Path.Combine(path));
 
 		[StructLayout(LayoutKind.Sequential, Pack = 1)]
@@ -68,7 +68,7 @@ namespace SpriteMaster.Resample {
 				HeaderSize = headerSize;
 			}
 
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			internal static CacheHeader Read (BinaryReader reader) {
 				var newHeader = new CacheHeader();
 
@@ -79,14 +79,14 @@ namespace SpriteMaster.Resample {
 				return newHeader;
 			}
 
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			internal void Write (BinaryWriter writer) {
 				foreach (var writeField in WriteValues) {
 					writeField(this, writer);
 				}
 			}
 
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			internal void Validate (string path) {
 				if (Assembly != AssemblyHash) {
 					throw new IOException($"Texture Cache File out of date '{path}'");
@@ -147,7 +147,7 @@ namespace SpriteMaster.Resample {
 
 		private static readonly ConcurrentDictionary<string, SaveState> SavingMap = Config.FileCache.Enabled ? new() : null;
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		internal static bool Fetch (
 			string path,
 			out uint refScale,
@@ -234,7 +234,7 @@ namespace SpriteMaster.Resample {
 			return false;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		internal static bool Save (
 			string path,
 			uint refScale,
@@ -323,7 +323,7 @@ namespace SpriteMaster.Resample {
 		[DllImport("kernel32.dll")]
 		static extern bool CreateSymbolicLink (string Link, string Target, LinkType Type);
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		private static bool IsSymbolic (string path) => new FileInfo(path).Attributes.HasFlag(FileAttributes.ReparsePoint);
 
 		static Cache () {

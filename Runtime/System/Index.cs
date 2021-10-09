@@ -24,7 +24,7 @@ namespace System {
     /// <remarks>
     /// If the Index constructed from the end, index value 1 means pointing at the last element and index value 0 means pointing at beyond last element.
     /// </remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(Runtime.MethodImpl.Optimize)]
     public Index (sbyte value, bool fromEnd) {
       if (value < 0) {
         throw new ArgumentOutOfRangeException(nameof(value), "value must be non-negative");
@@ -44,7 +44,7 @@ namespace System {
     /// <remarks>
     /// If the Index constructed from the end, index value 1 means pointing at the last element and index value 0 means pointing at beyond last element.
     /// </remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(Runtime.MethodImpl.Optimize)]
     public Index (short value, bool fromEnd) {
       if (value < 0) {
         throw new ArgumentOutOfRangeException(nameof(value), "value must be non-negative");
@@ -64,7 +64,7 @@ namespace System {
     /// <remarks>
     /// If the Index constructed from the end, index value 1 means pointing at the last element and index value 0 means pointing at beyond last element.
     /// </remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(Runtime.MethodImpl.Optimize)]
     public Index (int value, bool fromEnd) {
       if (value < 0) {
         throw new ArgumentOutOfRangeException(nameof(value), "value must be non-negative");
@@ -84,7 +84,7 @@ namespace System {
     /// <remarks>
     /// If the Index constructed from the end, index value 1 means pointing at the last element and index value 0 means pointing at beyond last element.
     /// </remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(Runtime.MethodImpl.Optimize)]
     public Index (long value, bool fromEnd) {
       if (value < 0) {
         throw new ArgumentOutOfRangeException(nameof(value), "value must be non-negative");
@@ -104,7 +104,7 @@ namespace System {
     /// <remarks>
     /// If the Index constructed from the end, index value 1 means pointing at the last element and index value 0 means pointing at beyond last element.
     /// </remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(Runtime.MethodImpl.Optimize)]
     public Index (byte value, bool fromEnd) {
       if (value < 0) {
         throw new ArgumentOutOfRangeException(nameof(value), "value must be non-negative");
@@ -124,7 +124,7 @@ namespace System {
     /// <remarks>
     /// If the Index constructed from the end, index value 1 means pointing at the last element and index value 0 means pointing at beyond last element.
     /// </remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(Runtime.MethodImpl.Optimize)]
     public Index (ushort value, bool fromEnd) {
       if (value < 0) {
         throw new ArgumentOutOfRangeException(nameof(value), "value must be non-negative");
@@ -144,7 +144,7 @@ namespace System {
     /// <remarks>
     /// If the Index constructed from the end, index value 1 means pointing at the last element and index value 0 means pointing at beyond last element.
     /// </remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(Runtime.MethodImpl.Optimize)]
     public Index (uint value, bool fromEnd) {
       if (value < 0) {
         throw new ArgumentOutOfRangeException(nameof(value), "value must be non-negative");
@@ -164,7 +164,7 @@ namespace System {
     /// <remarks>
     /// If the Index constructed from the end, index value 1 means pointing at the last element and index value 0 means pointing at beyond last element.
     /// </remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(Runtime.MethodImpl.Optimize)]
     public Index (ulong value, bool fromEnd) {
       if (value < 0) {
         throw new ArgumentOutOfRangeException(nameof(value), "value must be non-negative");
@@ -181,7 +181,7 @@ namespace System {
     }
 
     // The following private constructors mainly created for perf reason to avoid the checks
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(Runtime.MethodImpl.Optimize)]
     private Index (long value, Type type) {
       _originalType = type;
       _value = value;
@@ -195,7 +195,7 @@ namespace System {
 
     /// <summary>Create an Index from the start at the position indicated by the value.</summary>
     /// <param name="value">The index value from the start.</param>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(Runtime.MethodImpl.Optimize)]
     public static Index FromStart (long value, Type type) {
       if (value < 0) {
         throw new ArgumentOutOfRangeException(nameof(value), "value must be non-negative");
@@ -206,12 +206,12 @@ namespace System {
 
     /// <summary>Create an Index from the start at the position indicated by the value.</summary>
     /// <param name="value">The index value from the start.</param>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(Runtime.MethodImpl.Optimize)]
     public static Index FromStart (long value) => FromStart(value, typeof(int));
 
     /// <summary>Create an Index from the end at the position indicated by the value.</summary>
     /// <param name="value">The index value from the end.</param>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(Runtime.MethodImpl.Optimize)]
     public static Index FromEnd (long value, Type type) {
       if (value < 0) {
         throw new ArgumentOutOfRangeException(nameof(value), "value must be non-negative");
@@ -222,7 +222,7 @@ namespace System {
 
     /// <summary>Create an Index from the end at the position indicated by the value.</summary>
     /// <param name="value">The index value from the end.</param>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(Runtime.MethodImpl.Optimize)]
     public static Index FromEnd (long value) => FromEnd(value, typeof(int));
 
     /// <summary>Returns the index value.</summary>
@@ -239,7 +239,7 @@ namespace System {
     /// It is expected Index will be used with collections which always have non negative length/count. If the returned offset is negative and
     /// then used to index a collection will get out of range exception which will be same affect as the validation.
     /// </remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(Runtime.MethodImpl.Optimize)]
     public long GetOffset (int length) {
       var offset = _value;
       if (IsFromEnd) {
@@ -254,52 +254,52 @@ namespace System {
 
     /// <summary>Indicates whether the current Index object is equal to another object of the same type.</summary>
     /// <param name="value">An object to compare with this object</param>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(Runtime.MethodImpl.Optimize)]
     public override bool Equals (object? value) => value is Index && _value == ((Index)value)._value;
 
     /// <summary>Indicates whether the current Index object is equal to another Index object.</summary>
     /// <param name="other">An object to compare with this object</param>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(Runtime.MethodImpl.Optimize)]
     public bool Equals (Index other) => _value == other._value;
 
     /// <summary>Returns the hash code for this instance.</summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(Runtime.MethodImpl.Optimize)]
     public override int GetHashCode () => _value.GetHashCode();
 
     /// <summary>Converts integer number to an Index.</summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(Runtime.MethodImpl.Optimize)]
     public static implicit operator Index (sbyte value) => FromStart(value, typeof(sbyte));
 
     /// <summary>Converts integer number to an Index.</summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(Runtime.MethodImpl.Optimize)]
     public static implicit operator Index (short value) => FromStart(value, typeof(short));
 
     /// <summary>Converts integer number to an Index.</summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(Runtime.MethodImpl.Optimize)]
     public static implicit operator Index (int value) => FromStart(value, typeof(int));
 
     /// <summary>Converts integer number to an Index.</summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)] 
+    [MethodImpl(Runtime.MethodImpl.Optimize)] 
     public static implicit operator Index (long value) => FromStart(value, typeof(long));
 
     /// <summary>Converts integer number to an Index.</summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)] 
+    [MethodImpl(Runtime.MethodImpl.Optimize)] 
     public static implicit operator Index (byte value) => FromStart(value, typeof(byte));
 
     /// <summary>Converts integer number to an Index.</summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)] 
+    [MethodImpl(Runtime.MethodImpl.Optimize)] 
     public static implicit operator Index (ushort value) => FromStart(value, typeof(ushort));
 
     /// <summary>Converts integer number to an Index.</summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(Runtime.MethodImpl.Optimize)]
     public static implicit operator Index (uint value) => FromStart(value, typeof(uint));
 
     /// <summary>Converts integer number to an Index.</summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(Runtime.MethodImpl.Optimize)]
     public static implicit operator Index (ulong value) => FromStart(unchecked((long)value), typeof(ulong));
 
     /// <summary>Converts the value of the current Index object to its equivalent string representation.</summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(Runtime.MethodImpl.Optimize)]
     public override string ToString () {
       if (IsFromEnd)
         return "^" + ((ulong)Value).ToString();

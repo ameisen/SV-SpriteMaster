@@ -10,7 +10,7 @@ namespace SpriteMaster.Types {
 		static private class Reflect {
 			public static readonly PropertyInfo IsReadOnly = typeof(List<ComparableWeakReference<T>>).GetProperty("IsReadOnly", BindingFlags.Instance | BindingFlags.NonPublic);
 
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			private static string GetName (string name) {
 				return $"{typeof(WeakCollection<T>).Name}.{name}";
 			}
@@ -22,7 +22,7 @@ namespace SpriteMaster.Types {
 
 		private readonly List<ComparableWeakReference<T>> _List;
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		private static ComparableWeakReference<T> Weak (T obj) {
 			return new ComparableWeakReference<T>(obj);
 		}
@@ -30,38 +30,38 @@ namespace SpriteMaster.Types {
 		public int Count => _List.Count;
 
 		public int Capacity {
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			get { return _List.Capacity; }
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			set { _List.Capacity = value; }
 		}
 
 		public bool IsReadOnly => (bool)Reflect.IsReadOnly.GetValue(_List);
 
 		public T this[int index] {
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			get {
 				return _List[index].TryGetTarget(out T target) ? target : null;
 			}
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			set {
 				_List[index].SetTarget(value);
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public WeakCollection () {
 			_List = new List<ComparableWeakReference<T>>();
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public WeakCollection(IEnumerable<T> collection) : this() {
 			foreach (var obj in collection) {
 				_List.Add(obj.MakeWeak());
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public WeakCollection (IEnumerable<WeakReference<T>> collection) : this() {
 			foreach (var obj in collection) {
 				// TODO : Should we check if the object is still alive or not bother?
@@ -69,7 +69,7 @@ namespace SpriteMaster.Types {
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public WeakCollection (IEnumerable<ComparableWeakReference<T>> collection) : this() {
 			foreach (var obj in collection) {
 				// TODO : Should we check if the object is still alive or not bother?
@@ -77,34 +77,34 @@ namespace SpriteMaster.Types {
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public WeakCollection (WeakCollection<T> collection) : this(collection.Count) {
 			foreach (var obj in collection._List) {
 				_List.Add(obj);
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public WeakCollection (int capacity) {
 			_List = new List<ComparableWeakReference<T>>(capacity);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public void Add (T item) {
 			_List.Add(item?.MakeWeak());
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public void Add (WeakReference<T> item) {
 			_List.Add(item);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public void Add (ComparableWeakReference<T> item) {
 			_List.Add(item);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public void AddRange (IEnumerable<T> collection) {
 			foreach (T item in collection) {
 				_List.Add(item?.MakeWeak());
@@ -112,41 +112,41 @@ namespace SpriteMaster.Types {
 		}
 
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public void AddRange (IEnumerable<WeakReference<T>> collection) {
 			foreach (var item in collection) {
 				_List.Add(item);
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public void AddRange (IEnumerable<ComparableWeakReference<T>> collection) {
 			foreach (var item in collection) {
 				_List.Add(item);
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public System.Collections.ObjectModel.ReadOnlyCollection<ComparableWeakReference<T>> AsReadOnly () {
 			return _List.AsReadOnly();
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public int BinarySearch (T item) {
 			return _List.BinarySearch(Weak(item));
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public int BinarySearch (WeakReference<T> item) {
 			return _List.BinarySearch(item);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public int BinarySearch (ComparableWeakReference<T> item) {
 			return _List.BinarySearch(item);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		private static int Comparison (ComparableWeakReference<T> x, ComparableWeakReference<T> y, Comparison<T> comparer) {
 			bool hasX = x.TryGetTarget(out T xTarget);
 			bool hasY = y.TryGetTarget(out T yTarget);
@@ -164,53 +164,53 @@ namespace SpriteMaster.Types {
 		private sealed class ReferenceComparer : IComparer<ComparableWeakReference<T>> {
 			private readonly IComparer<T> Comparer;
 
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			public ReferenceComparer(IComparer<T> comparer) {
 				Comparer = comparer;
 			}
 
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			int IComparer<ComparableWeakReference<T>>.Compare (ComparableWeakReference<T> x, ComparableWeakReference<T> y) {
 				return Comparison(x, y, Comparer.Compare);
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public int BinarySearch (T item, IComparer<T> comparer) {
 			return _List.BinarySearch(Weak(item), new ReferenceComparer(comparer));
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public int BinarySearch (WeakReference<T> item, IComparer<T> comparer) {
 			return _List.BinarySearch(item, new ReferenceComparer(comparer));
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public int BinarySearch (ComparableWeakReference<T> item, IComparer<T> comparer) {
 			return _List.BinarySearch(item, new ReferenceComparer(comparer));
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public void Clear() {
 			_List.Clear();
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public bool Contains (T item) {
 			return _List.Contains(Weak(item));
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public bool Contains (WeakReference<T> item) {
 			return _List.Contains(item);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public bool Contains (ComparableWeakReference<T> item) {
 			return _List.Contains(item);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public List<TOutput> ConvertAll<TOutput> (Converter<T, TOutput> converter) {
 			var result = new List<TOutput>(_List.Count);
 			foreach (var item in _List) {
@@ -221,37 +221,37 @@ namespace SpriteMaster.Types {
 			return result;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public void CopyTo (T[] array) {
 			CopyTo(array: array, arrayIndex: 0);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public void CopyTo (WeakReference<T>[] array) {
 			CopyTo(array: array, arrayIndex: 0);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public void CopyTo (ComparableWeakReference<T>[] array) {
 			CopyTo(array: array, arrayIndex: 0);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public void CopyTo(T[] array, int arrayIndex) {
 			CopyTo(array: array, arrayIndex: arrayIndex, array.Length - arrayIndex);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public void CopyTo (WeakReference<T>[] array, int arrayIndex) {
 			CopyTo(array: array, arrayIndex: arrayIndex, array.Length - arrayIndex);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public void CopyTo (ComparableWeakReference<T>[] array, int arrayIndex) {
 			CopyTo(array: array, arrayIndex: arrayIndex, array.Length - arrayIndex);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		private void Check_CopyTo<U>(U[] array, int arrayIndex, int count) where U : class {
 			_ = array ?? throw new ArgumentNullException(nameof(array));
 			if (arrayIndex < 0)
@@ -262,46 +262,46 @@ namespace SpriteMaster.Types {
 				throw new ArgumentException($"The number of elements in the source WeakList<T> ({_List.Count}) is greater than the available space from {nameof(arrayIndex)} ({arrayIndex}) to the end of the destination {nameof(array)} ({array.Length})");
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public void CopyTo(T[] array, int arrayIndex, int count) {
 			Check_CopyTo(array, arrayIndex, count);
 			Purge();
 
 			int dstOffset = arrayIndex;
 			int dstLastOffset = dstOffset + count;
-			foreach (int i in 0..count) {
+			foreach (int i in 0.RangeTo(count)) {
 				if (_List[i].TryGetTarget(out T target)) {
 					array[dstOffset++] = target;
 				}
 			}
-			foreach (int i in dstOffset..dstLastOffset) {
+			foreach (int i in dstOffset.RangeTo(dstLastOffset)) {
 				array[i] = null;
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public void CopyTo (WeakReference<T>[] array, int arrayIndex, int count) {
 			Check_CopyTo(array, arrayIndex, count);
 			Purge();
 
 			int dstOffset = arrayIndex;
-			foreach (int i in 0..count) {
+			foreach (int i in 0.RangeTo(count)) {
 				array[dstOffset + i] = _List[i];
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public void CopyTo (ComparableWeakReference<T>[] array, int arrayIndex, int count) {
 			Check_CopyTo(array, arrayIndex, count);
 			Purge();
 
 			int dstOffset = arrayIndex;
-			foreach (int i in 0..count) {
+			foreach (int i in 0.RangeTo(count)) {
 				array[dstOffset + i] = _List[i];
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		static bool Predicate(ComparableWeakReference<T> reference, Predicate<T> predicate) {
 			if (reference.TryGetTarget(out T target)) {
 				return predicate.Invoke(target);
@@ -309,7 +309,7 @@ namespace SpriteMaster.Types {
 			return false;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public bool Exists (Predicate<T> match) {
 			foreach (var item in _List) {
 				if (Predicate(item, match)) {
@@ -319,7 +319,7 @@ namespace SpriteMaster.Types {
 			return false;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public bool Exists (Predicate<WeakReference<T>> match) {
 			foreach (var item in _List) {
 				if (match.Invoke(item)) {
@@ -329,7 +329,7 @@ namespace SpriteMaster.Types {
 			return false;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public bool Exists (Predicate<ComparableWeakReference<T>> match) {
 			foreach (var item in _List) {
 				if (match.Invoke(item)) {
@@ -339,7 +339,7 @@ namespace SpriteMaster.Types {
 			return false;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public T Find (Predicate<T> match) {
 			foreach (var item in _List) {
 				if (item.TryGetTarget(out T target) && match.Invoke(target)) {
@@ -349,7 +349,7 @@ namespace SpriteMaster.Types {
 			return default;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public WeakReference<T> Find (Predicate<WeakReference<T>> match) {
 			foreach (var item in _List) {
 				if (match.Invoke(item)) {
@@ -359,7 +359,7 @@ namespace SpriteMaster.Types {
 			return default;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public ComparableWeakReference<T> Find (Predicate<ComparableWeakReference<T>> match) {
 			foreach (var item in _List) {
 				if (match.Invoke(item)) {
@@ -369,7 +369,7 @@ namespace SpriteMaster.Types {
 			return default;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public List<T> FindAll (Predicate<T> match) {
 			var result = new List<T>();
 
@@ -384,7 +384,7 @@ namespace SpriteMaster.Types {
 			return result;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public List<WeakReference<T>> FindAll (Predicate<WeakReference<T>> match) {
 			var result = new List<WeakReference<T>>();
 
@@ -397,7 +397,7 @@ namespace SpriteMaster.Types {
 			return result;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public List<ComparableWeakReference<T>> FindAll (Predicate<ComparableWeakReference<T>> match) {
 			var result = new List<ComparableWeakReference<T>>();
 
@@ -410,7 +410,7 @@ namespace SpriteMaster.Types {
 			return result;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public void ForEach (Action<T> action) {
 			Purge();
 
@@ -421,7 +421,7 @@ namespace SpriteMaster.Types {
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public void ForEach (Action<WeakReference<T>> action) {
 			Purge();
 
@@ -430,7 +430,7 @@ namespace SpriteMaster.Types {
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public void ForEach (Action<ComparableWeakReference<T>> action) {
 			Purge();
 
@@ -449,22 +449,22 @@ namespace SpriteMaster.Types {
 		// InsertRange
 		// LastIndexof
 		
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public bool Remove (T item) {
 			return _List.Remove(Weak(item));
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public bool Remove (WeakReference<T> item) {
 			return _List.Remove(item);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public bool Remove (ComparableWeakReference<T> item) {
 			return _List.Remove(item);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public int RemoveAll (Predicate<T> match) {
 			return _List.RemoveAll((ComparableWeakReference<T> reference) => {
 				if (reference.TryGetTarget(out T target)) {
@@ -474,14 +474,14 @@ namespace SpriteMaster.Types {
 			});
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public int RemoveAll (Predicate<WeakReference<T>> match) {
 			return _List.RemoveAll((ComparableWeakReference<T> reference) => {
 				return match.Invoke(reference);
 			});
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public int RemoveAll (Predicate<ComparableWeakReference<T>> match) {
 			return _List.RemoveAll(match);
 		}
@@ -489,18 +489,18 @@ namespace SpriteMaster.Types {
 		// RemoveAt
 		// RemoveRange
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public int Purge() {
 			return _List.RemoveAll(
 				(ComparableWeakReference<T> reference) => !reference.IsAlive
 			);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public void Reverse() {
 			Purge();
 
-			foreach (int i in 0.._List.Count) {
+			foreach (int i in 0.RangeTo(_List.Count)) {
 				var swapIndex = _List.Count - (i + 1);
 				var temp = _List[i];
 				_List[i] = _List[swapIndex];
@@ -510,21 +510,21 @@ namespace SpriteMaster.Types {
 
 		// Reverse(int, int)
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public void Sort(Comparison<T> comparison) {
 			Purge();
 
 			_List.Sort((ComparableWeakReference<T> referenceA, ComparableWeakReference<T> referenceB) => Comparison(referenceA, referenceB, comparison));
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public void Sort (Comparer<T> comparer) {
 			Purge();
 
 			_List.Sort(new ReferenceComparer(comparer));
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public void Sort() {
 			Purge();
 
@@ -533,7 +533,7 @@ namespace SpriteMaster.Types {
 			);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public T[] ToArray() {
 			Purge();
 
@@ -551,13 +551,13 @@ namespace SpriteMaster.Types {
 			return result;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public void TrimExcess () {
 			Purge();
 			_List.TrimExcess();
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public bool TrueForAll (Predicate<T> match) {
 			foreach (var item in _List) {
 				if (!Predicate(item, match)) {
@@ -567,7 +567,7 @@ namespace SpriteMaster.Types {
 			return true;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public bool TrueForAll (Predicate<WeakReference<T>> match) {
 			foreach (var item in _List) {
 				if (!match.Invoke(item)) {
@@ -577,7 +577,7 @@ namespace SpriteMaster.Types {
 			return true;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public bool TrueForAll (Predicate<ComparableWeakReference<T>> match) {
 			foreach (var item in _List) {
 				if (!match.Invoke(item)) {
@@ -589,7 +589,7 @@ namespace SpriteMaster.Types {
 		public sealed class Enumerator : IEnumerator<T> {
 			private readonly IEnumerator<ComparableWeakReference<T>> _Enumerator;
 
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			public Enumerator (IEnumerator<ComparableWeakReference<T>> enumerator) {
 				_Enumerator = enumerator;
 			}
@@ -598,7 +598,7 @@ namespace SpriteMaster.Types {
 
 			object IEnumerator.Current => GetCurrent();
 
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			private T GetCurrent () {
 				T target = null;
 				while (!_Enumerator.Current.TryGetTarget(out target)) {
@@ -609,12 +609,12 @@ namespace SpriteMaster.Types {
 				return target;
 			}
 
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			public void Dispose () {
 				_Enumerator.Dispose();
 			}
 
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			public bool MoveNext () {
 				do {
 					if (!_Enumerator.MoveNext()) {
@@ -624,19 +624,19 @@ namespace SpriteMaster.Types {
 				return true;
 			}
 
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			public void Reset () {
 				_Enumerator.Reset();
 				while (!_Enumerator.Current.IsAlive && _Enumerator.MoveNext()) {}
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public IEnumerator<T> GetEnumerator () {
 			return new Enumerator(_List.GetEnumerator());
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		IEnumerator IEnumerable.GetEnumerator () {
 			return new Enumerator(_List.GetEnumerator());
 		}

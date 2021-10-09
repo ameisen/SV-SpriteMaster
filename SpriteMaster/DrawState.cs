@@ -44,13 +44,13 @@ namespace SpriteMaster {
 		}
 
 		internal static GraphicsDevice Device {
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			get {
 				return Game1.graphics.GraphicsDevice;
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		internal static void SetCurrentAddressMode (SamplerState samplerState) {
 			CurrentAddressModeU = samplerState.AddressU;
 			CurrentAddressModeV = samplerState.AddressV;
@@ -61,12 +61,12 @@ namespace SpriteMaster {
 		}
 
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		internal static TimeSpan RemainingFrameTime(float multiplier = 1.0f, TimeSpan? offset = null) {
 			return (ActualRemainingFrameTime() - (BaselineFrameTime + (offset ?? TimeSpan.Zero))).Multiply(multiplier);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		private static TimeSpan ActualRemainingFrameTime () {
 			return ExpectedFrameTime - (DateTime.Now - FrameStartTime);
 		}
@@ -74,7 +74,7 @@ namespace SpriteMaster {
 		//static bool testOnce = true;
 
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		internal static void OnPresent () {
 			/*
 			if (testOnce) {
@@ -128,12 +128,12 @@ namespace SpriteMaster {
 			++CurrentFrame;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		internal static void OnPresentPost() {
 			FrameStartTime = DateTime.Now;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		internal static void OnBegin (
 			SpriteBatch @this,
 			SpriteSortMode sortMode,

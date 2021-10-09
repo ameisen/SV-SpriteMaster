@@ -3,10 +3,15 @@ using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 
 namespace SpriteMaster {
 	public static class Runtime {
+		public static class MethodImpl {
+			public const MethodImplOptions Optimize = MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization;
+		}
+
 		[Pure]
 		private static string ArgVToString(string[] args) {
 			if (args.Length == 0) {

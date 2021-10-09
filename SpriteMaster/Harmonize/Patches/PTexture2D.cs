@@ -12,7 +12,7 @@ namespace SpriteMaster.Harmonize.Patches {
 	[SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
 	[SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Harmony")]
 	internal static class PTexture2D {
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		private static unsafe byte[] ExtractByteArray<T>(T[] data, int length, int typeSize) where T : struct {
 			var byteData = new byte[length * typeSize];
 			var handle = GCHandle.Alloc(data, GCHandleType.Pinned);
@@ -30,7 +30,7 @@ namespace SpriteMaster.Harmonize.Patches {
 
 		// Always returns a duplicate of the array, since we do not own the source array.
 		// It performs a shallow copy, which is fine.
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		private static unsafe byte[] GetByteArray<T>(T[] data, out int typeSize) where T : struct {
 			switch (data) {
 				case null:
@@ -53,12 +53,12 @@ namespace SpriteMaster.Harmonize.Patches {
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		private static bool Cacheable(Texture2D texture) {
 			return texture.LevelCount <= 1;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		private static void SetDataPurge<T>(Texture2D texture, Rectangle? rect, T[] data, int startIndex, int elementCount) where T : struct {
 			if (texture is ManagedTexture2D) {
 				return;

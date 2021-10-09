@@ -9,7 +9,7 @@ namespace SpriteMaster {
 #if !TRACK_PERFORMANCE
 		internal struct DummyDisposable : IDisposable {
 
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			public void Dispose () {}
 		}
 		private static readonly DummyDisposable Dummy = new();
@@ -19,14 +19,14 @@ namespace SpriteMaster {
 			internal readonly DateTime Start;
 			internal TimeSpan Duration { get; private set; }
 
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			internal PerformanceTrackerDisposable(string name) {
 				Name = name;
 				Start = DateTime.Now;
 				Duration = TimeSpan.Zero;
 			}
 
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			public void Dispose () {
 				Duration = DateTime.Now - Start;
 				InsertDataPoint(in this);

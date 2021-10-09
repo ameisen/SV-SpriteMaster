@@ -18,13 +18,13 @@ namespace SpriteMaster {
 			ImageMagick
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		internal static void PurgeHash (Texture2D reference) {
 			reference.Meta().CachedData = null;
 		}
 
 		// https://stackoverflow.com/a/12996028
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		private static ulong HashULong (ulong x) {
 			if (x == 0) {
 				x = ulong.MaxValue;
@@ -37,7 +37,7 @@ namespace SpriteMaster {
 			return x;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		internal static ulong GetHash (SpriteInfo input, TextureType textureType) {
 			// Need to make Hashing.CombineHash work better.
 			ulong hash = Hash.Combine(input.Reference.SafeName()?.GetHashCode(), input.Reference.Meta().GetHash(input));
@@ -59,8 +59,8 @@ namespace SpriteMaster {
 		// This basically just changes it from AXYZ to AZYX, which is what's expected in output.
 		private static Bitmap GetDumpBitmap (Bitmap source) {
 			var dump = (Bitmap)source.Clone();
-			foreach (int y in 0..dump.Height)
-				foreach (int x in 0..dump.Width) {
+			foreach (int y in 0.RangeTo(dump.Height)) {
+				foreach (int x in 0.RangeTo(dump.Width)) {
 					unchecked {
 						var pixel = dump.GetPixel(x, y);
 						var ipixel = (uint)pixel.ToArgb();
@@ -76,6 +76,7 @@ namespace SpriteMaster {
 						);
 					}
 				}
+			}
 
 			return dump;
 		}
@@ -87,14 +88,14 @@ namespace SpriteMaster {
 #endif
 
 #if REALLY_TRACE
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			[Conditional("REALLY_TRACE")]
 			private static void Trace (string msg) {
 				Debug.TraceLn($"[CreateNewTexture] {new string(' ', Depth)}{msg}");
 			}
 #endif
 
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			internal Tracer (string name) {
 #if REALLY_TRACE
 				Name = name;
@@ -104,7 +105,7 @@ namespace SpriteMaster {
 #endif
 			}
 
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			public void Dispose () {
 #if REALLY_TRACE
 				--Depth;
@@ -136,18 +137,18 @@ namespace SpriteMaster {
 			return false;
 		}
 
-		private static Types.Span<int> DownSample (byte[] data, in Bounds bounds, uint referenceWidth, uint block, bool blend = false) {
+		private static FixedSpan<int> DownSample (byte[] data, in Bounds bounds, uint referenceWidth, uint block, bool blend = false) {
 			uint blockSize = block * block;
 			uint halfBlock = blend ? 0 : (block >> 1);
 			var blockOffset = bounds.Offset * (int)block;
 
 			// Rescale the data down, doing an effective point sample from 4x4 blocks to 1 texel.
-			var veryRawData = new Types.Span<byte>(data).As<uint>();
-			var rawData = new Types.Span<int>(new int[bounds.Area]);
-			foreach (uint y in 0..bounds.Extent.Height) {
+			var veryRawData = new FixedSpan<byte>(data).As<uint>();
+			var rawData = new FixedSpan<int>(new int[bounds.Area]);
+			foreach (uint y in 0.RangeTo(bounds.Extent.Height)) {
 				var ySourceOffset = (((y * block) + (uint)blockOffset.Y) + halfBlock) * referenceWidth;
 				var yDestinationOffset = y * (uint)bounds.Extent.X;
-				foreach (uint x in 0..bounds.Extent.Width) {
+				foreach (uint x in 0.RangeTo(bounds.Extent.Width)) {
 					if (blend) {
 						uint max_a = 0;
 						uint a = 0;
@@ -155,8 +156,8 @@ namespace SpriteMaster {
 						uint g = 0;
 						uint r = 0;
 						var ySourceOffsetAdjusted = ySourceOffset;
-						foreach (uint innerY in 0..block) {
-							foreach (uint innerX in 0..block) {
+						foreach (uint innerY in 0U.RangeTo(block)) {
+							foreach (uint innerX in 0U.RangeTo(block)) {
 								var sample = veryRawData[ySourceOffsetAdjusted + ((x * block) + (uint)blockOffset.X + innerX)];
 								var aa = (sample >> 24) & 0xFFU;
 								max_a = Math.Max(aa, max_a);
@@ -270,7 +271,7 @@ namespace SpriteMaster {
 			if (Config.Resample.Scale) {
 				var originalScale = scale;
 				scale = 2;
-				foreach (uint s in originalScale..2U) {
+				foreach (uint s in originalScale.RangeTo(2U)) {
 					var newDimensions = inputSize * s;
 					if (newDimensions.X <= Config.PreferredMaxTextureDimension && newDimensions.Y <= Config.PreferredMaxTextureDimension) {
 						scale = s;
@@ -285,7 +286,7 @@ namespace SpriteMaster {
 			var scaledDimensions = spriteBounds.Extent * scale;
 
 			// Water in the game is pre-upscaled by 4... which is weird.
-			Types.Span<int> rawData;
+			FixedSpan<int> rawData;
 			if (isWater && WaterBlock != 1) {
 				rawData = DownSample(data: rawTextureData, bounds: inputBounds, referenceWidth: (uint)input.ReferenceSize.Width, block: WaterBlock);
 				rawSize = inputBounds.Extent;
@@ -299,7 +300,7 @@ namespace SpriteMaster {
 				inputBounds = rawSize;
 			}
 			else {
-				rawData = rawTextureData.AsSpan().As<int>();
+				rawData = rawTextureData.AsFixedSpan().As<int>();
 			}
 
 			var edgeResults = Edge.AnalyzeLegacy(
@@ -399,9 +400,9 @@ namespace SpriteMaster {
 							void WritePaddingY () {
 								if (!hasPadding.Y)
 									return;
-								foreach (int i in 0..actualPadding.Y) {
+								foreach (int i in 0.RangeTo(actualPadding.Y)) {
 									var strideOffset = y * paddedSize.Width;
-									foreach (int x in 0..paddedSize.Width) {
+									foreach (int x in 0.RangeTo(paddedSize.Width)) {
 										paddedData[strideOffset + x] = padConstant;
 									}
 									++y;
@@ -410,7 +411,7 @@ namespace SpriteMaster {
 
 							WritePaddingY();
 
-							foreach (int i in 0..spriteSize.Height) {
+							foreach (int i in 0.RangeTo(spriteSize.Height)) {
 								var strideOffset = y * paddedSize.Width;
 								var strideOffsetRaw = (i + inputBounds.Top) * prescaleSize.Width;
 								// Write a padded X line
@@ -418,12 +419,12 @@ namespace SpriteMaster {
 								void WritePaddingX () {
 									if (!hasPadding.X)
 										return;
-									foreach (int x in 0..actualPadding.X) {
+									foreach (int x in 0.RangeTo(actualPadding.X)) {
 										paddedData[xOffset++] = padConstant;
 									}
 								}
 								WritePaddingX();
-								foreach (int x in 0..spriteSize.Width) {
+								foreach (int x in 0.RangeTo(spriteSize.Width)) {
 									paddedData[xOffset++] = rawData[strideOffsetRaw + x + inputBounds.Left];
 								}
 								WritePaddingX();
@@ -432,7 +433,7 @@ namespace SpriteMaster {
 
 							WritePaddingY();
 
-							prescaleData = paddedData.AsSpan();
+							prescaleData = paddedData.AsFixedSpan();
 							prescaleSize = paddedSize;
 							scaledDimensions = scaledSize = newSize = prescaleSize * scale;
 							outputSize = prescaleSize;
@@ -450,7 +451,7 @@ namespace SpriteMaster {
 						}
 						break;
 						case Scaler.xBRZ: {
-							var outData = bitmapData.AsSpan().As<uint>();
+							var outData = bitmapData.AsFixedSpan().As<uint>();
 
 							var scalerConfig = new xBRZ.Config(
 								wrapped: (wrapped & false) | isWater
@@ -507,7 +508,7 @@ namespace SpriteMaster {
 					var dataBytes = new byte[dataSize];
 					int offsetSource = 0;
 					int offsetDest = 0;
-					foreach (int y in 0..resizedData.Height) {
+					foreach (int y in 0.RangeTo(resizedData.Height)) {
 						Marshal.Copy(dataPtr + offsetSource, bitmapData, offsetDest, widthSize);
 						offsetSource += resizedData.Stride;
 						offsetDest += widthSize;
@@ -569,8 +570,8 @@ namespace SpriteMaster {
 					var blockPaddedSize = (newSize + 3) & ~3;
 
 					var newBuffer = new byte[blockPaddedSize.Area * sizeof(int)];
-					var intSpanSrc = bitmapData.AsSpan().As<int>();
-					var intSpanDst = newBuffer.AsSpan().As<int>();
+					var intSpanSrc = bitmapData.AsFixedSpan().As<int>();
+					var intSpanDst = newBuffer.AsFixedSpan().As<int>();
 
 					int y;
 					for (y = 0; y < newSize.Y; ++y) {

@@ -1,4 +1,4 @@
-﻿using Harmony;
+﻿using HarmonyLib;
 using SpriteMaster.Extensions;
 using SpriteMaster.Harmonize;
 using SpriteMaster.Metadata;
@@ -129,7 +129,7 @@ namespace SpriteMaster {
 					configStrArray.Add("0");
 				}
 
-				foreach (int i in 0..configStrArray.Count) {
+				foreach (int i in 0.RangeTo(configStrArray.Count)) {
 					if (configStrArray[i] == "") {
 						return true;
 					}
@@ -220,7 +220,7 @@ namespace SpriteMaster {
 		}
 
 		private void ConfigureHarmony() {
-			var instance = HarmonyInstance.Create($"DigitalCarbide.${Config.ModuleName}");
+			var instance = new Harmony($"DigitalCarbide.${Config.ModuleName}");
 			instance.ApplyPatches();
 		}
 
