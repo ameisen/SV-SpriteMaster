@@ -1,4 +1,6 @@
-﻿using SpriteMaster.Extensions;
+﻿using Newtonsoft.Json.Linq;
+
+using SpriteMaster.Extensions;
 using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -21,8 +23,29 @@ namespace SpriteMaster.Types {
 		IEquatable<XTileRectangle> {
 		public static readonly Bounds Empty = new Bounds(0, 0, 0, 0);
 
+		private Vector2I ExtentReal;
+
 		public Vector2I Offset;
-		public Vector2I Extent;
+		public Vector2I Extent {
+			readonly get => ExtentReal;
+			set {
+				if (value.X < 0) {
+					Invert.X = true;
+					ExtentReal.X = -value.X;
+				}
+				else {
+					ExtentReal.X = value.X;
+				}
+
+				if (value.Y < 0) {
+					Invert.Y = true;
+					ExtentReal.Y = -value.Y;
+				}
+				else {
+					ExtentReal.Y = value.Y;
+				}
+			}
+		}
 		public Vector2B Invert;
 
 		public Vector2I Position {
@@ -44,7 +67,9 @@ namespace SpriteMaster.Types {
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			readonly get { return Extent; }
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
-			set { Extent = value; }
+			set {
+				Extent = value;
+			}
 		}
 
 		public int X {
@@ -65,7 +90,7 @@ namespace SpriteMaster.Types {
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			readonly get { return Extent.X; }
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
-			set { Extent.X = value; }
+			set { Extent = Vector2I.From(value, Extent.Y); }
 		}
 
 		public readonly int InvertedWidth {
@@ -77,7 +102,7 @@ namespace SpriteMaster.Types {
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			readonly get { return Extent.Y; }
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
-			set { Extent.Y = value; }
+			set { Extent = Vector2I.From(Extent.X, value); }
 		}
 
 		public readonly int InvertedHeight {
@@ -91,7 +116,7 @@ namespace SpriteMaster.Types {
 			readonly get { return Offset.X; }
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			set {
-				Extent.X += (Offset.X - value);
+				Width += (Offset.X - value);
 				Offset.X = value;
 			}
 		}
@@ -102,7 +127,7 @@ namespace SpriteMaster.Types {
 			readonly get { return Offset.Y; }
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			set {
-				Extent.Y += (Offset.Y - value);
+				Height += (Offset.Y - value);
 				Offset.Y = value;
 			}
 		}
@@ -134,14 +159,14 @@ namespace SpriteMaster.Types {
 			//Contract.AssertNotZero(extent.Width, $"{nameof(extent.Width)} is zero");
 			//Contract.AssertNotZero(extent.Height, $"{nameof(extent.Height)} is zero");
 			Offset = offset;
-			Extent = extent;
+			ExtentReal = extent;
 			Invert = new();
-			if (Extent.X < 0) {
-				Extent.X = -Extent.X;
+			if (ExtentReal.X < 0) {
+				ExtentReal.X = -ExtentReal.X;
 				Invert.X = true;
 			}
-			if (Extent.Y < 0) {
-				Extent.Y = -Extent.Y;
+			if (ExtentReal.Y < 0) {
+				ExtentReal.Y = -ExtentReal.Y;
 				Invert.Y = true;
 			}
 		}
@@ -158,7 +183,7 @@ namespace SpriteMaster.Types {
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public Bounds (in Bounds bounds) {
 			Offset = bounds.Offset;
-			Extent = bounds.Extent;
+			ExtentReal = bounds.Extent;
 			Invert = bounds.Invert;
 		}
 

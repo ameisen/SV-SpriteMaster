@@ -31,7 +31,7 @@ namespace SpriteMaster.Resample {
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		internal static unsafe Results AnalyzeLegacy (Texture2D reference, in FixedSpan<int> data, Bounds rawSize, Bounds spriteSize, Vector2B Wrapped) {
-			Vector2B boundsInverted = Vector2B.False;
+			Vector2B boundsInverted = spriteSize.Invert;
 
 			if (spriteSize.Width < 0 || spriteSize.Height < 0) {
 				Debug.ErrorLn($"Inverted Sprite Bounds Value leaked to AnalyzeLegacy: {spriteSize}");

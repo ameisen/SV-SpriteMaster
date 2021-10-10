@@ -200,12 +200,14 @@ namespace SpriteMaster {
 
 			help.Events.GameLoop.DayStarted += OnDayStarted;
 			// GC after major events
-			help.Events.GameLoop.SaveLoaded += (_, _1) => Garbage.Collect(compact: true, blocking: true, background: false);
+			help.Events.GameLoop.SaveLoaded += (_, _) => ForceGarbageCollect();
+			help.Events.GameLoop.DayEnding += (_, _) => ForceGarbageCollect();
+			help.Events.GameLoop.GameLaunched += (_, _) => ForceGarbageCollect();
+			help.Events.GameLoop.ReturnedToTitle += (_, _) => ForceGarbageCollect();
+			help.Events.GameLoop.SaveCreated += (_, _) => ForceGarbageCollect();
 
-			if (MemoryPressureThread != null)
-				MemoryPressureThread.Start();
-			if (GarbageCollectThread != null)
-				GarbageCollectThread.Start();
+			MemoryPressureThread?.Start();
+			GarbageCollectThread?.Start();
 		}
 
 		// SMAPI/CP won't do this, so we do. Purge the cached textures for the previous season on a season change.
@@ -218,6 +220,13 @@ namespace SpriteMaster {
 				CurrentSeason = season;
 				ScaledTexture.SpriteMap.SeasonPurge(season);
 			}
+
+			// And again after purge
+			Garbage.Collect(compact: true, blocking: true, background: false);
+		}
+
+		private static void ForceGarbageCollect() {
+			Garbage.Collect(compact: true, blocking: true, background: false);
 		}
 
 		private void ConfigureHarmony() {

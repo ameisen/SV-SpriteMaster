@@ -69,11 +69,11 @@ namespace SpriteMaster.Extensions {
 						}
 						if (compact && CompactingCollect != null) {
 							CompactingCollect.Invoke(null, new object[] {
-							int.MaxValue,
-							background ? GCCollectionMode.Optimized : GCCollectionMode.Forced,
-							blocking,
-							true
-					});
+								int.MaxValue,
+								background ? GCCollectionMode.Optimized : GCCollectionMode.Forced,
+								blocking,
+								true
+							});
 						}
 						else {
 							GC.Collect(
