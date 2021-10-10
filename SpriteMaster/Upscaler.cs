@@ -356,7 +356,7 @@ namespace SpriteMaster {
 				dump.Save(path, ImageFormat.Png);
 			}
 
-			if (Config.Resample.Smoothing) {
+			if (Config.Resample.Enabled) {
 				var prescaleData = rawData;
 				var prescaleSize = rawSize;
 
