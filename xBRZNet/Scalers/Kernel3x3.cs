@@ -7,7 +7,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 	internal unsafe ref struct Kernel3x3 {
 		private fixed uint Data[3 * 3];
 
-		public readonly uint this[int index] => Data[index];
+		internal readonly uint this[int index] => Data[index];
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		internal Kernel3x3(uint _0, uint _1, uint _2, uint _3, uint _4, uint _5, uint _6, uint _7, uint _8) {

@@ -2,7 +2,7 @@
   using System;
 
   [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = false, Inherited = false)]
-  public sealed class DisablePrivateReflectionAttribute : Attribute {
-    public DisablePrivateReflectionAttribute () { }
+  internal sealed class DisablePrivateReflectionAttribute : Attribute {
+    internal DisablePrivateReflectionAttribute () { }
   }
 }

@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 using System.Security;
 
 namespace SpriteMaster.Types {
-	public static class Arrays {
+	internal static class Arrays {
 		internal static class EmptyArrayStatic<T> {
 			[ImmutableObject(true)]
 			internal static readonly T[] Value = new T[0];
@@ -15,13 +15,13 @@ namespace SpriteMaster.Types {
 
 		[Pure, MethodImpl(Runtime.MethodImpl.Optimize)]
 		[ImmutableObject(true)]
-		public static T[] Empty<T> () => EmptyArrayStatic<T>.Value;
+		internal static T[] Empty<T> () => EmptyArrayStatic<T>.Value;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static T[] Singleton<T> (T value) => new T[] { value };
+		internal static T[] Singleton<T> (T value) => new T[] { value };
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static T[] Of<T> (params T[] values) => values;
+		internal static T[] Of<T> (params T[] values) => values;
 
 		private sealed class WrappedUnmanagedMemoryStream<T> : UnmanagedMemoryStream {
 			private readonly GCHandle Handle;
@@ -39,7 +39,7 @@ namespace SpriteMaster.Types {
 			}
 
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
-			public static unsafe WrappedUnmanagedMemoryStream<T> Get (T[] data, int offset, int size, FileAccess access) {
+			internal static unsafe WrappedUnmanagedMemoryStream<T> Get (T[] data, int offset, int size, FileAccess access) {
 				var handle = GCHandle.Alloc(data, GCHandleType.Pinned);
 				try {
 					return new WrappedUnmanagedMemoryStream<T>(handle, offset, size, access);
@@ -66,12 +66,12 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static unsafe UnmanagedMemoryStream Stream<T> (this T[] data) where T : struct {
+		internal static unsafe UnmanagedMemoryStream Stream<T> (this T[] data) where T : struct {
 			return WrappedUnmanagedMemoryStream<T>.Get(data, 0, data.Length, FileAccess.ReadWrite);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static UnmanagedMemoryStream Stream<T> (this T[] data, int offset = 0, int length = -1, FileAccess access = FileAccess.ReadWrite) {
+		internal static UnmanagedMemoryStream Stream<T> (this T[] data, int offset = 0, int length = -1, FileAccess access = FileAccess.ReadWrite) {
 			if (length == -1) {
 				length = data.Length - offset;
 			}
@@ -79,12 +79,12 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static MemoryStream Stream (this byte[] data) {
+		internal static MemoryStream Stream (this byte[] data) {
 			return new MemoryStream(data, 0, data.Length, true, true);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static MemoryStream Stream (this byte[] data, int offset = 0, int length = -1, FileAccess access = FileAccess.ReadWrite) {
+		internal static MemoryStream Stream (this byte[] data, int offset = 0, int length = -1, FileAccess access = FileAccess.ReadWrite) {
 			if (length == -1) {
 				length = data.Length - offset;
 			}
@@ -92,17 +92,17 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static FixedSpan<U> CastAs<T, U> (this T[] data) where T : unmanaged where U : unmanaged => data.AsFixedSpan<T, U>();
+		internal static FixedSpan<U> CastAs<T, U> (this T[] data) where T : unmanaged where U : unmanaged => data.AsFixedSpan<T, U>();
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static T[] Reverse<T> (this T[] array) {
+		internal static T[] Reverse<T> (this T[] array) {
 			//Contract.AssertNotNull(array);
 			Array.Reverse(array);
 			return array;
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static T[] Reversed<T> (this T[] array) {
+		internal static T[] Reversed<T> (this T[] array) {
 			//Contract.AssertNotNull(array);
 			var result = (T[])array.Clone();
 			Array.Reverse(result);
@@ -110,14 +110,14 @@ namespace SpriteMaster.Types {
 		}
 	}
 
-	public static class Arrays<T> {
+	internal static class Arrays<T> {
 		[ImmutableObject(true)]
-		public static readonly T[] Empty = Arrays.Empty<T>();
+		internal static readonly T[] Empty = Arrays.Empty<T>();
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static T[] Singleton (T value) => Arrays.Singleton<T>(value);
+		internal static T[] Singleton (T value) => Arrays.Singleton<T>(value);
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static T[] Of (params T[] values) => Arrays.Of<T>(values);
+		internal static T[] Of (params T[] values) => Arrays.Of<T>(values);
 	}
 }

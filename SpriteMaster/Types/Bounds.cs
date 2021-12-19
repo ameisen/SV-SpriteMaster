@@ -10,7 +10,7 @@ namespace SpriteMaster.Types {
 	using XNARectangle = Microsoft.Xna.Framework.Rectangle;
 	using XTileRectangle = xTile.Dimensions.Rectangle;
 
-	public struct Bounds :
+	internal struct Bounds :
 		ICloneable,
 		IComparable,
 		IComparable<Bounds>,
@@ -21,12 +21,12 @@ namespace SpriteMaster.Types {
 		IEquatable<DrawingRectangle>,
 		IEquatable<XNARectangle>,
 		IEquatable<XTileRectangle> {
-		public static readonly Bounds Empty = new Bounds(0, 0, 0, 0);
+		internal static readonly Bounds Empty = new Bounds(0, 0, 0, 0);
 
 		private Vector2I ExtentReal;
 
-		public Vector2I Offset;
-		public Vector2I Extent {
+		internal Vector2I Offset;
+		internal Vector2I Extent {
 			readonly get => ExtentReal;
 			set {
 				if (value.X < 0) {
@@ -46,16 +46,16 @@ namespace SpriteMaster.Types {
 				}
 			}
 		}
-		public Vector2B Invert;
+		internal Vector2B Invert;
 
-		public Vector2I Position {
+		internal Vector2I Position {
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			readonly get { return Offset; }
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			set { Offset = value; }
 		}
 
-		public Vector2I Location {
+		internal Vector2I Location {
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			readonly get { return Offset; }
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
@@ -63,7 +63,7 @@ namespace SpriteMaster.Types {
 		}
 
 		[Browsable(false)]
-		public Vector2I Size {
+		internal Vector2I Size {
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			readonly get { return Extent; }
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
@@ -72,46 +72,46 @@ namespace SpriteMaster.Types {
 			}
 		}
 
-		public int X {
+		internal int X {
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			readonly get { return Offset.X; }
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			set { Offset.X = value; }
 		}
 
-		public int Y {
+		internal int Y {
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			readonly get { return Offset.Y; }
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			set { Offset.Y = value; }
 		}
 
-		public int Width {
+		internal int Width {
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			readonly get { return Extent.X; }
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			set { Extent = Vector2I.From(value, Extent.Y); }
 		}
 
-		public readonly int InvertedWidth {
+		internal readonly int InvertedWidth {
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			get { return Invert.X ? -Extent.X : Extent.X; }
 		}
 
-		public int Height {
+		internal int Height {
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			readonly get { return Extent.Y; }
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			set { Extent = Vector2I.From(Extent.X, value); }
 		}
 
-		public readonly int InvertedHeight {
+		internal readonly int InvertedHeight {
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			get { return Invert.Y ? -Extent.Y : Extent.Y; }
 		}
 
 		[Browsable(false)]
-		public int Left {
+		internal int Left {
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			readonly get { return Offset.X; }
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
@@ -122,7 +122,7 @@ namespace SpriteMaster.Types {
 		}
 
 		[Browsable(false)]
-		public int Top {
+		internal int Top {
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			readonly get { return Offset.Y; }
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
@@ -133,7 +133,7 @@ namespace SpriteMaster.Types {
 		}
 
 		[Browsable(false)]
-		public int Right {
+		internal int Right {
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			readonly get { return Offset.X + Extent.X; }
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
@@ -141,21 +141,21 @@ namespace SpriteMaster.Types {
 		}
 
 		[Browsable(false)]
-		public int Bottom {
+		internal int Bottom {
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			readonly get { return Offset.Y + Extent.Y; }
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			set { Height = value - Offset.Y; }
 		}
 
-		public readonly int Area => Extent.X * Extent.Y;
+		internal readonly int Area => Extent.X * Extent.Y;
 
-		public readonly bool Degenerate => Extent.X == 0 || Extent.Y == 0;
+		internal readonly bool Degenerate => Extent.X == 0 || Extent.Y == 0;
 
-		public readonly bool IsEmpty => Area == 0;
+		internal readonly bool IsEmpty => Area == 0;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Bounds (Vector2I offset, Vector2I extent) {
+		internal Bounds (Vector2I offset, Vector2I extent) {
 			//Contract.AssertNotZero(extent.Width, $"{nameof(extent.Width)} is zero");
 			//Contract.AssertNotZero(extent.Height, $"{nameof(extent.Height)} is zero");
 			Offset = offset;
@@ -172,38 +172,38 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Bounds (int x, int y, int width, int height) : this(new Vector2I(x, y), new Vector2I(width, height)) { }
+		internal Bounds (int x, int y, int width, int height) : this(new Vector2I(x, y), new Vector2I(width, height)) { }
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Bounds (int width, int height) : this(0, 0, width, height) { }
+		internal Bounds (int width, int height) : this(0, 0, width, height) { }
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Bounds (Vector2I extent) : this(Vector2I.Zero, extent) { }
+		internal Bounds (Vector2I extent) : this(Vector2I.Zero, extent) { }
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Bounds (in Bounds bounds) {
+		internal Bounds (in Bounds bounds) {
 			Offset = bounds.Offset;
 			ExtentReal = bounds.Extent;
 			Invert = bounds.Invert;
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Bounds (in DrawingRectangle rect) : this(rect.X, rect.Y, rect.Width, rect.Height) { }
+		internal Bounds (in DrawingRectangle rect) : this(rect.X, rect.Y, rect.Width, rect.Height) { }
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Bounds (in XNARectangle rect) : this(rect.X, rect.Y, rect.Width, rect.Height) { }
+		internal Bounds (in XNARectangle rect) : this(rect.X, rect.Y, rect.Width, rect.Height) { }
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Bounds (in XTileRectangle rect) : this(rect.X, rect.Y, rect.Width, rect.Height) { }
+		internal Bounds (in XTileRectangle rect) : this(rect.X, rect.Y, rect.Width, rect.Height) { }
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Bounds (Microsoft.Xna.Framework.Graphics.Texture2D tex) : this(tex.Width, tex.Height) { }
+		internal Bounds (Microsoft.Xna.Framework.Graphics.Texture2D tex) : this(tex.Width, tex.Height) { }
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Bounds (System.Drawing.Bitmap bmp) : this(bmp.Width, bmp.Height) { }
+		internal Bounds (System.Drawing.Bitmap bmp) : this(bmp.Width, bmp.Height) { }
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public bool Overlaps (in Bounds other) =>
+		internal bool Overlaps (in Bounds other) =>
 		!(
 			other.Left > Right ||
 			other.Right < Left ||
@@ -212,7 +212,7 @@ namespace SpriteMaster.Types {
 		);
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public readonly Bounds Clone () => this;
+		internal readonly Bounds Clone () => this;
 
 		readonly object ICloneable.Clone () => this;
 
@@ -288,16 +288,16 @@ namespace SpriteMaster.Types {
 		public readonly bool Equals (XTileRectangle other) => Equals((Bounds)other);
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public readonly bool NotEquals (in Bounds other) => Offset != other.Offset || Extent != other.Extent;
+		internal readonly bool NotEquals (in Bounds other) => Offset != other.Offset || Extent != other.Extent;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public readonly bool NotEquals (in DrawingRectangle other) => NotEquals((Bounds)other);
+		internal readonly bool NotEquals (in DrawingRectangle other) => NotEquals((Bounds)other);
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public readonly bool NotEquals (in XNARectangle other) => NotEquals((Bounds)other);
+		internal readonly bool NotEquals (in XNARectangle other) => NotEquals((Bounds)other);
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public readonly bool NotEquals (in XTileRectangle other) => NotEquals((Bounds)other);
+		internal readonly bool NotEquals (in XTileRectangle other) => NotEquals((Bounds)other);
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public static bool operator == (in Bounds lhs, in Bounds rhs) => lhs.Equals(rhs);

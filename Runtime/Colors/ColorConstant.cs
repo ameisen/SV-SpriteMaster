@@ -1,17 +1,19 @@
-﻿namespace SpriteMaster.Colors {
-	public static class ColorConstant {
-		public static class Shift {
-			public const int Alpha = 24;
-			public const int Red = 0;
-			public const int Green = 8;
-			public const int Blue = 16;
+﻿using System.Runtime.CompilerServices;
+
+namespace SpriteMaster.Colors {
+	internal static class ColorConstant {
+		internal static class Shift {
+			internal const int Alpha = 24;
+			internal const int Red = 0;
+			internal const int Green = 8;
+			internal const int Blue = 16;
 		}
 
-		public static class Mask {
-			public const uint Alpha = 0xFFU << Shift.Alpha;
-			public const uint Red = 0xFFU << Shift.Red;
-			public const uint Green = 0xFFU << Shift.Green;
-			public const uint Blue = 0xFFU << Shift.Blue;
+		internal static class Mask {
+			internal const uint Alpha = 0xFFU << Shift.Alpha;
+			internal const uint Red = 0xFFU << Shift.Red;
+			internal const uint Green = 0xFFU << Shift.Green;
+			internal const uint Blue = 0xFFU << Shift.Blue;
 		}
 	}
 }

@@ -13,9 +13,9 @@ namespace SpriteMaster {
 		private static int TotalManagedTextures = 0;
 		private const bool UseMips = false;
 
-		public readonly WeakReference<Texture2D> Reference;
-		public readonly ScaledTexture Texture;
-		public readonly Vector2I Dimensions;
+		internal readonly WeakReference<Texture2D> Reference;
+		internal readonly ScaledTexture Texture;
+		internal readonly Vector2I Dimensions;
 
 		internal static void DumpStats(List<string> output) {
 			output.Add("\tManagedTexture2D:");
@@ -24,7 +24,7 @@ namespace SpriteMaster {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public ManagedTexture2D (
+		internal ManagedTexture2D (
 			ScaledTexture texture,
 			Texture2D reference,
 			Vector2I dimensions,

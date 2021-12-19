@@ -7,33 +7,33 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace SpriteMaster.Types {
-	public static class Extensions {
-		public static FixedSpan<T> AsFixedSpan<T>(this T[] data) where T : unmanaged {
+	internal static class Extensions {
+		internal static FixedSpan<T> AsFixedSpan<T>(this T[] data) where T : unmanaged {
 			return new FixedSpan<T>(data);
 		}
 
-		public static FixedSpan<U> AsFixedSpan<T, U>(this T[] data) where T : unmanaged where U : unmanaged {
+		internal static FixedSpan<U> AsFixedSpan<T, U>(this T[] data) where T : unmanaged where U : unmanaged {
 			using var intermediateSpan = new FixedSpan<T>(data);
 			return intermediateSpan.As<U>();
 		}
 
-		public static FixedSpan<T> AsFixedSpan<T>(this T[] data, int length) where T : unmanaged {
+		internal static FixedSpan<T> AsFixedSpan<T>(this T[] data, int length) where T : unmanaged {
 			return new FixedSpan<T>(data, length);
 		}
 
-		public static FixedSpan<U> AsFixedSpan<T, U>(this T[] data, int length) where T : unmanaged where U : unmanaged {
+		internal static FixedSpan<U> AsFixedSpan<T, U>(this T[] data, int length) where T : unmanaged where U : unmanaged {
 			using var intermediateSpan = new FixedSpan<T>(data, length);
 			return intermediateSpan.As<U>();
 		}
 	}
 
 	[ImmutableObject(true)]
-	public struct FixedSpan<T> : IDisposable where T : unmanaged {
+	internal struct FixedSpan<T> : IDisposable where T : unmanaged {
 		private sealed class CollectionHandle : IDisposable {
 			private GCHandle? Handle;
 
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
-			public CollectionHandle (GCHandle handle) {
+			internal CollectionHandle (GCHandle handle) {
 				Handle = handle;
 			}
 
@@ -51,8 +51,8 @@ namespace SpriteMaster.Types {
 
 		private CollectionHandle Handle;
 		private WeakReference PinnedObject;
-		public readonly IntPtr Pointer;
-		public readonly int Length;
+		internal readonly IntPtr Pointer;
+		internal readonly int Length;
 		private readonly int Size;
 
 		private readonly static int TypeSize = Marshal.SizeOf(typeof(T));
@@ -79,7 +79,7 @@ namespace SpriteMaster.Types {
 			return index * unchecked((uint)TypeSize);
 		}
 
-		public readonly unsafe T this[int index] {
+		internal readonly unsafe T this[int index] {
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			get {
 				T* ptr = (T*)(Pointer + GetOffset(index));
@@ -92,7 +92,7 @@ namespace SpriteMaster.Types {
 			}
 		}
 
-		public readonly unsafe T this[uint index] {
+		internal readonly unsafe T this[uint index] {
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			get {
 				T* ptr = (T*)(Pointer + unchecked((int)GetOffset(index)));
@@ -106,7 +106,7 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public readonly T[] ToArray() {
+		internal readonly T[] ToArray() {
 			var result = new T[Length];
 			for (int i = 0; i < Length; ++i) {
 				result[i] = this[i];
@@ -115,13 +115,13 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public readonly U[] ToArray<U>() where U : unmanaged {
+		internal readonly U[] ToArray<U>() where U : unmanaged {
 			using var span = As<U>();
 			return span.ToArray();
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public readonly unsafe ref T GetPinnableReference () {
+		internal readonly unsafe ref T GetPinnableReference () {
 			return ref *(T*)Pointer;
 		}
 
@@ -129,10 +129,10 @@ namespace SpriteMaster.Types {
 		public static implicit operator FixedSpan<T>(T[] array) => array.AsFixedSpan();
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public FixedSpan(T[] data) : this(data, data.Length, data.Length * TypeSize) {}
+		internal FixedSpan(T[] data) : this(data, data.Length, data.Length * TypeSize) {}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public FixedSpan(T[] data, int length) : this(data, length, length * TypeSize) { }
+		internal FixedSpan(T[] data, int length) : this(data, length, length * TypeSize) { }
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		private FixedSpan(object pinnedObject, int size) : this(pinnedObject, size / TypeSize, size) { }
@@ -156,7 +156,7 @@ namespace SpriteMaster.Types {
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		[Obsolete("Very Unsafe")]
-		public unsafe FixedSpan (T* data, int length, int size) {
+		internal unsafe FixedSpan (T* data, int length, int size) {
 			PinnedObject = null;
 			Pointer = (IntPtr)data;
 			Length = length;
@@ -166,10 +166,10 @@ namespace SpriteMaster.Types {
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		[Obsolete("Very Unsafe")]
-		public unsafe FixedSpan(T* data, int length) : this(data, length, length * TypeSize) {}
+		internal unsafe FixedSpan(T* data, int length) : this(data, length, length * TypeSize) {}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public readonly FixedSpan<U> As<U>() where U : unmanaged {
+		internal readonly FixedSpan<U> As<U>() where U : unmanaged {
 			// TODO add check for U == T
 			if (PinnedObject == null) {
 				return new FixedSpan<U>(Pointer, Size / Marshal.SizeOf(typeof(U)), Size);
@@ -191,13 +191,13 @@ namespace SpriteMaster.Types {
 			}
 		}
 
-		public unsafe sealed class Enumerator : IEnumerator<T>, IEnumerator {
+		internal unsafe sealed class Enumerator : IEnumerator<T>, IEnumerator {
 			private readonly T* Span;
 			private readonly int Length;
 			private int Index = 0;
 
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
-			public Enumerator (in FixedSpan<T> span) {
+			internal Enumerator (in FixedSpan<T> span) {
 				Span = (T *)span.Pointer;
 				Length = span.Length;
 			}

@@ -2,11 +2,11 @@
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Colors {
-	public struct ColorSpace {
-		public struct Double3 {
-			public readonly double R;
-			public readonly double G;
-			public readonly double B;
+	internal struct ColorSpace {
+		internal struct Double3 {
+			internal readonly double R;
+			internal readonly double G;
+			internal readonly double B;
 
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			internal Double3 (double r, double g, double b) {
@@ -16,9 +16,9 @@ namespace SpriteMaster.Colors {
 			}
 		}
 
-		public struct ScaleDouble {
-			public readonly double R;
-			public readonly double B;
+		internal struct ScaleDouble {
+			internal readonly double R;
+			internal readonly double B;
 
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			internal ScaleDouble (double r, double b) {
@@ -27,11 +27,11 @@ namespace SpriteMaster.Colors {
 			}
 		}
 
-		public readonly Double3 LumaCoefficient;
-		public readonly ScaleDouble LumaScale;
+		internal readonly Double3 LumaCoefficient;
+		internal readonly ScaleDouble LumaScale;
 
-		public readonly Func<double, double> Linearize;
-		public readonly Func<double, double> Delinearize;
+		internal readonly Func<double, double> Linearize;
+		internal readonly Func<double, double> Delinearize;
 
 		internal ColorSpace (double r, double g, double b, Func<double, double> linearize = null, Func<double, double> delinearize = null) {
 			// Correct for precision error, just in case.
@@ -60,30 +60,30 @@ namespace SpriteMaster.Colors {
 		}
 
 		// https://www.itu.int/dms_pubrec/itu-r/rec/bt/R-REC-BT.2020-2-201510-I!!PDF-E.pdf
-		public static readonly ColorSpace BT_2020 = new ColorSpace(r: 0.2627, g: 0.6780, b: 0.0593);
+		internal static readonly ColorSpace BT_2020 = new ColorSpace(r: 0.2627, g: 0.6780, b: 0.0593);
 
 		// https://www.itu.int/dms_pubrec/itu-r/rec/bt/R-REC-BT.2100-2-201807-I!!PDF-E.pdf
-		public static readonly ColorSpace BT_2100 = BT_2020; // Same Coefficients as BT.2020
+		internal static readonly ColorSpace BT_2100 = BT_2020; // Same Coefficients as BT.2020
 
 		// https://www.itu.int/dms_pubrec/itu-r/rec/bt/R-REC-BT.709-6-201506-I!!PDF-E.pdf
-		public static readonly ColorSpace BT_709 = new ColorSpace(r: 0.2126, g: 0.7152, b: 0.0722);
+		internal static readonly ColorSpace BT_709 = new ColorSpace(r: 0.2126, g: 0.7152, b: 0.0722);
 
-		public static readonly ColorSpace BT_709_Precise = new ColorSpace(r: 0.212655, g: 0.715158, b: 0.072187);
+		internal static readonly ColorSpace BT_709_Precise = new ColorSpace(r: 0.212655, g: 0.715158, b: 0.072187);
 
 		// https://www.itu.int/dms_pubrec/itu-r/rec/bt/R-REC-BT.601-7-201103-I!!PDF-E.pdf
-		public static readonly ColorSpace BT_601 = new ColorSpace(r: 0.299, g: 0.587, b: 0.114);
+		internal static readonly ColorSpace BT_601 = new ColorSpace(r: 0.299, g: 0.587, b: 0.114);
 
 		// https://www5.in.tum.de/lehre/vorlesungen/graphik/info/csc/COL_33.htm
-		public static readonly ColorSpace SMPTE_240M = new ColorSpace(r: 0.2122, g: 0.7013, b: 0.0865);
+		internal static readonly ColorSpace SMPTE_240M = new ColorSpace(r: 0.2122, g: 0.7013, b: 0.0865);
 
 		// https://www.sis.se/api/document/preview/562720/
-		public static readonly ColorSpace sRGB = new ColorSpace(
+		internal static readonly ColorSpace sRGB = new ColorSpace(
 			r: 0.2126, g: 0.7152, b: 0.0722,
 			linearize: (s) => (s <= 0.04045) ? (s / 12.92) : Math.Pow((s + 0.055) / 1.055, 2.4),
 			delinearize: (l) => (l <= 0.0031308) ? (l * 12.92) : 1.055 * Math.Pow(l, 1 / 2.4) - 0.055
 		);
 
-		public static readonly ColorSpace sRGB_Precise = new ColorSpace(
+		internal static readonly ColorSpace sRGB_Precise = new ColorSpace(
 			r: 0.212655, g: 0.715158, b: 0.072187,
 			linearize: (s) => (s <= 0.0404482362771082) ? (s / 12.92) : Math.Pow((s + 0.055) / 1.055, 2.4),
 			delinearize: (l) => (l <= 0.00313066844250063) ? (l * 12.92) : 1.055 * Math.Pow(l, 1 / 2.4) - 0.055

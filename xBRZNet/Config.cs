@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 // TODO : Handle X or Y-only scaling, since the game has a lot of 1xY and Xx1 sprites - 1D textures.
 namespace SpriteMaster.xBRZ {
-	public readonly struct Config : IEquatable<Config> {
+	internal readonly struct Config : IEquatable<Config> {
 		internal const int MaxScale = 6;
 
 		internal readonly Vector2B Wrapped;
@@ -23,7 +23,7 @@ namespace SpriteMaster.xBRZ {
 		internal readonly double EqualColorToleranceSq;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Config (
+		internal Config (
 			Vector2B Wrapped,
 			bool Gamma = true,
 			bool HasAlpha = true,

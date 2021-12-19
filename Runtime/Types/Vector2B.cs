@@ -7,15 +7,15 @@ using System.Runtime.InteropServices;
 namespace SpriteMaster.Types {
 	[DebuggerDisplay("[{X}, {Y}]")]
 	[StructLayout(LayoutKind.Sequential, Pack = sizeof(byte), Size = sizeof(byte))]
-	public struct Vector2B :
+	internal struct Vector2B :
 		ICloneable,
 		IComparable,
 		IComparable<Vector2B>,
 		IComparable<bool>,
 		IEquatable<Vector2B>,
 		IEquatable<bool> {
-		public static readonly Vector2B True = new Vector2B(Packed: All_Value);
-		public static readonly Vector2B False = new Vector2B(Packed: ZeroByte);
+		internal static readonly Vector2B True = new Vector2B(Packed: All_Value);
+		internal static readonly Vector2B False = new Vector2B(Packed: ZeroByte);
 
 		/*
 		// TODO : would an int be faster? Since it would be a native type?
@@ -40,32 +40,32 @@ namespace SpriteMaster.Types {
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		private static byte Get (bool X, bool Y) => (byte)(GetX(X) | GetY(Y));
 
-		public byte Packed;
+		internal byte Packed;
 
-		public bool X {
+		internal bool X {
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			readonly get => (Packed & X_Value) != ZeroByte;
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			set => Packed.SetBit(X_Bit, value);
 		}
-		public bool Y {
+		internal bool Y {
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			readonly get => (Packed & Y_Value) != ZeroByte;
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			set => Packed.SetBit(Y_Bit, value);
 		}
 
-		public bool Width { [MethodImpl(Runtime.MethodImpl.Optimize)] readonly get => X; [MethodImpl(Runtime.MethodImpl.Optimize)] set { X = value; } }
-		public bool Height { [MethodImpl(Runtime.MethodImpl.Optimize)] readonly get => Y; [MethodImpl(Runtime.MethodImpl.Optimize)] set { Y = value; } }
+		internal bool Width { [MethodImpl(Runtime.MethodImpl.Optimize)] readonly get => X; [MethodImpl(Runtime.MethodImpl.Optimize)] set { X = value; } }
+		internal bool Height { [MethodImpl(Runtime.MethodImpl.Optimize)] readonly get => Y; [MethodImpl(Runtime.MethodImpl.Optimize)] set { Y = value; } }
 
-		public bool Negative { [MethodImpl(Runtime.MethodImpl.Optimize)] readonly get => X; [MethodImpl(Runtime.MethodImpl.Optimize)] set { X = value; } }
-		public bool Positive { [MethodImpl(Runtime.MethodImpl.Optimize)] readonly get => Y; [MethodImpl(Runtime.MethodImpl.Optimize)] set { Y = value; } }
+		internal bool Negative { [MethodImpl(Runtime.MethodImpl.Optimize)] readonly get => X; [MethodImpl(Runtime.MethodImpl.Optimize)] set { X = value; } }
+		internal bool Positive { [MethodImpl(Runtime.MethodImpl.Optimize)] readonly get => Y; [MethodImpl(Runtime.MethodImpl.Optimize)] set { Y = value; } }
 
-		public readonly bool None => Packed == ZeroByte;
-		public readonly bool Any => Packed != ZeroByte;
-		public readonly bool All => Packed == All_Value;
+		internal readonly bool None => Packed == ZeroByte;
+		internal readonly bool Any => Packed != ZeroByte;
+		internal readonly bool All => Packed == All_Value;
 
-		public bool this[int index] {
+		internal bool this[int index] {
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			readonly get {
 #if DEBUG
@@ -88,49 +88,49 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Vector2B (byte Packed) => this.Packed = Packed;
+		internal Vector2B (byte Packed) => this.Packed = Packed;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static Vector2B From (byte Packed) => new Vector2B(Packed: Packed);
+		internal static Vector2B From (byte Packed) => new Vector2B(Packed: Packed);
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Vector2B (bool X, bool Y) : this(Packed: Get(X, Y)) {}
+		internal Vector2B (bool X, bool Y) : this(Packed: Get(X, Y)) {}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static Vector2B From (bool X, bool Y) => new Vector2B(X, Y);
+		internal static Vector2B From (bool X, bool Y) => new Vector2B(X, Y);
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Vector2B (bool Value) : this(Value ? All_Value : ZeroByte) { }
+		internal Vector2B (bool Value) : this(Value ? All_Value : ZeroByte) { }
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static Vector2B From (bool Value) => new Vector2B(Value: Value);
+		internal static Vector2B From (bool Value) => new Vector2B(Value: Value);
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Vector2B (Vector2B Vector) : this(Vector.Packed) {}
+		internal Vector2B (Vector2B Vector) : this(Vector.Packed) {}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static Vector2B From (Vector2B Vector) => new Vector2B(Vector: Vector);
+		internal static Vector2B From (Vector2B Vector) => new Vector2B(Vector: Vector);
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Vector2B Set (Vector2B Vector) {
+		internal Vector2B Set (Vector2B Vector) {
 			Packed = Vector.Packed;
 			return this;
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Vector2B Set (bool X, bool Y) {
+		internal Vector2B Set (bool X, bool Y) {
 			Packed = Get(X, Y);
 			return this;
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Vector2B Set (bool Value) {
+		internal Vector2B Set (bool Value) {
 			Packed = Value ? All_Value : ZeroByte;
 			return this;
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public readonly Vector2B Clone () => this;
+		internal readonly Vector2B Clone () => this;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		readonly object ICloneable.Clone () => this;
@@ -176,6 +176,6 @@ namespace SpriteMaster.Types {
 		public readonly bool Equals (bool other) => Packed == (other ? OneByte : ZeroByte);
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public readonly TypeCode GetTypeCode () => TypeCode.Object;
+		internal readonly TypeCode GetTypeCode () => TypeCode.Object;
 	}
 }

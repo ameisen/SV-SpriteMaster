@@ -19,38 +19,38 @@ namespace SpriteMaster.Resample {
 
 		[StructLayout(LayoutKind.Explicit, Pack = sizeof(byte), Size = sizeof(uint))]
 		unsafe struct ColorElement {
-			public static readonly ColorElement Zero = new ColorElement(0, 0, 0, 0);
+			internal static readonly ColorElement Zero = new ColorElement(0, 0, 0, 0);
 
 			[FieldOffset(0)]
-			public fixed byte Data[4];
+			internal fixed byte Data[4];
 
 			[FieldOffset(0)]
-			public byte R;
+			internal byte R;
 			[FieldOffset(1)]
-			public byte G;
+			internal byte G;
 			[FieldOffset(2)]
-			public byte B;
+			internal byte B;
 			[FieldOffset(3)]
-			public byte A;
+			internal byte A;
 
 			[FieldOffset(0)]
-			public fixed int AsInt[1];
+			internal fixed int AsInt[1];
 
 			[FieldOffset(0)]
-			public fixed uint AsUInt[1];
+			internal fixed uint AsUInt[1];
 
-			public ColorElement ColorsOnly => new ColorElement(R, G, B, 0);
+			internal ColorElement ColorsOnly => new ColorElement(R, G, B, 0);
 
 			public static implicit operator int(ColorElement element) => element.AsInt[0];
 			public static implicit operator uint(ColorElement element) => element.AsUInt[0];
 
-			public ref byte this[int index] {
+			internal ref byte this[int index] {
 				[MethodImpl(Runtime.MethodImpl.Optimize)]
 				get => ref Data[index];
 			}
 
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
-			public ColorElement(byte r, byte g, byte b, byte a) {
+			internal ColorElement(byte r, byte g, byte b, byte a) {
 				R = r;
 				G = g;
 				B = b;
@@ -58,12 +58,12 @@ namespace SpriteMaster.Resample {
 			}
 
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
-			public ColorElement(int color) : this(0, 0, 0, 0) {
+			internal ColorElement(int color) : this(0, 0, 0, 0) {
 				AsInt[0] = color;
 			}
 
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
-			public ColorElement(uint color) : this(0, 0, 0, 0) {
+			internal ColorElement(uint color) : this(0, 0, 0, 0) {
 				AsUInt[0] = color;
 			}
 		}

@@ -8,8 +8,8 @@ using SpriteMaster.xBRZ.Common;
 
 namespace SpriteMaster.xBRZ.Scalers {
 	internal abstract class IScaler {
-		public readonly int Scale;
-		public readonly Config Configuration;
+		internal readonly int Scale;
+		internal readonly Config Configuration;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		protected IScaler (int scale, in Config configuration) {
@@ -17,11 +17,11 @@ namespace SpriteMaster.xBRZ.Scalers {
 			Configuration = configuration;
 		}
 
-		public abstract void BlendLineSteep (uint col, in OutputMatrix out_);
-		public abstract void BlendLineSteepAndShallow (uint col, in OutputMatrix out_);
-		public abstract void BlendLineShallow (uint col, in OutputMatrix out_);
-		public abstract void BlendLineDiagonal (uint col, in OutputMatrix out_);
-		public abstract void BlendCorner (uint col, in OutputMatrix out_);
+		internal abstract void BlendLineSteep (uint col, in OutputMatrix out_);
+		internal abstract void BlendLineSteepAndShallow (uint col, in OutputMatrix out_);
+		internal abstract void BlendLineShallow (uint col, in OutputMatrix out_);
+		internal abstract void BlendLineDiagonal (uint col, in OutputMatrix out_);
+		internal abstract void BlendCorner (uint col, in OutputMatrix out_);
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		protected void AlphaBlend (int n, int m, ref uint dstRef, uint col) {
@@ -133,46 +133,46 @@ namespace SpriteMaster.xBRZ.Scalers {
 	}
 
 	internal sealed class Scaler2X : IScaler {
-		public new const int Scale = 2;
-		[MethodImpl(Runtime.MethodImpl.Optimize)] public Scaler2X (in Config config) : base(Scale, config) { }
+		internal new const int Scale = 2;
+		[MethodImpl(Runtime.MethodImpl.Optimize)] internal Scaler2X (in Config config) : base(Scale, config) { }
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public override void BlendLineShallow (uint col, in OutputMatrix out_) {
+		internal override void BlendLineShallow (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(Scale - 1, 0), col);
 			AlphaBlend(3, 4, ref out_.Ref(Scale - 1, 1), col);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public override void BlendLineSteep (uint col, in OutputMatrix out_) {
+		internal override void BlendLineSteep (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(0, Scale - 1), col);
 			AlphaBlend(3, 4, ref out_.Ref(1, Scale - 1), col);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public override void BlendLineSteepAndShallow (uint col, in OutputMatrix out_) {
+		internal override void BlendLineSteepAndShallow (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(1, 0), col);
 			AlphaBlend(1, 4, ref out_.Ref(0, 1), col);
 			AlphaBlend(5, 6, ref out_.Ref(1, 1), col); //[!] fixes 7/8 used in xBR
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public override void BlendLineDiagonal (uint col, in OutputMatrix out_) {
+		internal override void BlendLineDiagonal (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 2, ref out_.Ref(1, 1), col);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public override void BlendCorner (uint col, in OutputMatrix out_) {
+		internal override void BlendCorner (uint col, in OutputMatrix out_) {
 			//model a round corner
 			AlphaBlend(21, 100, ref out_.Ref(1, 1), col); //exact: 1 - pi/4 = 0.2146018366
 		}
 	}
 
 	internal sealed class Scaler3X : IScaler {
-		public new const int Scale = 3;
-		[MethodImpl(Runtime.MethodImpl.Optimize)] public Scaler3X (in Config config) : base(Scale, config) { }
+		internal new const int Scale = 3;
+		[MethodImpl(Runtime.MethodImpl.Optimize)] internal Scaler3X (in Config config) : base(Scale, config) { }
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public override void BlendLineShallow (uint col, in OutputMatrix out_) {
+		internal override void BlendLineShallow (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(Scale - 1, 0), col);
 			AlphaBlend(1, 4, ref out_.Ref(Scale - 2, 2), col);
 			AlphaBlend(3, 4, ref out_.Ref(Scale - 1, 1), col);
@@ -180,7 +180,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public override void BlendLineSteep (uint col, in OutputMatrix out_) {
+		internal override void BlendLineSteep (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(0, Scale - 1), col);
 			AlphaBlend(1, 4, ref out_.Ref(2, Scale - 2), col);
 			AlphaBlend(3, 4, ref out_.Ref(1, Scale - 1), col);
@@ -188,7 +188,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public override void BlendLineSteepAndShallow (uint col, in OutputMatrix out_) {
+		internal override void BlendLineSteepAndShallow (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(2, 0), col);
 			AlphaBlend(1, 4, ref out_.Ref(0, 2), col);
 			AlphaBlend(3, 4, ref out_.Ref(2, 1), col);
@@ -197,14 +197,14 @@ namespace SpriteMaster.xBRZ.Scalers {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public override void BlendLineDiagonal (uint col, in OutputMatrix out_) {
+		internal override void BlendLineDiagonal (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 8, ref out_.Ref(1, 2), col);
 			AlphaBlend(1, 8, ref out_.Ref(2, 1), col);
 			AlphaBlend(7, 8, ref out_.Ref(2, 2), col);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public override void BlendCorner (uint col, in OutputMatrix out_) {
+		internal override void BlendCorner (uint col, in OutputMatrix out_) {
 			//model a round corner
 			AlphaBlend(45, 100, ref out_.Ref(2, 2), col); //exact: 0.4545939598
 																										//alphaBlend(14, 1000, out.ref(2, 1), col); //0.01413008627 -> negligable
@@ -213,11 +213,11 @@ namespace SpriteMaster.xBRZ.Scalers {
 	}
 
 	internal sealed class Scaler4X : IScaler {
-		public new const int Scale = 4;
-		[MethodImpl(Runtime.MethodImpl.Optimize)] public Scaler4X (in Config config) : base(Scale, config) { }
+		internal new const int Scale = 4;
+		[MethodImpl(Runtime.MethodImpl.Optimize)] internal Scaler4X (in Config config) : base(Scale, config) { }
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public override void BlendLineShallow (uint col, in OutputMatrix out_) {
+		internal override void BlendLineShallow (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(Scale - 1, 0), col);
 			AlphaBlend(1, 4, ref out_.Ref(Scale - 2, 2), col);
 			AlphaBlend(3, 4, ref out_.Ref(Scale - 1, 1), col);
@@ -227,7 +227,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public override void BlendLineSteep (uint col, in OutputMatrix out_) {
+		internal override void BlendLineSteep (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(0, Scale - 1), col);
 			AlphaBlend(1, 4, ref out_.Ref(2, Scale - 2), col);
 			AlphaBlend(3, 4, ref out_.Ref(1, Scale - 1), col);
@@ -237,7 +237,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public override void BlendLineSteepAndShallow (uint col, in OutputMatrix out_) {
+		internal override void BlendLineSteepAndShallow (uint col, in OutputMatrix out_) {
 			AlphaBlend(3, 4, ref out_.Ref(3, 1), col);
 			AlphaBlend(3, 4, ref out_.Ref(1, 3), col);
 			AlphaBlend(1, 4, ref out_.Ref(3, 0), col);
@@ -249,14 +249,14 @@ namespace SpriteMaster.xBRZ.Scalers {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public override void BlendLineDiagonal (uint col, in OutputMatrix out_) {
+		internal override void BlendLineDiagonal (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 2, ref out_.Ref(Scale - 1, Scale / 2), col);
 			AlphaBlend(1, 2, ref out_.Ref(Scale - 2, Scale / 2 + 1), col);
 			out_.Set(Scale - 1, Scale - 1, col);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public override void BlendCorner (uint col, in OutputMatrix out_) {
+		internal override void BlendCorner (uint col, in OutputMatrix out_) {
 			//model a round corner
 			AlphaBlend(68, 100, ref out_.Ref(3, 3), col); //exact: 0.6848532563
 			AlphaBlend(9, 100, ref out_.Ref(3, 2), col); //0.08677704501
@@ -265,11 +265,11 @@ namespace SpriteMaster.xBRZ.Scalers {
 	}
 
 	internal sealed class Scaler5X : IScaler {
-		public new const int Scale = 5;
-		[MethodImpl(Runtime.MethodImpl.Optimize)] public Scaler5X (in Config config) : base(Scale, config) { }
+		internal new const int Scale = 5;
+		[MethodImpl(Runtime.MethodImpl.Optimize)] internal Scaler5X (in Config config) : base(Scale, config) { }
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public override void BlendLineShallow (uint col, in OutputMatrix out_) {
+		internal override void BlendLineShallow (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(Scale - 1, 0), col);
 			AlphaBlend(1, 4, ref out_.Ref(Scale - 2, 2), col);
 			AlphaBlend(1, 4, ref out_.Ref(Scale - 3, 4), col);
@@ -282,7 +282,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public override void BlendLineSteep (uint col, in OutputMatrix out_) {
+		internal override void BlendLineSteep (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(0, Scale - 1), col);
 			AlphaBlend(1, 4, ref out_.Ref(2, Scale - 2), col);
 			AlphaBlend(1, 4, ref out_.Ref(4, Scale - 3), col);
@@ -295,7 +295,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public override void BlendLineSteepAndShallow (uint col, in OutputMatrix out_) {
+		internal override void BlendLineSteepAndShallow (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(0, Scale - 1), col);
 			AlphaBlend(1, 4, ref out_.Ref(2, Scale - 2), col);
 			AlphaBlend(3, 4, ref out_.Ref(1, Scale - 1), col);
@@ -311,7 +311,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public override void BlendLineDiagonal (uint col, in OutputMatrix out_) {
+		internal override void BlendLineDiagonal (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 8, ref out_.Ref(Scale - 1, Scale / 2), col);
 			AlphaBlend(1, 8, ref out_.Ref(Scale - 2, Scale / 2 + 1), col);
 			AlphaBlend(1, 8, ref out_.Ref(Scale - 3, Scale / 2 + 2), col);
@@ -321,7 +321,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public override void BlendCorner (uint col, in OutputMatrix out_) {
+		internal override void BlendCorner (uint col, in OutputMatrix out_) {
 			//model a round corner
 			AlphaBlend(86, 100, ref out_.Ref(4, 4), col); //exact: 0.8631434088
 			AlphaBlend(23, 100, ref out_.Ref(4, 3), col); //0.2306749731
@@ -332,11 +332,11 @@ namespace SpriteMaster.xBRZ.Scalers {
 	}
 
 	internal sealed class Scaler6X : IScaler {
-		public new const int Scale = 6;
-		[MethodImpl(Runtime.MethodImpl.Optimize)] public Scaler6X (in Config config) : base(Scale, config) { }
+		internal new const int Scale = 6;
+		[MethodImpl(Runtime.MethodImpl.Optimize)] internal Scaler6X (in Config config) : base(Scale, config) { }
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public override void BlendLineShallow (uint col, in OutputMatrix out_) {
+		internal override void BlendLineShallow (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(Scale - 1, 0), col);
 			AlphaBlend(1, 4, ref out_.Ref(Scale - 2, 2), col);
 			AlphaBlend(1, 4, ref out_.Ref(Scale - 3, 4), col);
@@ -353,7 +353,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public override void BlendLineSteep (uint col, in OutputMatrix out_) {
+		internal override void BlendLineSteep (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(0, Scale - 1), col);
 			AlphaBlend(1, 4, ref out_.Ref(2, Scale - 2), col);
 			AlphaBlend(1, 4, ref out_.Ref(4, Scale - 3), col);
@@ -370,7 +370,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public override void BlendLineSteepAndShallow (uint col, in OutputMatrix out_) {
+		internal override void BlendLineSteepAndShallow (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 4, ref out_.Ref(0, Scale - 1), col);
 			AlphaBlend(1, 4, ref out_.Ref(2, Scale - 2), col);
 			AlphaBlend(3, 4, ref out_.Ref(1, Scale - 1), col);
@@ -391,7 +391,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public override void BlendLineDiagonal (uint col, in OutputMatrix out_) {
+		internal override void BlendLineDiagonal (uint col, in OutputMatrix out_) {
 			AlphaBlend(1, 2, ref out_.Ref(Scale - 1, Scale / 2), col);
 			AlphaBlend(1, 2, ref out_.Ref(Scale - 2, Scale / 2 + 1), col);
 			AlphaBlend(1, 2, ref out_.Ref(Scale - 3, Scale / 2 + 2), col);
@@ -402,7 +402,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public override void BlendCorner (uint col, in OutputMatrix out_) {
+		internal override void BlendCorner (uint col, in OutputMatrix out_) {
 			//model a round corner
 			AlphaBlend(97, 100, ref out_.Ref(5, 5), col); //exact: 0.9711013910
 			AlphaBlend(42, 100, ref out_.Ref(4, 5), col); //0.4236372243

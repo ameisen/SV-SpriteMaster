@@ -7,11 +7,11 @@ using System.Runtime.CompilerServices;
 namespace SpriteMaster.Resample {
 	internal static class Edge {
 		internal ref struct Results {
-			public readonly Vector2B Wrapped;
-			public readonly Vector2B RepeatX;
-			public readonly Vector2B RepeatY;
-			public readonly Vector2B EdgeX;
-			public readonly Vector2B EdgeY;
+			internal readonly Vector2B Wrapped;
+			internal readonly Vector2B RepeatX;
+			internal readonly Vector2B RepeatY;
+			internal readonly Vector2B EdgeX;
+			internal readonly Vector2B EdgeY;
 
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			internal Results(

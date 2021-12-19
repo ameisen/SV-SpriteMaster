@@ -8,10 +8,13 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 
+[assembly: InternalsVisibleToAttribute("SpriteMaster")]
+[assembly: InternalsVisibleToAttribute("xBRZ")]
+
 namespace SpriteMaster {
-	public static class Runtime {
-		public static class MethodImpl {
-			public const MethodImplOptions Optimize = MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization;
+	internal static class Runtime {
+		internal static class MethodImpl {
+			internal const MethodImplOptions Optimize = MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization;
 		}
 
 		[Pure]
@@ -30,11 +33,11 @@ namespace SpriteMaster {
 			return result.Remove(result.Length - 1);
 		}
 
-		public static Process Open2(string command, string arg) {
+		internal static Process Open2(string command, string arg) {
 			return Open2(command, Arrays.Singleton(arg));
 		}
 
-		public static Process Open2(string command, string[] args = null) {
+		internal static Process Open2(string command, string[] args = null) {
 			if (command == null || command == "")
 				throw new ArgumentOutOfRangeException(nameof(command));
 			args ??= Arrays<string>.Empty;
@@ -51,32 +54,32 @@ namespace SpriteMaster {
 			return process;
 		}
 
-		public static string Capture1 (string command, string arg) {
+		internal static string Capture1 (string command, string arg) {
 			return Capture1(command, Arrays.Singleton(arg));
 		}
 
-		public static string Capture1(string command, string[] args = null) {
+		internal static string Capture1(string command, string[] args = null) {
 			using var process = Open2(command, args);
 			return process.StandardOutput.ReadToEnd();
 		}
 
 		[ImmutableObject(true)]
-		public readonly ref struct Result2 {
+		internal readonly ref struct Result2 {
 			[ImmutableObject(true)]
-			public readonly string StandardOutput;
+			internal readonly string StandardOutput;
 			[ImmutableObject(true)]
-			public readonly string StandardError;
+			internal readonly string StandardError;
 			internal Result2(string StdOut, string StdErr) {
 				StandardOutput = StdOut ?? string.Empty;
 				StandardError = StdErr ?? string.Empty;
 			}
 		}
 
-		public static Result2 Capture1E (string command, string arg) {
+		internal static Result2 Capture1E (string command, string arg) {
 			return Capture1E(command, Arrays.Singleton(arg));
 		}
 
-		public static Result2 Capture1E(string command, string[] args = null) {
+		internal static Result2 Capture1E(string command, string[] args = null) {
 			using var process = Open2(command, args);
 			return new Result2(
 				process.StandardOutput.ReadToEnd(),
@@ -182,7 +185,7 @@ namespace SpriteMaster {
 			}
 		}
 
-		public enum PlatformType {
+		internal enum PlatformType {
 			// Windows NT
 			Windows,
 			// Any Linux Distro. Should probably determine if it's Debian because Debian is dumb
@@ -193,7 +196,7 @@ namespace SpriteMaster {
 			Macintosh
 		}
 
-		public enum FrameworkType {
+		internal enum FrameworkType {
 			// Windows uses .NET
 			DotNETFramework,
 			// Newer SDV uses .NET 5
@@ -202,38 +205,38 @@ namespace SpriteMaster {
 			Mono
 		}
 
-		public enum GameFrameworkType {
+		internal enum GameFrameworkType {
 			XNA,
 			MonoGame
 		}
 
-		public enum RendererType {
+		internal enum RendererType {
 			OpenGL,
 			D3D9,
 			D3D11
 		}
 
 		[ImmutableObject(true)]
-		public static readonly string FullSystem;
+		internal static readonly string FullSystem;
 
-		public static readonly FrameworkType Framework;
-		public static readonly GameFrameworkType GameFramework;
-		public static readonly RendererType Renderer;
-		public static readonly PlatformType Platform;
-		public static readonly int Bits = IntPtr.Size * 8;
+		internal static readonly FrameworkType Framework;
+		internal static readonly GameFrameworkType GameFramework;
+		internal static readonly RendererType Renderer;
+		internal static readonly PlatformType Platform;
+		internal static readonly int Bits = IntPtr.Size * 8;
 
-		public static bool IsWindows => Platform == PlatformType.Windows;
-		public static bool IsUnix => Platform != PlatformType.Windows;
-		public static bool IsLinux => Platform == PlatformType.Linux;
-		public static bool IsBSD => Platform == PlatformType.BSD;
-		public static bool IsMacintosh => Platform == PlatformType.Macintosh;
+		internal static bool IsWindows => Platform == PlatformType.Windows;
+		internal static bool IsUnix => Platform != PlatformType.Windows;
+		internal static bool IsLinux => Platform == PlatformType.Linux;
+		internal static bool IsBSD => Platform == PlatformType.BSD;
+		internal static bool IsMacintosh => Platform == PlatformType.Macintosh;
 
-		public static bool IsMonoGame => GameFramework == GameFrameworkType.MonoGame;
-		public static bool IsXNA => GameFramework == GameFrameworkType.XNA;
+		internal static bool IsMonoGame => GameFramework == GameFrameworkType.MonoGame;
+		internal static bool IsXNA => GameFramework == GameFrameworkType.XNA;
 
-		public static class Capabilities {
-			public static bool AsyncStores => Renderer != RendererType.OpenGL;
-			public static bool AsynchronousRenderingAPI => Renderer == RendererType.D3D11;
+		internal static class Capabilities {
+			internal static bool AsyncStores => Renderer != RendererType.OpenGL;
+			internal static bool AsynchronousRenderingAPI => Renderer == RendererType.D3D11;
 		}
 	}
 }

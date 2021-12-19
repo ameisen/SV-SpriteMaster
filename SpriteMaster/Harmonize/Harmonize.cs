@@ -13,7 +13,7 @@ namespace SpriteMaster.Harmonize {
 		private const BindingFlags InstanceFlags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
 		private const BindingFlags StaticFlags = BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public;
 
-		public enum PriorityLevel : int {
+		internal enum PriorityLevel : int {
 			Last = int.MinValue,
 			Lowest = Priority.Last,
 			VeryLow = Priority.VeryLow,
@@ -46,7 +46,7 @@ namespace SpriteMaster.Harmonize {
 			typeof(System.Drawing.Color)
 		};
 
-		public static void ApplyPatches(this Harmony @this) {
+		internal static void ApplyPatches(this Harmony @this) {
 			Contract.AssertNotNull(@this);
 			Debug.TraceLn("Applying Patches");
 			var assembly = typeof(Harmonize).Assembly;
@@ -125,35 +125,35 @@ namespace SpriteMaster.Harmonize {
 			return filteredParameters.Select(p => p.ParameterType).ToArray();
 		}
 
-		public static MethodEnumerable GetMethods (this Type type, string name, BindingFlags bindingFlags) {
+		internal static MethodEnumerable GetMethods (this Type type, string name, BindingFlags bindingFlags) {
 			return type.GetMethods(bindingFlags).Where(t => t.Name == name);
 		}
 
-		public static MethodEnumerable GetStaticMethods (this Type type, string name) {
+		internal static MethodEnumerable GetStaticMethods (this Type type, string name) {
 			return type.GetMethods(name, StaticFlags);
 		}
 
-		public static MethodInfo GetStaticMethod (this Type type, string name) {
+		internal static MethodInfo GetStaticMethod (this Type type, string name) {
 			return type.GetMethod(name, StaticFlags);
 		}
 
-		public static MethodEnumerable GetInstanceMethods (this Type type, string name) {
+		internal static MethodEnumerable GetInstanceMethods (this Type type, string name) {
 			return type.GetMethods(name, InstanceFlags);
 		}
 
-		public static MethodInfo GetInstanceMethod (this Type type, string name) {
+		internal static MethodInfo GetInstanceMethod (this Type type, string name) {
 			return type.GetMethod(name, InstanceFlags);
 		}
 
-		public static MethodEnumerable GetMethods<T> (string name, BindingFlags bindingFlags) {
+		internal static MethodEnumerable GetMethods<T> (string name, BindingFlags bindingFlags) {
 			return typeof(T).GetMethods(name, bindingFlags);
 		}
 
-		public static MethodEnumerable GetStaticMethods<T> (string name) {
+		internal static MethodEnumerable GetStaticMethods<T> (string name) {
 			return typeof(T).GetStaticMethods(name);
 		}
 
-		public static MethodEnumerable GetInstanceMethods<T> (string name) {
+		internal static MethodEnumerable GetInstanceMethods<T> (string name) {
 			return typeof(T).GetInstanceMethods(name);
 		}
 
@@ -256,7 +256,7 @@ namespace SpriteMaster.Harmonize {
 			}
 		}
 
-		public static void Patch (this Harmony instance, Type type, Type genericType, string name, MethodInfo pre = null, MethodInfo post = null, MethodInfo trans = null, int priority = Priority.Last, bool instanceMethod = true) {
+		internal static void Patch (this Harmony instance, Type type, Type genericType, string name, MethodInfo pre = null, MethodInfo post = null, MethodInfo trans = null, int priority = Priority.Last, bool instanceMethod = true) {
 			var referenceMethod = pre ?? post;
 			if (referenceMethod != null) {
 				var typeMethod = GetPatchMethod(type, name, referenceMethod, instance: instanceMethod) ?? throw new ArgumentException($"Method '{name}' in type '{type.FullName}' could not be found");

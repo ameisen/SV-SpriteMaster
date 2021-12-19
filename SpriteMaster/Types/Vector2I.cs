@@ -15,7 +15,7 @@ namespace SpriteMaster.Types {
 
 	[DebuggerDisplay("[{X}, {Y}}")]
 	[StructLayout(LayoutKind.Explicit, Pack = sizeof(ulong), Size = sizeof(ulong))]
-	public unsafe struct Vector2I :
+	internal unsafe struct Vector2I :
 		ICloneable,
 		IComparable,
 		IComparable<Vector2I>,
@@ -31,27 +31,27 @@ namespace SpriteMaster.Types {
 		IEquatable<DrawingSize>,
 		IEquatable<XTileSize> {
 
-		public static readonly Vector2I Zero = new Vector2I(0, 0);
-		public static readonly Vector2I One = new Vector2I(1, 1);
-		public static readonly Vector2I MinusOne = new Vector2I(-1, -1);
-		public static readonly Vector2I Empty = Zero;
+		internal static readonly Vector2I Zero = new Vector2I(0, 0);
+		internal static readonly Vector2I One = new Vector2I(1, 1);
+		internal static readonly Vector2I MinusOne = new Vector2I(-1, -1);
+		internal static readonly Vector2I Empty = Zero;
 
 		[FieldOffset(0)]
 		private fixed int Value[2];
 		
 		[FieldOffset(0)]
-		public int X;
+		internal int X;
 		[FieldOffset(sizeof(int))]
-		public int Y;
+		internal int Y;
 
 		[FieldOffset(0)]
-		public ulong Packed;
+		internal ulong Packed;
 
 
-		public int Width { [MethodImpl(Runtime.MethodImpl.Optimize)] readonly get => X; [MethodImpl(Runtime.MethodImpl.Optimize)] set { X = value; } }
-		public int Height { [MethodImpl(Runtime.MethodImpl.Optimize)] readonly get => Y; [MethodImpl(Runtime.MethodImpl.Optimize)] set { Y = value; } }
+		internal int Width { [MethodImpl(Runtime.MethodImpl.Optimize)] readonly get => X; [MethodImpl(Runtime.MethodImpl.Optimize)] set { X = value; } }
+		internal int Height { [MethodImpl(Runtime.MethodImpl.Optimize)] readonly get => Y; [MethodImpl(Runtime.MethodImpl.Optimize)] set { Y = value; } }
 
-		public int this[int index] {
+		internal int this[int index] {
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			readonly get {
 #if DEBUG
@@ -72,94 +72,94 @@ namespace SpriteMaster.Types {
 			}
 		}
 
-		public readonly int Area => X * Y;
+		internal readonly int Area => X * Y;
 
-		public readonly bool IsEmpty => Packed == 0UL;
-		public readonly bool IsZero => Packed == 0UL;
-		public readonly int MinOf => Math.Min(X, Y);
-		public readonly int MaxOf => Math.Max(X, Y);
-
-		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Vector2I (ulong Packed) : this() => this.Packed = Packed;
+		internal readonly bool IsEmpty => Packed == 0UL;
+		internal readonly bool IsZero => Packed == 0UL;
+		internal readonly int MinOf => Math.Min(X, Y);
+		internal readonly int MaxOf => Math.Max(X, Y);
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static Vector2I From (ulong Packed) => new Vector2I(Packed: Packed);
+		internal Vector2I (ulong Packed) : this() => this.Packed = Packed;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Vector2I (int X, int Y) : this() {
+		internal static Vector2I From (ulong Packed) => new Vector2I(Packed: Packed);
+
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
+		internal Vector2I (int X, int Y) : this() {
 			this.X = X;
 			this.Y = Y;
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static Vector2I From (int X, int Y) => new Vector2I(X, Y);
+		internal static Vector2I From (int X, int Y) => new Vector2I(X, Y);
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Vector2I (int Value) : this(Value, Value) { }
+		internal Vector2I (int Value) : this(Value, Value) { }
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static Vector2I From (int Value) => new Vector2I(Value);
+		internal static Vector2I From (int Value) => new Vector2I(Value);
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Vector2I (in Vector2 Vector, bool Round = true) : this(Round ? Vector.NearestInt() : Vector.TruncateInt()) {}
+		internal Vector2I (in Vector2 Vector, bool Round = true) : this(Round ? Vector.NearestInt() : Vector.TruncateInt()) {}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Vector2I (Vector2I vec) : this(vec.Packed) { }
+		internal Vector2I (Vector2I vec) : this(vec.Packed) { }
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Vector2I (DrawingPoint v) : this(v.X, v.Y) { }
+		internal Vector2I (DrawingPoint v) : this(v.X, v.Y) { }
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Vector2I (XNAPoint v) : this(v.X, v.Y) { }
+		internal Vector2I (XNAPoint v) : this(v.X, v.Y) { }
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Vector2I (XTilePoint v) : this(v.X, v.Y) { }
+		internal Vector2I (XTilePoint v) : this(v.X, v.Y) { }
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Vector2I (DrawingSize v) : this(v.Width, v.Height) { }
+		internal Vector2I (DrawingSize v) : this(v.Width, v.Height) { }
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Vector2I (XTileSize v) : this(v.Width, v.Height) { }
+		internal Vector2I (XTileSize v) : this(v.Width, v.Height) { }
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Vector2I (Microsoft.Xna.Framework.Graphics.Texture2D tex) : this(tex.Width, tex.Height) { }
+		internal Vector2I (Microsoft.Xna.Framework.Graphics.Texture2D tex) : this(tex.Width, tex.Height) { }
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Vector2I (System.Drawing.Bitmap bmp) : this(bmp.Width, bmp.Height) { }
+		internal Vector2I (System.Drawing.Bitmap bmp) : this(bmp.Width, bmp.Height) { }
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Vector2I(TeximpNet.Surface surface) : this(surface.Width, surface.Height) { }
+		internal Vector2I(TeximpNet.Surface surface) : this(surface.Width, surface.Height) { }
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Vector2I Set (int x, int y) {
+		internal Vector2I Set (int x, int y) {
 			X = x;
 			Y = y;
 			return this;
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Vector2I Set (int v) => Set(v, v);
+		internal Vector2I Set (int v) => Set(v, v);
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Vector2I Set (Vector2I vec) {
+		internal Vector2I Set (Vector2I vec) {
 			Packed = vec.Packed;
 			return this;
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Vector2I Set (DrawingPoint vec) => Set(vec.X, vec.Y);
+		internal Vector2I Set (DrawingPoint vec) => Set(vec.X, vec.Y);
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Vector2I Set (XNAPoint vec) => Set(vec.X, vec.Y);
+		internal Vector2I Set (XNAPoint vec) => Set(vec.X, vec.Y);
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Vector2I Set (XTilePoint vec) => Set(vec.X, vec.Y);
+		internal Vector2I Set (XTilePoint vec) => Set(vec.X, vec.Y);
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Vector2I Set (DrawingSize vec) => Set(vec.Width, vec.Height);
+		internal Vector2I Set (DrawingSize vec) => Set(vec.Width, vec.Height);
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Vector2I Set (XTileSize vec) => Set(vec.Width, vec.Height);
+		internal Vector2I Set (XTileSize vec) => Set(vec.Width, vec.Height);
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public static implicit operator DrawingPoint (Vector2I vec) => new DrawingPoint(vec.X, vec.Y);
@@ -198,49 +198,49 @@ namespace SpriteMaster.Types {
 		public static implicit operator Bounds (Vector2I vec) => new Bounds(vec);
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public readonly Vector2I Min () => new Vector2I(Math.Min(X, Y));
+		internal readonly Vector2I Min () => new Vector2I(Math.Min(X, Y));
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public readonly Vector2I Max () => new Vector2I(Math.Max(X, Y));
+		internal readonly Vector2I Max () => new Vector2I(Math.Max(X, Y));
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public readonly Vector2I Min (Vector2I v) => new Vector2I(
+		internal readonly Vector2I Min (Vector2I v) => new Vector2I(
 			Math.Min(X, v.X),
 			Math.Min(Y, v.Y)
 		);
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public readonly Vector2I Max (Vector2I v) => new Vector2I(
+		internal readonly Vector2I Max (Vector2I v) => new Vector2I(
 			Math.Max(X, v.X),
 			Math.Max(Y, v.Y)
 		);
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public readonly Vector2I Clamp (Vector2I min, Vector2I max) => new Vector2I(
+		internal readonly Vector2I Clamp (Vector2I min, Vector2I max) => new Vector2I(
 			X.Clamp(min.X, max.X),
 			Y.Clamp(min.Y, max.Y)
 		);
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public readonly Vector2I Min (int v) => new Vector2I(
+		internal readonly Vector2I Min (int v) => new Vector2I(
 			Math.Min(X, v),
 			Math.Min(Y, v)
 		);
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public readonly Vector2I Max (int v) => new Vector2I(
+		internal readonly Vector2I Max (int v) => new Vector2I(
 			Math.Max(X, v),
 			Math.Max(Y, v)
 		);
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public readonly Vector2I Clamp (int min, int max) => new Vector2I(
+		internal readonly Vector2I Clamp (int min, int max) => new Vector2I(
 			X.Clamp(min, max),
 			Y.Clamp(min, max)
 		);
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public readonly Vector2I Clone () => this;
+		internal readonly Vector2I Clone () => this;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		readonly object ICloneable.Clone () => this;
@@ -455,22 +455,22 @@ namespace SpriteMaster.Types {
 		public readonly bool Equals (XTileSize other) => this == (Vector2I)other;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public readonly bool NotEquals (Vector2I other) => Packed != other.Packed;
+		internal readonly bool NotEquals (Vector2I other) => Packed != other.Packed;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public readonly bool NotEquals (DrawingPoint other) => this != (Vector2I)other;
+		internal readonly bool NotEquals (DrawingPoint other) => this != (Vector2I)other;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public readonly bool NotEquals (XNAPoint other) => this != (Vector2I)other;
+		internal readonly bool NotEquals (XNAPoint other) => this != (Vector2I)other;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public readonly bool NotEquals (XTilePoint other) => this != (Vector2I)other;
+		internal readonly bool NotEquals (XTilePoint other) => this != (Vector2I)other;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public readonly bool NotEquals (DrawingSize other) => this != (Vector2I)other;
+		internal readonly bool NotEquals (DrawingSize other) => this != (Vector2I)other;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public readonly bool NotEquals (XTileSize other) => this != (Vector2I)other;
+		internal readonly bool NotEquals (XTileSize other) => this != (Vector2I)other;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public static bool operator == (Vector2I lhs, Vector2I rhs) => lhs.Packed == rhs.Packed;

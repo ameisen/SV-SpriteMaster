@@ -3,29 +3,29 @@ using System;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Extensions {
-	public static class Numeric {
+	internal static class Numeric {
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static long KiB (this long value) => value * 1024L;
+		internal static long KiB (this long value) => value * 1024L;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static long MiB (this long value) => value * 1024L * 1024L;
+		internal static long MiB (this long value) => value * 1024L * 1024L;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static long GiB (this long value) => value * 1024L * 1024L * 1024L;
+		internal static long GiB (this long value) => value * 1024L * 1024L * 1024L;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static long KiB (this int value) => value * 1024L;
+		internal static long KiB (this int value) => value * 1024L;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static long MiB (this int value) => value * 1024L * 1024L;
+		internal static long MiB (this int value) => value * 1024L * 1024L;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static long GiB (this int value) => value * 1024L * 1024L * 1024L;
+		internal static long GiB (this int value) => value * 1024L * 1024L * 1024L;
 
 		// Extracts a byte (8 bits) worth of data from a provided value, from the given offset
 		// Example: ExtractByte(0x00F0, 8) would return 0xF
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static byte ExtractByte (this byte value, int offset) {
+		internal static byte ExtractByte (this byte value, int offset) {
 			Contract.AssertZero(offset);
 			return value;
 		}
@@ -33,7 +33,7 @@ namespace SpriteMaster.Extensions {
 		// Extracts a byte (8 bits) worth of data from a provided value, from the given offset
 		// Example: ExtractByte(0x00F0, 8) would return 0xF
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static byte ExtractByte (this ushort value, int offset) {
+		internal static byte ExtractByte (this ushort value, int offset) {
 			Contract.AssertLess(Math.Abs(offset), sizeof(ushort) * 8);
 			return unchecked((byte)((value >> offset) & 0xFFU));
 		}
@@ -41,7 +41,7 @@ namespace SpriteMaster.Extensions {
 		// Extracts a byte (8 bits) worth of data from a provided value, from the given offset
 		// Example: ExtractByte(0x00F0, 8) would return 0xF
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static byte ExtractByte (this uint value, int offset) {
+		internal static byte ExtractByte (this uint value, int offset) {
 			Contract.AssertLess(Math.Abs(offset), sizeof(uint) * 8);
 			return unchecked((byte)((value >> offset) & 0xFFU));
 		}
@@ -49,7 +49,7 @@ namespace SpriteMaster.Extensions {
 		// Extracts a byte (8 bits) worth of data from a provided value, from the given offset
 		// Example: ExtractByte(0x00F0, 8) would return 0xF
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static byte ExtractByte (this ulong value, int offset) {
+		internal static byte ExtractByte (this ulong value, int offset) {
 			Contract.AssertLess(Math.Abs(offset), sizeof(ulong) * 8);
 			return unchecked((byte)((value >> offset) & 0xFFU));
 		}
@@ -57,84 +57,84 @@ namespace SpriteMaster.Extensions {
 		// Extracts a byte (8 bits) worth of data from a provided value, from the given offset
 		// Example: ExtractByte(0x00F0, 8) would return 0xF
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static byte ExtractByte (this sbyte value, int offset) => ExtractByte(unchecked((byte)value), offset);
+		internal static byte ExtractByte (this sbyte value, int offset) => ExtractByte(unchecked((byte)value), offset);
 
 		// Extracts a byte (8 bits) worth of data from a provided value, from the given offset
 		// Example: ExtractByte(0x00F0, 8) would return 0xF
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static byte ExtractByte (this short value, int offset) => ExtractByte(unchecked((ushort)value), offset);
+		internal static byte ExtractByte (this short value, int offset) => ExtractByte(unchecked((ushort)value), offset);
 
 		// Extracts a byte (8 bits) worth of data from a provided value, from the given offset
 		// Example: ExtractByte(0x00F0, 8) would return 0xF
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static byte ExtractByte (this int value, int offset) => ExtractByte(unchecked((uint)value), offset);
+		internal static byte ExtractByte (this int value, int offset) => ExtractByte(unchecked((uint)value), offset);
 
 		// Extracts a byte (8 bits) worth of data from a provided value, from the given offset
 		// Example: ExtractByte(0x00F0, 8) would return 0xF
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static byte ExtractByte (this long value, int offset) => ExtractByte(unchecked((ulong)value), offset);
+		internal static byte ExtractByte (this long value, int offset) => ExtractByte(unchecked((ulong)value), offset);
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static string Delimit (this long number) => number.ToString("G");
+		internal static string Delimit (this long number) => number.ToString("G");
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static string Delimit (this int number) => number.ToString("G");
+		internal static string Delimit (this int number) => number.ToString("G");
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static string Delimit (this short number) => number.ToString("G");
+		internal static string Delimit (this short number) => number.ToString("G");
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static string Delimit (this sbyte number) => number.ToString("G");
+		internal static string Delimit (this sbyte number) => number.ToString("G");
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static string Delimit (this ulong number) => number.ToString("G");
+		internal static string Delimit (this ulong number) => number.ToString("G");
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static string Delimit (this uint number) => number.ToString("G");
+		internal static string Delimit (this uint number) => number.ToString("G");
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static string Delimit (this ushort number) => number.ToString("G");
+		internal static string Delimit (this ushort number) => number.ToString("G");
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static string Delimit (this byte number) => number.ToString("G");
+		internal static string Delimit (this byte number) => number.ToString("G");
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static string Delimit (this long number, string delimiter = ",", uint delimitCount = 3) {
+		internal static string Delimit (this long number, string delimiter = ",", uint delimitCount = 3) {
 			return Delimit(number.ToString(), delimiter.Normalize(), delimitCount);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static string Delimit (this int number, string delimiter = ",", uint delimitCount = 3) {
+		internal static string Delimit (this int number, string delimiter = ",", uint delimitCount = 3) {
 			return Delimit(number.ToString(), delimiter.Normalize(), delimitCount);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static string Delimit (this short number, string delimiter = ",", uint delimitCount = 3) {
+		internal static string Delimit (this short number, string delimiter = ",", uint delimitCount = 3) {
 			return Delimit(number.ToString(), delimiter.Normalize(), delimitCount);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static string Delimit (this sbyte number, string delimiter = ",", uint delimitCount = 3) {
+		internal static string Delimit (this sbyte number, string delimiter = ",", uint delimitCount = 3) {
 			return Delimit(number.ToString(), delimiter.Normalize(), delimitCount);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static string Delimit (this ulong number, string delimiter = ",", uint delimitCount = 3) {
+		internal static string Delimit (this ulong number, string delimiter = ",", uint delimitCount = 3) {
 			return Delimit(number.ToString(), delimiter.Normalize(), delimitCount);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static string Delimit (this uint number, string delimiter = ",", uint delimitCount = 3) {
+		internal static string Delimit (this uint number, string delimiter = ",", uint delimitCount = 3) {
 			return Delimit(number.ToString(), delimiter.Normalize(), delimitCount);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static string Delimit (this ushort number, string delimiter = ",", uint delimitCount = 3) {
+		internal static string Delimit (this ushort number, string delimiter = ",", uint delimitCount = 3) {
 			return Delimit(number.ToString(), delimiter.Normalize(), delimitCount);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static string Delimit (this byte number, string delimiter = ",", uint delimitCount = 3) {
+		internal static string Delimit (this byte number, string delimiter = ",", uint delimitCount = 3) {
 			return Delimit(number.ToString(), delimiter.Normalize(), delimitCount);
 		}
 
@@ -156,7 +156,7 @@ namespace SpriteMaster.Extensions {
 			return result.Reverse().Normalize();
 		}
 
-		public enum DataFormat {
+		internal enum DataFormat {
 			IEC,
 			JEDEC,
 			Metric
@@ -191,45 +191,45 @@ namespace SpriteMaster.Extensions {
 		};
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static string AsDataSize (this long value, DataFormat format = DataFormat.IEC, int decimals = 2) {
+		internal static string AsDataSize (this long value, DataFormat format = DataFormat.IEC, int decimals = 2) {
 			Contract.AssertNotNegative(value);
 			return AsDataSize((ulong)value, format, decimals);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static string AsDataSize (this int value, DataFormat format = DataFormat.IEC, int decimals = 2) {
+		internal static string AsDataSize (this int value, DataFormat format = DataFormat.IEC, int decimals = 2) {
 			Contract.AssertNotNegative(value);
 			return AsDataSize((ulong)value, format, decimals);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static string AsDataSize (this short value, DataFormat format = DataFormat.IEC, int decimals = 2) {
+		internal static string AsDataSize (this short value, DataFormat format = DataFormat.IEC, int decimals = 2) {
 			Contract.AssertNotNegative(value);
 			return AsDataSize((ulong)value, format, decimals);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static string AsDataSize (this sbyte value, DataFormat format = DataFormat.IEC, int decimals = 2) {
+		internal static string AsDataSize (this sbyte value, DataFormat format = DataFormat.IEC, int decimals = 2) {
 			Contract.AssertNotNegative(value);
 			return AsDataSize((ulong)value, format, decimals);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static string AsDataSize (this uint value, DataFormat format = DataFormat.IEC, int decimals = 2) {
+		internal static string AsDataSize (this uint value, DataFormat format = DataFormat.IEC, int decimals = 2) {
 			return AsDataSize((ulong)value, format, decimals);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static string AsDataSize (this ushort value, DataFormat format = DataFormat.IEC, int decimals = 2) {
+		internal static string AsDataSize (this ushort value, DataFormat format = DataFormat.IEC, int decimals = 2) {
 			return AsDataSize((ulong)value, format, decimals);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static string AsDataSize (this byte value, DataFormat format = DataFormat.IEC, int decimals = 2) {
+		internal static string AsDataSize (this byte value, DataFormat format = DataFormat.IEC, int decimals = 2) {
 			return AsDataSize((ulong)value, format, decimals);
 		}
 
-		public static string AsDataSize (this ulong number, DataFormat format = DataFormat.IEC, int decimals = 2) {
+		internal static string AsDataSize (this ulong number, DataFormat format = DataFormat.IEC, int decimals = 2) {
 			Contract.AssertNotNegative(decimals);
 			uint fraction = (format == DataFormat.Metric) ? 1000U : 1024U;
 

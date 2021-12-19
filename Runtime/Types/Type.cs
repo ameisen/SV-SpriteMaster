@@ -6,15 +6,15 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Types {
-	public static class TypeTExtensions {
-		public static Type<T> GetTypeT<T> (this T _) {
+	internal static class TypeTExtensions {
+		internal static Type<T> GetTypeT<T> (this T _) {
 			return Type<T>.This;
 		}
 	}
 
-	public sealed class Type<T> : Type {
-		public static readonly Type<T> This = new Type<T>();
-		public static readonly Type UnderlyingType = typeof(T);
+	internal sealed class Type<T> : Type {
+		internal static readonly Type<T> This = new Type<T>();
+		internal static readonly Type UnderlyingType = typeof(T);
 
 		// TODO : implements equals, comparable, ==, !=, hashcode, etc
 

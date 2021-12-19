@@ -8,7 +8,7 @@ namespace SpriteMaster.Types {
 	[DebuggerDisplay("{Value}")]
 
 	[StructLayout(LayoutKind.Sequential, Pack = sizeof(ulong), Size = sizeof(ulong))]
-	public struct VolatileULong :
+	internal struct VolatileULong :
 		IComparable,
 		IComparable<ulong>,
 		IComparable<VolatileULong>,
@@ -45,7 +45,7 @@ namespace SpriteMaster.Types {
 		public /*readonly*/ bool Equals (/*in*/ VolatileULong other) => Value.Equals(other.Value);
 
 		private long _Value;
-		public ulong Value {
+		internal ulong Value {
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			/*readonly*/ get => unchecked((ulong)Interlocked.Read(ref _Value));
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
@@ -53,7 +53,7 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public VolatileULong (ulong value = default) : this() => Value = value;
+		internal VolatileULong (ulong value = default) : this() => Value = value;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public static implicit operator ulong (in VolatileULong value) => value.Value;

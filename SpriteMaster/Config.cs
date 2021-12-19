@@ -10,9 +10,9 @@ using TeximpNet.Compression;
 namespace SpriteMaster {
 	static class Config {
 		internal sealed class CommentAttribute : Attribute {
-			public readonly string Message;
+			internal readonly string Message;
 
-			public CommentAttribute (string message) {
+			internal CommentAttribute (string message) {
 				Message = message;
 			}
 		}
@@ -22,9 +22,9 @@ namespace SpriteMaster {
 
 		internal sealed class ConfigOldNameAttribute : Attribute
 		{
-			public readonly string Name;
+			internal readonly string Name;
 
-			public ConfigOldNameAttribute(string name)
+			internal ConfigOldNameAttribute(string name)
 			{
 				Name = name;
 			}

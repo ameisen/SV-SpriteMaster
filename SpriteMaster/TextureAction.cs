@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 namespace SpriteMaster {
 	internal sealed class TextureAction {
 		private readonly Action Executor;
-		public readonly int Texels;
+		internal readonly int Texels;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		internal TextureAction(Action executor, int texels) {

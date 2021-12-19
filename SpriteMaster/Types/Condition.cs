@@ -7,7 +7,7 @@ namespace SpriteMaster.Types
 		private volatile bool State = false;
 		private volatile AutoResetEvent Event = new(false);
 
-		public Condition(bool initialState = false)
+		internal Condition(bool initialState = false)
 		{
 			State = initialState;
 		}
@@ -15,20 +15,20 @@ namespace SpriteMaster.Types
 		public static implicit operator bool(Condition condition) => condition.State;
 
 		// This isn't quite thread-safe, but the granularity of this in our codebase is really loose to begin with. It doesn't need to be entirely thread-safe.
-		public bool Wait()
+		internal bool Wait()
 		{
 			Event.WaitOne();
 			return State;
 		}
 
-		public void Set(bool state = true)
+		internal void Set(bool state = true)
 		{
 			State = state;
 			Event.Set();
 		}
 
 		// This clears the state without triggering the event.
-		public void Clear()
+		internal void Clear()
 		{
 			State = false;
 		}

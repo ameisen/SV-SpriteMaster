@@ -6,14 +6,14 @@ using System.Threading;
 
 namespace SpriteMaster {
 	// C#'s Thread Queue can block when inserting a task if no free threads are free. This prevents said blocking.
-	public static class ThreadQueue {
+	internal static class ThreadQueue {
 		private const ThreadPriority QueueHandlerPriority = ThreadPriority.BelowNormal;
 
-		public delegate void QueueFunctor<T> (T state) where T : class;
+		internal delegate void QueueFunctor<T> (T state) where T : class;
 
 		private struct Functor {
-			public readonly WaitCallback Callback;
-			public readonly object State;
+			internal readonly WaitCallback Callback;
+			internal readonly object State;
 
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			private Functor(WaitCallback callback, object state) {
@@ -86,12 +86,12 @@ namespace SpriteMaster {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static void Queue<T> (QueueFunctor<T> functor, T argument) where T : class => Enqueue(Functor.Of(functor, argument));
+		internal static void Queue<T> (QueueFunctor<T> functor, T argument) where T : class => Enqueue(Functor.Of(functor, argument));
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static void Queue (WaitCallback functor, object argument) => Enqueue(Functor.Of(functor, argument));
+		internal static void Queue (WaitCallback functor, object argument) => Enqueue(Functor.Of(functor, argument));
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static void Queue (WaitCallback functor) => Enqueue(Functor.Of(functor));
+		internal static void Queue (WaitCallback functor) => Enqueue(Functor.Of(functor));
 	}
 }

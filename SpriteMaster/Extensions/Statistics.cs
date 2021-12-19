@@ -4,14 +4,14 @@ using System;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Extensions {
-	public static class Statistics {
+	internal static class Statistics {
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static unsafe double StandardDeviation (this in FixedSpan<int> data, int startIndex = 0, int count = 0) {
+		internal static unsafe double StandardDeviation (this in FixedSpan<int> data, int startIndex = 0, int count = 0) {
 			return StandardDeviation((int*)data.Pointer, data.Length, startIndex, count);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static unsafe double StandardDeviation (int* data, int length, int startIndex = 0, int count = 0) {
+		internal static unsafe double StandardDeviation (int* data, int length, int startIndex = 0, int count = 0) {
 			//return StandardDeviation(new FixedSpan<int>(data, length), startIndex: startIndex, count: count);
 
 			Contract.AssertPositiveOrZero(startIndex);

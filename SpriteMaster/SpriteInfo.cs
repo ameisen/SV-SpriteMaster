@@ -22,7 +22,7 @@ namespace SpriteMaster {
 
 		internal byte[] Data = default;
 		private VolatileULong _Hash = Hashing.Default;
-		public ulong Hash {
+		internal ulong Hash {
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			get {
 				ulong hash = _Hash;

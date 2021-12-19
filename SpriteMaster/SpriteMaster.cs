@@ -16,7 +16,7 @@ using System.Threading;
 
 namespace SpriteMaster {
 	public sealed class SpriteMaster : Mod {
-		public static SpriteMaster Self { get; private set; } = default;
+		internal static SpriteMaster Self { get; private set; } = default;
 
 		private static readonly bool DotNet = (Runtime.Framework != Runtime.FrameworkType.Mono);
 		private readonly Thread MemoryPressureThread = null;

@@ -34,7 +34,7 @@ namespace SpriteMaster {
 		}
 #endif
 
-		public AsyncTracker (string name) {
+		internal AsyncTracker (string name) {
 #if DEBUG
 			if (!Enabled) return;
 

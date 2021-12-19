@@ -15,7 +15,7 @@ using System.Runtime.CompilerServices;
 namespace SpriteMaster {
 	internal sealed partial class ScaledTexture : IDisposable {
 		// TODO : This can grow unbounded. Should fix.
-		public static readonly SpriteMap SpriteMap = new();
+		internal static readonly SpriteMap SpriteMap = new();
 
 		private static readonly LinkedList<WeakReference<ScaledTexture>> MostRecentList = new();
 
@@ -485,7 +485,7 @@ namespace SpriteMaster {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public void Dispose (bool disposeChildren) {
+		internal void Dispose (bool disposeChildren) {
 			if (disposeChildren && Texture != null) {
 				if (!Texture.IsDisposed) {
 					Texture.Dispose();

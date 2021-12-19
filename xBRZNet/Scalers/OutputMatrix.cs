@@ -13,8 +13,8 @@ namespace SpriteMaster.xBRZ.Scalers {
 
 		[ImmutableObject(true)]
 		private struct IntPair {
-			public readonly int i;
-			public readonly int j;
+			internal readonly int i;
+			internal readonly int j;
 
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			internal IntPair(int i, int j) {
@@ -27,7 +27,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 		private const int MaxScaleSquared = MaxScale * MaxScale;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public OutputMatrix (int scale, uint* outPtr, int outWidth) {
+		internal OutputMatrix (int scale, uint* outPtr, int outWidth) {
 			_n = (scale - 2) * (Rotator.MaxRotations * MaxScaleSquared);
 			_out = outPtr;
 			_outWidth = outWidth;
@@ -36,7 +36,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public void Move (RotationDegree rotDeg, int outi) {
+		internal void Move (RotationDegree rotDeg, int outi) {
 			_nr = _n + (int)rotDeg * MaxScaleSquared;
 			_outi = outi;
 		}
@@ -48,18 +48,18 @@ namespace SpriteMaster.xBRZ.Scalers {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public void Set (int i, int j, uint value) {
+		internal void Set (int i, int j, uint value) {
 			_out[GetIndex(i, j)] = value;
 		}
 
 		// TODO : I _really_ don't like this but I don't want to fully refactor ScalerImplementations.cs right now.
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public ref uint Ref (int i, int j) {
+		internal ref uint Ref (int i, int j) {
 			return ref _out[GetIndex(i, j)];
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public uint Get (int i, int j) {
+		internal uint Get (int i, int j) {
 			return _out[GetIndex(i, j)];
 		}
 

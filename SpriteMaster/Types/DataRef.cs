@@ -2,21 +2,21 @@
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Types {
-	public ref struct DataRef<T> where T : struct {
-		public readonly T[] Data;
-		public readonly int Offset;
-		public readonly int Length;
+	internal ref struct DataRef<T> where T : struct {
+		internal readonly T[] Data;
+		internal readonly int Offset;
+		internal readonly int Length;
 
-		public readonly bool IsEmpty => Data == null || Length == 0;
+		internal readonly bool IsEmpty => Data == null || Length == 0;
 
-		public readonly bool IsNull => Data == null; 
+		internal readonly bool IsNull => Data == null; 
 
-		public readonly bool IsEntire => !IsNull && Offset == 0 && Length == Data.Length;
+		internal readonly bool IsEntire => !IsNull && Offset == 0 && Length == Data.Length;
 
-		public static DataRef<T> Null => new DataRef<T>(null);
+		internal static DataRef<T> Null => new DataRef<T>(null);
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public DataRef (T[] data, int offset = 0, int length = 0) {
+		internal DataRef (T[] data, int offset = 0, int length = 0) {
 			Contract.AssertPositiveOrZero(offset);
 
 			Data = data;
@@ -44,7 +44,7 @@ namespace SpriteMaster.Types {
 		public static bool operator != (DataRef<T> lhs, object rhs) => lhs.Data != rhs;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public readonly bool Equals (DataRef<T> other) => this == other;
+		internal readonly bool Equals (DataRef<T> other) => this == other;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public readonly override bool Equals (object other) => this == other;

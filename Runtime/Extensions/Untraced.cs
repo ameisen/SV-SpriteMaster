@@ -4,12 +4,12 @@ using System.Diagnostics;
 using System.Reflection;
 
 namespace SpriteMaster.Extensions {
-	public static class Untraced {
+	internal static class Untraced {
 		[DebuggerStepThrough, DebuggerHidden()]
-		public static bool IsUntraced (this MethodBase method) => method != null && (method.IsDefined(typeof(DebuggerStepThroughAttribute), true) || method.IsDefined(typeof(DebuggerHiddenAttribute), true));
+		internal static bool IsUntraced (this MethodBase method) => method != null && (method.IsDefined(typeof(DebuggerStepThroughAttribute), true) || method.IsDefined(typeof(DebuggerHiddenAttribute), true));
 
 		[DebuggerStepThrough, DebuggerHidden()]
-		public static string GetStackTrace (this Exception e) {
+		internal static string GetStackTrace (this Exception e) {
 			var tracedStrings = new List<string>();
 			foreach (var frame in new StackTrace(e, true).GetFrames()) {
 				if (!frame.GetMethod().IsUntraced()) {

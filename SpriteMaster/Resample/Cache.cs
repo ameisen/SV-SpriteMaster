@@ -28,18 +28,18 @@ namespace SpriteMaster.Resample {
 
 		[StructLayout(LayoutKind.Sequential, Pack = 1)]
 		private class CacheHeader {
-			public Compression.Algorithm Algorithm;
-			public ulong Assembly = AssemblyHash;
-			public ulong ConfigHash = SerializeConfig.GetWideHashCode();
-			public uint RefScale;
-			public Vector2I Size;
-			public TextureFormat? Format;
-			public Vector2B Wrapped;
-			public Vector2I Padding;
-			public Vector2I BlockPadding;
-			public ulong DataHash;
-			public uint UncompressedDataLength;
-			public uint DataLength;
+			internal Compression.Algorithm Algorithm;
+			internal ulong Assembly = AssemblyHash;
+			internal ulong ConfigHash = SerializeConfig.GetWideHashCode();
+			internal uint RefScale;
+			internal Vector2I Size;
+			internal TextureFormat? Format;
+			internal Vector2B Wrapped;
+			internal Vector2I Padding;
+			internal Vector2I BlockPadding;
+			internal ulong DataHash;
+			internal uint UncompressedDataLength;
+			internal uint DataLength;
 
 			private delegate void ReadValue (object obj, BinaryReader stream);
 			private delegate void WriteValue (object obj, BinaryWriter stream);

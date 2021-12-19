@@ -6,21 +6,21 @@ using System.Threading;
 
 namespace SpriteMaster {
 	[SecuritySafeCritical]
-	public sealed class SharedLock : CriticalFinalizerObject, IDisposable {
+	internal sealed class SharedLock : CriticalFinalizerObject, IDisposable {
 		private ReaderWriterLock Lock = new ReaderWriterLock();
 
-		public struct SharedCookie : IDisposable {
+		internal struct SharedCookie : IDisposable {
 			private ReaderWriterLock Lock;
 
 			[SecuritySafeCritical]
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
-			public SharedCookie (ReaderWriterLock rwlock, int timeout) {
+			internal SharedCookie (ReaderWriterLock rwlock, int timeout) {
 				Lock = null;
 				rwlock.AcquireReaderLock(timeout);
 				Lock = rwlock;
 			}
 
-			public bool IsDisposed {
+			internal bool IsDisposed {
 				[SecuritySafeCritical]
 				[MethodImpl(Runtime.MethodImpl.Optimize)]
 				get { return Lock == null; }
@@ -38,18 +38,18 @@ namespace SpriteMaster {
 				Lock = null;
 			}
 		}
-		public struct ExclusiveCookie : IDisposable {
+		internal struct ExclusiveCookie : IDisposable {
 			private ReaderWriterLock Lock;
 
 			[SecuritySafeCritical]
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
-			public ExclusiveCookie (ReaderWriterLock rwlock, int timeout) {
+			internal ExclusiveCookie (ReaderWriterLock rwlock, int timeout) {
 				Lock = null;
 				rwlock.AcquireWriterLock(timeout);
 				Lock = rwlock;
 			}
 
-			public bool IsDisposed {
+			internal bool IsDisposed {
 				[SecuritySafeCritical]
 				[MethodImpl(Runtime.MethodImpl.Optimize)]
 				get { return Lock == null; }
@@ -68,19 +68,19 @@ namespace SpriteMaster {
 			}
 		}
 
-		public struct PromotedCookie : IDisposable {
+		internal struct PromotedCookie : IDisposable {
 			private ReaderWriterLock Lock;
 			private LockCookie Cookie;
 
 			[SecuritySafeCritical]
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
-			public PromotedCookie (ReaderWriterLock rwlock, int timeout) {
+			internal PromotedCookie (ReaderWriterLock rwlock, int timeout) {
 				Lock = null;
 				this.Cookie = rwlock.UpgradeToWriterLock(timeout);
 				Lock = rwlock;
 			}
 
-			public bool IsDisposed {
+			internal bool IsDisposed {
 				[SecuritySafeCritical]
 				[MethodImpl(Runtime.MethodImpl.Optimize)]
 				get { return Lock == null; }
@@ -105,31 +105,31 @@ namespace SpriteMaster {
 			Lock = null;
 		}
 
-		public bool IsLocked {
+		internal bool IsLocked {
 			[SecuritySafeCritical]
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			get { return Lock.IsReaderLockHeld || Lock.IsWriterLockHeld; }
 		}
 
-		public bool IsSharedLock {
+		internal bool IsSharedLock {
 			[SecuritySafeCritical]
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			get { return Lock.IsReaderLockHeld; }
 		}
 
-		public bool IsExclusiveLock {
+		internal bool IsExclusiveLock {
 			[SecuritySafeCritical]
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			get { return Lock.IsWriterLockHeld; }
 		}
 
-		public bool IsDisposed {
+		internal bool IsDisposed {
 			[SecuritySafeCritical]
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			get { return Lock == null; }
 		}
 
-		public SharedCookie Shared {
+		internal SharedCookie Shared {
 			[SecuritySafeCritical]
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			get {
@@ -137,7 +137,7 @@ namespace SpriteMaster {
 			}
 		}
 
-		public SharedCookie? TryShared {
+		internal SharedCookie? TryShared {
 			[SecuritySafeCritical]
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			get {
@@ -150,7 +150,7 @@ namespace SpriteMaster {
 			}
 		}
 
-		public ExclusiveCookie Exclusive {
+		internal ExclusiveCookie Exclusive {
 			[SecuritySafeCritical]
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			get {
@@ -158,7 +158,7 @@ namespace SpriteMaster {
 			}
 		}
 
-		public ExclusiveCookie? TryExclusive {
+		internal ExclusiveCookie? TryExclusive {
 			[SecuritySafeCritical]
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			get {
@@ -171,7 +171,7 @@ namespace SpriteMaster {
 			}
 		}
 
-		public PromotedCookie Promote {
+		internal PromotedCookie Promote {
 			[SecuritySafeCritical]
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			get {
@@ -180,7 +180,7 @@ namespace SpriteMaster {
 			}
 		}
 
-		public PromotedCookie? TryPromote {
+		internal PromotedCookie? TryPromote {
 			[SecuritySafeCritical]
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			get {

@@ -10,12 +10,12 @@ using SpriteMaster.xBRZ.Scalers;
 
 namespace SpriteMaster.xBRZ {
 	// ReSharper disable once InconsistentNaming
-	public sealed class Scaler {
-		public const uint MinScale = 2;
-		public const uint MaxScale = Config.MaxScale;
+	internal sealed class Scaler {
+		internal const uint MinScale = 2;
+		internal const uint MaxScale = Config.MaxScale;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public Scaler (
+		internal Scaler (
 			uint scaleMultiplier,
 			in FixedSpan<uint> sourceData,
 			in Point sourceSize,

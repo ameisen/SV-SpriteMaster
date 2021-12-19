@@ -4,8 +4,8 @@ using SpriteMaster.xBRZ.Common;
 
 namespace SpriteMaster.xBRZ.Scalers {
 	internal static class Rotator {
-		public const int MaxRotations = 4; // Number of 90 degree rotations
-		public const int MaxPositions = 9;
+		internal const int MaxRotations = 4; // Number of 90 degree rotations
+		internal const int MaxPositions = 9;
 
 		// Cache the 4 rotations of the 9 positions, a to i.
 		// a = 0, b = 1, c = 2,
@@ -14,7 +14,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 		private static readonly int[] RotationsArray = new int[MaxRotations * MaxPositions];
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static int Get(int index) {
+		internal static int Get(int index) {
 			return RotationsArray[index];
 		}
 

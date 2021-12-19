@@ -4,13 +4,13 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster {
-	public static class Contract {
+	internal static class Contract {
 		[DebuggerStepThrough, DebuggerHidden(), MethodImpl(Runtime.MethodImpl.Optimize)]
 		static private bool IsExceptionType (this Type type) {
 			return type.IsSubclassOf(typeof(Exception));
 		}
 
-		public delegate bool ClosedPredicate ();
+		internal delegate bool ClosedPredicate ();
 
 		[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden(), MethodImpl(Runtime.MethodImpl.Optimize)]
 		static internal void AssertNull<T> (this T value, in string message = "Variable is not null", Type exception = null) {

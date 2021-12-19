@@ -8,7 +8,7 @@ using System.Runtime.CompilerServices;
 namespace SpriteMaster.Types {
 	class WeakCollection<T> : ICollection<T>, IEnumerable<T>, IEnumerable, /*ICollection, */IReadOnlyList<T>, IReadOnlyCollection<T> where T : class {
 		static private class Reflect {
-			public static readonly PropertyInfo IsReadOnly = typeof(List<ComparableWeakReference<T>>).GetProperty("IsReadOnly", BindingFlags.Instance | BindingFlags.NonPublic);
+			internal static readonly PropertyInfo IsReadOnly = typeof(List<ComparableWeakReference<T>>).GetProperty("IsReadOnly", BindingFlags.Instance | BindingFlags.NonPublic);
 
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			private static string GetName (string name) {
@@ -29,7 +29,7 @@ namespace SpriteMaster.Types {
 
 		public int Count => _List.Count;
 
-		public int Capacity {
+		internal int Capacity {
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			get { return _List.Capacity; }
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
@@ -50,19 +50,19 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public WeakCollection () {
+		internal WeakCollection () {
 			_List = new List<ComparableWeakReference<T>>();
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public WeakCollection(IEnumerable<T> collection) : this() {
+		internal WeakCollection(IEnumerable<T> collection) : this() {
 			foreach (var obj in collection) {
 				_List.Add(obj.MakeWeak());
 			}
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public WeakCollection (IEnumerable<WeakReference<T>> collection) : this() {
+		internal WeakCollection (IEnumerable<WeakReference<T>> collection) : this() {
 			foreach (var obj in collection) {
 				// TODO : Should we check if the object is still alive or not bother?
 				_List.Add(obj);
@@ -70,7 +70,7 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public WeakCollection (IEnumerable<ComparableWeakReference<T>> collection) : this() {
+		internal WeakCollection (IEnumerable<ComparableWeakReference<T>> collection) : this() {
 			foreach (var obj in collection) {
 				// TODO : Should we check if the object is still alive or not bother?
 				_List.Add(obj);
@@ -78,14 +78,14 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public WeakCollection (WeakCollection<T> collection) : this(collection.Count) {
+		internal WeakCollection (WeakCollection<T> collection) : this(collection.Count) {
 			foreach (var obj in collection._List) {
 				_List.Add(obj);
 			}
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public WeakCollection (int capacity) {
+		internal WeakCollection (int capacity) {
 			_List = new List<ComparableWeakReference<T>>(capacity);
 		}
 
@@ -95,17 +95,17 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public void Add (WeakReference<T> item) {
+		internal void Add (WeakReference<T> item) {
 			_List.Add(item);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public void Add (ComparableWeakReference<T> item) {
+		internal void Add (ComparableWeakReference<T> item) {
 			_List.Add(item);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public void AddRange (IEnumerable<T> collection) {
+		internal void AddRange (IEnumerable<T> collection) {
 			foreach (T item in collection) {
 				_List.Add(item?.MakeWeak());
 			}
@@ -113,36 +113,36 @@ namespace SpriteMaster.Types {
 
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public void AddRange (IEnumerable<WeakReference<T>> collection) {
+		internal void AddRange (IEnumerable<WeakReference<T>> collection) {
 			foreach (var item in collection) {
 				_List.Add(item);
 			}
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public void AddRange (IEnumerable<ComparableWeakReference<T>> collection) {
+		internal void AddRange (IEnumerable<ComparableWeakReference<T>> collection) {
 			foreach (var item in collection) {
 				_List.Add(item);
 			}
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public System.Collections.ObjectModel.ReadOnlyCollection<ComparableWeakReference<T>> AsReadOnly () {
+		internal System.Collections.ObjectModel.ReadOnlyCollection<ComparableWeakReference<T>> AsReadOnly () {
 			return _List.AsReadOnly();
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public int BinarySearch (T item) {
+		internal int BinarySearch (T item) {
 			return _List.BinarySearch(Weak(item));
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public int BinarySearch (WeakReference<T> item) {
+		internal int BinarySearch (WeakReference<T> item) {
 			return _List.BinarySearch(item);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public int BinarySearch (ComparableWeakReference<T> item) {
+		internal int BinarySearch (ComparableWeakReference<T> item) {
 			return _List.BinarySearch(item);
 		}
 
@@ -165,7 +165,7 @@ namespace SpriteMaster.Types {
 			private readonly IComparer<T> Comparer;
 
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
-			public ReferenceComparer(IComparer<T> comparer) {
+			internal ReferenceComparer(IComparer<T> comparer) {
 				Comparer = comparer;
 			}
 
@@ -176,17 +176,17 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public int BinarySearch (T item, IComparer<T> comparer) {
+		internal int BinarySearch (T item, IComparer<T> comparer) {
 			return _List.BinarySearch(Weak(item), new ReferenceComparer(comparer));
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public int BinarySearch (WeakReference<T> item, IComparer<T> comparer) {
+		internal int BinarySearch (WeakReference<T> item, IComparer<T> comparer) {
 			return _List.BinarySearch(item, new ReferenceComparer(comparer));
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public int BinarySearch (ComparableWeakReference<T> item, IComparer<T> comparer) {
+		internal int BinarySearch (ComparableWeakReference<T> item, IComparer<T> comparer) {
 			return _List.BinarySearch(item, new ReferenceComparer(comparer));
 		}
 
@@ -201,17 +201,17 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public bool Contains (WeakReference<T> item) {
+		internal bool Contains (WeakReference<T> item) {
 			return _List.Contains(item);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public bool Contains (ComparableWeakReference<T> item) {
+		internal bool Contains (ComparableWeakReference<T> item) {
 			return _List.Contains(item);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public List<TOutput> ConvertAll<TOutput> (Converter<T, TOutput> converter) {
+		internal List<TOutput> ConvertAll<TOutput> (Converter<T, TOutput> converter) {
 			var result = new List<TOutput>(_List.Count);
 			foreach (var item in _List) {
 				if (item.TryGetTarget(out T target)) {
@@ -222,17 +222,17 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public void CopyTo (T[] array) {
+		internal void CopyTo (T[] array) {
 			CopyTo(array: array, arrayIndex: 0);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public void CopyTo (WeakReference<T>[] array) {
+		internal void CopyTo (WeakReference<T>[] array) {
 			CopyTo(array: array, arrayIndex: 0);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public void CopyTo (ComparableWeakReference<T>[] array) {
+		internal void CopyTo (ComparableWeakReference<T>[] array) {
 			CopyTo(array: array, arrayIndex: 0);
 		}
 
@@ -242,12 +242,12 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public void CopyTo (WeakReference<T>[] array, int arrayIndex) {
+		internal void CopyTo (WeakReference<T>[] array, int arrayIndex) {
 			CopyTo(array: array, arrayIndex: arrayIndex, array.Length - arrayIndex);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public void CopyTo (ComparableWeakReference<T>[] array, int arrayIndex) {
+		internal void CopyTo (ComparableWeakReference<T>[] array, int arrayIndex) {
 			CopyTo(array: array, arrayIndex: arrayIndex, array.Length - arrayIndex);
 		}
 
@@ -263,7 +263,7 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public void CopyTo(T[] array, int arrayIndex, int count) {
+		internal void CopyTo(T[] array, int arrayIndex, int count) {
 			Check_CopyTo(array, arrayIndex, count);
 			Purge();
 
@@ -280,7 +280,7 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public void CopyTo (WeakReference<T>[] array, int arrayIndex, int count) {
+		internal void CopyTo (WeakReference<T>[] array, int arrayIndex, int count) {
 			Check_CopyTo(array, arrayIndex, count);
 			Purge();
 
@@ -291,7 +291,7 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public void CopyTo (ComparableWeakReference<T>[] array, int arrayIndex, int count) {
+		internal void CopyTo (ComparableWeakReference<T>[] array, int arrayIndex, int count) {
 			Check_CopyTo(array, arrayIndex, count);
 			Purge();
 
@@ -310,7 +310,7 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public bool Exists (Predicate<T> match) {
+		internal bool Exists (Predicate<T> match) {
 			foreach (var item in _List) {
 				if (Predicate(item, match)) {
 					return true;
@@ -320,7 +320,7 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public bool Exists (Predicate<WeakReference<T>> match) {
+		internal bool Exists (Predicate<WeakReference<T>> match) {
 			foreach (var item in _List) {
 				if (match.Invoke(item)) {
 					return true;
@@ -330,7 +330,7 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public bool Exists (Predicate<ComparableWeakReference<T>> match) {
+		internal bool Exists (Predicate<ComparableWeakReference<T>> match) {
 			foreach (var item in _List) {
 				if (match.Invoke(item)) {
 					return true;
@@ -340,7 +340,7 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public T Find (Predicate<T> match) {
+		internal T Find (Predicate<T> match) {
 			foreach (var item in _List) {
 				if (item.TryGetTarget(out T target) && match.Invoke(target)) {
 					return target;
@@ -350,7 +350,7 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public WeakReference<T> Find (Predicate<WeakReference<T>> match) {
+		internal WeakReference<T> Find (Predicate<WeakReference<T>> match) {
 			foreach (var item in _List) {
 				if (match.Invoke(item)) {
 					return item;
@@ -360,7 +360,7 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public ComparableWeakReference<T> Find (Predicate<ComparableWeakReference<T>> match) {
+		internal ComparableWeakReference<T> Find (Predicate<ComparableWeakReference<T>> match) {
 			foreach (var item in _List) {
 				if (match.Invoke(item)) {
 					return item;
@@ -370,7 +370,7 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public List<T> FindAll (Predicate<T> match) {
+		internal List<T> FindAll (Predicate<T> match) {
 			var result = new List<T>();
 
 			foreach (var item in _List) {
@@ -385,7 +385,7 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public List<WeakReference<T>> FindAll (Predicate<WeakReference<T>> match) {
+		internal List<WeakReference<T>> FindAll (Predicate<WeakReference<T>> match) {
 			var result = new List<WeakReference<T>>();
 
 			foreach (var item in _List) {
@@ -398,7 +398,7 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public List<ComparableWeakReference<T>> FindAll (Predicate<ComparableWeakReference<T>> match) {
+		internal List<ComparableWeakReference<T>> FindAll (Predicate<ComparableWeakReference<T>> match) {
 			var result = new List<ComparableWeakReference<T>>();
 
 			foreach (var item in _List) {
@@ -411,7 +411,7 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public void ForEach (Action<T> action) {
+		internal void ForEach (Action<T> action) {
 			Purge();
 
 			foreach (var item in _List) {
@@ -422,7 +422,7 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public void ForEach (Action<WeakReference<T>> action) {
+		internal void ForEach (Action<WeakReference<T>> action) {
 			Purge();
 
 			foreach (var item in _List) {
@@ -431,7 +431,7 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public void ForEach (Action<ComparableWeakReference<T>> action) {
+		internal void ForEach (Action<ComparableWeakReference<T>> action) {
 			Purge();
 
 			foreach (var item in _List) {
@@ -441,7 +441,7 @@ namespace SpriteMaster.Types {
 
 		// TODO : must implement GetEnumerator
 		// class? Enumerator
-		// public Enumerator GetEnumerator ()
+		// internal Enumerator GetEnumerator ()
 
 		// GetRange
 		// IndexOf
@@ -455,17 +455,17 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public bool Remove (WeakReference<T> item) {
+		internal bool Remove (WeakReference<T> item) {
 			return _List.Remove(item);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public bool Remove (ComparableWeakReference<T> item) {
+		internal bool Remove (ComparableWeakReference<T> item) {
 			return _List.Remove(item);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public int RemoveAll (Predicate<T> match) {
+		internal int RemoveAll (Predicate<T> match) {
 			return _List.RemoveAll((ComparableWeakReference<T> reference) => {
 				if (reference.TryGetTarget(out T target)) {
 					return match.Invoke(target);
@@ -475,14 +475,14 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public int RemoveAll (Predicate<WeakReference<T>> match) {
+		internal int RemoveAll (Predicate<WeakReference<T>> match) {
 			return _List.RemoveAll((ComparableWeakReference<T> reference) => {
 				return match.Invoke(reference);
 			});
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public int RemoveAll (Predicate<ComparableWeakReference<T>> match) {
+		internal int RemoveAll (Predicate<ComparableWeakReference<T>> match) {
 			return _List.RemoveAll(match);
 		}
 
@@ -490,14 +490,14 @@ namespace SpriteMaster.Types {
 		// RemoveRange
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public int Purge() {
+		internal int Purge() {
 			return _List.RemoveAll(
 				(ComparableWeakReference<T> reference) => !reference.IsAlive
 			);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public void Reverse() {
+		internal void Reverse() {
 			Purge();
 
 			foreach (int i in 0.RangeTo(_List.Count)) {
@@ -511,21 +511,21 @@ namespace SpriteMaster.Types {
 		// Reverse(int, int)
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public void Sort(Comparison<T> comparison) {
+		internal void Sort(Comparison<T> comparison) {
 			Purge();
 
 			_List.Sort((ComparableWeakReference<T> referenceA, ComparableWeakReference<T> referenceB) => Comparison(referenceA, referenceB, comparison));
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public void Sort (Comparer<T> comparer) {
+		internal void Sort (Comparer<T> comparer) {
 			Purge();
 
 			_List.Sort(new ReferenceComparer(comparer));
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public void Sort() {
+		internal void Sort() {
 			Purge();
 
 			_List.Sort(
@@ -534,7 +534,7 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public T[] ToArray() {
+		internal T[] ToArray() {
 			Purge();
 
 			var result = new T[_List.Count];
@@ -552,13 +552,13 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public void TrimExcess () {
+		internal void TrimExcess () {
 			Purge();
 			_List.TrimExcess();
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public bool TrueForAll (Predicate<T> match) {
+		internal bool TrueForAll (Predicate<T> match) {
 			foreach (var item in _List) {
 				if (!Predicate(item, match)) {
 					return false;
@@ -568,7 +568,7 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public bool TrueForAll (Predicate<WeakReference<T>> match) {
+		internal bool TrueForAll (Predicate<WeakReference<T>> match) {
 			foreach (var item in _List) {
 				if (!match.Invoke(item)) {
 					return false;
@@ -578,7 +578,7 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public bool TrueForAll (Predicate<ComparableWeakReference<T>> match) {
+		internal bool TrueForAll (Predicate<ComparableWeakReference<T>> match) {
 			foreach (var item in _List) {
 				if (!match.Invoke(item)) {
 					return false;
@@ -586,11 +586,11 @@ namespace SpriteMaster.Types {
 			}
 			return true;
 		}
-		public sealed class Enumerator : IEnumerator<T> {
+		internal sealed class Enumerator : IEnumerator<T> {
 			private readonly IEnumerator<ComparableWeakReference<T>> _Enumerator;
 
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
-			public Enumerator (IEnumerator<ComparableWeakReference<T>> enumerator) {
+			internal Enumerator (IEnumerator<ComparableWeakReference<T>> enumerator) {
 				_Enumerator = enumerator;
 			}
 

@@ -4,12 +4,12 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Extensions {
-	public static class String {
+	internal static class String {
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static bool IsBlank (this string str) => str == null || str == "";
+		internal static bool IsBlank (this string str) => str == null || str == "";
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static string Reverse (this string str) {
+		internal static string Reverse (this string str) {
 			Contract.AssertNotNull(str);
 
 			unsafe {
@@ -25,14 +25,14 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static string Reversed (this string str) {
+		internal static string Reversed (this string str) {
 			Contract.AssertNotNull(str);
 			var strArray = str.ToCharArray().Reverse();
 			return new string(strArray);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static string Enquote (this string str, string quote = "\'") {
+		internal static string Enquote (this string str, string quote = "\'") {
 			if (str.StartsWith(quote) && str.EndsWith(quote)) {
 				return str;
 			}
@@ -41,7 +41,7 @@ namespace SpriteMaster.Extensions {
 
 		private static readonly char[] NewlineChars = new[] { '\n', '\r' };
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static IEnumerable<string> Lines (this string str, bool removeEmpty = false) {
+		internal static IEnumerable<string> Lines (this string str, bool removeEmpty = false) {
 			var strings = str.Split(NewlineChars);
 			var validLines = removeEmpty ? strings.Where(l => (l != null && l.Length > 0)) : strings.Where(l => l != null);
 			return validLines;

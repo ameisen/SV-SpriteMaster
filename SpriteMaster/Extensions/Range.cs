@@ -5,73 +5,73 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Extensions {
-	public static class Range {
+	internal static class Range {
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static T Clamp<T> (this T value, T min, T max) where T : IComparable, IComparable<T> =>
+		internal static T Clamp<T> (this T value, T min, T max) where T : IComparable, IComparable<T> =>
 			(value.CompareTo(min) < 0) ? min : (value.CompareTo(max) > 0) ? max : value;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static int Clamp (this int value, int min, int max) => (value < min) ? min : (value > max) ? max : value;
+		internal static int Clamp (this int value, int min, int max) => (value < min) ? min : (value > max) ? max : value;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static uint Clamp (this uint value, uint min, uint max) => (value < min) ? min : (value > max) ? max : value;
+		internal static uint Clamp (this uint value, uint min, uint max) => (value < min) ? min : (value > max) ? max : value;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static long Clamp (this long value, long min, long max) => (value < min) ? min : (value > max) ? max : value;
+		internal static long Clamp (this long value, long min, long max) => (value < min) ? min : (value > max) ? max : value;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static ulong Clamp (this ulong value, ulong min, ulong max) => (value < min) ? min : (value > max) ? max : value;
+		internal static ulong Clamp (this ulong value, ulong min, ulong max) => (value < min) ? min : (value > max) ? max : value;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static float Clamp (this float value, float min, float max) => (value < min) ? min : (value > max) ? max : value;
+		internal static float Clamp (this float value, float min, float max) => (value < min) ? min : (value > max) ? max : value;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static double Clamp (this double value, double min, double max) => (value < min) ? min : (value > max) ? max : value;
+		internal static double Clamp (this double value, double min, double max) => (value < min) ? min : (value > max) ? max : value;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static Vector2 Clamp (this Vector2 value, float min, float max) => new Vector2(value.X.Clamp(min, max), value.Y.Clamp(min, max));
+		internal static Vector2 Clamp (this Vector2 value, float min, float max) => new Vector2(value.X.Clamp(min, max), value.Y.Clamp(min, max));
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static Vector2 Clamp (this Vector2 value, double min, double max) => value.Clamp((float)min, (float)max);
+		internal static Vector2 Clamp (this Vector2 value, double min, double max) => value.Clamp((float)min, (float)max);
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static Vector2 Clamp (this Vector2 value, Vector2 min, Vector2 max) => new Vector2(value.X.Clamp(min.X, max.X), value.Y.Clamp(min.Y, max.Y));
+		internal static Vector2 Clamp (this Vector2 value, Vector2 min, Vector2 max) => new Vector2(value.X.Clamp(min.X, max.X), value.Y.Clamp(min.Y, max.Y));
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static Vector2 Min (this Vector2 value, float min) => new Vector2(Math.Min(value.X, min), Math.Min(value.Y, min));
+		internal static Vector2 Min (this Vector2 value, float min) => new Vector2(Math.Min(value.X, min), Math.Min(value.Y, min));
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static Vector2 Min (this Vector2 value, double min) => new Vector2(Math.Min(value.X, (float)min), Math.Min(value.Y, (float)min));
+		internal static Vector2 Min (this Vector2 value, double min) => new Vector2(Math.Min(value.X, (float)min), Math.Min(value.Y, (float)min));
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static Vector2 Min (this Vector2 value, Vector2 min) => new Vector2(Math.Min(value.X, min.X), Math.Min(value.Y, min.Y));
+		internal static Vector2 Min (this Vector2 value, Vector2 min) => new Vector2(Math.Min(value.X, min.X), Math.Min(value.Y, min.Y));
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static Vector2 Max (this Vector2 value, float max) => new Vector2(Math.Max(value.X, max), Math.Max(value.Y, max));
+		internal static Vector2 Max (this Vector2 value, float max) => new Vector2(Math.Max(value.X, max), Math.Max(value.Y, max));
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static Vector2 Max (this Vector2 value, double max) => new Vector2(Math.Max(value.X, (float)max), Math.Max(value.Y, (float)max));
+		internal static Vector2 Max (this Vector2 value, double max) => new Vector2(Math.Max(value.X, (float)max), Math.Max(value.Y, (float)max));
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static Vector2 Max (this Vector2 value, Vector2 max) => new Vector2(Math.Max(value.X, max.X), Math.Max(value.Y, max.Y));
+		internal static Vector2 Max (this Vector2 value, Vector2 max) => new Vector2(Math.Max(value.X, max.X), Math.Max(value.Y, max.Y));
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static bool WithinInclusive<T> (this T value, T min, T max) where T : IComparable, IComparable<T> {
+		internal static bool WithinInclusive<T> (this T value, T min, T max) where T : IComparable, IComparable<T> {
 			return (value.CompareTo(min) >= 0 && value.CompareTo(max) <= 0);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static bool WithinExclusive<T> (this T value, T min, T max) where T : IComparable, IComparable<T> {
+		internal static bool WithinExclusive<T> (this T value, T min, T max) where T : IComparable, IComparable<T> {
 			return (value.CompareTo(min) > 0 && value.CompareTo(max) < 0);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static bool Within<T> (this T value, T min, T max) where T : IComparable, IComparable<T> {
+		internal static bool Within<T> (this T value, T min, T max) where T : IComparable, IComparable<T> {
 			return WithinInclusive(value, min, max);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static IEnumerable<int> ToInclusive (this int from, int to) {
+		internal static IEnumerable<int> ToInclusive (this int from, int to) {
 			if (from >= to) {
 				while (from >= to) {
 					yield return from--;
@@ -85,7 +85,7 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static IEnumerable<long> ToInclusive (this int from, long to) {
+		internal static IEnumerable<long> ToInclusive (this int from, long to) {
 			if (from >= to) {
 				while (from >= to) {
 					yield return from--;
@@ -99,7 +99,7 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static IEnumerable<int> ToExclusive (this int from, int to) {
+		internal static IEnumerable<int> ToExclusive (this int from, int to) {
 			while (from < to) {
 				yield return from++;
 			}
@@ -109,7 +109,7 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static IEnumerable<long> ToExclusive (this int from, long to) {
+		internal static IEnumerable<long> ToExclusive (this int from, long to) {
 			while (from < to) {
 				yield return from++;
 			}
@@ -119,37 +119,37 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static IEnumerable<int> To (this int from, int to) {
+		internal static IEnumerable<int> To (this int from, int to) {
 			return ToInclusive(from, to);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static IEnumerable<long> To (this int from, long to) {
+		internal static IEnumerable<long> To (this int from, long to) {
 			return ToInclusive(from, to);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static IEnumerable<int> Until (this int from, int to) {
+		internal static IEnumerable<int> Until (this int from, int to) {
 			return ToExclusive(from, to);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static IEnumerable<long> Until (this int from, long to) {
+		internal static IEnumerable<long> Until (this int from, long to) {
 			return ToExclusive(from, to);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static IEnumerable<int> For (this int from, int count) {
+		internal static IEnumerable<int> For (this int from, int count) {
 			return ToExclusive(from, from + count);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static IEnumerable<long> For (this int from, long count) {
+		internal static IEnumerable<long> For (this int from, long count) {
 			return ToExclusive(from, from + count);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static IEnumerable<long> ToInclusive (this long from, long to) {
+		internal static IEnumerable<long> ToInclusive (this long from, long to) {
 			if (from < to) {
 				while (from <= to) {
 					yield return from++;
@@ -163,7 +163,7 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static IEnumerable<long> ToExclusive (this long from, long to) {
+		internal static IEnumerable<long> ToExclusive (this long from, long to) {
 			while (from < to) {
 				yield return from++;
 			}
@@ -173,17 +173,17 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static IEnumerable<long> To (this long from, long to) {
+		internal static IEnumerable<long> To (this long from, long to) {
 			return ToInclusive(from, to);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static IEnumerable<long> Until (this long from, long to) {
+		internal static IEnumerable<long> Until (this long from, long to) {
 			return ToExclusive(from, to);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static Bounds ClampTo (this in Bounds source, in Bounds clamp) {
+		internal static Bounds ClampTo (this in Bounds source, in Bounds clamp) {
 			var result = new Bounds(source.X, source.Y, source.Width, source.Height);
 
 			int leftDiff = clamp.Left - result.Left;

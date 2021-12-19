@@ -36,7 +36,12 @@
 		<!--<Deterministic>True</Deterministic>-->
 		
 		<BundleExtraAssemblies>System, ThirdParty</BundleExtraAssemblies>
-		<IgnoreModFilePatterns>System\.(?!Data\.HashFunction\..+).*$</IgnoreModFilePatterns>
+		<IgnoreModFilePatterns Condition="'$(IgnoreModFilePatterns)'!=''">$(IgnoreModFilePatterns), _SENTINEL_</IgnoreModFilePatterns>
+		<IgnoreModFilePatterns Condition="'$(IgnoreModFilePatterns)'==''">_SENTINEL_</IgnoreModFilePatterns>
+		<IgnoreModFilePatterns>$(IgnoreModFilePatterns), System\.(?!Data\.HashFunction\..+).*$</IgnoreModFilePatterns>
+		<IgnoreModFilePatterns>$(IgnoreModFilePatterns), Microsoft\.Build\..*$</IgnoreModFilePatterns>
+		<IgnoreModFilePatterns>$(IgnoreModFilePatterns), Microsoft\.NET\..*$</IgnoreModFilePatterns>
+		<IgnoreModFilePatterns>$(IgnoreModFilePatterns), Microsoft\.Win32\..*$</IgnoreModFilePatterns>
 	</PropertyGroup>
 	
   <ItemGroup>

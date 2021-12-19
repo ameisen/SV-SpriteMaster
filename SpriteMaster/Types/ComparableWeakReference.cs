@@ -5,14 +5,19 @@ using System.Security;
 
 namespace SpriteMaster.Types {
 	[System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members")]
-	public sealed class ComparableWeakReference<T> : ISerializable, ILongHash where T : class {
-		public const int NullHash = 0;
-		public const ulong NullLongHash = LongHash.Null;
+	internal sealed class ComparableWeakReference<T> :
+		ISerializable,
+		ILongHash,
+		IEquatable<WeakReference<T>>,
+		IEquatable<ComparableWeakReference<T>>
+	where T : class {
+		internal const int NullHash = 0;
+		internal const ulong NullLongHash = LongHash.Null;
 
 		static private class Reflect {
-			public static readonly PropertyInfo Target = typeof(WeakReference<T>).GetProperty("Target", BindingFlags.Instance | BindingFlags.NonPublic);
-			public static readonly MethodInfo Create = typeof(WeakReference<T>).GetMethod("Create", BindingFlags.Instance | BindingFlags.NonPublic);
-			public static readonly MethodInfo IsTrackResurrection = typeof(WeakReference<T>).GetMethod("IsTrackResurrection", BindingFlags.Instance | BindingFlags.NonPublic);
+			internal static readonly PropertyInfo Target = typeof(WeakReference<T>).GetProperty("Target", BindingFlags.Instance | BindingFlags.NonPublic);
+			internal static readonly MethodInfo Create = typeof(WeakReference<T>).GetMethod("Create", BindingFlags.Instance | BindingFlags.NonPublic);
+			internal static readonly MethodInfo IsTrackResurrection = typeof(WeakReference<T>).GetMethod("IsTrackResurrection", BindingFlags.Instance | BindingFlags.NonPublic);
 
 			private static string GetName (string name) => $"{typeof(ComparableWeakReference<T>).Name}.{name}";
 
@@ -32,17 +37,17 @@ namespace SpriteMaster.Types {
 			set { _Reference.SetTarget(value); }
 		}
 
-		public bool IsAlive => _Reference.TryGetTarget(out T _);
+		internal bool IsAlive => _Reference.TryGetTarget(out T _);
 
-		public ComparableWeakReference (T target) : this(new WeakReference<T>(target)) { }
+		internal ComparableWeakReference (T target) : this(new WeakReference<T>(target)) { }
 
-		public ComparableWeakReference (WeakReference<T> reference) {
+		internal ComparableWeakReference (WeakReference<T> reference) {
 			T target = null;
 			reference.TryGetTarget(out target);
 			_Reference = new WeakReference<T>(target);
 		}
 
-		public ComparableWeakReference (SerializationInfo info, StreamingContext context) {
+		internal ComparableWeakReference (SerializationInfo info, StreamingContext context) {
 			if (info == null) {
 				throw new ArgumentNullException(nameof(info));
 			}
@@ -51,9 +56,9 @@ namespace SpriteMaster.Types {
 			Create(target, boolean);
 		}
 
-		public bool TryGetTarget (out T target) => _Reference.TryGetTarget(out target);
+		internal bool TryGetTarget (out T target) => _Reference.TryGetTarget(out target);
 
-		public void SetTarget (T target) => _Reference.SetTarget(target);
+		internal void SetTarget (T target) => _Reference.SetTarget(target);
 
 		public void GetObjectData (SerializationInfo info, StreamingContext context) {
 			if (info == null) {
@@ -93,7 +98,7 @@ namespace SpriteMaster.Types {
 
 		public static bool Equals (WeakReference<T> objA, ComparableWeakReference<T> objB) => objA == objB;
 
-		public static bool Equals (object objA, ComparableWeakReference<T> objB) => objB.Equals(objA);
+		internal static bool Equals (object objA, ComparableWeakReference<T> objB) => objB.Equals(objA);
 
 		public override bool Equals (object obj) => obj switch {
 			ComparableWeakReference<T> reference => this == reference,

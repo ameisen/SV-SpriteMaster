@@ -2,7 +2,7 @@
 using System.Security;
 
 namespace SpriteMaster.Types {
-	public class WeakSet<T> where T : class {
+	internal class WeakSet<T> where T : class {
 		private const object Sentinel = null;
 
 		private readonly ConditionalWeakTable<T, object> InternalTable = new ConditionalWeakTable<T, object>();
@@ -10,7 +10,7 @@ namespace SpriteMaster.Types {
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		[SecuritySafeCritical]
-		public bool Contains(T obj) {
+		internal bool Contains(T obj) {
 			using (Lock.Shared) {
 				return InternalTable.TryGetValue(obj, out var _);
 			}
@@ -18,7 +18,7 @@ namespace SpriteMaster.Types {
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		[SecuritySafeCritical]
-		public bool Remove(T obj) {
+		internal bool Remove(T obj) {
 			using (Lock.Exclusive) {
 				return InternalTable.Remove(obj);
 			}
@@ -26,7 +26,7 @@ namespace SpriteMaster.Types {
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		[SecuritySafeCritical]
-		public bool Add(T obj) {
+		internal bool Add(T obj) {
 			try {
 				using (Lock.Exclusive) {
 					if (InternalTable.TryGetValue(obj, out var _)) {

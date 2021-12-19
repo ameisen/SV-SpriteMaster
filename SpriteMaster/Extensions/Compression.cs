@@ -36,7 +36,7 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static byte[] Compress(this byte[] data, Algorithm algorithm) {
+		internal static byte[] Compress(this byte[] data, Algorithm algorithm) {
 			return algorithm switch {
 				Algorithm.None => data,
 				Algorithm.Compress => Compressors.SystemIO.Compress(data),
@@ -48,12 +48,12 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static byte[] Compress(this byte[] data) {
+		internal static byte[] Compress(this byte[] data) {
 			return Compress(data, BestAlgorithm);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static byte[] Decompress (this byte[] data, int size, Algorithm algorithm) {
+		internal static byte[] Decompress (this byte[] data, int size, Algorithm algorithm) {
 			if (size == -1) {
 				return Decompress(data, algorithm);
 			}
@@ -69,12 +69,12 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static byte[] Decompress(this byte[] data, int size) {
+		internal static byte[] Decompress(this byte[] data, int size) {
 			return Decompress(data, size, BestAlgorithm);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static byte[] Decompress(this byte[] data, Algorithm algorithm) {
+		internal static byte[] Decompress(this byte[] data, Algorithm algorithm) {
 			return algorithm switch {
 				Algorithm.None => data,
 				Algorithm.Compress => Compressors.SystemIO.Decompress(data),
@@ -86,7 +86,7 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static byte[] Decompress(this byte[] data) {
+		internal static byte[] Decompress(this byte[] data) {
 			return Decompress(data, BestAlgorithm);
 		}
 

@@ -18,18 +18,18 @@ namespace SpriteMaster.Metadata {
 		private static MemoryCache DataCache = (Config.MemoryCache.Enabled) ? new(name: "DataCache", config: null) : null;
 		private static long CurrentID = 0U;
 
-		public readonly SpriteDictionary SpriteTable = new();
+		internal readonly SpriteDictionary SpriteTable = new();
 		private readonly string UniqueIDString = Interlocked.Increment(ref CurrentID).ToString();
 
-		public readonly SharedLock Lock = new();
+		internal readonly SharedLock Lock = new();
 
 		private volatile int CompressorCount = 0;
 		private readonly Semaphore CompressionSemaphore = new(int.MaxValue, int.MaxValue);
 
-		public volatile bool TracePrinted = false;
-		public VolatileULong UpdateToken { get; private set; } = 0;
+		internal volatile bool TracePrinted = false;
+		internal VolatileULong UpdateToken { get; private set; } = 0;
 
-		public bool ScaleValid = true;
+		internal bool ScaleValid = true;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		internal static void PurgeDataCache() {
@@ -43,14 +43,14 @@ namespace SpriteMaster.Metadata {
 			}
 		}
 
-		public VolatileULong LastAccessFrame { get; private set; } = (ulong)DrawState.CurrentFrame;
+		internal VolatileULong LastAccessFrame { get; private set; } = (ulong)DrawState.CurrentFrame;
 		internal VolatileULong Hash { get; private set; } = Hashing.Default;
 
 		// TODO : this presently is not threadsafe.
 		private int CachedDataLength = -1;
 		private readonly WeakReference<byte[]> _CachedData = (Config.MemoryCache.Enabled) ? new WeakReference<byte[]>(null) : null;
 
-		public bool HasCachedData {
+		internal bool HasCachedData {
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			get {
 				if (!Config.MemoryCache.Enabled)
@@ -63,7 +63,7 @@ namespace SpriteMaster.Metadata {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public unsafe void Purge (Texture2D reference, Bounds? bounds, DataRef<byte> data) {
+		internal unsafe void Purge (Texture2D reference, Bounds? bounds, DataRef<byte> data) {
 			using (Lock.Exclusive) {
 				if (data.IsNull) {
 					CachedData = null;
@@ -122,9 +122,9 @@ namespace SpriteMaster.Metadata {
 			}
 		}
 
-		public static readonly byte[] BlockedSentinel = new byte[1] { 0xFF };
+		internal static readonly byte[] BlockedSentinel = new byte[1] { 0xFF };
 
-		public byte[] CachedDataNonBlocking {
+		internal byte[] CachedDataNonBlocking {
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			get {
 				if (!Config.MemoryCache.Enabled)
@@ -171,7 +171,7 @@ namespace SpriteMaster.Metadata {
 			}
 		}
 
-		public byte[] CachedData {
+		internal byte[] CachedData {
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			get {
 				if (!Config.MemoryCache.Enabled)
@@ -290,12 +290,12 @@ namespace SpriteMaster.Metadata {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public void UpdateLastAccess() {
+		internal void UpdateLastAccess() {
 			LastAccessFrame = DrawState.CurrentFrame;
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public ulong GetHash(SpriteInfo info) {
+		internal ulong GetHash(SpriteInfo info) {
 			using (Lock.Shared) {
 				ulong hash = Hash;
 				if (hash == Hashing.Default) {

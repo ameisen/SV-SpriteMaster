@@ -14,7 +14,7 @@ namespace SpriteMaster.xBRZ.Color {
 		private static readonly ColorSpace CurrentColorSpace = ColorSpace.sRGB_Precise;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public ColorDist (in Config cfg) {
+		internal ColorDist (in Config cfg) {
 			Configuration = cfg;
 		}
 
@@ -73,7 +73,7 @@ namespace SpriteMaster.xBRZ.Color {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public double DistYCbCr (uint pix1, uint pix2) {
+		internal double DistYCbCr (uint pix1, uint pix2) {
 			if (pix1 == pix2)
 				return 0.0;
 

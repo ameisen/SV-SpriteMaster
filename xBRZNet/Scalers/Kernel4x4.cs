@@ -19,24 +19,24 @@ namespace SpriteMaster.xBRZ.Scalers {
 	internal unsafe ref struct Kernel4x4 {
 		private fixed uint Data[4 * 4];
 
-		public readonly uint this[int index] => Data[index];
+		internal readonly uint this[int index] => Data[index];
 
-		public readonly uint A => Data[0];
-		public readonly uint B => Data[1];
-		public readonly uint C => Data[2];
-		public readonly uint D => Data[3];
-		public readonly uint E => Data[4];
-		public readonly uint F => Data[5];
-		public readonly uint G => Data[6];
-		public readonly uint H => Data[7];
-		public readonly uint I => Data[8];
-		public readonly uint J => Data[9];
-		public readonly uint K => Data[10];
-		public readonly uint L => Data[11];
-		public readonly uint M => Data[12];
-		public readonly uint N => Data[13];
-		public readonly uint O => Data[14];
-		public readonly uint P => Data[15];
+		internal readonly uint A => Data[0];
+		internal readonly uint B => Data[1];
+		internal readonly uint C => Data[2];
+		internal readonly uint D => Data[3];
+		internal readonly uint E => Data[4];
+		internal readonly uint F => Data[5];
+		internal readonly uint G => Data[6];
+		internal readonly uint H => Data[7];
+		internal readonly uint I => Data[8];
+		internal readonly uint J => Data[9];
+		internal readonly uint K => Data[10];
+		internal readonly uint L => Data[11];
+		internal readonly uint M => Data[12];
+		internal readonly uint N => Data[13];
+		internal readonly uint O => Data[14];
+		internal readonly uint P => Data[15];
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		internal Kernel4x4 (

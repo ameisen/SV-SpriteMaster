@@ -7,9 +7,9 @@ using System.Runtime;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Extensions {
-	public static class Garbage {
+	internal static class Garbage {
 		private static readonly MethodInfo CompactingCollect = null;
-		public static volatile bool ManualCollection = false;
+		internal static volatile bool ManualCollection = false;
 
 		private static void ExecuteSafe(Action call) {
 			try {
@@ -45,14 +45,14 @@ namespace SpriteMaster.Extensions {
 #if NETFRAMEWORK && (NET20 || NET35 || NET40 || NET45)
 		[Conditional("FALSE")]
 #endif
-		public static void MarkCompact() {
+		internal static void MarkCompact() {
 			Debug.TraceLn("Marking for Compact");
 #if !NETFRAMEWORK || !(NET20 || NET35 || NET40 || NET45)
 			ExecuteSafe(() => GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce);
 #endif
 		}
 
-		public static void Collect(bool compact = false, bool blocking = false, bool background = true) {
+		internal static void Collect(bool compact = false, bool blocking = false, bool background = true) {
 			try {
 				ManualCollection = true;
 
@@ -102,31 +102,31 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static void Mark(long size) {
+		internal static void Mark(long size) {
 			Contract.AssertPositiveOrZero(size);
 			GC.AddMemoryPressure(size);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static void Mark (Texture2D texture) {
+		internal static void Mark (Texture2D texture) {
 			Contract.AssertNotNull(texture);
 			Mark(texture.SizeBytes());
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static void Unmark(long size) {
+		internal static void Unmark(long size) {
 			Contract.AssertPositiveOrZero(size);
 			GC.RemoveMemoryPressure(size);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static void Unmark (Texture2D texture) {
+		internal static void Unmark (Texture2D texture) {
 			Contract.AssertNotNull(texture);
 			Unmark(texture.SizeBytes());
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static void MarkOwned(SurfaceFormat format, int texels) {
+		internal static void MarkOwned(SurfaceFormat format, int texels) {
 			if (!Config.Garbage.CollectAccountOwnedTextures)
 				return;
 			Contract.AssertPositiveOrZero(texels);
@@ -135,7 +135,7 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static void UnmarkOwned (SurfaceFormat format, int texels) {
+		internal static void UnmarkOwned (SurfaceFormat format, int texels) {
 			if (!Config.Garbage.CollectAccountOwnedTextures)
 				return;
 			Contract.AssertPositiveOrZero(texels);
@@ -144,7 +144,7 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static void MarkUnowned (SurfaceFormat format, int texels) {
+		internal static void MarkUnowned (SurfaceFormat format, int texels) {
 			if (!Config.Garbage.CollectAccountUnownedTextures)
 				return;
 			Contract.AssertPositiveOrZero(texels);
@@ -153,7 +153,7 @@ namespace SpriteMaster.Extensions {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static void UnmarkUnowned (SurfaceFormat format, int texels) {
+		internal static void UnmarkUnowned (SurfaceFormat format, int texels) {
 			if (!Config.Garbage.CollectAccountUnownedTextures)
 				return;
 			Contract.AssertPositiveOrZero(texels);

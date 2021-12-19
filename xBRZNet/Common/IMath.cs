@@ -3,11 +3,11 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.xBRZ.Common {
-	public static class IMath {
+	internal static class IMath {
 		[DebuggerStepThrough]
 		private ref struct Argument<T> where T : unmanaged {
-			public readonly T Value;
-			public readonly string Name;
+			internal readonly T Value;
+			internal readonly string Name;
 
 			[DebuggerStepThrough, DebuggerHidden(), MethodImpl(Runtime.MethodImpl.Optimize)]
 			internal Argument (T value, string name) {

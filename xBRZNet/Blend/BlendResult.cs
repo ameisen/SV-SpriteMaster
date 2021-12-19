@@ -1,8 +1,8 @@
 ﻿namespace SpriteMaster.xBRZ.Blend {
 	internal ref struct BlendResult {
-		public BlendType F;
-		public BlendType G;
-		public BlendType J;
-		public BlendType K;
+		internal BlendType F;
+		internal BlendType G;
+		internal BlendType J;
+		internal BlendType K;
 	}
 }
