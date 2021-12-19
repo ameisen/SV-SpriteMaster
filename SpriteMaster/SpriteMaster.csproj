@@ -4,6 +4,7 @@
 
 	<PropertyGroup>
 		<AssemblyName>SpriteMaster</AssemblyName>
+		<PackageId>SpriteMaster-SV</PackageId>
 		<ProjectGuid>C270B7AD-DA11-4176-83B9-8998FE58A601</ProjectGuid>
 		<EnableHarmony>true</EnableHarmony>
 		<RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
@@ -45,7 +46,7 @@
 	</ItemGroup>
 	
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-		<Exec Command="copy /D /V /Y /L $(SolutionDir)Libraries\* $(OutDir)\." />
+		<Exec Command="$(ProjectDir)scripts\build.post.rb OutDir=$(OutDir) SolutionDir=$(SolutionDir) 'IgnoreModFilePatterns=$(IgnoreModFilePatterns)'" />
 	</Target>
 
 	<ItemGroup>

@@ -4,6 +4,7 @@
 
 	<PropertyGroup>
 		<AssemblyName>Runtime</AssemblyName>
+		<PackageId>SpriteMaster-SV-Runtime</PackageId>
 		<ProjectGuid>{D8AB0188-41C5-4669-AD33-231DA9401FA0}</ProjectGuid>
 		<OutputType>Library</OutputType>
 	</PropertyGroup>

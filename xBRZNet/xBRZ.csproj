@@ -4,6 +4,7 @@
 
   <PropertyGroup>
     <AssemblyName>xBRZ</AssemblyName>
+		<PackageId>SpriteMaster-SV-xBRZ</PackageId>
     <ProjectGuid>{84EE293E-B938-4512-8A39-86FFC00ED267}</ProjectGuid>
     <OutputType>Library</OutputType>
 		<Authors>Digital Carbide (Michael Kuklinski);Michael Yanni;Zenju</Authors>
