@@ -19,11 +19,12 @@ namespace SpriteMaster.xBRZ {
 		internal readonly double CenterDirectionBias;
 
 		// Precalculated
-		internal readonly double EqualColorTolerancePow2;
+		internal readonly double ChrominanceWeight;
+		internal readonly double EqualColorToleranceSq;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public Config (
-			Vector2B wrapped,
+			Vector2B Wrapped,
 			bool Gamma = true,
 			bool HasAlpha = true,
 			double luminanceWeight = 1.0,
@@ -32,16 +33,19 @@ namespace SpriteMaster.xBRZ {
 			double steepDirectionThreshold = 2.2,
 			double centerDirectionBias = 4.0
 		) {
-			this.Wrapped = wrapped;
+			this.Wrapped = Wrapped;
 			this.Gamma = Gamma;
 			this.HasAlpha = HasAlpha;
-			this.LuminanceWeight = luminanceWeight;
 			this.EqualColorTolerance = equalColorTolerance;
 			this.DominantDirectionThreshold = dominantDirectionThreshold;
 			this.SteepDirectionThreshold = steepDirectionThreshold;
 			this.CenterDirectionBias = centerDirectionBias;
 
-			this.EqualColorTolerancePow2 = Math.Pow(EqualColorTolerance, 2.0);
+			this.EqualColorToleranceSq = EqualColorTolerance * EqualColorTolerance;
+
+			var adjustedLuminanceWeight = luminanceWeight / (luminanceWeight + 1.0);
+			this.LuminanceWeight = adjustedLuminanceWeight * 2.0;
+			this.ChrominanceWeight = (1.0 - adjustedLuminanceWeight) * 2.0;
 		}
 
 		public override readonly bool Equals (object obj) {

@@ -75,7 +75,10 @@ namespace SpriteMaster.Extensions {
 		public static ulong HashFNV1<T> (this T[] data) where T : unmanaged => data.CastAs<T, byte>().HashFNV1();
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static unsafe ulong HashFNV1<T> (this in FixedSpan<T> data) where T : unmanaged => data.As<byte>().HashFNV1();
+		public static unsafe ulong HashFNV1<T>(this in FixedSpan<T> data) where T : unmanaged {
+			using var byteSpan = data.As<byte>();
+			return byteSpan.HashFNV1();
+		}
 
 		private static readonly IxxHash HasherXX = xxHashFactory.Instance.Create(new xxHashConfig() { HashSizeInBits = 64 });
 
@@ -113,7 +116,10 @@ namespace SpriteMaster.Extensions {
 		public static ulong HashXX<T> (this T[] data) where T : unmanaged => data.CastAs<T, byte>().HashXX();
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static ulong HashXX<T> (this in FixedSpan<T> data) where T : unmanaged => data.As<byte>().HashXX();
+		public static ulong HashXX<T>(this in FixedSpan<T> data) where T : unmanaged {
+			using var byteSpan = data.As<byte>();
+			return byteSpan.HashXX();
+		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public static ulong Hash (this byte[] data) => data.HashXX();//return data.HashFNV1();

@@ -32,7 +32,7 @@ namespace SpriteMaster {
 
 		internal static readonly string ModuleName = typeof(Config).Namespace;
 
-		internal const bool IgnoreConfig = false;
+		internal const bool IgnoreConfig = true;
 		internal const bool SkipIntro = IgnoreConfig;
 
 		[ConfigIgnore]
@@ -112,8 +112,8 @@ namespace SpriteMaster {
 			}
 
 			internal static class Sprite {
-				internal const bool DumpReference = false;
-				internal const bool DumpResample = false;
+				internal const bool DumpReference = true;
+				internal const bool DumpResample = true;
 			}
 
 			internal const bool MacOSTestMode = false;
@@ -139,6 +139,8 @@ namespace SpriteMaster {
 			internal const Upscaler.Scaler Scaler = Upscaler.Scaler.xBRZ;
 			[Comment("Should dynamic scaling be used (scaling based upon apparent sprite size)")]
 			internal const bool EnableDynamicScale = true;
+			[Comment("Should we assume that input sprites are gamma corrected?")]
+			internal static bool AssumeGammaCorrected = true;
 			[Comment("Should the scale factor of water be adjusted to account for water sprites being unusual?")]
 			internal static bool TrimWater = true;
 			[Comment("Positive bias applied to sprite scaling calculations")]
@@ -151,6 +153,24 @@ namespace SpriteMaster {
 			internal static bool EnableWrappedAddressing = true;
 			[Comment("Should resampling be stalled if it is determined that it will cause hitches?")]
 			internal static bool UseFrametimeStalling = true;
+			[Comment("Should color enhancement/rebalancing be performed?")]
+			internal static bool UseColorEnhancement = true;
+			[Comment("Should input textures be assumed to be using premultiplied alpha?")]
+			internal static bool AssumePremultiplyAlpha = true;
+			[Comment("Should transparent pixels be premultiplied to prevent a 'halo' effect?")]
+			internal static bool PremultiplyAlpha = true;
+			internal static class Deposterization {
+				[Comment("Should deposterization be performed?")]
+				internal static bool Enabled = true;
+				[Comment("Deposterization Color Threshold")]
+				internal static int Threshold = 56;
+				[Comment("Deposterization Block Size")]
+				internal static int BlockSize = 2;
+				[Comment("Default number of passes")]
+				internal static int Passes = 3;
+				[Comment("Use YCbCr for color comparisons?")]
+				internal static bool UseYCbCr = true;
+			}
 			internal static readonly List<SurfaceFormat> SupportedFormats = new() {
 				SurfaceFormat.Color,
 				SurfaceFormat.Dxt5,
@@ -194,6 +214,8 @@ namespace SpriteMaster {
 				internal static List<string> Whitelist = new() {
 					"LooseSprites/font_bold",
 					"Characters/Farmer/hairstyles",
+					"Characters/Farmer/hairstyles2",
+					"Characters/Farmer/hats",
 					"Characters/Farmer/pants",
 					"Characters/Farmer/shirts",
 					"TileSheets/weapons",
@@ -226,6 +248,18 @@ namespace SpriteMaster {
 				"LooseSprites/Cloudy_Ocean_BG",
 				"LooseSprites/Cloudy_Ocean_BG_Night"
 				};
+			}
+			internal static class xBRZ {
+				[Comment("The weight provided to luminance as opposed to chrominance when performing color comparisons")]
+				internal static double LuminanceWeight = 1.0;
+				[Comment("The tolerance for colors to be considered equal - [0, 256)")]
+				internal static double EqualColorTolerance = 30.0;
+				[Comment("The threshold for a corner-direction to be considered 'dominant'")]
+				internal static double DominantDirectionThreshold = 3.6;
+				[Comment("The threshold for a corner-direction to be considered 'steep'")]
+				internal static double SteepDirectionThreshold = 2.2;
+				[Comment("Bias towards kernel center applied to corner-direction calculations")]
+				internal static double CenterDirectionBias = 4.0;
 			}
 		}
 

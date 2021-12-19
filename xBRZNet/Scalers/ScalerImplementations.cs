@@ -2,15 +2,19 @@
 
 using System;
 using System.Runtime.CompilerServices;
+
+using SpriteMaster.Colors;
 using SpriteMaster.xBRZ.Common;
 
 namespace SpriteMaster.xBRZ.Scalers {
 	internal abstract class IScaler {
 		public readonly int Scale;
+		public readonly Config Configuration;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		protected IScaler (int scale) {
+		protected IScaler (int scale, in Config configuration) {
 			Scale = scale;
+			Configuration = configuration;
 		}
 
 		public abstract void BlendLineSteep (uint col, in OutputMatrix out_);
@@ -20,7 +24,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 		public abstract void BlendCorner (uint col, in OutputMatrix out_);
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		protected static void AlphaBlend (int n, int m, ref uint dstRef, uint col) {
+		protected void AlphaBlend (int n, int m, ref uint dstRef, uint col) {
 			//assert n < 256 : "possible overflow of (col & redMask) * N";
 			//assert m < 256 : "possible overflow of (col & redMask) * N + (dst & redMask) * (M - N)";
 			//assert 0 < n && n < m : "0 < N && N < M";
@@ -28,13 +32,13 @@ namespace SpriteMaster.xBRZ.Scalers {
 			//this works because 8 upper bits are free
 			var dst = dstRef;
 			var alphaComponent = BlendComponent(ColorConstant.Shift.Alpha, ColorConstant.Mask.Alpha, n, m, dst, col, gamma: false);
-			if (alphaComponent == 0) {
-				dstRef = 0;
-				return;
-			}
-			var redComponent = BlendComponent(ColorConstant.Shift.Red, ColorConstant.Mask.Red, n, m, dst, col);
-			var greenComponent = BlendComponent(ColorConstant.Shift.Green, ColorConstant.Mask.Green, n, m, dst, col);
-			var blueComponent = BlendComponent(ColorConstant.Shift.Blue, ColorConstant.Mask.Blue, n, m, dst, col);
+			//if (alphaComponent == 0) {
+			//	dstRef = 0;
+			//	return;
+			//}
+			var redComponent = BlendComponent(ColorConstant.Shift.Red, ColorConstant.Mask.Red, n, m, dst, col, gamma: Configuration.Gamma);
+			var greenComponent = BlendComponent(ColorConstant.Shift.Green, ColorConstant.Mask.Green, n, m, dst, col, gamma: Configuration.Gamma);
+			var blueComponent = BlendComponent(ColorConstant.Shift.Blue, ColorConstant.Mask.Blue, n, m, dst, col, gamma: Configuration.Gamma);
 			var blend = (alphaComponent | redComponent | greenComponent | blueComponent);
 			dstRef = blend; // MJY: Added required cast but will throw an exception if the asserts at the top are not checked.
 		}
@@ -84,7 +88,6 @@ namespace SpriteMaster.xBRZ.Scalers {
 			var inChan = ((inPixel >> shift) & 0xFF).Widen();
 			var setChan = ((setPixel >> shift) & 0xFF).Widen();
 
-			// TODO : attach to the configuration setting for SRGB
 			if (gamma) {
 				inChan = ToLinear(inChan);
 				setChan = ToLinear(setChan);
@@ -99,7 +102,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 			}
 
 			// Value is now in the range of 0 to 0xFFFF
-			if (!gamma) {
+			if (!gamma && false) {
 				// If it's alpha, let's try hardening the edges.
 				float channelF = (float)outChan / (float)0xFFFF;
 
@@ -131,7 +134,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 
 	internal sealed class Scaler2X : IScaler {
 		public new const int Scale = 2;
-		[MethodImpl(Runtime.MethodImpl.Optimize)] public Scaler2X () : base(Scale) { }
+		[MethodImpl(Runtime.MethodImpl.Optimize)] public Scaler2X (in Config config) : base(Scale, config) { }
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public override void BlendLineShallow (uint col, in OutputMatrix out_) {
@@ -166,7 +169,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 
 	internal sealed class Scaler3X : IScaler {
 		public new const int Scale = 3;
-		[MethodImpl(Runtime.MethodImpl.Optimize)] public Scaler3X () : base(Scale) { }
+		[MethodImpl(Runtime.MethodImpl.Optimize)] public Scaler3X (in Config config) : base(Scale, config) { }
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public override void BlendLineShallow (uint col, in OutputMatrix out_) {
@@ -211,7 +214,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 
 	internal sealed class Scaler4X : IScaler {
 		public new const int Scale = 4;
-		[MethodImpl(Runtime.MethodImpl.Optimize)] public Scaler4X () : base(Scale) { }
+		[MethodImpl(Runtime.MethodImpl.Optimize)] public Scaler4X (in Config config) : base(Scale, config) { }
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public override void BlendLineShallow (uint col, in OutputMatrix out_) {
@@ -263,7 +266,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 
 	internal sealed class Scaler5X : IScaler {
 		public new const int Scale = 5;
-		[MethodImpl(Runtime.MethodImpl.Optimize)] public Scaler5X () : base(Scale) { }
+		[MethodImpl(Runtime.MethodImpl.Optimize)] public Scaler5X (in Config config) : base(Scale, config) { }
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public override void BlendLineShallow (uint col, in OutputMatrix out_) {
@@ -330,7 +333,7 @@ namespace SpriteMaster.xBRZ.Scalers {
 
 	internal sealed class Scaler6X : IScaler {
 		public new const int Scale = 6;
-		[MethodImpl(Runtime.MethodImpl.Optimize)] public Scaler6X () : base(Scale) { }
+		[MethodImpl(Runtime.MethodImpl.Optimize)] public Scaler6X (in Config config) : base(Scale, config) { }
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public override void BlendLineShallow (uint col, in OutputMatrix out_) {

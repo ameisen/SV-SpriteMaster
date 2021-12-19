@@ -77,6 +77,7 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch {
 			}
 			catch (Exception ex) {
 				ex.PrintError();
+				ex.InnerException?.PrintError();
 			}
 
 			return null;

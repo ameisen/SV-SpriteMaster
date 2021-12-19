@@ -8,22 +8,22 @@ namespace SpriteMaster.Resample {
 	internal static class Edge {
 		internal ref struct Results {
 			public readonly Vector2B Wrapped;
-			public readonly Vector2B WrappedX;
-			public readonly Vector2B WrappedY;
+			public readonly Vector2B RepeatX;
+			public readonly Vector2B RepeatY;
 			public readonly Vector2B EdgeX;
 			public readonly Vector2B EdgeY;
 
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			internal Results(
 				Vector2B wrapped,
-				Vector2B wrappedX,
-				Vector2B wrappedY,
+				Vector2B repeatX,
+				Vector2B repeatY,
 				Vector2B edgeX,
 				Vector2B edgeY
 			) {
 				Wrapped = wrapped;
-				WrappedX = wrappedX;
-				WrappedY = wrappedY;
+				RepeatX = repeatX;
+				RepeatY = repeatY;
 				EdgeX = edgeX;
 				EdgeY = edgeY;
 			}
@@ -62,8 +62,9 @@ namespace SpriteMaster.Resample {
 				}
 			}
 
-			var WrappedX = new Vector2B(Wrapped.X);
-			var WrappedY = new Vector2B(Wrapped.Y);
+			var WrappedXY = Wrapped;
+			Vector2B RepeatX = Vector2B.False;
+			Vector2B RepeatY = Vector2B.False;
 
 			if (Config.WrapDetection.Enabled && Config.Resample.EnableWrappedAddressing) {
 				static byte GetAlpha (in int sample) {
@@ -75,7 +76,7 @@ namespace SpriteMaster.Resample {
 
 				long numSamples = 0;
 				double meanAlphaF = 0.0f;
-				if (!Wrapped.X || !Wrapped.Y) {
+				if (!WrappedXY.All) {
 					foreach (int y in 0.RangeTo(spriteInputSize.Height)) {
 						int offset = (y + spriteInputSize.Top) * rawInputSize.Width + spriteInputSize.Left;
 						foreach (int x in 0.RangeTo(spriteInputSize.Width)) {
@@ -92,7 +93,7 @@ namespace SpriteMaster.Resample {
 
 				// Count the fragments that are not alphad out completely on the edges.
 				// Both edges must meet the threshold.
-				if (!Wrapped.X) {
+				if (!WrappedXY.X) {
 					var samples = stackalloc int[] { 0, 0 };
 					foreach (int y in 0.RangeTo(spriteInputSize.Height)) {
 						int offset = (y + spriteInputSize.Top) * rawInputSize.Width + spriteInputSize.Left;
@@ -107,11 +108,15 @@ namespace SpriteMaster.Resample {
 						}
 					}
 					int threshold = ((float)spriteInputSize.Height * edgeThreshold).NearestInt();
-					WrappedX.Negative = samples[0] >= threshold;
-					WrappedX.Positive = samples[1] >= threshold;
-					Wrapped.X = WrappedX[0] && WrappedX[1];
+					var aboveThreshold = Vector2B.From(samples[0] >= threshold, samples[1] >= threshold);
+					if (aboveThreshold.All) {
+						WrappedXY.X = true;
+					}
+					else {
+						RepeatX = aboveThreshold;
+					}
 				}
-				if (!Wrapped.Y) {
+				if (!WrappedXY.Y) {
 					var samples = stackalloc int[] { 0, 0 };
 					var offsets = stackalloc int[] { spriteInputSize.Top * rawInputSize.Width, (spriteInputSize.Bottom - 1) * rawInputSize.Width };
 					int sampler = 0;
@@ -127,17 +132,32 @@ namespace SpriteMaster.Resample {
 						sampler++;
 					}
 					int threshold = ((float)spriteInputSize.Width * edgeThreshold).NearestInt();
-					WrappedY.Negative = samples[0] >= threshold;
-					WrappedY.Positive = samples[0] >= threshold;
-					Wrapped.Y = WrappedY[0] && WrappedY[1];
+					var aboveThreshold = Vector2B.From(samples[0] >= threshold, samples[1] >= threshold);
+					if (aboveThreshold.All) {
+						WrappedXY.Y = true;
+					}
+					else {
+						RepeatY = aboveThreshold;
+					}
+				}
+			}
+
+			if (WrappedXY.Any) {
+				// Perform tests against both sides of an edge to see if they match up. If they do not, convert
+				// a wrapped edge into a repeat edge
+				if (WrappedXY.X) {
+
+				}
+				if (WrappedXY.Y) {
+
 				}
 			}
 
 			// TODO : Should we flip these values based upon boundsInverted?
 			return new Results(
-				wrapped: Wrapped,
-				wrappedX: WrappedX,
-				wrappedY: WrappedY,
+				wrapped: WrappedXY,
+				repeatX: RepeatX,
+				repeatY: RepeatY,
 				edgeX: Vector2B.False,
 				edgeY: Vector2B.False
 			);

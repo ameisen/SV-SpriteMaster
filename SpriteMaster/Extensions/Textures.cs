@@ -2,9 +2,6 @@
 using SpriteMaster.Resample;
 using SpriteMaster.Types;
 using System;
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Drawing.Imaging;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -83,10 +80,10 @@ namespace SpriteMaster.Extensions {
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		internal static long SizeBytes (this ManagedTexture2D texture) => (long)texture.Area() * 4;
 
-		internal static Bitmap Resize (this Bitmap source, in Vector2I size, InterpolationMode filter = InterpolationMode.HighQualityBicubic, bool discard = true) {
+		internal static TeximpNet.Surface Resize (this TeximpNet.Surface source, in Vector2I size, TeximpNet.ImageFilter filter = TeximpNet.ImageFilter.Lanczos3, bool discard = true) {
 			if (size == new Vector2I(source)) {
 				try {
-					return new Bitmap(source);
+					return source.Clone();
 				}
 				finally {
 					if (discard) {
@@ -94,15 +91,17 @@ namespace SpriteMaster.Extensions {
 					}
 				}
 			}
-			var output = new Bitmap(size.Width, size.Height);
+
+			var output = source.Clone();
 			try {
-				using (var g = Graphics.FromImage(output)) {
-					g.InterpolationMode = filter;
-					g.DrawImage(source, 0, 0, output.Width, output.Height);
+				if (!output.Resize(size.Width, size.Height, filter)) {
+					throw new Exception("Failed to resize surface");
 				}
+
 				if (discard) {
 					source.Dispose();
 				}
+
 				return output;
 			}
 			catch {
@@ -125,39 +124,26 @@ namespace SpriteMaster.Extensions {
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		internal static string SafeName (this ScaledTexture texture) => texture.Name.SafeName();
 
-		internal static Bitmap CreateBitmap (byte[] source, in Vector2I size, PixelFormat format = PixelFormat.Format32bppArgb) {
-			var newImage = new Bitmap(size.Width, size.Height, format);
-			var rectangle = new Bounds(newImage);
-			var newBitmapData = newImage.LockBits(rectangle, ImageLockMode.WriteOnly, format);
-			// Get the address of the first line.
-			var newBitmapPointer = newBitmapData.Scan0;
-			//http://stackoverflow.com/a/1917036/294804
-			// Copy the RGB values back to the bitmap
+		private const int ImageElementSize = 4;
+		internal static TeximpNet.Surface CreateSurface<T>(in FixedSpan<T> source, in Vector2I size, in Bounds region) where T : unmanaged {
+			//TeximpNet.Surface.LoadFromStream
 
-			bool hasPadding = newBitmapData.Stride != (newBitmapData.Width * sizeof(int));
+			int offset = ((region.Top * size.Width) + region.Left) * ImageElementSize;
+			
+			var surface = TeximpNet.Surface.LoadFromRawData(
+				source.Pointer + offset,
+				width: region.Width,
+				height: region.Height,
+				rowPitch: size.Width * ImageElementSize,
+				isBGRA: false,
+				isTopDown: true
+			);
 
-			// Handle stride correctly as input data does not have any stride?
-			const bool CopyWithPadding = true;
-			if (CopyWithPadding && hasPadding) {
-				var rowElements = newImage.Width;
-				var rowSize = newBitmapData.Stride;
-
-				int sourceOffset = 0;
-				foreach (int row in 0.RangeTo(newImage.Height)) {
-					Marshal.Copy(source, sourceOffset, newBitmapPointer, rowElements * sizeof(int));
-					sourceOffset += rowElements;
-					newBitmapPointer += rowSize;
-				}
-			}
-			else {
-				var intCount = newBitmapData.Stride * newImage.Height / sizeof(int);
-				Marshal.Copy(source, 0, newBitmapPointer, intCount);
-			}
-			// Unlock the bits.
-			newImage.UnlockBits(newBitmapData);
-
-			return newImage;
+			return surface;
 		}
+		internal static TeximpNet.Surface CreateSurface<T>(T[] source, in Vector2I size, in Bounds region) where T : unmanaged => CreateSurface<T>(source.AsFixedSpan(), size, region);
+		internal static TeximpNet.Surface CreateSurface<T>(in FixedSpan<T> source, in Vector2I size) where T : unmanaged => CreateSurface<T>(source, size, size);
+		internal static TeximpNet.Surface CreateSurface<T>(T[] source, in Vector2I size) where T : unmanaged => CreateSurface<T>(source.AsFixedSpan(), size, size);
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		internal static bool IsValid (this ScaledTexture texture) {

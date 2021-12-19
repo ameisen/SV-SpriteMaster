@@ -136,12 +136,24 @@ namespace SpriteMaster {
 									case ulong v:
 										field.SetValue(null, unchecked((ulong)((IntegerValueSyntax)value.Value).Value));
 										break;
-									case float v:
-										field.SetValue(null, (float)((FloatValueSyntax)value.Value).Value);
-										break;
-									case double v:
-										field.SetValue(null, (double)((FloatValueSyntax)value.Value).Value);
-										break;
+									case float v: {
+										if (value.Value is IntegerValueSyntax ivalue) {
+											field.SetValue(null, (float)ivalue.Value);
+										}
+										else {
+											field.SetValue(null, (float)((FloatValueSyntax)value.Value).Value);
+										}
+									}
+									break;
+									case double v: {
+										if (value.Value is IntegerValueSyntax ivalue) {
+											field.SetValue(null, (double)ivalue.Value);
+										}
+										else {
+											field.SetValue(null, (double)((FloatValueSyntax)value.Value).Value);
+										}
+									}
+									break;
 									case bool v:
 										field.SetValue(null, (bool)((BooleanValueSyntax)value.Value).Value);
 										break;

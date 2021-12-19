@@ -92,7 +92,7 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static FixedSpan<U> CastAs<T, U> (this T[] data) where T : unmanaged where U : unmanaged => new FixedSpan<T>(data).As<U>();
+		public static FixedSpan<U> CastAs<T, U> (this T[] data) where T : unmanaged where U : unmanaged => data.AsFixedSpan<T, U>();
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public static T[] Reverse<T> (this T[] array) {

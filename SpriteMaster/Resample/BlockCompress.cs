@@ -14,7 +14,7 @@ namespace SpriteMaster.Resample {
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		private static void FlipColorBytes (byte[] p) {
-			var span = new FixedSpan<byte>(p).As<uint>();
+			using var span = p.AsFixedSpan<byte, uint>();
 			foreach (int i in 0.RangeTo(span.Length)) {
 				var color = span[i];
 				color =
@@ -293,9 +293,9 @@ namespace SpriteMaster.Resample {
 
 			switch (format) {
 				case SurfaceFormat.Dxt1: {
-					var blocks = data.AsFixedSpan().As<ColorBlock>();
+					using var blocks = data.AsFixedSpan<byte, ColorBlock>();
 					var outData = new byte[width * height * sizeof(uint)];
-					var outDataPacked = outData.AsFixedSpan().As<uint>();
+					using var outDataPacked = outData.AsFixedSpan<byte, uint>();
 					var widthBlocks = width / 4;
 
 					uint blockIndex = 0;
@@ -317,9 +317,9 @@ namespace SpriteMaster.Resample {
 					return outData;
 				} break;
 				case SurfaceFormat.Dxt3: {
-					var blocks = data.AsFixedSpan().As<ColorBlockDxt3>();
+					using var blocks = data.AsFixedSpan<byte, ColorBlockDxt3>();
 					var outData = new byte[width * height * sizeof(uint)];
-					var outDataPacked = outData.AsFixedSpan().As<uint>();
+					using var outDataPacked = outData.AsFixedSpan<byte, uint>();
 					var widthBlocks = width / 4;
 
 					uint blockIndex = 0;

@@ -15,7 +15,7 @@
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <ApplicationIcon>pufferchick_xbrz.ico</ApplicationIcon>
     <DebugSymbols>true</DebugSymbols>
-    <DebugType>pdbonly</DebugType>
+    <DebugType>portable</DebugType>
     <OutputPath>bin\$(Configuration)\</OutputPath>
     <BaseAddress>286261248</BaseAddress>
     <TargetFrameworkProfile />

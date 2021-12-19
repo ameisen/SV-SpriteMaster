@@ -2,7 +2,8 @@
 
 using System;
 using System.Runtime.CompilerServices;
-using SpriteMaster.xBRZ.Color;
+
+using SpriteMaster.Colors;
 using SpriteMaster.xBRZ.Common;
 
 namespace SpriteMaster.xBRZ.Color {
@@ -24,8 +25,7 @@ namespace SpriteMaster.xBRZ.Color {
 				texel2 = (texel2 >> shift) & 0xFF;
 			}
 
-			return Math.Abs(texel1 - texel2);
-			//return (unchecked((int)((uint)texel1 & mask)) - unchecked((int)((uint)texel2 & mask))) >> shift;
+			return Math.Abs((int)texel1 - (int)texel2);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
@@ -39,8 +39,10 @@ namespace SpriteMaster.xBRZ.Color {
 			double t2 = CurrentColorSpace.Linearize(texel2 / 255.0);
 
 			return Math.Abs(t1 - t2) * 255.0;
-			//return (unchecked((int)((uint)texel1 & mask)) - unchecked((int)((uint)texel2 & mask))) >> shift;
 		}
+
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
+		private static double Square(double value) => value * value;
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		private double DistYCbCrImpl (uint pix1, uint pix2) {
@@ -58,17 +60,6 @@ namespace SpriteMaster.xBRZ.Color {
 			var gDiff = Difference(pix1, pix2, ColorConstant.Shift.Green);
 			var bDiff = Difference(pix1, pix2, ColorConstant.Shift.Blue);  //subtraction for int is noticeable faster than for double
 
-			// Alpha gives some interesting properties.
-			// We technically cannot guarantee that the color is correct once we are in transparent areas, but we might still want to blend there.
-
-#if MULTIPLY_ALPHA
-			var aDiff = 0xFF - TexelDiff(pix1, pix2, ColorConstant.Shift.Alpha);
-				rDiff = (rDiff * aDiff) / 0xFF;
-				gDiff = (gDiff * aDiff) / 0xFF;
-				bDiff = (bDiff * aDiff) / 0xFF;
-			}
-#endif
-
 			var coefficient = CurrentColorSpace.LumaCoefficient;
 			var scale = CurrentColorSpace.LumaScale;
 
@@ -78,13 +69,13 @@ namespace SpriteMaster.xBRZ.Color {
 
 			// Skip division by 255.
 			// Also skip square root here by pre-squaring the config option equalColorTolerance.
-			return Math.Pow(Configuration.LuminanceWeight * y, 2) + Math.Pow(cB, 2) + Math.Pow(cR, 2);
+			return Square(Configuration.LuminanceWeight * y) + (Configuration.ChrominanceWeight * (Square(cB) + Square(cR)));
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public double DistYCbCr (uint pix1, uint pix2) {
 			if (pix1 == pix2)
-				return 0;
+				return 0.0;
 
 			var distance = DistYCbCrImpl(pix1, pix2);
 

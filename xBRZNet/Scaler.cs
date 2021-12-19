@@ -20,7 +20,7 @@ namespace SpriteMaster.xBRZ {
 			in FixedSpan<uint> sourceData,
 			in Point sourceSize,
 			in Rectangle? sourceTarget,
-			ref FixedSpan<uint> targetData,
+			in FixedSpan<uint> targetData,
 			in Config configuration
 		) {
 			if (scaleMultiplier < MinScale || scaleMultiplier > MaxScale) {
@@ -50,12 +50,12 @@ namespace SpriteMaster.xBRZ {
 				throw new ArgumentOutOfRangeException(nameof(targetData));
 			}
 
-			this.scaler = scaleMultiplier.ToIScaler();
+			this.scaler = scaleMultiplier.ToIScaler(configuration);
 			this.configuration = configuration;
 			this.ColorDistance = new ColorDist(this.configuration);
 			this.ColorEqualizer = new ColorEq(this.configuration);
 			this.sourceSize = sourceSize;
-			Scale(in sourceData, ref targetData);
+			Scale(in sourceData, in targetData);
 		}
 
 		private readonly Config configuration;
@@ -72,7 +72,7 @@ namespace SpriteMaster.xBRZ {
 
 		//fill block with the given color
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		private static void FillBlock<T> (ref FixedSpan<T> trg, int trgi, int pitch, T col, int blockSize) where T : unmanaged {
+		private static void FillBlock<T> (in FixedSpan<T> trg, int trgi, int pitch, T col, int blockSize) where T : unmanaged {
 			for (var y = 0; y < blockSize; ++y, trgi += pitch) {
 				for (var x = 0; x < blockSize; ++x) {
 					trg[trgi + x] = col;
@@ -207,76 +207,40 @@ namespace SpriteMaster.xBRZ {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		private int clampX (int x) {
+		private int getX (int x) {
 			x -= sourceTarget.Left;
 			if (configuration.Wrapped.X) {
 				x = (x + sourceTarget.Width) % sourceTarget.Width;
 			}
 			else {
-				x = Math.Min(Math.Max(x, 0), sourceTarget.Width - 1);
+				x = Math.Clamp(x, 0, sourceTarget.Width - 1);
 			}
 			return x + sourceTarget.Left;
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		private int clampY (int y) {
+		private int getY (int y) {
 			y -= sourceTarget.Top;
 			if (configuration.Wrapped.Y) {
 				y = (y + sourceTarget.Height) % sourceTarget.Height;
 			}
 			else {
-				y = Math.Min(Math.Max(y, 0), sourceTarget.Height - 1);
+				y = Math.Clamp(y, 0, sourceTarget.Height - 1);
 			}
 			return y + sourceTarget.Top;
 		}
 
-		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		private bool legalX (int x) {
-			return true;
-			/*
-			if (configuration.Wrapped.X) {
-				return true;
-			}
-			return x >= sourceTarget.Left && x < sourceTarget.Right;
-			*/
-		}
-
-		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		private bool legalY (int y) {
-			return true;
-			/*
-			if (configuration.Wrapped.Y) {
-				return true;
-			}
-			return y >= sourceTarget.Top && y < sourceTarget.Bottom;
-			*/
-		}
-
-		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		private int getX (int x) {
-			return legalX(x) ? clampX(x) : -clampX(x);
-		}
-
-		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		private int getY (int y) {
-			return legalY(y) ? clampY(y) : -clampY(y);
-		}
-
-		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		private static uint Mask (uint value, uint mask) {
-			return value & mask;
-		}
-
 		//scaler policy: see "Scaler2x" reference implementation
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		private unsafe void Scale (in FixedSpan<uint> source, ref FixedSpan<uint> destination) {
+		private unsafe void Scale (in FixedSpan<uint> source, in FixedSpan<uint> destination) {
 			fixed (uint* destinationPtr = &destination.GetPinnableReference()) {
 
 				int yFirst = sourceTarget.Top;
 				int yLast = sourceTarget.Bottom;
 
-				if (yFirst >= yLast)
+				if (yFirst >= yLast) {
 					return;
+				}
 
 				//temporary buffer for "on the fly preprocessing"
 				var preProcBuffer = stackalloc byte[sourceTarget.Width];
@@ -291,24 +255,26 @@ namespace SpriteMaster.xBRZ {
 					// If we do this, we draw the entire texture, with the padding, but we slightly enlarge the target area for _drawing_ to account for the extra padding.
 					// This will effectively cause a filtering effect and hopefully prevent the hard edge problems
 
-					if (stride >= 0 && offset >= 0)
+					if (stride >= 0 && offset >= 0) {
 						return src[stride + offset];
-					stride = (stride < 0) ? -stride : stride;
-					offset = (offset < 0) ? -offset : offset;
+					}
+
+					stride = Math.Abs(stride);
+					offset = Math.Abs(offset);
 					uint sample = src[stride + offset];
 					const uint mask = 0x00_FF_FF_FFU;
-					return Mask(sample, mask);
+					return sample & mask;
 				}
 
 				//initialize preprocessing buffer for first row:
 				//detect upper left and right corner blending
 				//this cannot be optimized for adjacent processing
 				//stripes; we must not allow for a memory race condition!
-				if (yFirst > 0) {
+				/*if (yFirst > 0)*/ {
 					var y = yFirst - 1;
 
 					var sM1 = sourceSize.X * getY(y - 1);
-					var s0 = sourceSize.X * y; //center line
+					var s0  = sourceSize.X * getY(y); //center line
 					var sP1 = sourceSize.X * getY(y + 1);
 					var sP2 = sourceSize.X * getY(y + 2);
 
@@ -325,7 +291,7 @@ namespace SpriteMaster.xBRZ {
 							GetPixel(source, sM1, xP2),
 
 							GetPixel(source, s0, xM1),
-							source[s0 + x],
+							GetPixel(source, s0, x),
 							GetPixel(source, s0, xP1),
 							GetPixel(source, s0, xP2),
 
@@ -350,12 +316,12 @@ namespace SpriteMaster.xBRZ {
 						---------
 						*/
 
-						int adjustedX = x - sourceTarget.Left;
+						int originX = x - sourceTarget.Left;
 
-						preProcBuffer[adjustedX] = preProcBuffer[adjustedX].SetTopR(blendResult.J);
+						preProcBuffer[originX] = preProcBuffer[originX].SetTopR(blendResult.J);
 
 						if (x + 1 < sourceTarget.Right) {
-							preProcBuffer[adjustedX + 1] = preProcBuffer[adjustedX + 1].SetTopL(blendResult.K);
+							preProcBuffer[originX + 1] = preProcBuffer[originX + 1].SetTopL(blendResult.K);
 						}
 						else if (configuration.Wrapped.X) {
 							preProcBuffer[0] = preProcBuffer[0].SetTopL(blendResult.K);
@@ -409,7 +375,7 @@ namespace SpriteMaster.xBRZ {
 
 						var blendResult = PreProcessCorners(in ker4); // writes to blendResult
 
-						int adjustedX = x - sourceTarget.Left;
+						int originX = x - sourceTarget.Left;
 
 						/*
 								preprocessing blend result:
@@ -422,12 +388,12 @@ namespace SpriteMaster.xBRZ {
 
 						//all four corners of (x, y) have been determined at
 						//this point due to processing sequence!
-						var blendXy = preProcBuffer[adjustedX].SetBottomR(blendResult.F);
+						var blendXy = preProcBuffer[originX].SetBottomR(blendResult.F);
 
 						//set 2nd known corner for (x, y + 1)
 						blendXy1 = blendXy1.SetTopR(blendResult.J);
 						//store on current buffer position for use on next row
-						preProcBuffer[adjustedX] = blendXy1;
+						preProcBuffer[originX] = blendXy1;
 
 						//set 1st known corner for (x + 1, y + 1) and
 						//buffer for use on next column
@@ -435,7 +401,7 @@ namespace SpriteMaster.xBRZ {
 
 						if (x + 1 < sourceTarget.Right) {
 							//set 3rd known corner for (x + 1, y)
-							preProcBuffer[adjustedX + 1] = preProcBuffer[adjustedX + 1].SetBottomL(blendResult.G);
+							preProcBuffer[originX + 1] = preProcBuffer[originX + 1].SetBottomL(blendResult.G);
 						}
 						else if (configuration.Wrapped.X) {
 							preProcBuffer[0] = preProcBuffer[0].SetBottomL(blendResult.G);
@@ -444,7 +410,7 @@ namespace SpriteMaster.xBRZ {
 						//fill block of size scale * scale with the given color
 						//  //place *after* preprocessing step, to not overwrite the
 						//  //results while processing the the last pixel!
-						FillBlock(ref destination, trgi, targetWidth, source[s0 + x], scaler.Scale);
+						FillBlock(in destination, trgi, targetWidth, source[s0 + x], scaler.Scale);
 
 						//blend four corners of current pixel
 						if (blendXy == 0)

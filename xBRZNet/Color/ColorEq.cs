@@ -8,7 +8,7 @@ namespace SpriteMaster.xBRZ.Color {
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public bool IsColorEqual (uint color1, uint color2) {
-			var eqColorThres = Configuration.EqualColorTolerancePow2;
+			var eqColorThres = Configuration.EqualColorToleranceSq;
 			return DistYCbCr(color1, color2) < eqColorThres;
 		}
 	}

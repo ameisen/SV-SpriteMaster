@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace SpriteMaster.Types {
-	[DebuggerDisplay("[{X}, {Y}}")]
+	[DebuggerDisplay("[{X}, {Y}]")]
 	[StructLayout(LayoutKind.Sequential, Pack = sizeof(byte), Size = sizeof(byte))]
 	public struct Vector2B :
 		ICloneable,

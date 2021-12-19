@@ -126,8 +126,6 @@ namespace SpriteMaster {
 		private static readonly TexelTimer TexelAverageSync = new();
 		private static readonly TexelTimer TexelAverageCachedSync = new();
 
-		private static readonly TimeSpan MinTimeSpan = TimeSpan.FromMilliseconds(-64.0);
-
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		private static TexelTimer GetTimer(bool cached, bool async) {
 			if (async) {
@@ -144,6 +142,9 @@ namespace SpriteMaster {
 			return GetTimer(IsCached, async);
 		}
 
+		static TimeSpan MeanTimeSpan = TimeSpan.Zero;
+		static int TimeSpanSamples = 0;
+
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		static internal ScaledTexture Get (Texture2D texture, Bounds source, uint expectedScale) {
 			using var _ = Performance.Track();
@@ -156,14 +157,17 @@ namespace SpriteMaster {
 				return null;
 			}
 
-			bool useAsync = (Config.AsyncScaling.EnabledForUnknownTextures || !texture.Anonymous()) && (source.Area >= Config.AsyncScaling.MinimumSizeTexels);
+			bool useAsync = Config.AsyncScaling.Enabled && (Config.AsyncScaling.EnabledForUnknownTextures || !texture.Anonymous()) && (source.Area >= Config.AsyncScaling.MinimumSizeTexels);
 			// !texture.Meta().HasCachedData
 
 			if (Config.Resample.UseFrametimeStalling && DrawState.PushedUpdateWithin(0)) {
+				var remainingTime = DrawState.RemainingFrameTime();
+				if (remainingTime <= TimeSpan.Zero) {
+					return null;
+				}
+
 				var estimatedDuration = GetTimer(texture: texture, async: useAsync).Estimate(source.Area);
-				const float multiplier = 1.0f;
-				var remainingTime = DrawState.RemainingFrameTime(multiplier: multiplier);
-				if (estimatedDuration.Ticks != 0 && estimatedDuration >= remainingTime && remainingTime > MinTimeSpan) {
+				if (estimatedDuration > TimeSpan.Zero && estimatedDuration > remainingTime) {
 					Debug.TraceLn($"Not enough frame time left to begin resampling '{texture.SafeName()}' ({estimatedDuration.TotalMilliseconds} >= {remainingTime.TotalMilliseconds})");
 					return null;
 				}
@@ -183,7 +187,6 @@ namespace SpriteMaster {
 				textureType = TextureType.Image;
 			}
 			SpriteInfo textureWrapper;
-			ulong hash;
 
 			using (Performance.Track("new SpriteInfo")) {
 				textureWrapper = new SpriteInfo(reference: texture, dimensions: source, expectedScale: expectedScale);
@@ -200,6 +203,7 @@ namespace SpriteMaster {
 			DrawState.PushedUpdateThisFrame = true;
 
 			try {
+				ulong hash;
 				using (Performance.Track("Upscaler.GetHash")) {
 					hash = Upscaler.GetHash(textureWrapper, textureType);
 				}
@@ -213,7 +217,7 @@ namespace SpriteMaster {
 					async: useAsync,
 					expectedScale: expectedScale
 				);
-				if (useAsync && Config.AsyncScaling.Enabled) {
+				if (useAsync) {
 					// It adds itself to the relevant maps.
 					if (newTexture.IsReady && newTexture.Texture != null) {
 						return newTexture;
@@ -228,6 +232,9 @@ namespace SpriteMaster {
 				watch.Stop();
 				var duration = watch.Elapsed;
 				var averager = GetTimer(cached: textureWrapper.WasCached, async: useAsync);
+				TimeSpanSamples++;
+				MeanTimeSpan += duration;
+				Debug.TraceLn($"{(MeanTimeSpan / TimeSpanSamples).TotalMilliseconds} ms");
 				averager.Add(source.Area, duration);
 			}
 		}

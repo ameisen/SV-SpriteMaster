@@ -153,6 +153,9 @@ namespace SpriteMaster {
 			CurrentSortMode = sortMode;
 			SetCurrentAddressMode(samplerState ?? SamplerState.PointClamp);
 			CurrentBlendSourceMode = (blendState ?? BlendState.AlphaBlend).AlphaSourceBlend;
+			if (blendState != null && blendState != BlendState.AlphaBlend) {
+				Console.WriteLine("oh");
+			}
 
 			var device = @this.GraphicsDevice;
 			var renderTargets = device.GetRenderTargets();

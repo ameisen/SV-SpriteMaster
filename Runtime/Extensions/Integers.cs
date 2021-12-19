@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -632,12 +633,140 @@ namespace SpriteMaster.Extensions {
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public static BigInteger Fuse (this long lhs, long rhs) => (lhs.Widen() | (rhs.Widen() << 64));
 
-		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static IEnumerable<int> RangeTo(this int from, int to) => Enumerable.Range(from, to);
+		private enum IntRangeDirection {
+			Forward,
+			Reverse
+		}
 
-		// TODO : fixme signed issues
+		private struct IntRangeEnumerator : IEnumerator<int>, IEnumerable<int> {
+			public int Current { get; private set; }
+			private readonly int Start;
+			private readonly int End;
+
+			object IEnumerator.Current => Current;
+
+			internal IntRangeEnumerator(int start, int end, IntRangeDirection direction) {
+				switch (direction) {
+					case IntRangeDirection.Forward:
+						--start; break;
+					case IntRangeDirection.Reverse:
+						++start; break;
+				}
+				Start = start;
+				End = end;
+				Current = Start;
+			}
+
+			public void Dispose() {}
+
+			public bool MoveNext() {
+				if (Current == End) {
+					return false;
+				}
+				if (Current < End) {
+					++Current;
+				}
+				else {
+					--Current;
+				}
+				return true;
+			}
+
+			public void Reset() {
+				Current = Start;
+			}
+
+			public IEnumerator<int> GetEnumerator() => this;
+			IEnumerator IEnumerable.GetEnumerator() => this;
+		}
+
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public static IEnumerable<uint> RangeTo(this uint from, uint to) => Enumerable.Range((int)from, (int)to).Select(value => (uint)value);
+		public static IEnumerable<int> RangeTo(this int from, int to) {
+			IntRangeDirection direction;
+			if (from < to) {
+				--to;
+				direction = IntRangeDirection.Forward;
+			}
+			else if (from > to) {
+				++to;
+				direction = IntRangeDirection.Reverse;
+			}
+			else {
+				return Enumerable.Empty<int>();
+			}
+			return new IntRangeEnumerator(from, to, direction);
+		}
+
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
+		public static IEnumerable<int> RangeToInclusive(this int from, int to) {
+			return new IntRangeEnumerator(from, to, (from <= to) ? IntRangeDirection.Forward : IntRangeDirection.Reverse);
+		}
+
+		private struct UIntRangeEnumerator : IEnumerator<uint>, IEnumerable<uint> {
+			public uint Current { get; private set; }
+			private readonly uint Start;
+			private readonly uint End;
+
+			object IEnumerator.Current => Current;
+
+			internal UIntRangeEnumerator(uint start, uint end, IntRangeDirection direction) {
+				switch (direction) {
+					case IntRangeDirection.Forward:
+						--start;
+						break;
+					case IntRangeDirection.Reverse:
+						++start;
+						break;
+				}
+				Start = start;
+				End = end;
+				Current = Start;
+			}
+
+			public void Dispose() { }
+
+			public bool MoveNext() {
+				if (Current == End) {
+					return false;
+				}
+				if (Current < End) {
+					++Current;
+				}
+				else {
+					--Current;
+				}
+				return true;
+			}
+
+			public void Reset() {
+				Current = Start;
+			}
+
+			public IEnumerator<uint> GetEnumerator() => this;
+			IEnumerator IEnumerable.GetEnumerator() => this;
+		}
+
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
+		public static IEnumerable<uint> RangeTo(this uint from, uint to) {
+			IntRangeDirection direction;
+			if (from < to) {
+				--to;
+				direction = IntRangeDirection.Forward;
+			}
+			else if (from > to) {
+				++to;
+				direction = IntRangeDirection.Reverse;
+			}
+			else {
+				return Enumerable.Empty<uint>();
+			}
+			return new UIntRangeEnumerator(from, to, direction);
+		}
+
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
+		public static IEnumerable<uint> RangeToInclusive(this uint from, uint to) {
+			return new UIntRangeEnumerator(from, to, (from <= to) ? IntRangeDirection.Forward : IntRangeDirection.Reverse);
+		}
 
 		//[MethodImpl(Runtime.MethodImpl.Optimize)]
 		//public static IEnumerable<long> RangeTo(this long from, long to) => System.Linq.Enumerable.Range(from, to);

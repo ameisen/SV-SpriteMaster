@@ -128,6 +128,9 @@ namespace SpriteMaster.Types {
 		public Vector2I (System.Drawing.Bitmap bmp) : this(bmp.Width, bmp.Height) { }
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
+		public Vector2I(TeximpNet.Surface surface) : this(surface.Width, surface.Height) { }
+
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public Vector2I Set (int x, int y) {
 			X = x;
 			Y = y;

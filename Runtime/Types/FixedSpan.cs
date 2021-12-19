@@ -12,15 +12,25 @@ namespace SpriteMaster.Types {
 			return new FixedSpan<T>(data);
 		}
 
+		public static FixedSpan<U> AsFixedSpan<T, U>(this T[] data) where T : unmanaged where U : unmanaged {
+			using var intermediateSpan = new FixedSpan<T>(data);
+			return intermediateSpan.As<U>();
+		}
+
 		public static FixedSpan<T> AsFixedSpan<T>(this T[] data, int length) where T : unmanaged {
 			return new FixedSpan<T>(data, length);
+		}
+
+		public static FixedSpan<U> AsFixedSpan<T, U>(this T[] data, int length) where T : unmanaged where U : unmanaged {
+			using var intermediateSpan = new FixedSpan<T>(data, length);
+			return intermediateSpan.As<U>();
 		}
 	}
 
 	[ImmutableObject(true)]
-	public ref struct FixedSpan<T> where T : unmanaged {
-		private sealed class CollectionHandle {
-			private GCHandle Handle;
+	public struct FixedSpan<T> : IDisposable where T : unmanaged {
+		private sealed class CollectionHandle : IDisposable {
+			private GCHandle? Handle;
 
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
 			public CollectionHandle (GCHandle handle) {
@@ -28,13 +38,19 @@ namespace SpriteMaster.Types {
 			}
 
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
-			~CollectionHandle () {
-				Handle.Free();
+			~CollectionHandle() => Dispose();
+
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
+			public void Dispose() {
+				if (Handle.HasValue) {
+					Handle.Value.Free();
+					Handle = null;
+				}
 			}
 		}
 
-		private readonly CollectionHandle Handle;
-		private readonly object PinnedObject;
+		private CollectionHandle Handle;
+		private WeakReference PinnedObject;
 		public readonly IntPtr Pointer;
 		public readonly int Length;
 		private readonly int Size;
@@ -45,7 +61,7 @@ namespace SpriteMaster.Types {
 		private readonly int GetOffset(int index) {
 #if DEBUG
 			if (index < 0 || index >= Length) {
-				throw new IndexOutOfRangeException(nameof(index));
+				throw new IndexOutOfRangeException($"{nameof(index)}: {index} outside [0, {Length}]");
 			}
 #endif
 
@@ -56,16 +72,16 @@ namespace SpriteMaster.Types {
 		private readonly uint GetOffset (uint index) {
 #if DEBUG
 			if (index >= unchecked((uint)Length)) {
-				throw new IndexOutOfRangeException(nameof(index));
+				throw new IndexOutOfRangeException($"{nameof(index)}: {index} outside [0, {Length}]");
 			}
 #endif
 
 			return index * unchecked((uint)TypeSize);
 		}
 
-		public unsafe T this[int index] {
+		public readonly unsafe T this[int index] {
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
-			readonly get {
+			get {
 				T* ptr = (T*)(Pointer + GetOffset(index));
 				return *ptr;
 			}
@@ -76,9 +92,9 @@ namespace SpriteMaster.Types {
 			}
 		}
 
-		public unsafe T this[uint index] {
+		public readonly unsafe T this[uint index] {
 			[MethodImpl(Runtime.MethodImpl.Optimize)]
-			readonly get {
+			get {
 				T* ptr = (T*)(Pointer + unchecked((int)GetOffset(index)));
 				return *ptr;
 			}
@@ -90,7 +106,7 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public T[] ToArray() {
+		public readonly T[] ToArray() {
 			var result = new T[Length];
 			for (int i = 0; i < Length; ++i) {
 				result[i] = this[i];
@@ -99,24 +115,33 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
+		public readonly U[] ToArray<U>() where U : unmanaged {
+			using var span = As<U>();
+			return span.ToArray();
+		}
+
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public readonly unsafe ref T GetPinnableReference () {
 			return ref *(T*)Pointer;
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
+		public static implicit operator FixedSpan<T>(T[] array) => array.AsFixedSpan();
+
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		public FixedSpan(T[] data) : this(data, data.Length, data.Length * TypeSize) {}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public FixedSpan (T[] data, int length) : this(data, length, length * TypeSize) { }
+		public FixedSpan(T[] data, int length) : this(data, length, length * TypeSize) { }
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		private FixedSpan (object pinnedObject, int size) : this(pinnedObject, size / TypeSize, size) { }
+		private FixedSpan(object pinnedObject, int size) : this(pinnedObject, size / TypeSize, size) { }
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
 		private FixedSpan(object pinnedObject, int length, int size) {
 			var handle = GCHandle.Alloc(pinnedObject, GCHandleType.Pinned);
 			try {
-				PinnedObject = pinnedObject;
+				PinnedObject = new WeakReference(pinnedObject);
 				Pointer = handle.AddrOfPinnedObject();
 				Length = length;
 				Size = size;
@@ -130,6 +155,7 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
+		[Obsolete("Very Unsafe")]
 		public unsafe FixedSpan (T* data, int length, int size) {
 			PinnedObject = null;
 			Pointer = (IntPtr)data;
@@ -139,16 +165,29 @@ namespace SpriteMaster.Types {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
+		[Obsolete("Very Unsafe")]
 		public unsafe FixedSpan(T* data, int length) : this(data, length, length * TypeSize) {}
 
 		[MethodImpl(Runtime.MethodImpl.Optimize)]
-		public FixedSpan<U> As<U>() where U : unmanaged {
+		public readonly FixedSpan<U> As<U>() where U : unmanaged {
 			// TODO add check for U == T
 			if (PinnedObject == null) {
 				return new FixedSpan<U>(Pointer, Size / Marshal.SizeOf(typeof(U)), Size);
 			}
 			else {
-				return new FixedSpan<U>(PinnedObject, Size);
+				return new FixedSpan<U>(PinnedObject.Target, Size);
+			}
+		}
+
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
+		public void Dispose() {
+			if (Handle != null) {
+				Handle.Dispose();
+				Handle = null;
+			}
+			if (PinnedObject != null) {
+				PinnedObject.Target = null;
+				PinnedObject = null;
 			}
 		}
 

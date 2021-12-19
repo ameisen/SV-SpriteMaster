@@ -1,0 +1,339 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading.Tasks;
+
+using SpriteMaster.Colors;
+using SpriteMaster.Extensions;
+using SpriteMaster.Types;
+
+using static StardewValley.Menus.CharacterCustomization;
+
+namespace SpriteMaster.Resample {
+	// Temporary code lifted from the PPSSPP project, deposterize.h
+	internal static class Deposterize {
+		private static readonly ColorSpace CurrentColorSpace = ColorSpace.sRGB_Precise;
+
+		[StructLayout(LayoutKind.Explicit, Pack = sizeof(byte), Size = sizeof(uint))]
+		unsafe struct ColorElement {
+			public static readonly ColorElement Zero = new ColorElement(0, 0, 0, 0);
+
+			[FieldOffset(0)]
+			public fixed byte Data[4];
+
+			[FieldOffset(0)]
+			public byte R;
+			[FieldOffset(1)]
+			public byte G;
+			[FieldOffset(2)]
+			public byte B;
+			[FieldOffset(3)]
+			public byte A;
+
+			[FieldOffset(0)]
+			public fixed int AsInt[1];
+
+			[FieldOffset(0)]
+			public fixed uint AsUInt[1];
+
+			public ColorElement ColorsOnly => new ColorElement(R, G, B, 0);
+
+			public static implicit operator int(ColorElement element) => element.AsInt[0];
+			public static implicit operator uint(ColorElement element) => element.AsUInt[0];
+
+			public ref byte this[int index] {
+				[MethodImpl(Runtime.MethodImpl.Optimize)]
+				get => ref Data[index];
+			}
+
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
+			public ColorElement(byte r, byte g, byte b, byte a) {
+				R = r;
+				G = g;
+				B = b;
+				A = a;
+			}
+
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
+			public ColorElement(int color) : this(0, 0, 0, 0) {
+				AsInt[0] = color;
+			}
+
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
+			public ColorElement(uint color) : this(0, 0, 0, 0) {
+				AsUInt[0] = color;
+			}
+		}
+
+		private class DeposterizeContext<T> where T : unmanaged {
+			private readonly FixedSpan<T> Source;
+			private readonly Vector2I Size;
+			private readonly Vector2B Wrapped;
+			private readonly int Passes;
+			private readonly int Threshold;
+			private readonly int ThresholdSq;
+			private readonly int BlockSize;
+
+			internal DeposterizeContext(
+				FixedSpan<T> source,
+				in Vector2I size,
+				in Vector2B wrapped,
+				int passes,
+				int threshold,
+				int blockSize
+			) {
+				Source = source;
+				Size = size;
+				Wrapped = wrapped;
+				Passes = passes;
+				Threshold = threshold;
+				ThresholdSq = threshold * threshold;
+				BlockSize = blockSize;
+			}
+
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
+			private static double TexelDiff(uint texel1, uint texel2, int shift) {
+				unchecked {
+					texel1 = (texel1 >> shift) & 0xFF;
+					texel2 = (texel2 >> shift) & 0xFF;
+				}
+
+				return Math.Abs((int)texel1 - (int)texel2);
+			}
+
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
+			private static double Square(double value) => value * value;
+
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
+			private static double DistYCbCrImpl(uint pix1, uint pix2) {
+				if ((pix1 & ~ColorConstant.Mask.Alpha) == (pix2 & ~ColorConstant.Mask.Alpha)) {
+					return 0.0;
+				}
+
+				//http://en.wikipedia.org/wiki/YCbCr#ITU-R_BT.601_conversion
+				//YCbCr conversion is a matrix multiplication => take advantage of linearity by subtracting first!
+				var rDiff = TexelDiff(pix1, pix2, ColorConstant.Shift.Red); //we may delay division by 255 to after matrix multiplication
+				var gDiff = TexelDiff(pix1, pix2, ColorConstant.Shift.Green);
+				var bDiff = TexelDiff(pix1, pix2, ColorConstant.Shift.Blue);  //subtraction for int is noticeable faster than for double
+
+				var coefficient = CurrentColorSpace.LumaCoefficient;
+				var scale = CurrentColorSpace.LumaScale;
+
+				var y = (coefficient.R * rDiff) + (coefficient.G * gDiff) + (coefficient.B * bDiff); //[!], analog YCbCr!
+				var cB = scale.B * (bDiff - y);
+				var cR = scale.R * (rDiff - y);
+
+				// Skip division by 255.
+				// Also skip square root here by pre-squaring the config option equalColorTolerance.
+				return Square(y) + Square(cB) + Square(cR);
+			}
+
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
+			private static double DistYCbCr(uint pix1, uint pix2) {
+				if (pix1 == pix2) {
+					return 0.0;
+				}
+
+				var distance = DistYCbCrImpl(pix1, pix2);
+
+				return distance;
+			}
+
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
+			private bool Compare(byte reference, byte lower, byte higher) {
+				return
+					(lower != higher) &&
+					(
+						(lower == reference && Math.Abs(higher - reference) <= Threshold) ||
+						(higher == reference && Math.Abs(lower - reference) <= Threshold)
+					);
+			}
+
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
+			private ColorElement Merge(ColorElement reference, ColorElement lower, ColorElement higher) {
+				ColorElement result = reference;
+
+				if (reference.A == lower.A && reference.A == higher.A) {
+					bool doMerge = false;
+					if (Config.Resample.Deposterization.UseYCbCr && lower != higher && (lower == reference || higher == reference)) {
+						doMerge =
+							(lower == reference && DistYCbCr(higher, reference) <= ThresholdSq) ||
+							(higher == reference && DistYCbCr(lower, reference) <= ThresholdSq);
+					}
+					else {
+						doMerge =
+							reference.A == lower.A && reference.A == higher.A &&
+							Compare(reference[0], lower[0], higher[0]) &&
+							Compare(reference[1], lower[1], higher[1]) &&
+							Compare(reference[2], lower[2], higher[2]);
+					}
+
+					if (doMerge) {
+						result[0] = (byte)((lower[0] + higher[0]) >> 1);
+						result[1] = (byte)((lower[1] + higher[1]) >> 1);
+						result[2] = (byte)((lower[2] + higher[2]) >> 1);
+					}
+				}
+
+				return result;
+			}
+
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
+			private int GetX(int value) {
+				if (Wrapped.X) {
+					var result = value % Size.X;
+					if (result < 0) {
+						result = Size.X + result;
+					}
+					return result;
+				}
+				else {
+					return Math.Clamp(value, 0, Size.X);
+				}
+			}
+
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
+			private int GetY(int value) {
+				if (Wrapped.Y) {
+					var result = value % Size.Y;
+					if (result < 0) {
+						result = Size.Y + result;
+					}
+					return result;
+				}
+				else {
+					return Math.Clamp(value, 0, Size.Y);
+				}
+			}
+
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
+			private unsafe void DeposterizeH(FixedSpan<ColorElement> inData, FixedSpan<ColorElement> outData) {
+				int minY = 0;
+				int maxY = Size.Height;
+
+				int minX = Wrapped.X ? -1 : 1;
+				int maxX = Wrapped.X ? Size.Width + 1 : Math.Max(1, Size.Width - 1);
+
+				foreach (int y in minY.RangeTo(maxY)) {
+					int modulusY = GetY(y);
+
+					var yIndex = modulusY * Size.X;
+
+					if (!Wrapped.X) {
+						outData[yIndex] = inData[yIndex];
+						outData[yIndex + Size.Width - 1] = inData[yIndex + Size.Width - 1];
+					}
+
+					foreach (int x in minX.RangeTo(maxX)) {
+						int modulusX = GetX(x);
+
+						var index = yIndex + modulusX;
+
+						var center = inData[index];
+						var left = inData[yIndex + GetX(x - 1)];
+						var right = inData[yIndex + GetX(x + 1)];
+
+						outData[index] = Merge(center, left, right);
+					}
+				}
+			}
+
+			[MethodImpl(Runtime.MethodImpl.Optimize)]
+			private unsafe void DeposterizeV(FixedSpan<ColorElement> inData, FixedSpan<ColorElement> outData) {
+				int minY = Wrapped.Y ? 0 : 1;
+				int maxY = Wrapped.Y ? Size.Height : Math.Max(1, Size.Height - 1);
+
+				int minX = Wrapped.X ? -(Size.X % BlockSize) : 0;
+				int maxX = Wrapped.X ? Size.Width + -minX : Size.Width;
+
+				int minXBlock = 0;
+				int maxXBlock = (maxX / BlockSize) + 1;
+
+				foreach (int xb in minXBlock.RangeTo(maxXBlock)) {
+					var min = (xb + minX) * BlockSize;
+					var max = Math.Min(maxX, min + BlockSize);
+
+					if (!Wrapped.Y) {
+						foreach (int x in min.RangeTo(max)) {
+							int xOffset = GetX(x);
+							int index0 = xOffset;
+							int index1 = ((Size.Height - 1) * Size.X) + xOffset;
+							outData[index0] = inData[index0];
+							outData[index1] = inData[index1];
+						}
+					}
+
+					foreach (int y in minY.RangeTo(maxY)) {
+						var modulusY = GetY(y);
+						var yIndex = modulusY * Size.X;
+						var yIndexPrev = GetY(y - 1) * Size.X;
+						var yIndexNext = GetY(y + 1) * Size.X;
+
+						foreach (int x in min.RangeTo(max)) {
+							var modulusX = GetX(x);
+
+							var index = yIndex + modulusX;
+
+							var center = inData[index];
+							var upper = inData[yIndexPrev + modulusX];
+							var lower = inData[yIndexNext + modulusX];
+
+							outData[index] = Merge(center, upper, lower);
+						}
+					}
+				}
+			}
+
+			internal unsafe T[] Execute() {
+				var buffer1 = new T[Source.Length];
+				var buffer2 = new T[Source.Length];
+
+				using var inData = Source.As<ColorElement>();
+				using var buffer1Data = buffer1.AsFixedSpan<T, ColorElement>();
+				using var buffer2Data = buffer2.AsFixedSpan<T, ColorElement>();
+
+				DeposterizeH(inData, buffer1Data);
+				DeposterizeV(buffer1Data, buffer2Data);
+				for (int pass = 1; pass < Passes; ++pass) {
+					DeposterizeH(buffer2Data, buffer1Data);
+					DeposterizeV(buffer1Data, buffer2Data);
+				}
+
+				return buffer2;
+			}
+		}
+
+		/*
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
+		internal static unsafe T[] Enhance<T>(
+			T[] data,
+			in Vector2I size,
+			in Vector2B wrapped) where T : unmanaged {
+			return Enhance<T>(data.AsFixedSpan(), size, wrapped);
+		}
+		*/
+
+		[MethodImpl(Runtime.MethodImpl.Optimize)]
+		internal static unsafe T[] Enhance<T>(
+			FixedSpan<T> data,
+			in Vector2I size,
+			in Vector2B wrapped,
+			int? passes = null,
+			int? threshold = null,
+			int? blockSize = null
+		) where T : unmanaged {
+			var context = new DeposterizeContext<T>(
+				source: data,
+				size: size,
+				wrapped: wrapped,
+				passes: passes ?? Config.Resample.Deposterization.Passes,
+				threshold: threshold ?? Config.Resample.Deposterization.Threshold,
+				blockSize: blockSize ?? Config.Resample.Deposterization.BlockSize
+			);
+			return context.Execute();
+		}
+	}
+}
