@@ -4,13 +4,8 @@
 
 	<PropertyGroup>
 		<AssemblyName>Runtime</AssemblyName>
-		<PackageId>SpriteMaster Runtime</PackageId>
 		<ProjectGuid>{D8AB0188-41C5-4669-AD33-231DA9401FA0}</ProjectGuid>
 		<OutputType>Library</OutputType>
-		<Version>0.13.0</Version>
-		<FileVersion>0.13.0.0</FileVersion>
-		<AssemblyVersion>0.13.0.*</AssemblyVersion>
-		<TargetFramework>net5.0</TargetFramework>
 	</PropertyGroup>
 	
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
@@ -18,25 +13,23 @@
 		<DebugType>portable</DebugType>
 		<DebugSymbols>true</DebugSymbols>
 	</PropertyGroup>
+	
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
 		<DefineConstants>TRACE;THREADQUEUE_PARALLEL</DefineConstants>
 		<Optimize>true</Optimize>
 		<NoWarn>1815</NoWarn>
 	</PropertyGroup>
+	
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Development|AnyCPU'">
 		<DefineConstants>DEBUG;TRACE</DefineConstants>
 		<Optimize>true</Optimize>
 		<NoWarn>1815</NoWarn>
 	</PropertyGroup>
-	<ItemGroup>
-		<None Include="$(SolutionDir)\LICENSE.md">
-			<Pack>True</Pack>
-			<PackagePath></PackagePath>
-		</None>
-	</ItemGroup>
+	
 	<ItemGroup>
 		<PackageReference Include="System.Data.HashFunction.xxHash" Version="2.0.0" />
 	</ItemGroup>
+	
 	<ItemGroup>
 		<Folder Include="Attributes\" />
 	</ItemGroup>

@@ -4,7 +4,7 @@
 		<RootNamespace>SpriteMaster</RootNamespace>
 		<Product>SpriteMaster-SV</Product>
 		<PackageId>SpriteMaster-SV</PackageId>
-		<Authors>Digital Carbide</Authors>
+		<Authors>Digital Carbide (Michael Kuklinski)</Authors>
 		<Company>Digital Carbide</Company>
 		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
 		<NeutralLanguage>en-US</NeutralLanguage>
@@ -24,17 +24,25 @@
 		<ErrorReport>prompt</ErrorReport>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 		<AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
-		<ApplicationIcon>pufferchick_xbrz.ico</ApplicationIcon>
+		<ApplicationIcon>$(SolutionDir)pufferchick_xbrz.ico</ApplicationIcon>
 		<DebugSymbols>true</DebugSymbols>
-		<DebugType>pdbonly</DebugType>
+		<DebugType>portable</DebugType>
 		<OutputPath>bin\$(Configuration)\</OutputPath>
 		<BaseAddress>285736960</BaseAddress>
 		<Deterministic>false</Deterministic>
 		<RunAnalyzersDuringLiveAnalysis>false</RunAnalyzersDuringLiveAnalysis>
 		<RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
 		<ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
+		<!--<Deterministic>True</Deterministic>-->
 		
 		<BundleExtraAssemblies>System, ThirdParty</BundleExtraAssemblies>
 		<IgnoreModFilePatterns>System\.(?!Data\.HashFunction\..+).*$</IgnoreModFilePatterns>
 	</PropertyGroup>
+	
+  <ItemGroup>
+    <None Include="$(SolutionDir)\LICENSE.md">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
 </Project>

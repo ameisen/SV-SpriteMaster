@@ -4,16 +4,12 @@
 
 	<PropertyGroup>
 		<AssemblyName>SpriteMaster</AssemblyName>
+		<ProjectGuid>C270B7AD-DA11-4176-83B9-8998FE58A601</ProjectGuid>
 		<EnableHarmony>true</EnableHarmony>
 		<RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
 		<NoWarn>0162;7035</NoWarn>
 		<IgnoreModFilePatterns>$(IgnoreModFilePatterns), \.dll\.config$, ILMerge, runtimes, net452, net450, net45</IgnoreModFilePatterns>
 		<Configurations>Debug;Release;Development</Configurations>
-		<AssemblyVersion>0.13.0.*</AssemblyVersion>
-		<FileVersion>0.13.0.0</FileVersion>
-		<Version>0.13.0</Version>
-		<DebugSymbols>true</DebugSymbols>
-		<DebugType>portable</DebugType>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -41,13 +37,6 @@
 		<PackageReference Include="Tomlyn" Version="0.1.2" />
 		<PackageReference Include="ZKWeb.System.Drawing" Version="4.0.1" />
 		<PackageReference Include="ZstdNet" Version="1.4.5" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<None Include="$(SolutionDir)\LICENSE.MD">
-			<Pack>True</Pack>
-			<PackagePath></PackagePath>
-		</None>
 	</ItemGroup>
 
 	<ItemGroup>
