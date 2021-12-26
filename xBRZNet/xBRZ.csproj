@@ -27,6 +27,20 @@
   </PropertyGroup>
 	
   <ItemGroup>
+    <PackageReference Include="ErrorProne.NET.CoreAnalyzers" Version="0.1.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="ErrorProne.NET.Structs" Version="0.1.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="FastEnum" Version="1.7.0" />
+    <PackageReference Include="FastMember" Version="1.5.0" />
+    <PackageReference Include="LinqFasterer" Version="2.1.0" />
+  </ItemGroup>
+	
+  <ItemGroup>
     <ProjectReference Include="$(SolutionDir)\Runtime\Runtime.csproj" />
   </ItemGroup>
 </Project>

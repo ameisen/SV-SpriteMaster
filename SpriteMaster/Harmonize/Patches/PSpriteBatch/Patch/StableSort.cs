@@ -1,5 +1,5 @@
-﻿namespace SpriteMaster.Harmonize.Patches.PSpriteBatch.Patch {
-	internal static class StableSort {
+﻿namespace SpriteMaster.Harmonize.Patches.PSpriteBatch.Patch;
+static class StableSort {
 #if STABLE_SORT
 		private static class Comparer {
 			private static FieldInfo TextureField;
@@ -130,5 +130,4 @@
 			}
 		}
 #endif
-	}
 }

@@ -1,3 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleToAttribute("SpriteMaster")]
+[assembly: CompilationRelaxations(CompilationRelaxations.NoStringInterning)]
+[assembly: InternalsVisibleTo("SpriteMaster")]
+
+[module: SkipLocalsInit]

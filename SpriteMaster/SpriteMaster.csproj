@@ -11,6 +11,8 @@
 		<NoWarn>0162;7035</NoWarn>
 		<IgnoreModFilePatterns>$(IgnoreModFilePatterns), \.dll\.config$, ILMerge, runtimes, net452, net450, net45</IgnoreModFilePatterns>
 		<Configurations>Debug;Release;Development</Configurations>
+		<EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+		<RunAnalyzersDuringBuild>False</RunAnalyzersDuringBuild>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -28,15 +30,26 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<!--<PackageReference Include="Brokenevent.ILStrip.CLI" Version="1.1.4" GeneratePathProperty="true" ExcludeAssets="all" />-->
+		<PackageReference Include="ErrorProne.NET.CoreAnalyzers" Version="0.1.2">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="ErrorProne.NET.Structs" Version="0.1.2">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="FastEnum" Version="1.7.0" />
+		<PackageReference Include="FastMember" Version="1.5.0" />
+		<PackageReference Include="ILRepack" Version="2.1.0-beta1" GeneratePathProperty="true" ExcludeAssets="all" />
+		<PackageReference Include="LinqFasterer" Version="2.1.0" />
 		<PackageReference Include="LZMA-SDK" Version="19.0.0" />
-		<PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
+		<PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" ExcludeAssets="all" />
 		<PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.0.0" />
 		<PackageReference Include="System.Data.HashFunction.Interfaces" Version="2.0.0" />
-		<PackageReference Include="System.Drawing.Common" Version="5.0.3" />
 		<PackageReference Include="System.Runtime.Caching" Version="5.0.0" />
 		<PackageReference Include="TeximpNet" Version="1.4.3" />
 		<PackageReference Include="Tomlyn" Version="0.1.2" />
-		<PackageReference Include="ZKWeb.System.Drawing" Version="4.0.1" />
 		<PackageReference Include="ZstdNet" Version="1.4.5" />
 	</ItemGroup>
 
@@ -46,7 +59,7 @@
 	</ItemGroup>
 	
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-		<Exec Command="$(ProjectDir)scripts\build.post.rb OutDir=$(OutDir) SolutionDir=$(SolutionDir) 'IgnoreModFilePatterns=$(IgnoreModFilePatterns)'" />
+		<Exec Command="$(ProjectDir)scripts\build.post.rb 'OutDir=$(OutDir)' 'SolutionDir=$(SolutionDir)' 'ILRepack=$(PkgILRepack)' 'ILStrip=$(PkgBrokenevent_ILStrip_CLI)' 'IgnoreModFilePatterns=$(IgnoreModFilePatterns)'" />
 	</Target>
 
 	<ItemGroup>

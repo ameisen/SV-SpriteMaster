@@ -1,8 +1,6 @@
-﻿namespace System.Runtime.CompilerServices {
-  using System;
+﻿namespace System.Runtime.CompilerServices;
 
-  [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = false, Inherited = false)]
-  internal sealed class DisablePrivateReflectionAttribute : Attribute {
-    internal DisablePrivateReflectionAttribute () { }
-  }
+[AttributeUsage(AttributeTargets.Assembly, AllowMultiple = false, Inherited = false)]
+sealed class DisablePrivateReflectionAttribute : Attribute {
+  internal DisablePrivateReflectionAttribute () { }
 }
