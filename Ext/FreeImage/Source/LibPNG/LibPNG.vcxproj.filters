@@ -56,6 +56,9 @@
     <ClCompile Include="pngwutil.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="pngpriv.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="png.h">

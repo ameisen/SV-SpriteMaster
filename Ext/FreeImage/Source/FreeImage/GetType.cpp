@@ -41,13 +41,6 @@ FreeImage_GetFileTypeFromHandle(FreeImageIO *io, fi_handle handle, int size) {
 		for (int i = 0; i < fif_count; ++i) {
 			FREE_IMAGE_FORMAT fif = (FREE_IMAGE_FORMAT)i;
 			if (FreeImage_ValidateFIF(fif, io, handle)) {
-				if(fif == FIF_TIFF) {
-					// many camera raw files use a TIFF signature ...
-					// ... try to revalidate against FIF_RAW (even if it breaks the code genericity)
-					if (FreeImage_ValidateFIF(FIF_RAW, io, handle)) {
-						return FIF_RAW;
-					}
-				}
 				return fif;
 			}
 		}

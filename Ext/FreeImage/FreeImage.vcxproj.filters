@@ -32,9 +32,6 @@
     <ClCompile Include="Source\FreeImage\FreeImage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\FreeImage\FreeImageC.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Source\FreeImage\FreeImageIO.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -157,6 +154,9 @@
     </ClCompile>
     <ClCompile Include="Source\FreeImage\ConversionRGBA16.cpp">
       <Filter>Source Files\Conversion</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\FreeImage\FreeImage.pch.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
