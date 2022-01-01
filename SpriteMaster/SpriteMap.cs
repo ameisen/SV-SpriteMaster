@@ -12,7 +12,7 @@ sealed class SpriteMap {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	static private ulong SpriteHash(Texture2D texture, in Bounds source, uint expectedScale) {
-		return Hash.Combine(source.Hash(), expectedScale.GetHashCode());
+		return Hash.Combine(source.Hash(), expectedScale.GetSafeHash());
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]

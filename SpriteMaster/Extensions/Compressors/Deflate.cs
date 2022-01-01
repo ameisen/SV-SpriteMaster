@@ -1,18 +1,23 @@
 ﻿using Ionic.Zlib;
 using LinqFasterer;
+using SpriteMaster.Harmonize;
 using System;
 using System.IO;
 using System.Runtime.CompilerServices;
+using static SpriteMaster.Harmonize.Harmonize;
 
 namespace SpriteMaster.Extensions.Compressors;
 
+//[HarmonizeFinalizeCatcher<ZlibStream, DllNotFoundException>(critical: false)]
 static class Deflate {
+	private static readonly Action<ZlibStream, CompressionStrategy> SetStrategy = typeof(ZlibStream).GetFieldSetter<ZlibStream, CompressionStrategy>("Strategy");
+
 	internal static bool IsSupported {
 		[MethodImpl(Runtime.MethodImpl.RunOnce)]
 		get {
 			try {
 				var dummyData = new byte[16];
-				var compressedData = Compress(dummyData);
+				var compressedData = CompressTest(dummyData);
 				var uncompressedData = Decompress(compressedData, dummyData.Length);
 				if (!EnumerableF.SequenceEqualF(dummyData, uncompressedData)) {
 					throw new Exception("Original and Uncompressed Data Mismatch");
@@ -32,24 +37,41 @@ static class Deflate {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static int CompressedLengthEstimate(byte[] data) {
-		return data.Length >> 1;
+	internal static int CompressedLengthEstimate(byte[] data) => data.Length >> 1;
+
+	[MethodImpl(Runtime.MethodImpl.RunOnce)]
+	internal static byte[] CompressTest(byte[] data) {
+		ZlibStream compressor = null;
+		try {
+			using var val = new MemoryStream(CompressedLengthEstimate(data));
+			using (compressor = new ZlibStream(val, CompressionMode.Compress, CompressionLevel.BestCompression)) {
+				if (SetStrategy is not null) {
+					SetStrategy(compressor, CompressionStrategy.Filtered);
+				}
+				compressor.Write(data, 0, data.Length);
+			}
+			return val.ToArray();
+		}
+		catch (DllNotFoundException) when (compressor is not null) {
+			GC.SuppressFinalize(compressor);
+			throw;
+		}
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static byte[] Compress(byte[] data) {
 		using var val = new MemoryStream(CompressedLengthEstimate(data));
 		using (var compressor = new ZlibStream(val, CompressionMode.Compress, CompressionLevel.BestCompression)) {
-			//compressor.Strategy = CompressionStrategy.Filtered;
+			if (SetStrategy is not null) {
+				SetStrategy(compressor, CompressionStrategy.Filtered);
+			}
 			compressor.Write(data, 0, data.Length);
 		}
 		return val.ToArray();
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static byte[] Decompress(byte[] data) {
-		return ZlibStream.UncompressBuffer(data);
-	}
+	internal static byte[] Decompress(byte[] data) => ZlibStream.UncompressBuffer(data);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static byte[] Decompress(byte[] data, int size) {

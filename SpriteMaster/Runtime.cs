@@ -7,12 +7,6 @@ using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 
-[assembly: CompilationRelaxations(CompilationRelaxations.NoStringInterning)]
-[assembly: InternalsVisibleTo("SpriteMaster")]
-[assembly: InternalsVisibleTo("xBRZ")]
-
-[module: SkipLocalsInit]
-
 namespace SpriteMaster;
 
 static class Runtime {

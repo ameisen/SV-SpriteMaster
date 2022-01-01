@@ -36,7 +36,7 @@ static class BlockCompress {
 		var oldSpriteFormat = format;
 		fixed (byte* p = data) {
 			try {
-				FlipColorBytes(p, data.Length);
+				//FlipColorBytes(p, data.Length);
 
 				using var compressor = new Compressor();
 				compressor.Input.AlphaMode = (HasAlpha) ? AlphaMode.Premultiplied : AlphaMode.None;
@@ -70,7 +70,7 @@ static class BlockCompress {
 				//public MipData (int width, int height, int rowPitch, IntPtr data, bool ownData = true)
 
 				using var mipData = new MipData(dimensions.Width, dimensions.Height, dimensions.Width * sizeof(int), (IntPtr)p, false);
-				compressor.Input.SetData(mipData, true);
+				compressor.Input.SetData(mipData, false);
 				var memoryBuffer = new byte[((SurfaceFormat)textureFormat).SizeBytes(dimensions.Area)];
 				using var stream = memoryBuffer.Stream();
 				if (compressor.Process(stream)) {
@@ -87,7 +87,7 @@ static class BlockCompress {
 				BlockCompressionFunctional = false;
 			}
 			format = oldSpriteFormat;
-			FlipColorBytes(p, data.Length);
+			//FlipColorBytes(p, data.Length);
 		}
 		return null;
 	}

@@ -128,6 +128,9 @@ struct FixedSpan<T> : IDisposable where T : unmanaged {
 	public static implicit operator FixedSpan<T>(T[] array) => array.AsFixedSpan();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal FixedSpan(int length) : this(GC.AllocateUninitializedArray<T>(length, pinned: true)) { }
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal FixedSpan(T[] data) : this(data, data.Length, data.Length * TypeSize) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]

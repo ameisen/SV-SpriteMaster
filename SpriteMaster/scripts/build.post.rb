@@ -4,6 +4,9 @@ require 'fileutils'
 require 'open3'
 require 'set'
 
+EnableMerge = false
+EnableStrip = false
+
 begin
 TAB = '  '
 
@@ -87,6 +90,8 @@ default_const(:TempAssembly, "SpriteMaster.merged.dll")
 default_const(:DotNetRuntime, File.join("C:", "Program Files", "dotnet", "packs", "Microsoft.NETCore.App.Ref", "5.0.0", "ref", "net5.0"))
 default_const(:IgnoreModFilePatterns, [])
 
+IsDebug = OutDir.to_s.include?("Debug")
+
 FileIgnorePatterns = IgnoreModFilePatterns.split(',').map(&:strip).map(&Regexp.method(:new))
 
 puts "SolutionDir: #{SolutionDir}"
@@ -151,7 +156,7 @@ $libraries.freeze
 puts "Stripping prebuilt libraries..."
 $libraries.each { |lib|
 	next if lib.dotnet?
-	
+
 	puts lib.to_s.tab
 	case lib.ext
 		when '.dylib'
@@ -171,8 +176,6 @@ unless Copy64
 	puts "Deleting 64-bit libraries..."
 	FileUtils.rm_rf(OutDir + 'x64')
 end
-
-exit 0 if OutDir.to_s.include?("Debug")
 
 def all_assemblies(dir)
 	result = []
@@ -239,25 +242,27 @@ def RepackBinary(libraries:, target:)
 	).success?
 end
 
-fail "Failed to repack binary" unless RepackBinary(
-	libraries: $filtered_dotnet_libraries,
-	target: OutDir + TempAssembly
-)
+if EnableMerge && !IsDebug
+	fail "Failed to repack binary" unless RepackBinary(
+		libraries: $filtered_dotnet_libraries,
+		target: OutDir + TempAssembly
+	)
 
-# delete all .NET assemblies
-puts "Deleting merged binaries..."
-$unfiltered_dotnet_libraries.map(&:path).each(&:delete)
-$unfiltered_dotnet_libraries.map{|l| l.path.sub_ext(".pdb")}.each { |f|
-	f.delete rescue nil
-}
-FileUtils.mv(
-	OutDir + TempAssembly,
-	OutDir + Primary
-)
-FileUtils.mv(
-	OutDir + Pathname.new(TempAssembly).sub_ext(".pdb"),
-	OutDir + Pathname.new(Primary).sub_ext(".pdb")
-)
+	# delete all .NET assemblies
+	puts "Deleting merged binaries..."
+	$unfiltered_dotnet_libraries.map(&:path).each(&:delete)
+	$unfiltered_dotnet_libraries.map{|l| l.path.sub_ext(".pdb")}.each { |f|
+		f.delete rescue nil
+	}
+	FileUtils.mv(
+		OutDir + TempAssembly,
+		OutDir + Primary
+	)
+	FileUtils.mv(
+		OutDir + Pathname.new(TempAssembly).sub_ext(".pdb"),
+		OutDir + Pathname.new(Primary).sub_ext(".pdb")
+	)
+end
 
 def StripBinary(library:, target:)
 	il_strip_binary = (ILStrip + "tools" + "BrokenEvent.ILStrip.CLI.exe") rescue nil
@@ -310,41 +315,12 @@ def StripBinary(library:, target:)
 	end
 end
 
-if false
-fail "Failed to strip binary" unless StripBinary(
-	library: $filtered_dotnet_libraries.find(&:primary?),
-	target: OutDir + TempAssembly
-)
+if EnableStrip && !IsDebug
+	fail "Failed to strip binary" unless StripBinary(
+		library: $filtered_dotnet_libraries.find(&:primary?),
+		target: OutDir + TempAssembly
+	)
 end
-
-=begin
-loud_call(
-	Pathname.new(Mono) + 'mono-api-info',
-	'-o', 'api.xml',
-	'-d', GamePath,
-	'-d', File.join(GamePath, 'smapi-internal'),
-	'-d', File.join(GamePath, 'Mods', 'ConsoleCommands'),
-	'-d', File.join(GamePath, 'Mods', 'ErrorHandler'),
-	*$dotnet_libraries
-	#*$dotnet_libraries.flat_map { |e| ['-a', e] }
-)
-
-loud_call(
-	Pathname.new(Mono) + 'monolinker',
-	# '-reference'
-	'-b',
-	'-v',
-	#'--deterministic',
-	'--skip-unresolved',
-	"-out", "#{Dir.pwd}/test.dll",
-	'-u', 'copy',
-	'-d', GamePath,
-	'-d', File.join(GamePath, 'smapi-internal'),
-	'-d', File.join(GamePath, 'Mods', 'ConsoleCommands'),
-	'-d', File.join(GamePath, 'Mods', 'ErrorHandler'),
-	
-)
-=end
 
 rescue => ex
 	STDOUT.puts "Error: #{ex}"

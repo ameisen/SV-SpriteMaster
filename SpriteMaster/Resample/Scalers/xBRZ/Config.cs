@@ -1,4 +1,5 @@
-﻿using SpriteMaster.Types;
+﻿using SpriteMaster.Extensions;
+using SpriteMaster.Types;
 using System;
 using System.Runtime.CompilerServices;
 
@@ -59,7 +60,7 @@ sealed class Config : IEquatable<Config> {
 	public override int GetHashCode() {
 		int hash = 0;
 		foreach (var field in typeof(Config).GetFields()) {
-			hash ^= field.GetValue(this).GetHashCode();
+			hash ^= field.GetValue(this).GetSafeHash();
 		}
 		return hash;
 	}

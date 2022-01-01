@@ -1,11 +1,16 @@
 ﻿global using XNA = Microsoft.Xna.Framework;
+global using DrawingColor = System.Drawing.Color;
 global using DrawingPoint = System.Drawing.Point;
 global using DrawingRectangle = System.Drawing.Rectangle;
 global using DrawingSize = System.Drawing.Size;
 global using XTilePoint = xTile.Dimensions.Location;
 global using XTileRectangle = xTile.Dimensions.Rectangle;
 global using XTileSize = xTile.Dimensions.Size;
+global using half = System.Half;
 using HarmonyLib;
+using LinqFasterer;
+using Sickhead.Engine.Util;
+using SpriteMaster.Caching;
 using SpriteMaster.Extensions;
 using SpriteMaster.Harmonize;
 using SpriteMaster.Metadata;
@@ -17,6 +22,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
+using System.Resources;
 using System.Runtime;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -69,7 +76,7 @@ public sealed class SpriteMaster : Mod {
 				}
 				catch (InsufficientMemoryException) {
 					Debug.WarningLn($"Less than {(Config.Garbage.RequiredFreeMemory * 1024 * 1024).AsDataSize(decimals: 0)} available for block allocation, forcing full garbage collection");
-					MTexture2D.PurgeDataCache();
+					ResidentCache.Purge();
 					DrawState.TriggerGC.Set(true);
 					Thread.Sleep(10000);
 				}
@@ -91,7 +98,7 @@ public sealed class SpriteMaster : Mod {
 						continue;
 					}
 
-					MTexture2D.PurgeDataCache();
+					ResidentCache.Purge();
 					DrawState.TriggerGC.Set(true);
 					// TODO : Do other cleanup attempts here.
 				}
@@ -107,7 +114,7 @@ public sealed class SpriteMaster : Mod {
 	private static volatile string CurrentSeason = "";
 
 	public SpriteMaster() {
-		Contract.AssertNull(Self);
+		Contracts.AssertNull(Self);
 		Self = this;
 
 		if (DotNet) {
@@ -161,6 +168,8 @@ public sealed class SpriteMaster : Mod {
 	public override void Entry(IModHelper help) {
 		AssemblyPath = help.DirectoryPath;
 
+		ConfigureHarmony();
+
 		var ConfigPath = Path.Combine(help.DirectoryPath, ConfigName);
 
 		using (var tempStream = new MemoryStream()) {
@@ -187,11 +196,10 @@ public sealed class SpriteMaster : Mod {
 
 		SerializeConfig.Save(ConfigPath);
 
-		ConfigureHarmony();
 		help.Events.Input.ButtonPressed += OnButtonPressed;
 
-		help.ConsoleCommands.Add("spritemaster_stats", "Dump SpriteMaster Statistics", (_, _) => { DumpStats(); });
-		help.ConsoleCommands.Add("spritemaster_memory", "Dump SpriteMaster Memory", (_, _) => { Debug.DumpMemory(); });
+		help.ConsoleCommands.Add("spritemaster_stats", "Dump SpriteMaster Statistics", (_, _) =>  DumpStats());
+		help.ConsoleCommands.Add("spritemaster_memory", "Dump SpriteMaster Memory", (_, _) => Debug.DumpMemory());
 		help.ConsoleCommands.Add("spritemaster_gc", "Trigger Spritemaster GC", (_, _) => {
 			lock (CollectLock) {
 				Garbage.Collect(compact: true, blocking: true, background: false);
@@ -201,7 +209,7 @@ public sealed class SpriteMaster : Mod {
 		help.ConsoleCommands.Add("spritemaster_purge", "Trigger Spritemaster Purge", (_, _) => {
 			lock (CollectLock) {
 				Garbage.Collect(compact: true, blocking: true, background: false);
-				MTexture2D.PurgeDataCache();
+				ResidentCache.Purge();
 				Garbage.Collect(compact: true, blocking: true, background: false);
 				DrawState.TriggerGC.Set(true);
 			}
@@ -218,6 +226,64 @@ public sealed class SpriteMaster : Mod {
 
 		MemoryPressureThread?.Start();
 		GarbageCollectThread?.Start();
+
+		// TODO : Iterate deeply with reflection over 'StardewValley' namespace to find any Texture2D objects sitting around
+
+		// Tell SMAPI to flush all assets loaded so that SM can precache already-loaded assets
+		bool invalidated = help.Content.InvalidateCache<XNA.Graphics.Texture>();
+
+		/*
+		var light = Game1.cauldronLight;
+		//Game1
+		//FarmerRenderer
+		//MovieTheater
+		//CraftingRecipe
+		//Flooring
+		//HoeDirt
+		//Furniture
+		//Tool
+		//FruitTree
+		//Bush
+		//titleMenu
+		try {
+			var texturesToCache = new List<XNA.Graphics.Texture2D>();
+			var resourcesLockField = typeof(XNA.Graphics.GraphicsDevice).GetField("_resourcesLock", BindingFlags.NonPublic | BindingFlags.Instance);
+			var resourcesField = typeof(XNA.Graphics.GraphicsDevice).GetField("_resources", BindingFlags.NonPublic | BindingFlags.Instance);
+			var resourcesLock = resourcesLockField.GetValue(DrawState.Device);
+			var resources = resourcesField.GetValue<IEnumerable<WeakReference>>(DrawState.Device);
+
+			lock (resourcesLock) {
+				foreach (var resource in resources) {
+					if (resource.Target is XNA.Graphics.Texture2D texture) {
+						texturesToCache.Add(texture);
+					}
+				}
+			}
+
+			texturesToCache = texturesToCache;
+		}
+		catch { }
+
+		try {
+			var texturesToCache = new List<XNA.Graphics.Texture2D>();
+			var assetsField = typeof(XNA.Content.ContentManager).GetField("disposableAssets", BindingFlags.NonPublic | BindingFlags.Instance);
+			var cmField = typeof(XNA.Content.ContentManager).GetField("ContentManagers", BindingFlags.NonPublic | BindingFlags.Static);
+			var contentManagers = cmField.GetValue<IEnumerable<WeakReference>>(null);
+			foreach (var weakRef in contentManagers) {
+				if (weakRef.Target is XNA.Content.ContentManager cm) {
+					var assets = assetsField.GetValue<IEnumerable<IDisposable>>(cm);
+					foreach (var asset in assets) {
+						if (asset is XNA.Graphics.Texture2D texture) {
+							texturesToCache.Add(texture);
+						}
+					}
+				}
+			}
+
+			texturesToCache = texturesToCache;
+		}
+		catch { }
+		*/
 	}
 
 	// SMAPI/CP won't do this, so we do. Purge the cached textures for the previous season on a season change.

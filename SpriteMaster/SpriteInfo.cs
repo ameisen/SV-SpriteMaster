@@ -39,7 +39,7 @@ sealed class SpriteInfo : IDisposable {
 	// Attempt to update the bytedata cache for the reference texture, or purge if it that makes more sense or if updating
 	// is not plausible.
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static unsafe void Purge(Texture2D reference, in Bounds? bounds, DataRef<byte> data) => reference.Meta().Purge(reference, bounds, data);
+	internal static unsafe void Purge(Texture2D reference, in Bounds? bounds, in DataRef<byte> data) => reference.Meta().Purge(reference, bounds, data);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool IsCached(Texture2D reference) => reference.Meta().CachedDataNonBlocking is not null;
@@ -57,11 +57,11 @@ sealed class SpriteInfo : IDisposable {
 		}
 		Reference = reference;
 
-		Data = reference.Meta().CachedDataNonBlocking;
+		Data = reference.Meta().CachedData;
 
 		if (Data is null) {
 			Data = new byte[reference.SizeBytes()];
-			Debug.TraceLn($"Reloading Texture Data: {reference.SafeName()}");
+			Debug.TraceLn($"Reloading Texture Data (not in cache): {reference.SafeName(DrawingColor.LightYellow)}");
 			reference.GetData(Data);
 			reference.Meta().CachedData = Data;
 			WasCached = false;

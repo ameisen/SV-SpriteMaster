@@ -36,7 +36,7 @@ static class Hash {
 			hash = subHash switch {
 				long i => Accumulate(hash, (ulong)i),
 				ulong i => Accumulate(hash, i),
-				_ => Accumulate(hash, subHash.GetHashCode()),
+				_ => Accumulate(hash, subHash.GetSafeHash()),
 			};
 		}
 		return hash;

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
+using SpriteMaster.Caching;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using SpriteMaster.Types.Interlocked;
@@ -11,62 +12,48 @@ using SpriteDictionary = System.Collections.Generic.Dictionary<ulong, SpriteMast
 namespace SpriteMaster.Metadata;
 
 sealed class MTexture2D {
-	static MTexture2D() {
-		Config.MemoryCache.Compress = Compression.GetPreferredAlgorithm(Config.MemoryCache.Compress);
-	}
-
-	internal static readonly SharedLock DataCacheLock = new();
-	private static MemoryCache DataCache = (Config.MemoryCache.Enabled) ? new(name: "DataCache", config: null) : null;
-	private static long CurrentID = 0U;
-
 	internal readonly SpriteDictionary SpriteTable = new();
-	private readonly string UniqueIDString = Interlocked.Increment(ref CurrentID).ToString();
+
+	/// <summary>The current (static) ID, incremented every time a new <see cref="MTexture2D"/> is created.</summary>
+	private static ulong CurrentID = 0U;
+	/// <summary>Whenever a new <see cref="MTexture2D"/> is created, <see cref="CurrentID"/> is incremented and <see cref="UniqueIDString"/> is set to a string representation of it.</summary>
+	private readonly string UniqueIDString = Interlocked.Increment(ref CurrentID).ToString64();
 
 	internal readonly SharedLock Lock = new();
 
-	private volatile int CompressorCount = 0;
-	private readonly Semaphore CompressionSemaphore = new(int.MaxValue, int.MaxValue);
-
 	internal volatile bool TracePrinted = false;
-	internal InterlockedULong UpdateToken { get; private set; } = 0;
 
 	internal bool ScaleValid = true;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static void PurgeDataCache() {
-		if (!Config.MemoryCache.Enabled) {
-			return;
-		}
-
-		using (DataCacheLock.Exclusive) {
-			DataCache.Dispose();
-			DataCache = new(name: "DataCache", config: null);
-		}
-	}
+	internal bool IsSystemRenderTarget = false;
 
 	internal InterlockedULong LastAccessFrame { get; private set; } = (ulong)DrawState.CurrentFrame;
 	internal InterlockedULong Hash { get; private set; } = Hashing.Default;
 
 	// TODO : this presently is not threadsafe.
-	private int CachedDataLength = -1;
 	private readonly WeakReference<byte[]> _CachedData = (Config.MemoryCache.Enabled) ? new(null) : null;
 
 	internal bool HasCachedData {
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		get {
-			if (!Config.MemoryCache.Enabled)
+			if (!Config.MemoryCache.Enabled) {
 				return false;
+			}
 
 			using (Lock.Shared) {
-				return (_CachedData.TryGetTarget(out var target) && target != null);
+				return _CachedData.TryGetTarget(out var target);
 			}
 		}
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal unsafe void Purge(Texture2D reference, in Bounds? bounds, DataRef<byte> data) {
+	internal unsafe void Purge(Texture2D reference, in Bounds? bounds, in DataRef<byte> data) {
 		using (Lock.Exclusive) {
+			bool hasCachedData = CachedData is not null;
+
 			if (data.IsNull) {
+				if (!hasCachedData) {
+					Debug.TraceLn($"Clearing '{reference.SafeName(DrawingColor.LightYellow)}' Cache");
+				}
 				CachedData = null;
 				return;
 			}
@@ -81,27 +68,24 @@ sealed class MTexture2D {
 					forcePurge = true;
 				}
 				else if (!bounds.HasValue && data.Offset == 0 && data.Length == refSize) {
-					Debug.TraceLn($"Overriding MTexture2D '{reference.SafeName()}' Cache in Purge: {bounds.HasValue}, {data.Offset}, {data.Length}");
+					Debug.TraceLn($"{(hasCachedData ? "Overriding" : "Setting")} '{reference.SafeName(DrawingColor.LightYellow)}' Cache in Purge: {bounds.HasValue}, {data.Offset}, {data.Length}");
 					CachedData = data.Data;
 				}
 				// TODO : This doesn't update the compressed cache.
-				else if (!bounds.HasValue && CachedData is var currentData && currentData != null) {
-					Debug.TraceLn($"Updating MTexture2D '{reference.SafeName()}' Cache in Purge: {bounds.HasValue}, {currentData}");
+				else if (!bounds.HasValue && CachedData is var currentData && currentData is not null) {
+					Debug.TraceLn($"{(hasCachedData ? "Updating" : "Setting")} '{reference.SafeName(DrawingColor.LightYellow)}' Cache in Purge: {bounds.HasValue}");
 					var byteSpan = data.Data;
-					using (DataCacheLock.Exclusive) {
-						/*using (Lock.Exclusive)*/
-						{
-							var untilOffset = Math.Min(currentData.Length - data.Offset, data.Length);
-							foreach (int i in 0.RangeTo(untilOffset)) {
-								currentData[i + data.Offset] = byteSpan[i];
-							}
-							Hash = Hashing.Default;
-							CachedData = currentData; // Force it to update the global cache.
-						}
+					var untilOffset = Math.Min(currentData.Length - data.Offset, data.Length);
+					foreach (int i in 0.RangeTo(untilOffset)) {
+						currentData[i + data.Offset] = byteSpan[i];
 					}
+					Hash = Hashing.Default;
+					CachedData = currentData; // Force it to update the global cache.
 				}
 				else {
-					Debug.TraceLn($"Forcing full MTexture2D '{reference.SafeName()}' Purge");
+					if (hasCachedData) {
+						Debug.TraceLn($"Forcing full '{reference.SafeName(DrawingColor.LightYellow)}' Purge");
+					}
 					forcePurge = true;
 				}
 			}
@@ -111,16 +95,9 @@ sealed class MTexture2D {
 			}
 
 			// TODO : maybe we need to purge more often?
-			if (forcePurge) {
+			if (forcePurge && hasCachedData) {
 				CachedData = null;
 			}
-		}
-	}
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private bool CheckUpdateToken(ulong referenceToken) {
-		using (Lock.Shared) {
-			return UpdateToken == referenceToken;
 		}
 	}
 
@@ -129,44 +106,12 @@ sealed class MTexture2D {
 	internal byte[] CachedDataNonBlocking {
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		get {
-			if (!Config.MemoryCache.Enabled)
+			if (!Config.MemoryCache.Enabled) {
 				return null;
+			}
 
-			//Lock.Tr
 			using (Lock.TryShared) {
-				byte[] target = null;
-				if (!_CachedData.TryGetTarget(out target) || target == null) {
-					byte[] compressedBuffer;
-					using (DataCacheLock.TryShared) {
-						if (Config.MemoryCache.Compress != Compression.Algorithm.None && Config.MemoryCache.Async) {
-							bool handledCompression = false;
-							using (Lock.TryPromote) {
-								handledCompression = CompressorCount <= 0;
-							}
-							if (!handledCompression) {
-								return BlockedSentinel;
-							}
-						}
-
-						compressedBuffer = DataCache[UniqueIDString] as byte[];
-						if (compressedBuffer != null) {
-							target = Compression.Decompress(compressedBuffer, CachedDataLength, Config.MemoryCache.Compress);
-						}
-						else {
-							target = null;
-						}
-					}
-					if (target != null) {
-						bool promoted = false;
-						using (Lock.TryPromote) {
-							_CachedData.SetTarget(target);
-							promoted = true;
-						}
-						if (!promoted) {
-							return BlockedSentinel;
-						}
-					}
-				}
+				_CachedData.TryGetTarget(out var target);
 				return target;
 			}
 			return BlockedSentinel;
@@ -176,112 +121,37 @@ sealed class MTexture2D {
 	internal byte[] CachedData {
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		get {
-			if (!Config.MemoryCache.Enabled)
+			if (!Config.MemoryCache.Enabled) {
 				return null;
+			}
 
 			using (Lock.Shared) {
-				byte[] target = null;
-				if (!_CachedData.TryGetTarget(out target) || target == null) {
-					byte[] compressedBuffer;
-					using (DataCacheLock.Shared) {
-						if (Config.MemoryCache.Compress != Compression.Algorithm.None && Config.MemoryCache.Async) {
-							using (Lock.Promote) {
-								int count = CompressorCount;
-								if (count > 0) {
-									foreach (int i in 0.RangeTo(count)) {
-										CompressionSemaphore.WaitOne();
-									}
-									CompressionSemaphore.Release(count);
-									CompressorCount = 0;
-								}
-							}
-						}
-
-						compressedBuffer = DataCache[UniqueIDString] as byte[];
-						if (compressedBuffer != null) {
-							target = Compression.Decompress(compressedBuffer, CachedDataLength, Config.MemoryCache.Compress);
-						}
-						else {
-							target = null;
-						}
-					}
-					using (Lock.Promote) {
-						_CachedData.SetTarget(target);
-					}
-				}
+				_CachedData.TryGetTarget(out var target);
 				return target;
 			}
 		}
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		set {
 			try {
-				CachedDataLength = (value != null) ? value.Length : -1;
-
-				if (!Config.MemoryCache.Enabled)
+				if (!Config.MemoryCache.Enabled) {
 					return;
-
-				ulong currentUpdateToken;
-				using (Lock.Exclusive) {
-					currentUpdateToken = UpdateToken;
-					UpdateToken = currentUpdateToken + 1;
 				}
 
 				TracePrinted = false;
 
-				using (Lock.Shared) {
-					//if (_CachedData.TryGetTarget(out var target) && target == value) {
-					//	return;
-					//}
-					if (value == null) {
-						using (Lock.Promote) {
-							_CachedData.SetTarget(null);
-						}
-						using (DataCacheLock.Exclusive) {
-							DataCache.Remove(UniqueIDString);
-						}
+				//if (_CachedData.TryGetTarget(out var target) && target == value) {
+				//	return;
+				//}
+				if (value is null) {
+					using (Lock.Promote) {
+						_CachedData.SetTarget(null);
+						ResidentCache.Remove<byte[]>(UniqueIDString);
 					}
-					else {
-						bool queueCompress = false;
-
-						// I suspect this is completing AFTER we get a call to purge again, and so is overwriting what is the correct data.
-						// Doesn't explain why _not_ purging helps, though.
-						if (Config.MemoryCache.Compress != Compression.Algorithm.None && Config.MemoryCache.Async) {
-							if (queueCompress) {
-								using (Lock.Promote) {
-									++CompressorCount;
-									CompressionSemaphore.WaitOne();
-									ThreadQueue.Queue((buffer) => {
-										Thread.CurrentThread.Priority = ThreadPriority.BelowNormal;
-										using var _ = new AsyncTracker($"Texture Cache Compress {UniqueIDString}");
-										try {
-											if (!CheckUpdateToken(currentUpdateToken)) {
-												return;
-											}
-											var compressedData = Compression.Compress(buffer, Config.MemoryCache.Compress);
-											using (DataCacheLock.Exclusive) {
-												using (Lock.Exclusive) {
-													if (currentUpdateToken != UpdateToken) {
-														return;
-													}
-
-													DataCache[UniqueIDString] = compressedData;
-												}
-											}
-										}
-										finally {
-											CompressionSemaphore.Release();
-										}
-									}, value);
-								}
-							}
-						}
-						else {
-							DataCache[UniqueIDString] = Compression.Compress(value, Config.MemoryCache.Compress);
-						}
-
-						using (Lock.Promote) {
-							_CachedData.SetTarget(value);
-						}
+				}
+				else {
+					using (Lock.Promote) {
+						ResidentCache.Set(UniqueIDString, value);
+						_CachedData.SetTarget(value);
 					}
 				}
 			}

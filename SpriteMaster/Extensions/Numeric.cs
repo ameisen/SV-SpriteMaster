@@ -1,6 +1,8 @@
-﻿using SpriteMaster.Types;
+﻿using Newtonsoft.Json.Linq;
+using SpriteMaster.Types;
 
 using System;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Extensions;
@@ -24,11 +26,35 @@ static class Numeric {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static long GiB(this int value) => value * 1024L * 1024L * 1024L;
 
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static int CountLeadingZeros(this byte value) => BitOperations.LeadingZeroCount(value) - (32 - 8);
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static int CountLeadingZeros(this sbyte value) => BitOperations.LeadingZeroCount((uint)value) - (32 - 8);
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static int CountLeadingZeros(this ushort value) => BitOperations.LeadingZeroCount(value) - (32 - 16);
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static int CountLeadingZeros(this short value) => BitOperations.LeadingZeroCount((uint)value) - (32 - 16);
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static int CountLeadingZeros(this uint value) => BitOperations.LeadingZeroCount(value);
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static int CountLeadingZeros(this int value) => BitOperations.LeadingZeroCount((uint)value);
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static int CountLeadingZeros(this ulong value) => BitOperations.LeadingZeroCount(value);
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static int CountLeadingZeros(this long value) => BitOperations.LeadingZeroCount((ulong)value);
+
 	// Extracts a byte (8 bits) worth of data from a provided value, from the given offset
 	// Example: ExtractByte(0x00F0, 8) would return 0xF
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static byte ExtractByte(this byte value, int offset) {
-		Contract.AssertZero(offset);
+		Contracts.AssertZero(offset);
 		return value;
 	}
 
@@ -36,7 +62,7 @@ static class Numeric {
 	// Example: ExtractByte(0x00F0, 8) would return 0xF
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static byte ExtractByte(this ushort value, int offset) {
-		Contract.AssertLess(Math.Abs(offset), sizeof(ushort) * 8);
+		Contracts.AssertLess(Math.Abs(offset), sizeof(ushort) * 8);
 		return (byte)((value >> offset) & 0xFFU);
 	}
 
@@ -44,7 +70,7 @@ static class Numeric {
 	// Example: ExtractByte(0x00F0, 8) would return 0xF
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static byte ExtractByte(this uint value, int offset) {
-		Contract.AssertLess(Math.Abs(offset), sizeof(uint) * 8);
+		Contracts.AssertLess(Math.Abs(offset), sizeof(uint) * 8);
 		return (byte)((value >> offset) & 0xFFU);
 	}
 
@@ -52,7 +78,7 @@ static class Numeric {
 	// Example: ExtractByte(0x00F0, 8) would return 0xF
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static byte ExtractByte(this ulong value, int offset) {
-		Contract.AssertLess(Math.Abs(offset), sizeof(ulong) * 8);
+		Contracts.AssertLess(Math.Abs(offset), sizeof(ulong) * 8);
 		return (byte)((value >> offset) & 0xFFU);
 	}
 
@@ -141,8 +167,8 @@ static class Numeric {
 	}
 
 	private static string Delimit(this string valueString, string delimiter, uint delimitCount) {
-		Contract.AssertPositive(delimitCount);
-		Contract.AssertTrue(delimiter.IsNormalized());
+		Contracts.AssertPositive(delimitCount);
+		Contracts.AssertTrue(delimiter.IsNormalized());
 
 		delimiter = delimiter.Reversed();
 
@@ -192,25 +218,25 @@ static class Numeric {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static string AsDataSize(this long value, DataFormat format = DataFormat.IEC, int decimals = 2) {
-		Contract.AssertNotNegative(value);
+		Contracts.AssertNotNegative(value);
 		return AsDataSize((ulong)value, format, decimals);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static string AsDataSize(this int value, DataFormat format = DataFormat.IEC, int decimals = 2) {
-		Contract.AssertNotNegative(value);
+		Contracts.AssertNotNegative(value);
 		return AsDataSize((ulong)value, format, decimals);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static string AsDataSize(this short value, DataFormat format = DataFormat.IEC, int decimals = 2) {
-		Contract.AssertNotNegative(value);
+		Contracts.AssertNotNegative(value);
 		return AsDataSize((ulong)value, format, decimals);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static string AsDataSize(this sbyte value, DataFormat format = DataFormat.IEC, int decimals = 2) {
-		Contract.AssertNotNegative(value);
+		Contracts.AssertNotNegative(value);
 		return AsDataSize((ulong)value, format, decimals);
 	}
 
@@ -230,7 +256,7 @@ static class Numeric {
 	}
 
 	internal static string AsDataSize(this ulong number, DataFormat format = DataFormat.IEC, int decimals = 2) {
-		Contract.AssertNotNegative(decimals);
+		Contracts.AssertNotNegative(decimals);
 		uint fraction = (format == DataFormat.Metric) ? 1000U : 1024U;
 
 		var SuffixTable = (format == DataFormat.IEC) ? BinarySuffixTable : DecimalSuffixTable;

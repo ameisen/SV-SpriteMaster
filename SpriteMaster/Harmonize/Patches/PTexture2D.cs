@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
+using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using System;
 using System.Diagnostics.CodeAnalysis;
@@ -96,7 +97,7 @@ static class PTexture2D {
 #endif
 	}
 
-	[Harmonize("SetData", HarmonizeAttribute.Fixation.Postfix, PriorityLevel.Last, HarmonizeAttribute.Generic.Struct)]
+	[Harmonize("SetData", Harmonize.Fixation.Postfix, PriorityLevel.Last, Harmonize.Generic.Struct)]
 	private static void OnSetDataPost<T>(Texture2D __instance, T[] data) where T : struct {
 		using var _ = Performance.Track("SetData1");
 		SetDataPurge(
@@ -108,7 +109,7 @@ static class PTexture2D {
 		);
 	}
 
-	[Harmonize("SetData", HarmonizeAttribute.Fixation.Postfix, PriorityLevel.Last, HarmonizeAttribute.Generic.Struct)]
+	[Harmonize("SetData", Harmonize.Fixation.Postfix, PriorityLevel.Last, Harmonize.Generic.Struct)]
 	private static void OnSetDataPost<T>(Texture2D __instance, T[] data, int startIndex, int elementCount) where T : struct {
 		using var _ = Performance.Track("SetData3");
 		SetDataPurge(
@@ -120,7 +121,7 @@ static class PTexture2D {
 		);
 	}
 
-	[Harmonize("SetData", HarmonizeAttribute.Fixation.Postfix, PriorityLevel.Last, HarmonizeAttribute.Generic.Struct)]
+	[Harmonize("SetData", Harmonize.Fixation.Postfix, PriorityLevel.Last, Harmonize.Generic.Struct)]
 	private static void OnSetDataPost<T>(Texture2D __instance, int level, in XNA.Rectangle? rect, T[] data, int startIndex, int elementCount) where T : struct {
 		using var _ = Performance.Track("SetData4");
 		SetDataPurge(
@@ -132,9 +133,47 @@ static class PTexture2D {
 		);
 	}
 
+	[Harmonize("SetData", Harmonize.Fixation.Postfix, PriorityLevel.Last, Harmonize.Generic.Struct)]
+	private static void OnSetDataPost<T>(Texture2D __instance, int level, int arraySlice, in XNA.Rectangle? rect, T[] data, int startIndex, int elementCount) where T : struct {
+		using var _ = Performance.Track("SetData5");
+		SetDataPurge(
+			__instance,
+			rect,
+			data,
+			startIndex,
+			elementCount
+		);
+	}
+
+	/*
+	[Harmonize("PlatformSetData", Harmonize.Fixation.Postfix, PriorityLevel.Last, Harmonize.Generic.Struct, platform: Harmonize.Platform.MonoGame)]
+	private static void OnPlatformSetData<T>(Texture2D __instance, int level, T[] data, int startIndex, int elementCount) where T : struct {
+		using var _ = Performance.Track("OnPlatformSetData0");
+		SetDataPurge(
+			__instance,
+			null,
+			data,
+			startIndex,
+			elementCount
+		);
+	}
+
+	[Harmonize("PlatformSetData", Harmonize.Fixation.Postfix, PriorityLevel.Last, Harmonize.Generic.Struct, platform: Harmonize.Platform.MonoGame)]
+	private static void OnPlatformSetData<T>(Texture2D __instance, int level, int arraySlice, XNA.Rectangle rect, T[] data, int startIndex, int elementCount) where T : struct {
+		using var _ = Performance.Track("OnPlatformSetData1");
+		SetDataPurge(
+			__instance,
+			null,
+			data,
+			startIndex,
+			elementCount
+		);
+	}
+	*/
+
 	// A horrible, horrible hack to stop a rare-ish crash when zooming or when the device resets. It doesn't appear to originate in SpriteMaster, but SM most certainly
 	// makes it worse. This will force the texture to regenerate on the fly if it is in a zombie state.
-	[Harmonize("Microsoft.Xna.Framework", "Microsoft.Xna.Framework.Helpers", "CheckDisposed", HarmonizeAttribute.Fixation.Prefix, PriorityLevel.Last, instance: false, platform: HarmonizeAttribute.Platform.XNA)]
+	[Harmonize("Microsoft.Xna.Framework", "Microsoft.Xna.Framework.Helpers", "CheckDisposed", Harmonize.Fixation.Prefix, PriorityLevel.Last, instance: false, platform: Harmonize.Platform.XNA)]
 	private static unsafe bool CheckDisposed(object obj, ref IntPtr pComPtr) {
 		if (obj is ManagedTexture2D) {
 			return true;

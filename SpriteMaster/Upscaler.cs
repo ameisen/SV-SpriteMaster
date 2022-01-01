@@ -41,7 +41,9 @@ sealed class Upscaler {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ulong GetHash(SpriteInfo input, TextureType textureType) {
 		// Need to make Hashing.CombineHash work better.
-		ulong hash = Hash.Combine(input.Reference.SafeName()?.GetHashCode(), input.Reference.Meta().GetHash(input));
+		var a = input.Reference.SafeName()?.GetSafeHash();
+		var b = input.Reference.Meta().GetHash(input);
+		ulong hash = Hash.Combine(input.Reference.SafeName()?.GetSafeHash(), input.Reference.Meta().GetHash(input));
 
 		if (Config.Resample.EnableDynamicScale) {
 			hash = Hash.Combine(hash, HashULong((ulong)input.ExpectedScale));
@@ -54,32 +56,6 @@ sealed class Upscaler {
 	}
 
 	private static readonly WeakSet<Texture2D> GarbageMarkSet = Config.Garbage.CollectAccountUnownedTextures ? new() : null;
-
-	// This basically just changes it from AXYZ to AZYX, which is what's expected in output.
-	private static Surface GetDumpSurface(Surface source) {
-		var dump = source.Clone();
-
-		/*
-		foreach (int y in 0.RangeTo(dump.Height)) {
-			foreach (int x in 0.RangeTo(dump.Width)) {
-				var pixel = dump.GetPixel(x, y);
-				var ipixel = (uint)pixel.ToArgb();
-
-				ipixel =
-					(ipixel & 0xFF00FF00) |
-					(ipixel & 0x00FF0000) >> 16 |
-					(ipixel & 0x000000FF) << 16;
-
-				dump.SetPixel(
-					x, y,
-					System.Drawing.Color.FromArgb((int)ipixel)
-				);
-			}
-		}
-		*/
-
-		return dump;
-	}
 
 	private sealed class Tracer : IDisposable {
 #if REALLY_TRACE
@@ -132,15 +108,6 @@ sealed class Upscaler {
 		}
 	}
 
-	private static bool IsWater(SpriteInfo input) {
-		var bounds = input.Size;
-		var texture = input.Reference;
-		if (bounds.Right <= 640 && bounds.Top >= 2000 && bounds.Extent.MinOf >= WaterBlock && texture.SafeName() == "LooseSprites/Cursors") {
-			return true;
-		}
-		return false;
-	}
-
 	private static FixedSpan<int> DownSample(byte[] data, in Bounds bounds, uint referenceWidth, uint block, bool blend = false) {
 		uint blockSize = block * block;
 		uint halfBlock = blend ? 0 : (block >> 1);
@@ -148,7 +115,7 @@ sealed class Upscaler {
 
 		// Rescale the data down, doing an effective point sample from 4x4 blocks to 1 texel.
 		using var veryRawData = data.AsFixedSpan<byte, uint>();
-		var rawData = new FixedSpan<int>(new int[bounds.Area]);
+		var rawData = new FixedSpan<int>(bounds.Area);
 		foreach (uint y in 0.RangeTo(bounds.Extent.Height)) {
 			var ySourceOffset = (((y * block) + (uint)blockOffset.Y) + halfBlock) * referenceWidth;
 			var yDestinationOffset = y * (uint)bounds.Extent.X;
@@ -198,23 +165,12 @@ sealed class Upscaler {
 
 	// TODO : use MemoryFailPoint class. Extensively.
 
-	private static byte[] ExtractSurface(Surface image) {
-		var imagePtr = image.DataPtr;
+	private static readonly object fileLock = new();
 
-		// TODO : what if PixelFormat doesn't match sizeof(int)?
-		var data = new byte[image.Width * image.Height * sizeof(int)];
-		var pitch = image.Pitch;
-		var destStride = image.Width * sizeof(int);
-
-		int offsetSource = 0;
-		int offsetDest = 0;
-		foreach (int y in 0.RangeTo(image.Height)) {
-			Marshal.Copy(imagePtr + offsetSource, data, offsetDest, destStride);
-			offsetSource += pitch;
-			offsetDest += destStride;
-		}
-
-		return data;
+	private enum GammaState {
+		Linear,
+		Gamma,
+		Unknown
 	}
 
 	private static unsafe void CreateNewTexture(
@@ -239,6 +195,9 @@ sealed class Upscaler {
 	) {
 		padding = Vector2I.Zero;
 		blockPadding = Vector2I.Zero;
+
+		var initialGammaState = GammaState.Gamma;
+		var currentGammaState = initialGammaState;
 
 		var rawSize = textureSize;
 		Bounds rawBounds = textureSize;
@@ -282,7 +241,7 @@ sealed class Upscaler {
 					//}
 					pngStream.Flush();
 					using var pngTexture = Texture2D.FromStream(DrawState.Device, pngStream);
-					rawTextureData = new byte[pngTexture.Width * pngTexture.Height * sizeof(int)];
+					rawTextureData = GC.AllocateUninitializedArray<byte>(pngTexture.Width * pngTexture.Height * sizeof(int), pinned: true);
 					pngTexture.GetData(rawTextureData);
 				}
 				break;
@@ -351,11 +310,12 @@ sealed class Upscaler {
 			}
 
 			if (Config.Debug.Sprite.DumpReference) {
-				using var submap = Textures.CreateSurface(rawData, rawSize, inputBounds);
-				using var dump = GetDumpSurface(submap);
-				var path = Cache.GetDumpPath($"{input.Reference.SafeName().Replace("/", ".")}.{hashString}.reference.png");
-				File.Delete(path);
-				dump.SaveToFile(ImageFormat.PNG, path, ImageSaveFlags.PNG_Z_DefaultCompression);
+				Textures.DumpTexture(
+					source: rawData,
+					sourceSize: rawSize,
+					destBounds: inputBounds,
+					path: Cache.GetDumpPath($"{input.Reference.SafeName().Replace("/", ".")}.{hashString}.reference.png")
+				);
 			}
 
 			if (Config.Resample.Enabled) {
@@ -423,7 +383,7 @@ sealed class Upscaler {
 						var hasPadding = shouldPad;
 
 						if (hasPadding.Any) {
-							int[] paddedData = new int[paddedSize.Area];
+							int[] paddedData = GC.AllocateUninitializedArray<int>(paddedSize.Area, pinned: true);
 
 							int y = 0;
 
@@ -477,7 +437,7 @@ sealed class Upscaler {
 					}
 				}
 
-				bitmapData = new byte[scaledSize.Area * sizeof(int)];
+				bitmapData = GC.AllocateUninitializedArray<byte>(scaledSize.Area * sizeof(int), pinned: true);
 
 				static byte ByteMul(byte a, byte b) => (byte)(((a * b) + 255) >> 8);
 				static byte ByteDiv(byte numerator, byte denominator) {
@@ -490,7 +450,7 @@ sealed class Upscaler {
 				try {
 					var doWrap = wrapped | isWater;
 
-					if (Config.Resample.AssumeGammaCorrected) {
+					if (Config.Resample.AssumeGammaCorrected && currentGammaState == GammaState.Gamma) {
 						for (int y = 0; y < outputSize.Height; ++y) {
 							int yInStride = (y + outputSize.Y) * prescaleSize.Width;
 							for (int x = 0; x < outputSize.Width; ++x) {
@@ -508,10 +468,15 @@ sealed class Upscaler {
 
 								prescaleData[yInStride + x + outputSize.X] = (int)sample;
 							}
+							currentGammaState = GammaState.Linear;
 						}
 					}
 
-					if (Config.Resample.AssumePremultiplyAlpha) {
+					lock (fileLock) {
+						File.AppendAllText(@"D:\Projects\Stardew\SpriteMaster\DebugLogs\FormatDump.log", $"{input.Reference.SafeName()}: {input.Reference.Format}, premul: {edgeResults.PremultipliedAlpha}\n");
+					}
+
+					if (Config.Resample.PremultiplyAlpha && edgeResults.PremultipliedAlpha) {
 						for (int y = 0; y < scaledSize.Height; ++y) {
 							int yInStride = y * scaledSize.Width * 4;
 							for (int x = 0; x < scaledSize.Width; ++x) {
@@ -534,7 +499,7 @@ sealed class Upscaler {
 						// This isn't the most efficient way to do this, though.
 						if (outputSize.X != 0 || outputSize.Y != 0 || outputSize.Extent != prescaleSize) {
 							int subArea = outputSize.Area;
-							var subData = new int[subArea].AsFixedSpan();
+							var subData = new FixedSpan<int>(subArea);
 							for (int y = 0; y < outputSize.Height; ++y) {
 								int yInStride = (y + outputSize.Y) * prescaleSize.Width;
 								int yOutStride = y * outputSize.Width;
@@ -551,12 +516,12 @@ sealed class Upscaler {
 						prescaleData = Deposterize.Enhance(prescaleData, prescaleSize, doWrap).AsFixedSpan<int>();
 
 						if (Config.Debug.Sprite.DumpReference) {
-							using var submap = Textures.CreateSurface(prescaleData, prescaleSize);
-							using var dump = GetDumpSurface(submap);
-							dump.AdjustGamma(2.2);
-							var path = Cache.GetDumpPath($"{input.Reference.SafeName().Replace("/", ".")}.{hashString}.reference.deposter.png");
-							File.Delete(path);
-							dump.SaveToFile(ImageFormat.PNG, path, ImageSaveFlags.PNG_Z_DefaultCompression);
+							Textures.DumpTexture(
+								source: prescaleData,
+								sourceSize: prescaleSize,
+								adjustGamma: 2.2,
+								path: Cache.GetDumpPath($"{input.Reference.SafeName().Replace("/", ".")}.{hashString}.reference.deposter.png")
+							);
 						}
 					}
 
@@ -609,7 +574,7 @@ sealed class Upscaler {
 						bitmapData = Recolor.Enhance(bitmapData, scaledSize);
 					}
 
-					if (Config.Resample.PremultiplyAlpha) {
+					if (Config.Resample.PremultiplyAlpha && edgeResults.PremultipliedAlpha) {
 						for (int y = 0; y < scaledSize.Height; ++y) {
 							int yInStride = y * scaledSize.Width * 4;
 							for (int x = 0; x < scaledSize.Width; ++x) {
@@ -627,7 +592,7 @@ sealed class Upscaler {
 						}
 					}
 
-					if (Config.Resample.AssumeGammaCorrected) {
+					if (Config.Resample.AssumeGammaCorrected && currentGammaState == GammaState.Linear) {
 						for (int y = 0; y < scaledSize.Height; ++y) {
 							int yInStride = y * scaledSize.Width * 4;
 							for (int x = 0; x < scaledSize.Width; ++x) {
@@ -642,6 +607,7 @@ sealed class Upscaler {
 								b = ColorSpace.sRGB_Precise.Delinearize(b);
 							}
 						}
+						currentGammaState = GammaState.Gamma;
 					}
 				}
 				catch (Exception ex) {
@@ -659,26 +625,34 @@ sealed class Upscaler {
 		}
 
 		if (Config.Debug.Sprite.DumpResample) {
-			using var filtered = Textures.CreateSurface(bitmapData, scaledDimensions);
-			using var dump = GetDumpSurface(filtered);
 			static string SimplifyBools(in Vector2B vec) {
 				return $"{(vec.X ? 1 : 0)}{(vec.Y ? 1 : 0)}";
 			}
-			var path = Cache.GetDumpPath($"{input.Reference.SafeName().Replace("/", ".")}.{hashString}.resample-wrap[{SimplifyBools(Wrapped)}]-repeat[{SimplifyBools(RepeatX)},{SimplifyBools(RepeatY)}]-pad[{padding.X},{padding.Y}].png");
-			File.Delete(path);
-			dump.SaveToFile(ImageFormat.PNG, path, ImageSaveFlags.PNG_Z_DefaultCompression);
+
+			Textures.DumpTexture(
+				source: bitmapData,
+				sourceSize: scaledDimensions,
+				swap: (2, 1, 0, 4),
+				path: Cache.GetDumpPath($"{input.Reference.SafeName().Replace("/", ".")}.{hashString}.resample-wrap[{SimplifyBools(Wrapped)}]-repeat[{SimplifyBools(RepeatX)},{SimplifyBools(RepeatY)}]-pad[{padding.X},{padding.Y}].png")
+			);
 		}
 
 		if (scaledDimensions != newSize) {
+			if (scaledDimensions.Width < newSize.Width || scaledDimensions.Height < newSize.Height) {
+				throw new Exception($"Resampled texture size {scaledDimensions} is smaller than expected {newSize}");
+			}
+
 			Debug.TraceLn($"Sprite {texture.SafeName()} requires rescaling");
 			// This should be incredibly rare - we very rarely need to scale back down.
-			using var filtered = Textures.CreateSurface(bitmapData, scaledDimensions);
-			filtered.Resize(newSize.X, newSize.Y, ImageFilter.Lanczos3);
-
-			bitmapData = ExtractSurface(filtered);
+			// I don't actually have a solution for this case.
+			newSize = scaledDimensions;
 		}
 
 		format = TextureFormat.Color;
+
+		if (currentGammaState != initialGammaState) {
+			throw new Exception("Gamma State Mismatch");
+		}
 
 		// We don't want to use block compression if asynchronous loads are enabled but this is not an asynchronous load... unless that is explicitly enabled.
 		if (Config.Resample.BlockCompression.Enabled && (Config.Resample.BlockCompression.Synchronized || !Config.AsyncScaling.Enabled || async) && newSize.MinOf >= 4) {
@@ -728,7 +702,7 @@ sealed class Upscaler {
 			if (!BlockCompress.IsBlockMultiple(newSize)) {
 				var blockPaddedSize = (newSize + 3) & ~3;
 
-				var newBuffer = new byte[blockPaddedSize.Area * sizeof(int)];
+				var newBuffer = GC.AllocateUninitializedArray<byte>(blockPaddedSize.Area * sizeof(int), pinned: true);
 				using var intSpanSrc = bitmapData.AsFixedSpan<byte, int>();
 				using var intSpanDst = newBuffer.AsFixedSpan<byte, int>();
 
@@ -755,7 +729,7 @@ sealed class Upscaler {
 				}
 
 				bitmapData = newBuffer;
-				blockPadding = blockPaddedSize - newSize;
+				blockPadding += blockPaddedSize - newSize;
 				newSize = blockPaddedSize;
 			}
 
@@ -827,7 +801,7 @@ sealed class Upscaler {
 			_ => throw new NotImplementedException("Unknown Image Type provided")
 		};
 
-		var isWater = (textureType == TextureType.Sprite) && IsWater(input);
+		var isWater = (textureType == TextureType.Sprite) && SpriteOverrides.IsWater(input.Size, input.Reference);
 		var isFont = (textureType == TextureType.Sprite) && !isWater && IsFont(input);
 
 		// Water : WaterBlock : 4
@@ -914,9 +888,9 @@ sealed class Upscaler {
 			}
 
 			var isAsync = Config.AsyncScaling.Enabled && async;
-			if (isAsync && !Config.AsyncScaling.ForceSynchronousStores) {
+			if (!isAsync || Config.AsyncScaling.ForceSynchronousStores) {
 				var reference = input.Reference;
-				void asyncCall() {
+				void syncCall() {
 					if (reference.IsDisposed) {
 						return;
 					}
@@ -934,7 +908,7 @@ sealed class Upscaler {
 						texture.Dispose();
 					}
 				}
-				SynchronizedTasks.AddPendingLoad(asyncCall, bitmapData.Length);
+				SynchronizedTasks.AddPendingLoad(syncCall, bitmapData.Length);
 				return null;
 			}
 			else {

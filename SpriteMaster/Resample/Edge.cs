@@ -12,6 +12,7 @@ static class Edge {
 		internal readonly Vector2B RepeatY;
 		internal readonly Vector2B EdgeX;
 		internal readonly Vector2B EdgeY;
+		internal readonly bool PremultipliedAlpha;
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		internal Results(
@@ -19,14 +20,30 @@ static class Edge {
 			Vector2B repeatX,
 			Vector2B repeatY,
 			Vector2B edgeX,
-			Vector2B edgeY
+			Vector2B edgeY,
+			bool premultipliedAlpha
 		) {
 			Wrapped = wrapped;
 			RepeatX = repeatX;
 			RepeatY = repeatY;
 			EdgeX = edgeX;
 			EdgeY = edgeY;
+			PremultipliedAlpha = premultipliedAlpha;
 		}
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	private static byte GetAlpha(int sample) {
+		return (byte)(((uint)sample >> 24) & 0xFF);
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	private static (byte R, byte G, byte B) GetColors(int sample) {
+		return (
+			(byte)(((uint)sample >> 0) & 0xFF),
+			(byte)(((uint)sample >> 8) & 0xFF),
+			(byte)(((uint)sample >> 16) & 0xFF)
+		);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -66,11 +83,7 @@ static class Edge {
 		Vector2B RepeatX = Vector2B.False;
 		Vector2B RepeatY = Vector2B.False;
 
-		if (Config.WrapDetection.Enabled && Config.Resample.EnableWrappedAddressing) {
-			static byte GetAlpha(int sample) {
-				return (byte)(((uint)sample >> 24) & 0xFF);
-			}
-
+		if (Config.WrapDetection.Enabled) {
 			var rawInputSize = rawSize;
 			var spriteInputSize = spriteSize;
 
@@ -153,13 +166,31 @@ static class Edge {
 			}
 		}
 
+		bool premultipliedAlpha = true;
+
+		// https://stackoverflow.com/a/9148428
+		if (Config.Resample.PremultiplyAlpha) {
+			foreach (var element in data) {
+				var alpha = GetAlpha(element);
+				var colors = GetColors(element);
+				var maxColor = Math.Max(Math.Max(colors.R, colors.G), colors.B);
+				if (maxColor > alpha) {
+					if (maxColor - alpha >= Config.Resample.PremultipliedAlphaThreshold) {
+						premultipliedAlpha = false;
+						break;
+					}
+				}
+			}
+		}
+
 		// TODO : Should we flip these values based upon boundsInverted?
 		return new(
 			wrapped: WrappedXY,
 			repeatX: RepeatX,
 			repeatY: RepeatY,
 			edgeX: Vector2B.False,
-			edgeY: Vector2B.False
+			edgeY: Vector2B.False,
+			premultipliedAlpha: premultipliedAlpha
 		);
 	}
 }

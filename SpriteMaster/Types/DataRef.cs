@@ -17,7 +17,7 @@ readonly ref struct DataRef<T> where T : struct {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal DataRef(T[] data, int offset = 0, int length = 0) {
-		Contract.AssertPositiveOrZero(offset);
+		Contracts.AssertPositiveOrZero(offset);
 
 		Data = data;
 		Offset = offset;

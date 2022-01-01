@@ -9,10 +9,10 @@ readonly struct ArrayWrapper2D<T> {
 	internal readonly uint Stride;
 
 	internal ArrayWrapper2D(T[] data, int width, int height, int stride) {
-		Contract.AssertNotNull(data);
-		Contract.AssertNotNegative(width);
-		Contract.AssertNotNegative(height);
-		Contract.AssertNotNegative(stride);
+		Contracts.AssertNotNull(data);
+		Contracts.AssertNotNegative(width);
+		Contracts.AssertNotNegative(height);
+		Contracts.AssertNotNegative(stride);
 
 		Data = data;
 		Width = width.Unsigned();
@@ -23,8 +23,8 @@ readonly struct ArrayWrapper2D<T> {
 	internal ArrayWrapper2D(T[] data, int width, int height) : this(data, width, height, width) { }
 
 	private readonly uint GetIndex(int x, int y) {
-		Contract.AssertNotNegative(x);
-		Contract.AssertNotNegative(y);
+		Contracts.AssertNotNegative(x);
+		Contracts.AssertNotNegative(y);
 
 		return GetIndex(x.Unsigned(), y.Unsigned());
 	}
@@ -32,7 +32,7 @@ readonly struct ArrayWrapper2D<T> {
 	private readonly uint GetIndex(uint x, uint y) {
 		var offset = y * Stride + x;
 
-		Contract.AssertLess(offset, Data.Length.Unsigned());
+		Contracts.AssertLess(offset, Data.Length.Unsigned());
 
 		return offset;
 	}

@@ -3,6 +3,7 @@ using SpriteMaster.Types;
 using System;
 using System.Collections.Concurrent;
 using System.IO;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -13,7 +14,7 @@ static class Cache {
 	private const string JunctionCacheName = $"{TextureCacheName}_Current";
 	private static readonly Version AssemblyVersion = typeof(Upscaler).Assembly.GetName().Version;
 	private static readonly Version RuntimeVersion = typeof(Runtime).Assembly.GetName().Version;
-	private static readonly ulong AssemblyHash = AssemblyVersion.GetHashCode().Fuse(RuntimeVersion.GetHashCode()).Unsigned();
+	private static readonly ulong AssemblyHash = AssemblyVersion.GetSafeHash().Fuse(RuntimeVersion.GetSafeHash()).Unsigned();
 	private static readonly string CacheName = $"{TextureCacheName}_{AssemblyVersion}";
 	private static readonly string LocalDataPath = Path.Combine(Config.LocalRoot, CacheName);
 	private static readonly string DumpPath = Path.Combine(LocalDataPath, "dump");
@@ -41,8 +42,8 @@ static class Cache {
 		internal uint UncompressedDataLength;
 		internal uint DataLength;
 
-		private delegate void ReadValue(object obj, BinaryReader stream);
-		private delegate void WriteValue(object obj, BinaryWriter stream);
+		private delegate void ReadValue(CacheHeader obj, BinaryReader stream);
+		private delegate void WriteValue(CacheHeader obj, BinaryWriter stream);
 		private static readonly uint HeaderSize;
 		private static readonly ReadValue[] ReadValues;
 		private static readonly WriteValue[] WriteValues;
@@ -51,7 +52,7 @@ static class Cache {
 		static CacheHeader() {
 			uint headerSize = 0;
 
-			var fields = typeof(CacheHeader).GetFields();
+			var fields = typeof(CacheHeader).GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
 			ReadValues = new ReadValue[fields.Length];
 			WriteValues = new WriteValue[fields.Length];
 			uint i = 0;
@@ -60,8 +61,14 @@ static class Cache {
 				var reader = field.FieldType.GetReader();
 				var writer = field.FieldType.GetWriter();
 
-				ReadValues[i] = (obj, stream) => field.SetValue(obj, reader(stream));
-				WriteValues[i] = (obj, stream) => writer(stream, field.GetValue(obj));
+				var setter = typeof(CacheHeader).GetFieldSetter<CacheHeader, object>(field);
+				var getter = typeof(CacheHeader).GetFieldGetter<CacheHeader, object>(field);
+
+				//ReadValues[i] = (obj, stream) => setter(obj as CacheHeader, reader(stream));
+				//WriteValues[i] = (obj, stream) => writer(stream, getter(obj as CacheHeader));
+
+				ReadValues[i] = (obj, stream) => setter(obj, reader(stream));
+				WriteValues[i] = (obj, stream) => writer(stream, getter(obj));
 				++i;
 			}
 
@@ -93,7 +100,7 @@ static class Cache {
 			}
 
 			if (!Format.HasValue) {
-				throw new InvalidDataException("Illegal compression format in cached texture");
+				throw new InvalidDataException($"Illegal compression format in cached texture '{path}'");
 			}
 		}
 	}

@@ -37,7 +37,7 @@
 		<TrimMode>CopyUsed</TrimMode>
 		
 		<BundleExtraAssemblies>System, ThirdParty</BundleExtraAssemblies>
-		<IgnoreModFilePatterns Condition="'$(IgnoreModFilePatterns)'!=''">$(IgnoreModFilePatterns), _SENTINEL_</IgnoreModFilePatterns>
+		<IgnoreModFilePatterns Condition="'$(IgnoreModFilePatterns)'!=''">$(IgnoreModFilePatterns), _§ENTINEL¶_</IgnoreModFilePatterns>
 		<IgnoreModFilePatterns Condition="'$(IgnoreModFilePatterns)'==''">_§ENTINEL¶_</IgnoreModFilePatterns>
 		<IgnoreModFilePatterns>$(IgnoreModFilePatterns), System\.(?!Data\.HashFunction\..+).*$</IgnoreModFilePatterns>
 		<IgnoreModFilePatterns>$(IgnoreModFilePatterns), Microsoft\.Build\..*$</IgnoreModFilePatterns>

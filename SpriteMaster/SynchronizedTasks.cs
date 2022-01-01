@@ -58,7 +58,7 @@ static class SynchronizedTasks {
 			if (invoke) {
 				PendingLoads.Swap();
 				lock (pendingLoads) {
-					if (Config.AsyncScaling.ThrottledSynchronousLoads) {
+					if (Config.AsyncScaling.ThrottledSynchronousLoads && !GameState.IsLoading) {
 						int processed = 0;
 						foreach (var action in pendingLoads) {
 							var estimate = TexelAverage.Estimate(action);

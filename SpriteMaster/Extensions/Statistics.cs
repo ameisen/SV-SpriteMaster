@@ -16,11 +16,11 @@ static class Statistics {
 	internal static unsafe double StandardDeviation(int* data, int length, int startIndex = 0, int count = 0) {
 		//return StandardDeviation(new FixedSpan<int>(data, length), startIndex: startIndex, count: count);
 
-		Contract.AssertPositiveOrZero(startIndex);
-		Contract.AssertLess(startIndex, length);
+		Contracts.AssertPositiveOrZero(startIndex);
+		Contracts.AssertLess(startIndex, length);
 		int endIndex = startIndex + count;
-		Contract.AssertLess(startIndex, endIndex);
-		Contract.AssertLess(endIndex, length);
+		Contracts.AssertLess(startIndex, endIndex);
+		Contracts.AssertLess(endIndex, length);
 
 		double sum = 0.0;
 		foreach (int i in startIndex.RangeTo(endIndex)) {

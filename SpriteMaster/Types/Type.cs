@@ -6,9 +6,12 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Types;
 
-static class TypeTExtensions {
+static class TypeExt {
 	[Pure, MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static Type<T> GetTypeT<T>(this T _) => Type<T>.This;
+
+	[Pure, MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static Type<T> From<T>() => Type<T>.This;
 }
 
 sealed class Type<T> : Type {

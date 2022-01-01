@@ -1,19 +1,24 @@
 ﻿using LinqFasterer;
+using SpriteMaster.Harmonize;
 using System;
 using System.IO;
 using System.Runtime.CompilerServices;
+using static SpriteMaster.Harmonize.Harmonize;
+
+using SevenLZMA = SevenZip.Compression.LZMA;
 
 namespace SpriteMaster.Extensions.Compressors;
 
 // https://stackoverflow.com/a/8605828
 // TODO : Implement a continual training dictionary so each stream doesn't require its own dictionary for in-memory compression.
+//[HarmonizeFinalizeCatcher<SevenLZMA.Encoder, DllNotFoundException>(critical: false)]
 static class LZMA {
 	internal static bool IsSupported {
 		[MethodImpl(Runtime.MethodImpl.RunOnce)]
 		get {
 			try {
 				var dummyData = new byte[16];
-				var compressedData = Compress(dummyData);
+				var compressedData = CompressTest(dummyData);
 				var uncompressedData = Decompress(compressedData, dummyData.Length);
 				if (!EnumerableF.SequenceEqualF(dummyData, uncompressedData)) {
 					throw new Exception("Original and Uncompressed Data Mismatch");
@@ -37,7 +42,7 @@ static class LZMA {
 
 		[MethodImpl(Runtime.MethodImpl.RunOnce)]
 		static Data() {
-			var encoder = new SevenZip.Compression.LZMA.Encoder();
+			var encoder = new SevenLZMA.Encoder();
 			using var propertiesStream = new MemoryStream(5);
 			encoder.WriteCoderProperties(propertiesStream);
 			propertiesStream.Flush();
@@ -46,34 +51,47 @@ static class LZMA {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static SevenZip.Compression.LZMA.Encoder GetEncoder() {
-		return new SevenZip.Compression.LZMA.Encoder();
-	}
+	private static SevenLZMA.Encoder GetEncoder() => new();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static SevenZip.Compression.LZMA.Decoder GetDecoder() {
-		var decoder = new SevenZip.Compression.LZMA.Decoder();
+	private static SevenLZMA.Decoder GetDecoder() {
+		var decoder = new SevenLZMA.Decoder();
 		decoder.SetDecoderProperties(Data.Properties);
 		return decoder;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static int CompressedLengthEstimate(byte[] data) {
-		return data.Length >> 1;
-	}
+	internal static int CompressedLengthEstimate(byte[] data) => data.Length >> 1;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static int DecompressedLengthEstimate(byte[] data) {
-		return data.Length << 1;
+	internal static int DecompressedLengthEstimate(byte[] data) => data.Length << 1;
+
+	[MethodImpl(Runtime.MethodImpl.RunOnce)]
+	internal static byte[] CompressTest(byte[] data) {
+		using var output = new MemoryStream(CompressedLengthEstimate(data));
+
+		using (var input = new MemoryStream(data)) {
+			SevenLZMA.Encoder encoder = null;
+			try {
+				encoder = GetEncoder();
+				encoder.Code(input, output, data.Length, -1, null);
+			}
+			catch (DllNotFoundException) when (encoder is not null) {
+				GC.SuppressFinalize(encoder);
+				throw;
+			}
+		}
+
+		output.Flush();
+		return output.ToArray();
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static byte[] Compress(byte[] data) {
 		using var output = new MemoryStream(CompressedLengthEstimate(data));
 
-		var encoder = GetEncoder();
-
 		using (var input = new MemoryStream(data)) {
+			var encoder = GetEncoder();
 			encoder.Code(input, output, data.Length, -1, null);
 		}
 

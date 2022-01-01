@@ -1,6 +1,7 @@
 ﻿using LinqFasterer;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Pastel;
 using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
 using SpriteMaster.Types;
@@ -30,7 +31,7 @@ sealed partial class ScaledTexture : IDisposable {
 		if (texture is ManagedTexture2D) {
 			if (!meta.TracePrinted) {
 				meta.TracePrinted = true;
-				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', is already scaled");
+				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', is already scaled");
 			}
 			return meta.ScaleValid = false;
 		}
@@ -38,7 +39,7 @@ sealed partial class ScaledTexture : IDisposable {
 		if (texture is RenderTarget2D) {
 			if (!meta.TracePrinted) {
 				meta.TracePrinted = true;
-				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', render targets unsupported");
+				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', render targets unsupported");
 			}
 			return meta.ScaleValid = false;
 		}
@@ -46,7 +47,7 @@ sealed partial class ScaledTexture : IDisposable {
 		if (Math.Max(texture.Width, texture.Height) <= Config.Resample.MinimumTextureDimensions) {
 			if (!meta.TracePrinted) {
 				meta.TracePrinted = true;
-				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', texture is too small to qualify");
+				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', texture is too small to qualify ({texture.Extent().ToString(DrawingColor.Orange)})");
 			}
 			return meta.ScaleValid = false;
 		}
@@ -54,7 +55,7 @@ sealed partial class ScaledTexture : IDisposable {
 		if (texture.Area() == 0) {
 			if (!meta.TracePrinted) {
 				meta.TracePrinted = true;
-				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', zero area");
+				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', zero area");
 			}
 			return meta.ScaleValid = false;
 		}
@@ -63,7 +64,7 @@ sealed partial class ScaledTexture : IDisposable {
 		if (texture.IsDisposed || texture.GraphicsDevice.IsDisposed) {
 			if (!meta.TracePrinted) {
 				meta.TracePrinted = true;
-				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', Is Zombie");
+				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', Is Zombie");
 			}
 			return meta.ScaleValid = false;
 		}
@@ -71,7 +72,7 @@ sealed partial class ScaledTexture : IDisposable {
 		if (Config.IgnoreUnknownTextures && texture.Anonymous()) {
 			if (!meta.TracePrinted) {
 				meta.TracePrinted = true;
-				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', Is Unknown Texture");
+				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', Is Unknown Texture");
 			}
 			return meta.ScaleValid = false;
 		}
@@ -80,7 +81,7 @@ sealed partial class ScaledTexture : IDisposable {
 		if (texture.LevelCount > 1) {
 			if (!meta.TracePrinted) {
 				meta.TracePrinted = true;
-				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', Multi-Level Textures Unsupported: {texture.LevelCount} levels");
+				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', Multi-Level Textures Unsupported: {texture.LevelCount.ToString(DrawingColor.Orange)} levels");
 			}
 			return meta.ScaleValid = false;
 		}
@@ -88,7 +89,7 @@ sealed partial class ScaledTexture : IDisposable {
 		if (!LegalFormat(texture)) {
 			if (!meta.TracePrinted) {
 				meta.TracePrinted = true;
-				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', Format Unsupported: {texture.Format}");
+				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', Format Unsupported: {texture.Format.ToString(DrawingColor.Orange)}");
 			}
 			return meta.ScaleValid = false;
 		}
@@ -98,7 +99,7 @@ sealed partial class ScaledTexture : IDisposable {
 				if (texture.SafeName().StartsWith(blacklisted)) {
 					if (!meta.TracePrinted) {
 						meta.TracePrinted = true;
-						Debug.TraceLn($"Not Scaling Texture '{texture.SafeName()}', Is Blacklisted");
+						Debug.TraceLn($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', Is Blacklisted");
 					}
 					return meta.ScaleValid = false;
 				}
@@ -133,8 +134,9 @@ sealed partial class ScaledTexture : IDisposable {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static TexelTimer GetTimer(Texture2D texture, bool async) {
+	private static TexelTimer GetTimer(Texture2D texture, bool async, out bool isCached) {
 		var IsCached = SpriteInfo.IsCached(texture);
+		isCached = IsCached;
 		return GetTimer(IsCached, async);
 	}
 
@@ -153,22 +155,38 @@ sealed partial class ScaledTexture : IDisposable {
 			return null;
 		}
 
+		bool useStalling = Config.Resample.UseFrametimeStalling && !GameState.IsLoading;
+
 		bool useAsync = Config.AsyncScaling.Enabled && (Config.AsyncScaling.EnabledForUnknownTextures || !texture.Anonymous()) && (source.Area >= Config.AsyncScaling.MinimumSizeTexels);
 		// !texture.Meta().HasCachedData
 
-		if (Config.Resample.UseFrametimeStalling && DrawState.PushedUpdateWithin(0)) {
-			var remainingTime = DrawState.RemainingFrameTime();
+		TimeSpan? remainingTime = null;
+		bool? isCached = null;
+
+		string getMetadataString() {
+			if (isCached.HasValue) {
+				return $" ({(useAsync ? "async" : "sync".Pastel(DrawingColor.Orange))} {(isCached.Value ? "cached" : "uncached".Pastel(DrawingColor.Orange))})";
+			}
+			else {
+				return $" ({(useAsync ? "async" : "sync".Pastel(DrawingColor.Orange))})";
+			}
+		}
+
+		string getNameString() {
+			return $"'{texture.SafeName(DrawingColor.LightYellow)}'{getMetadataString()}";
+		}
+
+		if (useStalling && DrawState.PushedUpdateWithin(0)) {
+			remainingTime = DrawState.RemainingFrameTime();
 			if (remainingTime <= TimeSpan.Zero) {
 				return null;
 			}
 
-			var estimatedDuration = GetTimer(texture: texture, async: useAsync).Estimate(source.Area);
+			var estimatedDuration = GetTimer(texture: texture, async: useAsync, out bool cached).Estimate(source.Area);
+			isCached = cached;
 			if (estimatedDuration > TimeSpan.Zero && estimatedDuration > remainingTime) {
-				Debug.TraceLn($"Not enough frame time left to begin resampling '{texture.SafeName()}' ({estimatedDuration.TotalMilliseconds} >= {remainingTime.TotalMilliseconds})");
+				Debug.TraceLn($"Not enough frame time left to begin resampling {getNameString()} ({estimatedDuration.TotalMilliseconds.ToString(DrawingColor.LightBlue)} ms >= {remainingTime?.TotalMilliseconds.ToString(DrawingColor.LightBlue)} ms)");
 				return null;
-			}
-			else {
-				Debug.TraceLn($"Remaining Time: {remainingTime.TotalMilliseconds}");
 			}
 		}
 
@@ -188,28 +206,29 @@ sealed partial class ScaledTexture : IDisposable {
 			textureWrapper = new(reference: texture, dimensions: source, expectedScale: expectedScale);
 		}
 
+		string getRemainingTime() {
+			if (!remainingTime.HasValue) {
+				return "";
+			}
+			return $" (remaining time: {remainingTime?.TotalMilliseconds.ToString(DrawingColor.LightYellow)} ms)";
+		}
+
 		// If this is null, it can only happen due to something being blocked, so we should try again later.
 		if (textureWrapper.Data is null) {
-			Debug.TraceLn($"Texture Data fetch for '{texture.SafeName()}' was blocked; retrying later");
+			Debug.TraceLn($"Texture Data fetch for {getNameString()} was {"blocked".Pastel(DrawingColor.Red)}; retrying later#{getRemainingTime()}");
 			return null;
 		}
 
-		Debug.TraceLn($"Beginning Rescale Process for '{texture.SafeName()}'");
+		Debug.TraceLn($"Beginning Rescale Process for {getNameString()} #{getRemainingTime()}");
 
 		DrawState.PushedUpdateThisFrame = true;
 
 		try {
-			ulong hash;
-			using (Performance.Track("Upscaler.GetHash")) {
-				hash = Upscaler.GetHash(textureWrapper, textureType);
-			}
-
 			var newTexture = new ScaledTexture(
 				assetName: texture.SafeName(),
 				textureWrapper: textureWrapper,
 				sourceRectangle: source,
 				textureType: textureType,
-				hash: hash,
 				async: useAsync,
 				expectedScale: expectedScale
 			);
@@ -230,13 +249,15 @@ sealed partial class ScaledTexture : IDisposable {
 			var averager = GetTimer(cached: textureWrapper.WasCached, async: useAsync);
 			TimeSpanSamples++;
 			MeanTimeSpan += duration;
-			Debug.TraceLn($"{(MeanTimeSpan / TimeSpanSamples).TotalMilliseconds} ms");
+			Debug.TraceLn($"Duration {getNameString()}: {(MeanTimeSpan / TimeSpanSamples).TotalMilliseconds.ToString(DrawingColor.LightYellow)} ms");
 			averager.Add(source.Area, duration);
 		}
 	}
 
 	internal static readonly SurfaceFormat[] AllowedFormats = {
 		SurfaceFormat.Color,
+		SurfaceFormat.Dxt5,
+		SurfaceFormat.Dxt5SRgb
 		//SurfaceFormat.Dxt3 // fonts
 	};
 
@@ -250,7 +271,7 @@ sealed partial class ScaledTexture : IDisposable {
 
 	internal readonly WeakTexture Reference;
 	internal readonly Bounds OriginalSourceRectangle;
-	internal readonly ulong Hash;
+	internal ulong Hash { get; private set; }
 
 	internal Vector2I Padding = Vector2I.Zero;
 	internal Vector2I UnpaddedSize;
@@ -306,7 +327,7 @@ sealed partial class ScaledTexture : IDisposable {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void PurgeTextures(long _purgeTotalBytes) {
-		Contract.AssertPositive(_purgeTotalBytes);
+		Contracts.AssertPositive(_purgeTotalBytes);
 
 		Debug.TraceLn($"Attempting to purge {_purgeTotalBytes.AsDataSize()} from currently loaded textures");
 
@@ -331,7 +352,7 @@ sealed partial class ScaledTexture : IDisposable {
 		}
 		else {
 			// For 32-bit, truncate down to an integer so this operation goes a bit faster.
-			Contract.AssertLessEqual(_purgeTotalBytes, (long)uint.MaxValue);
+			Contracts.AssertLessEqual(_purgeTotalBytes, (long)uint.MaxValue);
 			var purgeTotalBytes = (uint)_purgeTotalBytes;
 			lock (MostRecentList) {
 				uint totalPurge = 0;
@@ -352,11 +373,17 @@ sealed partial class ScaledTexture : IDisposable {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal ScaledTexture(string assetName, SpriteInfo textureWrapper, Bounds sourceRectangle, ulong hash, TextureType textureType, bool async, uint expectedScale) {
+	internal ScaledTexture(string assetName, SpriteInfo textureWrapper, Bounds sourceRectangle, TextureType textureType, bool async, uint expectedScale) {
 		using var _ = Performance.Track();
 
 		TexType = textureType;
-		Hash = hash;
+
+		ulong GetHash() {
+			using (Performance.Track("Upscaler.GetHash")) {
+				return Upscaler.GetHash(textureWrapper, textureType);
+			}
+		}
+
 		var source = textureWrapper.Reference;
 
 		this.OriginalSourceRectangle = new(sourceRectangle);
@@ -382,6 +409,7 @@ sealed partial class ScaledTexture : IDisposable {
 				Thread.CurrentThread.Priority = ThreadPriority.Lowest;
 				using var _ = new AsyncTracker($"Resampling {Name} [{sourceRectangle}]");
 				Thread.CurrentThread.Name = "Texture Resampling Thread";
+				Hash = GetHash();
 				Upscaler.Upscale(
 					texture: this,
 					scale: ref refScale,
@@ -396,6 +424,7 @@ sealed partial class ScaledTexture : IDisposable {
 		}
 		else {
 			// TODO store the HD Texture in _this_ object instead. Will confuse things like subtexture updates, though.
+			Hash = GetHash();
 			this.Texture = Upscaler.Upscale(
 				texture: this,
 				scale: ref refScale,
@@ -443,16 +472,16 @@ sealed partial class ScaledTexture : IDisposable {
 
 		switch (TexType) {
 			case TextureType.Sprite:
-				Debug.TraceLn($"Creating Sprite [{texture.Format} x{refScale}]: {this.SafeName()} {sourceRectangle}");
+				Debug.TraceLn($"Creating Sprite [{texture.Format.ToString(DrawingColor.LightCoral)} x{refScale}]: {this.SafeName(DrawingColor.LightYellow)} {sourceRectangle}");
 				break;
 			case TextureType.Image:
-				Debug.TraceLn($"Creating Image [{texture.Format} x{refScale}]: {this.SafeName()}");
+				Debug.TraceLn($"Creating Image [{texture.Format.ToString(DrawingColor.LightCoral)} x{refScale}]: {this.SafeName(DrawingColor.LightYellow)}");
 				break;
 			case TextureType.SlicedImage:
-				Debug.TraceLn($"Creating Sliced Image [{texture.Format} x{refScale}]: {this.SafeName()}");
+				Debug.TraceLn($"Creating Sliced Image [{texture.Format.ToString(DrawingColor.LightCoral)} x{refScale}]: {this.SafeName(DrawingColor.LightYellow)}");
 				break;
 			default:
-				Debug.TraceLn($"Creating UNKNOWN [{texture.Format} x{refScale}]: {this.SafeName()}");
+				Debug.TraceLn($"Creating UNKNOWN [{texture.Format.ToString(DrawingColor.LightCoral)} x{refScale}]: {this.SafeName(DrawingColor.LightYellow)}");
 				break;
 		}
 

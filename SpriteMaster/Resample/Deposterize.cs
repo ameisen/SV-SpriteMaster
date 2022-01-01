@@ -280,8 +280,8 @@ static class Deposterize {
 		}
 
 		internal unsafe T[] Execute() {
-			var buffer1 = new T[Source.Length];
-			var buffer2 = new T[Source.Length];
+			var buffer1 = GC.AllocateUninitializedArray<T>(Source.Length);
+			var buffer2 = GC.AllocateUninitializedArray<T>(Source.Length);
 
 			var inData = new Span<ColorElement>(Source.TypedPointer, (Source.Length * FixedSpan<T>.TypeSize) / sizeof(ColorElement));
 			var buffer1Data = MemoryMarshal.Cast<T, ColorElement>(buffer1.AsSpan());

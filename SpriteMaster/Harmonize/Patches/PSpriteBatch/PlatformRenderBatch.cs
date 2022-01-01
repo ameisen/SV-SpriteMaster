@@ -29,9 +29,9 @@ static class PlatformRenderBatch {
 		"Microsoft.Xna.Framework.Graphics",
 		"Microsoft.Xna.Framework.Graphics.SpriteBatcher",
 		"FlushVertexArray",
-		HarmonizeAttribute.Fixation.Prefix,
+		Harmonize.Fixation.Prefix,
 		PriorityLevel.First,
-		platform: HarmonizeAttribute.Platform.MonoGame
+		platform: Harmonize.Platform.MonoGame
 	)]
 	internal static bool OnFlushVertexArray(
 		SpriteBatcher __instance,
@@ -58,9 +58,9 @@ static class PlatformRenderBatch {
 
 	[Harmonize(
 		"PlatformRenderBatch",
-		HarmonizeAttribute.Fixation.Prefix,
+		Harmonize.Fixation.Prefix,
 		PriorityLevel.First,
-		platform: HarmonizeAttribute.Platform.XNA
+		platform: Harmonize.Platform.XNA
 	)]
 	internal static bool OnPlatformRenderBatch(
 		SpriteBatch __instance,

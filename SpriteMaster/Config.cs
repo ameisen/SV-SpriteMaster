@@ -148,13 +148,13 @@ static class Config {
 		[Comment("Minimum edge length of a sprite to be considered for resampling")]
 		internal static int MinimumTextureDimensions = 4;
 		[Comment("Should wrapped addressing be enabled for sprite resampling (when analysis suggests it)?")]
-		internal static bool EnableWrappedAddressing = true;
+		internal static bool EnableWrappedAddressing = false;
 		[Comment("Should resampling be stalled if it is determined that it will cause hitches?")]
 		internal static bool UseFrametimeStalling = true;
 		[Comment("Should color enhancement/rebalancing be performed?")]
 		internal static bool UseColorEnhancement = true;
-		[Comment("Should input textures be assumed to be using premultiplied alpha?")]
-		internal static bool AssumePremultiplyAlpha = true;
+		[Comment("What threshold should be used when determining if a sprite uses premultiplied alpha?")]
+		internal static int PremultipliedAlphaThreshold = 1;
 		[Comment("Should transparent pixels be premultiplied to prevent a 'halo' effect?")]
 		internal static bool PremultiplyAlpha = true;
 		[ConfigIgnore]
@@ -162,7 +162,7 @@ static class Config {
 			[Comment("Should deposterization be performed?")]
 			internal const bool Enabled = false; // disabled as the system needs more work
 			[Comment("Deposterization Color Threshold")]
-			internal static int Threshold = 56;
+			internal static int Threshold = 32;
 			[Comment("Deposterization Block Size")]
 			internal static int BlockSize = 2;
 			[Comment("Default number of passes")]
@@ -277,9 +277,9 @@ static class Config {
 	internal static class AsyncScaling {
 		internal const bool Enabled = true;
 		[Comment("Should asynchronous scaling be enabled for unknown textures?")]
-		internal static bool EnabledForUnknownTextures = false;
+		internal static bool EnabledForUnknownTextures = true;
 		[Comment("Should synchronous stores always be used?")]
-		internal static bool ForceSynchronousStores = !Runtime.Capabilities.AsyncStores;
+		internal static bool ForceSynchronousStores = false;//!Runtime.Capabilities.AsyncStores;
 		[Comment("Should synchronous stores be throttled?")]
 		internal static bool ThrottledSynchronousLoads = true;
 		[Comment("Should we fetch and load texture data within the same frame?")]
@@ -294,8 +294,6 @@ static class Config {
 		private const bool DevEnabled = true;
 		[Comment("Should memory cache elements always be flushed upon update?")]
 		internal static bool AlwaysFlush = false;
-		[Comment("Should memory compression algorithm should be used?")]
-		internal static Compression.Algorithm Compress = (Runtime.Bits == 64) ? Compression.Algorithm.None : Compression.BestAlgorithm;
 		[Comment("Should the memory cache be asynchronous?")]
 		internal static bool Async = true;
 	}

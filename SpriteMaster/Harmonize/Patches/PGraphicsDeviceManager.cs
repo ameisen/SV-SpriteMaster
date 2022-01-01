@@ -1,7 +1,10 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
+using SpriteMaster.Metadata;
+using SpriteMaster.Types;
 using System;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
@@ -51,7 +54,122 @@ static class PGraphicsDeviceManager {
 	}
 	private static State LastState = new(false);
 
-	[Harmonize("ApplyChanges", HarmonizeAttribute.Fixation.Prefix, PriorityLevel.First)]
+	[Harmonize(typeof(Microsoft.Xna.Framework.Graphics.RenderTarget2D), Harmonize.Constructor, Harmonize.Fixation.Prefix, PriorityLevel.Last)]
+	internal static bool OnRenderTarget2DConstruct(
+		GraphicsDevice graphicsDevice,
+		int width,
+		int height,
+		bool mipMap,
+		ref SurfaceFormat preferredFormat,
+		ref DepthFormat preferredDepthFormat,
+		ref int preferredMultiSampleCount,
+		RenderTargetUsage usage,
+		bool shared,
+		int arraySize,
+		out bool __state
+	) {
+		var stackTrace = new StackTrace(skipFrames: 2, fNeedFileInfo: false);
+
+		if (stackTrace.GetFrame(0)?.GetMethod()?.DeclaringType == typeof(StardewValley.Game1)) {
+			__state = true;
+		}
+
+		foreach (var frame in stackTrace.GetFrames()) {
+			var method = frame.GetMethod();
+			if (method?.DeclaringType != typeof(StardewValley.Game1)) {
+				continue;
+			}
+
+			switch (method?.Name) {
+				case "SetWindowSize": {
+					__state = true;
+					GraphicsDevice device = null;
+					if (!LastGraphicsDevice?.TryGetTarget(out device) ?? false || device is null) {
+						return true;
+					}
+
+					preferredMultiSampleCount = Config.DrawState.EnableMSAA ? 16 : 0;
+					preferredDepthFormat = device.PresentationParameters.DepthStencilFormat;
+					preferredFormat = device.PresentationParameters.BackBufferFormat;
+				} return true;
+
+				case "Initialize":
+				case "allocateLightmap":
+				case "takeMapScreenshot": {
+					__state = true;
+				} return true;
+			}
+		}
+
+		__state = false;
+		return true;
+	}
+
+	[Harmonize(typeof(Microsoft.Xna.Framework.Graphics.RenderTarget2D), Harmonize.Constructor, Harmonize.Fixation.Postfix, PriorityLevel.Last)]
+	internal static void OnRenderTarget2DConstructPost(
+		RenderTarget2D __instance,
+		GraphicsDevice graphicsDevice,
+		int width,
+		int height,
+		bool mipMap,
+		SurfaceFormat preferredFormat,
+		DepthFormat preferredDepthFormat,
+		int preferredMultiSampleCount,
+		RenderTargetUsage usage,
+		bool shared,
+		int arraySize,
+		bool __state
+	) {
+		if (__state) {
+			__instance.Meta().IsSystemRenderTarget = true;
+		}
+	}
+
+	/*
+	[Harmonize(typeof(StardewValley.Game1), "SetWindowSize", Harmonize.Fixation.Postfix, PriorityLevel.Last)]
+	internal static void OnSetWindowSize(StardewValley.Game1 __instance, int w, int h) {
+		GraphicsDevice device = null;
+		if (!LastGraphicsDevice?.TryGetTarget(out device) ?? false || device == null) {
+			return;
+		}
+
+		int multisampleCount = Config.DrawState.EnableMSAA ? 16 : 1;
+		var depthFormat = device.PresentationParameters.DepthStencilFormat;
+		var colorFormat = device.PresentationParameters.BackBufferFormat;
+
+		var oldScreen = __instance.screen;
+		var oldUIScreen = __instance.uiScreen;
+		RenderTarget2D newScreen = null;
+		RenderTarget2D newUIScreen = null;
+		try {
+			Vector2I screenExtent = oldScreen.Extent();
+			Vector2I uiScreenExtent = oldUIScreen.Extent();
+
+			newScreen = new RenderTarget2D(device, screenExtent.X, screenExtent.Y, mipMap: false, colorFormat, depthFormat, multisampleCount, RenderTargetUsage.PreserveContents) {
+				Name = oldScreen.Name
+			};
+			newUIScreen = new RenderTarget2D(device, uiScreenExtent.X, uiScreenExtent.Y, mipMap: false, colorFormat, depthFormat, multisampleCount, RenderTargetUsage.PreserveContents) {
+				Name = oldUIScreen.Name
+			};
+
+			__instance.screen = newScreen;
+			__instance.uiScreen = newUIScreen;
+
+			oldScreen.Dispose();
+			oldUIScreen.Dispose();
+		}
+		catch {
+			__instance.screen = oldScreen;
+			__instance.uiScreen = oldUIScreen;
+			newScreen?.Dispose();
+			newUIScreen?.Dispose();
+		}
+
+		return;
+	}
+	*/
+
+	[Harmonize("ApplyChanges", Harmonize.Fixation.Prefix, PriorityLevel.First)]
 	internal static bool OnApplyChanges(GraphicsDeviceManager __instance) {
 		var @this = __instance;
 
@@ -65,8 +183,9 @@ static class PGraphicsDeviceManager {
 		@this.PreferMultiSampling = Config.DrawState.EnableMSAA;
 		@this.SynchronizeWithVerticalRetrace = true;
 		@this.PreferredBackBufferFormat = Config.DrawState.BackbufferFormat;
-		if (Config.DrawState.DisableDepthBuffer)
+		if (Config.DrawState.DisableDepthBuffer) {
 			@this.PreferredDepthStencilFormat = DepthFormat.None;
+		}
 
 		return true;
 	}
@@ -74,13 +193,13 @@ static class PGraphicsDeviceManager {
 	private static bool DumpedSystemInfo = false;
 	private static WeakReference<GraphicsDevice> LastGraphicsDevice = null;
 
-	[Harmonize("ApplyChanges", HarmonizeAttribute.Fixation.Postfix, PriorityLevel.Last)]
+	[Harmonize("ApplyChanges", Harmonize.Fixation.Postfix, PriorityLevel.Last)]
 	internal static void OnApplyChangesPost(GraphicsDeviceManager __instance) {
 		var @this = __instance;
 
 		var device = @this.GraphicsDevice;
 
-		if (LastGraphicsDevice == null) {
+		if (LastGraphicsDevice is null) {
 			LastGraphicsDevice = device.MakeWeak();
 		}
 		else if (!LastGraphicsDevice.TryGetTarget(out var lastDevice) || lastDevice != device) {
@@ -105,7 +224,7 @@ static class PGraphicsDeviceManager {
 
 			var capabilitiesProperty = getPrivateField(device, "_profileCapabilities");
 
-			if (capabilitiesProperty == null) {
+			if (capabilitiesProperty is null) {
 				// Probably monogame?
 				var maxTextureSizeProperty = getPrivateField(device, "_maxTextureSize");
 				int? maxTextureSize = maxTextureSizeProperty?.GetValue<int>(device);
@@ -122,7 +241,7 @@ static class PGraphicsDeviceManager {
 				};
 
 				foreach (var capabilities in capabilitiesList) {
-					if (capabilities == null) {
+					if (capabilities is null) {
 						continue;
 					}
 					var maxTextureSizeProperty = getPrivateField(capabilities, "MaxTextureSize");

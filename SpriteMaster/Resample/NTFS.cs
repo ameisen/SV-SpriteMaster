@@ -18,7 +18,7 @@ sealed class NTFS {
 
 				var managementAssembly = Assembly.Load("System.Management");
 				var managementObjectClass = managementAssembly.GetType("System.Management.ManagementObject");
-				var invokeMethod = managementObjectClass.GetMethod("InvokeMethod", new Type[] { typeof(string), typeof(object[]) });
+				var invokeMethod = managementObjectClass.GetMethod("InvokeMethod", new [] { typeof(string), typeof(object[]) });
 
 				using var obj = (IDisposable)Activator.CreateInstance(managementObjectClass, new object[] { objectPath });
 				using ((IDisposable)invokeMethod.Invoke(obj, new object[] { "Compress", new object[] { } })) {

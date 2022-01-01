@@ -12,13 +12,13 @@ namespace SpriteMaster.Harmonize.Patches;
 [SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
 [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Harmony")]
 static class Cleanup {
-	[Harmonize("~GraphicsResource", HarmonizeAttribute.Fixation.Postfix, PriorityLevel.Last, platform: HarmonizeAttribute.Platform.XNA)]
+	[Harmonize("~GraphicsResource", Harmonize.Fixation.Postfix, PriorityLevel.Last, platform: Harmonize.Platform.XNA)]
 	private static void Finalize(GraphicsResource __instance) {
 		FinalizePost(__instance);
 	}
 
 	private static readonly ThreadLocal<object> CurrentFinalizer = new ThreadLocal<object>();
-	[Harmonize("Finalize", HarmonizeAttribute.Fixation.Prefix, PriorityLevel.First, platform: HarmonizeAttribute.Platform.All)]
+	[Harmonize("Finalize", Harmonize.Fixation.Prefix, PriorityLevel.First, platform: Harmonize.Platform.All)]
 	private static bool FinalizePre(object __instance) {
 		try {
 			return (CurrentFinalizer.Value != __instance);
@@ -26,13 +26,13 @@ static class Cleanup {
 		catch (ObjectDisposedException) { return true; }
 	}
 
-	[Harmonize("Finalize", HarmonizeAttribute.Fixation.Postfix, PriorityLevel.Last, platform: HarmonizeAttribute.Platform.All)]
+	[Harmonize("Finalize", Harmonize.Fixation.Postfix, PriorityLevel.Last, platform: Harmonize.Platform.All)]
 	private static void FinalizePost(object __instance) {
 		try {
 			if (CurrentFinalizer.Value == __instance) {
 				return;
 			}
-			Contract.AssertNull(CurrentFinalizer.Value);
+			Contracts.AssertNull(CurrentFinalizer.Value);
 			if (__instance is GraphicsResource resource) {
 				if (Config.Garbage.LeakPreventTexture) {
 					if (!resource.IsDisposed) {
@@ -65,7 +65,7 @@ static class Cleanup {
 						return;
 					}
 
-					Contract.AssertNull(CurrentFinalizer.Value);
+					Contracts.AssertNull(CurrentFinalizer.Value);
 					CurrentFinalizer.Value = @this;
 
 					if (disposedProperty != null || disposedField != null) {

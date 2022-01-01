@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
+using static SpriteMaster.Runtime;
 
 namespace SpriteMaster;
 static class Debug {
@@ -61,6 +62,13 @@ static class Debug {
 		TraceLn(exception.GetStackTrace(), caller: caller);
 	}
 
+	[Conditional("TRACE"), DebuggerStepThrough, DebuggerHidden()]
+	static internal void Trace<T>(string message, T exception, [CallerMemberName] string caller = null) where T : Exception {
+		if (!Config.Debug.Logging.LogInfo)
+			return;
+		TraceLn($"{message}\nException: {exception.Message}\n{exception.GetStackTrace()}", caller: caller);
+	}
+
 	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden()]
 	static internal void TraceLn(string message, bool format = true, [CallerMemberName] string caller = null) {
 		Trace($"{message}\n", format, caller);
@@ -82,11 +90,19 @@ static class Debug {
 	}
 
 	[Conditional("TRACE"), DebuggerStepThrough, DebuggerHidden()]
+	static internal void Info<T>(string message, T exception, [CallerMemberName] string caller = null) where T : Exception {
+		if (!Config.Debug.Logging.LogInfo)
+			return;
+		InfoLn($"{message}\nException: {exception.Message}\n{exception.GetStackTrace()}", caller: caller);
+	}
+
+	[Conditional("TRACE"), DebuggerStepThrough, DebuggerHidden()]
 	static internal void InfoLn(string message, bool format = true, [CallerMemberName] string caller = null) {
 		Info($"{message}\n", format, caller);
 	}
 
 	[DebuggerStepThrough, DebuggerHidden()]
+	[MethodImpl(MethodImpl.Hot)]
 	static internal void Message(string message, bool format = true, [CallerMemberName] string caller = null) {
 		if (!Config.Debug.Logging.LogInfo)
 			return;
@@ -94,6 +110,7 @@ static class Debug {
 	}
 
 	[DebuggerStepThrough, DebuggerHidden()]
+	[MethodImpl(MethodImpl.Hot)]
 	static internal void Message<T>(T exception, [CallerMemberName] string caller = null) where T : Exception {
 		if (!Config.Debug.Logging.LogInfo)
 			return;
@@ -102,11 +119,13 @@ static class Debug {
 	}
 
 	[DebuggerStepThrough, DebuggerHidden()]
+	[MethodImpl(MethodImpl.Hot)]
 	static internal void MessageLn(string message, bool format = true, [CallerMemberName] string caller = null) {
 		Message($"{message}\n", format, caller);
 	}
 
 	[DebuggerStepThrough, DebuggerHidden()]
+	[MethodImpl(MethodImpl.Cold)]
 	static internal void Warning(string message, bool format = true, [CallerMemberName] string caller = null) {
 		if (!Config.Debug.Logging.LogWarnings)
 			return;
@@ -114,6 +133,7 @@ static class Debug {
 	}
 
 	[DebuggerStepThrough, DebuggerHidden()]
+	[MethodImpl(MethodImpl.Cold)]
 	static internal void Warning<T>(T exception, [CallerMemberName] string caller = null) where T : Exception {
 		if (!Config.Debug.Logging.LogInfo)
 			return;
@@ -122,11 +142,13 @@ static class Debug {
 	}
 
 	[DebuggerStepThrough, DebuggerHidden()]
+	[MethodImpl(MethodImpl.Cold)]
 	static internal void WarningLn(string message, bool format = true, [CallerMemberName] string caller = null) {
 		Warning($"{message}\n", format, caller);
 	}
 
 	[DebuggerStepThrough, DebuggerHidden()]
+	[MethodImpl(MethodImpl.Cold)]
 	static internal void Error(string message, bool format = true, [CallerMemberName] string caller = null) {
 		if (!Config.Debug.Logging.LogErrors)
 			return;
@@ -134,6 +156,7 @@ static class Debug {
 	}
 
 	[DebuggerStepThrough, DebuggerHidden()]
+	[MethodImpl(MethodImpl.Cold)]
 	static internal void Error<T>(T exception, [CallerMemberName] string caller = null) where T : Exception {
 		if (!Config.Debug.Logging.LogInfo)
 			return;
@@ -141,6 +164,7 @@ static class Debug {
 	}
 
 	[DebuggerStepThrough, DebuggerHidden()]
+	[MethodImpl(MethodImpl.Cold)]
 	static internal void Error<T>(string message, T exception, [CallerMemberName] string caller = null) where T : Exception {
 		if (!Config.Debug.Logging.LogInfo)
 			return;
@@ -148,9 +172,55 @@ static class Debug {
 	}
 
 	[DebuggerStepThrough, DebuggerHidden()]
+	[MethodImpl(MethodImpl.Cold)]
 	static internal void ErrorLn(string message, bool format = true, [CallerMemberName] string caller = null) {
 		Error($"{message}\n", format, caller);
 	}
+
+	[DebuggerStepThrough, DebuggerHidden()]
+	[MethodImpl(MethodImpl.Cold)]
+	static internal void ConditionalError(bool condition, string message, bool format = true, [CallerMemberName] string caller = null) {
+		if (condition) {
+			Error(message: message, format: format, caller: caller);
+		}
+		else {
+			Trace(message: message, format: format, caller: caller);
+		}
+	}
+
+	[DebuggerStepThrough, DebuggerHidden()]
+	[MethodImpl(MethodImpl.Cold)]
+	static internal void ConditionalError<T>(bool condition, T exception, [CallerMemberName] string caller = null) where T : Exception {
+		if (condition) {
+			Error<T>(exception: exception, caller: caller);
+		}
+		else {
+			Trace<T>(exception: exception, caller: caller);
+		}
+	}
+
+	[DebuggerStepThrough, DebuggerHidden()]
+	[MethodImpl(MethodImpl.Cold)]
+	static internal void ConditionalError<T>(bool condition, string message, T exception, [CallerMemberName] string caller = null) where T : Exception {
+		if (condition) {
+			Error<T>(message: message, exception: exception, caller: caller);
+		}
+		else {
+			Trace(message: message, caller: caller);
+		}
+	}
+
+	[DebuggerStepThrough, DebuggerHidden()]
+	[MethodImpl(MethodImpl.Cold)]
+	static internal void ConditionalErrorLn(bool condition, string message, bool format = true, [CallerMemberName] string caller = null) {
+		if (condition) {
+			ErrorLn(message: message, format: format, caller: caller);
+		}
+		else {
+			TraceLn(message: message, format: format, caller: caller);
+		}
+	}
+
 
 	[DebuggerStepThrough, DebuggerHidden()]
 	static internal void Flush() => _ = Console.Error.FlushAsync();
@@ -251,7 +321,7 @@ static class Debug {
 		var lines = str.Lines(removeEmpty: true);
 		var fullString = string.Join("\n", lines);
 		lock (IOLock) {
-			SpriteMaster.Self.Monitor.Log(fullString);
+			SpriteMaster.Self.Monitor.Log(fullString, level);
 			/*
 			foreach (var line in lines) {
 				SpriteMaster.Self.Monitor.Log(line.TrimEnd(), level);

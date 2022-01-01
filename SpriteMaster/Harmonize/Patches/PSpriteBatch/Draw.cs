@@ -101,20 +101,12 @@ static class Draw {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static bool IsWater(in Bounds bounds, Texture2D texture) {
-		if (bounds.Right <= 640 && bounds.Top >= 2000 && texture.SafeName() == "LooseSprites/Cursors") {
-			return true;
-		}
-		return false;
-	}
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static void GetDrawParameters(Texture2D texture, in XNA.Rectangle? source, out Bounds bounds, out float scaleFactor) {
 		texture.Meta().UpdateLastAccess();
 		var sourceRectangle = source.GetValueOrDefault(new(0, 0, texture.Width, texture.Height));
 
 		scaleFactor = 1.0f;
-		if (IsWater(sourceRectangle, texture)) {
+		if (SpriteOverrides.IsWater(sourceRectangle, texture)) {
 			if (Config.Resample.TrimWater) {
 				scaleFactor = 4.0f;
 			}
@@ -153,11 +145,12 @@ static class Draw {
 			bounds: out var sourceRectangle,
 			scaleFactor: out var scaleFactor
 		);
+
 		var referenceRectangle = sourceRectangle;
 
 		Bounds destinationBounds = destination;
 
-		var expectedScale2D = new XNA.Vector2(destinationBounds.Width, destinationBounds.Height) / new XNA.Vector2(sourceRectangle.Width, sourceRectangle.Height);
+		var expectedScale2D = new Vector2F(destinationBounds.Extent) / new Vector2F(sourceRectangle.Extent);
 		var expectedScale = (uint)((Math.Max(expectedScale2D.X, expectedScale2D.Y) * scaleFactor) + Config.Resample.ScaleBias).Clamp(2.0f, (float)Config.Resample.MaxScale).NextInt();
 
 		if (!texture.FetchScaledTexture(
@@ -179,10 +172,10 @@ static class Draw {
 			// Convert the draw into the other draw style. This has to be done because the padding potentially has
 			// subpixel accuracy when scaled to the destination rectangle.
 
-			var originalSize = new XNA.Vector2(referenceRectangle.Width, referenceRectangle.Height);
-			var destinationSize = new XNA.Vector2(destinationBounds.Width, destinationBounds.Height);
+			var originalSize = new Vector2F(referenceRectangle.Extent);
+			var destinationSize = new Vector2F(destinationBounds.Extent);
 			var newScale = destinationSize / originalSize;
-			var newPosition = new XNA.Vector2(destinationBounds.X, destinationBounds.Y);
+			var newPosition = new Vector2F(destinationBounds.X, destinationBounds.Y);
 
 			if (destinationBounds.Invert.X) {
 				effects ^= SpriteEffects.FlipHorizontally;
@@ -239,7 +232,7 @@ static class Draw {
 				scaleFactor: out var scaleFactor
 			);
 
-			var expectedScale2D = new XNA.Vector2(destinationBounds.Width, destinationBounds.Height) / new XNA.Vector2(sourceRectangle.Width, sourceRectangle.Height);
+			var expectedScale2D = new Vector2F(destinationBounds.Extent) / new Vector2F(sourceRectangle.Extent);
 			var expectedScale = (uint)((Math.Max(expectedScale2D.X, expectedScale2D.Y) * scaleFactor) + Config.Resample.ScaleBias).Clamp(2.0f, (float)Config.Resample.MaxScale).NextInt();
 
 			if (!texture.FetchScaledTexture(
@@ -323,13 +316,13 @@ static class Draw {
 			return Continue;
 		}
 
-		var adjustedScale = scale / scaledTexture.Scale;
+		var adjustedScale = (Vector2F)scale / (Vector2F)scaledTexture.Scale;
 		var adjustedPosition = position;
-		var adjustedOrigin = origin;
+		var adjustedOrigin = (Vector2F)origin;
 
 		if (!scaledTexture.Padding.IsZero) {
-			var textureSize = new XNA.Vector2(sourceRectangle.Width, sourceRectangle.Height);
-			var innerSize = (XNA.Vector2)scaledTexture.UnpaddedSize;
+			var textureSize = new Vector2F(sourceRectangle.Extent);
+			var innerSize = (Vector2F)scaledTexture.UnpaddedSize;
 
 			// This is the scale factor to bring the inner size to the draw size.
 			var innerRatio = textureSize / innerSize;
@@ -337,12 +330,12 @@ static class Draw {
 			// Scale the... scale by the scale factor.
 			adjustedScale *= innerRatio;
 
-			adjustedOrigin *= scaledTexture.Scale;
+			adjustedOrigin *= (Vector2F)scaledTexture.Scale;
 			adjustedOrigin /= innerRatio;
 			adjustedOrigin += (textureSize - innerSize) * 0.5f;
 		}
 		else {
-			adjustedOrigin *= scaledTexture.Scale;
+			adjustedOrigin *= (Vector2F)scaledTexture.Scale;
 		}
 
 		if (source.HasValue) {

@@ -192,8 +192,8 @@ struct Bounds :
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal Bounds(Microsoft.Xna.Framework.Graphics.Texture2D tex) : this(tex.Width, tex.Height) { }
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Bounds(System.Drawing.Bitmap bmp) : this(bmp.Width, bmp.Height) { }
+	//[MethodImpl(Runtime.MethodImpl.Hot)]
+	//internal Bounds(System.Drawing.Bitmap bmp) : this(bmp.Width, bmp.Height) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal bool Overlaps(in Bounds other) =>
