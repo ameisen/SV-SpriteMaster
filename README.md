@@ -5,8 +5,8 @@ Stardew Valley mod that resamples all sprites using the [xBRZ resizing algorithm
 Compatible with almost any content-modifying mod.
 
 ## Requirements
-* [Visual Studio 2019](https://visualstudio.microsoft.com/vs/)
-* Windows 7 or higher
+* [Visual Studio 2022](https://visualstudio.microsoft.com/vs/)
+* Windows 10 or higher
 
 ## Credit
 * Platonymous - ScaledTexture2D and SpriteBatchFix Harmony patch classes - [PyTK mod](https://github.com/Platonymous/Stardew-Valley-Mods/blob/master/PyTK)
