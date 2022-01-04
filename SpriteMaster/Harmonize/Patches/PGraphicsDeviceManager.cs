@@ -3,8 +3,6 @@ using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
 using SpriteMaster.Types;
-using StardewValley;
-using StardewValley.Menus;
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -17,15 +15,6 @@ namespace SpriteMaster.Harmonize.Patches;
 [SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
 [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Harmony")]
 static class PGraphicsDeviceManager {
-
-	// D3DCREATE_MULTITHREADED
-	/*
-	[HarmonyPatch(typeof(GraphicsDevice), "CreateDevice", HarmonyPatch.Fixation.Transpile, PriorityLevel.First)]
-	internal static IEnumerable<Harmony.CodeInstruction> CreateDeviceTranspiler (IEnumerable<Harmony.CodeInstruction> instructions) {
-		return new List<Harmony.CodeInstruction>(instructions);
-	}
-	*/
-
 	private struct DeviceState {
 		internal Vector2I Size = new(int.MinValue);
 		internal bool Initialized = false;
@@ -49,109 +38,6 @@ static class PGraphicsDeviceManager {
 		}
 	}
 	private static DeviceState LastState = new();
-
-	private struct GameWindowState {
-		internal Vector2I Size = new(int.MinValue);
-		internal int GameInstanceCount = 0;
-		internal int GameInstanceIndex = 0;
-		internal float ZoomModifier = 0.0f;
-		internal bool Initialized = false;
-		internal bool IsFullscreen = false;
-		internal bool OverrideGameMenuReset = false;
-
-		// Windows
-		internal StardewValley.Menus.TextEntryMenu TextEntry = null;
-		internal StardewValley.Minigames.IMinigame CurrentMinigame = null;
-		internal IClickableMenu ActiveClickableMenu = null;
-		internal int ACMCurrentTab = int.MinValue;
-		internal IClickableMenu ACMCurrentPage = null;
-		internal WeakReference<IClickableMenu>[] OnScreenMenus = null;
-
-		private bool CheckWindowsDirty(StardewValley.Game1 instance) {
-			return
-				Game1.textEntry != TextEntry ||
-				Game1.currentMinigame != CurrentMinigame ||
-				Game1.activeClickableMenu != ActiveClickableMenu ||
-				(Game1.activeClickableMenu as GameMenu)?.GetCurrentPage() != ACMCurrentPage;
-		}
-
-		private bool CheckOnScreenMenusDirty() {
-			var onscreenMenus = Game1.onScreenMenus;
-			if (onscreenMenus is null != OnScreenMenus is null) {
-				return true;
-			}
-			if (onscreenMenus is null) {
-				return true;
-			}
-			if (onscreenMenus.Count != OnScreenMenus.Length) {
-				return true;
-			}
-			for (int i = 0; i < onscreenMenus.Count; ++i) {
-				if (OnScreenMenus[i] is null) {
-					return onscreenMenus[i] is not null;
-				}
-				if (!(OnScreenMenus[i].TryGetTarget(out var menu))) {
-					return true;
-				}
-				if (menu != onscreenMenus[i]) {
-					return true;
-				}
-			}
-			return false;
-		}
-
-		private void SetOnScreenMenusDirty() {
-			if (Game1.onScreenMenus is null) {
-				OnScreenMenus = null;
-			}
-			OnScreenMenus = new WeakReference<IClickableMenu>[Game1.onScreenMenus.Count];
-			for (int i = 0; i < Game1.onScreenMenus.Count; ++i) {
-				if (Game1.onScreenMenus[i] is null) {
-					OnScreenMenus[i] = null;
-					continue;
-				}
-				OnScreenMenus[i] = Game1.onScreenMenus[i].MakeWeak();
-			}
-		}
-
-		private void SetWindowsDirty(StardewValley.Game1 instance) {
-			TextEntry = Game1.textEntry;
-			CurrentMinigame = Game1.currentMinigame;
-			ActiveClickableMenu = Game1.activeClickableMenu;
-			ACMCurrentPage = (Game1.activeClickableMenu as GameMenu)?.GetCurrentPage();
-		}
-
-		internal bool Dirty(StardewValley.Game1 instance, Vector2I size) {
-			bool isFullscreen = Game1.graphics.IsFullScreen;
-			int gameInstanceCount = GameRunner.instance.gameInstances.Count;
-
-			if (
-				Initialized &&
-				IsFullscreen == isFullscreen &&
-				Size == size &&
-				GameInstanceCount == gameInstanceCount &&
-				GameInstanceIndex == instance.instanceIndex &&
-				ZoomModifier == instance.zoomModifier && // TODO : should we use approximate equality?
-				OverrideGameMenuReset == Game1.overrideGameMenuReset &&
-				!CheckWindowsDirty(instance) &&
-				!CheckOnScreenMenusDirty()
-			) {
-				return false;
-			}
-
-			Initialized = true;
-			IsFullscreen = isFullscreen;
-			Size = size;
-			GameInstanceCount = gameInstanceCount;
-			GameInstanceIndex = instance.instanceIndex;
-			ZoomModifier = instance.zoomModifier;
-			OverrideGameMenuReset = Game1.overrideGameMenuReset;
-			SetWindowsDirty(instance);
-			SetOnScreenMenusDirty();
-			return true;
-		}
-	}
-	private static GameWindowState LastGameWindowState = new();
 
 	[Harmonize(typeof(Microsoft.Xna.Framework.Graphics.RenderTarget2D), Harmonize.Constructor, Harmonize.Fixation.Prefix, PriorityLevel.Last)]
 	internal static bool OnRenderTarget2DConstruct(
@@ -223,22 +109,6 @@ static class PGraphicsDeviceManager {
 			__instance.Meta().IsSystemRenderTarget = true;
 		}
 	}
-
-	// This is an additional patch to try to reduce the number of superfluous state changes
-	/*
-	[Harmonize(typeof(StardewValley.Game1), "SetWindowSize", Fixation.Prefix, PriorityLevel.Last, critical: false)]
-	internal static bool OnSetWindowSize(StardewValley.Game1 __instance, int w, int h) {
-		bool dirty = false;
-
-		dirty = LastGameWindowState.Dirty(__instance, (w, h)) || dirty;
-		dirty = Game1.graphics.SynchronizeWithVerticalRetrace != Game1.options.vsyncEnabled || dirty;
-
-		dirty = __instance.screen is null || dirty;
-		dirty = __instance.uiScreen is null || dirty;
-
-		return dirty;
-	}
-	*/
 
 	[Harmonize("ApplyChanges", Harmonize.Fixation.Prefix, PriorityLevel.First)]
 	internal static bool OnApplyChanges(GraphicsDeviceManager __instance) {

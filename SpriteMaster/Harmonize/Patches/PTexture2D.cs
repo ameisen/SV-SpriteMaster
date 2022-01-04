@@ -13,51 +13,25 @@ namespace SpriteMaster.Harmonize.Patches;
 [SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
 [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Harmony")]
 static class PTexture2D {
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static unsafe byte[] ExtractByteArray<T>(T[] data, int length, int typeSize) where T : struct {
-		var byteData = new byte[length * typeSize];
-		var handle = GCHandle.Alloc(data, GCHandleType.Pinned);
-		try {
-			Marshal.Copy(handle.AddrOfPinnedObject(), byteData, 0, byteData.Length);
-		}
-		catch (Exception ex) {
-			Debug.Error(ex);
-		}
-		finally {
-			handle.Free();
-		}
-		return byteData;
-	}
+	#region Cache Handlers
+
+	// https://benbowen.blog/post/fun_with_makeref/
 
 	// Always returns a duplicate of the array, since we do not own the source array.
 	// It performs a shallow copy, which is fine.
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static unsafe byte[] GetByteArray<T>(T[] data, out int typeSize) where T : struct {
-		switch (data) {
-			case null:
-				typeSize = Marshal.SizeOf(typeof(T));
-				return null;
-			case byte[] byteData:
-				typeSize = sizeof(byte);
-				return (byte[])byteData.Clone();
-			case XNA.Color[] colorData:
-				typeSize = sizeof(XNA.Color);
-				return ExtractByteArray(colorData, data.Length, typeSize);
-			case var _ when (typeof(T).IsPrimitive || typeof(T).IsPointer || typeof(T).IsEnum):
-				typeSize = Marshal.SizeOf(typeof(T));
-				var byteArray = new byte[data.Length * typeSize];
-				Buffer.BlockCopy(data, 0, byteArray, 0, byteArray.Length);
-				return byteArray;
-			default:
-				typeSize = Marshal.SizeOf(typeof(T));
-				return ExtractByteArray(data, data.Length, typeSize);
-		}
+		// TODO : we shouldn't copy all the texture data from this, only the relevant parts from startIndex/elementCount
+		typeSize = Marshal.SizeOf<T>();
+		ReadOnlySpan<T> inData = data;
+		var inDataBytes = MemoryMarshal.Cast<T, byte>(inData);
+		var resultData = GC.AllocateUninitializedArray<byte>(inDataBytes.Length);
+		inDataBytes.CopyTo(resultData);
+		return resultData;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static bool Cacheable(Texture2D texture) {
-		return texture.LevelCount <= 1;
-	}
+	private static bool Cacheable(Texture2D texture) => texture.LevelCount <= 1;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static void SetDataPurge<T>(Texture2D texture, in XNA.Rectangle? rect, T[] data, int startIndex, int elementCount) where T : struct {
@@ -97,33 +71,31 @@ static class PTexture2D {
 #endif
 	}
 
-	[Harmonize("SetData", Harmonize.Fixation.Postfix, PriorityLevel.Last, Harmonize.Generic.Struct)]
-	private static void OnSetDataPost<T>(Texture2D __instance, T[] data) where T : struct {
-		using var _ = Performance.Track("SetData1");
-		SetDataPurge(
-			__instance,
-			null,
-			data,
-			0,
-			data.Length
-		);
+	#endregion
+
+	#region SetData
+
+	[Harmonize("SetData", Harmonize.Fixation.Prefix, PriorityLevel.Last, Harmonize.Generic.Struct)]
+	private static bool OnSetData<T>(Texture2D __instance, T[] data) where T : struct {
+		__instance.SetData(0, 0, null, data, 0, data.Length);
+		return false;
+	}
+
+	[Harmonize("SetData", Harmonize.Fixation.Prefix, PriorityLevel.Last, Harmonize.Generic.Struct)]
+	private static bool OnSetData<T>(Texture2D __instance, T[] data, int startIndex, int elementCount) where T : struct {
+		__instance.SetData(0, 0, null, data, startIndex, elementCount);
+		return false;
+	}
+
+	[Harmonize("SetData", Harmonize.Fixation.Prefix, PriorityLevel.Last, Harmonize.Generic.Struct)]
+	private static bool OnSetData<T>(Texture2D __instance, int level, in XNA.Rectangle? rect, T[] data, int startIndex, int elementCount) where T : struct {
+		__instance.SetData(level, 0, rect, data, startIndex, elementCount);
+		return false;
 	}
 
 	[Harmonize("SetData", Harmonize.Fixation.Postfix, PriorityLevel.Last, Harmonize.Generic.Struct)]
-	private static void OnSetDataPost<T>(Texture2D __instance, T[] data, int startIndex, int elementCount) where T : struct {
-		using var _ = Performance.Track("SetData3");
-		SetDataPurge(
-			__instance,
-			null,
-			data,
-			startIndex,
-			elementCount
-		);
-	}
-
-	[Harmonize("SetData", Harmonize.Fixation.Postfix, PriorityLevel.Last, Harmonize.Generic.Struct)]
-	private static void OnSetDataPost<T>(Texture2D __instance, int level, in XNA.Rectangle? rect, T[] data, int startIndex, int elementCount) where T : struct {
-		using var _ = Performance.Track("SetData4");
+	private static void OnSetData<T>(Texture2D __instance, int level, int arraySlice, in XNA.Rectangle? rect, T[] data, int startIndex, int elementCount) where T : struct {
+		using var _ = Performance.Track("SetData");
 		SetDataPurge(
 			__instance,
 			rect,
@@ -133,17 +105,7 @@ static class PTexture2D {
 		);
 	}
 
-	[Harmonize("SetData", Harmonize.Fixation.Postfix, PriorityLevel.Last, Harmonize.Generic.Struct)]
-	private static void OnSetDataPost<T>(Texture2D __instance, int level, int arraySlice, in XNA.Rectangle? rect, T[] data, int startIndex, int elementCount) where T : struct {
-		using var _ = Performance.Track("SetData5");
-		SetDataPurge(
-			__instance,
-			rect,
-			data,
-			startIndex,
-			elementCount
-		);
-	}
+	#endregion
 
 	/*
 	[Harmonize("PlatformSetData", Harmonize.Fixation.Postfix, PriorityLevel.Last, Harmonize.Generic.Struct, platform: Harmonize.Platform.MonoGame)]

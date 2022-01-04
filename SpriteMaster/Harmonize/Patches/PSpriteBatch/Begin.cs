@@ -7,7 +7,7 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch;
 static class Begin {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	[Harmonize("Begin", fixation: Harmonize.Fixation.Postfix, priority: Harmonize.PriorityLevel.Last)]
-	internal static void OnBegin(SpriteBatch __instance, SpriteSortMode sortMode, BlendState blendState, SamplerState samplerState, DepthStencilState depthStencilState, RasterizerState rasterizerState, Effect effect, Matrix transformMatrix) {
+	internal static void OnBegin(SpriteBatch __instance, SpriteSortMode sortMode, BlendState blendState, SamplerState samplerState, DepthStencilState depthStencilState, RasterizerState rasterizerState, Effect effect, Matrix? transformMatrix) {
 		DrawState.OnBegin(
 			__instance,
 			sortMode,
@@ -16,7 +16,7 @@ static class Begin {
 			depthStencilState ?? DepthStencilState.None,
 			rasterizerState ?? RasterizerState.CullCounterClockwise,
 			effect,
-			transformMatrix
+			transformMatrix ?? Matrix.Identity
 		);
 	}
 }

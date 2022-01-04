@@ -119,7 +119,7 @@ sealed class MTexture2D {
 				return null;
 			}
 
-			using (Lock.TryShared) {
+			using (var locked = Lock.TryShared) if (locked is not null) {
 				_CachedRawData.TryGetTarget(out var target);
 				return target;
 			}
@@ -170,7 +170,7 @@ sealed class MTexture2D {
 							ThreadQueue.Queue((meta) => {
 								if (meta._CachedRawData.TryGetTarget(out var rawData)) {
 									var uncompressedData = Resample.TextureDecode.DecodeBlockCompressedTexture(Format, Size, rawData);
-									if (uncompressedData == null || uncompressedData.Length == 0) {
+									if (uncompressedData.IsEmpty) {
 										throw new InvalidOperationException("Compressed data failed to decompress");
 									}
 									_CachedData.SetTarget(uncompressedData.ToArray());

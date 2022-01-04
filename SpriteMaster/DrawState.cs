@@ -70,29 +70,6 @@ static class DrawState {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void OnPresent() {
-		/*
-		if (testOnce) {
-			Texture2D testTexture;
-			using (var inFile = File.Open("D:\\test.png", FileMode.Open)) {
-				testTexture = Texture2D.FromStream(Game1.graphics.GraphicsDevice, inFile);
-			}
-			var testData = new byte[testTexture.Width * testTexture.Height * sizeof(int)];
-			testTexture.GetData(testData);
-
-			var format = TextureFormat.Color;
-			testData = BlockCompress.Compress(testData, ref format, new Vector2I(testTexture.Width, testTexture.Height), false, true, true, true, true, true);
-
-			var outData = BlockCompress.Decompress(testData, (uint)testTexture.Width, (uint)testTexture.Height, format);
-
-			var outTexture = new Texture2D(Game1.graphics.GraphicsDevice, testTexture.Width, testTexture.Height, false, SurfaceFormat.Color);
-			outTexture.SetData(outData);
-			using (var outFile = File.Open("D:\\test_out.png", FileMode.Create)) {
-				outTexture.SaveAsPng(outFile, outTexture.Width, outTexture.Height);
-			}
-			testOnce = false;
-		}
-		*/
-
 		if (TriggerGC) {
 			ScaledTexture.PurgeTextures((Config.Garbage.RequiredFreeMemory * Config.Garbage.RequiredFreeMemoryHysterisis).NearestLong() * 1024 * 1024);
 			//Garbage.Collect();

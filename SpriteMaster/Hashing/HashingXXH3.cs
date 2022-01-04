@@ -17,7 +17,7 @@ static partial class Hashing {
 		// HasherXX.ComputeHash(new SequenceReader<T>(data)).Hash.HashXXCompute();
 		ulong currentHash = Default;
 		foreach (var seq in data) {
-			currentHash = Combine(currentHash, seq.Span.HashXX());
+			currentHash = Combine(currentHash, seq.Span.HashXX3());
 		}
 		return currentHash;
 	}

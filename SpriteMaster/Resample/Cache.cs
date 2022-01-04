@@ -208,7 +208,7 @@ static class Cache {
 
 						var rawData = reader.ReadBytes((int)dataLength);
 
-						if (rawData.HashXX() != dataHash) {
+						if (rawData.Hash() != dataHash) {
 							throw new IOException($"Cache File '{path}' is corrupted");
 						}
 
@@ -291,7 +291,7 @@ static class Cache {
 						BlockPadding = blockPadding,
 						UncompressedDataLength = (uint)data.Length,
 						DataLength = (uint)compressedData.Length,
-						DataHash = compressedData.HashXX()
+						DataHash = compressedData.Hash()
 					}.Write(writer);
 
 					writer.Write(compressedData);

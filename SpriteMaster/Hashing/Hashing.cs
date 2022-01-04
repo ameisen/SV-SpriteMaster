@@ -3,7 +3,6 @@ using SpriteMaster.Types;
 
 using System;
 using System.Buffers;
-using System.Data.HashFunction.xxHash;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;

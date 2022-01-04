@@ -18,6 +18,7 @@ static class Cleanup {
 	}
 
 	private static readonly ThreadLocal<object> CurrentFinalizer = new ThreadLocal<object>();
+	/*
 	[Harmonize("Finalize", Harmonize.Fixation.Prefix, PriorityLevel.First, platform: Harmonize.Platform.All)]
 	private static bool FinalizePre(object __instance) {
 		try {
@@ -25,6 +26,7 @@ static class Cleanup {
 		}
 		catch (ObjectDisposedException) { return true; }
 	}
+	*/
 
 	[Harmonize("Finalize", Harmonize.Fixation.Postfix, PriorityLevel.Last, platform: Harmonize.Platform.All)]
 	private static void FinalizePost(object __instance) {
