@@ -38,7 +38,13 @@ static class ColorConstant {
 	internal static ushort Color8To16(byte value) => (ushort)((value << 8) | value);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static byte Color16To8(ushort value) => (byte)((uint)((value * 0xFF01) + 0x800000) >> 24);
+	internal static byte Color16To8Fast(ushort value) => (byte)((uint)((value * 0xFF01) + 0x800000) >> 24);
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static byte Color16To8Accurate(ushort value) => (byte)(((uint)value + 128) / 0x101);
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static byte Color16to8(ushort value) => Color16To8Accurate(value);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static half Color8ToHalf(byte value) {

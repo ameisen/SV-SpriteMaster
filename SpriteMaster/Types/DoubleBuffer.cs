@@ -60,8 +60,8 @@ sealed class DoubleBuffer<T> {
 
 	internal DoubleBuffer(params object[] parameters) : this(
 		// We do, indeed, want to create two seperate instances.
-		Reflection.CreateInstance<T>(parameters),
-		Reflection.CreateInstance<T>(parameters)
+		ReflectionExt.CreateInstance<T>(parameters),
+		ReflectionExt.CreateInstance<T>(parameters)
 	) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]

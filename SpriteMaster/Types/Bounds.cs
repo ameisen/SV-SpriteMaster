@@ -257,7 +257,7 @@ struct Bounds :
 	};
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly override int GetHashCode() => (int)Hash.Combine(Offset.GetHashCode(), Extent.GetHashCode());
+	public readonly override int GetHashCode() => (int)HashCode.Combine(Offset.GetHashCode(), Extent.GetHashCode());
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public readonly override bool Equals(object other) => other switch {

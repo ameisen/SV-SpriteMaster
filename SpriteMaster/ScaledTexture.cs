@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Pastel;
 using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
+using SpriteMaster.Resample;
 using SpriteMaster.Types;
 using System;
 using System.Collections.Generic;
@@ -214,7 +215,7 @@ sealed partial class ScaledTexture : IDisposable {
 		}
 
 		// If this is null, it can only happen due to something being blocked, so we should try again later.
-		if (textureWrapper.Data is null) {
+		if (textureWrapper.ReferenceData is null) {
 			Debug.TraceLn($"Texture Data fetch for {getNameString()} was {"blocked".Pastel(DrawingColor.Red)}; retrying later#{getRemainingTime()}");
 			return null;
 		}
@@ -319,10 +320,10 @@ sealed partial class ScaledTexture : IDisposable {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static void Purge(Texture2D reference, in Bounds? bounds, DataRef<byte> data) {
+	internal static void Purge(Texture2D reference, in Bounds? bounds, in DataRef<byte> data) {
 		SpriteInfo.Purge(reference, bounds, data);
 		SpriteMap.Purge(reference, bounds);
-		Upscaler.PurgeHash(reference);
+		Resampler.PurgeHash(reference);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -380,7 +381,7 @@ sealed partial class ScaledTexture : IDisposable {
 
 		ulong GetHash() {
 			using (Performance.Track("Upscaler.GetHash")) {
-				return Upscaler.GetHash(textureWrapper, textureType);
+				return Resampler.GetHash(textureWrapper, textureType);
 			}
 		}
 
@@ -410,7 +411,7 @@ sealed partial class ScaledTexture : IDisposable {
 				using var _ = new AsyncTracker($"Resampling {Name} [{sourceRectangle}]");
 				Thread.CurrentThread.Name = "Texture Resampling Thread";
 				Hash = GetHash();
-				Upscaler.Upscale(
+				Resampler.Upscale(
 					texture: this,
 					scale: ref refScale,
 					input: wrapper,
@@ -425,7 +426,7 @@ sealed partial class ScaledTexture : IDisposable {
 		else {
 			// TODO store the HD Texture in _this_ object instead. Will confuse things like subtexture updates, though.
 			Hash = GetHash();
-			this.Texture = Upscaler.Upscale(
+			this.Texture = Resampler.Upscale(
 				texture: this,
 				scale: ref refScale,
 				input: textureWrapper,

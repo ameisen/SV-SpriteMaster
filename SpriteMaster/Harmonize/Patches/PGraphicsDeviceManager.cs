@@ -3,6 +3,8 @@ using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
 using SpriteMaster.Types;
+using StardewValley;
+using StardewValley.Menus;
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -24,35 +26,132 @@ static class PGraphicsDeviceManager {
 	}
 	*/
 
-	private struct State {
-		bool Initialized;
-		bool IsFullscreen;
-		int Width;
-		int Height;
-
-		internal State(bool initialized) {
-			Initialized = initialized;
-			IsFullscreen = false;
-			Width = int.MinValue;
-			Height = int.MinValue;
-		}
+	private struct DeviceState {
+		internal Vector2I Size = new(int.MinValue);
+		internal bool Initialized = false;
+		internal bool IsFullscreen = false;
 
 		internal bool Dirty(GraphicsDeviceManager instance) {
 			bool isFullscreen = instance.IsFullScreen;
-			int width = instance.PreferredBackBufferWidth;
-			int height = instance.PreferredBackBufferHeight;
+			Vector2I size = (
+				instance.PreferredBackBufferWidth,
+				instance.PreferredBackBufferHeight
+			);
 
-			if (!Initialized || IsFullscreen != isFullscreen || Width != width || Height != height) {
-				Initialized = true;
-				IsFullscreen = isFullscreen;
-				Width = width;
-				Height = height;
+			if (Initialized && IsFullscreen == isFullscreen && Size == size) {
+				return false;
+			}
+
+			Initialized = true;
+			IsFullscreen = isFullscreen;
+			Size = size;
+			return true;
+		}
+	}
+	private static DeviceState LastState = new();
+
+	private struct GameWindowState {
+		internal Vector2I Size = new(int.MinValue);
+		internal int GameInstanceCount = 0;
+		internal int GameInstanceIndex = 0;
+		internal float ZoomModifier = 0.0f;
+		internal bool Initialized = false;
+		internal bool IsFullscreen = false;
+		internal bool OverrideGameMenuReset = false;
+
+		// Windows
+		internal StardewValley.Menus.TextEntryMenu TextEntry = null;
+		internal StardewValley.Minigames.IMinigame CurrentMinigame = null;
+		internal IClickableMenu ActiveClickableMenu = null;
+		internal int ACMCurrentTab = int.MinValue;
+		internal IClickableMenu ACMCurrentPage = null;
+		internal WeakReference<IClickableMenu>[] OnScreenMenus = null;
+
+		private bool CheckWindowsDirty(StardewValley.Game1 instance) {
+			return
+				Game1.textEntry != TextEntry ||
+				Game1.currentMinigame != CurrentMinigame ||
+				Game1.activeClickableMenu != ActiveClickableMenu ||
+				(Game1.activeClickableMenu as GameMenu)?.GetCurrentPage() != ACMCurrentPage;
+		}
+
+		private bool CheckOnScreenMenusDirty() {
+			var onscreenMenus = Game1.onScreenMenus;
+			if (onscreenMenus is null != OnScreenMenus is null) {
 				return true;
+			}
+			if (onscreenMenus is null) {
+				return true;
+			}
+			if (onscreenMenus.Count != OnScreenMenus.Length) {
+				return true;
+			}
+			for (int i = 0; i < onscreenMenus.Count; ++i) {
+				if (OnScreenMenus[i] is null) {
+					return onscreenMenus[i] is not null;
+				}
+				if (!(OnScreenMenus[i].TryGetTarget(out var menu))) {
+					return true;
+				}
+				if (menu != onscreenMenus[i]) {
+					return true;
+				}
 			}
 			return false;
 		}
+
+		private void SetOnScreenMenusDirty() {
+			if (Game1.onScreenMenus is null) {
+				OnScreenMenus = null;
+			}
+			OnScreenMenus = new WeakReference<IClickableMenu>[Game1.onScreenMenus.Count];
+			for (int i = 0; i < Game1.onScreenMenus.Count; ++i) {
+				if (Game1.onScreenMenus[i] is null) {
+					OnScreenMenus[i] = null;
+					continue;
+				}
+				OnScreenMenus[i] = Game1.onScreenMenus[i].MakeWeak();
+			}
+		}
+
+		private void SetWindowsDirty(StardewValley.Game1 instance) {
+			TextEntry = Game1.textEntry;
+			CurrentMinigame = Game1.currentMinigame;
+			ActiveClickableMenu = Game1.activeClickableMenu;
+			ACMCurrentPage = (Game1.activeClickableMenu as GameMenu)?.GetCurrentPage();
+		}
+
+		internal bool Dirty(StardewValley.Game1 instance, Vector2I size) {
+			bool isFullscreen = Game1.graphics.IsFullScreen;
+			int gameInstanceCount = GameRunner.instance.gameInstances.Count;
+
+			if (
+				Initialized &&
+				IsFullscreen == isFullscreen &&
+				Size == size &&
+				GameInstanceCount == gameInstanceCount &&
+				GameInstanceIndex == instance.instanceIndex &&
+				ZoomModifier == instance.zoomModifier && // TODO : should we use approximate equality?
+				OverrideGameMenuReset == Game1.overrideGameMenuReset &&
+				!CheckWindowsDirty(instance) &&
+				!CheckOnScreenMenusDirty()
+			) {
+				return false;
+			}
+
+			Initialized = true;
+			IsFullscreen = isFullscreen;
+			Size = size;
+			GameInstanceCount = gameInstanceCount;
+			GameInstanceIndex = instance.instanceIndex;
+			ZoomModifier = instance.zoomModifier;
+			OverrideGameMenuReset = Game1.overrideGameMenuReset;
+			SetWindowsDirty(instance);
+			SetOnScreenMenusDirty();
+			return true;
+		}
 	}
-	private static State LastState = new(false);
+	private static GameWindowState LastGameWindowState = new();
 
 	[Harmonize(typeof(Microsoft.Xna.Framework.Graphics.RenderTarget2D), Harmonize.Constructor, Harmonize.Fixation.Prefix, PriorityLevel.Last)]
 	internal static bool OnRenderTarget2DConstruct(
@@ -125,47 +224,19 @@ static class PGraphicsDeviceManager {
 		}
 	}
 
+	// This is an additional patch to try to reduce the number of superfluous state changes
 	/*
-	[Harmonize(typeof(StardewValley.Game1), "SetWindowSize", Harmonize.Fixation.Postfix, PriorityLevel.Last)]
-	internal static void OnSetWindowSize(StardewValley.Game1 __instance, int w, int h) {
-		GraphicsDevice device = null;
-		if (!LastGraphicsDevice?.TryGetTarget(out device) ?? false || device == null) {
-			return;
-		}
+	[Harmonize(typeof(StardewValley.Game1), "SetWindowSize", Fixation.Prefix, PriorityLevel.Last, critical: false)]
+	internal static bool OnSetWindowSize(StardewValley.Game1 __instance, int w, int h) {
+		bool dirty = false;
 
-		int multisampleCount = Config.DrawState.EnableMSAA ? 16 : 1;
-		var depthFormat = device.PresentationParameters.DepthStencilFormat;
-		var colorFormat = device.PresentationParameters.BackBufferFormat;
+		dirty = LastGameWindowState.Dirty(__instance, (w, h)) || dirty;
+		dirty = Game1.graphics.SynchronizeWithVerticalRetrace != Game1.options.vsyncEnabled || dirty;
 
-		var oldScreen = __instance.screen;
-		var oldUIScreen = __instance.uiScreen;
-		RenderTarget2D newScreen = null;
-		RenderTarget2D newUIScreen = null;
-		try {
-			Vector2I screenExtent = oldScreen.Extent();
-			Vector2I uiScreenExtent = oldUIScreen.Extent();
+		dirty = __instance.screen is null || dirty;
+		dirty = __instance.uiScreen is null || dirty;
 
-			newScreen = new RenderTarget2D(device, screenExtent.X, screenExtent.Y, mipMap: false, colorFormat, depthFormat, multisampleCount, RenderTargetUsage.PreserveContents) {
-				Name = oldScreen.Name
-			};
-			newUIScreen = new RenderTarget2D(device, uiScreenExtent.X, uiScreenExtent.Y, mipMap: false, colorFormat, depthFormat, multisampleCount, RenderTargetUsage.PreserveContents) {
-				Name = oldUIScreen.Name
-			};
-
-			__instance.screen = newScreen;
-			__instance.uiScreen = newUIScreen;
-
-			oldScreen.Dispose();
-			oldUIScreen.Dispose();
-		}
-		catch {
-			__instance.screen = oldScreen;
-			__instance.uiScreen = oldUIScreen;
-			newScreen?.Dispose();
-			newUIScreen?.Dispose();
-		}
-
-		return;
+		return dirty;
 	}
 	*/
 

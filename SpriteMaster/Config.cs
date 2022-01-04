@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
+using SpriteMaster.Resample;
 using SpriteMaster.Types;
 using StardewModdingAPI;
 using System;
@@ -40,7 +41,7 @@ static class Config {
 
 	internal static string ConfigVersion = "";
 	[ConfigIgnore]
-	internal static string ClearConfigBefore = "0.13.0.0";
+	internal static string ClearConfigBefore = "0.14.0.0";
 
 	[Comment("Should SpriteMaster be enabled?")]
 	internal static bool Enabled = true;
@@ -134,11 +135,11 @@ static class Config {
 		[Comment("Should texture rescaling be enabled?")]
 		internal static bool Scale = Enabled;
 		[Comment("What scaling algorithm should be used?")]
-		internal const Upscaler.Scaler Scaler = Upscaler.Scaler.xBRZ;
+		internal const Resampler.Scaler Scaler = Resampler.Scaler.xBRZ;
 		[Comment("Should dynamic scaling be used (scaling based upon apparent sprite size)")]
 		internal const bool EnableDynamicScale = true;
 		[Comment("Should we assume that input sprites are gamma corrected?")]
-		internal static bool AssumeGammaCorrected = true;
+		internal static bool AssumeGammaCorrected = false;
 		[Comment("Should the scale factor of water be adjusted to account for water sprites being unusual?")]
 		internal static bool TrimWater = true;
 		[Comment("Positive bias applied to sprite scaling calculations")]

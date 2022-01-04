@@ -202,7 +202,7 @@ static class Deposterize {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		private unsafe void DeposterizeH(in Span<ColorElement> inData, in Span<ColorElement> outData) {
+		private unsafe void DeposterizeH(Span<ColorElement> inData, Span<ColorElement> outData) {
 			int minY = 0;
 			int maxY = Size.Height;
 
@@ -234,7 +234,7 @@ static class Deposterize {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		private unsafe void DeposterizeV(in Span<ColorElement> inData, in Span<ColorElement> outData) {
+		private unsafe void DeposterizeV(Span<ColorElement> inData, Span<ColorElement> outData) {
 			int minY = Wrapped.Y ? 0 : 1;
 			int maxY = Wrapped.Y ? Size.Height : Math.Max(1, Size.Height - 1);
 

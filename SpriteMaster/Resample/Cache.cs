@@ -12,7 +12,7 @@ namespace SpriteMaster.Resample;
 static class Cache {
 	private const string TextureCacheName = "TextureCache";
 	private const string JunctionCacheName = $"{TextureCacheName}_Current";
-	private static readonly Version AssemblyVersion = typeof(Upscaler).Assembly.GetName().Version;
+	private static readonly Version AssemblyVersion = typeof(Resampler).Assembly.GetName().Version;
 	private static readonly Version RuntimeVersion = typeof(Runtime).Assembly.GetName().Version;
 	private static readonly ulong AssemblyHash = AssemblyVersion.GetSafeHash().Fuse(RuntimeVersion.GetSafeHash()).Unsigned();
 	private static readonly string CacheName = $"{TextureCacheName}_{AssemblyVersion}";

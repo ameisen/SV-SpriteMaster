@@ -23,7 +23,7 @@ static class Textures {
 			case SurfaceFormat.Dxt1:
 			case SurfaceFormat.Dxt1SRgb:
 			case SurfaceFormat.Dxt1a:
-			case var _ when format == TextureFormat.DXT1a:
+			case var _ when format == TextureFormat.BC1a:
 				return texels / 2;
 		}
 
@@ -55,36 +55,33 @@ static class Textures {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static bool IsBlock(this SurfaceFormat format) {
-		switch (format) {
-			case SurfaceFormat.Dxt1:
-			case SurfaceFormat.Dxt1SRgb:
-			case SurfaceFormat.Dxt3:
-			case SurfaceFormat.Dxt3SRgb:
-			case SurfaceFormat.Dxt5:
-			case SurfaceFormat.Dxt5SRgb:
-			case SurfaceFormat.Dxt1a:
-				return true;
-			default:
-				return false;
-		}
-	}
+	internal static bool IsCompressed(this SurfaceFormat format) => format switch {
+		SurfaceFormat.Dxt1 or
+		SurfaceFormat.Dxt1SRgb or
+		SurfaceFormat.Dxt3 or
+		SurfaceFormat.Dxt3SRgb or
+		SurfaceFormat.Dxt5 or
+		SurfaceFormat.Dxt5SRgb or
+		SurfaceFormat.Dxt1a
+		=> true,
+		_ => false
+	};
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static int BlockEdge(this SurfaceFormat format) {
-		switch (format) {
-			case SurfaceFormat.Dxt1:
-			case SurfaceFormat.Dxt1SRgb:
-			case SurfaceFormat.Dxt3:
-			case SurfaceFormat.Dxt3SRgb:
-			case SurfaceFormat.Dxt5:
-			case SurfaceFormat.Dxt5SRgb:
-			case SurfaceFormat.Dxt1a:
-				return 4;
-			default:
-				return 1;
-		}
-	}
+	internal static bool IsBlock(this SurfaceFormat format) => IsCompressed(format);
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static int BlockEdge(this SurfaceFormat format) => format switch {
+		SurfaceFormat.Dxt1 or
+		SurfaceFormat.Dxt1SRgb or
+		SurfaceFormat.Dxt3 or
+		SurfaceFormat.Dxt3SRgb or
+		SurfaceFormat.Dxt5 or
+		SurfaceFormat.Dxt5SRgb or
+		SurfaceFormat.Dxt1a
+		=> 4,
+		_ => 1
+	};
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static long SizeBytes(this Texture2D texture) => texture.Format.SizeBytes(texture.Area());

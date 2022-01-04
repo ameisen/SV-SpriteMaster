@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
+using System;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using TeximpNet.Compression;
@@ -19,37 +20,39 @@ readonly struct TextureFormat {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static implicit operator SurfaceFormat(TextureFormat format) {
-		return format.surfaceFormat;
-	}
+	public static implicit operator SurfaceFormat(TextureFormat format) => format.surfaceFormat;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static implicit operator CompressionFormat(TextureFormat format) {
-		return format.compressionFormat;
-	}
+	public static implicit operator CompressionFormat(TextureFormat format) => format.compressionFormat;
+
+	internal readonly bool IsSupported => Config.Resample.SupportedFormats.Contains(this);
+
+	internal readonly TextureFormat? SupportedOr => IsSupported ? this : null;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly long SizeBytes(int area) {
-		return surfaceFormat.SizeBytes(area);
-	}
-
-	internal static readonly SurfaceFormat SF_DXT1a = SurfaceFormatExt.GetSurfaceFormat("Dxt1a");
+	internal readonly long SizeBytes(int area) => surfaceFormat.SizeBytes(area);
 
 	internal static readonly TextureFormat Color = new(SurfaceFormat.Color, CompressionFormat.BGRA);
-	internal static readonly TextureFormat DXT5 = new(SurfaceFormat.Dxt5, CompressionFormat.DXT5);
-	internal static readonly TextureFormat DXT3 = new(SurfaceFormat.Dxt3, CompressionFormat.DXT3);
-	// https://github.com/labnation/MonoGame/blob/master/MonoGame.Framework/Graphics/SurfaceFormat.cs#L126
-	internal static readonly TextureFormat DXT1a = new(SF_DXT1a, CompressionFormat.DXT1a);
-	internal static readonly TextureFormat DXT1 = new(SurfaceFormat.Dxt1, CompressionFormat.DXT1);
+	internal static readonly TextureFormat ColorS = new(SurfaceFormat.ColorSRgb, CompressionFormat.BGRA);
 
-	private static TextureFormat SupportedOr(TextureFormat format, TextureFormat other) {
-		return Config.Resample.SupportedFormats.Contains(format) ? format : other;
-	}
+	internal static readonly TextureFormat ColorHalf = new(SurfaceFormat.Bgra4444, CompressionFormat.BGRA);
+	internal static readonly TextureFormat ColorHalfPunchthroughAlpha = new(SurfaceFormat.Bgra5551, CompressionFormat.BGRA);
+	internal static readonly TextureFormat ColorHalfNoAlpha = new(SurfaceFormat.Bgr565, CompressionFormat.BGRA);
 
-	internal static readonly TextureFormat WithAlpha = SupportedOr(DXT5, Color);
-	internal static readonly TextureFormat WithHardAlpha = SupportedOr(DXT3, Color);
-	internal static readonly TextureFormat WithPunchthroughAlpha = SupportedOr(DXT1a, WithHardAlpha);
-	internal static readonly TextureFormat NoAlpha = SupportedOr(DXT1, WithPunchthroughAlpha);
+	internal static readonly TextureFormat AlphaOnly = new(SurfaceFormat.Alpha8, CompressionFormat.BGRA);
+
+	internal static readonly TextureFormat BC3 = new(SurfaceFormat.Dxt5, CompressionFormat.BC3);
+	internal static readonly TextureFormat BC3S = new(SurfaceFormat.Dxt5SRgb, CompressionFormat.BC3);
+	internal static readonly TextureFormat BC2 = new(SurfaceFormat.Dxt3, CompressionFormat.BC2);
+	internal static readonly TextureFormat BC2S = new(SurfaceFormat.Dxt3SRgb, CompressionFormat.BC2);
+	internal static readonly TextureFormat BC1a = new(SurfaceFormat.Dxt1a, CompressionFormat.BC1a);
+	internal static readonly TextureFormat BC1 = new(SurfaceFormat.Dxt1, CompressionFormat.BC1);
+	internal static readonly TextureFormat BC1S = new(SurfaceFormat.Dxt1SRgb, CompressionFormat.BC1);
+
+	internal static readonly TextureFormat WithAlpha =							BC3.SupportedOr ?? BC2.SupportedOr ?? Color.SupportedOr ?? BC1a.SupportedOr ?? BC1;
+	internal static readonly TextureFormat WithHardAlpha =					BC2.SupportedOr ?? WithAlpha;
+	internal static readonly TextureFormat WithPunchthroughAlpha =	BC1a.SupportedOr ?? WithHardAlpha;
+	internal static readonly TextureFormat WithNoAlpha =						BC1.SupportedOr ?? WithPunchthroughAlpha;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static TextureFormat? Get(CompressionFormat format) {

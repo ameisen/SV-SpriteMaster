@@ -25,11 +25,11 @@ static class SerializeConfig {
 		ulong hash = default;
 
 		foreach (var field in type.GetFields(StaticFlags)) {
-			hash = Hash.Combine(hash, field.GetValue(null).GetLongHashCode());
+			hash = Hashing.Combine(hash, field.GetValue(null).GetLongHashCode());
 		}
 
 		foreach (var child in type.GetNestedTypes(StaticFlags)) {
-			hash = Hash.Combine(hash, HashClass(child));
+			hash = Hashing.Combine(hash, HashClass(child));
 		}
 
 		return hash;

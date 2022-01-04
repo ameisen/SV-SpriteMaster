@@ -4,7 +4,6 @@ using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using SpriteMaster.Types.Interlocked;
 using System;
-using System.Runtime.Caching;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using SpriteDictionary = System.Collections.Generic.Dictionary<ulong, SpriteMaster.ScaledTexture>;
@@ -25,12 +24,22 @@ sealed class MTexture2D {
 
 	internal bool ScaleValid = true;
 	internal bool IsSystemRenderTarget = false;
+	internal bool IsCompressed = false;
+	internal SurfaceFormat Format;
+	internal Vector2I Size;
 
 	internal InterlockedULong LastAccessFrame { get; private set; } = (ulong)DrawState.CurrentFrame;
 	internal InterlockedULong Hash { get; private set; } = Hashing.Default;
 
+	internal MTexture2D(Texture2D texture) {
+		IsCompressed = texture.Format.IsCompressed();
+		Format = texture.Format;
+		Size = texture.Extent();
+	}
+
 	// TODO : this presently is not threadsafe.
 	private readonly WeakReference<byte[]> _CachedData = (Config.MemoryCache.Enabled) ? new(null) : null;
+	private readonly WeakReference<byte[]> _CachedRawData = (Config.MemoryCache.Enabled) ? new(null) : null;
 
 	internal bool HasCachedData {
 		[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -48,13 +57,13 @@ sealed class MTexture2D {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal unsafe void Purge(Texture2D reference, in Bounds? bounds, in DataRef<byte> data) {
 		using (Lock.Exclusive) {
-			bool hasCachedData = CachedData is not null;
+			bool hasCachedData = CachedRawData is not null;
 
 			if (data.IsNull) {
 				if (!hasCachedData) {
 					Debug.TraceLn($"Clearing '{reference.SafeName(DrawingColor.LightYellow)}' Cache");
 				}
-				CachedData = null;
+				CachedRawData = null;
 				return;
 			}
 
@@ -69,10 +78,10 @@ sealed class MTexture2D {
 				}
 				else if (!bounds.HasValue && data.Offset == 0 && data.Length == refSize) {
 					Debug.TraceLn($"{(hasCachedData ? "Overriding" : "Setting")} '{reference.SafeName(DrawingColor.LightYellow)}' Cache in Purge: {bounds.HasValue}, {data.Offset}, {data.Length}");
-					CachedData = data.Data;
+					CachedRawData = data.Data;
 				}
 				// TODO : This doesn't update the compressed cache.
-				else if (!bounds.HasValue && CachedData is var currentData && currentData is not null) {
+				else if (!IsCompressed && !bounds.HasValue && CachedRawData is var currentData && currentData is not null) {
 					Debug.TraceLn($"{(hasCachedData ? "Updating" : "Setting")} '{reference.SafeName(DrawingColor.LightYellow)}' Cache in Purge: {bounds.HasValue}");
 					var byteSpan = data.Data;
 					var untilOffset = Math.Min(currentData.Length - data.Offset, data.Length);
@@ -80,7 +89,7 @@ sealed class MTexture2D {
 						currentData[i + data.Offset] = byteSpan[i];
 					}
 					Hash = Hashing.Default;
-					CachedData = currentData; // Force it to update the global cache.
+					CachedRawData = currentData; // Force it to update the global cache.
 				}
 				else {
 					if (hasCachedData) {
@@ -96,7 +105,7 @@ sealed class MTexture2D {
 
 			// TODO : maybe we need to purge more often?
 			if (forcePurge && hasCachedData) {
-				CachedData = null;
+				CachedRawData = null;
 			}
 		}
 	}
@@ -111,14 +120,14 @@ sealed class MTexture2D {
 			}
 
 			using (Lock.TryShared) {
-				_CachedData.TryGetTarget(out var target);
+				_CachedRawData.TryGetTarget(out var target);
 				return target;
 			}
 			return BlockedSentinel;
 		}
 	}
 
-	internal byte[] CachedData {
+	internal byte[] CachedRawData {
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		get {
 			if (!Config.MemoryCache.Enabled) {
@@ -126,7 +135,7 @@ sealed class MTexture2D {
 			}
 
 			using (Lock.Shared) {
-				_CachedData.TryGetTarget(out var target);
+				_CachedRawData.TryGetTarget(out var target);
 				return target;
 			}
 		}
@@ -139,11 +148,12 @@ sealed class MTexture2D {
 
 				TracePrinted = false;
 
-				//if (_CachedData.TryGetTarget(out var target) && target == value) {
+				//if (_CachedRawData.TryGetTarget(out var target) && target == value) {
 				//	return;
 				//}
 				if (value is null) {
 					using (Lock.Promote) {
+						_CachedRawData.SetTarget(null);
 						_CachedData.SetTarget(null);
 						ResidentCache.Remove<byte[]>(UniqueIDString);
 					}
@@ -151,13 +161,37 @@ sealed class MTexture2D {
 				else {
 					using (Lock.Promote) {
 						ResidentCache.Set(UniqueIDString, value);
-						_CachedData.SetTarget(value);
+						_CachedRawData.SetTarget(value);
+						if (!IsCompressed) {
+							_CachedData.SetTarget(value);
+						}
+						else {
+							_CachedData.SetTarget(null);
+							ThreadQueue.Queue((meta) => {
+								if (meta._CachedRawData.TryGetTarget(out var rawData)) {
+									var uncompressedData = Resample.TextureDecode.DecodeBlockCompressedTexture(Format, Size, rawData);
+									if (uncompressedData == null || uncompressedData.Length == 0) {
+										throw new InvalidOperationException("Compressed data failed to decompress");
+									}
+									_CachedData.SetTarget(uncompressedData.ToArray());
+								}
+							}, this);
+						}
 					}
 				}
 			}
 			finally {
 				Hash = default;
 			}
+		}
+	}
+
+	internal byte[] CachedData {
+		get {
+			if (_CachedData.TryGetTarget(out var data)) {
+				return data;
+			}
+			return null;
 		}
 	}
 
@@ -171,7 +205,7 @@ sealed class MTexture2D {
 		using (Lock.Shared) {
 			ulong hash = Hash;
 			if (hash == Hashing.Default) {
-				hash = info.Hash;
+				hash = info.ReferenceData.Hash();
 				using (Lock.Promote) {
 					Hash = hash;
 				}

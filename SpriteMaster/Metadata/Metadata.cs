@@ -8,7 +8,7 @@ static class Metadata {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static MTexture2D Meta(this Texture2D @this) {
-		return Texture2DMetaTable.GetOrCreateValue(@this);
+		return Texture2DMetaTable.GetValue(@this, key => new(key));
 	}
 }
 

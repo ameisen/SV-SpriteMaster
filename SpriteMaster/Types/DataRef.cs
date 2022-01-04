@@ -1,4 +1,5 @@
 ﻿using SpriteMaster.Extensions;
+using System;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Types;
@@ -52,6 +53,6 @@ readonly ref struct DataRef<T> where T : struct {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public readonly override int GetHashCode() {
 		// TODO : This isn't right. We need to hash Data _from_ the offset.
-		return (int)Hash.Combine(Data.GetHashCode(), Offset.GetHashCode());
+		return HashCode.Combine(Data.GetHashCode(), Offset.GetHashCode());
 	}
 }

@@ -2,11 +2,7 @@
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SpriteMaster;
 
@@ -20,4 +16,23 @@ static class SpriteOverrides {
 		}
 		return false;
 	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static bool IsFont(Texture2D texture, in Vector2I spriteSize, in Vector2I sheetSize) {
+		switch (texture.Format) {
+			case SurfaceFormat.Dxt1:
+			case SurfaceFormat.Dxt1SRgb:
+			case SurfaceFormat.Dxt1a:
+			case SurfaceFormat.Dxt3:
+			case SurfaceFormat.Dxt3SRgb:
+			case SurfaceFormat.Dxt5:
+			case SurfaceFormat.Dxt5SRgb:
+				return Math.Min(spriteSize.MinOf, sheetSize.MinOf) >= 1;
+			default:
+				return false;
+		}
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static bool IsFont(SpriteInfo info) => IsFont(info.Reference, info.Size.Extent, info.ReferenceSize);
 }

@@ -1,5 +1,4 @@
-﻿using SpriteMaster.Extensions;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Types;
 static class LongHash {
@@ -14,7 +13,7 @@ static class LongHash {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static ulong From(int hashCode) => Hash.Combine(hashCode, hashCode << 32);
+	internal static ulong From(int hashCode) => Hashing.Combine(hashCode, hashCode << 32);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ulong From(ILongHash obj) => obj.GetLongHashCode();

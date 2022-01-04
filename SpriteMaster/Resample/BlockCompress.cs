@@ -1,7 +1,9 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+﻿using Microsoft.Toolkit.HighPerformance;
+using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using System;
+using System.Diagnostics;
 using System.Drawing.Imaging;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -11,6 +13,40 @@ using TeximpNet.DDS;
 namespace SpriteMaster.Resample;
 
 static class BlockCompress {
+	// A very simple implementation
+
+	[DebuggerDisplay("[{X}, {Y}}")]
+	[StructLayout(LayoutKind.Sequential, Pack = sizeof(ulong), Size = sizeof(ulong))]
+	private ref struct Vector2U {
+		internal uint X;
+		internal uint Y;
+
+		internal uint Width {
+			readonly get => X;
+			set => X = value;
+		}
+		internal uint Height {
+			readonly get => Y;
+			set => Y = value;
+		}
+
+		internal uint Area => X * Y;
+
+		internal Vector2U(uint x, uint y) {
+			X = x;
+			Y = y;
+		}
+
+		internal Vector2U(Vector2I vec) : this((uint)vec.X, (uint)vec.Y) { }
+		internal Vector2U(in (uint X, uint Y) vec) : this(vec.X, vec.Y) {}
+
+		public static implicit operator Vector2U(Vector2I vec) => new(vec);
+		public static implicit operator Vector2U(in (uint X, uint Y) vec) => new(vec);
+		public static implicit operator Vector2I(Vector2U vec) => new((int)vec.X, (int)vec.Y);
+
+		public override readonly string ToString() => $"{{{X}, {Y}}}";
+	}
+
 	// We set this to false if block compression fails, as we assume that for whatever reason nvtt does not work on that system.
 	private static volatile bool BlockCompressionFunctional = true;
 
@@ -43,7 +79,7 @@ static class BlockCompress {
 				compressor.Input.GenerateMipmaps = false;
 				var textureFormat =
 					(!HasAlpha) ?
-						TextureFormat.NoAlpha :
+						TextureFormat.WithNoAlpha :
 						((false && IsPunchThroughAlpha && Config.Resample.BlockCompression.Quality != CompressionQuality.Fastest) ?
 							TextureFormat.WithPunchthroughAlpha :
 							(IsMasky ?
@@ -112,13 +148,16 @@ static class BlockCompress {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static bool IsBlockMultiple(int value) => (value % 4) == 0;
+	internal static bool IsBlockMultiple(int value) => (value & 3) == 0;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static bool IsBlockMultiple(uint value) => (value % 4) == 0;
+	internal static bool IsBlockMultiple(uint value) => (value & 3) == 0;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static bool IsBlockMultiple(Vector2I value) => IsBlockMultiple(value.X) && IsBlockMultiple(value.Y);
+	internal static bool IsBlockMultiple(Vector2I value) => IsBlockMultiple(value.X | value.Y);
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	private static bool IsBlockMultiple(Vector2U value) => IsBlockMultiple(value.X | value.Y);
 
 	// https://www.khronos.org/opengl/wiki/S3_Texture_Compression
 	[StructLayout(LayoutKind.Explicit, Pack = 1, Size = 8)]
@@ -127,7 +166,7 @@ static class BlockCompress {
 
 		// Color should appear as BGR, 565.
 		[StructLayout(LayoutKind.Explicit, Pack = 1, Size = 2)]
-		private unsafe struct Color565 {
+		private unsafe readonly struct Color565 {
 			[FieldOffset(0)]
 			internal readonly ushort Packed;
 
@@ -190,58 +229,56 @@ static class BlockCompress {
 		[FieldOffset(4)]
 		private fixed byte codes[4];
 
-		private readonly byte GetCode(uint x, uint y) {
-			var code = codes[y];
-			return (byte)((byte)(code >> (int)(x * 2)) & 0b11);
+		private readonly byte GetCode(Vector2U position) {
+			var code = codes[position.Y];
+			return (byte)((byte)(code >> (int)(position.X << 1)) & 0b11);
 		}
 
-		private static uint Pack(uint b, uint g, uint r) {
-			return
-				(uint)b << 16 |
-				(uint)g << 8 |
-				(uint)r;
-		}
+		private static uint Pack(uint b, uint g, uint r) =>
+			(b << 16) |
+			(g << 8) |
+			r;
 
 		// Returns the color, hopefully, as ABGR
-		internal readonly uint GetColor(uint x, uint y) {
+		internal readonly uint GetColor(Vector2U position) {
 			if (color0.Packed > color1.Packed) {
-				var code = GetCode(x, y);
+				var code = GetCode(position);
 				switch (code) {
 					case 0:
 						return color0.AsPacked;
 					case 1:
 						return color1.AsPacked;
 					case 2: {
-							var b = (uint)(2 * color0.B + color1.B) / 3;
-							var g = (uint)(2 * color0.G + color1.G) / 3;
-							var r = (uint)(2 * color0.R + color1.R) / 3;
+							var b = ((uint)(2U * color0.B + color1.B)) / 3U;
+							var g = ((uint)(2U * color0.G + color1.G)) / 3U;
+							var r = ((uint)(2U * color0.R + color1.R)) / 3U;
 							return Pack(b, g, r);
 						}
 					default:
 					case 3: {
-							var b = (uint)(color0.B + 2 * color1.B) / 3;
-							var g = (uint)(color0.G + 2 * color1.G) / 3;
-							var r = (uint)(color0.R + 2 * color1.R) / 3;
+							var b = ((uint)(color0.B + 2U * color1.B)) / 3U;
+							var g = ((uint)(color0.G + 2U * color1.G)) / 3U;
+							var r = ((uint)(color0.R + 2U * color1.R)) / 3U;
 							return Pack(b, g, r);
 						}
 				}
 			}
 			else {
-				return GetColorDXT3(x, y);
+				return GetColorDXT3(position);
 			}
 		}
 
-		internal readonly uint GetColorDXT3(uint x, uint y) {
-			var code = GetCode(x, y);
+		internal readonly uint GetColorDXT3(Vector2U position) {
+			var code = GetCode(position);
 			switch (code) {
 				case 0:
 					return color0.AsPacked;
 				case 1:
 					return color1.AsPacked;
 				case 2: {
-						var b = (uint)(color0.B + color1.B) / 2;
-						var g = (uint)(color0.G + color1.G) / 2;
-						var r = (uint)(color0.R + color1.R) / 2;
+						var b = ((uint)(color0.B + color1.B)) >> 1;
+						var g = ((uint)(color0.G + color1.G)) >> 1;
+						var r = ((uint)(color0.R + color1.R)) >> 1;
 						return Pack(b, g, r);
 					}
 				default:
@@ -259,41 +296,46 @@ static class BlockCompress {
 		[FieldOffset(8)]
 		private readonly ColorBlock Color;
 
-		internal readonly uint GetColor(uint x, uint y) {
-			var alphaValue = (byte)((AlphaBlock[y] >> (int)(x * 4)) & 0b1111);
+		internal readonly uint GetColor(Vector2U position) {
+			var alphaValue = (byte)((AlphaBlock[position.Y] >> (int)(position.X * 4)) & 0b1111);
 			uint alpha = ((uint)alphaValue * 0b10001u) << 24;
-			return Color.GetColorDXT3(x, y) | alpha;
+			return Color.GetColorDXT3(position) | alpha;
 		}
 	}
 
-	internal static byte[] Decompress(byte[] data, SpriteInfo info) {
-		return Decompress(data, (uint)info.Reference.Width, (uint)info.Reference.Height, info.Reference.Format);
-	}
+	internal static Span<byte> Decompress(ReadOnlySpan<byte> data, SpriteInfo info) => Decompress(
+		data,
+		info.ReferenceSize,
+		info.Reference.Format
+	);
 
-	internal static byte[] Decompress(byte[] data, uint width, uint height, SurfaceFormat format) {
-		if (!IsBlockMultiple(width) || !IsBlockMultiple(height)) {
-			throw new ArgumentException(nameof(width));
+	internal static Span<byte> Decompress(ReadOnlySpan<byte> data, Vector2I size, SurfaceFormat format) {
+		Vector2U uSize = size;
+
+		if (!IsBlockMultiple(uSize)) {
+			throw new ArgumentException($"{nameof(size)}: {uSize} not block multiple");
 		}
 
 		switch (format) {
 			case SurfaceFormat.Dxt1: {
-					using var blocks = data.AsFixedSpan<byte, ColorBlock>();
-					var outData = new byte[width * height * sizeof(uint)];
-					using var outDataPacked = outData.AsFixedSpan<byte, uint>();
-					var widthBlocks = width / 4;
+					var blocks = data.Cast<byte, ColorBlock>();
+					var outData = SpanExt.MakePinned<byte>((int)uSize.Area);
+					var outDataPacked = outData.Cast<byte, uint>();
+
+					var widthBlocks = uSize.Width >> 2;
 
 					uint blockIndex = 0;
 					foreach (var block in blocks) {
 						var index = blockIndex++;
-						var xOffset = (uint)(index % widthBlocks) * 4;
-						var yOffset = (uint)(index / widthBlocks) * 4;
+						var xOffset = (uint)((index & widthBlocks - 1)) << 2;
+						var yOffset = (uint)(index / widthBlocks) << 2;
 
-						foreach (uint y in 0.RangeTo(4)) {
+						for (uint y = 0; y < 4; ++y) {
 							var yOffsetInternal = yOffset + y;
-							foreach (uint x in 0.RangeTo(4)) {
+							for (uint x = 0; x < 4; ++x) {
 								var xOffsetInternal = xOffset + x;
-								var offset = (yOffsetInternal * (uint)width) + xOffsetInternal;
-								outDataPacked[(int)offset] = block.GetColor(x, y) | 0xFF000000U;
+								var offset = (yOffsetInternal * uSize.Width) + xOffsetInternal;
+								outDataPacked[(int)offset] = block.GetColor((x, y)) | 0xFF000000U;
 							}
 						}
 					}
@@ -302,23 +344,24 @@ static class BlockCompress {
 				}
 				break;
 			case SurfaceFormat.Dxt3: {
-					using var blocks = data.AsFixedSpan<byte, ColorBlockDxt3>();
-					var outData = new byte[width * height * sizeof(uint)];
-					using var outDataPacked = outData.AsFixedSpan<byte, uint>();
-					var widthBlocks = width / 4;
+					var blocks = data.Cast<byte, ColorBlockDxt3>();
+					var outData = SpanExt.MakePinned<byte>((int)uSize.Area * sizeof(uint));
+					var outDataPacked = outData.Cast<byte, uint>();
+
+					var widthBlocks = uSize.Width >> 2;
 
 					uint blockIndex = 0;
 					foreach (var block in blocks) {
 						var index = blockIndex++;
-						var xOffset = (uint)(index % widthBlocks) * 4;
-						var yOffset = (uint)(index / widthBlocks) * 4;
+						var xOffset = (uint)((index & widthBlocks - 1)) << 2;
+						var yOffset = (uint)(index / widthBlocks) << 2;
 
-						foreach (uint y in 0.RangeTo(4)) {
+						for (uint y = 0; y < 4; ++y) {
 							var yOffsetInternal = yOffset + y;
-							foreach (uint x in 0.RangeTo(4)) {
+							for (uint x = 0; x < 4; ++x) {
 								var xOffsetInternal = xOffset + x;
-								var offset = (yOffsetInternal * (uint)width) + xOffsetInternal;
-								outDataPacked[(int)offset] = block.GetColor(x, y);
+								var offset = (yOffsetInternal * uSize.Width) + xOffsetInternal;
+								outDataPacked[(int)offset] = block.GetColor((x, y));
 							}
 						}
 					}

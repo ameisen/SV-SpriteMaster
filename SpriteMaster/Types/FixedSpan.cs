@@ -116,6 +116,12 @@ struct FixedSpan<T> : IDisposable where T : unmanaged {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal readonly unsafe Span<T> ToSpan() => new Span<T>(TypedPointer, Length);
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal readonly unsafe ReadOnlySpan<T> ToReadOnlySpan() => new ReadOnlySpan<T>(TypedPointer, Length);
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal readonly U[] ToArray<U>(bool copy = false) where U : unmanaged {
 		using var span = As<U>();
 		return span.ToArray(copy: copy);
