@@ -25,11 +25,9 @@ sealed class SharedLock : CriticalFinalizerObject, IDisposable {
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		internal static ReadCookie TryCreate(LockType rwlock) => rwlock.TryEnterReadLock(0) ? new(rwlock) : new();
 
-		private readonly bool IsDisposed => Lock is null;
-
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		public void Dispose() {
-			if (IsDisposed) {
+			if (Lock is null) {
 				return;
 			}
 
@@ -38,28 +36,26 @@ sealed class SharedLock : CriticalFinalizerObject, IDisposable {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		public static implicit operator bool(in ReadCookie cookie) => !cookie.IsDisposed;
+		public static implicit operator bool(in ReadCookie cookie) => cookie.Lock is not null;
 	}
-	internal ref struct WriteCookie {
+	internal ref struct ExclusiveCookie {
 		private LockType Lock = null;
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		private WriteCookie(LockType rwlock) => Lock = rwlock;
+		private ExclusiveCookie(LockType rwlock) => Lock = rwlock;
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		internal static WriteCookie Create(LockType rwlock) {
+		internal static ExclusiveCookie Create(LockType rwlock) {
 			rwlock.EnterWriteLock();
 			return new(rwlock);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		internal static WriteCookie TryCreate(LockType rwlock) => rwlock.TryEnterWriteLock(0) ? new(rwlock) : new();
-
-		private readonly bool IsDisposed => Lock is null;
+		internal static ExclusiveCookie TryCreate(LockType rwlock) => rwlock.TryEnterWriteLock(0) ? new(rwlock) : new();
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		public void Dispose() {
-			if (IsDisposed) {
+			if (Lock is null) {
 				return;
 			}
 
@@ -68,7 +64,7 @@ sealed class SharedLock : CriticalFinalizerObject, IDisposable {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		public static implicit operator bool(in WriteCookie cookie) => !cookie.IsDisposed;
+		public static implicit operator bool(in ExclusiveCookie cookie) => cookie.Lock is not null;
 	}
 
 	internal ref struct PromotedCookie {
@@ -88,11 +84,9 @@ sealed class SharedLock : CriticalFinalizerObject, IDisposable {
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		internal static PromotedCookie TryCreate(LockType rwlock) => rwlock.TryEnterUpgradeableReadLock(0) ? new(rwlock) : new();
 
-		private readonly bool IsDisposed => Lock is null;
-
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		public void Dispose() {
-			if (IsDisposed) {
+			if (Lock is null) {
 				return;
 			}
 
@@ -101,7 +95,7 @@ sealed class SharedLock : CriticalFinalizerObject, IDisposable {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		public static implicit operator bool(in PromotedCookie cookie) => !cookie.IsDisposed;
+		public static implicit operator bool(in PromotedCookie cookie) => cookie.Lock is not null;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -120,8 +114,8 @@ sealed class SharedLock : CriticalFinalizerObject, IDisposable {
 
 	internal ReadCookie Read => ReadCookie.Create(Lock);
 	internal ReadCookie TryRead => ReadCookie.TryCreate(Lock);
-	internal WriteCookie Write => WriteCookie.Create(Lock);
-	internal WriteCookie TryWrite => WriteCookie.TryCreate(Lock);
+	internal ExclusiveCookie Write => ExclusiveCookie.Create(Lock);
+	internal ExclusiveCookie TryWrite => ExclusiveCookie.TryCreate(Lock);
 	internal PromotedCookie Promote => PromotedCookie.Create(Lock);
 	internal PromotedCookie TryPromote => PromotedCookie.TryCreate(Lock);
 
