@@ -112,7 +112,7 @@ static class Zstd {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static unsafe byte[] Decompress(byte[] data) {
+	internal static byte[] Decompress(byte[] data) {
 		using var decoder = GetDecoder();
 		return decoder.Unwrap(data);
 	}

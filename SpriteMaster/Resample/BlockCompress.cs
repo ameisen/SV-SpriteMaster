@@ -129,7 +129,7 @@ static class BlockCompress {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static unsafe bool Compress(ref byte[] data, ref TextureFormat format, Vector2I dimensions, bool HasAlpha, bool IsPunchThroughAlpha, bool IsMasky, bool HasR, bool HasG, bool HasB) {
+	internal static bool Compress(ref byte[] data, ref TextureFormat format, Vector2I dimensions, bool HasAlpha, bool IsPunchThroughAlpha, bool IsMasky, bool HasR, bool HasG, bool HasB) {
 		var oldFormat = format;
 
 		try {

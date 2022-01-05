@@ -23,13 +23,13 @@ static partial class Hashing {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static unsafe ulong HashXX3(this in FixedSpan<byte> data) => XXHash3.Hash64(data.ToSpan());
+	internal static ulong HashXX3(this in FixedSpan<byte> data) => XXHash3.Hash64(data.ToSpan());
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static unsafe ulong HashXX3(this ReadOnlySpan<byte> data) => XXHash3.Hash64(data);
+	internal static ulong HashXX3(this ReadOnlySpan<byte> data) => XXHash3.Hash64(data);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static unsafe ulong HashXX3(this Span<byte> data) => XXHash3.Hash64(data);
+	internal static ulong HashXX3(this Span<byte> data) => XXHash3.Hash64(data);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static unsafe ulong HashXX3(byte* data, int length) => XXHash3.Hash64(new ReadOnlySpan<byte>(data, length));

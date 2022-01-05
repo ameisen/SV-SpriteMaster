@@ -100,7 +100,7 @@ static class LZMA {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static unsafe byte[] Decompress(byte[] data) {
+	internal static byte[] Decompress(byte[] data) {
 		using var output = new MemoryStream(DecompressedLengthEstimate(data));
 
 		using (var input = new MemoryStream(data)) {

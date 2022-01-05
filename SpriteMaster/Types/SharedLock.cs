@@ -5,137 +5,125 @@ using System.Threading;
 
 namespace SpriteMaster;
 
+using LockType = ReaderWriterLockSlim;
+
 sealed class SharedLock : CriticalFinalizerObject, IDisposable {
-	private ReaderWriterLock Lock = new();
+	private LockType Lock;
 
-	internal struct SharedCookie : IDisposable {
-		private ReaderWriterLock Lock;
+	internal ref struct ReadCookie {
+		private LockType Lock = null;
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		internal SharedCookie(ReaderWriterLock rwlock, int timeout) {
-			Lock = null;
-			rwlock.AcquireReaderLock(timeout);
-			Lock = rwlock;
+		private ReadCookie(LockType rwlock) => Lock = rwlock;
+
+		[MethodImpl(Runtime.MethodImpl.Hot)]
+		internal static ReadCookie Create(LockType rwlock) {
+			rwlock.EnterReadLock();
+			return new(rwlock);
 		}
 
-		internal readonly bool IsDisposed => Lock is null;
+		[MethodImpl(Runtime.MethodImpl.Hot)]
+		internal static ReadCookie TryCreate(LockType rwlock) => rwlock.TryEnterReadLock(0) ? new(rwlock) : new();
+
+		private readonly bool IsDisposed => Lock is null;
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		public void Dispose() {
-			if (Lock == null) {
+			if (IsDisposed) {
 				return;
 			}
 
-			Lock.ReleaseReaderLock();
-
+			Lock.ExitReadLock();
 			Lock = null;
 		}
+
+		[MethodImpl(Runtime.MethodImpl.Hot)]
+		public static implicit operator bool(in ReadCookie cookie) => !cookie.IsDisposed;
 	}
-	internal struct ExclusiveCookie : IDisposable {
-		private ReaderWriterLock Lock;
+	internal ref struct WriteCookie {
+		private LockType Lock = null;
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		internal ExclusiveCookie(ReaderWriterLock rwlock, int timeout) {
-			Lock = null;
-			rwlock.AcquireWriterLock(timeout);
-			Lock = rwlock;
+		private WriteCookie(LockType rwlock) => Lock = rwlock;
+
+		[MethodImpl(Runtime.MethodImpl.Hot)]
+		internal static WriteCookie Create(LockType rwlock) {
+			rwlock.EnterWriteLock();
+			return new(rwlock);
 		}
 
-		internal readonly bool IsDisposed => Lock is null;
+		[MethodImpl(Runtime.MethodImpl.Hot)]
+		internal static WriteCookie TryCreate(LockType rwlock) => rwlock.TryEnterWriteLock(0) ? new(rwlock) : new();
+
+		private readonly bool IsDisposed => Lock is null;
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		public void Dispose() {
-			if (Lock == null) {
+			if (IsDisposed) {
 				return;
 			}
 
-			Lock.ReleaseWriterLock();
-
+			Lock.ExitWriteLock();
 			Lock = null;
 		}
+
+		[MethodImpl(Runtime.MethodImpl.Hot)]
+		public static implicit operator bool(in WriteCookie cookie) => !cookie.IsDisposed;
 	}
 
-	internal struct PromotedCookie : IDisposable {
-		private ReaderWriterLock Lock;
-		private LockCookie Cookie;
+	internal ref struct PromotedCookie {
+		private LockType Lock = null;
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		internal PromotedCookie(ReaderWriterLock rwlock, int timeout) {
-			Lock = null;
-			this.Cookie = rwlock.UpgradeToWriterLock(timeout);
+		private PromotedCookie(LockType rwlock) {
 			Lock = rwlock;
 		}
 
-		internal readonly bool IsDisposed => Lock is null;
+		[MethodImpl(Runtime.MethodImpl.Hot)]
+		internal static PromotedCookie Create(LockType rwlock) {
+			rwlock.EnterUpgradeableReadLock();
+			return new(rwlock);
+		}
+
+		[MethodImpl(Runtime.MethodImpl.Hot)]
+		internal static PromotedCookie TryCreate(LockType rwlock) => rwlock.TryEnterUpgradeableReadLock(0) ? new(rwlock) : new();
+
+		private readonly bool IsDisposed => Lock is null;
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		public void Dispose() {
-			if (Lock == null) {
+			if (IsDisposed) {
 				return;
 			}
 
-			Lock.DowngradeFromWriterLock(ref Cookie);
-
+			Lock.ExitUpgradeableReadLock();
 			Lock = null;
 		}
+
+		[MethodImpl(Runtime.MethodImpl.Hot)]
+		public static implicit operator bool(in PromotedCookie cookie) => !cookie.IsDisposed;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	~SharedLock() {
-		Dispose();
-		Lock = null;
+	internal SharedLock(LockRecursionPolicy recursionPolicy = LockRecursionPolicy.NoRecursion) {
+		Lock = new(recursionPolicy);
 	}
 
-	internal bool IsLocked => Lock.IsReaderLockHeld || Lock.IsWriterLockHeld;
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	~SharedLock() => Dispose();
 
-	internal bool IsSharedLock => Lock.IsReaderLockHeld;
-
-	internal bool IsExclusiveLock => Lock.IsWriterLockHeld;
-
+	internal bool IsLocked => IsReadLock || IsWriteLock || IsPromotedLock;
+	internal bool IsReadLock => Lock.IsReadLockHeld;
+	internal bool IsWriteLock => Lock.IsWriteLockHeld;
+	internal bool IsPromotedLock => Lock.IsUpgradeableReadLockHeld;
 	internal bool IsDisposed => Lock == null;
 
-	internal SharedCookie Shared => new(Lock, -1);
-
-	internal SharedCookie? TryShared {
-		[MethodImpl(Runtime.MethodImpl.Hot)]
-		get {
-			try {
-				return new(Lock, 0);
-			}
-			catch { // TODO : catch only specific exceptions
-				return null;
-			}
-		}
-	}
-
-	internal ExclusiveCookie Exclusive => new(Lock, -1);
-
-	internal ExclusiveCookie? TryExclusive {
-		[MethodImpl(Runtime.MethodImpl.Hot)]
-		get {
-			try {
-				return new(Lock, 0);
-			}
-			catch { // TODO : catch only specific exceptions
-				return null;
-			}
-		}
-	}
-
-	internal PromotedCookie Promote => new(Lock, -1);
-
-	internal PromotedCookie? TryPromote {
-		[MethodImpl(Runtime.MethodImpl.Hot)]
-		get {
-			//Contract.Assert(!IsExclusiveLock && IsSharedLock);
-			try {
-				return new(Lock, 0);
-			}
-			catch {
-				return null;
-			}
-		}
-	}
+	internal ReadCookie Read => ReadCookie.Create(Lock);
+	internal ReadCookie TryRead => ReadCookie.TryCreate(Lock);
+	internal WriteCookie Write => WriteCookie.Create(Lock);
+	internal WriteCookie TryWrite => WriteCookie.TryCreate(Lock);
+	internal PromotedCookie Promote => PromotedCookie.Create(Lock);
+	internal PromotedCookie TryPromote => PromotedCookie.TryCreate(Lock);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public void Dispose() {
@@ -143,11 +131,16 @@ sealed class SharedLock : CriticalFinalizerObject, IDisposable {
 			return;
 		}
 
-		if (Lock.IsWriterLockHeld) {
-			Lock.ReleaseWriterLock();
+		if (IsPromotedLock) {
+			Lock.ExitUpgradeableReadLock();
 		}
-		else if (Lock.IsReaderLockHeld) {
-			Lock.ReleaseReaderLock();
+		if (IsWriteLock) {
+			Lock.ExitWriteLock();
 		}
+		else if (IsReadLock) {
+			Lock.ExitReadLock();
+		}
+
+		Lock = null;
 	}
 }

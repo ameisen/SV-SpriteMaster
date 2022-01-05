@@ -20,9 +20,9 @@ sealed class SpriteMap {
 		var rectangleHash = SpriteHash(texture: reference, source: source, expectedScale: expectedScale);
 
 		var meta = reference.Meta();
-		using (Lock.Exclusive) {
+		using (Lock.Write) {
 			ScaledTextureReferences.Add(texture);
-			using (meta.Lock.Exclusive) {
+			using (meta.Lock.Write) {
 				meta.SpriteTable.Add(rectangleHash, texture);
 			}
 		}
@@ -35,7 +35,7 @@ sealed class SpriteMap {
 
 		var meta = texture.Meta();
 		var Map = meta.SpriteTable;
-		using (meta.Lock.Shared) {
+		using (meta.Lock.Read) {
 			if (Map.TryGetValue(rectangleHash, out var scaledTexture)) {
 				if (scaledTexture.Texture?.IsDisposed == true) {
 					using (meta.Lock.Promote) {
@@ -59,7 +59,7 @@ sealed class SpriteMap {
 		try {
 			var meta = texture.Meta();
 
-			using (Lock.Exclusive) {
+			using (Lock.Write) {
 				try {
 					ScaledTextureReferences.Purge();
 					var removeElements = new List<ScaledTexture>();
@@ -75,7 +75,7 @@ sealed class SpriteMap {
 				}
 				catch { }
 			}
-			using (meta.Lock.Exclusive) {
+			using (meta.Lock.Write) {
 				meta.SpriteTable.Clear();
 			}
 		}
@@ -93,7 +93,7 @@ sealed class SpriteMap {
 		try {
 			var meta = reference.Meta();
 			var Map = meta.SpriteTable;
-			using (meta.Lock.Shared) {
+			using (meta.Lock.Read) {
 				if (Map.Count == 0) {
 					return;
 				}
@@ -142,7 +142,7 @@ sealed class SpriteMap {
 	internal void SeasonPurge(string season) {
 		try {
 			var purgeList = new List<ScaledTexture>();
-			using (Lock.Shared) {
+			using (Lock.Read) {
 				foreach (var scaledTexture in ScaledTextureReferences) {
 					if (scaledTexture.Anonymous())
 						continue;
@@ -164,7 +164,7 @@ sealed class SpriteMap {
 				if (purgable.Reference.TryGetTarget(out var reference)) {
 					purgable.Dispose();
 					var meta = reference.Meta();
-					using (meta.Lock.Exclusive) {
+					using (meta.Lock.Write) {
 						meta.SpriteTable.Clear();
 					}
 				}

@@ -3,7 +3,7 @@
 namespace SpriteMaster.Resample;
 
 static class Recolor {
-	internal static unsafe T[] Enhance<T>(T[] data, Vector2I size) where T : unmanaged {
+	internal static T[] Enhance<T>(T[] data, Vector2I size) where T : unmanaged {
 		return data;
 
 		/*

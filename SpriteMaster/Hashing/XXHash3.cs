@@ -243,7 +243,7 @@ partial class Hashing {
 		}
 
 		[MethodImpl(MethodImpl.Hot)]
-		private static unsafe void xxh3_accumulate(Span<ulong> acc, ReadOnlySpan<byte> data, ReadOnlySpan<byte> secret, int stripeCount) {
+		private static void xxh3_accumulate(Span<ulong> acc, ReadOnlySpan<byte> data, ReadOnlySpan<byte> secret, int stripeCount) {
 			for (int i = 0; i < stripeCount; i++) {
 				xxh3_accumulate_512_scalar(acc, data[(i * XXH_STRIPE_LEN)..], secret[(i * 8)..]);
 			}
@@ -260,7 +260,7 @@ partial class Hashing {
 			}
 		}
 
-		private static unsafe void xxh3_accumulate_512_sse2(Span<ulong> acc, ReadOnlySpan<byte> data, ReadOnlySpan<byte> secret) {
+		private static void xxh3_accumulate_512_sse2(Span<ulong> acc, ReadOnlySpan<byte> data, ReadOnlySpan<byte> secret) {
 			//Span<Vector128<uint>> xacc = MemoryMarshal.Cast<ulong, Vector128<uint>>(acc);
 			//ReadOnlySpan<Vector128<uint>> xdata = MemoryMarshal.Cast<byte, Vector128<uint>>(data);
 			//ReadOnlySpan<Vector128<uint>> xsecret = MemoryMarshal.Cast<byte, Vector128<uint>>(secret);

@@ -18,7 +18,7 @@ sealed class MTexture2D {
 	/// <summary>Whenever a new <see cref="MTexture2D"/> is created, <see cref="CurrentID"/> is incremented and <see cref="UniqueIDString"/> is set to a string representation of it.</summary>
 	private readonly string UniqueIDString = Interlocked.Increment(ref CurrentID).ToString64();
 
-	internal readonly SharedLock Lock = new();
+	internal readonly SharedLock Lock = new(LockRecursionPolicy.SupportsRecursion);
 
 	internal volatile bool TracePrinted = false;
 
@@ -48,15 +48,15 @@ sealed class MTexture2D {
 				return false;
 			}
 
-			using (Lock.Shared) {
+			using (Lock.Read) {
 				return _CachedData.TryGetTarget(out var target);
 			}
 		}
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal unsafe void Purge(Texture2D reference, in Bounds? bounds, in DataRef<byte> data) {
-		using (Lock.Exclusive) {
+	internal void Purge(Texture2D reference, in Bounds? bounds, in DataRef<byte> data) {
+		using (Lock.Write) {
 			bool hasCachedData = CachedRawData is not null;
 
 			if (data.IsNull) {
@@ -119,7 +119,7 @@ sealed class MTexture2D {
 				return null;
 			}
 
-			using (var locked = Lock.TryShared) if (locked is not null) {
+			using (var locked = Lock.TryRead) if (locked) {
 				_CachedRawData.TryGetTarget(out var target);
 				return target;
 			}
@@ -134,7 +134,7 @@ sealed class MTexture2D {
 				return null;
 			}
 
-			using (Lock.Shared) {
+			using (Lock.Read) {
 				_CachedRawData.TryGetTarget(out var target);
 				return target;
 			}
@@ -202,7 +202,7 @@ sealed class MTexture2D {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal ulong GetHash(SpriteInfo info) {
-		using (Lock.Shared) {
+		using (Lock.Read) {
 			ulong hash = Hash;
 			if (hash == Hashing.Default) {
 				hash = info.ReferenceData.Hash();

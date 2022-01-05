@@ -309,7 +309,7 @@ static class Deposterize {
 	*/
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static unsafe T[] Enhance<T>(
+	internal static T[] Enhance<T>(
 		FixedSpan<T> data,
 		in Vector2I size,
 		in Vector2B wrapped,

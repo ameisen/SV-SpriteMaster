@@ -38,7 +38,7 @@ static class Arrays {
 			) => Handle = handle;
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		internal static unsafe WrappedUnmanagedMemoryStream<T> Get(T[] data, int offset, int size, FileAccess access) {
+		internal static WrappedUnmanagedMemoryStream<T> Get(T[] data, int offset, int size, FileAccess access) {
 			var handle = GCHandle.Alloc(data, GCHandleType.Pinned);
 			try {
 				return new WrappedUnmanagedMemoryStream<T>(handle, offset, size, access);
@@ -63,7 +63,7 @@ static class Arrays {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static unsafe UnmanagedMemoryStream Stream<T>(this T[] data) where T : struct => WrappedUnmanagedMemoryStream<T>.Get(data, 0, data.Length, FileAccess.ReadWrite);
+	internal static UnmanagedMemoryStream Stream<T>(this T[] data) where T : struct => WrappedUnmanagedMemoryStream<T>.Get(data, 0, data.Length, FileAccess.ReadWrite);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static UnmanagedMemoryStream Stream<T>(this T[] data, int offset = 0, int length = -1, FileAccess access = FileAccess.ReadWrite) {

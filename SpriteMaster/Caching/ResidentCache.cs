@@ -41,7 +41,7 @@ static class ResidentCache {
 			return;
 		}
 
-		using (CacheLock.Exclusive) {
+		using (CacheLock.Write) {
 			Cache?.Dispose();
 			Cache = CreateCache();
 		}
@@ -49,7 +49,7 @@ static class ResidentCache {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void OnSettingsChanged() {
-		using (CacheLock.Exclusive) {
+		using (CacheLock.Write) {
 			if (Enabled) {
 				if (Cache is null) {
 					Cache = CreateCache();

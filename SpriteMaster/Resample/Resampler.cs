@@ -731,7 +731,7 @@ sealed class Resampler {
 		return null;
 	}
 
-	private static unsafe ManagedTexture2D UpscaleInternal(ScaledTexture texture, ref uint scale, SpriteInfo input, TextureType textureType, ulong hash, ref Vector2B wrapped, bool async) {
+	private static ManagedTexture2D UpscaleInternal(ScaledTexture texture, ref uint scale, SpriteInfo input, TextureType textureType, ulong hash, ref Vector2B wrapped, bool async) {
 		var spriteFormat = TextureFormat.Color;
 
 		if (Config.Garbage.CollectAccountUnownedTextures && GarbageMarkSet.Add(input.Reference)) {

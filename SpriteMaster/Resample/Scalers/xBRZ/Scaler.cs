@@ -129,7 +129,7 @@ sealed class Scaler {
 			blendInfo: result of preprocessing all four corners of pixel "e"
 	*/
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private unsafe void ScalePixel(IScaler scaler, RotationDegree rotDeg, in Kernel3x3 ker, int trgi, byte blendInfo) {
+	private void ScalePixel(IScaler scaler, RotationDegree rotDeg, in Kernel3x3 ker, int trgi, byte blendInfo) {
 		var blend = blendInfo.Rotate(rotDeg);
 
 		if (blend.GetBottomR() == BlendType.None) {

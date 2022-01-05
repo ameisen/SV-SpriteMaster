@@ -11,7 +11,7 @@ class WeakSet<T> where T : class {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	[SecuritySafeCritical]
 	internal bool Contains(T obj) {
-		using (Lock.Shared) {
+		using (Lock.Read) {
 			return InternalTable.TryGetValue(obj, out var _);
 		}
 	}
@@ -19,7 +19,7 @@ class WeakSet<T> where T : class {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	[SecuritySafeCritical]
 	internal bool Remove(T obj) {
-		using (Lock.Exclusive) {
+		using (Lock.Write) {
 			return InternalTable.Remove(obj);
 		}
 	}
@@ -28,7 +28,7 @@ class WeakSet<T> where T : class {
 	[SecuritySafeCritical]
 	internal bool Add(T obj) {
 		try {
-			using (Lock.Exclusive) {
+			using (Lock.Write) {
 				if (InternalTable.TryGetValue(obj, out var _)) {
 					return false;
 				}

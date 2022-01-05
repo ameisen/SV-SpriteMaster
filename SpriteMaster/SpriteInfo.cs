@@ -114,7 +114,7 @@ sealed class SpriteInfo : IDisposable {
 	// Attempt to update the bytedata cache for the reference texture, or purge if it that makes more sense or if updating
 	// is not plausible.
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static unsafe void Purge(Texture2D reference, in Bounds? bounds, in DataRef<byte> data) => reference.Meta().Purge(reference, bounds, data);
+	internal static void Purge(Texture2D reference, in Bounds? bounds, in DataRef<byte> data) => reference.Meta().Purge(reference, bounds, data);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool IsCached(Texture2D reference) => reference.Meta().CachedDataNonBlocking is not null;
