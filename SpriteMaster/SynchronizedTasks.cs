@@ -18,10 +18,10 @@ static class SynchronizedTasks {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static void AddPendingLoad(in Action action, int texels) {
+	internal static void AddPendingLoad(in Action action, int size) {
 		var current = PendingLoads.Current;
 		lock (current) {
-			current.Add(new TextureAction(action, texels));
+			current.Add(new TextureAction(action, size));
 		}
 	}
 
@@ -62,7 +62,7 @@ static class SynchronizedTasks {
 						int processed = 0;
 						foreach (var action in pendingLoads) {
 							var estimate = TexelAverage.Estimate(action);
-							if (DrawState.PushedUpdateWithin(1) && watch.Elapsed + estimate > remainingTime) {
+							if (DrawState.PushedUpdateWithin(0) && watch.Elapsed + estimate > remainingTime) {
 								break;
 							}
 
@@ -70,6 +70,7 @@ static class SynchronizedTasks {
 							var start = watch.Elapsed;
 							action.Invoke();
 							var duration = watch.Elapsed - start;
+							Debug.Warning($"Sprite Finished: Est: {estimate.TotalMilliseconds}  Act: {duration.TotalMilliseconds}   ({action.Size}) ({remainingTime.TotalMilliseconds})");
 							TexelAverage.Add(action, duration);
 
 							++processed;

@@ -39,6 +39,9 @@ static class Deflate {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static int CompressedLengthEstimate(byte[] data) => data.Length >> 1;
 
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static int CompressedLengthEstimate(ReadOnlySpan<byte> data) => data.Length >> 1;
+
 	[MethodImpl(Runtime.MethodImpl.RunOnce)]
 	internal static byte[] CompressTest(byte[] data) {
 		ZlibStream compressor = null;
@@ -66,6 +69,18 @@ static class Deflate {
 				SetStrategy(compressor, CompressionStrategy.Filtered);
 			}
 			compressor.Write(data, 0, data.Length);
+		}
+		return val.ToArray();
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static byte[] Compress(ReadOnlySpan<byte> data) {
+		using var val = new MemoryStream(CompressedLengthEstimate(data));
+		using (var compressor = new ZlibStream(val, CompressionMode.Compress, CompressionLevel.BestCompression)) {
+			if (SetStrategy is not null) {
+				SetStrategy(compressor, CompressionStrategy.Filtered);
+			}
+			compressor.Write(data.ToArray(), 0, data.Length);
 		}
 		return val.ToArray();
 	}

@@ -72,7 +72,6 @@ public sealed class SpriteMaster : Mod {
 			lock (CollectLock) {
 				try {
 					using var _ = new MemoryFailPoint(Config.Garbage.RequiredFreeMemory);
-					Thread.Sleep(128);
 				}
 				catch (InsufficientMemoryException) {
 					Debug.WarningLn($"Less than {(Config.Garbage.RequiredFreeMemory * 1024 * 1024).AsDataSize(decimals: 0)} available for block allocation, forcing full garbage collection");
@@ -81,6 +80,7 @@ public sealed class SpriteMaster : Mod {
 					Thread.Sleep(10000);
 				}
 			}
+			Thread.Sleep(512);
 		}
 	}
 
@@ -220,7 +220,7 @@ public sealed class SpriteMaster : Mod {
 		// GC after major events
 		help.Events.GameLoop.SaveLoaded += (_, _) => ForceGarbageCollect();
 		help.Events.GameLoop.DayEnding += (_, _) => ForceGarbageCollect();
-		help.Events.GameLoop.GameLaunched += (_, _) => ForceGarbageCollect();
+		help.Events.GameLoop.GameLaunched += (_, _) => { ForceGarbageCollect(); ScaledTexture.ClearTimers(); };
 		help.Events.GameLoop.ReturnedToTitle += (_, _) => ForceGarbageCollect();
 		help.Events.GameLoop.SaveCreated += (_, _) => ForceGarbageCollect();
 
@@ -230,7 +230,7 @@ public sealed class SpriteMaster : Mod {
 		// TODO : Iterate deeply with reflection over 'StardewValley' namespace to find any Texture2D objects sitting around
 
 		// Tell SMAPI to flush all assets loaded so that SM can precache already-loaded assets
-		bool invalidated = help.Content.InvalidateCache<XNA.Graphics.Texture>();
+		//bool invalidated = help.Content.InvalidateCache<XNA.Graphics.Texture>();
 
 		/*
 		var light = Game1.cauldronLight;

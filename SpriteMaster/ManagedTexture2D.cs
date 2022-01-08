@@ -4,12 +4,13 @@ using SpriteMaster.Types;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using TeximpNet.Compression;
 
 namespace SpriteMaster;
-sealed class ManagedTexture2D : Texture2D {
-	private static long TotalAllocatedSize = 0L;
-	private static int TotalManagedTextures = 0;
+sealed class ManagedTexture2D : InternalTexture2D {
+	private static ulong TotalAllocatedSize = 0L;
+	private static volatile uint TotalManagedTextures = 0;
 	private const bool UseMips = false;
 
 	internal readonly WeakReference<Texture2D> Reference;
@@ -20,7 +21,7 @@ sealed class ManagedTexture2D : Texture2D {
 		output.AddRange(new[]{
 			"\tManagedTexture2D:",
 			$"\t\tTotal Managed Textures : {TotalManagedTextures}",
-			$"\t\tTotal Texture Size     : {TotalAllocatedSize.AsDataSize()}"
+			$"\t\tTotal Texture Size     : {Interlocked.Read(ref TotalAllocatedSize).AsDataSize()}"
 			});
 	}
 
@@ -32,7 +33,7 @@ sealed class ManagedTexture2D : Texture2D {
 		SurfaceFormat format,
 		string name = null
 	) : base(reference.GraphicsDevice.IsDisposed ? DrawState.Device : reference.GraphicsDevice, dimensions.Width, dimensions.Height, UseMips, format) {
-		this.Name = name ?? $"{reference.SafeName()} [RESAMPLED {(CompressionFormat)format}]";
+		this.Name = name ?? $"{reference.SafeName()} [internal managed <{format}>]";
 
 		Reference = reference.MakeWeak();
 		Texture = texture;
@@ -40,14 +41,14 @@ sealed class ManagedTexture2D : Texture2D {
 
 		reference.Disposing += (_, _) => OnParentDispose();
 
-		TotalAllocatedSize += this.SizeBytes();
-		++TotalManagedTextures;
+		Interlocked.Add(ref TotalAllocatedSize, (ulong)this.SizeBytes());
+		Interlocked.Increment(ref TotalManagedTextures);
 
 		Garbage.MarkOwned(format, dimensions.Area);
 		Disposing += (_, _) => {
 			Garbage.UnmarkOwned(format, dimensions.Area);
-			TotalAllocatedSize -= this.SizeBytes();
-			--TotalManagedTextures;
+			Interlocked.Add(ref TotalAllocatedSize, (ulong)-this.SizeBytes());
+			Interlocked.Decrement(ref TotalManagedTextures);
 		};
 	}
 

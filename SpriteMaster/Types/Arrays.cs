@@ -55,10 +55,16 @@ static class Arrays {
 		[SecuritySafeCritical]
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		protected override void Dispose(bool disposing) {
-			if (!IsDisposed) {
-				Handle.Free();
-				IsDisposed = true;
+			if (IsDisposed) {
+				return;
 			}
+
+			base.Dispose(disposing);
+
+			Handle.Free();
+			IsDisposed = true;
+
+			GC.SuppressFinalize(this);
 		}
 	}
 
@@ -83,9 +89,6 @@ static class Arrays {
 		}
 		return new MemoryStream(data, offset, length, (access != FileAccess.Read), true);
 	}
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static FixedSpan<U> CastAs<T, U>(this T[] data) where T : unmanaged where U : unmanaged => data.AsFixedSpan<T, U>();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static T[] Reverse<T>(this T[] array) {

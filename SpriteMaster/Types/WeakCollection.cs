@@ -603,8 +603,12 @@ class WeakCollection<T> : ICollection<T>, IEnumerable<T>, IEnumerable, /*ICollec
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
+		~Enumerator() => Dispose();
+
+		[MethodImpl(Runtime.MethodImpl.Hot)]
 		public void Dispose() {
 			_Enumerator.Dispose();
+			GC.SuppressFinalize(this);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]

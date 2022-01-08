@@ -64,6 +64,9 @@ static class LZMA {
 	internal static int CompressedLengthEstimate(byte[] data) => data.Length >> 1;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static int CompressedLengthEstimate(ReadOnlySpan<byte> data) => data.Length >> 1;
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static int DecompressedLengthEstimate(byte[] data) => data.Length << 1;
 
 	[MethodImpl(Runtime.MethodImpl.RunOnce)]
@@ -93,6 +96,21 @@ static class LZMA {
 		using (var input = new MemoryStream(data)) {
 			var encoder = GetEncoder();
 			encoder.Code(input, output, data.Length, -1, null);
+		}
+
+		output.Flush();
+		return output.ToArray();
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static unsafe byte[] Compress(ReadOnlySpan<byte> data) {
+		using var output = new MemoryStream(CompressedLengthEstimate(data));
+
+		fixed (byte* dataPtr = data) {
+			using (var input = new UnmanagedMemoryStream(dataPtr, data.Length)) {
+				var encoder = GetEncoder();
+				encoder.Code(input, output, data.Length, -1, null);
+			}
 		}
 
 		output.Flush();

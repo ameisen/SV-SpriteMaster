@@ -34,5 +34,5 @@ static class SpriteOverrides {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static bool IsFont(SpriteInfo info) => IsFont(info.Reference, info.Size.Extent, info.ReferenceSize);
+	internal static bool IsFont(SpriteInfo info) => IsFont(info.Reference, info.Bounds.Extent, info.ReferenceSize);
 }

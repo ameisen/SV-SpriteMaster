@@ -1,48 +1,13 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+﻿using Microsoft.Toolkit.HighPerformance;
+using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
 using SpriteMaster.Types;
-using SpriteMaster.Types.Interlocked;
+using SpriteMaster.Types.Interlocking;
 using System;
-using System.Buffers;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster;
-
-using SpriteMemorySequence = ReadOnlySequence<byte>;
-
-sealed class SpriteMemorySegment : ReadOnlySequenceSegment<byte> {
-	internal SpriteMemorySegment(in ReadOnlyMemory<byte> memory) {
-		Memory = memory;
-	}
-
-	internal static SpriteMemorySequence Create(in ReadOnlyMemory<byte> memory, int offset, in Vector2I extent, int stride, SurfaceFormat format) {
-		if (extent.Width == 0 || extent.Height == 0) {
-			throw new ArgumentOutOfRangeException($"SpriteMemorySegment.Create: '{nameof(extent)}' is degenerate");
-		}
-		if (stride <= 0) {
-			throw new ArgumentOutOfRangeException($"SpriteMemorySegment.Create: '{nameof(stride)}' is invalid");
-		}
-
-		int spriteStride = checked((int)format.SizeBytes(extent.Width));
-		SpriteMemorySegment firstSegment = null;
-		SpriteMemorySegment prevSegment = null;
-		for (int y = 0; y < extent.Height; ++y) {
-			var segment = new SpriteMemorySegment(memory.Slice(offset, spriteStride));
-			if (firstSegment is null) {
-				firstSegment = segment;
-			}
-			if (prevSegment is not null) {
-				prevSegment.Next = segment;
-			}
-
-			prevSegment = segment;
-			offset += stride;
-		}
-
-		return new SpriteMemorySequence(firstSegment, 0, prevSegment, prevSegment.Memory.Length);
-	}
-}
 
 /// <summary>
 /// A wrapper during the resampling process that encapsulates the properties of the sprite itself
@@ -50,22 +15,23 @@ sealed class SpriteMemorySegment : ReadOnlySequenceSegment<byte> {
 /// </summary>
 sealed class SpriteInfo : IDisposable {
 	internal readonly Texture2D Reference;
-	internal readonly Vector2I ReferenceSize;
-	internal readonly Bounds Size;
+	internal readonly Bounds Bounds;
+	internal Vector2I ReferenceSize => Reference.Extent();
 	internal readonly Vector2B Wrapped;
-	internal readonly bool BlendEnabled;
+	internal readonly TextureType TextureType;
 	internal readonly uint ExpectedScale;
+	private readonly int RawOffset;
+	private readonly int RawStride;
+	internal readonly XNA.Graphics.BlendState BlendState;
+	internal readonly bool BlendEnabled;
 	internal readonly bool IsWater;
 	internal readonly bool IsFont;
 	// For statistics and throttling
 	internal readonly bool WasCached;
 
-	private readonly int RawOffset;
-	private readonly int RawStride;
+	public override string ToString() => $"SpriteInfo[Name: '{Reference.Name}', ReferenceSize: {ReferenceSize}, Size: {Bounds}]";
 
-	public override string ToString() => $"SpriteInfo[Name: '{Reference.Name}', ReferenceSize: {ReferenceSize}, Size: {Size}]";
-
-	internal SpriteMemorySequence? SpriteData = null;
+	internal ulong SpriteDataHash = Hashing.Default;
 	private byte[] _ReferenceData = null;
 	internal byte[] ReferenceData {
 		get => _ReferenceData;
@@ -75,16 +41,25 @@ sealed class SpriteInfo : IDisposable {
 			}
 			_ReferenceData = value;
 			if (_ReferenceData == null) {
-				SpriteData = null;
+				SpriteDataHash = Hashing.Default;
 			}
 			else {
-				SpriteData = SpriteMemorySegment.Create(
-					memory: new ReadOnlyMemory<byte>(_ReferenceData),
+				int formatSize = Reference.Format.IsCompressed() ? 4 : (int)Reference.Format.SizeBytes(1);
+
+				int actualWidth = Bounds.Extent.X * formatSize;
+
+				var spriteData = new Span2D<byte>(
+					array: _ReferenceData,
 					offset: RawOffset,
-					extent: Size.Extent,
-					stride: RawStride,
-					format: Reference.Format
+					width: Bounds.Extent.X * formatSize,
+					height: Bounds.Extent.Y,
+					// 'pitch' is the distance between the end of one row and the start of another
+					// whereas 'stride' is the distance between the starts of rows
+					// Ergo, 'pitch' is 'stride' - 'width'.
+					pitch: RawStride - actualWidth
 				);
+
+				SpriteDataHash = spriteData.Hash();
 			}
 		}
 	}
@@ -96,8 +71,8 @@ sealed class SpriteInfo : IDisposable {
 			ulong hash = _Hash;
 			if (hash == Hashing.Default) {
 				hash = Hashing.Combine(
-					SpriteData?.Hash(),
-					Size.Extent.GetLongHashCode(),
+					SpriteDataHash,
+					Bounds.Extent.GetLongHashCode(),
 					BlendEnabled.GetLongHashCode(),
 					//ExpectedScale.GetLongHashCode(),
 					IsWater.GetLongHashCode(),
@@ -120,20 +95,23 @@ sealed class SpriteInfo : IDisposable {
 	internal static bool IsCached(Texture2D reference) => reference.Meta().CachedDataNonBlocking is not null;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal SpriteInfo(Texture2D reference, in Bounds dimensions, uint expectedScale) {
-		ReferenceSize = new(reference);
-		ExpectedScale = expectedScale;
-		Size = dimensions;
-		if (Size.Bottom > ReferenceSize.Height) {
-			Size.Height -= (Size.Bottom - ReferenceSize.Height);
-		}
-		if (Size.Right > ReferenceSize.Width) {
-			Size.Width -= (Size.Right - ReferenceSize.Width);
-		}
+	internal SpriteInfo(Texture2D reference, in Bounds dimensions, uint expectedScale, TextureType textureType) {
 		Reference = reference;
+		BlendState = DrawState.CurrentBlendState;
+		ExpectedScale = expectedScale;
+		Bounds = dimensions;
+		TextureType = textureType;
+		if (Bounds.Bottom > ReferenceSize.Height) {
+			Bounds.Height -= (Bounds.Bottom - ReferenceSize.Height);
+		}
+		if (Bounds.Right > ReferenceSize.Width) {
+			Bounds.Width -= (Bounds.Right - ReferenceSize.Width);
+		}
 
-		RawStride = checked((int)reference.Format.SizeBytes(ReferenceSize.Width));
-		RawOffset = (RawStride * dimensions.Top) + checked((int)reference.Format.SizeBytes(dimensions.Left));
+		int formatSize = reference.Format.IsCompressed() ? 4 : (int)reference.Format.SizeBytes(1);
+
+		RawStride = formatSize * ReferenceSize.Width;
+		RawOffset = (RawStride * dimensions.Top) + (formatSize * dimensions.Left);
 
 		var refMeta = reference.Meta();
 		var refData = refMeta.CachedData;
@@ -159,19 +137,20 @@ sealed class SpriteInfo : IDisposable {
 
 		ReferenceData = refData;
 
-		BlendEnabled = DrawState.CurrentBlendSourceMode != Blend.One;
+		BlendEnabled = DrawState.CurrentBlendState.AlphaSourceBlend != Blend.One;
 		Wrapped = new(
-			DrawState.CurrentAddressModeU == TextureAddressMode.Wrap,
-			DrawState.CurrentAddressModeV == TextureAddressMode.Wrap
+			DrawState.CurrentSamplerState.AddressU == TextureAddressMode.Wrap,
+			DrawState.CurrentSamplerState.AddressV == TextureAddressMode.Wrap
 		);
 
-		IsWater = SpriteOverrides.IsWater(Size, Reference);
-		IsFont = SpriteOverrides.IsFont(Reference, Size.Extent, ReferenceSize);
+		IsWater = TextureType == TextureType.Sprite && SpriteOverrides.IsWater(Bounds, Reference);
+		IsFont = !IsWater && TextureType == TextureType.Sprite && SpriteOverrides.IsFont(Reference, Bounds.Extent, ReferenceSize);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public void Dispose() {
 		ReferenceData = null;
 		_Hash = Hashing.Default;
+		GC.SuppressFinalize(this);
 	}
 }

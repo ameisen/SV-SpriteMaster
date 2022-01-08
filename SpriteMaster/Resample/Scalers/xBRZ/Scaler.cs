@@ -17,10 +17,10 @@ sealed class Scaler {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal Scaler(
 		uint scaleMultiplier,
-		in FixedSpan<uint> sourceData,
+		ReadOnlySpan<uint> sourceData,
 		in Point sourceSize,
 		in Rectangle? sourceTarget,
-		ref FixedSpan<uint> targetData,
+		Span<uint> targetData,
 		in Config configuration
 	) {
 		if (scaleMultiplier < MinScale || scaleMultiplier > MaxScale) {
@@ -55,7 +55,7 @@ sealed class Scaler {
 		this.ColorDistance = new(this.configuration);
 		this.ColorEqualizer = new(this.configuration);
 		this.sourceSize = sourceSize;
-		Scale(in sourceData, ref targetData);
+		Scale(sourceData, targetData);
 	}
 
 	private readonly Config configuration;
@@ -72,7 +72,7 @@ sealed class Scaler {
 
 	//fill block with the given color
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static void FillBlock<T>(ref FixedSpan<T> trg, int trgi, int pitch, T col, int blockSize) where T : unmanaged {
+	private static void FillBlock<T>(Span<T> trg, int trgi, int pitch, T col, int blockSize) where T : unmanaged {
 		for (var y = 0; y < blockSize; ++y, trgi += pitch) {
 			for (var x = 0; x < blockSize; ++x) {
 				trg[trgi + x] = col;
@@ -234,7 +234,7 @@ sealed class Scaler {
 
 	//scaler policy: see "Scaler2x" reference implementation
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private unsafe void Scale(in FixedSpan<uint> source, ref FixedSpan<uint> destination) {
+	private unsafe void Scale(ReadOnlySpan<uint> source, Span<uint> destination) {
 		fixed (uint* destinationPtr = &destination.GetPinnableReference()) {
 
 			int yFirst = sourceTarget.Top;
@@ -247,7 +247,7 @@ sealed class Scaler {
 			//temporary buffer for "on the fly preprocessing"
 			var preProcBuffer = stackalloc byte[sourceTarget.Width];
 
-			static uint GetPixel(in FixedSpan<uint> src, int stride, int offset) {
+			static uint GetPixel(ReadOnlySpan<uint> src, int stride, int offset) {
 				// We can try embedded a distance calculation as well. Perhaps instead of a negative stride/offset, we provide a 
 				// negative distance from the edge and just recalculate the stride/offset in that case.
 				// We can scale the alpha reduction by the distance to hopefully correct the edges.
@@ -413,7 +413,7 @@ sealed class Scaler {
 					//fill block of size scale * scale with the given color
 					//  //place *after* preprocessing step, to not overwrite the
 					//  //results while processing the the last pixel!
-					FillBlock(ref destination, trgi, targetWidth, source[s0 + x], scaler.Scale);
+					FillBlock(destination, trgi, targetWidth, source[s0 + x], scaler.Scale);
 
 					//blend four corners of current pixel
 					if (blendXy == 0)

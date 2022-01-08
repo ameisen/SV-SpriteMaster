@@ -2,36 +2,54 @@
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
-using SpriteMaster.Types.Interlocked;
+using SpriteMaster.Types.Interlocking;
 using StardewValley;
 using System;
+using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace SpriteMaster;
 
 static class DrawState {
 	private static readonly SamplerState DefaultSamplerState = SamplerState.LinearClamp;
-	private static bool _PushedUpdateThisFrame = false;
+
+	internal static readonly InterlockedULong LastPushedUpdateFrame = 0UL;
+
+	private static volatile bool _PushedUpdateThisFrame = false;
 	internal static bool PushedUpdateThisFrame {
 		get {
 			return _PushedUpdateThisFrame;
 		}
 		set {
 			if (value) {
-				LastPushedUpdateFrame = CurrentFrame;
+				LastPushedUpdateFrame.Set(CurrentFrame);
 			}
 			_PushedUpdateThisFrame = value;
 		}
 	}
-	internal static ulong LastPushedUpdateFrame = 0UL;
+
 	internal static InterlockedULong CurrentFrame = 0UL;
-	internal static TextureAddressMode CurrentAddressModeU = DefaultSamplerState.AddressU;
-	internal static TextureAddressMode CurrentAddressModeV = DefaultSamplerState.AddressV;
-	internal static Blend CurrentBlendSourceMode = BlendState.AlphaBlend.AlphaSourceBlend;
+
+	private static readonly Func<SamplerState, SamplerState> SamplerStateClone =
+		typeof(SamplerState).GetMethod("Clone", BindingFlags.Instance | BindingFlags.NonPublic)?.CreateDelegate<Func<SamplerState, SamplerState>>() ?? throw new NullReferenceException(nameof(SamplerStateClone));
+
+	private static readonly Func<BlendState, BlendState> BlendStateClone =
+		typeof(BlendState).GetMethod("Clone", BindingFlags.Instance | BindingFlags.NonPublic)?.CreateDelegate<Func<BlendState, BlendState>>() ?? throw new NullReferenceException(nameof(SamplerStateClone));
+
+	private static class Defaults {
+		internal static readonly SamplerState SamplerState = SamplerStateClone(SamplerState.LinearClamp);
+		internal static readonly BlendState BlendState = BlendStateClone(BlendState.AlphaBlend);
+		internal const SpriteSortMode SortMode = SpriteSortMode.Deferred;
+	}
+
+
+	internal static SamplerState CurrentSamplerState = Defaults.SamplerState;
+	internal static BlendState CurrentBlendState = Defaults.BlendState;
+	internal static SpriteSortMode CurrentSortMode = Defaults.SortMode;
 
 	internal static readonly Condition TriggerGC = new(false);
 
-	internal static SpriteSortMode CurrentSortMode = SpriteSortMode.Deferred;
 	internal static TimeSpan ExpectedFrameTime { get; private set; } = new(166_667); // default 60hz
 	internal static bool ForceSynchronous = false;
 
@@ -46,12 +64,6 @@ static class DrawState {
 	}
 
 	internal static GraphicsDevice Device => Game1.graphics.GraphicsDevice;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static void SetCurrentAddressMode(SamplerState samplerState) {
-		CurrentAddressModeU = samplerState.AddressU;
-		CurrentAddressModeV = samplerState.AddressV;
-	}
 
 	internal static bool PushedUpdateWithin(int frames) => (long)((ulong)CurrentFrame - LastPushedUpdateFrame) <= frames;
 
@@ -70,6 +82,7 @@ static class DrawState {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void OnPresent() {
+		Thread.CurrentThread.Priority = ThreadPriority.Highest;
 		if (TriggerGC) {
 			ScaledTexture.PurgeTextures((Config.Garbage.RequiredFreeMemory * Config.Garbage.RequiredFreeMemoryHysterisis).NearestLong() * 1024 * 1024);
 			//Garbage.Collect();
@@ -108,6 +121,12 @@ static class DrawState {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
+	private static SamplerState ConditionallyClone(SamplerState value, SamplerState defaultValue) => (value is null) ? defaultValue : SamplerStateClone(value);
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	private static BlendState ConditionallyClone(BlendState value, BlendState defaultValue) => (value is null) ? defaultValue : BlendStateClone(value);
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void OnBegin(
 		SpriteBatch @this,
 		SpriteSortMode sortMode,
@@ -119,8 +138,8 @@ static class DrawState {
 		in Matrix transformMatrix
 	) {
 		CurrentSortMode = sortMode;
-		SetCurrentAddressMode(samplerState ?? SamplerState.PointClamp);
-		CurrentBlendSourceMode = (blendState ?? BlendState.AlphaBlend).AlphaSourceBlend;
+		CurrentSamplerState = ConditionallyClone(samplerState, Defaults.SamplerState);
+		CurrentBlendState = ConditionallyClone(blendState, Defaults.BlendState);
 
 		var device = @this.GraphicsDevice;
 		var renderTargets = device.GetRenderTargets();

@@ -23,7 +23,14 @@ static partial class Hashing {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static ulong HashXX3(this in FixedSpan<byte> data) => XXHash3.Hash64(data.ToSpan());
+	internal static ulong HashXX3(this Span2D<byte> data) {
+		// HasherXX.ComputeHash(new SequenceReader<T>(data)).Hash.HashXXCompute();
+		ulong currentHash = Default;
+		for(int i = 0; i < data.Height; ++i) {
+			currentHash = Combine(currentHash, data.GetRowSpan(i).HashXX3());
+		}
+		return currentHash;
+	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ulong HashXX3(this ReadOnlySpan<byte> data) => XXHash3.Hash64(data);
@@ -52,7 +59,4 @@ static partial class Hashing {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ulong HashXX3<T>(this T[] data) where T : unmanaged => new Span<T>(data).Cast<T, byte>().HashXX3();
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static ulong HashXX3<T>(this in FixedSpan<T> data) where T : unmanaged => data.ToSpan().Cast<T, byte>().HashXX3();
 }

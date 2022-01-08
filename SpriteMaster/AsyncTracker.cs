@@ -55,6 +55,8 @@ sealed class AsyncTracker : IDisposable {
 			Trackers.Remove(this);
 			DumpTrackers();
 		}
+
+		GC.SuppressFinalize(this);
 #endif
 	}
 }

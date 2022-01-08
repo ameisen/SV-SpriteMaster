@@ -1,19 +1,13 @@
-﻿
-using SpriteMaster.Types;
-
-using System;
+﻿using System;
 using System.Runtime.CompilerServices;
+
+#nullable enable
 
 namespace SpriteMaster.Extensions;
 
 static class Statistics {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static unsafe double StandardDeviation(this in FixedSpan<int> data, int startIndex = 0, int count = 0) {
-		return StandardDeviation((int*)data.Pointer, data.Length, startIndex, count);
-	}
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static unsafe double StandardDeviation(int* data, int length, int startIndex = 0, int count = 0) {
+	internal static double StandardDeviation(this ReadOnlySpan<int> data, int length, int startIndex = 0, int count = 0) {
 		//return StandardDeviation(new FixedSpan<int>(data, length), startIndex: startIndex, count: count);
 
 		Contracts.AssertPositiveOrZero(startIndex);

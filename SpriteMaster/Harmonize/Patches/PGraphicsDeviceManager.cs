@@ -192,7 +192,7 @@ static class PGraphicsDeviceManager {
 						try {
 							Config.ClampDimension = currentDimension;
 							//Math.Min(i, Config.PreferredMaxTextureDimension);
-							using (var testTexture = new Texture2D(@this.GraphicsDevice, currentDimension, currentDimension)) {
+							using (var testTexture = new DumpTexture2D(@this.GraphicsDevice, currentDimension, currentDimension) { Name = "Resolution Test Texture" }) {
 								/* do nothing. We want to dispose of it immediately. */
 							}
 							Garbage.Collect(compact: true, blocking: true, background: false);

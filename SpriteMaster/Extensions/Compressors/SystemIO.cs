@@ -39,6 +39,9 @@ static class SystemIO {
 	internal static int CompressedLengthEstimate(byte[] data) => data.Length >> 1;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static int CompressedLengthEstimate(ReadOnlySpan<byte> data) => data.Length >> 1;
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static int DecompressedLengthEstimate(byte[] data) => data.Length << 1;
 
 	[MethodImpl(Runtime.MethodImpl.RunOnce)]
@@ -62,6 +65,15 @@ static class SystemIO {
 		using var val = new MemoryStream(CompressedLengthEstimate(data));
 		using (var compressor = new IOC.DeflateStream(val, System.IO.Compression.CompressionLevel.Optimal)) {
 			compressor.Write(data, 0, data.Length);
+		}
+		return val.ToArray();
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static byte[] Compress(ReadOnlySpan<byte> data) {
+		using var val = new MemoryStream(CompressedLengthEstimate(data));
+		using (var compressor = new IOC.DeflateStream(val, System.IO.Compression.CompressionLevel.Optimal)) {
+			compressor.Write(data);
 		}
 		return val.ToArray();
 	}

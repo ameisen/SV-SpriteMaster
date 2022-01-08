@@ -136,5 +136,7 @@ sealed class SharedLock : CriticalFinalizerObject, IDisposable {
 		}
 
 		Lock = null;
+
+		GC.SuppressFinalize(this);
 	}
 }

@@ -51,9 +51,32 @@ static class Compression {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static byte[] Compress(this ReadOnlySpan<byte> data, Algorithm algorithm) {
+		return algorithm switch {
+			Algorithm.None => data.ToArray(),
+			Algorithm.Compress => Compressors.SystemIO.Compress(data),
+			Algorithm.Deflate => Compressors.Deflate.Compress(data),
+			Algorithm.LZMA => Compressors.LZMA.Compress(data),
+			Algorithm.Zstd => Compressors.Zstd.Compress(data),
+			_ => throw new Exception($"Unknown Compression Algorithm: '{algorithm}'"),
+		};
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static byte[] Compress(this Span<byte> data, Algorithm algorithm) => Compress((ReadOnlySpan<byte>)data, algorithm);
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static byte[] Compress(this byte[] data) {
 		return Compress(data, BestAlgorithm);
 	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static byte[] Compress(this ReadOnlySpan<byte> data) {
+		return Compress(data, BestAlgorithm);
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static byte[] Compress(this Span<byte> data) => Compress((ReadOnlySpan<byte>)data);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static byte[] Decompress(this byte[] data, int size, Algorithm algorithm) {

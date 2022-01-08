@@ -55,7 +55,7 @@ static class Draw {
 			if (!newSource.Cleanup(reference))
 				return null;
 
-			if (reference is RenderTarget2D || reference.Width < 1 || reference.Height < 1)
+			if (reference.Width < 1 || reference.Height < 1)
 				return null;
 
 			if (reference.Extent().MaxOf <= Config.Resample.MinimumTextureDimensions)

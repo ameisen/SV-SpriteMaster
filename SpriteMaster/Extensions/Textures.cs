@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+﻿using Microsoft.Toolkit.HighPerformance;
+using Microsoft.Xna.Framework.Graphics;
 using Pastel;
 using SpriteMaster.Resample;
 using SpriteMaster.Types;
@@ -141,62 +142,46 @@ static class Textures {
 
 	private const int ImageElementSize = 4;
 
-	internal static unsafe void DumpTexture<T>(string path, T[] source, in Vector2I sourceSize, in double? adjustGamma = null, in Bounds? destBounds = null, in (int i0, int i1, int i2, int i3)? swap = null) where T : unmanaged {
-		using var fixedSpan = source.AsFixedSpan();
-		DumpTexture<T>(path, fixedSpan, sourceSize, adjustGamma, destBounds, swap);
+	internal static void DumpTexture<T>(string path, T[] source, in Vector2I sourceSize, in double? adjustGamma = null, in Bounds? destBounds = null, in (int i0, int i1, int i2, int i3)? swap = null) where T : unmanaged {
+		DumpTexture<T>(path, source.AsSpan(), sourceSize, adjustGamma, destBounds, swap);
 	}
 
-	internal static unsafe void DumpTexture<T>(string path, in FixedSpan<T> source, in Vector2I sourceSize, in double? adjustGamma = null, in Bounds? destBounds = null, in (int i0, int i1, int i2, int i3)? swap = null) where T : unmanaged {
-		T[] subData;
+	internal static void DumpTexture<T>(string path, Span<T> source, in Vector2I sourceSize, in double? adjustGamma = null, in Bounds? destBounds = null, in (int i0, int i1, int i2, int i3)? swap = null) where T : unmanaged {
+		byte[] subData;
 		Bounds destBound;
 		if (destBounds.HasValue) {
 			destBound = destBounds.Value;
-			subData = GC.AllocateUninitializedArray<T>(destBound.Area, pinned: true);
-			uint sourceStride = (uint)(sourceSize.Width * 4);
-			uint destStride = (uint)(destBound.Width * 4);
-			uint sourceOffset = (uint)((sourceStride * destBound.Top) + (destBound.Left * 4));
-			uint destOffset = 0;
-			byte* sourcePtr = (byte*)source.TypedPointer;
-			fixed (T* dataPtrT = subData) {
-				byte* dataPtr = (byte*)dataPtrT;
-
-				for (int y = 0; y < destBound.Height; ++y) {
-					Unsafe.CopyBlock(
-						dataPtr + destOffset,
-						sourcePtr + sourceOffset,
-						destStride
-					);
-					destOffset += destStride;
-					sourceOffset += sourceStride;
-				}
+			subData = GC.AllocateUninitializedArray<byte>(destBound.Area * 4);
+			var destSpan = subData.AsSpan().Cast<byte, uint>();
+			var sourceSpan = source.Cast<T, uint>();
+			int sourceOffset = (sourceSize.Width * destBound.Top) + destBound.Left;
+			int destOffset = 0;
+			for (int y = 0; y < destBound.Height; ++y) {
+				sourceSpan.Slice(sourceOffset, destBound.Width).CopyTo(destSpan.Slice(destOffset, destBound.Width));
+				destOffset += destBound.Width;
+				sourceOffset += sourceSize.Width;
 			}
 		}
 		else {
-			subData = source.ToArray();
+			subData = source.Cast<T, byte>().ToArray();
 			destBound = sourceSize;
 		}
 
 		SynchronizedTasks.AddPendingAction(() => {
-			using var dumpTexture = new Texture2D(
+			using var dumpTexture = new DumpTexture2D(
 				StardewValley.Game1.graphics.GraphicsDevice,
 				destBound.Width,
 				destBound.Height,
 				mipmap: false,
 				format: SurfaceFormat.Color
-			);
+			) {
+				Name = "Dump Texture"
+			};
+		
+			// PlatformSetData(0, data, 0, data.Length);
 			dumpTexture.SetData(subData);
 			using var dumpFile = File.Create(path);
 			dumpTexture.SaveAsPng(dumpFile, destBound.Width, destBound.Height);
 		});
-	}
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static bool IsValid(this ScaledTexture texture) {
-		return texture != null && texture.Texture != null && !texture.Texture.IsDisposed;
-	}
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static bool IsDisposed(this ScaledTexture texture) {
-		return texture == null || (texture.Texture != null && texture.Texture.IsDisposed);
 	}
 }

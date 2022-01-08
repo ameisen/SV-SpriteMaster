@@ -33,44 +33,28 @@ static class Edge {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static byte GetAlpha(int sample) {
+	private static byte GetAlpha(uint sample) {
 		return (byte)(((uint)sample >> 24) & 0xFF);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static (byte R, byte G, byte B) GetColors(int sample) {
-		return (
-			(byte)(((uint)sample >> 0) & 0xFF),
-			(byte)(((uint)sample >> 8) & 0xFF),
-			(byte)(((uint)sample >> 16) & 0xFF)
-		);
-	}
+	internal static unsafe Results AnalyzeLegacy(Texture2D reference, Span<uint> data, Bounds bounds, Vector2B Wrapped) {
+		Vector2B boundsInverted = bounds.Invert;
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static unsafe Results AnalyzeLegacy(Texture2D reference, in FixedSpan<int> data, Bounds rawSize, Bounds spriteSize, Vector2B Wrapped) {
-		Vector2B boundsInverted = spriteSize.Invert;
+		if (bounds.Width < 0 || bounds.Height < 0) {
+			Debug.ErrorLn($"Inverted Sprite Bounds Value leaked to AnalyzeLegacy: {bounds}");
 
-		if (spriteSize.Width < 0 || spriteSize.Height < 0) {
-			Debug.ErrorLn($"Inverted Sprite Bounds Value leaked to AnalyzeLegacy: {spriteSize}");
+			boundsInverted.X = bounds.Width < 0;
+			boundsInverted.Y = bounds.Height < 0;
 
-			boundsInverted.X = spriteSize.Width < 0;
-			boundsInverted.Y = spriteSize.Height < 0;
-
-			spriteSize.Width = Math.Abs(spriteSize.Width);
-			spriteSize.Height = Math.Abs(spriteSize.Height);
-		}
-
-		if (rawSize.Width < 0 || rawSize.Height < 0) {
-			Debug.ErrorLn($"Inverted Raw Bounds Value leaked to AnalyzeLegacy: {rawSize}");
-
-			rawSize.Width = Math.Abs(rawSize.Width);
-			rawSize.Height = Math.Abs(rawSize.Height);
+			bounds.Width = Math.Abs(bounds.Width);
+			bounds.Height = Math.Abs(bounds.Height);
 		}
 
 		float edgeThreshold = Config.WrapDetection.edgeThreshold;
 
 		if (!reference.Anonymous() && Config.Resample.Padding.StrictList.Contains(reference.SafeName())) {
-			var ratio = (float)spriteSize.Extent.MaxOf / (float)spriteSize.Extent.MinOf;
+			var ratio = (float)bounds.Extent.MaxOf / (float)bounds.Extent.MinOf;
 			if (ratio >= 4.0f) {
 				edgeThreshold = 2.0f;
 			}
@@ -84,17 +68,14 @@ static class Edge {
 		Vector2B RepeatY = Vector2B.False;
 
 		if (Config.WrapDetection.Enabled) {
-			var rawInputSize = rawSize;
-			var spriteInputSize = spriteSize;
-
 			long numSamples = 0;
 			double meanAlphaF = 0.0f;
 			if (!WrappedXY.All) {
-				foreach (int y in 0.RangeTo(spriteInputSize.Height)) {
-					int offset = (y + spriteInputSize.Top) * rawInputSize.Width + spriteInputSize.Left;
-					foreach (int x in 0.RangeTo(spriteInputSize.Width)) {
+				foreach (int y in 0.RangeTo(bounds.Height)) {
+					int offset = (y + bounds.Top) * bounds.Width + bounds.Left;
+					foreach (int x in 0.RangeTo(bounds.Width)) {
 						int address = offset + x;
-						int sample = data[address];
+						uint sample = data[address];
 						meanAlphaF += GetAlpha(sample);
 						++numSamples;
 					}
@@ -108,10 +89,10 @@ static class Edge {
 			// Both edges must meet the threshold.
 			if (!WrappedXY.X) {
 				var samples = stackalloc int[] { 0, 0 };
-				foreach (int y in 0.RangeTo(spriteInputSize.Height)) {
-					int offset = (y + spriteInputSize.Top) * rawInputSize.Width + spriteInputSize.Left;
-					int sample0 = data[offset];
-					int sample1 = data[offset + (spriteInputSize.Width - 1)];
+				foreach (int y in 0.RangeTo(bounds.Height)) {
+					int offset = (y + bounds.Top) * bounds.Width + bounds.Left;
+					uint sample0 = data[offset];
+					uint sample1 = data[offset + (bounds.Width - 1)];
 
 					if (GetAlpha(sample0) >= alphaThreshold) {
 						samples[0]++;
@@ -120,7 +101,7 @@ static class Edge {
 						samples[1]++;
 					}
 				}
-				int threshold = ((float)spriteInputSize.Height * edgeThreshold).NearestInt();
+				int threshold = ((float)bounds.Height * edgeThreshold).NearestInt();
 				var aboveThreshold = Vector2B.From(samples[0] >= threshold, samples[1] >= threshold);
 				if (aboveThreshold.All) {
 					WrappedXY.X = true;
@@ -131,20 +112,20 @@ static class Edge {
 			}
 			if (!WrappedXY.Y) {
 				var samples = stackalloc int[] { 0, 0 };
-				var offsets = stackalloc int[] { spriteInputSize.Top * rawInputSize.Width, (spriteInputSize.Bottom - 1) * rawInputSize.Width };
+				var offsets = stackalloc int[] { bounds.Top * bounds.Width, (bounds.Bottom - 1) * bounds.Width };
 				int sampler = 0;
 				foreach (int i in 0.RangeTo(2)) {
 					var yOffset = offsets[i];
-					foreach (int x in 0.RangeTo(spriteInputSize.Width)) {
-						int offset = yOffset + x + spriteInputSize.Left;
-						int sample = data[offset];
+					foreach (int x in 0.RangeTo(bounds.Width)) {
+						int offset = yOffset + x + bounds.Left;
+						uint sample = data[offset];
 						if (GetAlpha(sample) >= alphaThreshold) {
 							samples[sampler]++;
 						}
 					}
 					sampler++;
 				}
-				int threshold = ((float)spriteInputSize.Width * edgeThreshold).NearestInt();
+				int threshold = ((float)bounds.Width * edgeThreshold).NearestInt();
 				var aboveThreshold = Vector2B.From(samples[0] >= threshold, samples[1] >= threshold);
 				if (aboveThreshold.All) {
 					WrappedXY.Y = true;
@@ -172,8 +153,10 @@ static class Edge {
 		if (Config.Resample.PremultiplyAlpha) {
 			foreach (var element in data) {
 				var alpha = GetAlpha(element);
-				var colors = GetColors(element);
-				var maxColor = Math.Max(Math.Max(colors.R, colors.G), colors.B);
+				byte R = (byte)((uint)element >> 0);
+				byte G = (byte)((uint)element >> 8);
+				byte B = (byte)((uint)element >> 16);
+				var maxColor = Math.Max(Math.Max(R, G), B);
 				if (maxColor > alpha) {
 					if (maxColor - alpha >= Config.Resample.PremultipliedAlphaThreshold) {
 						premultipliedAlpha = false;

@@ -37,7 +37,15 @@ sealed partial class ScaledTexture : IDisposable {
 			return meta.ScaleValid = false;
 		}
 
-		if (texture is RenderTarget2D) {
+		if (texture is InternalTexture2D) {
+			if (!meta.TracePrinted) {
+				meta.TracePrinted = true;
+				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', is an internal texture");
+			}
+			return meta.ScaleValid = false;
+		}
+
+		if (texture is RenderTarget2D && texture.Meta().IsSystemRenderTarget) {
 			if (!meta.TracePrinted) {
 				meta.TracePrinted = true;
 				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', render targets unsupported");
@@ -124,6 +132,13 @@ sealed partial class ScaledTexture : IDisposable {
 	private static readonly TexelTimer TexelAverageSync = new();
 	private static readonly TexelTimer TexelAverageCachedSync = new();
 
+	internal static void ClearTimers() {
+		TexelAverage.Reset();
+		TexelAverageCached.Reset();
+		TexelAverageSync.Reset();
+		TexelAverageCachedSync.Reset();
+	}
+
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static TexelTimer GetTimer(bool cached, bool async) {
 		if (async) {
@@ -183,7 +198,7 @@ sealed partial class ScaledTexture : IDisposable {
 				return null;
 			}
 
-			var estimatedDuration = GetTimer(texture: texture, async: useAsync, out bool cached).Estimate(source.Area);
+			var estimatedDuration = GetTimer(texture: texture, async: useAsync, out bool cached).Estimate((int)texture.Format.SizeBytes(source.Area));
 			isCached = cached;
 			if (estimatedDuration > TimeSpan.Zero && estimatedDuration > remainingTime) {
 				Debug.TraceLn($"Not enough frame time left to begin resampling {getNameString()} ({estimatedDuration.TotalMilliseconds.ToString(DrawingColor.LightBlue)} ms >= {remainingTime?.TotalMilliseconds.ToString(DrawingColor.LightBlue)} ms)");
@@ -201,10 +216,15 @@ sealed partial class ScaledTexture : IDisposable {
 		else {
 			textureType = TextureType.Image;
 		}
+
+		if (SpriteOverrides.IsWater(source, texture)) {
+			//textureType = TextureType.Image;
+		}
+
 		SpriteInfo textureWrapper;
 
 		using (Performance.Track("new SpriteInfo")) {
-			textureWrapper = new(reference: texture, dimensions: source, expectedScale: expectedScale);
+			textureWrapper = new(reference: texture, dimensions: source, expectedScale: expectedScale, textureType: textureType);
 		}
 
 		string getRemainingTime() {
@@ -225,23 +245,19 @@ sealed partial class ScaledTexture : IDisposable {
 		DrawState.PushedUpdateThisFrame = true;
 
 		try {
-			var newTexture = new ScaledTexture(
-				assetName: texture.SafeName(),
-				textureWrapper: textureWrapper,
-				sourceRectangle: source,
-				textureType: textureType,
-				async: useAsync,
-				expectedScale: expectedScale
+			var resampleTask = ResampleTask.Dispatch(
+				spriteInfo: textureWrapper,
+				async: useAsync
 			);
+
+			var result = resampleTask.IsCompletedSuccessfully ? resampleTask.Result : null;
+
 			if (useAsync) {
 				// It adds itself to the relevant maps.
-				if (newTexture.IsReady && newTexture.Texture is not null) {
-					return newTexture;
-				}
-				return null;
+				return (result?.IsReady ?? false) ? result : null;
 			}
 			else {
-				return newTexture;
+				return result;
 			}
 		}
 		finally {
@@ -266,7 +282,8 @@ sealed partial class ScaledTexture : IDisposable {
 	internal readonly string Name;
 	internal Vector2 Scale;
 	internal readonly TextureType TexType;
-	internal volatile bool IsReady = false;
+	private volatile bool _isReady = false;
+	internal bool IsReady => _isReady && Texture is not null;
 
 	internal Vector2B Wrapped = Vector2B.False;
 
@@ -279,6 +296,8 @@ sealed partial class ScaledTexture : IDisposable {
 	internal Vector2I BlockPadding = Vector2I.Zero;
 	private readonly Vector2I originalSize;
 	private readonly Bounds sourceRectangle;
+	private readonly uint ExpectedScale;
+	internal readonly ulong SpriteMapHash;
 	private uint refScale;
 
 	internal ulong LastReferencedFrame = DrawState.CurrentFrame;
@@ -286,11 +305,11 @@ sealed partial class ScaledTexture : IDisposable {
 	internal Vector2 AdjustedScale = Vector2.One;
 
 	private LinkedListNode<WeakReference<ScaledTexture>> CurrentRecentNode = null;
-	private volatile bool Disposed = false;
+	internal volatile bool IsDisposed = false;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	~ScaledTexture() {
-		if (!Disposed) {
+		if (!IsDisposed) {
 			Dispose();
 		}
 	}
@@ -300,7 +319,7 @@ sealed partial class ScaledTexture : IDisposable {
 	internal long MemorySize {
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		get {
-			if (!IsReady || Texture is null) {
+			if (!IsReady) {
 				return 0;
 			}
 			return Texture.SizeBytes();
@@ -390,8 +409,18 @@ sealed partial class ScaledTexture : IDisposable {
 		this.OriginalSourceRectangle = new(sourceRectangle);
 		this.Reference = source.MakeWeak();
 		this.sourceRectangle = sourceRectangle;
+		this.ExpectedScale = expectedScale;
 		this.refScale = expectedScale;
-		SpriteMap.Add(source, this, sourceRectangle, expectedScale);
+		this.SpriteMapHash = SpriteMap.SpriteHash(source, sourceRectangle, expectedScale);
+		// TODO : I believe we need a lock here until when the texture is _fully created_, preventing new instantiations from starting of a texture
+		// already in-flight
+		if (!SpriteMap.Add(source, this)) {
+			// If false, then the sprite already exists in the map (which can be caused by gap between the Resample task being kicked off, and hitting this, and _another_ sprite getting
+			// past the earlier try-block, and getting here.
+			// TODO : this should be fixed by making sure that all of the resample tasks _at least_ get to this point before the end of the frame.
+			// TODO : That might not be sufficient either if the _same_ draw ends up happening again.
+			return;
+		}
 
 		this.Name = source.Anonymous() ? assetName.SafeName() : source.SafeName();
 		switch (TexType) {
@@ -405,45 +434,16 @@ sealed partial class ScaledTexture : IDisposable {
 				throw new NotImplementedException("Sliced Images not yet implemented");
 		}
 
-		if (async && Config.AsyncScaling.Enabled) {
-			ThreadQueue.Queue((SpriteInfo wrapper) => {
-				Thread.CurrentThread.Priority = ThreadPriority.Lowest;
-				using var _ = new AsyncTracker($"Resampling {Name} [{sourceRectangle}]");
-				Thread.CurrentThread.Name = "Texture Resampling Thread";
-				Hash = GetHash();
-				Resampler.Upscale(
-					texture: this,
-					scale: ref refScale,
-					input: wrapper,
-					textureType: TexType,
-					hash: Hash,
-					wrapped: ref Wrapped,
-					async: true
-				);
-				// If the upscale fails, the asynchronous action on the render thread automatically cleans up the ScaledTexture.
-			}, textureWrapper);
-		}
-		else {
-			// TODO store the HD Texture in _this_ object instead. Will confuse things like subtexture updates, though.
-			Hash = GetHash();
-			this.Texture = Resampler.Upscale(
-				texture: this,
-				scale: ref refScale,
-				input: textureWrapper,
-				textureType: TexType,
-				hash: Hash,
-				wrapped: ref Wrapped,
-				async: false
-			);
-
-			if (this.Texture is not null) {
-				Finish();
-			}
-			else {
-				Dispose();
-				return;
-			}
-		}
+		// TODO store the HD Texture in _this_ object instead. Will confuse things like subtexture updates, though.
+		Hash = GetHash();
+		this.Texture = Resampler.Upscale(
+			texture: this,
+			scale: ref refScale,
+			input: textureWrapper,
+			hash: Hash,
+			wrapped: ref Wrapped,
+			async: false
+		);
 
 		// TODO : I would love to dispose of this texture _now_, but we rely on it disposing to know if we need to dispose of ours.
 		// There is a better way to do this using weak references, I just need to analyze it further. Memory leaks have been a pain so far.
@@ -462,7 +462,7 @@ sealed partial class ScaledTexture : IDisposable {
 			texture = Texture;
 		}
 
-		if (texture is null || texture.IsDisposed) {
+		if (texture is null || texture.IsDisposed || IsDisposed) {
 			return;
 		}
 
@@ -488,12 +488,13 @@ sealed partial class ScaledTexture : IDisposable {
 
 		this.Scale = (Vector2)texture.Dimensions / new Vector2(originalSize.Width, originalSize.Height);
 
-		IsReady = true;
+		Thread.MemoryBarrier();
+		_isReady = true;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal void UpdateReferenceFrame() {
-		if (Disposed) {
+		if (IsDisposed) {
 			return;
 		}
 
@@ -523,7 +524,7 @@ sealed partial class ScaledTexture : IDisposable {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public void Dispose() {
-		if (Disposed) {
+		if (IsDisposed) {
 			return;
 		}
 
@@ -536,7 +537,9 @@ sealed partial class ScaledTexture : IDisposable {
 			}
 			CurrentRecentNode = null;
 		}
-		Disposed = true;
+		IsDisposed = true;
+
+		GC.SuppressFinalize(this);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]

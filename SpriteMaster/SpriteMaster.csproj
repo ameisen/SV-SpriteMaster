@@ -31,6 +31,7 @@
 
 	<ItemGroup>
 		<!--<PackageReference Include="Brokenevent.ILStrip.CLI" Version="1.1.4" GeneratePathProperty="true" ExcludeAssets="all" />-->
+		<PackageReference Include="BCnEncoder.Net" Version="2.1.0" />
 		<PackageReference Include="ErrorProne.NET.CoreAnalyzers" Version="0.4.0-beta.1">
 		  <PrivateAssets>all</PrivateAssets>
 		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

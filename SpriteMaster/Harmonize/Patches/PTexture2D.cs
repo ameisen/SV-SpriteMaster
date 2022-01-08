@@ -35,10 +35,6 @@ static class PTexture2D {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static void SetDataPurge<T>(Texture2D texture, in XNA.Rectangle? rect, T[] data, int startIndex, int elementCount) where T : struct {
-		if (texture is ManagedTexture2D) {
-			return;
-		}
-
 		if (!ScaledTexture.Validate(texture)) {
 			return;
 		}
@@ -77,24 +73,36 @@ static class PTexture2D {
 
 	[Harmonize("SetData", Harmonize.Fixation.Prefix, PriorityLevel.Last, Harmonize.Generic.Struct)]
 	private static bool OnSetData<T>(Texture2D __instance, T[] data) where T : struct {
+		if (__instance is (ManagedTexture2D or InternalTexture2D)) {
+			return true;
+		}
 		__instance.SetData(0, 0, null, data, 0, data.Length);
 		return false;
 	}
 
 	[Harmonize("SetData", Harmonize.Fixation.Prefix, PriorityLevel.Last, Harmonize.Generic.Struct)]
 	private static bool OnSetData<T>(Texture2D __instance, T[] data, int startIndex, int elementCount) where T : struct {
+		if (__instance is (ManagedTexture2D or InternalTexture2D)) {
+			return true;
+		}
 		__instance.SetData(0, 0, null, data, startIndex, elementCount);
 		return false;
 	}
 
 	[Harmonize("SetData", Harmonize.Fixation.Prefix, PriorityLevel.Last, Harmonize.Generic.Struct)]
 	private static bool OnSetData<T>(Texture2D __instance, int level, in XNA.Rectangle? rect, T[] data, int startIndex, int elementCount) where T : struct {
+		if (__instance is (ManagedTexture2D or InternalTexture2D)) {
+			return true;
+		}
 		__instance.SetData(level, 0, rect, data, startIndex, elementCount);
 		return false;
 	}
 
 	[Harmonize("SetData", Harmonize.Fixation.Postfix, PriorityLevel.Last, Harmonize.Generic.Struct)]
 	private static void OnSetData<T>(Texture2D __instance, int level, int arraySlice, in XNA.Rectangle? rect, T[] data, int startIndex, int elementCount) where T : struct {
+		if (__instance is (ManagedTexture2D or InternalTexture2D)) {
+			return;
+		}
 		using var _ = Performance.Track("SetData");
 		SetDataPurge(
 			__instance,

@@ -11,19 +11,17 @@ sealed class SpriteMap {
 	private readonly WeakCollection<ScaledTexture> ScaledTextureReferences = new();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	static private ulong SpriteHash(Texture2D texture, in Bounds source, uint expectedScale) {
+	internal static ulong SpriteHash(Texture2D texture, in Bounds source, uint expectedScale) {
 		return Hashing.Combine(source.Hash(), expectedScale.GetSafeHash());
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal void Add(Texture2D reference, ScaledTexture texture, in Bounds source, uint expectedScale) {
-		var rectangleHash = SpriteHash(texture: reference, source: source, expectedScale: expectedScale);
-
+	internal bool Add(Texture2D reference, ScaledTexture texture) {
 		var meta = reference.Meta();
 		using (Lock.Write) {
-			ScaledTextureReferences.Add(texture);
+			ScaledTextureReferences.Add(texture);  
 			using (meta.Lock.Write) {
-				meta.SpriteTable.Add(rectangleHash, texture);
+				return meta.SpriteTable.TryAdd(texture.SpriteMapHash, texture);
 			}
 		}
 	}
@@ -76,7 +74,9 @@ sealed class SpriteMap {
 				catch { }
 			}
 			using (meta.Lock.Write) {
-				meta.SpriteTable.Clear();
+				if (meta.SpriteTable.TryGetValue(scaledTexture.SpriteMapHash, out var currentValue) && currentValue == scaledTexture) {
+					meta.SpriteTable.Remove(scaledTexture.SpriteMapHash);
+				}
 			}
 		}
 		finally {

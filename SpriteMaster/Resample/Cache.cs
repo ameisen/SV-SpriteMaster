@@ -164,7 +164,7 @@ static class Cache {
 		out Vector2B wrapped,
 		out Vector2I padding,
 		out Vector2I blockPadding,
-		out byte[] data
+		out Span<byte> data
 	) {
 		refScale = 0;
 		size = Vector2I.Zero;
@@ -251,7 +251,7 @@ static class Cache {
 		Vector2B wrapped,
 		Vector2I padding,
 		Vector2I blockPadding,
-		byte[] data
+		ReadOnlySpan<byte> data
 	) {
 		if (!Config.FileCache.Enabled) {
 			return true;
@@ -319,7 +319,7 @@ static class Cache {
 				try { File.Delete(path); } catch { }
 				SavingMap.TryRemove(path, out var _);
 			}
-		}, data);
+		}, data.ToArray()); // TODO : eliminate this copy
 		return true;
 	}
 

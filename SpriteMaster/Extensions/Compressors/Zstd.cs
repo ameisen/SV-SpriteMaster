@@ -12,27 +12,30 @@ namespace SpriteMaster.Extensions.Compressors;
 //[HarmonizeFinalizeCatcher<ZstdNet.Compressor, DllNotFoundException>(critical: false)]
 static class Zstd {
 	private sealed class Compressor : IDisposable {
-		private readonly ZstdNet.Compressor Delegate;
+		private readonly ZstdNet.Compressor Delegator;
 
 		[MethodImpl(MethodImpl.Hot)]
 		internal Compressor() : this(Zstd.Options.CompressionDefault) { }
 		[MethodImpl(MethodImpl.Hot)]
-		internal Compressor(ZstdNet.CompressionOptions options) => Delegate = new(options);
+		internal Compressor(ZstdNet.CompressionOptions options) => Delegator = new(options);
 
 
 		[MethodImpl(MethodImpl.Hot)]
 		public void Dispose() {
 			try {
-				Delegate.Dispose();
+				Delegator.Dispose();
 			}
 			catch (DllNotFoundException) {
 				// This eliminates an invalid call to a DLL that isn't present.
-				GC.SuppressFinalize(Delegate);
+				GC.SuppressFinalize(Delegator);
 			}
 		}
 
 		[MethodImpl(MethodImpl.Hot)]
-		internal byte[] Wrap(byte[] data) => Delegate.Wrap(data);
+		internal byte[] Wrap(byte[] data) => Delegator.Wrap(data);
+
+		[MethodImpl(MethodImpl.Hot)]
+		internal byte[] Wrap(ReadOnlySpan<byte> data) => Delegator.Wrap(data);
 	}
 
 	private sealed class Decompressor : IDisposable {
@@ -107,6 +110,12 @@ static class Zstd {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static byte[] Compress(byte[] data) {
+		using var encoder = GetEncoder();
+		return encoder.Wrap(data);
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static byte[] Compress(ReadOnlySpan<byte> data) {
 		using var encoder = GetEncoder();
 		return encoder.Wrap(data);
 	}

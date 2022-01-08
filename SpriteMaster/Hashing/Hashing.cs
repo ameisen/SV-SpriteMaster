@@ -1,4 +1,5 @@
-﻿using SpriteMaster.Extensions;
+﻿using Microsoft.Toolkit.HighPerformance;
+using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 
 using System;
@@ -50,7 +51,7 @@ static partial class Hashing {
 	internal static ulong Hash(this ReadOnlySequence<byte> data) => data.HashXX3();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static ulong Hash(this in FixedSpan<byte> data) => data.HashXX3();
+	internal static ulong Hash(this Span2D<byte> data) => data.HashXX3();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ulong Hash(this ReadOnlySpan<byte> data) => data.HashXX3();
@@ -66,9 +67,6 @@ static partial class Hashing {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ulong Hash<T>(this T[] data) where T : unmanaged => data.HashXX3();
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static ulong Hash<T>(this in FixedSpan<T> data) where T : unmanaged => data.HashXX3();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ulong Hash(this Stream stream) => stream.HashXX3();

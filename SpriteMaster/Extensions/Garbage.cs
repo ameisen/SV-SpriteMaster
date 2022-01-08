@@ -25,7 +25,7 @@ static class Garbage {
 	}
 
 	static Garbage() {
-		ExecuteSafe(() => GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency);
+		ExecuteSafe(() => GCSettings.LatencyMode = GCLatencyMode.Interactive);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]

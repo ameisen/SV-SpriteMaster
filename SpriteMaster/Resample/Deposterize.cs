@@ -1,4 +1,5 @@
-﻿using SpriteMaster.Colors;
+﻿using Microsoft.Toolkit.HighPerformance;
+using SpriteMaster.Colors;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using System;
@@ -63,7 +64,6 @@ static class Deposterize {
 	}
 
 	private class DeposterizeContext<T> where T : unmanaged {
-		private readonly FixedSpan<T> Source;
 		private readonly Vector2I Size;
 		private readonly Vector2B Wrapped;
 		private readonly int Passes;
@@ -72,14 +72,12 @@ static class Deposterize {
 		private readonly int BlockSize;
 
 		internal DeposterizeContext(
-			in FixedSpan<T> source,
 			in Vector2I size,
 			in Vector2B wrapped,
 			int passes,
 			int threshold,
 			int blockSize
 		) {
-			Source = source;
 			Size = size;
 			Wrapped = wrapped;
 			Passes = passes;
@@ -178,12 +176,12 @@ static class Deposterize {
 			if (Wrapped.X) {
 				var result = value % Size.X;
 				if (result < 0) {
-					result = Size.X + result;
+					result += Size.X;
 				}
 				return result;
 			}
 			else {
-				return Math.Clamp(value, 0, Size.X);
+				return Math.Clamp(value, 0, Size.X - 1);
 			}
 		}
 
@@ -192,32 +190,27 @@ static class Deposterize {
 			if (Wrapped.Y) {
 				var result = value % Size.Y;
 				if (result < 0) {
-					result = Size.Y + result;
+					result += Size.Y;
 				}
 				return result;
 			}
 			else {
-				return Math.Clamp(value, 0, Size.Y);
+				return Math.Clamp(value, 0, Size.Y - 1);
 			}
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		private unsafe void DeposterizeH(Span<ColorElement> inData, Span<ColorElement> outData) {
+		private void DeposterizeH(ReadOnlySpan<ColorElement> inData, Span<ColorElement> outData) {
 			int minY = 0;
 			int maxY = Size.Height;
 
-			int minX = Wrapped.X ? -1 : 1;
-			int maxX = Wrapped.X ? Size.Width + 1 : Math.Max(1, Size.Width - 1);
+			int minX = -1;
+			int maxX = Size.Width + 1;
 
 			foreach (int y in minY.RangeTo(maxY)) {
 				int modulusY = GetY(y);
 
 				var yIndex = modulusY * Size.X;
-
-				if (!Wrapped.X) {
-					outData[yIndex] = inData[yIndex];
-					outData[yIndex + Size.Width - 1] = inData[yIndex + Size.Width - 1];
-				}
 
 				foreach (int x in minX.RangeTo(maxX)) {
 					int modulusX = GetX(x);
@@ -234,12 +227,12 @@ static class Deposterize {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		private unsafe void DeposterizeV(Span<ColorElement> inData, Span<ColorElement> outData) {
-			int minY = Wrapped.Y ? 0 : 1;
-			int maxY = Wrapped.Y ? Size.Height : Math.Max(1, Size.Height - 1);
+		private void DeposterizeV(ReadOnlySpan<ColorElement> inData, Span<ColorElement> outData) {
+			int minY = -1;
+			int maxY = Size.Height + 1;
 
-			int minX = Wrapped.X ? -(Size.X % BlockSize) : 0;
-			int maxX = Wrapped.X ? Size.Width + -minX : Size.Width;
+			int minX = -(Size.X % BlockSize);
+			int maxX = Size.Width + -minX;
 
 			int minXBlock = 0;
 			int maxXBlock = (maxX / BlockSize) + 1;
@@ -248,21 +241,10 @@ static class Deposterize {
 				var min = (xb + minX) * BlockSize;
 				var max = Math.Min(maxX, min + BlockSize);
 
-				if (!Wrapped.Y) {
-					foreach (int x in min.RangeTo(max)) {
-						int xOffset = GetX(x);
-						int index0 = xOffset;
-						int index1 = ((Size.Height - 1) * Size.X) + xOffset;
-						outData[index0] = inData[index0];
-						outData[index1] = inData[index1];
-					}
-				}
-
 				foreach (int y in minY.RangeTo(maxY)) {
-					var modulusY = GetY(y);
-					var yIndex = modulusY * Size.X;
-					var yIndexPrev = GetY(y - 1) * Size.X;
-					var yIndexNext = GetY(y + 1) * Size.X;
+					var yIndex =			GetY(y)			* Size.X;
+					var yIndexPrev =	GetY(y - 1)	* Size.X;
+					var yIndexNext =	GetY(y + 1)	* Size.X;
 
 					foreach (int x in min.RangeTo(max)) {
 						var modulusX = GetX(x);
@@ -279,19 +261,56 @@ static class Deposterize {
 			}
 		}
 
-		internal unsafe T[] Execute() {
-			var buffer1 = GC.AllocateUninitializedArray<T>(Source.Length);
-			var buffer2 = GC.AllocateUninitializedArray<T>(Source.Length);
+		private void DeposterizeV2(ReadOnlySpan<ColorElement> inData, Span<ColorElement> outData) {
+			int minY = 1;
+			int maxY = Size.Height;
 
-			var inData = new Span<ColorElement>(Source.TypedPointer, (Source.Length * FixedSpan<T>.TypeSize) / sizeof(ColorElement));
-			var buffer1Data = MemoryMarshal.Cast<T, ColorElement>(buffer1.AsSpan());
-			var buffer2Data = MemoryMarshal.Cast<T, ColorElement>(buffer2.AsSpan());
+			int minX = -(Size.X % BlockSize);
+			int maxX = Size.Width + -minX;
+
+			int minXBlock = 0;
+			int maxXBlock = (maxX / BlockSize) + 1;
+
+			for (int xb = 0; xb < Size.X / BlockSize + 1; ++xb) {
+				var min = (xb + minX) * BlockSize;
+				var max = Math.Min(maxX, min + BlockSize);
+
+				for (int y = 1; y < Size.Height; ++y) {
+					var modulusY = GetY(y);
+					var yIndex = modulusY * Size.X;
+					var yIndexPrev = GetY(y - 1) * Size.X;
+					var yIndexNext = GetY(y + 1) * Size.X;
+
+					for (int x = xb * BlockSize; x < (xb + 1) * BlockSize && x < Size.Width; ++x) {
+						var modulusX = GetX(x);
+
+						var index = yIndex + modulusX;
+
+						var center = inData[index];
+						var upper = inData[yIndexPrev + modulusX];
+						var lower = inData[yIndexNext + modulusX];
+
+						outData[index] = Merge(center, upper, lower);
+					}
+				}
+			}
+		}
+
+		internal Span<T> Execute(ReadOnlySpan<T> data) {
+			var buffer1 = SpanExt.MakeUninitialized<T>(data.Length);
+			var buffer2 = SpanExt.MakeUninitialized<T>(data.Length);
+
+			var inData = data.Cast<T, ColorElement>();
+			var buffer1Data = buffer1.Cast<T, ColorElement>();
+			var buffer2Data = buffer2.Cast<T, ColorElement>();
 
 			DeposterizeH(inData, buffer1Data);
 			DeposterizeV(buffer1Data, buffer2Data);
+			//buffer1Data.CopyTo(buffer2Data);
 			for (int pass = 1; pass < Passes; ++pass) {
 				DeposterizeH(buffer2Data, buffer1Data);
 				DeposterizeV(buffer1Data, buffer2Data);
+				//buffer1Data.CopyTo(buffer2Data);
 			}
 
 			return buffer2;
@@ -309,8 +328,8 @@ static class Deposterize {
 	*/
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static T[] Enhance<T>(
-		FixedSpan<T> data,
+	internal static Span<T> Enhance<T>(
+		ReadOnlySpan<T> data,
 		in Vector2I size,
 		in Vector2B wrapped,
 		int? passes = null,
@@ -318,13 +337,12 @@ static class Deposterize {
 		int? blockSize = null
 	) where T : unmanaged {
 		var context = new DeposterizeContext<T>(
-			source: data,
 			size: size,
 			wrapped: wrapped,
 			passes: passes ?? Config.Resample.Deposterization.Passes,
 			threshold: threshold ?? Config.Resample.Deposterization.Threshold,
 			blockSize: blockSize ?? Config.Resample.Deposterization.BlockSize
 		);
-		return context.Execute();
+		return context.Execute(data);
 	}
 }

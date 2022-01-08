@@ -89,9 +89,9 @@ static class Config {
 
 	internal static class Garbage {
 		[Comment("Should unowned textures be marked in the garbage collector's statistics?")]
-		internal static bool CollectAccountUnownedTextures = true;
+		internal static bool CollectAccountUnownedTextures = false;
 		[Comment("Should owned textures be marked in the garbage collector's statistics?")]
-		internal static bool CollectAccountOwnedTextures = true;
+		internal static bool CollectAccountOwnedTextures = false;
 		[Comment("Should SM attempt to detect and prevent texture memory leaks?")]
 		internal static bool LeakPreventTexture = false;
 		[Comment("Should SM attempt to detect and prevent disposable object memory leaks?")]
@@ -147,7 +147,7 @@ static class Config {
 		[Comment("Maximum scale factor of sprites")]
 		internal static uint MaxScale = 6;
 		[Comment("Minimum edge length of a sprite to be considered for resampling")]
-		internal static int MinimumTextureDimensions = 4;
+		internal static int MinimumTextureDimensions = 1;
 		[Comment("Should wrapped addressing be enabled for sprite resampling (when analysis suggests it)?")]
 		internal static bool EnableWrappedAddressing = false;
 		[Comment("Should resampling be stalled if it is determined that it will cause hitches?")]
@@ -163,11 +163,11 @@ static class Config {
 			[Comment("Should deposterization be performed?")]
 			internal const bool Enabled = false; // disabled as the system needs more work
 			[Comment("Deposterization Color Threshold")]
-			internal static int Threshold = 32;
+			internal static int Threshold = 48;
 			[Comment("Deposterization Block Size")]
-			internal static int BlockSize = 2;
+			internal static int BlockSize = 1;
 			[Comment("Default number of passes")]
-			internal static int Passes = 3;
+			internal static int Passes = 2;
 			[Comment("Use YCbCr for color comparisons?")]
 			internal static bool UseYCbCr = true;
 		}
@@ -256,7 +256,7 @@ static class Config {
 			[Comment("The weight provided to luminance as opposed to chrominance when performing color comparisons")]
 			internal static double LuminanceWeight = 1.0;
 			[Comment("The tolerance for colors to be considered equal - [0, 256)")]
-			internal static double EqualColorTolerance = 30.0;
+			internal static double EqualColorTolerance = 20.0;
 			[Comment("The threshold for a corner-direction to be considered 'dominant'")]
 			internal static double DominantDirectionThreshold = 3.6;
 			[Comment("The threshold for a corner-direction to be considered 'steep'")]
@@ -280,7 +280,7 @@ static class Config {
 		[Comment("Should asynchronous scaling be enabled for unknown textures?")]
 		internal static bool EnabledForUnknownTextures = true;
 		[Comment("Should synchronous stores always be used?")]
-		internal static bool ForceSynchronousStores = false;//!Runtime.Capabilities.AsyncStores;
+		internal static bool ForceSynchronousStores = !Runtime.Capabilities.AsyncStores;
 		[Comment("Should synchronous stores be throttled?")]
 		internal static bool ThrottledSynchronousLoads = true;
 		[Comment("Should we fetch and load texture data within the same frame?")]

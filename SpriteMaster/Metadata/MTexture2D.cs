@@ -1,8 +1,9 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Caching;
 using SpriteMaster.Extensions;
+using SpriteMaster.Resample;
 using SpriteMaster.Types;
-using SpriteMaster.Types.Interlocked;
+using SpriteMaster.Types.Interlocking;
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -167,15 +168,7 @@ sealed class MTexture2D {
 						}
 						else {
 							_CachedData.SetTarget(null);
-							ThreadQueue.Queue((meta) => {
-								if (meta._CachedRawData.TryGetTarget(out var rawData)) {
-									var uncompressedData = Resample.TextureDecode.DecodeBlockCompressedTexture(Format, Size, rawData);
-									if (uncompressedData.IsEmpty) {
-										throw new InvalidOperationException("Compressed data failed to decompress");
-									}
-									_CachedData.SetTarget(uncompressedData.ToArray());
-								}
-							}, this);
+							DecodeTask.Dispatch(this);
 						}
 					}
 				}
@@ -194,6 +187,8 @@ sealed class MTexture2D {
 			return null;
 		}
 	}
+
+	internal void SetCachedDataUnsafe(Span<byte> data) => _CachedData.SetTarget(data.ToArray());
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal void UpdateLastAccess() {

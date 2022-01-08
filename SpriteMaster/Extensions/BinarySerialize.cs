@@ -1,6 +1,5 @@
 ﻿using SpriteMaster.Types;
-using SpriteMaster.Types.Interlocked;
-
+using SpriteMaster.Types.Interlocking;
 using System;
 using System.IO;
 using System.Runtime.CompilerServices;

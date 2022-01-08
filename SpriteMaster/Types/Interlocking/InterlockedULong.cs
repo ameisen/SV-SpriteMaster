@@ -2,8 +2,9 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Threading;
 
-namespace SpriteMaster.Types.Interlocked;
+namespace SpriteMaster.Types.Interlocking;
 
 [DebuggerDisplay("{Value}")]
 [StructLayout(LayoutKind.Sequential, Pack = sizeof(ulong), Size = sizeof(ulong))]
@@ -19,6 +20,12 @@ struct InterlockedULong :
 		InterlockedULong value => CompareTo(value),
 		_ => throw new ArgumentException($"{obj} is neither type {typeof(ulong)} nor {typeof(InterlockedULong)}"),
 	};
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	public void Set(ulong value) => Interlocked.Exchange(ref _Value, value);
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	public readonly ulong Get() => Interlocked.Read(ref Unsafe.AsRef(_Value));
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public readonly int CompareTo(ulong other) => Value.CompareTo(other);
@@ -45,9 +52,9 @@ struct InterlockedULong :
 	private ulong _Value;
 	internal ulong Value {
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		readonly get => System.Threading.Interlocked.Read(ref Unsafe.AsRef(_Value));
+		readonly get => Get();
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		set => System.Threading.Interlocked.Exchange(ref _Value, value);
+		set => Set(value);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]

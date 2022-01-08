@@ -30,32 +30,9 @@ static class PGraphicsDevice {
 
 	#region Reset
 
-	private static int ResetReentrancy = 0;
-
-	[Harmonize("Reset", fixation: Harmonize.Fixation.Prefix, priority: PriorityLevel.Last)]
-	internal static bool OnResetPre(GraphicsDevice __instance) {
-		_ = Interlocked.Increment(ref ResetReentrancy);
-		return true;
-	}
-
 	[Harmonize("Reset", fixation: Harmonize.Fixation.Postfix, priority: PriorityLevel.Last)]
 	internal static void OnResetPost(GraphicsDevice __instance) {
-		if (Interlocked.Decrement(ref ResetReentrancy) == 0) {
-			DrawState.OnPresentPost();
-		}
-	}
-
-	[Harmonize("Reset", fixation: Harmonize.Fixation.Prefix, priority: PriorityLevel.Last)]
-	internal static bool OnResetPre(GraphicsDevice __instance, PresentationParameters presentationParameters) {
-		_ = Interlocked.Increment(ref ResetReentrancy);
-		return true;
-	}
-
-	[Harmonize("Reset", fixation: Harmonize.Fixation.Postfix, priority: PriorityLevel.Last)]
-	internal static void OnResetPost(GraphicsDevice __instance, PresentationParameters presentationParameters) {
-		if (Interlocked.Decrement(ref ResetReentrancy) == 0) {
-			DrawState.OnPresentPost();
-		}
+		DrawState.OnPresentPost();
 	}
 
 	#endregion
