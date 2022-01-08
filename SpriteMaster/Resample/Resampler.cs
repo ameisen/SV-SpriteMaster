@@ -90,56 +90,6 @@ sealed class Resampler {
 	private const int WaterBlock = 4;
 	private const int FontBlock = 1;
 
-	private static Span<uint> BlockReducer(ReadOnlySpan<uint> data, in Bounds inBounds, int stride, int block, out Vector2I outExtent) {
-		//if ((bounds.Width % block) != 0 || (bounds.Height % block) != 0) {
-		//	throw new ArgumentOutOfRangeException($"Bounds {bounds} are not multiples of block {block}");
-		//}
-
-		if (!block.IsPow2()) {
-			throw new ArgumentException($"Block size {block} is not a power-of-two");
-		}
-
-		Bounds bounds = new Bounds(
-			inBounds.Offset & ~(block - 1), // 'block' is a power-of-two
-			(inBounds.Extent / block).Max((1, 1))
-		);
-
-		var result = SpanExt.MakeUninitialized<uint>(bounds.Area);
-
-		int startOffset = (bounds.Offset.Y * stride) + bounds.Offset.X;
-		int outOffset = 0;
-
-		for (int y = 0; y < bounds.Extent.Height; ++y) {
-			int offset = startOffset + ((y * block) * stride);
-			for (int x = 0; x < bounds.Extent.Width; ++x) {
-				result[outOffset++] = data[offset + (x * block)];
-			}
-		}
-
-		outExtent = bounds.Extent;
-		return result;
-	}
-
-	private static Span<uint> DownSample(ReadOnlySpan<uint> data, in Bounds inBounds, int stride, int block, out Vector2I outExtent) {
-		int blockSize = block * block;
-		int halfBlock = block >> 1;
-		var blockOffset = inBounds.Offset * block;
-
-		// Rescale the data down, doing an effective point sample from 4x4 blocks to 1 texel.
-		var outData = SpanExt.MakeUninitialized<uint>(inBounds.Area);
-		foreach (int y in 0.RangeTo(inBounds.Extent.Height)) {
-			int ySourceOffset = (y * block + blockOffset.Y + halfBlock) * stride;
-			int yDestinationOffset = y * inBounds.Extent.X;
-			foreach (int x in 0.RangeTo(inBounds.Extent.Width)) {
-				outData[yDestinationOffset + x] = data[ySourceOffset + x * block + blockOffset.X + halfBlock];
-			}
-		}
-
-		outExtent = inBounds.Extent;
-
-		return outData;
-	}
-
 	// TODO : use MemoryFailPoint class. Extensively.
 
 	private enum GammaState {
@@ -196,36 +146,23 @@ sealed class Resampler {
 		// Water in the game is pre-upscaled by 4... which is weird.
 		Span<uint> spriteRawData;
 		Bounds spriteRawBounds;
+		int blockSize = 1;
 		if ((input.IsWater || input.Reference == StardewValley.Game1.rainTexture) && WaterBlock != 1) {
-			spriteRawData = BlockReducer(data: input.ReferenceData.AsSpan<byte>().Cast<byte, uint>(), inBounds: inputBounds, stride: input.ReferenceSize.Width, block: WaterBlock, outExtent: out var newExtent);
-			spriteRawBounds = newExtent;
-			// TODO : handle inverted input.Bounds
+			blockSize = WaterBlock;
 		}
 		else if (input.IsFont && FontBlock != 1) {
-			spriteRawData = BlockReducer(data: input.ReferenceData.AsSpan<byte>().Cast<byte, uint>(), inBounds: inputBounds, stride: input.ReferenceSize.Width, block: FontBlock, outExtent: out var newExtent);
-			spriteRawBounds = newExtent;
+			blockSize = FontBlock;
 			scale = Config.Resample.MaxScale;
-			// TODO : handle inverted input.Bounds
 		}
-		else {
-			// Otherwise, copy the sprite to its own texture if it isn't already.
-			var inputSpan = input.ReferenceData.AsSpan().Cast<byte, uint>();
-			if (input.Bounds == input.Reference.Bounds) {
-				spriteRawData = inputSpan;
-				spriteRawBounds = input.Bounds;
-			}
-			else {
-				spriteRawData = SpanExt.MakeUninitialized<uint>(input.Bounds.Area);
-				int sourceOffset = (input.Reference.Width * input.Bounds.Top) + input.Bounds.Left;
-				int destOffset = 0;
-				for (int y = 0; y < input.Bounds.Height; ++y) {
-					inputSpan.Slice(sourceOffset, input.Bounds.Width).CopyTo(spriteRawData.Slice(destOffset, input.Bounds.Width));
-					destOffset += input.Bounds.Width;
-					sourceOffset += input.Reference.Bounds.Width;
-				}
-				spriteRawBounds = input.Bounds.Extent;
-			}
-		}
+		// TODO : handle inverted input.Bounds
+		spriteRawData = Passes.ExtractSprite.Extract(
+			data: input.ReferenceData.AsSpan<byte>().Cast<byte, Color8>(),
+			textureBounds: input.Reference.Bounds,
+			spriteBounds: inputBounds,
+			stride: input.ReferenceSize.Width,
+			block: blockSize,
+			newBounds: out spriteRawBounds
+		).Cast<Color8, uint>();
 
 		// At this point, rawData includes just the sprite's raw data.
 
