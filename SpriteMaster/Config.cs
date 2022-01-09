@@ -208,6 +208,8 @@ static class Config {
 			internal static int MinimumSizeTexels = 4;
 			[Comment("Should unknown (unnamed) sprites be ignored by the padding system?")]
 			internal static bool IgnoreUnknown = false;
+			[Comment("Should solid edges be padded?")]
+			internal static bool PadSolidEdges = false;
 
 			[Comment("What spritesheets should have a stricter edge-detection algorithm applied?")]
 			internal static List<string> StrictList = new() {

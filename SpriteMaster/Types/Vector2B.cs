@@ -68,6 +68,8 @@ struct Vector2B :
 	internal readonly bool Any => Packed != ZeroByte;
 	internal readonly bool All => Packed == All_Value;
 
+	internal readonly Vector2B Invert => (!X, !Y);
+
 	internal bool this[int index] {
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		readonly get {

@@ -8,7 +8,6 @@ using SpriteMaster.Metadata;
 using SpriteMaster.Types;
 using System;
 using System.Runtime.CompilerServices;
-using Tomlyn.Syntax;
 
 namespace SpriteMaster.Resample;
 
@@ -53,39 +52,6 @@ sealed class Resampler {
 	}
 
 	private static readonly WeakSet<Texture2D> GarbageMarkSet = Config.Garbage.CollectAccountUnownedTextures ? new() : null;
-
-	private sealed class Tracer : IDisposable {
-#if REALLY_TRACE
-			private readonly string Name;
-			private static int Depth = 0;
-#endif
-
-#if REALLY_TRACE
-			[MethodImpl(Runtime.MethodImpl.Optimize)]
-			[Conditional("REALLY_TRACE")]
-			private static void Trace (string msg) {
-				Debug.TraceLn($"[CreateNewTexture] {new string(' ', Depth)}{msg}");
-			}
-#endif
-
-		[MethodImpl(Runtime.MethodImpl.Hot)]
-		internal Tracer(string name) {
-#if REALLY_TRACE
-				Name = name;
-
-				Trace(Name);
-				++Depth;
-#endif
-		}
-
-		[MethodImpl(Runtime.MethodImpl.Hot)]
-		public void Dispose() {
-#if REALLY_TRACE
-				--Depth;
-				Trace("~" + Name);
-#endif
-		}
-	}
 
 	private const int WaterBlock = 4;
 	private const int FontBlock = 1;
