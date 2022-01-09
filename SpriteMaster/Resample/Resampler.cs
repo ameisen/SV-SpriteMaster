@@ -161,6 +161,7 @@ sealed class Resampler {
 			block: blockSize,
 			newExtent: out Vector2I spriteRawExtent
 		).Cast<Color8, uint>();
+		var innerSpriteRawExtent = spriteRawExtent;
 
 		// At this point, rawData includes just the sprite's raw data.
 
@@ -178,9 +179,7 @@ sealed class Resampler {
 		}
 
 		var scaledSize = spriteRawExtent * scale;
-		var newSize = scaledSize.Min(Config.ClampDimension);
-
-		var scaledDimensions = spriteRawExtent * scale;
+		var scaledSizeClamped = scaledSize.Min(Config.ClampDimension);
 
 		Debug.Info($"Current Draw State: {DrawState.CurrentBlendState}");
 
@@ -201,11 +200,6 @@ sealed class Resampler {
 		Span<byte> bitmapData;
 
 		if (Config.Resample.Enabled) {
-			var prescaleData = spriteRawData;
-			var prescaleSize = spriteRawExtent;
-
-			var outputSize = spriteRawExtent;
-
 			// Apply padding to the sprite if necessary
 			var paddedData = Passes.Padding.Apply(
 				data: spriteRawData.Cast<uint, Color8>(),
@@ -214,13 +208,12 @@ sealed class Resampler {
 				input: input,
 				analysis: analysis,
 				padding: out padding,
-				paddedSize: out var paddedSize
+				paddedSize: out spriteRawExtent
 			);
 
-			prescaleData = paddedData.Cast<Color8, uint>();
-			prescaleSize = paddedSize;
-			scaledDimensions = scaledSize = newSize = prescaleSize * scale;
-			outputSize = prescaleSize;
+			spriteRawData = paddedData.Cast<Color8, uint>();
+			scaledSize = spriteRawExtent * scale;
+			scaledSizeClamped = scaledSize.Min(Config.ClampDimension);
 
 			bitmapData = SpanExt.MakePinned<byte>(scaledSize.Area * sizeof(uint));
 
@@ -236,10 +229,10 @@ sealed class Resampler {
 				var doWrap = wrapped | input.IsWater;
 
 				if (Config.Resample.AssumeGammaCorrected && currentGammaState == GammaState.Gamma) {
-					for (int y = 0; y < outputSize.Height; ++y) {
-						int yInStride = (y + outputSize.Y) * prescaleSize.Width;
-						for (int x = 0; x < outputSize.Width; ++x) {
-							var sample = (uint)prescaleData[yInStride + x + outputSize.X];
+					for (int y = 0; y < spriteRawExtent.Height; ++y) {
+						int yInStride = (y + spriteRawExtent.Y) * spriteRawExtent.Width;
+						for (int x = 0; x < spriteRawExtent.Width; ++x) {
+							var sample = (uint)spriteRawData[yInStride + x + spriteRawExtent.X];
 
 							byte r = (byte)(sample & 0xFF);
 							byte g = (byte)(sample >> 8 & 0xFF);
@@ -251,7 +244,7 @@ sealed class Resampler {
 
 							sample = r | (uint)(g << 8) | (uint)(b << 16) | sample & 0xFF_00_00_00;
 
-							prescaleData[yInStride + x + outputSize.X] = sample;
+							spriteRawData[yInStride + x + spriteRawExtent.X] = sample;
 						}
 						currentGammaState = GammaState.Linear;
 					}
@@ -276,27 +269,26 @@ sealed class Resampler {
 				}
 
 				if (Config.Resample.Deposterization.Enabled) {
-					if (outputSize.X != 0 || outputSize.Y != 0 || outputSize != prescaleSize) {
-						int subArea = outputSize.Area;
+					if (spriteRawExtent.X != 0 || spriteRawExtent.Y != 0) {
+						int subArea = spriteRawExtent.Area;
 						var subData = GC.AllocateUninitializedArray<uint>(subArea);
-						for (int y = 0; y < outputSize.Height; ++y) {
-							int yInStride = (y + outputSize.Y) * prescaleSize.Width;
-							int yOutStride = y * outputSize.Width;
-							for (int x = 0; x < outputSize.Width; ++x) {
-								subData[yOutStride + x] = prescaleData[yInStride + x + outputSize.X];
+						for (int y = 0; y < spriteRawExtent.Height; ++y) {
+							int yInStride = (y + spriteRawExtent.Y) * spriteRawExtent.Width;
+							int yOutStride = y * spriteRawExtent.Width;
+							for (int x = 0; x < spriteRawExtent.Width; ++x) {
+								subData[yOutStride + x] = spriteRawData[yInStride + x + spriteRawExtent.X];
 							}
 						}
 
-						prescaleData = subData;
-						prescaleSize = outputSize;
+						spriteRawData = subData;
 					}
 
-					prescaleData = Deposterize.Enhance<uint>(prescaleData, prescaleSize, doWrap);
+					spriteRawData = Deposterize.Enhance<uint>(spriteRawData, spriteRawExtent, doWrap);
 
 					if (Config.Debug.Sprite.DumpReference) {
 						Textures.DumpTexture(
-							source: prescaleData,
-							sourceSize: prescaleSize,
+							source: spriteRawData,
+							sourceSize: spriteRawExtent,
 							adjustGamma: 2.2,
 							path: Cache.GetDumpPath($"{input.Reference.SafeName().Replace("/", ".")}.{hashString}.reference.deposter.png")
 						);
@@ -317,9 +309,9 @@ sealed class Resampler {
 
 							new xBRZ.Scaler(
 								scaleMultiplier: scale,
-								sourceData: prescaleData, // TODO
-								sourceSize: prescaleSize,
-								sourceTarget: new Bounds(outputSize),
+								sourceData: spriteRawData, // TODO
+								sourceSize: spriteRawExtent,
+								sourceTarget: new Bounds(spriteRawExtent),
 								targetData: bitmapData.Cast<byte, uint>(),
 								configuration: scalerConfig
 							);
@@ -399,21 +391,21 @@ sealed class Resampler {
 
 			Textures.DumpTexture(
 				source: bitmapData,
-				sourceSize: scaledDimensions,
+				sourceSize: scaledSize,
 				swap: (2, 1, 0, 4),
 				path: Cache.GetDumpPath($"{input.Reference.SafeName().Replace("/", ".")}.{hashString}.resample-wrap[{SimplifyBools(analysis.Wrapped)}]-repeat[{SimplifyBools(analysis.RepeatX)},{SimplifyBools(analysis.RepeatY)}]-pad[{padding.X},{padding.Y}].png")
 			);
 		}
 
-		if (scaledDimensions != newSize) {
-			if (scaledDimensions.Width < newSize.Width || scaledDimensions.Height < newSize.Height) {
-				throw new Exception($"Resampled texture size {scaledDimensions} is smaller than expected {newSize}");
+		if (scaledSize != scaledSizeClamped) {
+			if (scaledSize.Width < scaledSizeClamped.Width || scaledSize.Height < scaledSizeClamped.Height) {
+				throw new Exception($"Resampled texture size {scaledSize} is smaller than expected {scaledSizeClamped}");
 			}
 
 			Debug.TraceLn($"Sprite {texture.SafeName()} requires rescaling");
 			// This should be incredibly rare - we very rarely need to scale back down.
 			// I don't actually have a solution for this case.
-			newSize = scaledDimensions;
+			scaledSizeClamped = scaledSize;
 		}
 
 		format = TextureFormat.Color;
@@ -423,7 +415,7 @@ sealed class Resampler {
 		}
 
 		// We don't want to use block compression if asynchronous loads are enabled but this is not an asynchronous load... unless that is explicitly enabled.
-		if (Config.Resample.BlockCompression.Enabled /*&& (Config.Resample.BlockCompression.Synchronized || !Config.AsyncScaling.Enabled || async)*/ && newSize.MinOf >= 4) {
+		if (Config.Resample.BlockCompression.Enabled /*&& (Config.Resample.BlockCompression.Synchronized || !Config.AsyncScaling.Enabled || async)*/ && scaledSizeClamped.MinOf >= 4) {
 			// TODO : We can technically allocate the block padding before the scaling phase, and pass it a stride
 			// so it will just ignore the padding areas. That would be more efficient than this.
 
@@ -472,19 +464,19 @@ sealed class Resampler {
 				}
 			}
 
-			if (!Decoder.BlockDecoderCommon.IsBlockMultiple(newSize)) {
-				var blockPaddedSize = newSize + 3 & ~3;
+			if (!Decoder.BlockDecoderCommon.IsBlockMultiple(scaledSizeClamped)) {
+				var blockPaddedSize = scaledSizeClamped + 3 & ~3;
 
 				var newBuffer = SpanExt.MakeUninitialized<byte>(blockPaddedSize.Area * sizeof(uint));
 				var intSpanSrc = bitmapData.Cast<byte, uint>();
 				var intSpanDst = newBuffer.Cast<byte, uint>();
 
 				int y;
-				for (y = 0; y < newSize.Y; ++y) {
+				for (y = 0; y < scaledSizeClamped.Y; ++y) {
 					var newBufferOffset = y * blockPaddedSize.X;
-					var bitmapOffset = y * newSize.X;
+					var bitmapOffset = y * scaledSizeClamped.X;
 					int x;
-					for (x = 0; x < newSize.X; ++x) {
+					for (x = 0; x < scaledSizeClamped.X; ++x) {
 						intSpanDst[newBufferOffset + x] = intSpanSrc[bitmapOffset + x];
 					}
 					int lastX = x - 1;
@@ -493,7 +485,7 @@ sealed class Resampler {
 					}
 				}
 				var lastY = y - 1;
-				var sourceOffset = lastY * newSize.X;
+				var sourceOffset = lastY * scaledSizeClamped.X;
 				for (; y < blockPaddedSize.Y; ++y) {
 					int newBufferOffset = y * blockPaddedSize.X;
 					for (int x = 0; x < blockPaddedSize.X; ++x) {
@@ -502,14 +494,14 @@ sealed class Resampler {
 				}
 
 				bitmapData = newBuffer;
-				blockPadding += blockPaddedSize - newSize;
-				newSize = blockPaddedSize;
+				blockPadding += blockPaddedSize - scaledSizeClamped;
+				scaledSizeClamped = blockPaddedSize;
 			}
 
 			bitmapData = TextureEncode.Encode(
 				data: bitmapData,
 				format: ref format,
-				dimensions: newSize,
+				dimensions: scaledSizeClamped,
 				hasAlpha: HasAlpha,
 				isPunchthroughAlpha: IsPunchThroughAlpha,
 				isMasky: IsMasky,
@@ -519,7 +511,7 @@ sealed class Resampler {
 			);
 		}
 
-		size = newSize;
+		size = scaledSizeClamped;
 		return bitmapData;
 	}
 
