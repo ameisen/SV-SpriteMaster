@@ -144,8 +144,6 @@ sealed class Resampler {
 		}
 
 		// Water in the game is pre-upscaled by 4... which is weird.
-		Span<uint> spriteRawData;
-		Bounds spriteRawBounds;
 		int blockSize = 1;
 		if ((input.IsWater || input.Reference == StardewValley.Game1.rainTexture) && WaterBlock != 1) {
 			blockSize = WaterBlock;
@@ -155,22 +153,23 @@ sealed class Resampler {
 			scale = Config.Resample.MaxScale;
 		}
 		// TODO : handle inverted input.Bounds
-		spriteRawData = Passes.ExtractSprite.Extract(
+		var spriteRawData = Passes.ExtractSprite.Extract(
 			data: input.ReferenceData.AsSpan<byte>().Cast<byte, Color8>(),
 			textureBounds: input.Reference.Bounds,
 			spriteBounds: inputBounds,
 			stride: input.ReferenceSize.Width,
 			block: blockSize,
-			newBounds: out spriteRawBounds
+			newExtent: out Vector2I spriteRawExtent
 		).Cast<Color8, uint>();
 
 		// At this point, rawData includes just the sprite's raw data.
 
+		// Adjust the scale value so that it is within the preferred dimensional limits
 		if (Config.Resample.Scale) {
 			var originalScale = scale;
 			scale = 2;
 			foreach (uint s in originalScale.RangeTo(2U)) {
-				var newDimensions = spriteRawBounds.Extent * s;
+				var newDimensions = spriteRawExtent * s;
 				if (newDimensions.X <= Config.PreferredMaxTextureDimension && newDimensions.Y <= Config.PreferredMaxTextureDimension) {
 					scale = s;
 					break;
@@ -178,151 +177,50 @@ sealed class Resampler {
 			}
 		}
 
-		var scaledSize = spriteRawBounds.Extent * scale;
+		var scaledSize = spriteRawExtent * scale;
 		var newSize = scaledSize.Min(Config.ClampDimension);
 
-		var scaledDimensions = spriteRawBounds.Extent * scale;
+		var scaledDimensions = spriteRawExtent * scale;
 
 		Debug.Info($"Current Draw State: {DrawState.CurrentBlendState}");
 
-		wrapped.Set(false);
-
-		Vector2B Wrapped;
-		Vector2B RepeatX, RepeatY;
-
-		var edgeResults = Edge.AnalyzeLegacy(
+		var analysis = Passes.Analysis.AnalyzeLegacy(
 			reference: input.Reference,
 			data: spriteRawData,
-			bounds: spriteRawBounds,
+			bounds: spriteRawExtent,
 			Wrapped: input.Wrapped
 		);
 
-		Wrapped = edgeResults.Wrapped;
-		RepeatX = edgeResults.RepeatX;
-		RepeatY = edgeResults.RepeatY;
 		if (Config.Resample.EnableWrappedAddressing) {
-			wrapped = Wrapped;
+			wrapped = analysis.Wrapped;
+		}
+		else {
+			wrapped = (false, false);
 		}
 
 		Span<byte> bitmapData;
 
 		if (Config.Resample.Enabled) {
 			var prescaleData = spriteRawData;
-			var prescaleSize = spriteRawBounds.Extent;
+			var prescaleSize = spriteRawExtent;
 
-			var outputSize = spriteRawBounds;
+			var outputSize = spriteRawExtent;
 
-			// Do we need to pad the sprite?
-			if (Config.Resample.Padding.Enabled) {
-				var shouldPad = new Vector2B(
-					!Wrapped.X && !RepeatX.Any && spriteRawBounds.Width > 1,
-					!Wrapped.Y && !RepeatY.Any && spriteRawBounds.Height > 1
-				);
+			// Apply padding to the sprite if necessary
+			var paddedData = Passes.Padding.Apply(
+				data: spriteRawData.Cast<uint, Color8>(),
+				spriteSize: spriteRawExtent,
+				scale: scale,
+				input: input,
+				analysis: analysis,
+				padding: out padding,
+				paddedSize: out var paddedSize
+			);
 
-				if (
-					(
-						prescaleSize.X <= Config.Resample.Padding.MinimumSizeTexels &&
-						prescaleSize.Y <= Config.Resample.Padding.MinimumSizeTexels
-					) ||
-					Config.Resample.Padding.IgnoreUnknown && !input.Reference.Anonymous()
-				) {
-					shouldPad = Vector2B.False;
-				}
-
-				// TODO : make X and Y variants of the whitelist and blacklist
-				if (!input.Reference.Anonymous()) {
-					if (Config.Resample.Padding.Whitelist.Contains(input.Reference.SafeName())) {
-						shouldPad = Vector2B.True;
-					}
-					else if (input.IsWater || Config.Resample.Padding.Blacklist.Contains(input.Reference.SafeName())) {
-						shouldPad = Vector2B.False;
-					}
-				}
-
-				if (shouldPad.Any) {
-					var expectedPadding = Math.Max(1U, scale / 2);
-					var expectedPaddingBoth = expectedPadding * 2;
-
-					// TODO we only need to pad the edge that has texels. Double padding is wasteful.
-					var paddedSize = spriteRawBounds.Extent;
-					var spriteSize = spriteRawBounds.Extent;
-
-					var actualPadding = Vector2I.Zero;
-
-					if (shouldPad.X) {
-						if ((paddedSize.X + expectedPaddingBoth) * scale > Config.ClampDimension) {
-							shouldPad.X = false;
-						}
-						else {
-							paddedSize.X += (int)expectedPaddingBoth;
-							actualPadding.X = (int)expectedPadding;
-						}
-					}
-					if (shouldPad.Y) {
-						if ((paddedSize.Y + expectedPaddingBoth) * scale > Config.ClampDimension) {
-							shouldPad.Y = false;
-						}
-						else {
-							paddedSize.Y += (int)expectedPaddingBoth;
-							actualPadding.Y = (int)expectedPadding;
-						}
-					}
-
-					var hasPadding = shouldPad;
-
-					if (hasPadding.Any) {
-						uint[] paddedData = GC.AllocateUninitializedArray<uint>(paddedSize.Area);
-
-						int y = 0;
-
-						const int padConstant = 0x00000000;
-
-						padding = actualPadding * scale * 2;
-
-						void WritePaddingY() {
-							if (!hasPadding.Y)
-								return;
-							foreach (int i in 0.RangeTo(actualPadding.Y)) {
-								var strideOffset = y * paddedSize.Width;
-								foreach (int x in 0.RangeTo(paddedSize.Width)) {
-									paddedData[strideOffset + x] = padConstant;
-								}
-								++y;
-							}
-						}
-
-						WritePaddingY();
-
-						foreach (int i in 0.RangeTo(spriteSize.Height)) {
-							var strideOffset = y * paddedSize.Width;
-							var strideOffsetRaw = i * prescaleSize.Width;
-							// Write a padded X line
-							var xOffset = strideOffset;
-							void WritePaddingX() {
-								if (!hasPadding.X)
-									return;
-								foreach (int x in 0.RangeTo(actualPadding.X)) {
-									paddedData[xOffset++] = padConstant;
-								}
-							}
-							WritePaddingX();
-							foreach (int x in 0.RangeTo(spriteSize.Width)) {
-								paddedData[xOffset++] = spriteRawData[strideOffsetRaw + x];
-							}
-							WritePaddingX();
-							++y;
-						}
-
-						WritePaddingY();
-
-						prescaleData = paddedData;
-						prescaleSize = paddedSize;
-						scaledDimensions = scaledSize = newSize = prescaleSize * scale;
-						outputSize = prescaleSize;
-						//scaledDimensions = originalPaddedSize * scale;
-					}
-				}
-			}
+			prescaleData = paddedData.Cast<Color8, uint>();
+			prescaleSize = paddedSize;
+			scaledDimensions = scaledSize = newSize = prescaleSize * scale;
+			outputSize = prescaleSize;
 
 			bitmapData = SpanExt.MakePinned<byte>(scaledSize.Area * sizeof(uint));
 
@@ -359,7 +257,7 @@ sealed class Resampler {
 					}
 				}
 
-				if (!input.IsWater && (Config.Resample.PremultiplyAlpha && edgeResults.PremultipliedAlpha)) {
+				if (!input.IsWater && (Config.Resample.PremultiplyAlpha && analysis.PremultipliedAlpha)) {
 					for (int y = 0; y < scaledSize.Height; ++y) {
 						int yInStride = y * scaledSize.Width * 4;
 						for (int x = 0; x < scaledSize.Width; ++x) {
@@ -378,7 +276,7 @@ sealed class Resampler {
 				}
 
 				if (Config.Resample.Deposterization.Enabled) {
-					if (outputSize.X != 0 || outputSize.Y != 0 || outputSize.Extent != prescaleSize) {
+					if (outputSize.X != 0 || outputSize.Y != 0 || outputSize != prescaleSize) {
 						int subArea = outputSize.Area;
 						var subData = GC.AllocateUninitializedArray<uint>(subArea);
 						for (int y = 0; y < outputSize.Height; ++y) {
@@ -390,8 +288,7 @@ sealed class Resampler {
 						}
 
 						prescaleData = subData;
-						prescaleSize = outputSize.Extent;
-						outputSize = new Bounds(outputSize.Extent);
+						prescaleSize = outputSize;
 					}
 
 					prescaleData = Deposterize.Enhance<uint>(prescaleData, prescaleSize, doWrap);
@@ -422,7 +319,7 @@ sealed class Resampler {
 								scaleMultiplier: scale,
 								sourceData: prescaleData, // TODO
 								sourceSize: prescaleSize,
-								sourceTarget: outputSize,
+								sourceTarget: new Bounds(outputSize),
 								targetData: bitmapData.Cast<byte, uint>(),
 								configuration: scalerConfig
 							);
@@ -449,7 +346,7 @@ sealed class Resampler {
 					bitmapData = Recolor.Enhance<byte>(bitmapData, scaledSize);
 				}
 
-				if (!input.IsWater && (Config.Resample.PremultiplyAlpha && edgeResults.PremultipliedAlpha)) {
+				if (!input.IsWater && (Config.Resample.PremultiplyAlpha && analysis.PremultipliedAlpha)) {
 					for (int y = 0; y < scaledSize.Height; ++y) {
 						int yInStride = y * scaledSize.Width * 4;
 						for (int x = 0; x < scaledSize.Width; ++x) {
@@ -504,7 +401,7 @@ sealed class Resampler {
 				source: bitmapData,
 				sourceSize: scaledDimensions,
 				swap: (2, 1, 0, 4),
-				path: Cache.GetDumpPath($"{input.Reference.SafeName().Replace("/", ".")}.{hashString}.resample-wrap[{SimplifyBools(Wrapped)}]-repeat[{SimplifyBools(RepeatX)},{SimplifyBools(RepeatY)}]-pad[{padding.X},{padding.Y}].png")
+				path: Cache.GetDumpPath($"{input.Reference.SafeName().Replace("/", ".")}.{hashString}.resample-wrap[{SimplifyBools(analysis.Wrapped)}]-repeat[{SimplifyBools(analysis.RepeatX)},{SimplifyBools(analysis.RepeatY)}]-pad[{padding.X},{padding.Y}].png")
 			);
 		}
 

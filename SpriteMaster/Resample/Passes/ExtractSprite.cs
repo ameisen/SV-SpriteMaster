@@ -8,13 +8,13 @@ using System.Runtime.InteropServices;
 namespace SpriteMaster.Resample.Passes;
 
 static class ExtractSprite {
-	internal static Span<Color8> Extract(ReadOnlySpan<Color8> data, in Bounds textureBounds, in Bounds spriteBounds, int stride, int block, out Bounds newBounds) {
+	internal static Span<Color8> Extract(ReadOnlySpan<Color8> data, in Bounds textureBounds, in Bounds spriteBounds, int stride, int block, out Vector2I newExtent) {
 		//if ((bounds.Width % block) != 0 || (bounds.Height % block) != 0) {
 		//	throw new ArgumentOutOfRangeException($"Bounds {bounds} are not multiples of block {block}");
 		//}
 
 		if (block == 1) {
-			return Extract(data, textureBounds, spriteBounds, stride, out newBounds);
+			return Extract(data, textureBounds, spriteBounds, stride, out newExtent);
 		}
 
 		if (!block.IsPow2()) {
@@ -38,14 +38,14 @@ static class ExtractSprite {
 			}
 		}
 
-		newBounds = bounds.Extent;
+		newExtent = bounds.Extent;
 		return result;
 	}
 
-	internal static Span<Color8> Extract(ReadOnlySpan<Color8> data, in Bounds textureBounds, in Bounds inBounds, int stride, out Bounds newBounds) {
+	internal static Span<Color8> Extract(ReadOnlySpan<Color8> data, in Bounds textureBounds, in Bounds inBounds, int stride, out Vector2I newExtent) {
 		if (inBounds == textureBounds) {
-			newBounds = inBounds;
-			return MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(data), data.Length);
+			newExtent = inBounds.Extent;
+			return data.ToSpanUnsafe();
 		}
 		else {
 			var resultData = SpanExt.MakeUninitialized<Color8>(inBounds.Area);
@@ -56,7 +56,7 @@ static class ExtractSprite {
 				destOffset += inBounds.Width;
 				sourceOffset += textureBounds.Width;
 			}
-			newBounds = inBounds.Extent;
+			newExtent = inBounds.Extent;
 			return resultData;
 		}
 	}

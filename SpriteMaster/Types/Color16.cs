@@ -10,6 +10,8 @@ namespace SpriteMaster.Types;
 
 [StructLayout(LayoutKind.Explicit, Pack = sizeof(ulong), Size = sizeof(ulong))]
 struct Color16 {
+	internal static readonly Color16 Zero = new(0UL);
+
 	[FieldOffset(0)]
 	internal ulong Packed = 0;
 
