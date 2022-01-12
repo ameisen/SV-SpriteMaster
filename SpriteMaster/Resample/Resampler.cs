@@ -2,6 +2,7 @@
 using Microsoft.Toolkit.HighPerformance;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using SpriteMaster.Caching;
 using SpriteMaster.Colors;
 using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
@@ -84,7 +85,7 @@ sealed class Resampler {
 				source: input.ReferenceData,
 				sourceSize: input.ReferenceSize,
 				destBounds: input.Bounds,
-				path: Cache.GetDumpPath($"{input.Reference.SafeName().Replace("/", ".")}.{hashString}.reference.png")
+				path: FileCache.GetDumpPath($"{input.Reference.SafeName().Replace("/", ".")}.{hashString}.reference.png")
 			);
 		}
 
@@ -120,13 +121,13 @@ sealed class Resampler {
 		}
 		// TODO : handle inverted input.Bounds
 		var spriteRawData = Passes.ExtractSprite.Extract(
-			data: input.ReferenceData.AsSpan<byte>().Cast<byte, Color8>(),
+			data: input.ReferenceData.AsSpan<Color8>(),
 			textureBounds: input.Reference.Bounds,
 			spriteBounds: inputBounds,
 			stride: input.ReferenceSize.Width,
 			block: blockSize,
 			newExtent: out Vector2I spriteRawExtent
-		).Cast<Color8, uint>();
+		).Cast<uint>();
 		var innerSpriteRawExtent = spriteRawExtent;
 
 		// At this point, rawData includes just the sprite's raw data.
@@ -168,7 +169,7 @@ sealed class Resampler {
 		if (Config.Resample.Enabled) {
 			// Apply padding to the sprite if necessary
 			var paddedData = Passes.Padding.Apply(
-				data: spriteRawData.Cast<uint, Color8>(),
+				data: spriteRawData.Cast<Color8>(),
 				spriteSize: spriteRawExtent,
 				scale: scale,
 				input: input,
@@ -177,7 +178,7 @@ sealed class Resampler {
 				paddedSize: out spriteRawExtent
 			);
 
-			spriteRawData = paddedData.Cast<Color8, uint>();
+			spriteRawData = paddedData.Cast<uint>();
 			scaledSize = spriteRawExtent * scale;
 			scaledSizeClamped = scaledSize.Min(Config.ClampDimension);
 
@@ -256,7 +257,7 @@ sealed class Resampler {
 							source: spriteRawData,
 							sourceSize: spriteRawExtent,
 							adjustGamma: 2.2,
-							path: Cache.GetDumpPath($"{input.Reference.SafeName().Replace("/", ".")}.{hashString}.reference.deposter.png")
+							path: FileCache.GetDumpPath($"{input.Reference.SafeName().Replace("/", ".")}.{hashString}.reference.deposter.png")
 						);
 					}
 				}
@@ -278,7 +279,7 @@ sealed class Resampler {
 								sourceData: spriteRawData, // TODO
 								sourceSize: spriteRawExtent,
 								sourceTarget: new Bounds(spriteRawExtent),
-								targetData: bitmapData.Cast<byte, uint>(),
+								targetData: bitmapData.Cast<uint>(),
 								configuration: scalerConfig
 							);
 						}
@@ -347,7 +348,7 @@ sealed class Resampler {
 			//ColorSpace.ConvertLinearToSRGB(bitmapData, Texel.Ordering.ARGB);
 		}
 		else {
-			bitmapData = spriteRawData.Cast<uint, byte>();
+			bitmapData = spriteRawData.Cast<byte>();
 		}
 
 		if (Config.Debug.Sprite.DumpResample) {
@@ -359,7 +360,7 @@ sealed class Resampler {
 				source: bitmapData,
 				sourceSize: scaledSize,
 				swap: (2, 1, 0, 4),
-				path: Cache.GetDumpPath($"{input.Reference.SafeName().Replace("/", ".")}.{hashString}.resample-wrap[{SimplifyBools(analysis.Wrapped)}]-repeat[{SimplifyBools(analysis.RepeatX)},{SimplifyBools(analysis.RepeatY)}]-pad[{padding.X},{padding.Y}].png")
+				path: FileCache.GetDumpPath($"{input.Reference.SafeName().Replace("/", ".")}.{hashString}.resample-wrap[{SimplifyBools(analysis.Wrapped)}]-repeat[{SimplifyBools(analysis.RepeatX)},{SimplifyBools(analysis.RepeatY)}]-pad[{padding.X},{padding.Y}].png")
 			);
 		}
 
@@ -406,7 +407,7 @@ sealed class Resampler {
 					red[i] = 0;
 				}
 
-				var intData = bitmapData.Cast<byte, uint>();
+				var intData = bitmapData.Cast<uint>();
 
 				foreach (var color in intData) {
 					alpha[color.ExtractByte(24)]++;
@@ -434,8 +435,8 @@ sealed class Resampler {
 				var blockPaddedSize = scaledSizeClamped + 3 & ~3;
 
 				var newBuffer = SpanExt.MakeUninitialized<byte>(blockPaddedSize.Area * sizeof(uint));
-				var intSpanSrc = bitmapData.Cast<byte, uint>();
-				var intSpanDst = newBuffer.Cast<byte, uint>();
+				var intSpanSrc = bitmapData.Cast<uint>();
+				var intSpanDst = newBuffer.Cast<uint>();
 
 				int y;
 				for (y = 0; y < scaledSizeClamped.Y; ++y) {
@@ -524,7 +525,7 @@ sealed class Resampler {
 		}
 
 		var hashString = hash.ToString("x");
-		var cachePath = Cache.GetPath($"{hashString}.cache");
+		var cachePath = FileCache.GetPath($"{hashString}.cache");
 
 		var inputSize = input.TextureType switch {
 			TextureType.Sprite => input.Bounds.Extent,
@@ -538,7 +539,7 @@ sealed class Resampler {
 			var newSize = Vector2I.Zero;
 
 			try {
-				if (Cache.Fetch(
+				if (FileCache.Fetch(
 					path: cachePath,
 					refScale: out var fetchScale,
 					size: out newSize,
@@ -580,7 +581,7 @@ sealed class Resampler {
 				}
 
 				try {
-					Cache.Save(cachePath, scale, newSize, spriteFormat, wrapped, texture.Padding, texture.BlockPadding, bitmapData);
+					FileCache.Save(cachePath, scale, newSize, spriteFormat, wrapped, texture.Padding, texture.BlockPadding, bitmapData);
 				}
 				catch { }
 			}

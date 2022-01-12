@@ -1,13 +1,4 @@
-﻿global using XNA = Microsoft.Xna.Framework;
-global using DrawingColor = System.Drawing.Color;
-global using DrawingPoint = System.Drawing.Point;
-global using DrawingRectangle = System.Drawing.Rectangle;
-global using DrawingSize = System.Drawing.Size;
-global using XTilePoint = xTile.Dimensions.Location;
-global using XTileRectangle = xTile.Dimensions.Rectangle;
-global using XTileSize = xTile.Dimensions.Size;
-global using half = System.Half;
-using HarmonyLib;
+﻿using HarmonyLib;
 using LinqFasterer;
 using Sickhead.Engine.Util;
 using SpriteMaster.Caching;
@@ -28,18 +19,18 @@ using System.Runtime;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
-[assembly: CompilationRelaxations(CompilationRelaxations.NoStringInterning)]
-[module: SkipLocalsInit]
+#nullable enable
 
 namespace SpriteMaster;
+
 public sealed class SpriteMaster : Mod {
-	internal static SpriteMaster Self { get; private set; } = default;
+	internal static SpriteMaster Self { get; private set; } = default!;
 
 	private static readonly bool DotNet = (Runtime.Framework != Runtime.FrameworkType.Mono);
-	private readonly Thread MemoryPressureThread = null;
-	private readonly Thread GarbageCollectThread = null;
-	private readonly object CollectLock = DotNet ? new() : null;
-	internal static string AssemblyPath { get; private set; }
+	private readonly Thread? MemoryPressureThread = null;
+	private readonly Thread? GarbageCollectThread = null;
+	private readonly object? CollectLock = DotNet ? new() : null;
+	internal static string? AssemblyPath { get; private set; }
 
 	internal static void DumpStats() {
 		var currentProcess = Process.GetCurrentProcess();
@@ -69,7 +60,7 @@ public sealed class SpriteMaster : Mod {
 				continue;
 			}
 
-			lock (CollectLock) {
+			lock (CollectLock!) {
 				try {
 					using var _ = new MemoryFailPoint(Config.Garbage.RequiredFreeMemory);
 				}
@@ -93,7 +84,7 @@ public sealed class SpriteMaster : Mod {
 					Thread.Sleep(128);
 					continue;
 				}
-				lock (CollectLock) {
+				lock (CollectLock!) {
 					if (DrawState.TriggerGC && DrawState.TriggerGC.Wait()) {
 						continue;
 					}
@@ -201,13 +192,13 @@ public sealed class SpriteMaster : Mod {
 		help.ConsoleCommands.Add("spritemaster_stats", "Dump SpriteMaster Statistics", (_, _) =>  DumpStats());
 		help.ConsoleCommands.Add("spritemaster_memory", "Dump SpriteMaster Memory", (_, _) => Debug.DumpMemory());
 		help.ConsoleCommands.Add("spritemaster_gc", "Trigger Spritemaster GC", (_, _) => {
-			lock (CollectLock) {
+			lock (CollectLock!) {
 				Garbage.Collect(compact: true, blocking: true, background: false);
 				DrawState.TriggerGC.Set(true);
 			}
 		});
 		help.ConsoleCommands.Add("spritemaster_purge", "Trigger Spritemaster Purge", (_, _) => {
-			lock (CollectLock) {
+			lock (CollectLock!) {
 				Garbage.Collect(compact: true, blocking: true, background: false);
 				ResidentCache.Purge();
 				Garbage.Collect(compact: true, blocking: true, background: false);
@@ -287,7 +278,7 @@ public sealed class SpriteMaster : Mod {
 	}
 
 	// SMAPI/CP won't do this, so we do. Purge the cached textures for the previous season on a season change.
-	private static void OnDayStarted(object _, DayStartedEventArgs _1) {
+	private static void OnDayStarted(object? _, DayStartedEventArgs _1) {
 		// Do a full GC at the start of each day
 		Garbage.Collect(compact: true, blocking: true, background: false);
 
@@ -310,7 +301,7 @@ public sealed class SpriteMaster : Mod {
 		instance.ApplyPatches();
 	}
 
-	private static void OnButtonPressed(object sender, ButtonPressedEventArgs args) {
+	private static void OnButtonPressed(object? _, ButtonPressedEventArgs args) {
 		if (args.Button == Config.ToggleButton) {
 			Config.Enabled = !Config.Enabled;
 		}

@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 namespace SpriteMaster.Types;
 
 struct Bounds :
+	ILongHash,
 	ICloneable,
 	IComparable,
 	IComparable<Bounds>,
@@ -257,7 +258,10 @@ struct Bounds :
 	};
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly override int GetHashCode() => (int)HashCode.Combine(Offset.GetHashCode(), Extent.GetHashCode());
+	public readonly override int GetHashCode() => (int)Hashing.Combine(Offset.GetHashCode(), Extent.GetHashCode());
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	ulong ILongHash.GetLongHashCode() => ((uint)Offset.GetHashCode() << 32) | (uint)Extent.GetHashCode();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public readonly override bool Equals(object other) => other switch {

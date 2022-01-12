@@ -2,6 +2,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
+using System.Security;
 using TeximpNet;
 using TeximpNet.Unmanaged;
 
@@ -9,6 +10,7 @@ namespace SpriteMaster.Harmonize.Patches;
 
 [SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
 [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Harmony")]
+[SuppressUnmanagedCodeSecurity]
 static class NVTT {
 
 	//[DllImport("__Internal")]

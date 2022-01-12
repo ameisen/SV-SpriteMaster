@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.Toolkit.HighPerformance;
+using SpriteMaster.Types;
+using System;
 using System.IO;
 using System.Runtime.InteropServices;
 
@@ -22,4 +24,30 @@ static class SpanExt {
 
 	internal static void CopyTo<T>(this ReadOnlySpan<T> inSpan, Span<T> outSpan, int inOffset, int outOffset, int count) =>
 		inSpan.Slice(inOffset, count).CopyTo(outSpan.Slice(outOffset, count));
+
+	internal static Span<T> Cast<T>(this Span<byte> span) where T : unmanaged => span.Cast<byte, T>();
+	internal static Span<T> Cast<T>(this Span<int> span) where T : unmanaged => span.Cast<int, T>();
+	internal static Span<T> Cast<T>(this Span<uint> span) where T : unmanaged => span.Cast<uint, T>();
+	internal static Span<T> Cast<T>(this Span<Color8> span) where T : unmanaged => span.Cast<Color8, T>();
+	internal static Span<T> Cast<T>(this Span<Color16> span) where T : unmanaged => span.Cast<Color16, T>();
+
+	internal static ReadOnlySpan<T> Cast<T>(this ReadOnlySpan<byte> span) where T : unmanaged => span.Cast<byte, T>();
+	internal static ReadOnlySpan<T> Cast<T>(this ReadOnlySpan<int> span) where T : unmanaged => span.Cast<int, T>();
+	internal static ReadOnlySpan<T> Cast<T>(this ReadOnlySpan<uint> span) where T : unmanaged => span.Cast<uint, T>();
+	internal static ReadOnlySpan<T> Cast<T>(this ReadOnlySpan<Color8> span) where T : unmanaged => span.Cast<Color8, T>();
+	internal static ReadOnlySpan<T> Cast<T>(this ReadOnlySpan<Color16> span) where T : unmanaged => span.Cast<Color16, T>();
+
+	internal static Span<U> AsSpan<T, U>(this T[] array) where T : unmanaged where U : unmanaged => array.AsSpan().Cast<T, U>();
+	internal static Span<U> AsSpan<U>(this byte[] array) where U : unmanaged => array.AsSpan().Cast<byte, U>();
+	internal static Span<U> AsSpan<U>(this int[] array) where U : unmanaged => array.AsSpan().Cast<int, U>();
+	internal static Span<U> AsSpan<U>(this uint[] array) where U : unmanaged => array.AsSpan().Cast<uint, U>();
+	internal static Span<U> AsSpan<U>(this Color8[] array) where U : unmanaged => array.AsSpan().Cast<Color8, U>();
+	internal static Span<U> AsSpan<U>(this Color16[] array) where U : unmanaged => array.AsSpan().Cast<Color16, U>();
+
+	internal static ReadOnlySpan<U> AsReadOnlySpan<T, U>(this T[] array) where T : unmanaged where U : unmanaged => array.AsSpan().Cast<T, U>();
+	internal static ReadOnlySpan<U> AsReadOnlySpan<U>(this byte[] array) where U : unmanaged => array.AsSpan().Cast<byte, U>();
+	internal static ReadOnlySpan<U> AsReadOnlySpan<U>(this int[] array) where U : unmanaged => array.AsSpan().Cast<int, U>();
+	internal static ReadOnlySpan<U> AsReadOnlySpan<U>(this uint[] array) where U : unmanaged => array.AsSpan().Cast<uint, U>();
+	internal static ReadOnlySpan<U> AsReadOnlySpan<U>(this Color8[] array) where U : unmanaged => array.AsSpan().Cast<Color8, U>();
+	internal static ReadOnlySpan<U> AsReadOnlySpan<U>(this Color16[] array) where U : unmanaged => array.AsSpan().Cast<Color16, U>();
 }

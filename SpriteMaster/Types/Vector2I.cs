@@ -9,6 +9,7 @@ namespace SpriteMaster.Types;
 [DebuggerDisplay("[{X}, {Y}}")]
 [StructLayout(LayoutKind.Explicit, Pack = sizeof(ulong), Size = sizeof(ulong))]
 unsafe struct Vector2I :
+	ILongHash,
 	ICloneable,
 	IComparable,
 	IComparable<Vector2I>,
@@ -443,7 +444,10 @@ unsafe struct Vector2I :
 
 	// C# GetHashCode on all integer primitives, even longs, just returns it truncated to an int.
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly override int GetHashCode() => HashCode.Combine(X.GetHashCode(), Y.GetHashCode());
+	public readonly override int GetHashCode() => (int)Hashing.Combine(X.GetHashCode(), Y.GetHashCode());
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	ulong ILongHash.GetLongHashCode() => ((uint)X.GetHashCode() << 32) | (uint)Y.GetHashCode();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public readonly override bool Equals(object other) => other switch {

@@ -35,7 +35,11 @@ static class SerializeConfig {
 		return hash;
 	}
 
-	internal static ulong GetWideHashCode() => HashClass(typeof(Config));
+	internal static ulong ConfigHash { get; private set; } = 0UL;
+
+	internal static void RefreshHash() {
+		ConfigHash = HashClass(typeof(Config));
+	}
 
 	private static bool IsClassIgnored(Type type) => (type is not null) && (type.HasAttribute<Config.ConfigIgnoreAttribute>() || IsClassIgnored(type.DeclaringType));
 
@@ -353,6 +357,9 @@ static class SerializeConfig {
 			ex.PrintWarning();
 			return false;
 		}
+		finally {
+			RefreshHash();
+		}
 	}
 
 	internal static bool Load(string ConfigPath, bool retain = false) {
@@ -368,6 +375,9 @@ static class SerializeConfig {
 		catch (Exception ex) {
 			ex.PrintWarning();
 			return false;
+		}
+		finally {
+			RefreshHash();
 		}
 	}
 
@@ -385,6 +395,9 @@ static class SerializeConfig {
 			ex.PrintWarning();
 			return false;
 		}
+		finally {
+			RefreshHash();
+		}
 		return true;
 	}
 
@@ -401,6 +414,9 @@ static class SerializeConfig {
 		catch (Exception ex) {
 			ex.PrintWarning();
 			return false;
+		}
+		finally {
+			RefreshHash();
 		}
 		return true;
 	}

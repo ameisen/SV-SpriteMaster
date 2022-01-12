@@ -152,7 +152,7 @@ static class Textures {
 		if (destBounds.HasValue) {
 			destBound = destBounds.Value;
 			subData = GC.AllocateUninitializedArray<byte>(destBound.Area * 4);
-			var destSpan = subData.AsSpan().Cast<byte, uint>();
+			var destSpan = subData.AsSpan<uint>();
 			var sourceSpan = source.Cast<T, uint>();
 			int sourceOffset = (sourceSize.Width * destBound.Top) + destBound.Left;
 			int destOffset = 0;

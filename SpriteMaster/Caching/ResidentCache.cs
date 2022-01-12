@@ -3,14 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Caching;
 using System.Runtime.CompilerServices;
+using System.Security;
 using System.Text;
 using System.Threading.Tasks;
+
+#nullable enable
 
 namespace SpriteMaster.Caching;
 
 /// <summary>
 /// Used to cache original texture data so it doesn't need to perform blocking fetches as often
 /// </summary>
+[SuppressUnmanagedCodeSecurity]
 static class ResidentCache {
 	internal static bool Enabled => Config.MemoryCache.Enabled;
 
@@ -18,22 +22,22 @@ static class ResidentCache {
 	private static MemoryCache Cache = CreateCache();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static MemoryCache CreateCache() => Enabled ? new(name: "ResidentCache", config: null) : null;
+	private static MemoryCache CreateCache() => Enabled ? new(name: "ResidentCache", config: null) : null!;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static T Get<T>(string key) where T : class => Cache.Get(key) as T;
+	internal static T? Get<T>(string key) where T : class => Cache.Get(key) as T;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static bool TryGet<T>(string key, out T value) where T : class {
+	internal static bool TryGet<T>(string key, out T? value) where T : class {
 		var result = Get<T>(key);
 		value = result;
 		return result is not null;
 	}
 
-	internal static T Set<T>(string key, T value) where T : class => (Cache[key] = value) as T;
+	internal static T? Set<T>(string key, T value) where T : class => (Cache[key] = value) as T;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static T Remove<T>(string key) where T : class => Cache.Remove(key) as T;
+	internal static T? Remove<T>(string key) where T : class => Cache.Remove(key) as T;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void Purge() {

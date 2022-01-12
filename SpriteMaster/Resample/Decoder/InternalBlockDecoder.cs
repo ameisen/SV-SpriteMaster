@@ -1,10 +1,7 @@
-﻿using Microsoft.Toolkit.HighPerformance;
-using Microsoft.Xna.Framework.Graphics;
+﻿using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using System;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using static SpriteMaster.Resample.Decoder.BlockDecoderCommon;
 
@@ -172,9 +169,9 @@ static class InternalBlockDecoder {
 
 		switch (format) {
 			case SurfaceFormat.Dxt1: {
-					var blocks = data.Cast<byte, ColorBlock>();
+					var blocks = data.Cast<ColorBlock>();
 					var outData = SpanExt.MakePinned<byte>((int)uSize.Area);
-					var outDataPacked = outData.Cast<byte, uint>();
+					var outDataPacked = outData.Cast<uint>();
 
 					var widthBlocks = uSize.Width >> 2;
 
@@ -198,9 +195,9 @@ static class InternalBlockDecoder {
 				}
 				break;
 			case SurfaceFormat.Dxt3: {
-					var blocks = data.Cast<byte, ColorBlockDxt3>();
+					var blocks = data.Cast<ColorBlockDxt3>();
 					var outData = SpanExt.MakePinned<byte>((int)uSize.Area * sizeof(uint));
-					var outDataPacked = outData.Cast<byte, uint>();
+					var outDataPacked = outData.Cast<uint>();
 
 					var widthBlocks = uSize.Width >> 2;
 

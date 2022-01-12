@@ -54,7 +54,7 @@ static class Config {
 	[Comment("The preferred maximum texture edge length, if allowed by the hardware")]
 	internal const int AbsoluteMaxTextureDimension = 16384;
 	internal const int BaseMaxTextureDimension = 4096;
-	internal static int PreferredMaxTextureDimension = 8192;
+	internal static int PreferredMaxTextureDimension = 16384;
 	internal const bool ClampInvalidBounds = true;
 	internal const bool IgnoreUnknownTextures = false;
 

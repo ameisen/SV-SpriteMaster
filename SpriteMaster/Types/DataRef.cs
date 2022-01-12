@@ -53,6 +53,6 @@ readonly ref struct DataRef<T> where T : struct {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public readonly override int GetHashCode() {
 		// TODO : This isn't right. We need to hash Data _from_ the offset.
-		return HashCode.Combine(Data.GetHashCode(), Offset.GetHashCode());
+		return (int)Hashing.Combine(Data.GetHashCode(), Offset.GetHashCode());
 	}
 }

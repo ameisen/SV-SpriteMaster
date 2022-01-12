@@ -68,6 +68,10 @@ sealed class SpriteInfo : IDisposable {
 	internal ulong Hash {
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		get {
+			if (_ReferenceData == null) {
+				throw new NullReferenceException(nameof(_ReferenceData));
+			}
+
 			ulong hash = _Hash;
 			if (hash == Hashing.Default) {
 				hash = Hashing.Combine(

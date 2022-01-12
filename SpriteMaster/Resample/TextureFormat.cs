@@ -4,33 +4,39 @@ using SpriteMaster.Types;
 using System;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using TeximpNet.Compression;
 
 namespace SpriteMaster.Resample;
 
+[StructLayout(LayoutKind.Sequential)]
 readonly struct TextureFormat {
 
-	private readonly SurfaceFormat surfaceFormat;
-	private readonly CompressionFormat compressionFormat;
+	[MarshalAs(UnmanagedType.I4)]
+	private readonly SurfaceFormat SurfaceFormat;
+	[MarshalAs(UnmanagedType.I4)]
+	private readonly CompressionFormat CompressionFormat;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal TextureFormat(SurfaceFormat surfaceFormat, CompressionFormat compressionFormat) {
-		this.surfaceFormat = surfaceFormat;
-		this.compressionFormat = compressionFormat;
+		this.SurfaceFormat = surfaceFormat;
+		this.CompressionFormat = compressionFormat;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static implicit operator SurfaceFormat(TextureFormat format) => format.surfaceFormat;
+	public static implicit operator SurfaceFormat(TextureFormat format) => format.SurfaceFormat;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static implicit operator CompressionFormat(TextureFormat format) => format.compressionFormat;
+	public static implicit operator CompressionFormat(TextureFormat format) => format.CompressionFormat;
 
 	internal readonly bool IsSupported => Config.Resample.SupportedFormats.Contains(this);
 
 	internal readonly TextureFormat? SupportedOr => IsSupported ? this : null;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly long SizeBytes(int area) => surfaceFormat.SizeBytes(area);
+	internal readonly long SizeBytes(int area) => SurfaceFormat.SizeBytes(area);
+
+	internal static readonly TextureFormat None = new((SurfaceFormat)(-1), (CompressionFormat)(-1));
 
 	internal static readonly TextureFormat Color = new(SurfaceFormat.Color, CompressionFormat.BGRA);
 	internal static readonly TextureFormat ColorS = new(SurfaceFormat.ColorSRgb, CompressionFormat.BGRA);
@@ -66,4 +72,8 @@ readonly struct TextureFormat {
 		}
 		return null;
 	}
+
+	public static bool operator ==(in TextureFormat left, in TextureFormat right) => left.SurfaceFormat == right.SurfaceFormat && left.CompressionFormat == right.CompressionFormat;
+
+	public static bool operator !=(in TextureFormat left, in TextureFormat right) => left.SurfaceFormat != right.SurfaceFormat || left.CompressionFormat != right.CompressionFormat;
 }
