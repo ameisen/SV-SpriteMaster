@@ -1,11 +1,11 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
-using SpriteMaster.Types;
-using System;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using TeximpNet.Compression;
+
+#nullable enable
 
 namespace SpriteMaster.Resample;
 
@@ -66,7 +66,7 @@ readonly struct TextureFormat {
 		foreach (var field in fields) {
 			if (field.FieldType != typeof(TextureFormat))
 				continue;
-			var formatField = (TextureFormat)field.GetValue(null);
+			var formatField = (TextureFormat)field.GetValue(null)!;
 			if (formatField == format)
 				return formatField;
 		}
@@ -76,4 +76,13 @@ readonly struct TextureFormat {
 	public static bool operator ==(in TextureFormat left, in TextureFormat right) => left.SurfaceFormat == right.SurfaceFormat && left.CompressionFormat == right.CompressionFormat;
 
 	public static bool operator !=(in TextureFormat left, in TextureFormat right) => left.SurfaceFormat != right.SurfaceFormat || left.CompressionFormat != right.CompressionFormat;
+
+	public override bool Equals(object? obj) {
+		if (obj is TextureFormat format) {
+			return this == format;
+		}
+		return false;
+	}
+
+	public override int GetHashCode() => (int)Hashing.Combine(SurfaceFormat, CompressionFormat);
 }

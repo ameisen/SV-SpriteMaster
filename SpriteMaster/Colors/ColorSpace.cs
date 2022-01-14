@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SpriteMaster.Types.Fixed;
+using System;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Colors;
@@ -41,9 +42,13 @@ readonly struct ColorSpace {
 	internal readonly CurveDelegateDouble DelinearizeScalar;
 
 	internal readonly byte Linearize(byte value) => LinearizeTable8[value];
+	internal readonly byte Linearize(Fixed8 value) => LinearizeTable8[(byte)value];
 	internal readonly ushort Linearize(ushort value) => LinearizeTable16[value];
+	internal readonly ushort Linearize(Fixed16 value) => LinearizeTable16[(ushort)value];
 	internal readonly byte Delinearize(byte value) => DelinearizeTable8[value];
+	internal readonly byte Delinearize(Fixed8 value) => DelinearizeTable8[(byte)value];
 	internal readonly ushort Delinearize(ushort value) => DelinearizeTable16[value];
+	internal readonly byte Delinearize(Fixed16 value) => DelinearizeTable8[(ushort)value];
 
 	[MethodImpl(Runtime.MethodImpl.RunOnce)]
 	internal ColorSpace(double r, double g, double b, CurveDelegateDouble linearize = null, CurveDelegateDouble delinearize = null) {

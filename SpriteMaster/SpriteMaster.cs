@@ -35,15 +35,15 @@ public sealed class SpriteMaster : Mod {
 	internal static void DumpStats() {
 		var currentProcess = Process.GetCurrentProcess();
 		var workingSet = currentProcess.WorkingSet64;
-		var vmem = currentProcess.VirtualMemorySize64;
-		var gc_allocated = GC.GetTotalMemory(false);
+		var virtualMem = currentProcess.VirtualMemorySize64;
+		var gcAllocated = GC.GetTotalMemory(false);
 
 		var lines = new List<string> {
 			"SpriteMaster Stats Dump:",
 			"\tVM:",
 			$"\t\tProcess Working Set    : {workingSet.AsDataSize()}",
-			$"\t\tProcess Virtual Memory : {vmem.AsDataSize()}:",
-			$"\t\tGC Allocated Memory    : {gc_allocated.AsDataSize()}:",
+			$"\t\tProcess Virtual Memory : {virtualMem.AsDataSize()}:",
+			$"\t\tGC Allocated Memory    : {gcAllocated.AsDataSize()}:",
 			"",
 		};
 

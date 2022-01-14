@@ -1,5 +1,6 @@
 ﻿using BCnEncoder.Encoder;
 using BCnEncoder.Shared;
+using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using System;
 using System.Runtime.CompilerServices;
@@ -44,7 +45,7 @@ static class BCnBlockEncoder {
 	};
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static Span<byte> Encode(ReadOnlySpan<byte> data, ref TextureFormat format, Vector2I dimensions, bool hasAlpha, bool isPunchthroughAlpha, bool isMasky, bool hasR, bool hasG, bool hasB) {
+	internal static Span<Color8> Encode(ReadOnlySpan<Color8> data, ref TextureFormat format, Vector2I dimensions, bool hasAlpha, bool isPunchthroughAlpha, bool isMasky, bool hasR, bool hasG, bool hasB) {
 		var textureFormat = BlockEncoderCommon.GetBestTextureFormat(hasAlpha, isPunchthroughAlpha, isMasky);
 
 		var encoder = new BcEncoder();
@@ -52,8 +53,8 @@ static class BCnBlockEncoder {
 		encoder.OutputOptions.Quality = Config.Resample.BlockCompression.Quality.Convert();
 		encoder.OutputOptions.Format = textureFormat.Convert();
 		encoder.Options.IsParallel = false;
-		var result = encoder.EncodeToRawBytes(data, dimensions.Width, dimensions.Height, format.InputConvert());
+		var result = encoder.EncodeToRawBytes(data.Cast<byte>(), dimensions.Width, dimensions.Height, format.InputConvert());
 		format = textureFormat;
-		return result[0];
+		return result[0].AsSpan<Color8>();
 	}
 }

@@ -41,7 +41,7 @@ static class Analysis {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static unsafe LegacyResults AnalyzeLegacy(Texture2D reference, Span<uint> data, Bounds bounds, Vector2B Wrapped) {
+	internal static unsafe LegacyResults AnalyzeLegacy(Texture2D reference, ReadOnlySpan<Color8> data, Bounds bounds, Vector2B Wrapped) {
 		Vector2B boundsInverted = bounds.Invert;
 
 		if (bounds.Width < 0 || bounds.Height < 0) {
@@ -78,8 +78,8 @@ static class Analysis {
 					int offset = (y + bounds.Top) * bounds.Width + bounds.Left;
 					foreach (int x in 0.RangeTo(bounds.Width)) {
 						int address = offset + x;
-						uint sample = data[address];
-						meanAlphaF += GetAlpha(sample);
+						var sample = data[address];
+						meanAlphaF += sample.A.Value;
 						++numSamples;
 					}
 				}
@@ -94,13 +94,13 @@ static class Analysis {
 				var samples = stackalloc int[] { 0, 0 };
 				foreach (int y in 0.RangeTo(bounds.Height)) {
 					int offset = (y + bounds.Top) * bounds.Width + bounds.Left;
-					uint sample0 = data[offset];
-					uint sample1 = data[offset + (bounds.Width - 1)];
+					var sample0 = data[offset];
+					var sample1 = data[offset + (bounds.Width - 1)];
 
-					if (GetAlpha(sample0) >= alphaThreshold) {
+					if (sample0.A.Value >= alphaThreshold) {
 						samples[0]++;
 					}
-					if (GetAlpha(sample1) >= alphaThreshold) {
+					if (sample1.A.Value >= alphaThreshold) {
 						samples[1]++;
 					}
 				}
@@ -121,8 +121,8 @@ static class Analysis {
 					var yOffset = offsets[i];
 					foreach (int x in 0.RangeTo(bounds.Width)) {
 						int offset = yOffset + x + bounds.Left;
-						uint sample = data[offset];
-						if (GetAlpha(sample) >= alphaThreshold) {
+						var sample = data[offset];
+						if (sample.A.Value >= alphaThreshold) {
 							samples[sampler]++;
 						}
 					}
@@ -155,16 +155,15 @@ static class Analysis {
 		// https://stackoverflow.com/a/9148428
 		if (Config.Resample.PremultiplyAlpha) {
 			foreach (var element in data) {
-				var alpha = GetAlpha(element);
-				byte R = (byte)((uint)element >> 0);
-				byte G = (byte)((uint)element >> 8);
-				byte B = (byte)((uint)element >> 16);
+				var alpha = element.A.Value;
+				byte R = element.R.Value;
+				byte G = element.G.Value;
+				byte B = element.B.Value;
 				var maxColor = Math.Max(Math.Max(R, G), B);
-				if (maxColor > alpha) {
-					if (maxColor - alpha >= Config.Resample.PremultipliedAlphaThreshold) {
-						premultipliedAlpha = false;
-						break;
-					}
+				int colorDifference = maxColor - alpha;
+				if (colorDifference >= Config.Resample.PremultipliedAlphaThreshold) {
+					premultipliedAlpha = false;
+					break;
 				}
 			}
 		}

@@ -24,7 +24,9 @@ static class String {
 		fixed (char* p = str) {
 			for (int i = 0; i < str.Length / 2; ++i) {
 				int endIndex = (str.Length - i) - 1;
-				(p[endIndex], p[i]) = (p[i], p[endIndex]);
+				var temp = p[endIndex];
+				p[endIndex] = p[i];
+				p[i] = temp;
 			}
 		}
 
@@ -34,8 +36,7 @@ static class String {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static string Reversed(this string str) {
 		Contracts.AssertNotNull(str);
-		var strArray = str.ToCharArray().Reverse();
-		return new(strArray);
+		return new string(str).Reverse();
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]

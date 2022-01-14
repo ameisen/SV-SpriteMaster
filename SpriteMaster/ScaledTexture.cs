@@ -48,7 +48,7 @@ sealed partial class ScaledTexture : IDisposable {
 		if (texture is RenderTarget2D && texture.Meta().IsSystemRenderTarget) {
 			if (!meta.TracePrinted) {
 				meta.TracePrinted = true;
-				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', render targets unsupported");
+				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', system render targets unsupported");
 			}
 			return meta.ScaleValid = false;
 		}

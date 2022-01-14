@@ -65,7 +65,7 @@ sealed class Resampler {
 		Unknown
 	}
 
-	private static unsafe Span<byte> CreateNewTexture(
+	private static unsafe Span<Color8> CreateNewTexture(
 		ScaledTexture texture,
 		bool async,
 		SpriteInfo input,
@@ -127,7 +127,7 @@ sealed class Resampler {
 			stride: input.ReferenceSize.Width,
 			block: blockSize,
 			newExtent: out Vector2I spriteRawExtent
-		).Cast<uint>();
+		);
 		var innerSpriteRawExtent = spriteRawExtent;
 
 		// At this point, rawData includes just the sprite's raw data.
@@ -164,11 +164,11 @@ sealed class Resampler {
 			wrapped = (false, false);
 		}
 
-		Span<byte> bitmapData;
+		Span<Color8> bitmapData = spriteRawData;
 
 		if (Config.Resample.Enabled) {
 			// Apply padding to the sprite if necessary
-			var paddedData = Passes.Padding.Apply(
+			spriteRawData = Passes.Padding.Apply(
 				data: spriteRawData.Cast<Color8>(),
 				spriteSize: spriteRawExtent,
 				scale: scale,
@@ -178,79 +178,25 @@ sealed class Resampler {
 				paddedSize: out spriteRawExtent
 			);
 
-			spriteRawData = paddedData.Cast<uint>();
 			scaledSize = spriteRawExtent * scale;
 			scaledSizeClamped = scaledSize.Min(Config.ClampDimension);
 
-			bitmapData = SpanExt.MakePinned<byte>(scaledSize.Area * sizeof(uint));
-
-			static byte ByteMul(byte a, byte b) => (byte)(a * b + 255 >> 8);
-			static byte ByteDiv(byte numerator, byte denominator) {
-				if (denominator == 0) {
-					return numerator; // this isn't right but I have no idea what to do in this case.
-				}
-				return (byte)Math.Min(255, numerator / denominator << 8);
-			}
+			bitmapData = SpanExt.MakePinned<Color8>(scaledSize.Area);
 
 			try {
 				var doWrap = wrapped | input.IsWater;
 
 				if (Config.Resample.AssumeGammaCorrected && currentGammaState == GammaState.Gamma) {
-					for (int y = 0; y < spriteRawExtent.Height; ++y) {
-						int yInStride = (y + spriteRawExtent.Y) * spriteRawExtent.Width;
-						for (int x = 0; x < spriteRawExtent.Width; ++x) {
-							var sample = (uint)spriteRawData[yInStride + x + spriteRawExtent.X];
-
-							byte r = (byte)(sample & 0xFF);
-							byte g = (byte)(sample >> 8 & 0xFF);
-							byte b = (byte)(sample >> 16 & 0xFF);
-
-							r = ColorSpace.sRGB_Precise.Linearize(r);
-							g = ColorSpace.sRGB_Precise.Linearize(g);
-							b = ColorSpace.sRGB_Precise.Linearize(b);
-
-							sample = r | (uint)(g << 8) | (uint)(b << 16) | sample & 0xFF_00_00_00;
-
-							spriteRawData[yInStride + x + spriteRawExtent.X] = sample;
-						}
-						currentGammaState = GammaState.Linear;
-					}
+					Passes.GammaCorrection.Linearize(spriteRawData, spriteRawExtent);
+					currentGammaState = GammaState.Linear;
 				}
 
 				if (!input.IsWater && (Config.Resample.PremultiplyAlpha && analysis.PremultipliedAlpha)) {
-					for (int y = 0; y < scaledSize.Height; ++y) {
-						int yInStride = y * scaledSize.Width * 4;
-						for (int x = 0; x < scaledSize.Width; ++x) {
-							int actualX = x * 4;
-
-							ref byte r = ref bitmapData[yInStride + actualX + 0];
-							ref byte g = ref bitmapData[yInStride + actualX + 1];
-							ref byte b = ref bitmapData[yInStride + actualX + 2];
-							ref byte a = ref bitmapData[yInStride + actualX + 3];
-
-							r = ByteDiv(r, a);
-							g = ByteDiv(g, a);
-							b = ByteDiv(b, a);
-						}
-					}
+					Passes.PremultipliedAlpha.Reverse(spriteRawData.Cast<Color8>(), spriteRawExtent);
 				}
 
 				if (Config.Resample.Deposterization.Enabled) {
-					if (spriteRawExtent.X != 0 || spriteRawExtent.Y != 0) {
-						int subArea = spriteRawExtent.Area;
-						var subData = GC.AllocateUninitializedArray<uint>(subArea);
-						for (int y = 0; y < spriteRawExtent.Height; ++y) {
-							int yInStride = (y + spriteRawExtent.Y) * spriteRawExtent.Width;
-							int yOutStride = y * spriteRawExtent.Width;
-							for (int x = 0; x < spriteRawExtent.Width; ++x) {
-								subData[yOutStride + x] = spriteRawData[yInStride + x + spriteRawExtent.X];
-							}
-						}
-
-						spriteRawData = subData;
-					}
-
-					spriteRawData = Deposterize.Enhance<uint>(spriteRawData, spriteRawExtent, doWrap);
+					spriteRawData = Deposterize.Enhance<Color8>(spriteRawData, spriteRawExtent, doWrap);
 
 					if (Config.Debug.Sprite.DumpReference) {
 						Textures.DumpTexture(
@@ -276,7 +222,7 @@ sealed class Resampler {
 
 							new xBRZ.Scaler(
 								scaleMultiplier: scale,
-								sourceData: spriteRawData, // TODO
+								sourceData: spriteRawData.Cast<uint>(), // TODO
 								sourceSize: spriteRawExtent,
 								sourceTarget: new Bounds(spriteRawExtent),
 								targetData: bitmapData.Cast<uint>(),
@@ -298,46 +244,19 @@ sealed class Resampler {
 				}
 
 				if (Config.Resample.Deposterization.Enabled) {
-					bitmapData = Deposterize.Enhance<byte>(bitmapData, scaledSize, doWrap);
+					bitmapData = Deposterize.Enhance<Color8>(bitmapData, scaledSize, doWrap);
 				}
 
 				if (Config.Resample.UseColorEnhancement) {
-					bitmapData = Recolor.Enhance<byte>(bitmapData, scaledSize);
+					bitmapData = Recolor.Enhance<Color8>(bitmapData, scaledSize);
 				}
 
 				if (!input.IsWater && (Config.Resample.PremultiplyAlpha && analysis.PremultipliedAlpha)) {
-					for (int y = 0; y < scaledSize.Height; ++y) {
-						int yInStride = y * scaledSize.Width * 4;
-						for (int x = 0; x < scaledSize.Width; ++x) {
-							int actualX = x * 4;
-
-							ref byte r = ref bitmapData[yInStride + actualX + 0];
-							ref byte g = ref bitmapData[yInStride + actualX + 1];
-							ref byte b = ref bitmapData[yInStride + actualX + 2];
-							ref byte a = ref bitmapData[yInStride + actualX + 3];
-
-							r = ByteMul(r, a);
-							g = ByteMul(g, a);
-							b = ByteMul(b, a);
-						}
-					}
+					Passes.PremultipliedAlpha.Apply(bitmapData, scaledSize);
 				}
 
 				if (Config.Resample.AssumeGammaCorrected && currentGammaState == GammaState.Linear) {
-					for (int y = 0; y < scaledSize.Height; ++y) {
-						int yInStride = y * scaledSize.Width * 4;
-						for (int x = 0; x < scaledSize.Width; ++x) {
-							int actualX = x * 4;
-
-							ref byte r = ref bitmapData[yInStride + actualX + 0];
-							ref byte g = ref bitmapData[yInStride + actualX + 1];
-							ref byte b = ref bitmapData[yInStride + actualX + 2];
-
-							r = ColorSpace.sRGB_Precise.Delinearize(r);
-							g = ColorSpace.sRGB_Precise.Delinearize(g);
-							b = ColorSpace.sRGB_Precise.Delinearize(b);
-						}
-					}
+					Passes.GammaCorrection.Delinearize(bitmapData, scaledSize);
 					currentGammaState = GammaState.Gamma;
 				}
 			}
@@ -346,9 +265,6 @@ sealed class Resampler {
 				throw;
 			}
 			//ColorSpace.ConvertLinearToSRGB(bitmapData, Texel.Ordering.ARGB);
-		}
-		else {
-			bitmapData = spriteRawData.Cast<byte>();
 		}
 
 		if (Config.Debug.Sprite.DumpResample) {
@@ -407,23 +323,21 @@ sealed class Resampler {
 					red[i] = 0;
 				}
 
-				var intData = bitmapData.Cast<uint>();
-
-				foreach (var color in intData) {
-					alpha[color.ExtractByte(24)]++;
-					blue[color.ExtractByte(16)]++;
-					green[color.ExtractByte(8)]++;
-					red[color.ExtractByte(0)]++;
+				foreach (var color in bitmapData) {
+					alpha[color.A.Value]++;
+					blue[color.B.Value]++;
+					green[color.G.Value]++;
+					red[color.R.Value]++;
 				}
 
 
-				hasR = red[0] != intData.Length;
-				hasG = green[0] != intData.Length;
-				hasB = blue[0] != intData.Length;
+				hasR = red[0] != bitmapData.Length;
+				hasG = green[0] != bitmapData.Length;
+				hasB = blue[0] != bitmapData.Length;
 
 				//Debug.WarningLn($"Punch-through Alpha: {intData.Length}");
-				IsPunchThroughAlpha = IsMasky = alpha[0] + alpha[MaxShades - 1] == intData.Length;
-				HasAlpha = alpha[MaxShades - 1] != intData.Length;
+				IsPunchThroughAlpha = IsMasky = alpha[0] + alpha[MaxShades - 1] == bitmapData.Length;
+				HasAlpha = alpha[MaxShades - 1] != bitmapData.Length;
 
 				if (HasAlpha && !IsPunchThroughAlpha) {
 					var alphaDeviation = Statistics.StandardDeviation(alpha, MaxShades, 1, MaxShades - 2);
@@ -434,9 +348,8 @@ sealed class Resampler {
 			if (!Decoder.BlockDecoderCommon.IsBlockMultiple(scaledSizeClamped)) {
 				var blockPaddedSize = scaledSizeClamped + 3 & ~3;
 
-				var newBuffer = SpanExt.MakeUninitialized<byte>(blockPaddedSize.Area * sizeof(uint));
-				var intSpanSrc = bitmapData.Cast<uint>();
-				var intSpanDst = newBuffer.Cast<uint>();
+				var spanDst = SpanExt.MakeUninitialized<Color8>(blockPaddedSize.Area);
+				var spanSrc = bitmapData;
 
 				int y;
 				for (y = 0; y < scaledSizeClamped.Y; ++y) {
@@ -444,11 +357,11 @@ sealed class Resampler {
 					var bitmapOffset = y * scaledSizeClamped.X;
 					int x;
 					for (x = 0; x < scaledSizeClamped.X; ++x) {
-						intSpanDst[newBufferOffset + x] = intSpanSrc[bitmapOffset + x];
+						spanDst[newBufferOffset + x] = spanSrc[bitmapOffset + x];
 					}
 					int lastX = x - 1;
 					for (; x < blockPaddedSize.X; ++x) {
-						intSpanDst[newBufferOffset + x] = intSpanSrc[bitmapOffset + lastX];
+						spanDst[newBufferOffset + x] = spanSrc[bitmapOffset + lastX];
 					}
 				}
 				var lastY = y - 1;
@@ -456,11 +369,11 @@ sealed class Resampler {
 				for (; y < blockPaddedSize.Y; ++y) {
 					int newBufferOffset = y * blockPaddedSize.X;
 					for (int x = 0; x < blockPaddedSize.X; ++x) {
-						intSpanDst[newBufferOffset + x] = intSpanDst[sourceOffset + x];
+						spanDst[newBufferOffset + x] = spanDst[sourceOffset + x];
 					}
 				}
 
-				bitmapData = newBuffer;
+				bitmapData = spanDst;
 				blockPadding += blockPaddedSize - scaledSizeClamped;
 				scaledSizeClamped = blockPaddedSize;
 			}
@@ -573,7 +486,7 @@ sealed class Resampler {
 						format: out spriteFormat,
 						padding: out texture.Padding,
 						blockPadding: out texture.BlockPadding
-					);
+					).AsBytes();
 				}
 				catch (OutOfMemoryException) {
 					Debug.Error($"OutOfMemoryException thrown trying to create texture [texture: {texture.SafeName()}, bounds: {input.Bounds}, textureSize: {input.ReferenceSize}, scale: {scale}]");

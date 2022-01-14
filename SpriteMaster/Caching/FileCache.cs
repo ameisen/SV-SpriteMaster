@@ -49,7 +49,7 @@ static class FileCache {
 		internal Vector2B Wrapped;
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		internal static unsafe CacheHeader Read(BinaryReader reader) {
+		internal static CacheHeader Read(BinaryReader reader) {
 			CacheHeader newHeader = new();
 			var newHeaderSpan = MemoryMarshal.CreateSpan(ref newHeader, 1).Cast<CacheHeader, byte>();
 			reader.Read(newHeaderSpan);
@@ -83,10 +83,10 @@ static class FileCache {
 
 	private sealed class Profiler {
 		private readonly object Lock = new();
-		private ulong FetchCount = 0L;
-		private ulong SumFetchTime = 0L;
-		private ulong StoreCount = 0L;
-		private ulong SumStoreTime = 0L;
+		private ulong FetchCount = 0UL;
+		private ulong SumFetchTime = 0UL;
+		private ulong StoreCount = 0UL;
+		private ulong SumStoreTime = 0UL;
 
 		internal ulong MeanFetchTime {
 			get {
@@ -157,7 +157,7 @@ static class FileCache {
 				// https://stackoverflow.com/questions/1304/how-to-check-for-file-lock
 				static bool WasLocked(IOException ex) {
 					var errorCode = Marshal.GetHRForException(ex) & (1 << 16) - 1;
-					return errorCode == 32 || errorCode == 33;
+					return errorCode is (32 or 33);
 				}
 
 				try {
@@ -321,7 +321,7 @@ static class FileCache {
 							continue;
 						}
 						var endPath = Path.GetFileName(directory);
-						if (Config.FileCache.Purge || endPath != CacheName && endPath != JunctionCacheName) {
+						if (Config.FileCache.Purge || (endPath != CacheName && endPath != JunctionCacheName)) {
 							// If it doesn't match, it's outdated and should be deleted.
 							Directory.Delete(directory, true);
 						}
