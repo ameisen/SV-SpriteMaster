@@ -1,10 +1,7 @@
 ﻿using HarmonyLib;
-using LinqFasterer;
-using Sickhead.Engine.Util;
 using SpriteMaster.Caching;
 using SpriteMaster.Extensions;
 using SpriteMaster.Harmonize;
-using SpriteMaster.Metadata;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
@@ -13,10 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Reflection;
-using System.Resources;
 using System.Runtime;
-using System.Runtime.CompilerServices;
 using System.Threading;
 
 #nullable enable

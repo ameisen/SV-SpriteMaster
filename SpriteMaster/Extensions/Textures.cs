@@ -2,12 +2,12 @@
 using Microsoft.Xna.Framework.Graphics;
 using Pastel;
 using SpriteMaster.Resample;
+using SpriteMaster.Tasking;
 using SpriteMaster.Types;
 
 using System;
 using System.IO;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
 namespace SpriteMaster.Extensions;
 
@@ -167,7 +167,7 @@ static class Textures {
 			destBound = sourceSize;
 		}
 
-		SynchronizedTasks.AddPendingAction(() => {
+		SynchronizedTaskScheduler.Instance.QueueImmediate(() => {
 			using var dumpTexture = new DumpTexture2D(
 				StardewValley.Game1.graphics.GraphicsDevice,
 				destBound.Width,

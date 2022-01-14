@@ -1,8 +1,4 @@
-﻿using System;
-using System.Runtime.CompilerServices;
+﻿#nullable enable
 
 namespace SpriteMaster;
-sealed record TextureAction(Action Executor, int Size) {
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal void Invoke() => Executor.Invoke();
-}
+sealed record TextureAction(int Size) {}

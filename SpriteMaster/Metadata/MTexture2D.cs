@@ -9,6 +9,8 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using SpriteDictionary = System.Collections.Generic.Dictionary<ulong, SpriteMaster.ScaledTexture>;
 
+#nullable enable
+
 namespace SpriteMaster.Metadata;
 
 sealed class MTexture2D {
@@ -30,7 +32,7 @@ sealed class MTexture2D {
 	internal Vector2I Size;
 
 	internal InterlockedULong LastAccessFrame { get; private set; } = (ulong)DrawState.CurrentFrame;
-	internal InterlockedULong Hash { get; private set; } = Hashing.Default;
+	internal InterlockedULong Hash { get; private set; } = 0;
 
 	internal MTexture2D(Texture2D texture) {
 		IsCompressed = texture.Format.IsCompressed();
@@ -39,8 +41,8 @@ sealed class MTexture2D {
 	}
 
 	// TODO : this presently is not threadsafe.
-	private readonly WeakReference<byte[]> _CachedData = (Config.MemoryCache.Enabled) ? new(null) : null;
-	private readonly WeakReference<byte[]> _CachedRawData = (Config.MemoryCache.Enabled) ? new(null) : null;
+	private readonly WeakReference<byte[]> _CachedData = (Config.MemoryCache.Enabled) ? new(null!) : null!;
+	private readonly WeakReference<byte[]> _CachedRawData = (Config.MemoryCache.Enabled) ? new(null!) : null!;
 
 	internal bool HasCachedData {
 		[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -89,7 +91,7 @@ sealed class MTexture2D {
 					foreach (int i in 0.RangeTo(untilOffset)) {
 						currentData[i + data.Offset] = byteSpan[i];
 					}
-					Hash = Hashing.Default;
+					Hash = 0;
 					CachedRawData = currentData; // Force it to update the global cache.
 				}
 				else {
@@ -113,7 +115,7 @@ sealed class MTexture2D {
 
 	internal static readonly byte[] BlockedSentinel = new byte[1] { 0xFF };
 
-	internal byte[] CachedDataNonBlocking {
+	internal byte[]? CachedDataNonBlocking {
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		get {
 			if (!Config.MemoryCache.Enabled) {
@@ -128,7 +130,7 @@ sealed class MTexture2D {
 		}
 	}
 
-	internal byte[] CachedRawData {
+	internal byte[]? CachedRawData {
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		get {
 			if (!Config.MemoryCache.Enabled) {
@@ -154,8 +156,8 @@ sealed class MTexture2D {
 				//}
 				if (value is null) {
 					using (Lock.Promote) {
-						_CachedRawData.SetTarget(null);
-						_CachedData.SetTarget(null);
+						_CachedRawData.SetTarget(null!);
+						_CachedData.SetTarget(null!);
 						ResidentCache.Remove<byte[]>(UniqueIDString);
 					}
 				}
@@ -167,7 +169,7 @@ sealed class MTexture2D {
 							_CachedData.SetTarget(value);
 						}
 						else {
-							_CachedData.SetTarget(null);
+							_CachedData.SetTarget(null!);
 							DecodeTask.Dispatch(this);
 						}
 					}
@@ -179,7 +181,7 @@ sealed class MTexture2D {
 		}
 	}
 
-	internal byte[] CachedData {
+	internal byte[]? CachedData {
 		get {
 			if (_CachedData.TryGetTarget(out var data)) {
 				return data;
@@ -199,7 +201,10 @@ sealed class MTexture2D {
 	internal ulong GetHash(SpriteInfo info) {
 		using (Lock.Read) {
 			ulong hash = Hash;
-			if (hash == Hashing.Default) {
+			if (hash == 0) {
+				if (info.ReferenceData is null) {
+					throw new NullReferenceException(nameof(info.ReferenceData));
+				}
 				hash = info.ReferenceData.Hash();
 				using (Lock.Promote) {
 					Hash = hash;

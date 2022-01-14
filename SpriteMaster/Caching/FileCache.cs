@@ -1,15 +1,18 @@
 ﻿using Microsoft.Toolkit.HighPerformance;
 using SpriteMaster.Extensions;
 using SpriteMaster.Resample;
+using SpriteMaster.Tasking;
 using SpriteMaster.Types;
 using System;
 using System.Collections.Concurrent;
 using System.IO;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Threading;
+using System.Threading.Tasks;
+
+#nullable enable
 
 namespace SpriteMaster.Caching;
 
@@ -17,14 +20,17 @@ namespace SpriteMaster.Caching;
 static class FileCache {
 	private const string TextureCacheName = "TextureCache";
 	private const string JunctionCacheName = $"{TextureCacheName}_Current";
-	private static readonly Version AssemblyVersion = typeof(Resampler).Assembly.GetName().Version;
-	private static readonly Version RuntimeVersion = typeof(Runtime).Assembly.GetName().Version;
+	private static readonly Version AssemblyVersion = typeof(Resampler).Assembly.GetName().Version!;
+	private static readonly Version RuntimeVersion = typeof(Runtime).Assembly.GetName().Version!;
 	private static readonly ulong AssemblyHash = AssemblyVersion.GetSafeHash().Fuse(RuntimeVersion.GetSafeHash()).Unsigned();
 	private static readonly string CacheName = $"{TextureCacheName}_{AssemblyVersion}";
 	private static readonly string LocalDataPath = Path.Combine(Config.LocalRoot, CacheName);
 	private static readonly string DumpPath = Path.Combine(LocalDataPath, "dump");
 
 	private static readonly bool SystemCompression = false;
+
+	private static readonly ThreadedTaskScheduler TaskScheduler = new(threadNameFunction: index => $"FileCache IO Thread #{index}");
+	private static readonly TaskFactory TaskFactory = new(TaskScheduler);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static string GetPath(params string[] path) => Path.Combine(LocalDataPath, Path.Combine(path));
@@ -122,9 +128,9 @@ static class FileCache {
 			}
 		}
 	}
-	private static readonly Profiler CacheProfiler = Config.FileCache.Profile && Config.FileCache.Enabled ? new() : null;
+	private static readonly Profiler CacheProfiler = Config.FileCache.Profile && Config.FileCache.Enabled ? new() : null!;
 
-	private static readonly ConcurrentDictionary<string, SaveState> SavingMap = Config.FileCache.Enabled ? new() : null;
+	private static readonly ConcurrentDictionary<string, SaveState> SavingMap = Config.FileCache.Enabled ? new() : null!;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool Fetch(
@@ -231,7 +237,8 @@ static class FileCache {
 			return false;
 		}
 
-		ThreadQueue.Queue((data) => {
+		TaskFactory.StartNew(obj => {
+			var data = (byte[])obj!;
 			Thread.CurrentThread.Priority = ThreadPriority.BelowNormal;
 			using var _ = new AsyncTracker($"File Cache Write {path}");
 			bool failure = false;

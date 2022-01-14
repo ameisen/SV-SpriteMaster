@@ -3,12 +3,14 @@ using Microsoft.Toolkit.HighPerformance;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Caching;
-using SpriteMaster.Colors;
 using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
+using SpriteMaster.Tasking;
 using SpriteMaster.Types;
 using System;
 using System.Runtime.CompilerServices;
+
+#nullable enable
 
 namespace SpriteMaster.Resample;
 
@@ -29,10 +31,10 @@ sealed class Resampler {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static ulong HashULong(ulong x) {
 		if (x == 0) {
-			x = ulong.MaxValue;
+			x = 0x9e3779b97f4a7c15UL; // ⌊2^64 / Φ⌋
 		}
-		x = (x ^ x >> 30) * 0xbf58476d1ce4e5b9ul;
-		x = (x ^ x >> 27) * 0x94d049bb133111ebul;
+		x = (x ^ x >> 30) * 0xbf58476d1ce4e5b9UL;
+		x = (x ^ x >> 27) * 0x94d049bb133111ebUL;
 		x ^= x >> 31;
 		return x;
 	}
@@ -52,7 +54,7 @@ sealed class Resampler {
 		return hash;
 	}
 
-	private static readonly WeakSet<Texture2D> GarbageMarkSet = Config.Garbage.CollectAccountUnownedTextures ? new() : null;
+	private static readonly WeakSet<Texture2D> GarbageMarkSet = Config.Garbage.CollectAccountUnownedTextures ? new() : null!;
 
 	private const int WaterBlock = 4;
 	private const int FontBlock = 1;
@@ -77,6 +79,10 @@ sealed class Resampler {
 		out Vector2I padding,
 		out Vector2I blockPadding
 	) {
+		if (input.ReferenceData is null) {
+			throw new ArgumentNullException(nameof(input.ReferenceData));
+		}
+
 		padding = Vector2I.Zero;
 		blockPadding = Vector2I.Zero;
 
@@ -85,7 +91,7 @@ sealed class Resampler {
 				source: input.ReferenceData,
 				sourceSize: input.ReferenceSize,
 				destBounds: input.Bounds,
-				path: FileCache.GetDumpPath($"{input.Reference.SafeName().Replace("/", ".")}.{hashString}.reference.png")
+				path: FileCache.GetDumpPath($"{input.Reference.SafeName().Replace('/', '.')}.{hashString}.reference.png")
 			);
 		}
 
@@ -203,7 +209,7 @@ sealed class Resampler {
 							source: spriteRawData,
 							sourceSize: spriteRawExtent,
 							adjustGamma: 2.2,
-							path: FileCache.GetDumpPath($"{input.Reference.SafeName().Replace("/", ".")}.{hashString}.reference.deposter.png")
+							path: FileCache.GetDumpPath($"{input.Reference.SafeName().Replace('/', '.')}.{hashString}.reference.deposter.png")
 						);
 					}
 				}
@@ -276,7 +282,7 @@ sealed class Resampler {
 				source: bitmapData,
 				sourceSize: scaledSize,
 				swap: (2, 1, 0, 4),
-				path: FileCache.GetDumpPath($"{input.Reference.SafeName().Replace("/", ".")}.{hashString}.resample-wrap[{SimplifyBools(analysis.Wrapped)}]-repeat[{SimplifyBools(analysis.RepeatX)},{SimplifyBools(analysis.RepeatY)}]-pad[{padding.X},{padding.Y}].png")
+				path: FileCache.GetDumpPath($"{input.Reference.SafeName().Replace('/', '.')}.{hashString}.resample-wrap[{SimplifyBools(analysis.Wrapped)}]-repeat[{SimplifyBools(analysis.RepeatX)},{SimplifyBools(analysis.RepeatY)}]-pad[{padding.X},{padding.Y}].png")
 			);
 		}
 
@@ -395,7 +401,7 @@ sealed class Resampler {
 		return bitmapData;
 	}
 
-	internal static ManagedTexture2D Upscale(ScaledTexture texture, ref uint scale, SpriteInfo input, ulong hash, ref Vector2B wrapped, bool async) {
+	internal static ManagedTexture2D? Upscale(ScaledTexture texture, ref uint scale, SpriteInfo input, ulong hash, ref Vector2B wrapped, bool async) {
 		try {
 			// Try to process the texture twice. Garbage collect after a failure, maybe it'll work then.
 			foreach (var _ in 0.To(1)) {
@@ -423,17 +429,17 @@ sealed class Resampler {
 		return null;
 	}
 
-	internal static readonly Action<Texture2D, int, byte[], int, int> PlatformSetData = typeof(Texture2D).GetMethods(
+	internal static readonly Action<Texture2D, int, byte[], int, int>? PlatformSetData = typeof(Texture2D).GetMethods(
 		System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic
 		).SingleF(m => m.Name == "PlatformSetData" && m.GetParameters().Length == 4)?.MakeGenericMethod(new Type[] { typeof(byte) })?.CreateDelegate<Action<Texture2D, int, byte[], int, int>>();
 
-	private static ManagedTexture2D UpscaleInternal(ScaledTexture texture, ref uint scale, SpriteInfo input, ulong hash, ref Vector2B wrapped, bool async) {
+	private static ManagedTexture2D? UpscaleInternal(ScaledTexture texture, ref uint scale, SpriteInfo input, ulong hash, ref Vector2B wrapped, bool async) {
 		var spriteFormat = TextureFormat.Color;
 
 		if (Config.Garbage.CollectAccountUnownedTextures && GarbageMarkSet.Add(input.Reference)) {
 			Garbage.Mark(input.Reference);
 			input.Reference.Disposing += (obj, _) => {
-				Garbage.Unmark((Texture2D)obj);
+				Garbage.Unmark((Texture2D)obj!);
 			};
 		}
 
@@ -502,7 +508,7 @@ sealed class Resampler {
 			texture.UnpaddedSize = newSize - (texture.Padding + texture.BlockPadding);
 			texture.AdjustedScale = (Vector2)texture.UnpaddedSize / inputSize;
 
-			ManagedTexture2D CreateTexture(byte[] data) {
+			ManagedTexture2D? CreateTexture(byte[] data) {
 				if (input.Reference.GraphicsDevice.IsDisposed) {
 					return null;
 				}
@@ -533,7 +539,7 @@ sealed class Resampler {
 					if (texture.IsDisposed) {
 						return;
 					}
-					ManagedTexture2D newTexture = null;
+					ManagedTexture2D? newTexture = null;
 					try {
 						newTexture = CreateTexture(bitmapDataArray);
 						texture.Texture = newTexture;
@@ -547,11 +553,11 @@ sealed class Resampler {
 						texture.Dispose();
 					}
 				}
-				SynchronizedTasks.AddPendingLoad(syncCall, bitmapData.Length);
+				SynchronizedTaskScheduler.Instance.QueueDeferred(syncCall, new(bitmapData.Length));
 				return null;
 			}
 			else {
-				ManagedTexture2D newTexture = null;
+				ManagedTexture2D? newTexture = null;
 				try {
 					newTexture = CreateTexture(bitmapData.ToArray());
 					if (isAsync) {

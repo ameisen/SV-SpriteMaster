@@ -7,6 +7,8 @@ using SpriteMaster.Types.Interlocking;
 using System;
 using System.Runtime.CompilerServices;
 
+#nullable enable
+
 namespace SpriteMaster;
 
 /// <summary>
@@ -31,9 +33,9 @@ sealed class SpriteInfo : IDisposable {
 
 	public override string ToString() => $"SpriteInfo[Name: '{Reference.Name}', ReferenceSize: {ReferenceSize}, Size: {Bounds}]";
 
-	internal ulong SpriteDataHash = Hashing.Default;
-	private byte[] _ReferenceData = null;
-	internal byte[] ReferenceData {
+	internal ulong SpriteDataHash = 0;
+	private byte[]? _ReferenceData = null;
+	internal byte[]? ReferenceData {
 		get => _ReferenceData;
 		set {
 			if (_ReferenceData == value) {
@@ -41,7 +43,7 @@ sealed class SpriteInfo : IDisposable {
 			}
 			_ReferenceData = value;
 			if (_ReferenceData == null) {
-				SpriteDataHash = Hashing.Default;
+				SpriteDataHash = 0;
 			}
 			else {
 				int formatSize = Reference.Format.IsCompressed() ? 4 : (int)Reference.Format.SizeBytes(1);
@@ -64,7 +66,7 @@ sealed class SpriteInfo : IDisposable {
 		}
 	}
 
-	private InterlockedULong _Hash = Hashing.Default;
+	private InterlockedULong _Hash = 0;
 	internal ulong Hash {
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		get {
@@ -73,7 +75,7 @@ sealed class SpriteInfo : IDisposable {
 			}
 
 			ulong hash = _Hash;
-			if (hash == Hashing.Default) {
+			if (hash == 0) {
 				hash = Hashing.Combine(
 					SpriteDataHash,
 					Bounds.Extent.GetLongHashCode(),
@@ -154,7 +156,7 @@ sealed class SpriteInfo : IDisposable {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public void Dispose() {
 		ReferenceData = null;
-		_Hash = Hashing.Default;
+		_Hash = 0;
 		GC.SuppressFinalize(this);
 	}
 }

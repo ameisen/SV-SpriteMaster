@@ -2,21 +2,24 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
+#nullable enable
+
 namespace SpriteMaster.Tasking;
 
-[DebuggerTypeProxy(typeof(SuperTaskSchedulerDebugView))]
+[DebuggerTypeProxy(typeof(ThreadedTaskSchedulerDebugView))]
 [DebuggerDisplay("Id={Id}, ScheduledTasks = {DebugTaskCount}")]
 sealed class ThreadedTaskScheduler : TaskScheduler, IDisposable {
 	internal static readonly ThreadedTaskScheduler Instance = new();
 	internal static readonly TaskFactory TaskFactory = new(Instance);
 
-	private class SuperTaskSchedulerDebugView {
+	private class ThreadedTaskSchedulerDebugView {
 		private readonly ThreadedTaskScheduler Scheduler;
 
-		public SuperTaskSchedulerDebugView(ThreadedTaskScheduler scheduler) {
+		public ThreadedTaskSchedulerDebugView(ThreadedTaskScheduler scheduler) {
 			Scheduler = scheduler ?? throw new ArgumentNullException(nameof(scheduler));
 		}
 
@@ -36,11 +39,11 @@ sealed class ThreadedTaskScheduler : TaskScheduler, IDisposable {
 
 	internal ThreadedTaskScheduler(
 		int? concurrencyLevel = null,
-		Func<int, string> threadNameFunction = null,
+		Func<int, string>? threadNameFunction = null,
 		bool useForegroundThreads = false,
 		ThreadPriority threadPriority = ThreadPriority.Lowest,
-		Action<Thread, int> onThreadInit = null,
-		Action<Thread, int> onThreadFinally = null
+		Action<Thread, int>? onThreadInit = null,
+		Action<Thread, int>? onThreadFinally = null
 	) {
 		if (concurrencyLevel is null or 0) {
 			concurrencyLevel = Environment.ProcessorCount;
@@ -54,7 +57,7 @@ sealed class ThreadedTaskScheduler : TaskScheduler, IDisposable {
 
 		Threads = new Thread[ConcurrencyLevel];
 		for (int i = 0; i < Threads.Length; ++i) {
-			Threads[i] = new(index => DispatchLoop((int)index, onThreadInit, onThreadFinally)) {
+			Threads[i] = new(index => DispatchLoop((int)index!, onThreadInit, onThreadFinally)) {
 				Priority = threadPriority,
 				IsBackground = true,
 				Name = threadNameFunction is null ? $"ThreadedTaskScheduler Thread {i}" : threadNameFunction(i),
@@ -67,7 +70,8 @@ sealed class ThreadedTaskScheduler : TaskScheduler, IDisposable {
 		}
 	}
 
-	private void DispatchLoop(int index, Action<Thread, int> onInit, Action<Thread, int> onFinally) {
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	private void DispatchLoop(int index, Action<Thread, int>? onInit, Action<Thread, int>? onFinally) {
 		IsTaskProcessingThread = true;
 		var thread = Thread.CurrentThread;
 		onInit?.Invoke(thread, index);
@@ -97,6 +101,7 @@ sealed class ThreadedTaskScheduler : TaskScheduler, IDisposable {
 		}
 	}
 
+	[MethodImpl(Runtime.MethodImpl.Hot)]
 	protected override void QueueTask(Task task) {
 		if (DisposeCancellation.IsCancellationRequested) {
 			throw new ObjectDisposedException(GetType().Name);

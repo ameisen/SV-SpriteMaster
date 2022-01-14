@@ -8,10 +8,12 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
 
+#nullable enable
+
 namespace SpriteMaster;
 
 static partial class Hashing {
-	internal const ulong Default = 0UL;
+	internal const ulong Default = 0x9e3779b97f4a7c15UL;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ulong Accumulate(ulong hash, ulong hashend) => hash ^ hashend + 0x9e3779b9ul + (hash << 6) + (hash >> 2);
@@ -21,7 +23,7 @@ static partial class Hashing {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ulong Combine(params ulong[] hashes) {
-		ulong hash = 0;
+		ulong hash = Default;
 		foreach (var subHash in hashes) {
 			hash = Accumulate(hash, subHash);
 		}
@@ -30,7 +32,7 @@ static partial class Hashing {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ulong Combine(params object[] hashes) {
-		ulong hash = 0;
+		ulong hash = Default;
 
 		foreach (var subHash in hashes) {
 			hash = subHash switch {

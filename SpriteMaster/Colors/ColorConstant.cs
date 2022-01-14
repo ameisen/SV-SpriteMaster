@@ -1,7 +1,7 @@
 ﻿using SpriteMaster.Extensions;
-using System;
-using System.Numerics;
 using System.Runtime.CompilerServices;
+
+#nullable enable
 
 namespace SpriteMaster.Colors;
 

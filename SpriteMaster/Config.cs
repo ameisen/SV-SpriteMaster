@@ -104,9 +104,7 @@ static class Config {
 
 	internal static class Debug {
 		internal static class Logging {
-			internal static bool LogInfo = true;
-			internal static bool LogWarnings = true;
-			internal static bool LogErrors = true;
+			internal static LogLevel LogLevel = LogLevel.Trace;
 			internal const bool OwnLogFile = true;
 		}
 

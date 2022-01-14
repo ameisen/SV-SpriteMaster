@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
+using SpriteMaster.Tasking;
 using SpriteMaster.Types;
 using SpriteMaster.Types.Interlocking;
 using StardewValley;
@@ -8,6 +9,8 @@ using System;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading;
+
+#nullable enable
 
 namespace SpriteMaster;
 
@@ -93,7 +96,7 @@ static class DrawState {
 
 		if (Config.AsyncScaling.CanFetchAndLoadSameFrame || !PushedUpdateThisFrame) {
 			var remaining = ActualRemainingFrameTime();
-			SynchronizedTasks.ProcessPendingActions(remaining);
+			SynchronizedTaskScheduler.Instance.Dispatch(remaining);
 		}
 
 		if (!PushedUpdateThisFrame) {
