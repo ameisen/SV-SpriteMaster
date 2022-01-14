@@ -17,14 +17,13 @@ struct Fixed16 {
 	internal Fixed16(Fixed16 value) => InternalValue = value.InternalValue;
 	internal Fixed16(Fixed8 value) => InternalValue = FromU8((byte)value);
 
-	public static Fixed16 operator /(Fixed16 lhs, Fixed16 rhs) {
-		if (rhs == Fixed16.Zero) {
-			return lhs;
+	public static Fixed16 operator /(Fixed16 numerator, Fixed16 denominator) {
+		if (denominator == Fixed16.Zero) {
+			return numerator;
 		}
-		ulong n0 = ((ulong)lhs.InternalValue) << 32;
-		n0 -= lhs.InternalValue;
-		ulong n1 = (ulong)rhs.InternalValue;
-		ulong result = n0 / n1;
+		ulong numeratorWidened = ((ulong)numerator.InternalValue) << 32;
+		numeratorWidened -= numerator.InternalValue;
+		ulong result = numeratorWidened / denominator.InternalValue;
 		return (ushort)(result >> 16);
 	}
 

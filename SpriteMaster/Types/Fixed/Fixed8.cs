@@ -18,14 +18,13 @@ struct Fixed8 {
 	internal Fixed8(Fixed8 value) => InternalValue = value.InternalValue;
 	internal Fixed8(Fixed16 value) => InternalValue = FromU16((ushort)value);
 
-	public static Fixed8 operator /(Fixed8 lhs, Fixed8 rhs) {
-		if (rhs == Fixed8.Zero) {
-			return lhs;
+	public static Fixed8 operator /(Fixed8 numerator, Fixed8 denominator) {
+		if (denominator == Fixed8.Zero) {
+			return numerator;
 		}
-		uint n0 = ((uint)lhs.InternalValue) << 16;
-		n0 -= lhs.InternalValue;
-		uint n1 = (uint)rhs.InternalValue;
-		uint result = n0 / n1;
+		uint numeratorWidened = ((uint)numerator.InternalValue) << 16;
+		numeratorWidened -= numerator.InternalValue;
+		uint result = numeratorWidened / denominator.InternalValue;
 		return (byte)(result >> 8);
 	}
 
