@@ -1,8 +1,11 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.xBRZ.Blend;
 
-enum BlendType : byte {
+using PreprocessType = Byte;
+
+enum BlendType : PreprocessType {
 	// These blend types must fit into 2 bits.
 	None = 0, //do not blend
 	Normal = 1, //a normal indication to blend
@@ -11,10 +14,10 @@ enum BlendType : byte {
 
 static class BlendTypeExtension {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static byte Byte(this BlendType type) => (byte)type;
+	internal static PreprocessType Value(this BlendType type) => (byte)type;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static BlendType BlendType(this byte value) => (BlendType)value;
+	internal static BlendType BlendType(this PreprocessType value) => (BlendType)value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static BlendType BlendType(this int value) => (BlendType)value;

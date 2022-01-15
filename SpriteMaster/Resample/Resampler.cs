@@ -229,7 +229,7 @@ sealed class Resampler {
 								scaleMultiplier: scale,
 								sourceData: spriteRawData, // TODO
 								sourceSize: spriteRawExtent,
-								sourceTarget: new Bounds(spriteRawExtent),
+								expectedTargetSize: scaledSize,
 								targetData: bitmapData,
 								configuration: scalerConfig
 							);

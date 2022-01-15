@@ -1,35 +1,38 @@
 ﻿using SpriteMaster.xBRZ.Common;
+using System;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.xBRZ.Blend;
 
+using PreprocessType = Byte;
+
 static class BlendInfo {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static BlendType GetTopL(this byte b) => (b & 0x3).BlendType();
+	internal static BlendType GetTopL(this PreprocessType b) => (b & 0x3).BlendType();
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static BlendType GetTopR(this byte b) => ((byte)(b >> 2) & 0x3).BlendType();
+	internal static BlendType GetTopR(this PreprocessType b) => ((PreprocessType)(b >> 2) & 0x3).BlendType();
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static BlendType GetBottomR(this byte b) => ((byte)(b >> 4) & 0x3).BlendType();
+	internal static BlendType GetBottomR(this PreprocessType b) => ((PreprocessType)(b >> 4) & 0x3).BlendType();
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static BlendType GetBottomL(this byte b) => ((byte)(b >> 6) & 0x3).BlendType();
+	internal static BlendType GetBottomL(this PreprocessType b) => ((PreprocessType)(b >> 6) & 0x3).BlendType();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static byte SetTopL(this byte b, BlendType bt) => (byte)(b | bt.Byte());
+	internal static PreprocessType SetTopL(this PreprocessType b, BlendType bt) => (PreprocessType)(b | bt.Value());
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static byte SetTopR(this byte b, BlendType bt) => (byte)(b | (bt.Byte() << 2));
+	internal static PreprocessType SetTopR(this PreprocessType b, BlendType bt) => (PreprocessType)(b | (bt.Value() << 2));
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static byte SetBottomR(this byte b, BlendType bt) => (byte)(b | (bt.Byte() << 4));
+	internal static PreprocessType SetBottomR(this PreprocessType b, BlendType bt) => (PreprocessType)(b | (bt.Value() << 4));
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static byte SetBottomL(this byte b, BlendType bt) => (byte)(b | (bt.Byte() << 6));
+	internal static PreprocessType SetBottomL(this PreprocessType b, BlendType bt) => (PreprocessType)(b | (bt.Value() << 6));
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static bool BlendingNeeded(this byte b) => b != 0;
+	internal static bool BlendingNeeded(this PreprocessType b) => b != 0;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static byte Rotate(this byte b, RotationDegree rotDeg) {
-		var l = (byte)((byte)rotDeg << 1);
-		var r = (byte)(8 - l);
+	internal static PreprocessType Rotate(this PreprocessType b, RotationDegree rotDeg) {
+		var l = (PreprocessType)((PreprocessType)rotDeg << 1);
+		var r = (PreprocessType)(8 - l);
 
-		return (byte)(b << l | b >> r);
+		return (PreprocessType)(b << l | b >> r);
 	}
 }
