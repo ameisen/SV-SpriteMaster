@@ -137,7 +137,7 @@ static class Config {
 		[Comment("Should dynamic scaling be used (scaling based upon apparent sprite size)")]
 		internal const bool EnableDynamicScale = true;
 		[Comment("Should we assume that input sprites are gamma corrected?")]
-		internal static bool AssumeGammaCorrected = false;
+		internal static bool AssumeGammaCorrected = true;
 		[Comment("Should the scale factor of water be adjusted to account for water sprites being unusual?")]
 		internal static bool TrimWater = true;
 		[Comment("Positive bias applied to sprite scaling calculations")]
@@ -161,7 +161,7 @@ static class Config {
 			[Comment("Should deposterization be performed?")]
 			internal const bool Enabled = false; // disabled as the system needs more work
 			[Comment("Deposterization Color Threshold")]
-			internal static int Threshold = 48;
+			internal static int Threshold = 32;
 			[Comment("Deposterization Block Size")]
 			internal static int BlockSize = 1;
 			[Comment("Default number of passes")]

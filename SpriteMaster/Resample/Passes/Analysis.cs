@@ -175,7 +175,7 @@ static class Analysis {
 			repeatY: RepeatY,
 			edgeX: Vector2B.False,
 			edgeY: Vector2B.False,
-			premultipliedAlpha: premultipliedAlpha
+			premultipliedAlpha: true
 		);
 	}
 }

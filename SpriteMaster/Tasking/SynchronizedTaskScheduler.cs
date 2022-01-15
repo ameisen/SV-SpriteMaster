@@ -129,7 +129,7 @@ sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
 							var start = watch.Elapsed;
 							InvokeTask(task);
 							var duration = watch.Elapsed - start;
-							Debug.Warning($"Sprite Finished: Est: {estimate.TotalMilliseconds}  Act: {duration.TotalMilliseconds}   ({task.ActionData.Size}) ({remainingTime.TotalMilliseconds})");
+							Debug.Trace($"Sprite Finished: Est: {estimate.TotalMilliseconds}  Act: {duration.TotalMilliseconds}   ({task.ActionData.Size}) ({remainingTime.TotalMilliseconds})");
 							TexelAverage.Add(task.ActionData, duration);
 
 							++processed;

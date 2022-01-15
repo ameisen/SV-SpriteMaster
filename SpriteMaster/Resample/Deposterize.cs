@@ -31,8 +31,8 @@ static class Deposterize {
 			Size = size;
 			Wrapped = wrapped;
 			Passes = passes;
-			Threshold = threshold;
-			ThresholdSq = threshold * threshold;
+			Threshold = threshold * 256;
+			ThresholdSq = Threshold * Threshold;
 			BlockSize = blockSize;
 		}
 

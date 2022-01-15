@@ -154,8 +154,6 @@ sealed class Resampler {
 		var scaledSize = spriteRawExtent * scale;
 		var scaledSizeClamped = scaledSize.Min(Config.ClampDimension);
 
-		Debug.Info($"Current Draw State: {DrawState.CurrentBlendState}");
-
 		var analysis = Passes.Analysis.AnalyzeLegacy(
 			reference: input.Reference,
 			data: spriteRawData8,
