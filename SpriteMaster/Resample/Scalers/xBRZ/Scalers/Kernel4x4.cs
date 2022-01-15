@@ -18,45 +18,45 @@ namespace SpriteMaster.xBRZ.Scalers;
 */
 [ImmutableObject(true)]
 unsafe ref struct Kernel4x4 {
-	private fixed uint Data[4 * 4];
+	private fixed ulong Data[4 * 4];
 
-	internal readonly Color8 this[int index] => (Color8)Data[index];
+	internal readonly Color16 this[int index] => (Color16)Data[index];
 
-	internal readonly Color8 A => this[0];
-	internal readonly Color8 B => this[1];
-	internal readonly Color8 C => this[2];
-	internal readonly Color8 D => this[3];
-	internal readonly Color8 E => this[4];
-	internal readonly Color8 F => this[5];
-	internal readonly Color8 G => this[6];
-	internal readonly Color8 H => this[7];
-	internal readonly Color8 I => this[8];
-	internal readonly Color8 J => this[9];
-	internal readonly Color8 K => this[10];
-	internal readonly Color8 L => this[11];
-	internal readonly Color8 M => this[12];
-	internal readonly Color8 N => this[13];
-	internal readonly Color8 O => this[14];
-	internal readonly Color8 P => this[15];
+	internal readonly Color16 A => this[0];
+	internal readonly Color16 B => this[1];
+	internal readonly Color16 C => this[2];
+	internal readonly Color16 D => this[3];
+	internal readonly Color16 E => this[4];
+	internal readonly Color16 F => this[5];
+	internal readonly Color16 G => this[6];
+	internal readonly Color16 H => this[7];
+	internal readonly Color16 I => this[8];
+	internal readonly Color16 J => this[9];
+	internal readonly Color16 K => this[10];
+	internal readonly Color16 L => this[11];
+	internal readonly Color16 M => this[12];
+	internal readonly Color16 N => this[13];
+	internal readonly Color16 O => this[14];
+	internal readonly Color16 P => this[15];
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal Kernel4x4(
-		Color8 _0,
-		Color8 _1,
-		Color8 _2,
-		Color8 _3,
-		Color8 _4,
-		Color8 _5,
-		Color8 _6,
-		Color8 _7,
-		Color8 _8,
-		Color8 _9,
-		Color8 _10,
-		Color8 _11,
-		Color8 _12,
-		Color8 _13,
-		Color8 _14,
-		Color8 _15
+		Color16 _0,
+		Color16 _1,
+		Color16 _2,
+		Color16 _3,
+		Color16 _4,
+		Color16 _5,
+		Color16 _6,
+		Color16 _7,
+		Color16 _8,
+		Color16 _9,
+		Color16 _10,
+		Color16 _11,
+		Color16 _12,
+		Color16 _13,
+		Color16 _14,
+		Color16 _15
 	) {
 		Data[0] = _0.AsPacked;
 		Data[1] = _1.AsPacked;

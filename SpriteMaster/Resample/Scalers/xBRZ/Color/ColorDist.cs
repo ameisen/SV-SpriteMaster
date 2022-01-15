@@ -19,7 +19,7 @@ class ColorDist {
 	internal ColorDist(Config cfg) => Configuration = cfg;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static Fixed8 TexelDiff(Fixed8 texel1, Fixed8 texel2) => (Fixed8)Math.Abs(texel1.Value - texel2.Value);
+	private static Fixed16 TexelDiff(Fixed16 texel1, Fixed16 texel2) => (Fixed16)Math.Abs(texel1.Value - texel2.Value);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static double Square(double value) => value * value;
@@ -29,7 +29,7 @@ class ColorDist {
 
 	// TODO : This can be SIMD-ized using https://docs.microsoft.com/en-us/dotnet/api/system.runtime.intrinsics.x86
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private unsafe double DistYCbCrImpl(Color8 pix1, Color8 pix2) {
+	private unsafe double DistYCbCrImpl(Color16 pix1, Color16 pix2) {
 		// See if the colors are the same
 		if (pix1.NoAlpha == pix2.NoAlpha) {
 			return 0.0;
@@ -50,12 +50,13 @@ class ColorDist {
 		var cR = scale.R * (rDiff.Value - y);
 
 		// Skip division by 255.
-		// Also skip square root here by pre-squaring the config option equalColorTolerance.
-		return Square(Configuration.LuminanceWeight * y) + (Configuration.ChrominanceWeight * (Square(cB) + Square(cR)));
+		var luminance = Square(Configuration.LuminanceWeight * y);
+		var chrominance = Configuration.ChrominanceWeight * (Square(cB) + Square(cR));
+		return Math.Sqrt(luminance + chrominance);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal double DistYCbCr(Color8 pix1, Color8 pix2) {
+	internal double DistYCbCr(Color16 pix1, Color16 pix2) {
 		if (pix1 == pix2) {
 			return 0.0;
 		}
@@ -68,7 +69,8 @@ class ColorDist {
 			var a2 = pix2.A;
 
 			// TODO : integer math?
-			distance = ColorConstant.ValueToScalar(MathExt.Min(a1, a2)) * distance + Square(Math.Abs(a2.Value - a1.Value));
+			var alphaScalar = ColorConstant.ValueToScalar(MathExt.Min(a1, a2));
+			distance = alphaScalar * distance + Math.Abs(a2.Value - a1.Value);
 		}
 
 		return distance;

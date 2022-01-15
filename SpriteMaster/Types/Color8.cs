@@ -118,7 +118,7 @@ struct Color8 : IEquatable<Color8>, IEquatable<uint>, ILongHash {
 	}
 
 	internal static Span<Color8> Convert(ReadOnlySpan<Color16> source, bool pinned = true) {
-		var destination = new Span<Color8>(GC.AllocateUninitializedArray<Color8>(source.Length, pinned: pinned));
+		var destination = SpanExt.MakeUninitialized<Color8>(source.Length, pinned: pinned);
 		for (int i = 0; i < source.Length; ++i) {
 			destination[i] = From(source[i]);
 		}

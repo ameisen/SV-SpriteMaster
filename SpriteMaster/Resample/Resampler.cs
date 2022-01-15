@@ -126,7 +126,7 @@ sealed class Resampler {
 			scale = Config.Resample.MaxScale;
 		}
 		// TODO : handle inverted input.Bounds
-		var spriteRawData = Passes.ExtractSprite.Extract(
+		var spriteRawData8 = Passes.ExtractSprite.Extract(
 			data: input.ReferenceData.AsSpan<Color8>(),
 			textureBounds: input.Reference.Bounds,
 			spriteBounds: inputBounds,
@@ -158,7 +158,7 @@ sealed class Resampler {
 
 		var analysis = Passes.Analysis.AnalyzeLegacy(
 			reference: input.Reference,
-			data: spriteRawData,
+			data: spriteRawData8,
 			bounds: spriteRawExtent,
 			Wrapped: input.Wrapped
 		);
@@ -170,12 +170,15 @@ sealed class Resampler {
 			wrapped = (false, false);
 		}
 
-		Span<Color8> bitmapData = spriteRawData;
+		// Widen data.
+		var spriteRawData = Color16.Convert(spriteRawData8);
+
+		Span<Color16> bitmapDataWide = spriteRawData;
 
 		if (Config.Resample.Enabled) {
 			// Apply padding to the sprite if necessary
 			spriteRawData = Passes.Padding.Apply(
-				data: spriteRawData.Cast<Color8>(),
+				data: spriteRawData,
 				spriteSize: spriteRawExtent,
 				scale: scale,
 				input: input,
@@ -187,7 +190,7 @@ sealed class Resampler {
 			scaledSize = spriteRawExtent * scale;
 			scaledSizeClamped = scaledSize.Min(Config.ClampDimension);
 
-			bitmapData = SpanExt.MakePinned<Color8>(scaledSize.Area);
+			bitmapDataWide = SpanExt.MakePinned<Color16>(scaledSize.Area);
 
 			try {
 				var doWrap = wrapped | input.IsWater;
@@ -198,11 +201,11 @@ sealed class Resampler {
 				}
 
 				if (!input.IsWater && (Config.Resample.PremultiplyAlpha && analysis.PremultipliedAlpha)) {
-					Passes.PremultipliedAlpha.Reverse(spriteRawData.Cast<Color8>(), spriteRawExtent);
+					Passes.PremultipliedAlpha.Reverse(spriteRawData, spriteRawExtent);
 				}
 
 				if (Config.Resample.Deposterization.Enabled) {
-					spriteRawData = Deposterize.Enhance<Color8>(spriteRawData, spriteRawExtent, doWrap);
+					spriteRawData = Deposterize.Enhance<Color16>(spriteRawData, spriteRawExtent, doWrap);
 
 					if (Config.Debug.Sprite.DumpReference) {
 						Textures.DumpTexture(
@@ -217,7 +220,7 @@ sealed class Resampler {
 				switch (Config.Resample.Scaler) {
 					case Scaler.xBRZ: {
 							var scalerConfig = new xBRZ.Config(
-								Wrapped: doWrap,
+								wrapped: doWrap,
 								luminanceWeight: Config.Resample.xBRZ.LuminanceWeight,
 								equalColorTolerance: Config.Resample.xBRZ.EqualColorTolerance,
 								dominantDirectionThreshold: Config.Resample.xBRZ.DominantDirectionThreshold,
@@ -225,12 +228,14 @@ sealed class Resampler {
 								centerDirectionBias: Config.Resample.xBRZ.CenterDirectionBias
 							);
 
+							var tempData = SpanExt.MakeUninitialized<Color8>(bitmapDataWide.Length);
+
 							new xBRZ.Scaler(
 								scaleMultiplier: scale,
-								sourceData: spriteRawData, // TODO
+								sourceData: spriteRawData,
 								sourceSize: spriteRawExtent,
 								expectedTargetSize: scaledSize,
-								targetData: bitmapData,
+								targetData: bitmapDataWide,
 								configuration: scalerConfig
 							);
 						}
@@ -249,19 +254,19 @@ sealed class Resampler {
 				}
 
 				if (Config.Resample.Deposterization.Enabled) {
-					bitmapData = Deposterize.Enhance<Color8>(bitmapData, scaledSize, doWrap);
+					bitmapDataWide = Deposterize.Enhance<Color16>(bitmapDataWide, scaledSize, doWrap);
 				}
 
 				if (Config.Resample.UseColorEnhancement) {
-					bitmapData = Recolor.Enhance<Color8>(bitmapData, scaledSize);
+					bitmapDataWide = Recolor.Enhance<Color16>(bitmapDataWide, scaledSize);
 				}
 
 				if (!input.IsWater && (Config.Resample.PremultiplyAlpha && analysis.PremultipliedAlpha)) {
-					Passes.PremultipliedAlpha.Apply(bitmapData, scaledSize);
+					Passes.PremultipliedAlpha.Apply(bitmapDataWide, scaledSize);
 				}
 
 				if (Config.Resample.AssumeGammaCorrected && currentGammaState == GammaState.Linear) {
-					Passes.GammaCorrection.Delinearize(bitmapData, scaledSize);
+					Passes.GammaCorrection.Delinearize(bitmapDataWide, scaledSize);
 					currentGammaState = GammaState.Gamma;
 				}
 			}
@@ -274,11 +279,11 @@ sealed class Resampler {
 
 		if (Config.Debug.Sprite.DumpResample) {
 			static string SimplifyBools(in Vector2B vec) {
-				return $"{(vec.X ? 1 : 0)}{(vec.Y ? 1 : 0)}";
+				return $"{vec.X.ToInt()}{vec.Y.ToInt()}";
 			}
 
 			Textures.DumpTexture(
-				source: bitmapData,
+				source: bitmapDataWide,
 				sourceSize: scaledSize,
 				swap: (2, 1, 0, 4),
 				path: FileCache.GetDumpPath($"{input.Reference.SafeName().Replace('/', '.')}.{hashString}.resample-wrap[{SimplifyBools(analysis.Wrapped)}]-repeat[{SimplifyBools(analysis.RepeatX)},{SimplifyBools(analysis.RepeatY)}]-pad[{padding.X},{padding.Y}].png")
@@ -301,6 +306,9 @@ sealed class Resampler {
 		if (currentGammaState != initialGammaState) {
 			throw new Exception("Gamma State Mismatch");
 		}
+
+		// Narrow
+		var bitmapData = Color8.Convert(bitmapDataWide);
 
 		// We don't want to use block compression if asynchronous loads are enabled but this is not an asynchronous load... unless that is explicitly enabled.
 		if (Config.Resample.BlockCompression.Enabled /*&& (Config.Resample.BlockCompression.Synchronized || !Config.AsyncScaling.Enabled || async)*/ && scaledSizeClamped.MinOf >= 4) {

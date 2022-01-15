@@ -8,8 +8,6 @@ using PreprocessType = Byte;
 
 static class BlendInfo {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static BlendType GetTopL(this PreprocessType b) => (b & 0x3).BlendType();
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static BlendType GetTopR(this PreprocessType b) => ((PreprocessType)(b >> 2) & 0x3).BlendType();
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static BlendType GetBottomR(this PreprocessType b) => ((PreprocessType)(b >> 4) & 0x3).BlendType();

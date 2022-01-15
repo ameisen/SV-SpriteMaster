@@ -6,12 +6,12 @@ namespace SpriteMaster.xBRZ.Scalers;
 
 [ImmutableObject(true)]
 unsafe ref struct Kernel3x3 {
-	private fixed uint Data[3 * 3];
+	private fixed ulong Data[3 * 3];
 
-	internal readonly Color8 this[int index] => (Color8)Data[index];
+	internal readonly Color16 this[int index] => (Color16)Data[index];
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Kernel3x3(Color8 _0, Color8 _1, Color8 _2, Color8 _3, Color8 _4, Color8 _5, Color8 _6, Color8 _7, Color8 _8) {
+	internal Kernel3x3(Color16 _0, Color16 _1, Color16 _2, Color16 _3, Color16 _4, Color16 _5, Color16 _6, Color16 _7, Color16 _8) {
 		Data[0] = _0.AsPacked;
 		Data[1] = _1.AsPacked;
 		Data[2] = _2.AsPacked;

@@ -8,8 +8,8 @@ namespace SpriteMaster.Resample.Passes;
 
 static class PremultipliedAlpha {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static void Apply(Span<Color8> data, in Vector2I size) {
-		foreach (ref Color8 color in data) {
+	internal static void Apply(Span<Color16> data, in Vector2I size) {
+		foreach (ref Color16 color in data) {
 			color.R *= color.A;
 			color.G *= color.A;
 			color.B *= color.A;
@@ -17,8 +17,8 @@ static class PremultipliedAlpha {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static void Reverse(Span<Color8> data, in Vector2I size) {
-		foreach (ref Color8 color in data) {
+	internal static void Reverse(Span<Color16> data, in Vector2I size) {
+		foreach (ref Color16 color in data) {
 			color.R /= color.A;
 			color.G /= color.A;
 			color.B /= color.A;

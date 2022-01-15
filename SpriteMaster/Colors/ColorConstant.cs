@@ -24,7 +24,7 @@ static class ColorConstant {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static double ValueToScalar(byte value) => value / 255.0;
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static double ValueToScalar(ushort value) => value / 655_35.0;
+	internal static double ValueToScalar(ushort value) => value / 65_535.0;
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static double ValueToScalar(uint value) => value / 4_294_967_295.0;
 	[MethodImpl(Runtime.MethodImpl.Hot)]

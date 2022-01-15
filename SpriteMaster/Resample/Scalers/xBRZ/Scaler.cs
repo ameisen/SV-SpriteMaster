@@ -18,10 +18,10 @@ sealed class Scaler {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal Scaler(
 		uint scaleMultiplier,
-		ReadOnlySpan<Color8> sourceData,
+		ReadOnlySpan<Color16> sourceData,
 		Vector2I sourceSize,
 		Vector2I expectedTargetSize,
-		Span<Color8> targetData,
+		Span<Color16> targetData,
 		in Config configuration
 	) {
 		if (scaleMultiplier < MinScale || scaleMultiplier > MaxScale) {
@@ -68,11 +68,9 @@ sealed class Scaler {
 
 	//fill block with the given color
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static void FillBlock<T>(Span<T> trg, int trgi, int pitch, T col, int blockSize) where T : unmanaged {
+	private static void FillBlock(Span<Color16> trg, int trgi, int pitch, Color16 col, int blockSize) {
 		for (var y = 0; y < blockSize; ++y, trgi += pitch) {
-			for (var x = 0; x < blockSize; ++x) {
-				trg[trgi + x] = col;
-			}
+			trg.Slice(trgi, blockSize).Fill(col);
 		}
 	}
 
@@ -228,7 +226,7 @@ sealed class Scaler {
 
 	//scaler policy: see "Scaler2x" reference implementation
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private void Scale(ReadOnlySpan<Color8> source, Span<Color8> destination) {
+	private void Scale(ReadOnlySpan<Color16> source, Span<Color16> destination) {
 		int yFirst = 0;
 		int yLast = SourceSize.Height;
 
@@ -238,8 +236,9 @@ sealed class Scaler {
 
 		//temporary buffer for "on the fly preprocessing"
 		Span<PreprocessType> preProcBuffer = stackalloc PreprocessType[SourceSize.Width];
+		preProcBuffer.Fill(0);
 
-		static Color8 GetPixel(ReadOnlySpan<Color8> src, int stride, int offset) {
+		static Color16 GetPixel(ReadOnlySpan<Color16> src, int stride, int offset) {
 			// We can try embedded a distance calculation as well. Perhaps instead of a negative stride/offset, we provide a 
 			// negative distance from the edge and just recalculate the stride/offset in that case.
 			// We can scale the alpha reduction by the distance to hopefully correct the edges.
@@ -255,7 +254,7 @@ sealed class Scaler {
 
 			stride = Math.Abs(stride);
 			offset = Math.Abs(offset);
-			Color8 sample = src[stride + offset];
+			Color16 sample = src[stride + offset];
 			return sample with { A = 0 };
 		}
 

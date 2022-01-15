@@ -2,6 +2,7 @@
 using SpriteMaster.Colors;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
+using SpriteMaster.Types.Fixed;
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -11,57 +12,6 @@ namespace SpriteMaster.Resample;
 // Temporary code lifted from the PPSSPP project, deposterize.h
 static class Deposterize {
 	private static readonly ColorSpace CurrentColorSpace = ColorSpace.sRGB_Precise;
-
-	[StructLayout(LayoutKind.Explicit, Pack = sizeof(byte), Size = sizeof(uint))]
-	unsafe struct ColorElement {
-		internal static readonly ColorElement Zero = new(0, 0, 0, 0);
-
-		[FieldOffset(0)]
-		internal fixed byte Data[4];
-
-		[FieldOffset(0)]
-		internal byte R;
-		[FieldOffset(1)]
-		internal byte G;
-		[FieldOffset(2)]
-		internal byte B;
-		[FieldOffset(3)]
-		internal byte A;
-
-		[FieldOffset(0)]
-		internal fixed int AsInt[1];
-
-		[FieldOffset(0)]
-		internal fixed uint AsUInt[1];
-
-		internal ColorElement ColorsOnly => new(R, G, B, 0);
-
-		public static implicit operator int(ColorElement element) => element.AsInt[0];
-		public static implicit operator uint(ColorElement element) => element.AsUInt[0];
-
-		internal ref byte this[int index] {
-			[MethodImpl(Runtime.MethodImpl.Hot)]
-			get => ref Data[index];
-		}
-
-		[MethodImpl(Runtime.MethodImpl.Hot)]
-		internal ColorElement(byte r, byte g, byte b, byte a) {
-			R = r;
-			G = g;
-			B = b;
-			A = a;
-		}
-
-		[MethodImpl(Runtime.MethodImpl.Hot)]
-		internal ColorElement(int color) : this(0, 0, 0, 0) {
-			AsInt[0] = color;
-		}
-
-		[MethodImpl(Runtime.MethodImpl.Hot)]
-		internal ColorElement(uint color) : this(0, 0, 0, 0) {
-			AsUInt[0] = color;
-		}
-	}
 
 	private class DeposterizeContext<T> where T : unmanaged {
 		private readonly Vector2I Size;
@@ -87,42 +37,39 @@ static class Deposterize {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		private static double TexelDiff(uint texel1, uint texel2, int shift) {
-			texel1 = (texel1 >> shift) & 0xFF;
-			texel2 = (texel2 >> shift) & 0xFF;
-
-			return Math.Abs((int)texel1 - (int)texel2);
-		}
+		private static Fixed16 TexelDiff(Fixed16 texel1, Fixed16 texel2) => (Fixed16)Math.Abs(texel1.Value - texel2.Value);
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		private static double Square(double value) => value * value;
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		private static double DistYCbCrImpl(uint pix1, uint pix2) {
-			if ((pix1 & ~ColorConstant.Mask.Alpha) == (pix2 & ~ColorConstant.Mask.Alpha)) {
+		private unsafe double DistYCbCrImpl(Color16 pix1, Color16 pix2) {
+			// See if the colors are the same
+			if (pix1.NoAlpha == pix2.NoAlpha) {
 				return 0.0;
 			}
 
 			//http://en.wikipedia.org/wiki/YCbCr#ITU-R_BT.601_conversion
 			//YCbCr conversion is a matrix multiplication => take advantage of linearity by subtracting first!
-			var rDiff = TexelDiff(pix1, pix2, ColorConstant.Shift.Red); //we may delay division by 255 to after matrix multiplication
-			var gDiff = TexelDiff(pix1, pix2, ColorConstant.Shift.Green);
-			var bDiff = TexelDiff(pix1, pix2, ColorConstant.Shift.Blue);  //subtraction for int is noticeable faster than for double
+			var rDiff = TexelDiff(pix1.R, pix2.R); //we may delay division by 255 to after matrix multiplication
+			var gDiff = TexelDiff(pix1.G, pix2.G);
+			var bDiff = TexelDiff(pix1.B, pix2.B); //subtraction for int is noticeable faster than for double
 
 			var coefficient = CurrentColorSpace.LumaCoefficient;
 			var scale = CurrentColorSpace.LumaScale;
 
-			var y = (coefficient.R * rDiff) + (coefficient.G * gDiff) + (coefficient.B * bDiff); //[!], analog YCbCr!
-			var cB = scale.B * (bDiff - y);
-			var cR = scale.R * (rDiff - y);
+			// TODO : integer math?
+			var y = (coefficient.R * rDiff.Value) + (coefficient.G * gDiff.Value) + (coefficient.B * bDiff.Value); //[!], analog YCbCr!
+			var cB = scale.B * (bDiff.Value - y);
+			var cR = scale.R * (rDiff.Value - y);
 
 			// Skip division by 255.
 			// Also skip square root here by pre-squaring the config option equalColorTolerance.
-			return Square(y) + Square(cB) + Square(cR);
+			return Square(y) + ((Square(cB) + Square(cR)));
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		private static double DistYCbCr(uint pix1, uint pix2) {
+		internal double DistYCbCr(Color16 pix1, Color16 pix2) {
 			if (pix1 == pix2) {
 				return 0.0;
 			}
@@ -133,18 +80,18 @@ static class Deposterize {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		private bool Compare(byte reference, byte lower, byte higher) {
+		private bool Compare(Fixed16 reference, Fixed16 lower, Fixed16 higher) {
 			return
 				(lower != higher) &&
 				(
-					(lower == reference && Math.Abs(higher - reference) <= Threshold) ||
-					(higher == reference && Math.Abs(lower - reference) <= Threshold)
+					(lower == reference && Math.Abs(higher.Value - reference.Value) <= Threshold) ||
+					(higher == reference && Math.Abs(lower.Value - reference.Value) <= Threshold)
 				);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		private ColorElement Merge(ColorElement reference, ColorElement lower, ColorElement higher) {
-			ColorElement result = reference;
+		private Color16 Merge(Color16 reference, Color16 lower, Color16 higher) {
+			Color16 result = reference;
 
 			if (reference.A == lower.A && reference.A == higher.A) {
 				bool doMerge = false;
@@ -156,15 +103,15 @@ static class Deposterize {
 				else {
 					doMerge =
 						reference.A == lower.A && reference.A == higher.A &&
-						Compare(reference[0], lower[0], higher[0]) &&
-						Compare(reference[1], lower[1], higher[1]) &&
-						Compare(reference[2], lower[2], higher[2]);
+						Compare(reference.R, lower.R, higher.R) &&
+						Compare(reference.G, lower.G, higher.G) &&
+						Compare(reference.B, lower.B, higher.B);
 				}
 
 				if (doMerge) {
-					result[0] = (byte)((lower[0] + higher[0]) >> 1);
-					result[1] = (byte)((lower[1] + higher[1]) >> 1);
-					result[2] = (byte)((lower[2] + higher[2]) >> 1);
+					result.R = (ushort)((lower.R.Value + higher.R.Value) >> 1);
+					result.G = (ushort)((lower.G.Value + higher.G.Value) >> 1);
+					result.B = (ushort)((lower.B.Value + higher.B.Value) >> 1);
 				}
 			}
 
@@ -200,7 +147,7 @@ static class Deposterize {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		private void DeposterizeH(ReadOnlySpan<ColorElement> inData, Span<ColorElement> outData) {
+		private void DeposterizeH(ReadOnlySpan<Color16> inData, Span<Color16> outData) {
 			int minY = 0;
 			int maxY = Size.Height;
 
@@ -227,7 +174,7 @@ static class Deposterize {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		private void DeposterizeV(ReadOnlySpan<ColorElement> inData, Span<ColorElement> outData) {
+		private void DeposterizeV(ReadOnlySpan<Color16> inData, Span<Color16> outData) {
 			int minY = -1;
 			int maxY = Size.Height + 1;
 
@@ -261,7 +208,7 @@ static class Deposterize {
 			}
 		}
 
-		private void DeposterizeV2(ReadOnlySpan<ColorElement> inData, Span<ColorElement> outData) {
+		private void DeposterizeV2(ReadOnlySpan<Color16> inData, Span<Color16> outData) {
 			int minY = 1;
 			int maxY = Size.Height;
 
@@ -300,9 +247,9 @@ static class Deposterize {
 			var buffer1 = SpanExt.MakeUninitialized<T>(data.Length);
 			var buffer2 = SpanExt.MakeUninitialized<T>(data.Length);
 
-			var inData = data.Cast<T, ColorElement>();
-			var buffer1Data = buffer1.Cast<T, ColorElement>();
-			var buffer2Data = buffer2.Cast<T, ColorElement>();
+			var inData = data.Cast<T, Color16>();
+			var buffer1Data = buffer1.Cast<T, Color16>();
+			var buffer2Data = buffer2.Cast<T, Color16>();
 
 			DeposterizeH(inData, buffer1Data);
 			DeposterizeV(buffer1Data, buffer2Data);

@@ -7,7 +7,7 @@ using System;
 namespace SpriteMaster.Resample.Passes;
 
 static class Padding {
-	private static readonly Color8 padConstant = Color8.Zero;
+	private static readonly Color16 padConstant = Color16.Zero;
 
 	private record struct PaddingParameters(Vector2I PaddedSize, Vector2I ActualPadding, Vector2B HasPadding, Vector2B SolidEdge);
 
@@ -83,7 +83,7 @@ static class Padding {
 		return true;
 	}
 
-	internal static Span<Color8> Apply(ReadOnlySpan<Color8> data, in Vector2I spriteSize, uint scale, SpriteInfo input, in Passes.Analysis.LegacyResults analysis, out Vector2I padding, out Vector2I paddedSize) {
+	internal static Span<Color16> Apply(ReadOnlySpan<Color16> data, in Vector2I spriteSize, uint scale, SpriteInfo input, in Passes.Analysis.LegacyResults analysis, out Vector2I padding, out Vector2I paddedSize) {
 		if (!GetPaddingParameters(spriteSize, scale, input, analysis, out var parameters)) {
 			padding = Vector2I.Zero;
 			paddedSize = spriteSize;
@@ -96,12 +96,12 @@ static class Padding {
 
 		// The actual padding logic. If we get to this point, we are actually performing padding.
 
-		var paddedData = SpanExt.MakeUninitialized<Color8>(paddedSpriteSize.Area);
+		var paddedData = SpanExt.MakeUninitialized<Color16>(paddedSpriteSize.Area);
 
 		{
 			int y = 0;
 
-			void WritePaddingY(Span<Color8> data) {
+			void WritePaddingY(Span<Color16> data) {
 				if (!hasPadding.Y) {
 					return;
 				}
@@ -117,7 +117,7 @@ static class Padding {
 
 			WritePaddingY(paddedData);
 
-			void WritePaddingX(Span<Color8> data, ref int xOffset) {
+			void WritePaddingX(Span<Color16> data, ref int xOffset) {
 				if (!hasPadding.X) {
 					return;
 				}

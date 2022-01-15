@@ -8,6 +8,7 @@ using SpriteMaster.Types;
 using System;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace SpriteMaster.Extensions;
 
@@ -142,18 +143,26 @@ static class Textures {
 
 	private const int ImageElementSize = 4;
 
-	internal static void DumpTexture<T>(string path, T[] source, in Vector2I sourceSize, in double? adjustGamma = null, in Bounds? destBounds = null, in (int i0, int i1, int i2, int i3)? swap = null) where T : unmanaged {
-		DumpTexture<T>(path, source.AsSpan(), sourceSize, adjustGamma, destBounds, swap);
+	internal static void DumpTexture(string path, byte[] source, in Vector2I sourceSize, in double? adjustGamma = null, in Bounds? destBounds = null, in (int i0, int i1, int i2, int i3)? swap = null) {
+		DumpTexture(path, source.AsSpan().Cast<Color8>(), sourceSize, adjustGamma, destBounds, swap);
 	}
 
-	internal static void DumpTexture<T>(string path, Span<T> source, in Vector2I sourceSize, in double? adjustGamma = null, in Bounds? destBounds = null, in (int i0, int i1, int i2, int i3)? swap = null) where T : unmanaged {
+	internal static void DumpTexture(string path, ReadOnlySpan<Color8> source, in Vector2I sourceSize, in double? adjustGamma = null, in Bounds? destBounds = null, in (int i0, int i1, int i2, int i3)? swap = null) {
+		DumpTexture8(path, source, sourceSize, adjustGamma, destBounds, swap);
+	}
+
+	internal static void DumpTexture(string path, ReadOnlySpan<Color16> source, in Vector2I sourceSize, in double? adjustGamma = null, in Bounds? destBounds = null, in (int i0, int i1, int i2, int i3)? swap = null) {
+		DumpTexture16(path, source, sourceSize, adjustGamma, destBounds, swap);
+	}
+
+	private static void DumpTexture8(string path, ReadOnlySpan<Color8> source, in Vector2I sourceSize, in double? adjustGamma = null, in Bounds? destBounds = null, in (int i0, int i1, int i2, int i3)? swap = null) {
 		byte[] subData;
 		Bounds destBound;
 		if (destBounds.HasValue) {
 			destBound = destBounds.Value;
 			subData = GC.AllocateUninitializedArray<byte>(destBound.Area * 4);
 			var destSpan = subData.AsSpan<uint>();
-			var sourceSpan = source.Cast<T, uint>();
+			var sourceSpan = source.Cast<Color8, uint>();
 			int sourceOffset = (sourceSize.Width * destBound.Top) + destBound.Left;
 			int destOffset = 0;
 			for (int y = 0; y < destBound.Height; ++y) {
@@ -163,25 +172,74 @@ static class Textures {
 			}
 		}
 		else {
-			subData = source.Cast<T, byte>().ToArray();
+			subData = source.Cast<Color8, byte>().ToArray();
 			destBound = sourceSize;
 		}
 
 		SynchronizedTaskScheduler.Instance.QueueImmediate(() => {
-			using var dumpTexture = new DumpTexture2D(
-				StardewValley.Game1.graphics.GraphicsDevice,
-				destBound.Width,
-				destBound.Height,
-				mipmap: false,
-				format: SurfaceFormat.Color
-			) {
-				Name = "Dump Texture"
-			};
-		
-			// PlatformSetData(0, data, 0, data.Length);
-			dumpTexture.SetData(subData);
-			using var dumpFile = File.Create(path);
-			dumpTexture.SaveAsPng(dumpFile, destBound.Width, destBound.Height);
+			try {
+				using var dumpTexture = new DumpTexture2D(
+					StardewValley.Game1.graphics.GraphicsDevice,
+					destBound.Width,
+					destBound.Height,
+					mipmap: false,
+					format: SurfaceFormat.Color
+				) {
+					Name = "Dump Texture"
+				};
+
+				// PlatformSetData(0, data, 0, data.Length);
+				dumpTexture.SetData(subData);
+				using var dumpFile = File.Create(path);
+				dumpTexture.SaveAsPng(dumpFile, destBound.Width, destBound.Height);
+			}
+			catch (Exception ex) {
+				Debug.Warning(ex);
+			}
+		});
+	}
+
+	private static void DumpTexture16(string path, ReadOnlySpan<Color16> source, in Vector2I sourceSize, in double? adjustGamma = null, in Bounds? destBounds = null, in (int i0, int i1, int i2, int i3)? swap = null) {
+		ulong[] subData;
+		Bounds destBound;
+		if (destBounds.HasValue) {
+			destBound = destBounds.Value;
+			subData = GC.AllocateUninitializedArray<ulong>(destBound.Area);
+			var destSpan = subData.AsSpan();
+			var sourceSpan = source.Cast<Color16, ulong>();
+			int sourceOffset = (sourceSize.Width * destBound.Top) + destBound.Left;
+			int destOffset = 0;
+			for (int y = 0; y < destBound.Height; ++y) {
+				sourceSpan.Slice(sourceOffset, destBound.Width).CopyTo(destSpan.Slice(destOffset, destBound.Width));
+				destOffset += destBound.Width;
+				sourceOffset += sourceSize.Width;
+			}
+		}
+		else {
+			subData = source.Cast<Color16, ulong>().ToArray();
+			destBound = sourceSize;
+		}
+
+		SynchronizedTaskScheduler.Instance.QueueImmediate(() => {
+			try {
+				using var dumpTexture = new DumpTexture2D(
+					StardewValley.Game1.graphics.GraphicsDevice,
+					destBound.Width,
+					destBound.Height,
+					mipmap: false,
+					format: SurfaceFormat.Rgba64
+				) {
+					Name = "Dump Texture"
+				};
+
+				// PlatformSetData(0, data, 0, data.Length);
+				dumpTexture.SetData(subData);
+				using var dumpFile = File.Create(path);
+				dumpTexture.SaveAsPng(dumpFile, destBound.Width, destBound.Height);
+			}
+			catch (Exception ex) {
+				Debug.Warning(ex);
+			}
 		});
 	}
 }

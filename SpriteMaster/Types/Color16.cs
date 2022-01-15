@@ -22,10 +22,10 @@ struct Color16 : IEquatable<Color16>, IEquatable<ulong>, ILongHash {
 	internal Fixed16 G = 0;
 	[FieldOffset(4)]
 	internal Fixed16 B = 0;
-	[FieldOffset(8)]
+	[FieldOffset(6)]
 	internal Fixed16 A = 0;
 
-	internal readonly Color16 NoAlpha => new(R, G, B, 0);
+	internal readonly Color16 NoAlpha => this with { A = 0 };
 
 	private static ulong MakeMask(bool r, bool g, bool b, bool a) {
 		// ToShort returns 0 or 1 for the mask. Negating it will turn that into 0 or -1, and -1 is 0xFF...
@@ -118,7 +118,7 @@ struct Color16 : IEquatable<Color16>, IEquatable<ulong>, ILongHash {
 	}
 
 	internal static Span<Color16> Convert(ReadOnlySpan<Color8> source, bool pinned = true) {
-		var destination = new Span<Color16>(GC.AllocateUninitializedArray<Color16>(source.Length, pinned: pinned));
+		var destination = SpanExt.MakeUninitialized<Color16>(source.Length, pinned: pinned);
 		for (int i = 0; i < source.Length; ++i) {
 			destination[i] = From(source[i]);
 		}

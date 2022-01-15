@@ -21,26 +21,23 @@ sealed class Config : IEquatable<Config> {
 
 	// Precalculated
 	internal readonly double ChrominanceWeight;
-	internal readonly double EqualColorToleranceSq;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal Config(
-		Vector2B Wrapped,
-		bool HasAlpha = true,
+		Vector2B wrapped,
+		bool hasAlpha = true,
 		double luminanceWeight = 1.0,
 		double equalColorTolerance = 30.0,
 		double dominantDirectionThreshold = 3.6,
 		double steepDirectionThreshold = 2.2,
 		double centerDirectionBias = 4.0
 	) {
-		this.Wrapped = Wrapped;
-		this.HasAlpha = HasAlpha;
-		this.EqualColorTolerance = equalColorTolerance;
+		this.EqualColorTolerance = equalColorTolerance * 256.0;
+		this.Wrapped = wrapped;
+		this.HasAlpha = hasAlpha;
 		this.DominantDirectionThreshold = dominantDirectionThreshold;
 		this.SteepDirectionThreshold = steepDirectionThreshold;
 		this.CenterDirectionBias = centerDirectionBias;
-
-		this.EqualColorToleranceSq = EqualColorTolerance * EqualColorTolerance;
 
 		var adjustedLuminanceWeight = luminanceWeight / (luminanceWeight + 1.0);
 		this.LuminanceWeight = adjustedLuminanceWeight * 2.0;
