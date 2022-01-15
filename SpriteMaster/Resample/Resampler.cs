@@ -218,7 +218,6 @@ sealed class Resampler {
 					case Scaler.xBRZ: {
 							var scalerConfig = new xBRZ.Config(
 								Wrapped: doWrap,
-								Gamma: false,
 								luminanceWeight: Config.Resample.xBRZ.LuminanceWeight,
 								equalColorTolerance: Config.Resample.xBRZ.EqualColorTolerance,
 								dominantDirectionThreshold: Config.Resample.xBRZ.DominantDirectionThreshold,

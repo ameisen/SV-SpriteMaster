@@ -26,7 +26,6 @@ sealed class Config : IEquatable<Config> {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal Config(
 		Vector2B Wrapped,
-		bool Gamma = true,
 		bool HasAlpha = true,
 		double luminanceWeight = 1.0,
 		double equalColorTolerance = 30.0,
