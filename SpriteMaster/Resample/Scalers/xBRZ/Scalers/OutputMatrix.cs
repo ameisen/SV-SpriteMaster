@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 namespace SpriteMaster.xBRZ.Scalers;
 
 //access matrix area, top-left at position "out" for image with given width
-unsafe ref struct OutputMatrix {
+ref struct OutputMatrix {
 	private readonly Span<Color8> OutSpan;
 	private readonly int Width;
 	private readonly int N;
