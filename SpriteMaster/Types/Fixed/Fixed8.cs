@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 namespace SpriteMaster.Types.Fixed;
 
 [StructLayout(LayoutKind.Explicit, Pack = sizeof(byte), Size = sizeof(byte))]
-struct Fixed8 {
+struct Fixed8 : IEquatable<Fixed8>, IEquatable<byte>, ILongHash {
 	public static readonly Fixed8 Zero = new(0);
 
 	[FieldOffset(0)]
@@ -47,9 +47,17 @@ struct Fixed8 {
 		return false;
 	}
 
+	internal readonly bool Equals(Fixed8 other) => this == other;
+	internal readonly bool Equals(byte other) => this == (Fixed8)other;
+
+	readonly bool IEquatable<Fixed8>.Equals(Fixed8 other) => this.Equals(other);
+	readonly bool IEquatable<byte>.Equals(byte other) => this.Equals(other);
+
 	public override readonly int GetHashCode() => InternalValue.GetHashCode();
 
 	public static explicit operator byte(Fixed8 value) => value.InternalValue;
 	public static implicit operator Fixed8(byte value) => new(value);
 	public static explicit operator Fixed16(Fixed8 value) => new(Fixed16.FromU8(value.InternalValue));
+
+	readonly ulong ILongHash.GetLongHashCode() => Hashing.Combine(InternalValue);
 }

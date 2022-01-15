@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using SpriteMaster.Types;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.xBRZ.Scalers;
@@ -7,18 +8,18 @@ namespace SpriteMaster.xBRZ.Scalers;
 unsafe ref struct Kernel3x3 {
 	private fixed uint Data[3 * 3];
 
-	internal readonly uint this[int index] => Data[index];
+	internal readonly Color8 this[int index] => (Color8)Data[index];
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Kernel3x3(uint _0, uint _1, uint _2, uint _3, uint _4, uint _5, uint _6, uint _7, uint _8) {
-		Data[0] = _0;
-		Data[1] = _1;
-		Data[2] = _2;
-		Data[3] = _3;
-		Data[4] = _4;
-		Data[5] = _5;
-		Data[6] = _6;
-		Data[7] = _7;
-		Data[8] = _8;
+	internal Kernel3x3(Color8 _0, Color8 _1, Color8 _2, Color8 _3, Color8 _4, Color8 _5, Color8 _6, Color8 _7, Color8 _8) {
+		Data[0] = _0.AsPacked;
+		Data[1] = _1.AsPacked;
+		Data[2] = _2.AsPacked;
+		Data[3] = _3.AsPacked;
+		Data[4] = _4.AsPacked;
+		Data[5] = _5.AsPacked;
+		Data[6] = _6.AsPacked;
+		Data[7] = _7.AsPacked;
+		Data[8] = _8.AsPacked;
 	}
 }

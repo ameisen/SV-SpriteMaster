@@ -10,7 +10,6 @@ sealed class Config : IEquatable<Config> {
 	internal const int MaxScale = 6;
 
 	internal readonly Vector2B Wrapped;
-	internal readonly bool Gamma;
 	internal readonly bool HasAlpha;
 
 	// These are the default values:
@@ -36,7 +35,6 @@ sealed class Config : IEquatable<Config> {
 		double centerDirectionBias = 4.0
 	) {
 		this.Wrapped = Wrapped;
-		this.Gamma = Gamma;
 		this.HasAlpha = HasAlpha;
 		this.EqualColorTolerance = equalColorTolerance;
 		this.DominantDirectionThreshold = dominantDirectionThreshold;

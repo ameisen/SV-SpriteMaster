@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using SpriteMaster.Types;
+using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.xBRZ.Color;
 
@@ -7,7 +8,7 @@ sealed class ColorEq : ColorDist {
 	internal ColorEq (Config configuration) : base(configuration) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal bool IsColorEqual (uint color1, uint color2) {
+	internal bool IsColorEqual (Color8 color1, Color8 color2) {
 		var equalColorThreshold = Configuration.EqualColorToleranceSq;
 		return DistYCbCr(color1, color2) < equalColorThreshold;
 	}

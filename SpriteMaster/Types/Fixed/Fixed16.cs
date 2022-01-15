@@ -1,9 +1,10 @@
-﻿using System.Runtime.InteropServices;
+﻿using System;
+using System.Runtime.InteropServices;
 
 namespace SpriteMaster.Types.Fixed;
 
 [StructLayout(LayoutKind.Explicit, Pack = sizeof(ushort), Size = sizeof(ushort))]
-struct Fixed16 {
+struct Fixed16 : IEquatable<Fixed16>, IEquatable<ushort>, ILongHash {
 	public static readonly Fixed16 Zero = new((ushort)0);
 
 	[FieldOffset(0)]
@@ -46,9 +47,17 @@ struct Fixed16 {
 		return false;
 	}
 
+	internal readonly bool Equals(Fixed16 other) => this == other;
+	internal readonly bool Equals(ushort other) => this == (Fixed16)other;
+
+	readonly bool IEquatable<Fixed16>.Equals(Fixed16 other) => this.Equals(other);
+	readonly bool IEquatable<ushort>.Equals(ushort other) => this.Equals(other);
+
 	public override readonly int GetHashCode() => InternalValue.GetHashCode();
 
 	public static explicit operator ushort(Fixed16 value) => value.InternalValue;
 	public static implicit operator Fixed16(ushort value) => new(value);
 	public static explicit operator Fixed8(Fixed16 value) => new(Fixed8.FromU16(value.InternalValue));
+
+	readonly ulong ILongHash.GetLongHashCode() => Hashing.Combine(InternalValue);
 }

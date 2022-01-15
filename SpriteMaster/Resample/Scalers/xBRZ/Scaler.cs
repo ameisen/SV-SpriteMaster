@@ -17,10 +17,10 @@ sealed class Scaler {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal Scaler(
 		uint scaleMultiplier,
-		ReadOnlySpan<uint> sourceData,
+		ReadOnlySpan<Color8> sourceData,
 		in Point sourceSize,
 		in Rectangle? sourceTarget,
-		Span<uint> targetData,
+		Span<Color8> targetData,
 		in Config configuration
 	) {
 		if (scaleMultiplier < MinScale || scaleMultiplier > MaxScale) {
@@ -234,8 +234,8 @@ sealed class Scaler {
 
 	//scaler policy: see "Scaler2x" reference implementation
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private unsafe void Scale(ReadOnlySpan<uint> source, Span<uint> destination) {
-		fixed (uint* destinationPtr = &destination.GetPinnableReference()) {
+	private unsafe void Scale(ReadOnlySpan<Color8> source, Span<Color8> destination) {
+		fixed (Color8* destinationPtr = destination) {
 
 			int yFirst = sourceTarget.Top;
 			int yLast = sourceTarget.Bottom;
@@ -247,7 +247,7 @@ sealed class Scaler {
 			//temporary buffer for "on the fly preprocessing"
 			var preProcBuffer = stackalloc byte[sourceTarget.Width];
 
-			static uint GetPixel(ReadOnlySpan<uint> src, int stride, int offset) {
+			static Color8 GetPixel(ReadOnlySpan<Color8> src, int stride, int offset) {
 				// We can try embedded a distance calculation as well. Perhaps instead of a negative stride/offset, we provide a 
 				// negative distance from the edge and just recalculate the stride/offset in that case.
 				// We can scale the alpha reduction by the distance to hopefully correct the edges.
@@ -263,9 +263,8 @@ sealed class Scaler {
 
 				stride = Math.Abs(stride);
 				offset = Math.Abs(offset);
-				uint sample = src[stride + offset];
-				const uint mask = 0x00_FF_FF_FFU;
-				return sample & mask;
+				Color8 sample = src[stride + offset];
+				return sample with { A = 0 };
 			}
 
 			//initialize preprocessing buffer for first row:

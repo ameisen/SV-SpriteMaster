@@ -1,4 +1,6 @@
-﻿using System;
+﻿//#define SM_SINGLE_THREAD
+
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -46,7 +48,11 @@ sealed class ThreadedTaskScheduler : TaskScheduler, IDisposable {
 		Action<Thread, int>? onThreadFinally = null
 	) {
 		if (concurrencyLevel is null or 0) {
+#if SM_SINGLE_THREAD
+			concurrencyLevel = 1;
+#else
 			concurrencyLevel = Environment.ProcessorCount;
+#endif
 		}
 
 		if (concurrencyLevel < 0) {

@@ -1,4 +1,5 @@
-﻿using SpriteMaster.xBRZ.Common;
+﻿using SpriteMaster.Types;
+using SpriteMaster.xBRZ.Common;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
@@ -6,7 +7,7 @@ namespace SpriteMaster.xBRZ.Scalers;
 
 //access matrix area, top-left at position "out" for image with given width
 unsafe struct OutputMatrix {
-	private readonly uint* OutPtr;
+	private readonly Color8* OutPtr;
 	private readonly int Width;
 	private readonly int N;
 	private int Index = 0;
@@ -18,7 +19,7 @@ unsafe struct OutputMatrix {
 	private const int MaxScaleSquared = MaxScale * MaxScale;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal OutputMatrix(int scale, uint* outPtr, int outWidth) {
+	internal OutputMatrix(int scale, Color8* outPtr, int outWidth) {
 		N = (scale - 2) * (Rotator.MaxRotations * MaxScaleSquared);
 		OutPtr = outPtr;
 		Width = outWidth;
@@ -36,7 +37,7 @@ unsafe struct OutputMatrix {
 		return (Index + rot.J + rot.I * Width);
 	}
 
-	internal ref uint this[int i, int j] => ref OutPtr[GetIndex(i, j)];
+	internal ref Color8 this[int i, int j] => ref OutPtr[GetIndex(i, j)];
 
 	//calculate input matrix coordinates after rotation at program startup
 	private static readonly IntPair[] MatrixRotation = new IntPair[(MaxScale - 1) * MaxScaleSquared * Rotator.MaxRotations];

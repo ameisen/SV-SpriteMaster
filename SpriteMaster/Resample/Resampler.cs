@@ -228,10 +228,10 @@ sealed class Resampler {
 
 							new xBRZ.Scaler(
 								scaleMultiplier: scale,
-								sourceData: spriteRawData.Cast<uint>(), // TODO
+								sourceData: spriteRawData, // TODO
 								sourceSize: spriteRawExtent,
 								sourceTarget: new Bounds(spriteRawExtent),
-								targetData: bitmapData.Cast<uint>(),
+								targetData: bitmapData,
 								configuration: scalerConfig
 							);
 						}

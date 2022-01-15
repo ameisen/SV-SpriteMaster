@@ -1,4 +1,5 @@
 ﻿using SpriteMaster.Extensions;
+using SpriteMaster.Types.Fixed;
 using System.Runtime.CompilerServices;
 
 #nullable enable
@@ -26,6 +27,10 @@ static class ColorConstant {
 	internal static double ValueToScalar(ushort value) => value / 655_35.0;
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static double ValueToScalar(uint value) => value / 4_294_967_295.0;
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static double ValueToScalar(Fixed8 value) => ValueToScalar(value.Value);
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static double ValueToScalar(Fixed16 value) => ValueToScalar(value.Value);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static byte ScalarToValue8(double scalar) => (byte)((scalar * 255.0) + 0.5);
@@ -38,10 +43,10 @@ static class ColorConstant {
 	internal static ushort Color8To16(byte value) => (ushort)((value << 8) | value);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static byte Color16To8Fast(ushort value) => (byte)((uint)((value * 0xFF01) + 0x800000) >> 24);
+	internal static byte Color16To8Fast(ushort value) => (byte)((uint)((value * 0xFF01U) + 0x800000U) >> 24);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static byte Color16To8Accurate(ushort value) => (byte)(((uint)value + 128) / 0x101);
+	internal static byte Color16To8Accurate(ushort value) => (byte)(((uint)value + 128U) / 0x101U);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static byte Color16to8(ushort value) => Color16To8Accurate(value);

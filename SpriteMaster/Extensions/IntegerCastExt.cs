@@ -7,7 +7,28 @@ static partial class Integer {
 	// Unsigned Conversions
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static unsafe byte ToByte(this bool value) => value.ReinterpretAs<byte>();
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static unsafe sbyte ToSByte(this bool value) => value.ReinterpretAs<sbyte>();
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static unsafe short ToShort(this bool value) => value.ReinterpretAs<byte>();
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static unsafe ushort ToUShort(this bool value) => value.ReinterpretAs<byte>();
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static unsafe int ToInt(this bool value) => value.ReinterpretAs<byte>();
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static unsafe uint ToUInt(this bool value) => value.ReinterpretAs<byte>();
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static unsafe long ToLong(this bool value) => value.ReinterpretAs<byte>();
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static unsafe ulong ToULong(this bool value) => value.ReinterpretAs<byte>();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static byte Byte(this byte value) => (byte)value;

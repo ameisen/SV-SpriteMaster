@@ -102,25 +102,31 @@ static class IMath {
 		return (ulong)Math.Sqrt(value);
 	}
 
-	internal static int Widen(this int value) => value * 0x101;
+	internal static byte TruncateNarrow(this ushort value) => (byte)value;
+	internal static ushort TruncateNarrow(this uint value) => (ushort)value;
+	internal static uint TruncateNarrow(this ulong value) => (uint)value;
 
-	internal static uint Widen(this uint value) => value * 0x101U;
+	internal static ushort Widen(this byte value) => (ushort)((value << 8) | value);
 
-	internal static long Widen(this long value) => value * 0x101L;
+	internal static uint Widen(this ushort value) => (uint)((value << 16) | value);
 
-	internal static ulong Widen(this ulong value) => value * 0x101UL;
+	internal static ulong Widen(this uint value) => (ulong)((value << 32) | value);
 
-	internal static int Narrow(this int value) => value / 0x101;
+	internal static byte Narrow(this ushort value) => (byte)(((uint)value + ((byte)sbyte.MaxValue) + 1) / 0x101U);
 
-	internal static uint Narrow(this uint value) => value / 0x101U;
+	internal static ushort Narrow(this uint value) => (ushort)(((ulong)value + ((ushort)short.MaxValue) + 1) / 0x101UL);
 
-	internal static long Narrow(this long value) => value / 0x101L;
+	internal static byte asUnsigned(this sbyte value) => (byte)value;
 
-	internal static ulong Narrow(this ulong value) => value / 0x101UL;
+	internal static ushort asUnsigned(this short value) => (ushort)value;
 
 	internal static uint asUnsigned(this int value) => (uint)value;
 
 	internal static ulong asUnsigned(this long value) => (ulong)value;
+
+	internal static sbyte asSigned(this byte value) => (sbyte)value;
+
+	internal static short asSigned(this ushort value) => (short)value;
 
 	internal static int asSigned(this uint value) => (int)value;
 
