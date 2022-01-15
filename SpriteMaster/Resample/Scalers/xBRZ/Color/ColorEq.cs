@@ -8,8 +8,5 @@ sealed class ColorEq : ColorDist {
 	internal ColorEq (Config configuration) : base(configuration) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal bool IsColorEqual (Color8 color1, Color8 color2) {
-		var equalColorThreshold = Configuration.EqualColorToleranceSq;
-		return DistYCbCr(color1, color2) < equalColorThreshold;
-	}
+	internal bool IsColorEqual (Color8 color1, Color8 color2) => DistYCbCr(color1, color2) < Configuration.EqualColorToleranceSq;
 }

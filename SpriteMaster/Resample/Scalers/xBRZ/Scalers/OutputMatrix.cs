@@ -1,7 +1,6 @@
 ﻿using SpriteMaster.Types;
 using SpriteMaster.xBRZ.Common;
 using System;
-using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.xBRZ.Scalers;

@@ -16,14 +16,10 @@ class ColorDist {
 	private static readonly ColorSpace CurrentColorSpace = ColorSpace.sRGB_Precise;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal ColorDist(Config cfg) {
-		Configuration = cfg;
-	}
+	internal ColorDist(Config cfg) => Configuration = cfg;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static Fixed8 TexelDiff(Fixed8 texel1, Fixed8 texel2) {
-		return (Fixed8)Math.Abs(texel1.Value - texel2.Value);
-	}
+	private static Fixed8 TexelDiff(Fixed8 texel1, Fixed8 texel2) => (Fixed8)Math.Abs(texel1.Value - texel2.Value);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static double Square(double value) => value * value;
