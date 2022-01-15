@@ -40,35 +40,34 @@ sealed class Scaler {
 		if (sourceSize.X * sourceSize.Y > sourceData.Length) {
 			throw new ArgumentOutOfRangeException(nameof(sourceData));
 		}
-		this.sourceTarget = sourceTarget.GetValueOrDefault(new(0, 0, sourceSize.X, sourceSize.Y));
-		if (this.sourceTarget.Right > sourceSize.X || this.sourceTarget.Bottom > sourceSize.Y) {
+		this.SourceTarget = sourceTarget.GetValueOrDefault(new(0, 0, sourceSize.X, sourceSize.Y));
+		if (this.SourceTarget.Right > sourceSize.X || this.SourceTarget.Bottom > sourceSize.Y) {
 			throw new ArgumentOutOfRangeException(nameof(sourceTarget));
 		}
-		this.targetWidth = this.sourceTarget.Width * (int)scaleMultiplier;
-		this.targetHeight = this.sourceTarget.Height * (int)scaleMultiplier;
-		if (targetWidth * targetHeight > targetData.Length) {
+		this.TargetWidth = this.SourceTarget.Width * (int)scaleMultiplier;
+		this.TargetHeight = this.SourceTarget.Height * (int)scaleMultiplier;
+		if (TargetWidth * TargetHeight > targetData.Length) {
 			throw new ArgumentOutOfRangeException(nameof(targetData));
 		}
 
-		this.scaler = scaleMultiplier.ToIScaler(configuration);
-		this.configuration = configuration;
-		this.ColorDistance = new(this.configuration);
-		this.ColorEqualizer = new(this.configuration);
-		this.sourceSize = sourceSize;
+		this.ScalerInterface = scaleMultiplier.ToIScaler(configuration);
+		this.Configuration = configuration;
+		this.ColorDistance = new(this.Configuration);
+		this.ColorEqualizer = new(this.Configuration);
+		this.SourceSize = sourceSize;
 		Scale(sourceData, targetData);
 	}
 
-	private readonly Config configuration;
-	private readonly IScaler scaler;
-	private OutputMatrix outputMatrix;
+	private readonly Config Configuration;
+	private readonly IScaler ScalerInterface;
 
 	private readonly ColorDist ColorDistance;
 	private readonly ColorEq ColorEqualizer;
 
-	private readonly Point sourceSize;
-	private readonly Rectangle sourceTarget;
-	private readonly int targetWidth;
-	private readonly int targetHeight;
+	private readonly Point SourceSize;
+	private readonly Rectangle SourceTarget;
+	private readonly int TargetWidth;
+	private readonly int TargetHeight;
 
 	//fill block with the given color
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -92,11 +91,11 @@ sealed class Scaler {
 
 		var dist = ColorDistance;
 
-		var jg = dist.DistYCbCr(ker.I, ker.F) + dist.DistYCbCr(ker.F, ker.C) + dist.DistYCbCr(ker.N, ker.K) + dist.DistYCbCr(ker.K, ker.H) + configuration.CenterDirectionBias * dist.DistYCbCr(ker.J, ker.G);
-		var fk = dist.DistYCbCr(ker.E, ker.J) + dist.DistYCbCr(ker.J, ker.O) + dist.DistYCbCr(ker.B, ker.G) + dist.DistYCbCr(ker.G, ker.L) + configuration.CenterDirectionBias * dist.DistYCbCr(ker.F, ker.K);
+		var jg = dist.DistYCbCr(ker.I, ker.F) + dist.DistYCbCr(ker.F, ker.C) + dist.DistYCbCr(ker.N, ker.K) + dist.DistYCbCr(ker.K, ker.H) + Configuration.CenterDirectionBias * dist.DistYCbCr(ker.J, ker.G);
+		var fk = dist.DistYCbCr(ker.E, ker.J) + dist.DistYCbCr(ker.J, ker.O) + dist.DistYCbCr(ker.B, ker.G) + dist.DistYCbCr(ker.G, ker.L) + Configuration.CenterDirectionBias * dist.DistYCbCr(ker.F, ker.K);
 
 		if (jg < fk) {
-			var dominantGradient = (configuration.DominantDirectionThreshold * jg < fk) ? BlendType.Dominant : BlendType.Normal;
+			var dominantGradient = (Configuration.DominantDirectionThreshold * jg < fk) ? BlendType.Dominant : BlendType.Normal;
 			if (ker.F != ker.G && ker.F != ker.J) {
 				result.F = dominantGradient;
 			}
@@ -105,7 +104,7 @@ sealed class Scaler {
 			}
 		}
 		else if (fk < jg) {
-			var dominantGradient = (configuration.DominantDirectionThreshold * fk < jg) ? BlendType.Dominant : BlendType.Normal;
+			var dominantGradient = (Configuration.DominantDirectionThreshold * fk < jg) ? BlendType.Dominant : BlendType.Normal;
 			if (ker.J != ker.F && ker.J != ker.K) {
 				result.J = dominantGradient;
 			}
@@ -129,7 +128,7 @@ sealed class Scaler {
 			blendInfo: result of preprocessing all four corners of pixel "e"
 	*/
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private void ScalePixel(IScaler scaler, RotationDegree rotDeg, in Kernel3x3 ker, int trgi, byte blendInfo) {
+	private void ScalePixel(IScaler scaler, RotationDegree rotDeg, in Kernel3x3 ker, in OutputMatrix outputMatrix, int trgi, byte blendInfo) {
 		var blend = blendInfo.Rotate(rotDeg);
 
 		if (blend.GetBottomR() == BlendType.None) {
@@ -187,8 +186,8 @@ sealed class Scaler {
 		var fg = dist.DistYCbCr(f, g);
 		var hc = dist.DistYCbCr(h, c);
 
-		var haveShallowLine = configuration.SteepDirectionThreshold * fg <= hc && e != g && d != g;
-		var haveSteepLine = configuration.SteepDirectionThreshold * hc <= fg && e != c && b != c;
+		var haveShallowLine = Configuration.SteepDirectionThreshold * fg <= hc && e != g && d != g;
+		var haveSteepLine = Configuration.SteepDirectionThreshold * hc <= fg && e != c && b != c;
 
 		if (haveShallowLine) {
 			if (haveSteepLine) {
@@ -210,234 +209,231 @@ sealed class Scaler {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private int getX(int x) {
-		x -= sourceTarget.Left;
-		if (configuration.Wrapped.X) {
-			x = (x + sourceTarget.Width) % sourceTarget.Width;
+		x -= SourceTarget.Left;
+		if (Configuration.Wrapped.X) {
+			x = (x + SourceTarget.Width) % SourceTarget.Width;
 		}
 		else {
-			x = Math.Clamp(x, 0, sourceTarget.Width - 1);
+			x = Math.Clamp(x, 0, SourceTarget.Width - 1);
 		}
-		return x + sourceTarget.Left;
+		return x + SourceTarget.Left;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private int getY(int y) {
-		y -= sourceTarget.Top;
-		if (configuration.Wrapped.Y) {
-			y = (y + sourceTarget.Height) % sourceTarget.Height;
+		y -= SourceTarget.Top;
+		if (Configuration.Wrapped.Y) {
+			y = (y + SourceTarget.Height) % SourceTarget.Height;
 		}
 		else {
-			y = Math.Clamp(y, 0, sourceTarget.Height - 1);
+			y = Math.Clamp(y, 0, SourceTarget.Height - 1);
 		}
-		return y + sourceTarget.Top;
+		return y + SourceTarget.Top;
 	}
 
 	//scaler policy: see "Scaler2x" reference implementation
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private unsafe void Scale(ReadOnlySpan<Color8> source, Span<Color8> destination) {
-		fixed (Color8* destinationPtr = destination) {
+	private void Scale(ReadOnlySpan<Color8> source, Span<Color8> destination) {
+		int yFirst = SourceTarget.Top;
+		int yLast = SourceTarget.Bottom;
 
-			int yFirst = sourceTarget.Top;
-			int yLast = sourceTarget.Bottom;
+		if (yFirst >= yLast) {
+			return;
+		}
 
-			if (yFirst >= yLast) {
-				return;
+		//temporary buffer for "on the fly preprocessing"
+		Span<byte> preProcBuffer = stackalloc byte[SourceTarget.Width];
+
+		static Color8 GetPixel(ReadOnlySpan<Color8> src, int stride, int offset) {
+			// We can try embedded a distance calculation as well. Perhaps instead of a negative stride/offset, we provide a 
+			// negative distance from the edge and just recalculate the stride/offset in that case.
+			// We can scale the alpha reduction by the distance to hopefully correct the edges.
+
+			// Alternatively, for non-wrapping textures (or for wrapping ones that only have one wrapped axis) we embed them in a new target
+			// which is padded with alpha, and after resampling we manually clamp the colors on it. This will give a normal-ish effect for drawing, and will make it so we might get a more correct edge since it can overdraw.
+			// If we do this, we draw the entire texture, with the padding, but we slightly enlarge the target area for _drawing_ to account for the extra padding.
+			// This will effectively cause a filtering effect and hopefully prevent the hard edge problems
+
+			if (stride >= 0 && offset >= 0) {
+				return src[stride + offset];
 			}
 
-			//temporary buffer for "on the fly preprocessing"
-			var preProcBuffer = stackalloc byte[sourceTarget.Width];
+			stride = Math.Abs(stride);
+			offset = Math.Abs(offset);
+			Color8 sample = src[stride + offset];
+			return sample with { A = 0 };
+		}
 
-			static Color8 GetPixel(ReadOnlySpan<Color8> src, int stride, int offset) {
-				// We can try embedded a distance calculation as well. Perhaps instead of a negative stride/offset, we provide a 
-				// negative distance from the edge and just recalculate the stride/offset in that case.
-				// We can scale the alpha reduction by the distance to hopefully correct the edges.
+		//initialize preprocessing buffer for first row:
+		//detect upper left and right corner blending
+		//this cannot be optimized for adjacent processing
+		//stripes; we must not allow for a memory race condition!
+		/*if (yFirst > 0)*/
+		{
+			var y = yFirst - 1;
 
-				// Alternatively, for non-wrapping textures (or for wrapping ones that only have one wrapped axis) we embed them in a new target
-				// which is padded with alpha, and after resampling we manually clamp the colors on it. This will give a normal-ish effect for drawing, and will make it so we might get a more correct edge since it can overdraw.
-				// If we do this, we draw the entire texture, with the padding, but we slightly enlarge the target area for _drawing_ to account for the extra padding.
-				// This will effectively cause a filtering effect and hopefully prevent the hard edge problems
+			var sM1 = SourceSize.X * getY(y - 1);
+			var s0 = SourceSize.X * getY(y); //center line
+			var sP1 = SourceSize.X * getY(y + 1);
+			var sP2 = SourceSize.X * getY(y + 2);
 
-				if (stride >= 0 && offset >= 0) {
-					return src[stride + offset];
+			for (var x = SourceTarget.Left; x < SourceTarget.Right; ++x) {
+				var xM1 = getX(x - 1);
+				var xP1 = getX(x + 1);
+				var xP2 = getX(x + 2);
+
+				//read sequentially from memory as far as possible
+				var ker4 = new Kernel4x4(
+					GetPixel(source, sM1, xM1),
+					GetPixel(source, sM1, x),
+					GetPixel(source, sM1, xP1),
+					GetPixel(source, sM1, xP2),
+
+					GetPixel(source, s0, xM1),
+					GetPixel(source, s0, x),
+					GetPixel(source, s0, xP1),
+					GetPixel(source, s0, xP2),
+
+					GetPixel(source, sP1, xM1),
+					GetPixel(source, sP1, x),
+					GetPixel(source, sP1, xP1),
+					GetPixel(source, sP1, xP2),
+
+					GetPixel(source, sP2, xM1),
+					GetPixel(source, sP2, x),
+					GetPixel(source, sP2, xP1),
+					GetPixel(source, sP2, xP2)
+				);
+
+				var blendResult = PreProcessCorners(in ker4); // writes to blendResult
+				/*
+				preprocessing blend result:
+				---------
+				| F | G | //evalute corner between F, G, J, K
+				----|---| //input pixel is at position F
+				| J | K |
+				---------
+				*/
+
+				int originX = x - SourceTarget.Left;
+
+				preProcBuffer[originX] = preProcBuffer[originX].SetTopR(blendResult.J);
+
+				if (x + 1 < SourceTarget.Right) {
+					preProcBuffer[originX + 1] = preProcBuffer[originX + 1].SetTopL(blendResult.K);
 				}
-
-				stride = Math.Abs(stride);
-				offset = Math.Abs(offset);
-				Color8 sample = src[stride + offset];
-				return sample with { A = 0 };
-			}
-
-			//initialize preprocessing buffer for first row:
-			//detect upper left and right corner blending
-			//this cannot be optimized for adjacent processing
-			//stripes; we must not allow for a memory race condition!
-			/*if (yFirst > 0)*/
-			{
-				var y = yFirst - 1;
-
-				var sM1 = sourceSize.X * getY(y - 1);
-				var s0 = sourceSize.X * getY(y); //center line
-				var sP1 = sourceSize.X * getY(y + 1);
-				var sP2 = sourceSize.X * getY(y + 2);
-
-				for (var x = sourceTarget.Left; x < sourceTarget.Right; ++x) {
-					var xM1 = getX(x - 1);
-					var xP1 = getX(x + 1);
-					var xP2 = getX(x + 2);
-
-					//read sequentially from memory as far as possible
-					var ker4 = new Kernel4x4(
-						GetPixel(source, sM1, xM1),
-						GetPixel(source, sM1, x),
-						GetPixel(source, sM1, xP1),
-						GetPixel(source, sM1, xP2),
-
-						GetPixel(source, s0, xM1),
-						GetPixel(source, s0, x),
-						GetPixel(source, s0, xP1),
-						GetPixel(source, s0, xP2),
-
-						GetPixel(source, sP1, xM1),
-						GetPixel(source, sP1, x),
-						GetPixel(source, sP1, xP1),
-						GetPixel(source, sP1, xP2),
-
-						GetPixel(source, sP2, xM1),
-						GetPixel(source, sP2, x),
-						GetPixel(source, sP2, xP1),
-						GetPixel(source, sP2, xP2)
-					);
-
-					var blendResult = PreProcessCorners(in ker4); // writes to blendResult
-					/*
-					preprocessing blend result:
-					---------
-					| F | G | //evalute corner between F, G, J, K
-					----|---| //input pixel is at position F
-					| J | K |
-					---------
-					*/
-
-					int originX = x - sourceTarget.Left;
-
-					preProcBuffer[originX] = preProcBuffer[originX].SetTopR(blendResult.J);
-
-					if (x + 1 < sourceTarget.Right) {
-						preProcBuffer[originX + 1] = preProcBuffer[originX + 1].SetTopL(blendResult.K);
-					}
-					else if (configuration.Wrapped.X) {
-						preProcBuffer[0] = preProcBuffer[0].SetTopL(blendResult.K);
-					}
+				else if (Configuration.Wrapped.X) {
+					preProcBuffer[0] = preProcBuffer[0].SetTopL(blendResult.K);
 				}
 			}
+		}
 
-			outputMatrix = new OutputMatrix(scaler.Scale, destinationPtr, targetWidth);
+		var outputMatrix = new OutputMatrix(ScalerInterface.Scale, destination, TargetWidth);
 
-			for (var y = yFirst; y < yLast; ++y) {
-				//consider MT "striped" access
-				var trgi = scaler.Scale * (y - yFirst) * targetWidth;
+		for (var y = yFirst; y < yLast; ++y) {
+			//consider MT "striped" access
+			var trgi = ScalerInterface.Scale * (y - yFirst) * TargetWidth;
 
-				var sM1 = sourceSize.X * getY(y - 1);
-				var s0 = sourceSize.X * y; //center line
-				var sP1 = sourceSize.X * getY(y + 1);
-				var sP2 = sourceSize.X * getY(y + 2);
+			var sM1 = SourceSize.X * getY(y - 1);
+			var s0 = SourceSize.X * y; //center line
+			var sP1 = SourceSize.X * getY(y + 1);
+			var sP2 = SourceSize.X * getY(y + 2);
 
-				byte blendXy1 = 0;
+			byte blendXy1 = 0;
 
-				for (var x = sourceTarget.Left; x < sourceTarget.Right; ++x, trgi += scaler.Scale) {
-					var xM1 = getX(x - 1);
-					var xP1 = getX(x + 1);
-					var xP2 = getX(x + 2);
+			for (var x = SourceTarget.Left; x < SourceTarget.Right; ++x, trgi += ScalerInterface.Scale) {
+				var xM1 = getX(x - 1);
+				var xP1 = getX(x + 1);
+				var xP2 = getX(x + 2);
 
-					//evaluate the four corners on bottom-right of current pixel
-					//blend_xy for current (x, y) position
+				//evaluate the four corners on bottom-right of current pixel
+				//blend_xy for current (x, y) position
 
-					//read sequentially from memory as far as possible
-					var ker4 = new Kernel4x4(
-						GetPixel(source, sM1, xM1),
-						GetPixel(source, sM1, x),
-						GetPixel(source, sM1, xP1),
-						GetPixel(source, sM1, xP2),
+				//read sequentially from memory as far as possible
+				var ker4 = new Kernel4x4(
+					GetPixel(source, sM1, xM1),
+					GetPixel(source, sM1, x),
+					GetPixel(source, sM1, xP1),
+					GetPixel(source, sM1, xP2),
 
-						GetPixel(source, s0, xM1),
-						source[s0 + x],
-						GetPixel(source, s0, xP1),
-						GetPixel(source, s0, xP2),
+					GetPixel(source, s0, xM1),
+					source[s0 + x],
+					GetPixel(source, s0, xP1),
+					GetPixel(source, s0, xP2),
 
-						GetPixel(source, sP1, xM1),
-						GetPixel(source, sP1, x),
-						GetPixel(source, sP1, xP1),
-						GetPixel(source, sP1, xP2),
+					GetPixel(source, sP1, xM1),
+					GetPixel(source, sP1, x),
+					GetPixel(source, sP1, xP1),
+					GetPixel(source, sP1, xP2),
 
-						GetPixel(source, sP2, xM1),
-						GetPixel(source, sP2, x),
-						GetPixel(source, sP2, xP1),
-						GetPixel(source, sP2, xP2)
-					);
+					GetPixel(source, sP2, xM1),
+					GetPixel(source, sP2, x),
+					GetPixel(source, sP2, xP1),
+					GetPixel(source, sP2, xP2)
+				);
 
-					var blendResult = PreProcessCorners(in ker4); // writes to blendResult
+				var blendResult = PreProcessCorners(in ker4); // writes to blendResult
 
-					int originX = x - sourceTarget.Left;
+				int originX = x - SourceTarget.Left;
 
-					/*
-							preprocessing blend result:
-							---------
-							| F | G | //evaluate corner between F, G, J, K
-							----|---| //current input pixel is at position F
-							| J | K |
-							---------
-					*/
+				/*
+						preprocessing blend result:
+						---------
+						| F | G | //evaluate corner between F, G, J, K
+						----|---| //current input pixel is at position F
+						| J | K |
+						---------
+				*/
 
-					//all four corners of (x, y) have been determined at
-					//this point due to processing sequence!
-					var blendXy = preProcBuffer[originX].SetBottomR(blendResult.F);
+				//all four corners of (x, y) have been determined at
+				//this point due to processing sequence!
+				var blendXy = preProcBuffer[originX].SetBottomR(blendResult.F);
 
-					//set 2nd known corner for (x, y + 1)
-					blendXy1 = blendXy1.SetTopR(blendResult.J);
-					//store on current buffer position for use on next row
-					preProcBuffer[originX] = blendXy1;
+				//set 2nd known corner for (x, y + 1)
+				blendXy1 = blendXy1.SetTopR(blendResult.J);
+				//store on current buffer position for use on next row
+				preProcBuffer[originX] = blendXy1;
 
-					//set 1st known corner for (x + 1, y + 1) and
-					//buffer for use on next column
-					blendXy1 = ((byte)0).SetTopL(blendResult.K);
+				//set 1st known corner for (x + 1, y + 1) and
+				//buffer for use on next column
+				blendXy1 = ((byte)0).SetTopL(blendResult.K);
 
-					if (x + 1 < sourceTarget.Right) {
-						//set 3rd known corner for (x + 1, y)
-						preProcBuffer[originX + 1] = preProcBuffer[originX + 1].SetBottomL(blendResult.G);
-					}
-					else if (configuration.Wrapped.X) {
-						preProcBuffer[0] = preProcBuffer[0].SetBottomL(blendResult.G);
-					}
-
-					//fill block of size scale * scale with the given color
-					//  //place *after* preprocessing step, to not overwrite the
-					//  //results while processing the the last pixel!
-					FillBlock(destination, trgi, targetWidth, source[s0 + x], scaler.Scale);
-
-					//blend four corners of current pixel
-					if (blendXy == 0)
-						continue;
-
-					//read sequentially from memory as far as possible
-					var ker3 = new Kernel3x3(
-						ker4.A,
-						ker4.B,
-						ker4.C,
-
-						ker4.E,
-						ker4.F,
-						ker4.G,
-
-						ker4.I,
-						ker4.J,
-						ker4.K
-					);
-
-					ScalePixel(scaler, RotationDegree.R0, in ker3, trgi, blendXy);
-					ScalePixel(scaler, RotationDegree.R90, in ker3, trgi, blendXy);
-					ScalePixel(scaler, RotationDegree.R180, in ker3, trgi, blendXy);
-					ScalePixel(scaler, RotationDegree.R270, in ker3, trgi, blendXy);
+				if (x + 1 < SourceTarget.Right) {
+					//set 3rd known corner for (x + 1, y)
+					preProcBuffer[originX + 1] = preProcBuffer[originX + 1].SetBottomL(blendResult.G);
 				}
+				else if (Configuration.Wrapped.X) {
+					preProcBuffer[0] = preProcBuffer[0].SetBottomL(blendResult.G);
+				}
+
+				//fill block of size scale * scale with the given color
+				//  //place *after* preprocessing step, to not overwrite the
+				//  //results while processing the the last pixel!
+				FillBlock(destination, trgi, TargetWidth, source[s0 + x], ScalerInterface.Scale);
+
+				//blend four corners of current pixel
+				if (blendXy == 0)
+					continue;
+
+				//read sequentially from memory as far as possible
+				var ker3 = new Kernel3x3(
+					ker4.A,
+					ker4.B,
+					ker4.C,
+
+					ker4.E,
+					ker4.F,
+					ker4.G,
+
+					ker4.I,
+					ker4.J,
+					ker4.K
+				);
+
+				ScalePixel(ScalerInterface, RotationDegree.R0, in ker3, in outputMatrix, trgi, blendXy);
+				ScalePixel(ScalerInterface, RotationDegree.R90, in ker3, in outputMatrix, trgi, blendXy);
+				ScalePixel(ScalerInterface, RotationDegree.R180, in ker3, in outputMatrix, trgi, blendXy);
+				ScalePixel(ScalerInterface, RotationDegree.R270, in ker3, in outputMatrix, trgi, blendXy);
 			}
 		}
 	}
