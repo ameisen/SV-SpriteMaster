@@ -1,22 +1,24 @@
 ﻿using SpriteMaster.Extensions;
+using SpriteMaster.Resample.Scalers.xBRZ.Blend;
+using SpriteMaster.Resample.Scalers.xBRZ.Color;
+using SpriteMaster.Resample.Scalers.xBRZ.Common;
+using SpriteMaster.Resample.Scalers.xBRZ.Scalers;
 using SpriteMaster.Types;
-using SpriteMaster.xBRZ.Blend;
-using SpriteMaster.xBRZ.Color;
-using SpriteMaster.xBRZ.Common;
-using SpriteMaster.xBRZ.Scalers;
 using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 
 #nullable enable
 
-namespace SpriteMaster.xBRZ;
+namespace SpriteMaster.Resample.Scalers.xBRZ;
 
 using PreprocessType = Byte;
 
 sealed class Scaler {
-	internal const uint MinScale = 2;
-	internal const uint MaxScale = Config.MaxScale;
+	private const uint MinScale = 2;
+	private const uint MaxScale = Config.MaxScale;
+
+	internal static uint ClampScale(uint scale) => Math.Clamp(scale, MinScale, MaxScale);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static Span<Color16> Apply(
@@ -78,12 +80,12 @@ sealed class Scaler {
 			throw new ArgumentOutOfRangeException(nameof(sourceSize));
 		}
 
-		this.ScalerInterface = scaleMultiplier.ToIScaler(configuration);
-		this.Configuration = configuration;
-		this.ColorDistance = new(this.Configuration);
-		this.ColorEqualizer = new(this.Configuration);
-		this.SourceSize = sourceSize;
-		this.TargetSize = targetSize;
+		ScalerInterface = scaleMultiplier.ToIScaler(configuration);
+		Configuration = configuration;
+		ColorDistance = new(Configuration);
+		ColorEqualizer = new(Configuration);
+		SourceSize = sourceSize;
+		TargetSize = targetSize;
 	}
 
 	private readonly Config Configuration;
@@ -109,7 +111,7 @@ sealed class Scaler {
 	private BlendResult PreProcessCorners(in Kernel4x4 ker) {
 		var result = new BlendResult();
 
-		if ((ker.F == ker.G && ker.J == ker.K) || (ker.F == ker.J && ker.G == ker.K)) {
+		if (ker.F == ker.G && ker.J == ker.K || ker.F == ker.J && ker.G == ker.K) {
 			return result;
 		}
 
@@ -119,7 +121,7 @@ sealed class Scaler {
 		var fk = dist.DistYCbCr(ker.E, ker.J) + dist.DistYCbCr(ker.J, ker.O) + dist.DistYCbCr(ker.B, ker.G) + dist.DistYCbCr(ker.G, ker.L) + Configuration.CenterDirectionBias * dist.DistYCbCr(ker.F, ker.K);
 
 		if (jg < fk) {
-			var dominantGradient = (Configuration.DominantDirectionThreshold * jg < fk) ? BlendType.Dominant : BlendType.Normal;
+			var dominantGradient = Configuration.DominantDirectionThreshold * jg < fk ? BlendType.Dominant : BlendType.Normal;
 			if (ker.F != ker.G && ker.F != ker.J) {
 				result.F = dominantGradient;
 			}
@@ -128,7 +130,7 @@ sealed class Scaler {
 			}
 		}
 		else if (fk < jg) {
-			var dominantGradient = (Configuration.DominantDirectionThreshold * fk < jg) ? BlendType.Dominant : BlendType.Normal;
+			var dominantGradient = Configuration.DominantDirectionThreshold * fk < jg ? BlendType.Dominant : BlendType.Normal;
 			if (ker.J != ker.F && ker.J != ker.K) {
 				result.J = dominantGradient;
 			}

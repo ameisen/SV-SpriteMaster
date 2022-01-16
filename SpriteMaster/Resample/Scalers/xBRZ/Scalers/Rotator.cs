@@ -1,12 +1,11 @@
 ﻿using SpriteMaster.Extensions;
-using SpriteMaster.xBRZ.Common;
 using System;
 using System.Runtime.CompilerServices;
 using static SpriteMaster.Extensions.Collections;
 
 #nullable enable
 
-namespace SpriteMaster.xBRZ.Scalers;
+namespace SpriteMaster.Resample.Scalers.xBRZ.Scalers;
 
 static class Rotator {
 	internal const int MaxRotations = 4; // Number of 90 degree rotations
@@ -23,10 +22,10 @@ static class Rotator {
 
 	static Rotator() {
 		var rotation = ArrayExt.Range(0, MaxPositions);
-		var sideLength = (int)MathExt.RoundToInt(Math.Sqrt(MaxPositions));
+		var sideLength = (int)Math.Sqrt(MaxPositions).RoundToInt();
 		for (var rot = 0; rot < MaxRotations; rot++) {
 			for (var pos = 0; pos < MaxPositions; pos++) {
-				RotationsArray[(pos * MaxRotations) + rot] = rotation[pos];
+				RotationsArray[pos * MaxRotations + rot] = rotation[pos];
 			}
 			rotation = rotation.RotateClockwise(sideLength);
 		}

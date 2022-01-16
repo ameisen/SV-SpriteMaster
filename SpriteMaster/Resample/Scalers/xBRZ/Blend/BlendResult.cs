@@ -1,6 +1,8 @@
 ﻿#nullable enable
 
-namespace SpriteMaster.xBRZ.Blend;
+using SpriteMaster;
+
+namespace SpriteMaster.Resample.Scalers.xBRZ.Blend;
 
 ref struct BlendResult {
 	internal BlendType F = 0;

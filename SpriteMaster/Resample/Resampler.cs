@@ -218,7 +218,7 @@ sealed class Resampler {
 
 				switch (Config.Resample.Scaler) {
 					case Scaler.xBRZ: {
-							var scalerConfig = new xBRZ.Config(
+							var scalerConfig = new Scalers.xBRZ.Config(
 								wrapped: doWrap,
 								luminanceWeight: Config.Resample.xBRZ.LuminanceWeight,
 								equalColorTolerance: Config.Resample.xBRZ.EqualColorTolerance,
@@ -227,7 +227,7 @@ sealed class Resampler {
 								centerDirectionBias: Config.Resample.xBRZ.CenterDirectionBias
 							);
 
-							bitmapDataWide = xBRZ.Scaler.Apply(
+							bitmapDataWide = Scalers.xBRZ.Scaler.Apply(
 								configuration: scalerConfig,
 								scaleMultiplier: scale,
 								sourceData: spriteRawData,

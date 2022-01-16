@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 
 #nullable enable
 
-namespace SpriteMaster.xBRZ.Scalers;
+namespace SpriteMaster.Resample.Scalers.xBRZ.Scalers;
 
 abstract class IScaler {
 	internal readonly int Scale;

@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 #nullable enable
 
-namespace SpriteMaster.xBRZ.Scalers;
+namespace SpriteMaster.Resample.Scalers.xBRZ.Scalers;
 
 /*
 		input kernel area naming convention:

@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 #nullable enable
 
-namespace SpriteMaster.xBRZ.Scalers;
+namespace SpriteMaster.Resample.Scalers.xBRZ.Scalers;
 
 [ImmutableObject(true)]
 unsafe ref struct Kernel3x3 {

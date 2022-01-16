@@ -62,10 +62,12 @@ public static class XBRZProgram {
 	}
 
 	private static unsafe Span<Color8> ReadFile(Uri path, out Vector2I size) {
+		Console.WriteLine($"Reading {path}");
+
 		using var rawImage = Image.FromFile(path.LocalPath);
-		using var image = new Bitmap(rawImage.Width, rawImage.Height, PixelFormat.Format32bppArgb);
+		using var image = new Bitmap(rawImage.Width + 64, rawImage.Height + 64, PixelFormat.Format32bppArgb);
 		using (Graphics g = Graphics.FromImage(image)) {
-			g.DrawImage(rawImage, 0, 0);
+			g.DrawImage(rawImage, 32, 32, rawImage.Width, rawImage.Height);
 		}
 
 		if (image is null) {
@@ -76,7 +78,7 @@ public static class XBRZProgram {
 
 		var imageSpan = SpanExt.MakeUninitialized<Color8>(image.Width * image.Height);
 		var sourceSize = imageData.Height * imageData.Stride;
-		var sourceData = new ReadOnlySpan<Color8>(imageData.Scan0.ToPointer(), sourceSize);
+		var sourceData = new ReadOnlySpan<byte>(imageData.Scan0.ToPointer(), sourceSize).Cast<Color8>();
 		int destOffset = 0;
 		int sourceOffset = 0;
 		for (int y = 0; y < imageData.Height; ++y) {
@@ -85,7 +87,7 @@ public static class XBRZProgram {
 			);
 
 			destOffset += imageData.Width;
-			sourceOffset += imageData.Stride;
+			sourceOffset += (imageData.Stride / sizeof(Color8));
 		}
 
 		image.UnlockBits(imageData);
@@ -95,6 +97,8 @@ public static class XBRZProgram {
 	}
 
 	private static unsafe void ProcessJob(in Job job) {
+		Console.WriteLine($"Processing {job.Path}");
+
 		var imageDataNarrow = ReadFile(job.Path, out var imageSize);
 
 		// Widen
@@ -110,7 +114,7 @@ public static class XBRZProgram {
 		// TODO : padding?
 		// Padding?
 
-		var scalerConfig = new xBRZ.Config(
+		var scalerConfig = new Resample.Scalers.xBRZ.Config(
 			wrapped: Vector2B.False,
 			luminanceWeight: Config.Resample.xBRZ.LuminanceWeight,
 			equalColorTolerance: Config.Resample.xBRZ.EqualColorTolerance,
@@ -118,7 +122,18 @@ public static class XBRZProgram {
 			steepDirectionThreshold: Config.Resample.xBRZ.SteepDirectionThreshold,
 			centerDirectionBias: Config.Resample.xBRZ.CenterDirectionBias
 		);
-		imageData = xBRZ.Scaler.
+		uint scale = 5;
+		if (scale != 1) {
+			var targetSize = imageSize * scale;
+			imageData = Resample.Scalers.xBRZ.Scaler.Apply(
+				scalerConfig,
+				scaleMultiplier: scale,
+				sourceData: imageData,
+				sourceSize: imageSize,
+				targetSize: targetSize
+			);
+			imageSize = targetSize;
+		}
 
 		// Delinearize
 		Resample.Passes.GammaCorrection.Delinearize(imageData, imageSize);
@@ -127,6 +142,20 @@ public static class XBRZProgram {
 		Resample.Passes.PremultipliedAlpha.Apply(imageData, imageSize);
 
 		// Narrow
+		var resampledData = Color8.Convert(imageData);
 
+		Bitmap resampledBitmap;
+		fixed (Color8* ptr = resampledData) {
+			int stride = imageSize.Width * sizeof(Color8);
+			resampledBitmap = new Bitmap(imageSize.Width, imageSize.Height, stride, PixelFormat.Format32bppPArgb, (IntPtr)ptr);
+		}
+
+		using (resampledBitmap) {
+			var path = job.Path.LocalPath;
+			var extension = Path.GetExtension(path);
+			path = Path.Combine(Path.GetDirectoryName(path), Path.GetFileNameWithoutExtension(path));
+			path = $"{path}.resampled{extension}";
+			resampledBitmap.Save(path, ImageFormat.Png);
+		}
 	}
 }

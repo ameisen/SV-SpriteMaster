@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 #nullable enable
 
-namespace SpriteMaster.xBRZ.Blend;
+namespace SpriteMaster.Resample.Scalers.xBRZ.Blend;
 
 using PreprocessType = Byte;
 

@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 #nullable enable
 
 // TODO : Handle X or Y-only scaling, since the game has a lot of 1xY and Xx1 sprites - 1D textures.
-namespace SpriteMaster.xBRZ;
+namespace SpriteMaster.Resample.Scalers.xBRZ;
 
 sealed class Config : IEquatable<Config> {
 	internal const int MaxScale = 6;
@@ -34,16 +34,16 @@ sealed class Config : IEquatable<Config> {
 		double steepDirectionThreshold = 2.2,
 		double centerDirectionBias = 4.0
 	) {
-		this.EqualColorTolerance = equalColorTolerance * 256.0;
-		this.Wrapped = wrapped;
-		this.HasAlpha = hasAlpha;
-		this.DominantDirectionThreshold = dominantDirectionThreshold;
-		this.SteepDirectionThreshold = steepDirectionThreshold;
-		this.CenterDirectionBias = centerDirectionBias;
+		EqualColorTolerance = equalColorTolerance * 256.0;
+		Wrapped = wrapped;
+		HasAlpha = hasAlpha;
+		DominantDirectionThreshold = dominantDirectionThreshold;
+		SteepDirectionThreshold = steepDirectionThreshold;
+		CenterDirectionBias = centerDirectionBias;
 
 		var adjustedLuminanceWeight = luminanceWeight / (luminanceWeight + 1.0);
-		this.LuminanceWeight = adjustedLuminanceWeight * 2.0;
-		this.ChrominanceWeight = (1.0 - adjustedLuminanceWeight) * 2.0;
+		LuminanceWeight = adjustedLuminanceWeight * 2.0;
+		ChrominanceWeight = (1.0 - adjustedLuminanceWeight) * 2.0;
 	}
 
 	public override bool Equals(object? obj) {

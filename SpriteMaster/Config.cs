@@ -147,8 +147,8 @@ static class Config {
 		internal static bool TrimWater = true;
 		[Comment("Positive bias applied to sprite scaling calculations")]
 		internal static float ScaleBias = 0.1f;
-		[Comment("Maximum scale factor of sprites")]
-		internal static uint MaxScale = 6;
+		[Comment("Maximum scale factor of sprites (dependant on chosen scaler)")]
+		internal static uint MaxScale = uint.MaxValue;
 		[Comment("Minimum edge length of a sprite to be considered for resampling")]
 		internal static int MinimumTextureDimensions = 1;
 		[Comment("Should wrapped addressing be enabled for sprite resampling (when analysis suggests it)?")]

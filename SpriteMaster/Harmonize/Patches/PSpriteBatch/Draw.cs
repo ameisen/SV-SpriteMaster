@@ -151,7 +151,7 @@ static class Draw {
 		Bounds destinationBounds = destination;
 
 		var expectedScale2D = new Vector2F(destinationBounds.Extent) / new Vector2F(sourceRectangle.Extent);
-		var expectedScale = (uint)((Math.Max(expectedScale2D.X, expectedScale2D.Y) * scaleFactor) + Config.Resample.ScaleBias).Clamp(2.0f, (float)Config.Resample.MaxScale).NextInt();
+		var expectedScale = EstimateScale(expectedScale2D, scaleFactor);
 
 		if (!texture.FetchScaledTexture(
 			expectedScale: expectedScale,
@@ -233,7 +233,7 @@ static class Draw {
 			);
 
 			var expectedScale2D = new Vector2F(destinationBounds.Extent) / new Vector2F(sourceRectangle.Extent);
-			var expectedScale = (uint)((Math.Max(expectedScale2D.X, expectedScale2D.Y) * scaleFactor) + Config.Resample.ScaleBias).Clamp(2.0f, (float)Config.Resample.MaxScale).NextInt();
+			var expectedScale = EstimateScale(expectedScale2D, scaleFactor);
 
 			if (!texture.FetchScaledTexture(
 				expectedScale: expectedScale,
@@ -269,6 +269,14 @@ static class Draw {
 		return Continue;
 	}
 
+	internal static uint EstimateScale(Vector2F scale, float scaleFactor) {
+		float factoredScale = scale.MaxOf * scaleFactor;
+		factoredScale += Config.Resample.ScaleBias;
+		factoredScale = factoredScale.Clamp(2.0f, (float)Config.Resample.MaxScale);
+		uint factoredScaleN = (uint)factoredScale.NextInt();
+		return Resample.Scalers.xBRZ.Scaler.ClampScale(factoredScaleN);
+	}
+
 	internal static bool OnDraw(
 		this SpriteBatch @this,
 		ref Texture2D texture,
@@ -296,7 +304,7 @@ static class Draw {
 			sourceRectangle = resampledTexture.Dimensions;
 		}
 		else if (texture.FetchScaledTexture(
-			expectedScale: (uint)((Math.Max(scale.X, scale.Y) * scaleFactor) + Config.Resample.ScaleBias).Clamp(2.0f, (float)Config.Resample.MaxScale).NextInt(),
+			expectedScale: EstimateScale(scale, scaleFactor),
 			source: ref sourceRectangle,
 			scaledTexture: out scaledTexture,
 			create: true

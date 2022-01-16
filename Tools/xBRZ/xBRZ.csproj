@@ -18,4 +18,13 @@
     <ProjectReference Include="..\..\SpriteMaster\SpriteMaster.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="StardewModdingAPI">
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley\StardewModdingAPI.dll</HintPath>
+    </Reference>
+    <Reference Include="xTile">
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley\xTile.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>

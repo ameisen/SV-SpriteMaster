@@ -1,6 +1,6 @@
 ﻿#nullable enable
 
-namespace SpriteMaster.xBRZ.Common;
+namespace SpriteMaster.Resample.Scalers.xBRZ.Common;
 
 // clockwise
 enum RotationDegree : byte {

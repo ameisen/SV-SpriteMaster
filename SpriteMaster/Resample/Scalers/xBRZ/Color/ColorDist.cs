@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 
 #nullable enable
 
-namespace SpriteMaster.xBRZ.Color;
+namespace SpriteMaster.Resample.Scalers.xBRZ.Color;
 
 class ColorDist {
 	protected readonly Config Configuration;
@@ -45,7 +45,7 @@ class ColorDist {
 		var scale = CurrentColorSpace.LumaScale;
 
 		// TODO : integer math?
-		var y = (coefficient.R * rDiff.Value) + (coefficient.G * gDiff.Value) + (coefficient.B * bDiff.Value); //[!], analog YCbCr!
+		var y = coefficient.R * rDiff.Value + coefficient.G * gDiff.Value + coefficient.B * bDiff.Value; //[!], analog YCbCr!
 		var cB = scale.B * (bDiff.Value - y);
 		var cR = scale.R * (rDiff.Value - y);
 
@@ -69,7 +69,7 @@ class ColorDist {
 			var a2 = pix2.A;
 
 			// TODO : integer math?
-			var alphaScalar = MathExt.Min(a1, a2).ValueToScalar();
+			var alphaScalar = a1.Min(a2).ValueToScalar();
 			distance = alphaScalar * distance + Math.Abs(a2.Value - a1.Value);
 		}
 

@@ -1,11 +1,11 @@
-﻿using SpriteMaster.Types;
-using SpriteMaster.xBRZ.Common;
+﻿using SpriteMaster.Resample.Scalers.xBRZ.Common;
+using SpriteMaster.Types;
 using System;
 using System.Runtime.CompilerServices;
 
 #nullable enable
 
-namespace SpriteMaster.xBRZ.Scalers;
+namespace SpriteMaster.Resample.Scalers.xBRZ.Scalers;
 
 //access matrix area, top-left at position "out" for image with given width
 ref struct OutputMatrix {
@@ -22,7 +22,7 @@ ref struct OutputMatrix {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal OutputMatrix(int scale, Span<Color16> outSpan, int outWidth) {
-		N = (scale - 2) * (Rotator.MaxRotations * MaxScaleSquared);
+		N = (scale - 2) * Rotator.MaxRotations * MaxScaleSquared;
 		OutSpan = outSpan;
 		Width = outWidth;
 	}
@@ -36,7 +36,7 @@ ref struct OutputMatrix {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private readonly int GetIndex(int i, int j) {
 		var rot = MatrixRotation[NRow + i * MaxScale + j];
-		return (Index + rot.J + rot.I * Width);
+		return Index + rot.J + rot.I * Width;
 	}
 
 	internal readonly ref Color16 this[int i, int j] => ref OutSpan[GetIndex(i, j)];
@@ -47,7 +47,7 @@ ref struct OutputMatrix {
 	static OutputMatrix() {
 		for (var n = 2; n < MaxScale + 1; n++) {
 			for (var r = 0; r < Rotator.MaxRotations; r++) {
-				var nr = (n - 2) * (Rotator.MaxRotations * MaxScaleSquared) + r * MaxScaleSquared;
+				var nr = (n - 2) * Rotator.MaxRotations * MaxScaleSquared + r * MaxScaleSquared;
 				for (var i = 0; i < MaxScale; i++) {
 					for (var j = 0; j < MaxScale; j++) {
 						MatrixRotation[nr + i * MaxScale + j] = BuildMatrixRotation(r, i, j, n);

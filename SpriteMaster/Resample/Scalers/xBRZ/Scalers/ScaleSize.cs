@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 #nullable enable
 
-namespace SpriteMaster.xBRZ.Scalers;
+namespace SpriteMaster.Resample.Scalers.xBRZ.Scalers;
 
 static class ScaleSize {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
