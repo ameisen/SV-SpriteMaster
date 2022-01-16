@@ -101,7 +101,7 @@ sealed class Scaler2X : IScaler {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal override void BlendCorner(Color16 color, ref OutputMatrix matrix) {
 		//model a round corner
-		AlphaBlend(21, 100, ref matrix[1, 1], color); //exact: 1 - pi/4 = 0.2146018366
+		AlphaBlend(43, 200, ref matrix[1, 1], color); //exact: 1 - pi/4 = 0.2146018366
 	}
 }
 
@@ -146,10 +146,10 @@ sealed class Scaler3X : IScaler {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal override void BlendCorner(Color16 color, ref OutputMatrix matrix) {
 		//model a round corner
-		AlphaBlend(45,  100, ref matrix[2, 2], color); //exact: 0.4545939598
-#if false
-		AlphaBlend(14, 1000, ref matrix[2, 1], color); //0.01413008627 -> negligible + avoid conflicts with other rotations for this odd scale
-		AlphaBlend(14, 1000, ref matrix[1, 2], color); //0.01413008627
+		AlphaBlend(91,  200, ref matrix[2, 2], color); //exact: 0.4545939598
+#if true
+		AlphaBlend( 3,  200, ref matrix[2, 1], color); //0.01413008627 -> negligible + avoid conflicts with other rotations for this odd scale
+		AlphaBlend( 3,  200, ref matrix[1, 2], color); //0.01413008627
 #endif
 	}
 }
@@ -202,9 +202,9 @@ sealed class Scaler4X : IScaler {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal override void BlendCorner(Color16 color, ref OutputMatrix matrix) {
 		//model a round corner
-		AlphaBlend(68, 100, ref matrix[3, 3], color); //exact: 0.6848532563
-		AlphaBlend( 9, 100, ref matrix[3, 2], color); //0.08677704501
-		AlphaBlend( 9, 100, ref matrix[2, 3], color); //0.08677704501
+		AlphaBlend(137, 200, ref matrix[3, 3], color); //exact: 0.6848532563
+		AlphaBlend( 17, 200, ref matrix[3, 2], color); //0.08677704501
+		AlphaBlend( 17, 200, ref matrix[2, 3], color); //0.08677704501
 	}
 }
 
@@ -269,12 +269,12 @@ sealed class Scaler5X : IScaler {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal override void BlendCorner(Color16 color, ref OutputMatrix matrix) {
 		//model a round corner
-		AlphaBlend(86, 100, ref matrix[4, 4], color); //exact: 0.8631434088
-		AlphaBlend(23, 100, ref matrix[4, 3], color); //0.2306749731
-		AlphaBlend(23, 100, ref matrix[3, 4], color); //0.2306749731
-#if false
-		AlphaBlend( 1,  64, ref matrix[4, 2], color); //0.01676812367 -> negligible + avoid conflicts with other rotations for this odd scale
-		AlphaBlend( 1,  64, ref matrix[2, 4], color); //0.01676812367
+		AlphaBlend(173, 200, ref matrix[4, 4], color); //exact: 0.8631434088
+		AlphaBlend( 46, 200, ref matrix[4, 3], color); //0.2306749731
+		AlphaBlend( 46, 200, ref matrix[3, 4], color); //0.2306749731
+#if true
+		AlphaBlend(  3, 200, ref matrix[4, 2], color); //0.01676812367 -> negligible + avoid conflicts with other rotations for this odd scale
+		AlphaBlend(  3, 200, ref matrix[2, 4], color); //0.01676812367
 #endif
 	}
 }
@@ -354,10 +354,10 @@ sealed class Scaler6X : IScaler {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal override void BlendCorner(Color16 color, ref OutputMatrix matrix) {
 		//model a round corner
-		AlphaBlend(97, 100, ref matrix[5, 5], color); //exact: 0.9711013910
-		AlphaBlend(42, 100, ref matrix[4, 5], color); //0.4236372243
-		AlphaBlend(42, 100, ref matrix[5, 4], color); //0.4236372243
-		AlphaBlend( 6, 100, ref matrix[5, 3], color); //0.05652034508
-		AlphaBlend( 6, 100, ref matrix[3, 5], color); //0.05652034508
+		AlphaBlend(194, 200, ref matrix[5, 5], color); //exact: 0.9711013910
+		AlphaBlend( 85, 200, ref matrix[4, 5], color); //0.4236372243
+		AlphaBlend( 85, 200, ref matrix[5, 4], color); //0.4236372243
+		AlphaBlend( 11, 200, ref matrix[5, 3], color); //0.05652034508
+		AlphaBlend( 11, 200, ref matrix[3, 5], color); //0.05652034508
 	}
 }
