@@ -142,7 +142,7 @@ static class Config {
 		[Comment("Should dynamic scaling be used (scaling based upon apparent sprite size)")]
 		internal const bool EnableDynamicScale = true;
 		[Comment("Should we assume that input sprites are gamma corrected?")]
-		internal static bool AssumeGammaCorrected = true;
+		internal static bool AssumeGammaCorrected = false;
 		[Comment("Should the scale factor of water be adjusted to account for water sprites being unusual?")]
 		internal static bool TrimWater = true;
 		[Comment("Positive bias applied to sprite scaling calculations")]
@@ -263,11 +263,11 @@ static class Config {
 			[Comment("The tolerance for colors to be considered equal - [0, 256)")]
 			internal static double EqualColorTolerance = 20.0;
 			[Comment("The threshold for a corner-direction to be considered 'dominant'")]
-			internal static double DominantDirectionThreshold = 3.6;
+			internal static double DominantDirectionThreshold = 4.4;
 			[Comment("The threshold for a corner-direction to be considered 'steep'")]
 			internal static double SteepDirectionThreshold = 2.2;
 			[Comment("Bias towards kernel center applied to corner-direction calculations")]
-			internal static double CenterDirectionBias = 4.0;
+			internal static double CenterDirectionBias = 3.0;
 		}
 	}
 

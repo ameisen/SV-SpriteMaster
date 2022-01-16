@@ -8,6 +8,8 @@
     <StartupObject>SpriteMaster.Tools.XBRZProgram</StartupObject>
     <ApplicationIcon>pufferchick_xbrz.ico</ApplicationIcon>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+		<UseWPF>true</UseWPF>
+		<UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
 
   <ItemGroup>
