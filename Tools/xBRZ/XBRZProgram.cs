@@ -1,10 +1,7 @@
 ﻿using SpriteMaster.Extensions;
 using SpriteMaster.Types;
-using SpriteMaster.Types.Fixed;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
 namespace SpriteMaster.Tools;
 
@@ -122,7 +119,7 @@ public static class XBRZProgram {
 			steepDirectionThreshold: Config.Resample.xBRZ.SteepDirectionThreshold,
 			centerDirectionBias: Config.Resample.xBRZ.CenterDirectionBias
 		);
-		uint scale = 5;
+		uint scale = 6;
 		if (scale != 1) {
 			var targetSize = imageSize * scale;
 			imageData = Resample.Scalers.xBRZ.Scaler.Apply(
