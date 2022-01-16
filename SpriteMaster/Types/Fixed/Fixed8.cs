@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SpriteMaster.Colors;
+using System;
 using System.Runtime.InteropServices;
 
 namespace SpriteMaster.Types.Fixed;
@@ -6,13 +7,14 @@ namespace SpriteMaster.Types.Fixed;
 [StructLayout(LayoutKind.Explicit, Pack = sizeof(byte), Size = sizeof(byte))]
 struct Fixed8 : IEquatable<Fixed8>, IEquatable<byte>, ILongHash {
 	public static readonly Fixed8 Zero = new(0);
+	public static readonly Fixed8 Max = new(byte.MaxValue);
 
 	[FieldOffset(0)]
 	private byte InternalValue = 0;
 
 	internal readonly byte Value => InternalValue;
 
-	internal static byte FromU16(ushort value) => Colors.ColorConstant.Color16to8(value);
+	internal static byte FromU16(ushort value) => value.Color16to8();
 
 	internal Fixed8(byte value) => InternalValue = value;
 	internal Fixed8(Fixed8 value) => InternalValue = value.InternalValue;

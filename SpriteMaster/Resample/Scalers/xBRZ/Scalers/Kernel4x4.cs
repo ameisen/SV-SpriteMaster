@@ -2,6 +2,8 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
+#nullable enable
+
 namespace SpriteMaster.xBRZ.Scalers;
 
 /*
@@ -20,24 +22,22 @@ namespace SpriteMaster.xBRZ.Scalers;
 unsafe ref struct Kernel4x4 {
 	private fixed ulong Data[4 * 4];
 
-	internal readonly Color16 this[int index] => (Color16)Data[index];
-
-	internal readonly Color16 A => this[0];
-	internal readonly Color16 B => this[1];
-	internal readonly Color16 C => this[2];
-	internal readonly Color16 D => this[3];
-	internal readonly Color16 E => this[4];
-	internal readonly Color16 F => this[5];
-	internal readonly Color16 G => this[6];
-	internal readonly Color16 H => this[7];
-	internal readonly Color16 I => this[8];
-	internal readonly Color16 J => this[9];
-	internal readonly Color16 K => this[10];
-	internal readonly Color16 L => this[11];
-	internal readonly Color16 M => this[12];
-	internal readonly Color16 N => this[13];
-	internal readonly Color16 O => this[14];
-	internal readonly Color16 P => this[15];
+	internal readonly Color16 A => (Color16)Data[0x0];
+	internal readonly Color16 B => (Color16)Data[0x1];
+	internal readonly Color16 C => (Color16)Data[0x2];
+	internal readonly Color16 D => (Color16)Data[0x3];
+	internal readonly Color16 E => (Color16)Data[0x4];
+	internal readonly Color16 F => (Color16)Data[0x5];
+	internal readonly Color16 G => (Color16)Data[0x6];
+	internal readonly Color16 H => (Color16)Data[0x7];
+	internal readonly Color16 I => (Color16)Data[0x8];
+	internal readonly Color16 J => (Color16)Data[0x9];
+	internal readonly Color16 K => (Color16)Data[0xA];
+	internal readonly Color16 L => (Color16)Data[0xB];
+	internal readonly Color16 M => (Color16)Data[0xC];
+	internal readonly Color16 N => (Color16)Data[0xD];
+	internal readonly Color16 O => (Color16)Data[0xE];
+	internal readonly Color16 P => (Color16)Data[0xF];
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal Kernel4x4(

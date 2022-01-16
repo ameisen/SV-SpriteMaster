@@ -66,9 +66,6 @@ static class Zstd {
 				if (!EnumerableF.SequenceEqualF(dummyData, uncompressedData)) {
 					throw new Exception("Original and Uncompressed Data Mismatch");
 				}
-				if (Config.Debug.MacOSTestMode) {
-					throw new Exception("Mac OS Test Mode Enabled, Zstd not supported");
-				}
 				Debug.InfoLn("Zstd Compression is supported".Pastel(DrawingColor.LightGreen));
 				return true;
 			}

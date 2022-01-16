@@ -8,6 +8,7 @@ using SpriteMaster.Metadata;
 using SpriteMaster.Tasking;
 using SpriteMaster.Types;
 using System;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 
 #nullable enable
@@ -226,15 +227,13 @@ sealed class Resampler {
 								centerDirectionBias: Config.Resample.xBRZ.CenterDirectionBias
 							);
 
-							var tempData = SpanExt.MakeUninitialized<Color8>(bitmapDataWide.Length);
-
-							new xBRZ.Scaler(
+							bitmapDataWide = xBRZ.Scaler.Apply(
+								configuration: scalerConfig,
 								scaleMultiplier: scale,
 								sourceData: spriteRawData,
 								sourceSize: spriteRawExtent,
-								expectedTargetSize: scaledSize,
-								targetData: bitmapDataWide,
-								configuration: scalerConfig
+								targetSize: scaledSize,
+								targetData: bitmapDataWide
 							);
 						}
 						break;
@@ -409,7 +408,7 @@ sealed class Resampler {
 	internal static ManagedTexture2D? Upscale(ScaledTexture texture, ref uint scale, SpriteInfo input, ulong hash, ref Vector2B wrapped, bool async) {
 		try {
 			// Try to process the texture twice. Garbage collect after a failure, maybe it'll work then.
-			foreach (var _ in 0.To(1)) {
+			for (int i = 0; i < 2; ++i) {
 				try {
 					return UpscaleInternal(
 						texture: texture,
@@ -435,8 +434,8 @@ sealed class Resampler {
 	}
 
 	internal static readonly Action<Texture2D, int, byte[], int, int>? PlatformSetData = typeof(Texture2D).GetMethods(
-		System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic
-		).SingleF(m => m.Name == "PlatformSetData" && m.GetParameters().Length == 4)?.MakeGenericMethod(new Type[] { typeof(byte) })?.CreateDelegate<Action<Texture2D, int, byte[], int, int>>();
+		BindingFlags.Instance | BindingFlags.NonPublic
+	).SingleF(m => m.Name == "PlatformSetData" && m.GetParameters().Length == 4)?.MakeGenericMethod(new Type[] { typeof(byte) })?.CreateDelegate<Action<Texture2D, int, byte[], int, int>>();
 
 	private static ManagedTexture2D? UpscaleInternal(ScaledTexture texture, ref uint scale, SpriteInfo input, ulong hash, ref Vector2B wrapped, bool async) {
 		var spriteFormat = TextureFormat.Color;

@@ -1,4 +1,4 @@
-﻿global using XNA = Microsoft.Xna.Framework;
+global using XNA = Microsoft.Xna.Framework;
 global using DrawingColor = System.Drawing.Color;
 global using DrawingPoint = System.Drawing.Point;
 global using DrawingRectangle = System.Drawing.Rectangle;
@@ -8,8 +8,11 @@ global using XTileRectangle = xTile.Dimensions.Rectangle;
 global using XTileSize = xTile.Dimensions.Size;
 global using half = System.Half;
 
+#nullable enable
+
 using System.Runtime.CompilerServices;
 using System.Security;
+using System;
 
 [assembly: CompilationRelaxations(CompilationRelaxations.NoStringInterning)]
 
@@ -17,6 +20,28 @@ using System.Security;
 [assembly: AllowPartiallyTrustedCallers]
 [assembly: SecurityTransparent]
 [assembly: SecurityRules(SecurityRuleSet.Level2, SkipVerificationInFullTrust = true)]
+[assembly: InternalsVisibleToAttribute("xBRZ")]
+[assembly: ChangeList("6651d59:first_mpl2-18-g6651d59")]
+[assembly: BuildComputerName("Palatinate")]
+[assembly: FullVersion("0.13.0.2-alpha.2")]
 // [assembly: SuppressUnmanagedCodeSecurity]
 
 [module: SkipLocalsInit]
+
+[AttributeUsage(validOn: AttributeTargets.Assembly, AllowMultiple = false, Inherited = true)]
+sealed class ChangeListAttribute : Attribute {
+	internal readonly string Value;
+	internal ChangeListAttribute(string value) => Value = value;
+}
+
+[AttributeUsage(validOn: AttributeTargets.Assembly, AllowMultiple = false, Inherited = true)]
+sealed class BuildComputerNameAttribute : Attribute {
+	internal readonly string Value;
+	internal BuildComputerNameAttribute(string value) => Value = value;
+}
+
+[AttributeUsage(validOn: AttributeTargets.Assembly, AllowMultiple = false, Inherited = true)]
+sealed class FullVersionAttribute : Attribute {
+	internal readonly string Value;
+	internal FullVersionAttribute(string value) => Value = value;
+}

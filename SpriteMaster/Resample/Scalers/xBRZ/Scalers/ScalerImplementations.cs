@@ -1,11 +1,10 @@
 ﻿//#define XBRZ_WIDE_BLEND
 
-using SpriteMaster.Colors;
 using SpriteMaster.Types;
 using SpriteMaster.Types.Fixed;
-using SpriteMaster.xBRZ.Common;
-using System;
 using System.Runtime.CompilerServices;
+
+#nullable enable
 
 namespace SpriteMaster.xBRZ.Scalers;
 

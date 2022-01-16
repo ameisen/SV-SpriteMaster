@@ -14,4 +14,7 @@ static class MathExt {
 
 	internal static Fixed8 Clamp(this Fixed8 v, Fixed8 min, Fixed8 max) => Math.Clamp(v.Value, min.Value, max.Value);
 	internal static Fixed16 Clamp(this Fixed16 v, Fixed16 min, Fixed16 max) => Math.Clamp(v.Value, min.Value, max.Value);
+
+	internal static long RoundToInt(this float v) => (long)Math.Round(v);
+	internal static long RoundToInt(this double v) => (long)Math.Round(v);
 }

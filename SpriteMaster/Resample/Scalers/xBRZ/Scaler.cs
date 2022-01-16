@@ -1,4 +1,5 @@
-﻿using SpriteMaster.Types;
+﻿using SpriteMaster.Extensions;
+using SpriteMaster.Types;
 using SpriteMaster.xBRZ.Blend;
 using SpriteMaster.xBRZ.Color;
 using SpriteMaster.xBRZ.Common;
@@ -6,6 +7,8 @@ using SpriteMaster.xBRZ.Scalers;
 using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+
+#nullable enable
 
 namespace SpriteMaster.xBRZ;
 
@@ -16,13 +19,49 @@ sealed class Scaler {
 	internal const uint MaxScale = Config.MaxScale;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Scaler(
+	internal static Span<Color16> Apply(
+		in Config configuration,
 		uint scaleMultiplier,
 		ReadOnlySpan<Color16> sourceData,
 		Vector2I sourceSize,
-		Vector2I expectedTargetSize,
-		Span<Color16> targetData,
-		in Config configuration
+		Vector2I targetSize,
+		Span<Color16> targetData = default
+	) {
+		if (sourceSize.X * sourceSize.Y > sourceData.Length) {
+			throw new ArgumentOutOfRangeException(nameof(sourceData));
+		}
+
+		var targetSizeCalculated = sourceSize * scaleMultiplier;
+		if (targetSize != targetSizeCalculated) {
+			throw new ArgumentOutOfRangeException(nameof(targetSize));
+		}
+
+		if (targetData == Span<Color16>.Empty) {
+			targetData = SpanExt.MakeUninitialized<Color16>(targetSize.Area);
+		}
+		else {
+			if (targetSize.Area > targetData.Length) {
+				throw new ArgumentOutOfRangeException(nameof(targetData));
+			}
+		}
+
+		var scalerInstance = new Scaler(
+			configuration: in configuration,
+			scaleMultiplier: scaleMultiplier,
+			sourceSize: sourceSize,
+			targetSize: targetSize
+		);
+
+		scalerInstance.Scale(sourceData, targetData);
+		return targetData;
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	private Scaler(
+		in Config configuration,
+		uint scaleMultiplier,
+		Vector2I sourceSize,
+		Vector2I targetSize
 	) {
 		if (scaleMultiplier < MinScale || scaleMultiplier > MaxScale) {
 			throw new ArgumentOutOfRangeException(nameof(scaleMultiplier));
@@ -38,23 +77,13 @@ sealed class Scaler {
 		if (sourceSize.X <= 0 || sourceSize.Y <= 0) {
 			throw new ArgumentOutOfRangeException(nameof(sourceSize));
 		}
-		if (sourceSize.X * sourceSize.Y > sourceData.Length) {
-			throw new ArgumentOutOfRangeException(nameof(sourceData));
-		}
-		TargetSize = sourceSize * scaleMultiplier;
-		if (expectedTargetSize != TargetSize) {
-			throw new ArgumentOutOfRangeException(nameof(expectedTargetSize));
-		}
-		if (TargetSize.Area > targetData.Length) {
-			throw new ArgumentOutOfRangeException(nameof(targetData));
-		}
 
 		this.ScalerInterface = scaleMultiplier.ToIScaler(configuration);
 		this.Configuration = configuration;
 		this.ColorDistance = new(this.Configuration);
 		this.ColorEqualizer = new(this.Configuration);
 		this.SourceSize = sourceSize;
-		Scale(sourceData, targetData);
+		this.TargetSize = targetSize;
 	}
 
 	private readonly Config Configuration;
@@ -68,9 +97,9 @@ sealed class Scaler {
 
 	//fill block with the given color
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static void FillBlock(Span<Color16> trg, int trgi, int pitch, Color16 col, int blockSize) {
-		for (var y = 0; y < blockSize; ++y, trgi += pitch) {
-			trg.Slice(trgi, blockSize).Fill(col);
+	private static void FillBlock(Span<Color16> trg, int targetOffset, int pitch, Color16 col, int blockSize, int targetWidth) {
+		for (var y = 0; y < blockSize; ++y, targetOffset += pitch) {
+			trg.Slice(targetOffset, blockSize).Fill(col);
 		}
 	}
 
@@ -123,7 +152,7 @@ sealed class Scaler {
 			blendInfo: result of preprocessing all four corners of pixel "e"
 	*/
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private void ScalePixel(IScaler scaler, RotationDegree rotDeg, in Kernel3x3 ker, in OutputMatrix outputMatrix, int trgi, PreprocessType blendInfo) {
+	private void ScalePixel(IScaler scaler, RotationDegree rotDeg, in Kernel3x3 ker, ref OutputMatrix outputMatrix, int targetIndex, PreprocessType blendInfo) {
 		var blend = blendInfo.Rotate(rotDeg);
 
 		if (blend.GetBottomR() == BlendType.None) {
@@ -168,11 +197,10 @@ sealed class Scaler {
 		//choose most similar color
 		var px = dist.DistYCbCr(e, f) <= dist.DistYCbCr(e, h) ? f : h;
 
-		var out_ = outputMatrix;
-		out_.Move(rotDeg, trgi);
+		outputMatrix.Move(rotDeg, targetIndex);
 
 		if (!doLineBlend) {
-			scaler.BlendCorner(px, ref out_);
+			scaler.BlendCorner(px, ref outputMatrix);
 			return;
 		}
 
@@ -186,18 +214,18 @@ sealed class Scaler {
 
 		if (haveShallowLine) {
 			if (haveSteepLine) {
-				scaler.BlendLineSteepAndShallow(px, ref out_);
+				scaler.BlendLineSteepAndShallow(px, ref outputMatrix);
 			}
 			else {
-				scaler.BlendLineShallow(px, ref out_);
+				scaler.BlendLineShallow(px, ref outputMatrix);
 			}
 		}
 		else {
 			if (haveSteepLine) {
-				scaler.BlendLineSteep(px, ref out_);
+				scaler.BlendLineSteep(px, ref outputMatrix);
 			}
 			else {
-				scaler.BlendLineDiagonal(px, ref out_);
+				scaler.BlendLineDiagonal(px, ref outputMatrix);
 			}
 		}
 	}
@@ -227,10 +255,10 @@ sealed class Scaler {
 	//scaler policy: see "Scaler2x" reference implementation
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private void Scale(ReadOnlySpan<Color16> source, Span<Color16> destination) {
-		int yFirst = 0;
+		int targetStride = TargetSize.Width * ScalerInterface.Scale;
 		int yLast = SourceSize.Height;
 
-		if (yFirst >= yLast) {
+		if (0 >= yLast) {
 			return;
 		}
 
@@ -264,7 +292,7 @@ sealed class Scaler {
 		//stripes; we must not allow for a memory race condition!
 		/*if (yFirst > 0)*/
 		{
-			var y = yFirst - 1;
+			var y = -1;
 
 			var sM1 = SourceSize.X * getY(y - 1);
 			var s0 = SourceSize.X * getY(y); //center line
@@ -309,31 +337,31 @@ sealed class Scaler {
 				---------
 				*/
 
-				preProcBuffer[x] = preProcBuffer[x].SetTopR(blendResult.J);
+				preProcBuffer[x].SetTopR(blendResult.J);
 
 				if (x + 1 < SourceSize.Width) {
-					preProcBuffer[x + 1] = preProcBuffer[x + 1].SetTopL(blendResult.K);
+					preProcBuffer[x + 1].SetTopL(blendResult.K);
 				}
 				else if (Configuration.Wrapped.X) {
-					preProcBuffer[0] = preProcBuffer[0].SetTopL(blendResult.K);
+					preProcBuffer[0].SetTopL(blendResult.K);
 				}
 			}
 		}
 
 		var outputMatrix = new OutputMatrix(ScalerInterface.Scale, destination, TargetSize.Width);
 
-		for (var y = yFirst; y < yLast; ++y) {
+		for (var y = 0; y < yLast; ++y) {
 			//consider MT "striped" access
-			var trgi = ScalerInterface.Scale * (y - yFirst) * TargetSize.Width;
+			var targetIndex = y * targetStride;
 
 			var sM1 = SourceSize.X * getY(y - 1);
 			var s0 = SourceSize.X * y; //center line
 			var sP1 = SourceSize.X * getY(y + 1);
 			var sP2 = SourceSize.X * getY(y + 2);
 
-			PreprocessType blendXy1 = 0;
+			PreprocessType blendXY1 = 0;
 
-			for (var x = 0; x < SourceSize.Width; ++x, trgi += ScalerInterface.Scale) {
+			for (var x = 0; x < SourceSize.Width; ++x, targetIndex += ScalerInterface.Scale) {
 				var xM1 = getX(x - 1);
 				var xP1 = getX(x + 1);
 				var xP2 = getX(x + 2);
@@ -377,33 +405,35 @@ sealed class Scaler {
 
 				//all four corners of (x, y) have been determined at
 				//this point due to processing sequence!
-				var blendXy = preProcBuffer[x].SetBottomR(blendResult.F);
+				var blendXY = preProcBuffer[x];
+				blendXY.SetBottomR(blendResult.F);
+				blendXY1.SetTopR(blendResult.J);
+				preProcBuffer[x] = blendXY1;
 
-				//set 2nd known corner for (x, y + 1)
-				blendXy1 = blendXy1.SetTopR(blendResult.J);
-				//store on current buffer position for use on next row
-				preProcBuffer[x] = blendXy1;
+				blendXY1 = 0;
+				blendXY1.SetTopL(blendResult.K);
 
-				//set 1st known corner for (x + 1, y + 1) and
-				//buffer for use on next column
-				blendXy1 = ((PreprocessType)0).SetTopL(blendResult.K);
-
+				//set 3rd known corner for (x + 1, y)
+				int? preProcIndex = null;
 				if (x + 1 < SourceSize.Width) {
-					//set 3rd known corner for (x + 1, y)
-					preProcBuffer[x + 1] = preProcBuffer[x + 1].SetBottomL(blendResult.G);
+					preProcIndex = x + 1;
 				}
 				else if (Configuration.Wrapped.X) {
-					preProcBuffer[0] = preProcBuffer[0].SetBottomL(blendResult.G);
+					preProcIndex = 0;
+				}
+				if (preProcIndex.HasValue) {
+					preProcBuffer[preProcIndex.Value].SetBottomL(blendResult.G);
 				}
 
 				//fill block of size scale * scale with the given color
 				//  //place *after* preprocessing step, to not overwrite the
 				//  //results while processing the the last pixel!
-				FillBlock(destination, trgi, TargetSize.Width, source[s0 + x], ScalerInterface.Scale);
+				FillBlock(destination, targetIndex, TargetSize.Width, source[s0 + x], ScalerInterface.Scale, TargetSize.Width);
 
 				//blend four corners of current pixel
-				if (blendXy == 0)
+				if (!blendXY.BlendingNeeded()) {
 					continue;
+				}
 
 				//read sequentially from memory as far as possible
 				var ker3 = new Kernel3x3(
@@ -420,10 +450,10 @@ sealed class Scaler {
 					ker4.K
 				);
 
-				ScalePixel(ScalerInterface, RotationDegree.R0, in ker3, in outputMatrix, trgi, blendXy);
-				ScalePixel(ScalerInterface, RotationDegree.R90, in ker3, in outputMatrix, trgi, blendXy);
-				ScalePixel(ScalerInterface, RotationDegree.R180, in ker3, in outputMatrix, trgi, blendXy);
-				ScalePixel(ScalerInterface, RotationDegree.R270, in ker3, in outputMatrix, trgi, blendXy);
+				ScalePixel(ScalerInterface, RotationDegree.R0, in ker3, ref outputMatrix, targetIndex, blendXY);
+				ScalePixel(ScalerInterface, RotationDegree.R90, in ker3, ref outputMatrix, targetIndex, blendXY);
+				ScalePixel(ScalerInterface, RotationDegree.R180, in ker3, ref outputMatrix, targetIndex, blendXY);
+				ScalePixel(ScalerInterface, RotationDegree.R270, in ker3, ref outputMatrix, targetIndex, blendXY);
 			}
 		}
 	}

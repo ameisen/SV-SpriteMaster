@@ -1,11 +1,11 @@
-﻿// #define MULTIPLY_ALPHA
-
-using SpriteMaster.Colors;
+﻿using SpriteMaster.Colors;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using SpriteMaster.Types.Fixed;
 using System;
 using System.Runtime.CompilerServices;
+
+#nullable enable
 
 namespace SpriteMaster.xBRZ.Color;
 
@@ -69,7 +69,7 @@ class ColorDist {
 			var a2 = pix2.A;
 
 			// TODO : integer math?
-			var alphaScalar = ColorConstant.ValueToScalar(MathExt.Min(a1, a2));
+			var alphaScalar = MathExt.Min(a1, a2).ValueToScalar();
 			distance = alphaScalar * distance + Math.Abs(a2.Value - a1.Value);
 		}
 

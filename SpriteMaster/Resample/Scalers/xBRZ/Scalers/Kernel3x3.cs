@@ -2,6 +2,8 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
+#nullable enable
+
 namespace SpriteMaster.xBRZ.Scalers;
 
 [ImmutableObject(true)]

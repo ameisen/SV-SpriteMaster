@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 
+#nullable enable
+
 namespace SpriteMaster.xBRZ.Blend;
 
 using PreprocessType = Byte;

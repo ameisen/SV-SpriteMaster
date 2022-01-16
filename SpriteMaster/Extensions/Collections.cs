@@ -1,30 +1,29 @@
 ﻿using System;
 using System.Collections.Generic;
-using FastExpressionCompiler.LightExpression;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-
-using static SpriteMaster.Runtime;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using static SpriteMaster.Runtime;
+
+#nullable enable
 
 namespace SpriteMaster.Extensions;
 
 static class Collections {
 	#region IsBlank
 	[MethodImpl(MethodImpl.Hot)]
-	internal static bool IsBlank<T>(this IEnumerable<T> enumerable) => enumerable is null || !enumerable.Any();
+	internal static bool IsBlank<T>(this IEnumerable<T>? enumerable) => enumerable is null || !enumerable.Any();
 
 	[MethodImpl(MethodImpl.Hot)]
-	internal static bool IsBlank<T>(this ICollection<T> collection) => collection is null || !collection.Any();
+	internal static bool IsBlank<T>(this ICollection<T>? collection) => collection is null || !collection.Any();
 
 	[MethodImpl(MethodImpl.Hot)]
-	internal static bool IsBlank<T>(this IList<T> list) => list is null || list.Count == 0;
+	internal static bool IsBlank<T>(this IList<T>? list) => list is null || list.Count == 0;
 
 	[MethodImpl(MethodImpl.Hot)]
-	internal static bool IsBlank<T>(this List<T> list) => list is null || list.Count == 0;
+	internal static bool IsBlank<T>(this List<T>? list) => list is null || list.Count == 0;
 
 	[MethodImpl(MethodImpl.Hot)]
-	internal static bool IsBlank<T>(this T[] array) => array is null || array.Length == 0;
+	internal static bool IsBlank<T>(this T[]? array) => array is null || array.Length == 0;
 	#endregion
 
 	#region IsEmpty
@@ -47,16 +46,16 @@ static class Collections {
 	#region Blanked
 	#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
 	[MethodImpl(MethodImpl.Hot)]
-	internal static T Blanked<T>(this T enumerable) where T : class?, IEnumerable<T> => enumerable.IsBlank() ? null : enumerable;
+	internal static T? Blanked<T>(this T? enumerable) where T : class?, IEnumerable<T> => enumerable.IsBlank() ? null : enumerable;
 
 	[MethodImpl(MethodImpl.Hot)]
-	internal static T[] Blanked<T>(this T[] array) => array.IsBlank() ? null : array;
+	internal static T[]? Blanked<T>(this T[]? array) => array.IsBlank() ? null : array;
 #pragma warning restore CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
 	#endregion
 
 	[MethodImpl(MethodImpl.Hot)]
-	internal static V GetOrAddDefault<K, V>(this Dictionary<K, V> dictionary, K key, Func<V> defaultGetter) {
-		if (dictionary.TryGetValue(key, out V value)) {
+	internal static V? GetOrAddDefault<K, V>(this Dictionary<K, V> dictionary, K key, Func<V> defaultGetter) where K : notnull {
+		if (dictionary.TryGetValue(key, out V? value)) {
 			return value;
 		}
 		var newValue = defaultGetter.Invoke();

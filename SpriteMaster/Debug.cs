@@ -20,6 +20,7 @@ static class Debug {
 		internal const ConsoleColor Info = ConsoleColor.White;
 		internal const ConsoleColor Warning = ConsoleColor.Yellow;
 		internal const ConsoleColor Error = ConsoleColor.Red;
+		internal const ConsoleColor Fatal = ConsoleColor.Red;
 	}
 
 	private static readonly string LocalLogPath = Path.Combine(Config.LocalRoot, $"{ModuleName}.log");
@@ -48,13 +49,14 @@ static class Debug {
 	[DebuggerStepThrough, DebuggerHidden()]
 	private static string ParseException(Exception exception) {
 		var output = new StringBuilder();
-		output.AppendLine($"Exception: {exception.Message}\n{exception.GetStackTrace()}");
+		output.AppendLine($"Exception: {exception.GetType().Name} : {exception.Message}\n{exception.GetStackTrace()}");
 		Exception currentException = exception;
 		var exceptionSet = new HashSet<Exception>() { exception };
 		while (currentException.InnerException is not null && exceptionSet.Add(currentException.InnerException)) {
+			var innerException = currentException.InnerException;
 			output.AppendLine("---");
-			output.AppendLine($"InnerException: {currentException.Message}\n{currentException.GetStackTrace()}");
-			currentException = currentException.InnerException;
+			output.AppendLine($"InnerException: {innerException.GetType().Name} : {innerException.Message}\n{innerException.GetStackTrace()}");
+			currentException = innerException;
 		}
 		return output.ToString();
 	}
@@ -85,7 +87,7 @@ static class Debug {
 	internal static void Trace<T>(string message, T exception, [CallerMemberName] string caller = null!) where T : Exception {
 		if (!CheckLogLevel(LogLevel.Trace))
 			return;
-		TraceLn($"{message}\nException: {exception.Message}\n{exception.GetStackTrace()}", caller: caller);
+		TraceLn($"{message}\n{ParseException(exception)}", caller: caller);
 	}
 
 	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden()]
@@ -111,7 +113,7 @@ static class Debug {
 	internal static void Info<T>(string message, T exception, [CallerMemberName] string caller = null!) where T : Exception {
 		if (!CheckLogLevel(LogLevel.Debug))
 			return;
-		InfoLn($"{message}\nException: {exception.Message}\n{exception.GetStackTrace()}", caller: caller);
+		InfoLn($"{message}\n{ParseException(exception)}", caller: caller);
 	}
 
 	[Conditional("TRACE"), DebuggerStepThrough, DebuggerHidden()]
@@ -191,6 +193,44 @@ static class Debug {
 	[MethodImpl(MethodImpl.Cold)]
 	internal static void ErrorLn(string message, bool format = true, [CallerMemberName] string caller = null!) {
 		Error($"{message}\n", format, caller);
+	}
+
+	[DebuggerStepThrough, DebuggerHidden()]
+	[MethodImpl(MethodImpl.Cold)]
+	internal static void Fatal(string message, bool format = true, [CallerMemberName] string caller = null!) {
+		try {
+			if (!CheckLogLevel(LogLevel.Alert))
+				return;
+			DebugWrite(LogLevel.Alert, $"{caller.Format(format)}{message}");
+		}
+		finally {
+			if (!Config.ForcedDisable) {
+				DebugWrite(LogLevel.Alert, "Fatal Error encountered, shutting down SpriteMaster");
+				Config.ForcedDisable = true;
+			}
+		}
+	}
+
+	[DebuggerStepThrough, DebuggerHidden()]
+	[MethodImpl(MethodImpl.Cold)]
+	internal static void Fatal<T>(T exception, [CallerMemberName] string caller = null!) where T : Exception {
+		if (!CheckLogLevel(LogLevel.Alert))
+			return;
+		FatalLn(ParseException(exception), caller: caller);
+	}
+
+	[DebuggerStepThrough, DebuggerHidden()]
+	[MethodImpl(MethodImpl.Cold)]
+	internal static void Fatal<T>(string message, T exception, [CallerMemberName] string caller = null!) where T : Exception {
+		if (!CheckLogLevel(LogLevel.Alert))
+			return;
+		FatalLn($"{message}\n{ParseException(exception)}", caller: caller);
+	}
+
+	[DebuggerStepThrough, DebuggerHidden()]
+	[MethodImpl(MethodImpl.Cold)]
+	internal static void FatalLn(string message, bool format = true, [CallerMemberName] string caller = null!) {
+		Fatal($"{message}\n", format, caller);
 	}
 
 	[DebuggerStepThrough, DebuggerHidden()]
@@ -301,6 +341,7 @@ static class Debug {
 			LogLevel.Info => Color.Info,
 			LogLevel.Warn => Color.Warning,
 			LogLevel.Error => Color.Error,
+			LogLevel.Alert => Color.Fatal,
 			_ => ConsoleColor.White,
 		};
 	}
@@ -314,6 +355,7 @@ static class Debug {
 					LogLevel.Info => 'I',
 					LogLevel.Warn => 'W',
 					LogLevel.Error => 'E',
+					LogLevel.Alert => 'F',
 					_ => '?',
 				};
 

@@ -43,8 +43,11 @@ static class Config {
 	[ConfigIgnore]
 	internal static string ClearConfigBefore = "0.14.0.0";
 
+	[ConfigIgnore]
+	internal static bool ForcedDisable = false;
 	[Comment("Should SpriteMaster be enabled?")]
 	internal static bool Enabled = true;
+	internal static bool IsEnabled => !ForcedDisable && Enabled;
 	[Comment("Button to toggle SpriteMaster")]
 	internal static SButton ToggleButton = SButton.F11;
 
@@ -63,17 +66,21 @@ static class Config {
 
 	internal enum Configuration {
 		Debug,
+		Development,
 		Release
 	}
 
 	internal const Configuration BuildConfiguration =
-#if DEBUG
+#if DEVELOPMENT
+			Configuration.Development;
+#elif DEBUG
 			Configuration.Debug;
 #else
 			Configuration.Release;
 #endif
 
 	internal const bool IsDebug = BuildConfiguration == Configuration.Debug;
+	internal const bool IsDevelopment = BuildConfiguration == Configuration.Development;
 	internal const bool IsRelease = BuildConfiguration == Configuration.Release;
 
 	[ConfigIgnore]
@@ -109,11 +116,9 @@ static class Config {
 		}
 
 		internal static class Sprite {
-			internal const bool DumpReference = true;
-			internal const bool DumpResample = true;
+			internal const bool DumpReference = !IsRelease;
+			internal const bool DumpResample = !IsRelease;
 		}
-
-		internal const bool MacOSTestMode = false;
 	}
 
 	internal static class DrawState {
@@ -181,7 +186,7 @@ static class Config {
 		};
 		internal static class BlockCompression {
 			[Comment("Should block compression of sprites be enabled?")]
-			internal static bool Enabled = DevEnabled && ((!Runtime.IsMacintosh && !Debug.MacOSTestMode) || MacSupported) && true; // I cannot build a proper libnvtt for OSX presently.
+			internal static bool Enabled = DevEnabled && (!Runtime.IsMacintosh || MacSupported) && true; // I cannot build a proper libnvtt for OSX presently.
 			[ConfigIgnore]
 			private const bool MacSupported = false;
 			private const bool DevEnabled = true;

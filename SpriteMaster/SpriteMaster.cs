@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Runtime;
 using System.Threading;
 
@@ -25,6 +26,10 @@ public sealed class SpriteMaster : Mod {
 	private readonly Thread? GarbageCollectThread = null;
 	private readonly object? CollectLock = DotNet ? new() : null;
 	internal static string? AssemblyPath { get; private set; }
+
+	internal static readonly string ChangeList = typeof(SpriteMaster).Assembly.GetCustomAttribute<ChangeListAttribute>()?.Value ?? "local";
+	internal static readonly string BuildComputerName = typeof(SpriteMaster).Assembly.GetCustomAttribute<BuildComputerNameAttribute>()?.Value ?? "unknown";
+	internal static readonly string FullVersion = typeof(SpriteMaster).Assembly.GetCustomAttribute<FullVersionAttribute>()?.Value ?? Config.CurrentVersionObj.ToString();
 
 	internal static void DumpStats() {
 		var currentProcess = Process.GetCurrentProcess();
@@ -151,6 +156,8 @@ public sealed class SpriteMaster : Mod {
 	}
 
 	public override void Entry(IModHelper help) {
+		Debug.Message($"SpriteMaster {FullVersion} build {Config.CurrentVersionObj.Revision} ({Config.BuildConfiguration}, {ChangeList}, {BuildComputerName})");
+
 		AssemblyPath = help.DirectoryPath;
 
 		ConfigureHarmony();

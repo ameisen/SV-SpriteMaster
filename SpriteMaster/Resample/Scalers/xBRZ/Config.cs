@@ -3,6 +3,8 @@ using SpriteMaster.Types;
 using System;
 using System.Runtime.CompilerServices;
 
+#nullable enable
+
 // TODO : Handle X or Y-only scaling, since the game has a lot of 1xY and Xx1 sprites - 1D textures.
 namespace SpriteMaster.xBRZ;
 
@@ -44,7 +46,7 @@ sealed class Config : IEquatable<Config> {
 		this.ChrominanceWeight = (1.0 - adjustedLuminanceWeight) * 2.0;
 	}
 
-	public override bool Equals(object obj) {
+	public override bool Equals(object? obj) {
 		if (obj is Config other) {
 			return Equals(other);
 		}
@@ -68,12 +70,15 @@ sealed class Config : IEquatable<Config> {
 	}
 
 	[System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Exception Ignored")]
-	public bool Equals(Config other) {
+	public bool Equals(Config? other) {
 		try {
 			foreach (var field in typeof(Config).GetFields()) {
 				var leftField = field.GetValue(this);
 				var rightField = field.GetValue(other);
 				// TODO possibly fall back on IComparable
+				if (leftField is null) {
+					return rightField is null;
+				}
 				if (!leftField.Equals(rightField)) {
 					return false;
 				}

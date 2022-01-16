@@ -130,6 +130,7 @@ struct Color16 : IEquatable<Color16>, IEquatable<ulong>, ILongHash {
 	readonly ulong ILongHash.GetLongHashCode() => Hashing.Combine(Packed);
 
 	static Color16() {
+#if SM_INTERNAL_TESTING
 		// Testing
 		var rMask = MakeMask(true, false, false, false);
 		Contracts.AssertEqual(rMask, 0x0000_0000_0000_FFFFUL);
@@ -143,5 +144,6 @@ struct Color16 : IEquatable<Color16>, IEquatable<ulong>, ILongHash {
 		Contracts.AssertEqual(allMask, 0xFFFF_FFFF_FFFF_FFFFUL);
 		var noneMask = MakeMask(false, false, false, false);
 		Contracts.AssertEqual(noneMask, 0x0000_0000_0000_0000UL);
+#endif //SM_INTERNAL_TESTING
 	}
 }

@@ -61,6 +61,10 @@ sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal void Dispatch(in TimeSpan remainingTime) {
+		if (!Config.IsEnabled) {
+			return;
+		}
+
 		try {
 			DispatchInternal(remainingTime);
 		}
@@ -158,6 +162,10 @@ sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	protected override void QueueTask(Task task) {
+		if (!Config.IsEnabled) {
+			return;
+		}
+
 		if (DisposeCancellation.IsCancellationRequested) {
 			throw new ObjectDisposedException(GetType().Name);
 		}
@@ -178,12 +186,20 @@ sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal void QueueImmediate(Action action) {
+		if (!Config.IsEnabled) {
+			return;
+		}
+
 		var task = new Task(action);
 		task.Start(this);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal void QueueDeferred(Action action, in TextureAction actionData) {
+		if (!Config.IsEnabled) {
+			return;
+		}
+
 		var task = new TextureActionTask(action, actionData);
 		task.Start(this);
 	}

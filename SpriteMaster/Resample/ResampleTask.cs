@@ -1,11 +1,10 @@
 ﻿using SpriteMaster.Extensions;
 using SpriteMaster.Tasking;
-using SpriteMaster.Types;
 using System.Threading.Tasks;
 
-namespace SpriteMaster.Resample;
-
 #nullable enable
+
+namespace SpriteMaster.Resample;
 
 static class ResampleTask {
 	private static readonly TaskFactory<ScaledTexture?> Factory = new(ThreadedTaskScheduler.Instance);

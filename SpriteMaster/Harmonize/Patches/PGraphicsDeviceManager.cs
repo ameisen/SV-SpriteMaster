@@ -53,7 +53,7 @@ static class PGraphicsDeviceManager {
 		int arraySize,
 		out bool __state
 	) {
-		var stackTrace = new StackTrace(skipFrames: 2, fNeedFileInfo: false);
+		var stackTrace = new StackTrace(fNeedFileInfo: false);
 
 		if (stackTrace.GetFrame(0)?.GetMethod()?.DeclaringType == typeof(StardewValley.Game1)) {
 			__state = true;

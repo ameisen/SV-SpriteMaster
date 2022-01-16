@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project>
 	<PropertyGroup>
 		<RootNamespace>SpriteMaster</RootNamespace>
@@ -9,9 +9,9 @@
 		<NeutralLanguage>en-US</NeutralLanguage>
 		<Copyright>mkuklinski</Copyright>
 
-		<Version>0.13.0</Version>
+		<Version>0.13.0-alpha.2</Version>
 		<AssemblyVersion>0.13.0.*</AssemblyVersion>
-		<FileVersion>0.13.0.0</FileVersion>
+		<FileVersion>0.13.0.2</FileVersion>
 		
 		<TargetFramework>net5.0</TargetFramework>
 		<FileAlignment>512</FileAlignment>
@@ -50,7 +50,7 @@
   <ItemGroup>
     <None Include="$(SolutionDir)\LICENSE.md">
       <Pack>True</Pack>
-      <PackagePath></PackagePath>
+      <PackagePath/>
     </None>
   </ItemGroup>
 </Project>

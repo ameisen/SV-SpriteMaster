@@ -1,4 +1,6 @@
-﻿namespace SpriteMaster.xBRZ.Common;
+﻿#nullable enable
+
+namespace SpriteMaster.xBRZ.Common;
 
 // clockwise
 enum RotationDegree : byte {

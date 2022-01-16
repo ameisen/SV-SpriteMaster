@@ -1,4 +1,6 @@
-﻿namespace SpriteMaster.xBRZ.Blend;
+﻿#nullable enable
+
+namespace SpriteMaster.xBRZ.Blend;
 
 ref struct BlendResult {
 	internal BlendType F = 0;

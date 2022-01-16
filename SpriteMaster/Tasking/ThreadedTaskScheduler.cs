@@ -47,68 +47,89 @@ sealed class ThreadedTaskScheduler : TaskScheduler, IDisposable {
 		Action<Thread, int>? onThreadInit = null,
 		Action<Thread, int>? onThreadFinally = null
 	) {
-		if (concurrencyLevel is null or 0) {
+		try {
+			if (concurrencyLevel is null or 0) {
 #if SM_SINGLE_THREAD
 			concurrencyLevel = 1;
 #else
-			concurrencyLevel = Environment.ProcessorCount;
+				concurrencyLevel = Environment.ProcessorCount;
 #endif
+			}
+
+			if (concurrencyLevel < 0) {
+				throw new ArgumentOutOfRangeException(nameof(concurrencyLevel));
+			}
+
+			ConcurrencyLevel = concurrencyLevel.Value;
+
+			Threads = new Thread[ConcurrencyLevel];
+			for (int i = 0; i < Threads.Length; ++i) {
+				Threads[i] = new(index => DispatchLoop((int)index!, onThreadInit, onThreadFinally)) {
+					Priority = threadPriority,
+					IsBackground = true,
+					Name = threadNameFunction is null ? $"ThreadedTaskScheduler Thread {i}" : threadNameFunction(i),
+				};
+				try {
+					Threads[i].SetApartmentState(ApartmentState.MTA);
+				}
+				catch (PlatformNotSupportedException) {
+					/* do nothing */
+				}
+			}
+
+			for (int i = 0; i < Threads.Length; ++i) {
+				Threads[i].Start(i);
+			}
 		}
-
-		if (concurrencyLevel < 0) {
-			throw new ArgumentOutOfRangeException(nameof(concurrencyLevel));
-		}
-
-		ConcurrencyLevel = concurrencyLevel.Value;
-
-		Threads = new Thread[ConcurrencyLevel];
-		for (int i = 0; i < Threads.Length; ++i) {
-			Threads[i] = new(index => DispatchLoop((int)index!, onThreadInit, onThreadFinally)) {
-				Priority = threadPriority,
-				IsBackground = true,
-				Name = threadNameFunction is null ? $"ThreadedTaskScheduler Thread {i}" : threadNameFunction(i),
-			};
-			Threads[i].SetApartmentState(ApartmentState.MTA);
-		}
-
-		for (int i = 0; i < Threads.Length; ++i) {
-			Threads[i].Start(i);
+		catch (Exception ex) {
+			Debug.Error("Failed to create ThreadedTaskScheduler", ex);
+			throw;
 		}
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private void DispatchLoop(int index, Action<Thread, int>? onInit, Action<Thread, int>? onFinally) {
-		IsTaskProcessingThread = true;
-		var thread = Thread.CurrentThread;
-		onInit?.Invoke(thread, index);
 		try {
+			IsTaskProcessingThread = true;
+			var thread = Thread.CurrentThread;
+			onInit?.Invoke(thread, index);
 			try {
-				for (; ; ) {
-					try {
-						foreach (var task in BlockingTaskQueue.GetConsumingEnumerable(DisposeCancellation.Token)) {
-							if (task is not null) {
-								if (TryExecuteTask(task) || task.IsCompleted) {
-									task.Dispose();
+				try {
+					while (!Config.ForcedDisable) {
+						try {
+							foreach (var task in BlockingTaskQueue.GetConsumingEnumerable(DisposeCancellation.Token)) {
+								if (task is not null) {
+									if (TryExecuteTask(task) || task.IsCompleted) {
+										task.Dispose();
+									}
 								}
 							}
 						}
-					}
-					catch (ThreadAbortException) {
-						if (!Environment.HasShutdownStarted && !AppDomain.CurrentDomain.IsFinalizingForUnload()) {
-							Thread.ResetAbort();
+						catch (ThreadAbortException) {
+							if (!Environment.HasShutdownStarted && !AppDomain.CurrentDomain.IsFinalizingForUnload()) {
+								Thread.ResetAbort();
+							}
 						}
 					}
 				}
+				catch (OperationCanceledException) { /* do nothing */ }
 			}
-			catch (OperationCanceledException) { /* do nothing */ }
+			finally {
+				onFinally?.Invoke(thread, index);
+			}
 		}
-		finally {
-			onFinally?.Invoke(thread, index);
+		catch (Exception ex) {
+			Debug.Error("Error in ThreadedTaskScheduler.DispatchLoop", ex);
+			throw;
 		}
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	protected override void QueueTask(Task task) {
+		if (!Config.IsEnabled) {
+			return;
+		}
+
 		if (DisposeCancellation.IsCancellationRequested) {
 			throw new ObjectDisposedException(GetType().Name);
 		}

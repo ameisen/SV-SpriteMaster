@@ -34,7 +34,7 @@ static class Draw {
 		float layerDepth,
 		ref ManagedTexture2D __state
 	) {
-		if (!Config.Enabled)
+		if (!Config.IsEnabled)
 			return true;
 
 		return __instance.OnDrawFirst(
@@ -63,7 +63,7 @@ static class Draw {
 		ref float layerDepth,
 		ref ManagedTexture2D __state
 	) {
-		if (!Config.Enabled)
+		if (!Config.IsEnabled)
 			return true;
 
 		return __instance.OnDraw(
@@ -90,7 +90,7 @@ static class Draw {
 		SpriteEffects effects = SpriteEffects.None,
 		float layerDepth = 0f
 	) {
-		if (!Config.Enabled)
+		if (!Config.IsEnabled)
 			return true;
 
 		@this.Draw(
@@ -141,7 +141,7 @@ static class Draw {
 		SpriteEffects effects = SpriteEffects.None,
 		float layerDepth = 0f
 	) {
-		if (!Config.Enabled)
+		if (!Config.IsEnabled)
 			return true;
 
 		@this.Draw(
@@ -162,7 +162,7 @@ static class Draw {
 
 	[Harmonize("Draw", priority: Harmonize.PriorityLevel.Last)]
 	internal static bool OnDraw(SpriteBatch __instance, ref Texture2D texture, ref XNA.Vector2 position, ref XNA.Rectangle? sourceRectangle, XNA.Color color, float rotation, ref XNA.Vector2 origin, ref XNA.Vector2 scale, SpriteEffects effects, float layerDepth) {
-		if (!Config.Enabled)
+		if (!Config.IsEnabled)
 			return true;
 
 		return __instance.OnDraw(

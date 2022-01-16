@@ -45,7 +45,12 @@ sealed partial class ScaledTexture : IDisposable {
 			return meta.ScaleValid = false;
 		}
 
-		if (texture is RenderTarget2D && texture.Meta().IsSystemRenderTarget) {
+		if (texture is RenderTarget2D && (
+				StardewValley.GameRunner.instance.gameInstances.AnyF(game => texture == game.screen || texture == game.uiScreen) ||
+				texture.Name is ("UI Screen" or "Screen") ||
+				texture.Meta().IsSystemRenderTarget
+			)
+		) {
 			if (!meta.TracePrinted) {
 				meta.TracePrinted = true;
 				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', system render targets unsupported");

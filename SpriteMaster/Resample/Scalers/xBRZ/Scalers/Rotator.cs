@@ -1,7 +1,10 @@
-﻿using LinqFasterer;
+﻿using SpriteMaster.Extensions;
 using SpriteMaster.xBRZ.Common;
+using System;
 using System.Runtime.CompilerServices;
 using static SpriteMaster.Extensions.Collections;
+
+#nullable enable
 
 namespace SpriteMaster.xBRZ.Scalers;
 
@@ -20,7 +23,7 @@ static class Rotator {
 
 	static Rotator() {
 		var rotation = ArrayExt.Range(0, MaxPositions);
-		var sideLength = IMath.Sqrt(MaxPositions);
+		var sideLength = (int)MathExt.RoundToInt(Math.Sqrt(MaxPositions));
 		for (var rot = 0; rot < MaxRotations; rot++) {
 			for (var pos = 0; pos < MaxPositions; pos++) {
 				RotationsArray[(pos * MaxRotations) + rot] = rotation[pos];

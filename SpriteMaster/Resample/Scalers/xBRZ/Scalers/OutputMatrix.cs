@@ -3,6 +3,8 @@ using SpriteMaster.xBRZ.Common;
 using System;
 using System.Runtime.CompilerServices;
 
+#nullable enable
+
 namespace SpriteMaster.xBRZ.Scalers;
 
 //access matrix area, top-left at position "out" for image with given width
@@ -26,9 +28,9 @@ ref struct OutputMatrix {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal void Move(RotationDegree rotDeg, int outi) {
+	internal void Move(RotationDegree rotDeg, int outIndex) {
 		NRow = N + (int)rotDeg * MaxScaleSquared;
-		Index = outi;
+		Index = outIndex;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]

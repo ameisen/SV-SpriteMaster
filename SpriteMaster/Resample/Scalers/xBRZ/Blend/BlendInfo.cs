@@ -2,6 +2,8 @@
 using System;
 using System.Runtime.CompilerServices;
 
+#nullable enable
+
 namespace SpriteMaster.xBRZ.Blend;
 
 using PreprocessType = Byte;
@@ -15,13 +17,13 @@ static class BlendInfo {
 	internal static BlendType GetBottomL(this PreprocessType b) => ((PreprocessType)(b >> 6) & 0x3).BlendType();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static PreprocessType SetTopL(this PreprocessType b, BlendType bt) => (PreprocessType)(b | bt.Value());
+	internal static void SetTopL(this ref PreprocessType b, BlendType bt) => b = (PreprocessType)(b | bt.Value());
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static PreprocessType SetTopR(this PreprocessType b, BlendType bt) => (PreprocessType)(b | (bt.Value() << 2));
+	internal static void SetTopR(this ref PreprocessType b, BlendType bt) => b = (PreprocessType)(b | (bt.Value() << 2));
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static PreprocessType SetBottomR(this PreprocessType b, BlendType bt) => (PreprocessType)(b | (bt.Value() << 4));
+	internal static void SetBottomR(this ref PreprocessType b, BlendType bt) => b = (PreprocessType)(b | (bt.Value() << 4));
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static PreprocessType SetBottomL(this PreprocessType b, BlendType bt) => (PreprocessType)(b | (bt.Value() << 6));
+	internal static void SetBottomL(this ref PreprocessType b, BlendType bt) => b = (PreprocessType)(b | (bt.Value() << 6));
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool BlendingNeeded(this PreprocessType b) => b != 0;
