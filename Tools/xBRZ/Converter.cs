@@ -1,6 +1,5 @@
 ﻿using SpriteMaster;
 using SpriteMaster.Types;
-using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 
@@ -114,7 +113,7 @@ static class ConverterProgram {
 		using (resampledBitmap) {
 			var path = job.Path.LocalPath;
 			var extension = Path.GetExtension(path);
-			path = Path.Combine(Path.GetDirectoryName(path), Path.GetFileNameWithoutExtension(path));
+			path = Path.Combine(Path.GetDirectoryName(path)!, Path.GetFileNameWithoutExtension(path));
 			path = $"{path}.resampled{extension}";
 			resampledBitmap.Save(path, ImageFormat.Png);
 		}

@@ -1,27 +1,22 @@
-﻿using SpriteMaster.Extensions;
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+
+#nullable enable
 
 namespace SpriteMaster.Types;
 
-struct Bounds :
+[StructLayout(LayoutKind.Sequential, Pack = Vector2I.Alignment)]
+partial struct Bounds :
 	ILongHash,
-	ICloneable,
-	IComparable,
-	IComparable<Bounds>,
-	IComparable<DrawingRectangle>,
-	IComparable<XNA.Rectangle>,
-	IComparable<XTileRectangle>,
-	IEquatable<Bounds>,
-	IEquatable<DrawingRectangle>,
-	IEquatable<XNA.Rectangle>,
-	IEquatable<XTileRectangle> {
+	ICloneable {
 	internal static readonly Bounds Empty = new(0, 0, 0, 0);
 
 	private Vector2I ExtentReal;
 
 	internal Vector2I Offset;
+	internal readonly Vector2F OffsetF => new Vector2F(Offset);
 	internal Vector2I Extent {
 		readonly get => ExtentReal;
 		set {
@@ -42,6 +37,7 @@ struct Bounds :
 			}
 		}
 	}
+	internal readonly Vector2F ExtentF => new Vector2F(Extent);
 	internal Vector2B Invert;
 
 	internal Vector2I Position {
@@ -206,6 +202,15 @@ struct Bounds :
 	);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal bool Contains(in Bounds other) =>
+	(
+		Left <= other.Left &&
+		Right >= other.Right &&
+		Top <= other.Top &&
+		Bottom >= other.Bottom
+	);
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal readonly Bounds Clone() => this;
 
 	readonly object ICloneable.Clone() => this;
@@ -232,112 +237,37 @@ struct Bounds :
 	public override readonly string ToString() => $"[[{X}, {Y}] [{InvertedWidth}, {InvertedHeight}]]";
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly int CompareTo(Bounds other) {
-		var result = Offset.CompareTo(other.Offset);
-		if (result != 0) {
-			return result;
-		}
-		return Extent.CompareTo(other.Extent);
-	}
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly int CompareTo(DrawingRectangle other) => CompareTo((Bounds)other);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly int CompareTo(XNA.Rectangle other) => CompareTo((Bounds)other);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly int CompareTo(XTileRectangle other) => CompareTo((Bounds)other);
-
-	readonly int IComparable.CompareTo(object other) => other switch {
-		Bounds bounds => CompareTo(bounds),
-		DrawingRectangle rect => CompareTo(rect),
-		XNA.Rectangle rect => CompareTo(rect),
-		XTileRectangle rect => CompareTo(rect),
-		_ => throw new ArgumentException(),
-	};
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public readonly override int GetHashCode() => (int)Hashing.Combine(Offset.GetHashCode(), Extent.GetHashCode());
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	ulong ILongHash.GetLongHashCode() => ((uint)Offset.GetHashCode() << 32) | (uint)Extent.GetHashCode();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly override bool Equals(object other) => other switch {
-		Bounds bounds => Equals(bounds),
-		DrawingRectangle rect => Equals(rect),
-		XNA.Rectangle rect => Equals(rect),
-		XTileRectangle rect => Equals(rect),
-		_ => throw new ArgumentException(),
-	};
+	internal readonly Bounds ClampTo(in Bounds clamp) {
+		Bounds source = this;
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly bool Equals(Bounds other) => Offset == other.Offset && Extent == other.Extent;
+		int leftDiff = clamp.Left - source.Left;
+		if (leftDiff > 0) {
+			source.X += leftDiff;
+			source.Width -= leftDiff;
+		}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly bool Equals(in Bounds other) => Offset == other.Offset && Extent == other.Extent;
+		int topDiff = clamp.Top - source.Top;
+		if (topDiff > 0) {
+			source.Y += topDiff;
+			source.Height -= topDiff;
+		}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly bool Equals(DrawingRectangle other) => Equals((Bounds)other);
+		int rightDiff = source.Right - clamp.Right;
+		if (rightDiff > 0) {
+			source.Width -= rightDiff;
+		}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly bool Equals(XNA.Rectangle other) => Equals((Bounds)other);
+		int bottomDiff = source.Bottom - clamp.Bottom;
+		if (bottomDiff > 0) {
+			source.Height -= bottomDiff;
+		}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly bool Equals(XTileRectangle other) => Equals((Bounds)other);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly bool NotEquals(in Bounds other) => Offset != other.Offset || Extent != other.Extent;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly bool NotEquals(in DrawingRectangle other) => NotEquals((Bounds)other);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly bool NotEquals(in XNA.Rectangle other) => NotEquals((Bounds)other);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly bool NotEquals(in XTileRectangle other) => NotEquals((Bounds)other);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(in Bounds lhs, in Bounds rhs) => lhs.Equals(in rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(in Bounds lhs, in Bounds rhs) => lhs.NotEquals(rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(in Bounds lhs, in DrawingRectangle rhs) => lhs.Equals(rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(in Bounds lhs, in DrawingRectangle rhs) => lhs.NotEquals(rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(in DrawingRectangle lhs, in Bounds rhs) => rhs.Equals(lhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(in DrawingRectangle lhs, in Bounds rhs) => rhs.NotEquals(lhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(in Bounds lhs, in XNA.Rectangle rhs) => lhs.Equals(rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(in Bounds lhs, in XNA.Rectangle rhs) => lhs.NotEquals(rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(in XNA.Rectangle lhs, in Bounds rhs) => rhs.Equals(lhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(in XNA.Rectangle lhs, in Bounds rhs) => rhs.NotEquals(lhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(in Bounds lhs, in XTileRectangle rhs) => lhs.Equals(rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(in Bounds lhs, in XTileRectangle rhs) => lhs.NotEquals(rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(in XTileRectangle lhs, in Bounds rhs) => rhs.Equals(lhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(in XTileRectangle lhs, in Bounds rhs) => rhs.NotEquals(lhs);
+		return source;
+	}
 }

@@ -69,7 +69,7 @@ sealed class Resampler {
 	}
 
 	private static unsafe Span<Color8> CreateNewTexture(
-		ScaledTexture texture,
+		ManagedSpriteInstance texture,
 		bool async,
 		SpriteInfo input,
 		string hashString,
@@ -405,13 +405,13 @@ sealed class Resampler {
 		return bitmapData;
 	}
 
-	internal static ManagedTexture2D? Upscale(ScaledTexture texture, ref uint scale, SpriteInfo input, ulong hash, ref Vector2B wrapped, bool async) {
+	internal static ManagedTexture2D? Upscale(ManagedSpriteInstance spriteInstance, ref uint scale, SpriteInfo input, ulong hash, ref Vector2B wrapped, bool async) {
 		try {
 			// Try to process the texture twice. Garbage collect after a failure, maybe it'll work then.
 			for (int i = 0; i < 2; ++i) {
 				try {
 					return UpscaleInternal(
-						texture: texture,
+						spriteInstance: spriteInstance,
 						scale: ref scale,
 						input: input,
 						hash: hash,
@@ -429,7 +429,7 @@ sealed class Resampler {
 			Debug.Error($"Internal Error processing '{input}'", ex);
 		}
 
-		texture.Texture = null;
+		spriteInstance.Texture = null;
 		return null;
 	}
 
@@ -437,7 +437,7 @@ sealed class Resampler {
 		BindingFlags.Instance | BindingFlags.NonPublic
 	).SingleF(m => m.Name == "PlatformSetData" && m.GetParameters().Length == 4)?.MakeGenericMethod(new Type[] { typeof(byte) })?.CreateDelegate<Action<Texture2D, int, byte[], int, int>>();
 
-	private static ManagedTexture2D? UpscaleInternal(ScaledTexture texture, ref uint scale, SpriteInfo input, ulong hash, ref Vector2B wrapped, bool async) {
+	private static ManagedTexture2D? UpscaleInternal(ManagedSpriteInstance spriteInstance, ref uint scale, SpriteInfo input, ulong hash, ref Vector2B wrapped, bool async) {
 		var spriteFormat = TextureFormat.Color;
 
 		if (Config.Garbage.CollectAccountUnownedTextures && GarbageMarkSet.Add(input.Reference)) {
@@ -468,8 +468,8 @@ sealed class Resampler {
 					size: out newSize,
 					format: out spriteFormat,
 					wrapped: out wrapped,
-					padding: out texture.Padding,
-					blockPadding: out texture.BlockPadding,
+					padding: out spriteInstance.Padding,
+					blockPadding: out spriteInstance.BlockPadding,
 					data: out bitmapData
 				)) {
 					scale = fetchScale;
@@ -487,37 +487,37 @@ sealed class Resampler {
 				try {
 					bitmapData = CreateNewTexture(
 						async: async,
-						texture: texture,
+						texture: spriteInstance,
 						input: input,
 						hashString: hashString,
 						wrapped: ref wrapped,
 						scale: ref scale,
 						size: out newSize,
 						format: out spriteFormat,
-						padding: out texture.Padding,
-						blockPadding: out texture.BlockPadding
+						padding: out spriteInstance.Padding,
+						blockPadding: out spriteInstance.BlockPadding
 					).AsBytes();
 				}
 				catch (OutOfMemoryException) {
-					Debug.Error($"OutOfMemoryException thrown trying to create texture [texture: {texture.SafeName()}, bounds: {input.Bounds}, textureSize: {input.ReferenceSize}, scale: {scale}]");
+					Debug.Error($"OutOfMemoryException thrown trying to create texture [texture: {spriteInstance.SafeName()}, bounds: {input.Bounds}, textureSize: {input.ReferenceSize}, scale: {scale}]");
 					throw;
 				}
 
 				try {
-					FileCache.Save(cachePath, scale, newSize, spriteFormat, wrapped, texture.Padding, texture.BlockPadding, bitmapData);
+					FileCache.Save(cachePath, scale, newSize, spriteFormat, wrapped, spriteInstance.Padding, spriteInstance.BlockPadding, bitmapData);
 				}
 				catch { }
 			}
 
-			texture.UnpaddedSize = newSize - (texture.Padding + texture.BlockPadding);
-			texture.AdjustedScale = (Vector2)texture.UnpaddedSize / inputSize;
+			spriteInstance.UnpaddedSize = newSize - (spriteInstance.Padding + spriteInstance.BlockPadding);
+			spriteInstance.AdjustedScale = (Vector2)spriteInstance.UnpaddedSize / inputSize;
 
 			ManagedTexture2D? CreateTexture(byte[] data) {
 				if (input.Reference.GraphicsDevice.IsDisposed) {
 					return null;
 				}
 				var newTexture = new ManagedTexture2D(
-					texture: texture,
+					texture: spriteInstance,
 					reference: input.Reference,
 					dimensions: newSize,
 					format: spriteFormat
@@ -540,21 +540,21 @@ sealed class Resampler {
 					if (reference.IsDisposed) {
 						return;
 					}
-					if (texture.IsDisposed) {
+					if (spriteInstance.IsDisposed) {
 						return;
 					}
 					ManagedTexture2D? newTexture = null;
 					try {
 						newTexture = CreateTexture(bitmapDataArray);
-						texture.Texture = newTexture;
-						texture.Finish();
+						spriteInstance.Texture = newTexture;
+						spriteInstance.Finish();
 					}
 					catch (Exception ex) {
 						ex.PrintError();
 						if (newTexture != null) {
 							newTexture.Dispose();
 						}
-						texture.Dispose();
+						spriteInstance.Dispose();
 					}
 				}
 				SynchronizedTaskScheduler.Instance.QueueDeferred(syncCall, new(bitmapData.Length));
@@ -565,8 +565,8 @@ sealed class Resampler {
 				try {
 					newTexture = CreateTexture(bitmapData.ToArray());
 					if (isAsync) {
-						texture.Texture = newTexture;
-						texture.Finish();
+						spriteInstance.Texture = newTexture;
+						spriteInstance.Finish();
 					}
 					return newTexture;
 				}

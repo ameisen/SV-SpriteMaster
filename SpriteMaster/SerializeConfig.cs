@@ -2,12 +2,16 @@
 using SpriteMaster.Types;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
 using Tomlyn;
 using Tomlyn.Syntax;
 
+#nullable enable
+
 namespace SpriteMaster;
+
 static class SerializeConfig {
 	private const BindingFlags StaticFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static;
 
@@ -41,11 +45,11 @@ static class SerializeConfig {
 		ConfigHash = HashClass(typeof(Config));
 	}
 
-	private static bool IsClassIgnored(Type type) => (type is not null) && (type.HasAttribute<Config.ConfigIgnoreAttribute>() || IsClassIgnored(type.DeclaringType));
+	private static bool IsClassIgnored(Type? type) => (type is not null) && (type.HasAttribute<Config.ConfigIgnoreAttribute>() || IsClassIgnored(type.DeclaringType));
 
 	private static bool IsFieldIgnored(FieldInfo field) => field.HasAttribute<Config.ConfigIgnoreAttribute>() || IsClassIgnored(field.DeclaringType);
 
-	private static bool IsValidField(FieldInfo field) => !(field is null || field.IsPrivate || field.IsInitOnly || !field.IsStatic || field.IsLiteral || IsFieldIgnored(field));
+	private static bool IsValidField([NotNullWhen(true)] FieldInfo? field) => !(field is null || field.IsPrivate || field.IsInitOnly || !field.IsStatic || field.IsLiteral || IsFieldIgnored(field));
 
 	// TODO validate that different config elements aren't sharing 'OldName' attributes. That'd be hard to diagnose.
 
@@ -55,7 +59,7 @@ static class SerializeConfig {
 				string tableName = "";
 				try {
 					tableName = table.Name.ToString();
-					var elements = tableName.Split('.');
+					string?[] elements = tableName.Split('.');
 					if (elements.Length != 0) {
 						elements[0] = null;
 					}
@@ -110,7 +114,7 @@ static class SerializeConfig {
 								continue;
 							}
 
-							object fieldValue = field.GetValue(null);
+							object? fieldValue = field.GetValue(null);
 							switch (fieldValue) {
 								case string v:
 									field.SetValue(null, (string)((StringValueSyntax)value.Value).Value.Trim());
@@ -229,7 +233,7 @@ static class SerializeConfig {
 		return true;
 	}
 
-	private static void SaveClass(Type type, DocumentSyntax document, KeySyntax key = null) {
+	private static void SaveClass(Type type, DocumentSyntax document, KeySyntax? key = null) {
 		key ??= new(type.Name);
 
 		var fields = type.GetFields(StaticFlags);
@@ -243,8 +247,8 @@ static class SerializeConfig {
 				continue;
 			}
 
-			ValueSyntax value = null;
-			object fieldValue = field.GetValue(null);
+			ValueSyntax? value = null;
+			object? fieldValue = field.GetValue(null);
 
 			switch (fieldValue) {
 				case string v:
@@ -332,7 +336,7 @@ static class SerializeConfig {
 				continue;
 			}
 			var childKey = new KeySyntax(typeof(Config).Name);
-			var parentKey = key.ToString().Split('.');
+			string?[] parentKey = key.ToString().Split('.');
 			if (parentKey.Length != 0) {
 				parentKey[0] = null;
 			}

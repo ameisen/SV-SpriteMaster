@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 
+#nullable enable
+
 namespace SpriteMaster;
 
 sealed class AsyncTracker : IDisposable {
@@ -10,8 +12,8 @@ sealed class AsyncTracker : IDisposable {
 #endif
 
 #if DEBUG
-	private static readonly object TrackerLock = Enabled ? new() : null;
-	private static readonly HashSet<AsyncTracker> Trackers = Enabled ? new() : null;
+	private static readonly object TrackerLock = Enabled ? new() : null!;
+	private static readonly HashSet<AsyncTracker> Trackers = Enabled ? new() : null!;
 
 	private readonly string Name;
 #endif
@@ -37,9 +39,10 @@ sealed class AsyncTracker : IDisposable {
 
 	internal AsyncTracker(string name) {
 #if DEBUG
+		Name = name;
+
 		if (!Enabled) return;
 
-		Name = name;
 		lock (TrackerLock) {
 			Trackers.Add(this);
 			DumpTrackers();

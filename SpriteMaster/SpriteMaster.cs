@@ -212,7 +212,7 @@ public sealed class SpriteMaster : Mod {
 		// GC after major events
 		help.Events.GameLoop.SaveLoaded += (_, _) => ForceGarbageCollect();
 		help.Events.GameLoop.DayEnding += (_, _) => ForceGarbageCollect();
-		help.Events.GameLoop.GameLaunched += (_, _) => { ForceGarbageCollect(); ScaledTexture.ClearTimers(); };
+		help.Events.GameLoop.GameLaunched += (_, _) => { ForceGarbageCollect(); ManagedSpriteInstance.ClearTimers(); };
 		help.Events.GameLoop.ReturnedToTitle += (_, _) => ForceGarbageCollect();
 		help.Events.GameLoop.SaveCreated += (_, _) => ForceGarbageCollect();
 
@@ -286,7 +286,7 @@ public sealed class SpriteMaster : Mod {
 		var season = SDate.Now().Season.ToLower();
 		if (season != CurrentSeason) {
 			CurrentSeason = season;
-			ScaledTexture.SpriteMap.SeasonPurge(season);
+			ManagedSpriteInstance.SpriteMap.SeasonPurge(season.ToLowerInvariant());
 		}
 
 		// And again after purge

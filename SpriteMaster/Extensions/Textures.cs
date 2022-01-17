@@ -125,7 +125,7 @@ static class Textures {
 	internal static bool Anonymous(this Texture2D texture) => texture.Name.IsBlank();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static bool Anonymous(this ScaledTexture texture) => texture.Name.IsBlank();
+	internal static bool Anonymous(this ManagedSpriteInstance texture) => texture.Name.IsBlank();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static string SafeName(this string name) => name.IsBlank() ? "Unknown" : name.Replace('\\', '/').Replace("//", "/");
@@ -137,9 +137,9 @@ static class Textures {
 	internal static string SafeName(this Texture2D texture, in DrawingColor color) => texture.Name.SafeName(in color);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static string SafeName(this ScaledTexture texture) => texture.Name.SafeName();
+	internal static string SafeName(this ManagedSpriteInstance texture) => texture.Name.SafeName();
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static string SafeName(this ScaledTexture texture, in DrawingColor color) => texture.Name.SafeName(in color);
+	internal static string SafeName(this ManagedSpriteInstance texture, in DrawingColor color) => texture.Name.SafeName(in color);
 
 	private const int ImageElementSize = 4;
 

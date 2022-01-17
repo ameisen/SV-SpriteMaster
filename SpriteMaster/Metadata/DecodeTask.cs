@@ -10,9 +10,9 @@ namespace SpriteMaster.Resample;
 static class DecodeTask {
 	private static readonly TaskFactory Factory = new(ThreadedTaskScheduler.Instance);
 
-	private static void Decode(object? metadata) => DecodeFunction(metadata! as MTexture2D);
+	private static void Decode(object? metadata) => DecodeFunction(metadata! as Texture2DMeta);
 
-	private static void DecodeFunction(MTexture2D? metadata) {
+	private static void DecodeFunction(Texture2DMeta? metadata) {
 		var rawData = metadata!.CachedRawData;
 		if (rawData == null) {
 			return;
@@ -25,5 +25,5 @@ static class DecodeTask {
 		metadata!.SetCachedDataUnsafe(uncompressedData);
 	}
 
-	internal static Task Dispatch(MTexture2D metadata) => Factory.StartNew(Decode, metadata);
+	internal static Task Dispatch(Texture2DMeta metadata) => Factory.StartNew(Decode, metadata);
 }

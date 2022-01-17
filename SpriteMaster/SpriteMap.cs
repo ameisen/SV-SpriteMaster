@@ -3,12 +3,18 @@ using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
 using SpriteMaster.Types;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
+#nullable enable
+
 namespace SpriteMaster;
+
+// TODO : This class, and Texture2DMeta, have a _lot_ of inter-play and it makes it very confusing.
+// This needs to be cleaned up badly.
 sealed class SpriteMap {
 	private readonly SharedLock Lock = new();
-	private readonly WeakCollection<ScaledTexture> ScaledTextureReferences = new();
+	private readonly WeakCollection<ManagedSpriteInstance> SpriteInstanceReferences = new();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ulong SpriteHash(Texture2D texture, in Bounds source, uint expectedScale) {
@@ -16,74 +22,84 @@ sealed class SpriteMap {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal bool Add(Texture2D reference, ScaledTexture texture) {
+	internal bool Add(Texture2D reference, ManagedSpriteInstance texture) {
 		var meta = reference.Meta();
 		using (Lock.Write) {
-			ScaledTextureReferences.Add(texture);  
+			SpriteInstanceReferences.Add(texture);  
 			using (meta.Lock.Write) {
-				return meta.SpriteTable.TryAdd(texture.SpriteMapHash, texture);
+				return meta.SpriteInstanceTable.TryAdd(texture.SpriteMapHash, texture);
 			}
 		}
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal bool TryGet(Texture2D texture, in Bounds source, uint expectedScale, out ScaledTexture result) {
+	internal bool TryGetReady(Texture2D texture, in Bounds source, uint expectedScale, [NotNullWhen(true)] out ManagedSpriteInstance? result) {
+		if (TryGet(texture, source, expectedScale, out var internalResult) && internalResult.IsReady) {
+			result = internalResult;
+			return true;
+		}
 		result = null;
+		return false;
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal bool TryGet(Texture2D texture, in Bounds source, uint expectedScale, [NotNullWhen(true)] out ManagedSpriteInstance? result) {
 		var rectangleHash = SpriteHash(texture: texture, source: source, expectedScale: expectedScale);
 
 		var meta = texture.Meta();
-		var Map = meta.SpriteTable;
+		var Map = meta.SpriteInstanceTable;
 		using (meta.Lock.Read) {
-			if (Map.TryGetValue(rectangleHash, out var scaledTexture)) {
-				if (scaledTexture.Texture?.IsDisposed == true) {
+			if (Map.TryGetValue(rectangleHash, out var spriteInstance)) {
+				if (spriteInstance.Texture?.IsDisposed == true) {
 					using (meta.Lock.Promote) {
-						Map.Clear();
+						meta.ClearSpriteInstanceTable();
 					}
 				}
 				else {
-					if (scaledTexture.IsReady) {
-						result = scaledTexture;
-					}
+					result = spriteInstance;
 					return true;
 				}
 			}
 		}
 
+		result = null;
 		return false;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal void Remove(ScaledTexture scaledTexture, Texture2D texture) {
+	internal void Remove(ManagedSpriteInstance spriteInstance, Texture2D texture) {
 		try {
 			var meta = texture.Meta();
+			var spriteTable = meta.SpriteInstanceTable;
 
 			using (Lock.Write) {
 				try {
-					ScaledTextureReferences.Purge();
-					var removeElements = new List<ScaledTexture>();
-					foreach (var element in ScaledTextureReferences) {
-						if (element == scaledTexture) {
+					SpriteInstanceReferences.Purge();
+					var removeElements = new List<ManagedSpriteInstance>();
+					foreach (var element in SpriteInstanceReferences) {
+						if (element == spriteInstance) {
 							removeElements.Add(element);
 						}
 					}
 
 					foreach (var element in removeElements) {
-						ScaledTextureReferences.Remove(element);
+						SpriteInstanceReferences.Remove(element);
 					}
 				}
 				catch { }
 			}
 			using (meta.Lock.Write) {
-				if (meta.SpriteTable.TryGetValue(scaledTexture.SpriteMapHash, out var currentValue) && currentValue == scaledTexture) {
-					meta.SpriteTable.Remove(scaledTexture.SpriteMapHash);
+				if (spriteTable.TryGetValue(spriteInstance.SpriteMapHash, out var currentValue) && currentValue == spriteInstance) {
+					spriteTable.Remove(spriteInstance.SpriteMapHash);
+					currentValue?.Dispose();
 				}
 			}
 		}
 		finally {
-			if (scaledTexture.Texture != null && !scaledTexture.Texture.IsDisposed) {
-				Debug.TraceLn($"Disposing Active HD Texture: {scaledTexture.SafeName()}");
+			if (spriteInstance.Texture != null && !spriteInstance.Texture.IsDisposed) {
+				Debug.TraceLn($"Disposing Active HD Texture: {spriteInstance.SafeName()}");
 
-				//scaledTexture.Texture.Dispose();
+				//spriteInstance.Texture.Dispose();
 			}
 		}
 	}
@@ -92,9 +108,9 @@ sealed class SpriteMap {
 	internal void Purge(Texture2D reference, in Bounds? sourceRectangle = null) {
 		try {
 			var meta = reference.Meta();
-			var Map = meta.SpriteTable;
+			var spriteTable = meta.SpriteInstanceTable;
 			using (meta.Lock.Read) {
-				if (Map.Count == 0) {
+				if (spriteTable.Count == 0) {
 					return;
 				}
 
@@ -103,20 +119,21 @@ sealed class SpriteMap {
 
 				bool hasSourceRect = sourceRectangle.HasValue;
 
-				var removeTexture = hasSourceRect ? new List<ulong>() : null;
+				var removeTexture = hasSourceRect ? new List<ulong>() : null!;
 
-				foreach (var pairs in Map) {
-					var scaledTexture = pairs.Value;
-					lock (scaledTexture) {
-						if (sourceRectangle.HasValue && !scaledTexture.OriginalSourceRectangle.Overlaps(sourceRectangle.Value)) {
+				foreach (var pairs in spriteTable) {
+					var spriteInstance = pairs.Value;
+					lock (spriteInstance) {
+						if (sourceRectangle.HasValue && !spriteInstance.OriginalSourceRectangle.Overlaps(sourceRectangle.Value)) {
 							continue;
 						}
-						if (scaledTexture.Texture != null) {
+						if (spriteInstance.Texture is not null) {
 							// TODO : should this be locked?
-							scaledTexture.Texture.Dispose();
+							spriteInstance.Texture.Dispose();
 						}
-						scaledTexture.Texture = null;
+						spriteInstance.Texture = null;
 						if (hasSourceRect) {
+							spriteInstance.Dispose();
 							removeTexture.Add(pairs.Key);
 						}
 					}
@@ -125,11 +142,11 @@ sealed class SpriteMap {
 				using (meta.Lock.Promote) {
 					if (hasSourceRect) {
 						foreach (var hash in removeTexture) {
-							Map.Remove(hash);
+							spriteTable.Remove(hash);
 						}
 					}
 					else {
-						Map.Clear();
+						meta.ClearSpriteInstanceTable();
 					}
 				}
 				// : TODO dispose sprites?
@@ -141,14 +158,16 @@ sealed class SpriteMap {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal void SeasonPurge(string season) {
 		try {
-			var purgeList = new List<ScaledTexture>();
+			var purgeList = new List<ManagedSpriteInstance>();
 			using (Lock.Read) {
-				foreach (var scaledTexture in ScaledTextureReferences) {
-					if (scaledTexture.Anonymous())
+				foreach (var spriteInstance in SpriteInstanceReferences) {
+					if (spriteInstance.Anonymous()) {
 						continue;
-					var textureName = scaledTexture.SafeName().ToLowerInvariant();
+					}
+
+					var textureName = spriteInstance.SafeName().ToLowerInvariant();
 					if (
-						!textureName.Contains(season.ToLowerInvariant()) &&
+						!textureName.Contains(season) &&
 						(
 							textureName.Contains("spring") ||
 							textureName.Contains("summer") ||
@@ -156,7 +175,7 @@ sealed class SpriteMap {
 							textureName.Contains("winter")
 						)
 					) {
-						purgeList.Add(scaledTexture);
+						purgeList.Add(spriteInstance);
 					}
 				}
 			}
@@ -164,8 +183,9 @@ sealed class SpriteMap {
 				if (purgable.Reference.TryGetTarget(out var reference)) {
 					purgable.Dispose();
 					var meta = reference.Meta();
+					var spriteTable = meta.SpriteInstanceTable;
 					using (meta.Lock.Write) {
-						meta.SpriteTable.Clear();
+						meta.ClearSpriteInstanceTable();
 					}
 				}
 			}
@@ -173,16 +193,16 @@ sealed class SpriteMap {
 		catch { }
 	}
 
-	internal Dictionary<Texture2D, List<ScaledTexture>> GetDump() {
-		var result = new Dictionary<Texture2D, List<ScaledTexture>>();
+	internal Dictionary<Texture2D, List<ManagedSpriteInstance>> GetDump() {
+		var result = new Dictionary<Texture2D, List<ManagedSpriteInstance>>();
 
-		foreach (var scaledTexture in ScaledTextureReferences) {
-			if (scaledTexture.Reference.TryGetTarget(out var referenceTexture)) {
+		foreach (var spriteInstance in SpriteInstanceReferences) {
+			if (spriteInstance.Reference.TryGetTarget(out var referenceTexture)) {
 				if (!result.TryGetValue(referenceTexture, out var resultList)) {
-					resultList = new List<ScaledTexture>();
+					resultList = new List<ManagedSpriteInstance>();
 					result.Add(referenceTexture, resultList);
 				}
-				resultList.Add(scaledTexture);
+				resultList.Add(spriteInstance);
 			}
 		}
 

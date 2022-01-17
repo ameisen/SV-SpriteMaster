@@ -2,6 +2,8 @@
 using System;
 using System.Runtime.CompilerServices;
 
+#nullable enable
+
 namespace SpriteMaster;
 sealed class TexelTimer {
 	private long TotalDuration = 0;

@@ -3,9 +3,10 @@ using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
 using SpriteMaster.Types;
 using System;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+
+#nullable enable
 
 namespace SpriteMaster.Harmonize.Patches.PSpriteBatch;
 
@@ -30,20 +31,20 @@ static class Draw {
 		this Texture2D reference,
 		uint expectedScale,
 		ref Bounds source,
-		out ScaledTexture scaledTexture,
+		[NotNullWhen(true)] out ManagedSpriteInstance? spriteInstance,
 		bool create = false
 	) {
 		var invert = source.Invert;
-		scaledTexture = reference.FetchScaledTexture(
+		spriteInstance = reference.FetchScaledTexture(
 			expectedScale: expectedScale,
 			source: ref source,
 			create: create
 		);
 		source.Invert = invert;
-		return scaledTexture != null;
+		return spriteInstance is not null;
 	}
 
-	private static ScaledTexture FetchScaledTexture(
+	private static ManagedSpriteInstance? FetchScaledTexture(
 		this Texture2D reference,
 		uint expectedScale,
 		ref Bounds source,
@@ -52,67 +53,63 @@ static class Draw {
 		var newSource = source;
 
 		try {
-			if (!newSource.Cleanup(reference))
+			// If the (potentially-clamped) source bounds are invalid, return null
+			if (!newSource.Cleanup(reference)) {
 				return null;
-
-			if (reference.Width < 1 || reference.Height < 1)
-				return null;
-
-			if (reference.Extent().MaxOf <= Config.Resample.MinimumTextureDimensions)
-				return null;
-
-			var scaledTexture = create ?
-				ScaledTexture.Get(texture: reference, source: newSource, expectedScale: expectedScale) :
-				ScaledTexture.Fetch(texture: reference, source: newSource, expectedScale: expectedScale);
-			if (scaledTexture != null && scaledTexture.IsReady) {
-				var t = scaledTexture.Texture;
-
-				if (!t.Validate())
-					return null;
-
-				source = t.Dimensions;
-
-				return scaledTexture;
 			}
+
+			// If the reference texture's dimensions are invalid, return null
+			if (reference.Width < 1 || reference.Height < 1) {
+				return null;
+			}
+
+			// If the reference texture is too small to consider resampling, return null
+			if (reference.Extent().MaxOf <= Config.Resample.MinimumTextureDimensions) {
+				return null;
+			}
+
+			var spriteInstance = create ?
+				ManagedSpriteInstance.FetchOrCreate(texture: reference, source: newSource, expectedScale: expectedScale) :
+				ManagedSpriteInstance.Fetch(texture: reference, source: newSource, expectedScale: expectedScale);
+
+			if (spriteInstance is null || !spriteInstance.IsReady) {
+				return null;
+			}
+
+			var t = spriteInstance.Texture!;
+
+			if (!t.Validate()) {
+				return null;
+			}
+
+			source = t.Dimensions;
+
+			return spriteInstance;
 		}
 		catch (Exception ex) {
 			ex.PrintError();
-			ex.InnerException?.PrintError();
 		}
 
 		return null;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static bool Validate(this ManagedTexture2D @this) {
-		return @this?.IsDisposed == false;
-	}
-
-	[Conditional("DEBUG"), MethodImpl(Runtime.MethodImpl.Hot)]
-	private static void Validate(this in XNA.Rectangle sourceRect, Texture2D reference) {
-		Bounds source = sourceRect;
-		if (source.Left < 0 || source.Top < 0 || source.Right >= reference.Width || source.Bottom >= reference.Height) {
-			if (source.Right - reference.Width > 1 || source.Bottom - reference.Height > 1)
-				Debug.WarningLn($"Out of range source '{source}' for texture '{reference.SafeName()}' ({reference.Width}, {reference.Height})");
-		}
-		if (source.Right < source.Left || source.Bottom < source.Top) {
-			Debug.WarningLn($"Inverted range source '{source}' for texture '{reference.SafeName()}'");
-		}
-	}
+	private static bool Validate(this ManagedTexture2D texture) => !texture.IsDisposed;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static void GetDrawParameters(Texture2D texture, in XNA.Rectangle? source, out Bounds bounds, out float scaleFactor) {
 		texture.Meta().UpdateLastAccess();
-		var sourceRectangle = source.GetValueOrDefault(new(0, 0, texture.Width, texture.Height));
 
-		scaleFactor = 1.0f;
-		if (SpriteOverrides.IsWater(sourceRectangle, texture)) {
-			if (Config.Resample.TrimWater) {
-				scaleFactor = 4.0f;
-			}
+		var sourceRectangle = (Bounds)source.GetValueOrDefault(new(0, 0, texture.Width, texture.Height));
+
+		if (Config.Resample.TrimWater && SpriteOverrides.IsWater(sourceRectangle, texture)) {
+			scaleFactor = 4.0f;
+		}
+		else {
+			scaleFactor = 1.0f;
 		}
 
-		sourceRectangle.Validate(reference: texture);
+		ReportOnceValidations.Validate(sourceRectangle, texture);
 		bounds = sourceRectangle;
 	}
 
@@ -135,7 +132,7 @@ static class Draw {
 		if (destination.Width < 0 || destination.Height < 0) {
 			Debug.Trace("destination invert");
 		}
-		if (source.HasValue && (source.Value.Width < 0 || source.Value.Height < 0)) {
+		if (source is XNA.Rectangle sourceRect && (sourceRect.Width < 0 || sourceRect.Height < 0)) {
 			Debug.Trace("source invert");
 		}
 
@@ -150,32 +147,29 @@ static class Draw {
 
 		Bounds destinationBounds = destination;
 
-		var expectedScale2D = new Vector2F(destinationBounds.Extent) / new Vector2F(sourceRectangle.Extent);
+		var expectedScale2D = destinationBounds.ExtentF / sourceRectangle.ExtentF;
 		var expectedScale = EstimateScale(expectedScale2D, scaleFactor);
 
 		if (!texture.FetchScaledTexture(
 			expectedScale: expectedScale,
 			source: ref sourceRectangle,
-			scaledTexture: out var scaledTexture,
+			spriteInstance: out var spriteInstance,
 			create: true
 		)) {
 			return Continue;
 		}
-		scaledTexture.UpdateReferenceFrame();
+		spriteInstance.UpdateReferenceFrame();
 
-		var resampledTexture = scaledTexture.Texture;
-		if (!resampledTexture.Validate()) {
-			return Continue;
-		}
+		var resampledTexture = spriteInstance.Texture!;
 
-		if (!scaledTexture.Padding.IsZero) {
+		if (!spriteInstance.Padding.IsZero) {
 			// Convert the draw into the other draw style. This has to be done because the padding potentially has
 			// subpixel accuracy when scaled to the destination rectangle.
 
-			var originalSize = new Vector2F(referenceRectangle.Extent);
-			var destinationSize = new Vector2F(destinationBounds.Extent);
+			var originalSize = referenceRectangle.ExtentF;
+			var destinationSize = destinationBounds.ExtentF;
 			var newScale = destinationSize / originalSize;
-			var newPosition = new Vector2F(destinationBounds.X, destinationBounds.Y);
+			var newPosition = destinationBounds.OffsetF;
 
 			if (destinationBounds.Invert.X) {
 				effects ^= SpriteEffects.FlipHorizontally;
@@ -219,12 +213,12 @@ static class Draw {
 		using var _ = Performance.Track("OnDraw0");
 
 		Bounds sourceRectangle;
-		ScaledTexture scaledTexture;
+		ManagedSpriteInstance? spriteInstance;
 		ManagedTexture2D resampledTexture;
 
 		Bounds destinationBounds = destination;
 
-		if (__state == null) {
+		if (__state is null) {
 			GetDrawParameters(
 				texture: texture,
 				source: source,
@@ -238,24 +232,21 @@ static class Draw {
 			if (!texture.FetchScaledTexture(
 				expectedScale: expectedScale,
 				source: ref sourceRectangle,
-				scaledTexture: out scaledTexture
+				spriteInstance: out spriteInstance
 			)) {
 				return Continue;
 			}
-			scaledTexture.UpdateReferenceFrame();
+			spriteInstance.UpdateReferenceFrame();
 
-			resampledTexture = scaledTexture.Texture;
-			if (!resampledTexture.Validate()) {
-				return Continue;
-			}
+			resampledTexture = spriteInstance.Texture!;
 		}
 		else {
 			resampledTexture = __state;
-			scaledTexture = resampledTexture.Texture;
+			spriteInstance = resampledTexture.Texture;
 			sourceRectangle = resampledTexture.Dimensions;
 		}
 
-		var scaledOrigin = origin / scaledTexture.Scale;
+		var scaledOrigin = (Vector2F)origin / spriteInstance.Scale;
 
 		if (source.HasValue) {
 			sourceRectangle.Invert.X = (source.Value.Width < 0);
@@ -298,39 +289,37 @@ static class Draw {
 			scaleFactor: out var scaleFactor
 		);
 
-		ScaledTexture scaledTexture;
-		if (texture is ManagedTexture2D resampledTexture) {
-			scaledTexture = resampledTexture.Texture;
+		ManagedSpriteInstance? spriteInstance;
+		ManagedTexture2D? resampledTexture;
+		if (texture is ManagedTexture2D) {
+			resampledTexture = (ManagedTexture2D)texture;
+			spriteInstance = resampledTexture.Texture;
 			sourceRectangle = resampledTexture.Dimensions;
 		}
 		else if (texture.FetchScaledTexture(
 			expectedScale: EstimateScale(scale, scaleFactor),
 			source: ref sourceRectangle,
-			scaledTexture: out scaledTexture,
+			spriteInstance: out spriteInstance,
 			create: true
 		)) {
-			scaledTexture.UpdateReferenceFrame();
-			resampledTexture = scaledTexture.Texture;
-
-			if (!resampledTexture.Validate()) {
-				return Continue;
-			}
+			spriteInstance.UpdateReferenceFrame();
+			resampledTexture = spriteInstance.Texture!;
 		}
 		else {
 			resampledTexture = null;
 		}
 
-		if (scaledTexture == null) {
+		if (spriteInstance is null || resampledTexture is null) {
 			return Continue;
 		}
 
-		var adjustedScale = (Vector2F)scale / (Vector2F)scaledTexture.Scale;
+		var adjustedScale = (Vector2F)scale / (Vector2F)spriteInstance.Scale;
 		var adjustedPosition = position;
 		var adjustedOrigin = (Vector2F)origin;
 
-		if (!scaledTexture.Padding.IsZero) {
+		if (!spriteInstance.Padding.IsZero) {
 			var textureSize = new Vector2F(sourceRectangle.Extent);
-			var innerSize = (Vector2F)scaledTexture.UnpaddedSize;
+			var innerSize = (Vector2F)spriteInstance.UnpaddedSize;
 
 			// This is the scale factor to bring the inner size to the draw size.
 			var innerRatio = textureSize / innerSize;
@@ -338,12 +327,12 @@ static class Draw {
 			// Scale the... scale by the scale factor.
 			adjustedScale *= innerRatio;
 
-			adjustedOrigin *= (Vector2F)scaledTexture.Scale;
+			adjustedOrigin *= (Vector2F)spriteInstance.Scale;
 			adjustedOrigin /= innerRatio;
 			adjustedOrigin += (textureSize - innerSize) * 0.5f;
 		}
 		else {
-			adjustedOrigin *= (Vector2F)scaledTexture.Scale;
+			adjustedOrigin *= (Vector2F)spriteInstance.Scale;
 		}
 
 		if (source.HasValue) {

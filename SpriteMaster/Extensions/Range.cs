@@ -184,33 +184,4 @@ static class Range {
 	internal static IEnumerable<long> Until(this long from, long to) {
 		return ToExclusive(from, to);
 	}
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static Bounds ClampTo(this in Bounds source, in Bounds clamp) {
-		var result = new Bounds(source.X, source.Y, source.Width, source.Height);
-
-		int leftDiff = clamp.Left - result.Left;
-		if (leftDiff > 0) {
-			result.X += leftDiff;
-			result.Width -= leftDiff;
-		}
-
-		int topDiff = clamp.Top - result.Top;
-		if (topDiff > 0) {
-			result.Y += topDiff;
-			result.Height -= topDiff;
-		}
-
-		int rightDiff = result.Right - clamp.Right;
-		if (rightDiff > 0) {
-			result.Width -= rightDiff;
-		}
-
-		int bottomDiff = result.Bottom - clamp.Bottom;
-		if (bottomDiff > 0) {
-			result.Height -= bottomDiff;
-		}
-
-		return result;
-	}
 }

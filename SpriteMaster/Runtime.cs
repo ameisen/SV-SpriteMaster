@@ -7,6 +7,8 @@ using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 
+#nullable enable
+
 namespace SpriteMaster;
 
 static class Runtime {
@@ -15,6 +17,7 @@ static class Runtime {
 		internal const MethodImplOptions Cold = MethodImplOptions.NoInlining | MethodImplOptions.AggressiveOptimization;
 		internal const MethodImplOptions ErrorPath = MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization;
 		internal const MethodImplOptions RunOnce = MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization;
+		internal const MethodImplOptions IgnoreOptimization = MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization;
 	}
 
 	[Pure]
@@ -40,7 +43,7 @@ static class Runtime {
 	}
 
 	[MethodImpl(MethodImpl.RunOnce)]
-	private static Process Open2(string command, string[] args = null) {
+	private static Process Open2(string command, string[]? args = null) {
 		if (string.IsNullOrEmpty(command)) {
 			throw new ArgumentOutOfRangeException(nameof(command));
 		}
@@ -64,7 +67,7 @@ static class Runtime {
 	}
 
 	[MethodImpl(MethodImpl.RunOnce)]
-	private static string Capture1(string command, string[] args = null) {
+	private static string Capture1(string command, string[]? args = null) {
 		using var process = Open2(command, args);
 		return process.StandardOutput.ReadToEnd();
 	}
@@ -88,7 +91,7 @@ static class Runtime {
 	}
 
 	[MethodImpl(MethodImpl.RunOnce)]
-	private static Result2 Capture1E(string command, string[] args = null) {
+	private static Result2 Capture1E(string command, string[]? args = null) {
 		using var process = Open2(command, args);
 		return new(
 			process.StandardOutput.ReadToEnd(),
@@ -151,7 +154,7 @@ static class Runtime {
 		// Set a base default based on the platform and bits
 		GameFramework = (!IsWindows || Bits == 64) ? GameFrameworkType.MonoGame : GameFrameworkType.XNA;
 		foreach (var frameworkPair in GameFrameworkPairs) {
-			var exists = AppDomain.CurrentDomain.GetAssemblies().AnyF(assembly => assembly.GetName().Name.StartsWith(frameworkPair.Prefix));
+			var exists = AppDomain.CurrentDomain.GetAssemblies().AnyF(assembly => assembly.GetName().Name?.StartsWith(frameworkPair.Prefix) ?? false);
 			if (exists) {
 				GameFramework = frameworkPair.Framework;
 				break;
@@ -168,8 +171,14 @@ static class Runtime {
 			try {
 				var gameAssembly = AppDomain.CurrentDomain.GetAssemblies().SingleF(assembly => assembly.GetName().Name == "MonoGame.Framework");
 				var shaderType = gameAssembly.GetType("Microsoft.Xna.Framework.Graphics.Shader");
+				if (shaderType is null) {
+					throw new NullReferenceException(nameof(shaderType));
+				}
 				var profileProperty = shaderType.GetProperty("Profile");
-				var profile = (int)profileProperty.GetValue(null);
+				if (profileProperty is null) {
+					throw new NullReferenceException(nameof(profileProperty));
+				}
+				var profile = (int?)profileProperty.GetValue(null);
 				Renderer = profile switch {
 					0 => RendererType.OpenGL,
 					1 => RendererType.D3D11,

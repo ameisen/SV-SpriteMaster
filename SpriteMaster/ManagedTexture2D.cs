@@ -5,16 +5,18 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using TeximpNet.Compression;
+
+#nullable enable
 
 namespace SpriteMaster;
+
 sealed class ManagedTexture2D : InternalTexture2D {
 	private static ulong TotalAllocatedSize = 0L;
 	private static volatile uint TotalManagedTextures = 0;
 	private const bool UseMips = false;
 
 	internal readonly WeakReference<Texture2D> Reference;
-	internal readonly ScaledTexture Texture;
+	internal readonly ManagedSpriteInstance Texture;
 	internal readonly Vector2I Dimensions;
 
 	internal static void DumpStats(List<string> output) {
@@ -27,11 +29,11 @@ sealed class ManagedTexture2D : InternalTexture2D {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal ManagedTexture2D(
-		ScaledTexture texture,
+		ManagedSpriteInstance texture,
 		Texture2D reference,
 		Vector2I dimensions,
 		SurfaceFormat format,
-		string name = null
+		string? name = null
 	) : base(reference.GraphicsDevice.IsDisposed ? DrawState.Device : reference.GraphicsDevice, dimensions.Width, dimensions.Height, UseMips, format) {
 		this.Name = name ?? $"{reference.SafeName()} [internal managed <{format}>]";
 

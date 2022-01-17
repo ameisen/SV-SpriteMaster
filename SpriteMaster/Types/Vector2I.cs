@@ -4,28 +4,22 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
+#nullable enable
+
 namespace SpriteMaster.Types;
 
+[CLSCompliant(false)]
 [DebuggerDisplay("[{X}, {Y}}")]
-[StructLayout(LayoutKind.Explicit, Pack = sizeof(ulong), Size = sizeof(ulong))]
-unsafe struct Vector2I :
+[StructLayout(LayoutKind.Explicit, Pack = Vector2I.Alignment, Size = Vector2I.ByteSize)]
+unsafe partial struct Vector2I :
+	CompositePrimitive<ulong>,
 	ILongHash,
-	ICloneable,
-	IComparable,
-	IComparable<Vector2I>,
-	IComparable<(int, int)>,
-	IComparable<DrawingPoint>,
-	IComparable<XNA.Point>,
-	IComparable<XTilePoint>,
-	IComparable<DrawingSize>,
-	IComparable<XTileSize>,
-	IEquatable<Vector2I>,
-	IEquatable<(int, int)>,
-	IEquatable<DrawingPoint>,
-	IEquatable<XNA.Point>,
-	IEquatable<XTilePoint>,
-	IEquatable<DrawingSize>,
-	IEquatable<XTileSize> {
+	ICloneable {
+	internal const int ByteSize = sizeof(ulong);
+	internal const int Alignment = sizeof(ulong);
+
+	internal static readonly Vector2I MaxValue = (int.MaxValue, int.MaxValue);
+	internal static readonly Vector2I MinValue = (int.MinValue, int.MinValue);
 
 	internal static readonly Vector2I Zero = (0, 0);
 	internal static readonly Vector2I One = (1, 1);
@@ -407,40 +401,8 @@ unsafe struct Vector2I :
 		lhs.Y ^ (int)rhs
 	);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public override readonly string ToString() => $"{{{X}, {Y}}}";
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly int CompareTo(Vector2I other) => Packed.CompareTo(other.Packed);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly int CompareTo((int, int) other) => CompareTo((Vector2I)other);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly int CompareTo(DrawingPoint other) => CompareTo((Vector2I)other);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly int CompareTo(XNA.Point other) => CompareTo((Vector2I)other);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly int CompareTo(XTilePoint other) => CompareTo((Vector2I)other);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly int CompareTo(DrawingSize other) => CompareTo((Vector2I)other);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly int CompareTo(XTileSize other) => CompareTo((Vector2I)other);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	readonly int IComparable.CompareTo(object other) => other switch {
-		Vector2I vec => CompareTo(vec),
-		DrawingPoint vec => CompareTo(vec),
-		XNA.Point vec => CompareTo(vec),
-		XTilePoint vec => CompareTo(vec),
-		DrawingSize vec => CompareTo(vec),
-		XTileSize vec => CompareTo(vec),
-		_ => throw new ArgumentException(),
-	};
+	public readonly string ToString(IFormatProvider? provider) => $"{{{X.ToString(provider)}, {Y.ToString(provider)}}}";
 
 	// C# GetHashCode on all integer primitives, even longs, just returns it truncated to an int.
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -448,138 +410,4 @@ unsafe struct Vector2I :
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	ulong ILongHash.GetLongHashCode() => ((uint)X.GetHashCode() << 32) | (uint)Y.GetHashCode();
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly override bool Equals(object other) => other switch {
-		Vector2I vec => Equals(vec),
-		DrawingPoint vec => Equals(vec),
-		XNA.Point vec => Equals(vec),
-		XTilePoint vec => Equals(vec),
-		DrawingSize vec => Equals(vec),
-		XTileSize vec => Equals(vec),
-		_ => throw new ArgumentException(),
-	};
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly bool Equals(Vector2I other) => Packed == other.Packed;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly bool Equals((int, int) other) => this == (Vector2I)other;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly bool Equals(in (int X, int Y) other) => this == (Vector2I)other;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly bool Equals(DrawingPoint other) => this == (Vector2I)other;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly bool Equals(XNA.Point other) => this == (Vector2I)other;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly bool Equals(XTilePoint other) => this == (Vector2I)other;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly bool Equals(DrawingSize other) => this == (Vector2I)other;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly bool Equals(XTileSize other) => this == (Vector2I)other;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly bool NotEquals(Vector2I other) => Packed != other.Packed;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly bool NotEquals(in (int X, int Y) other) => this != (Vector2I)other;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly bool NotEquals(DrawingPoint other) => this != (Vector2I)other;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly bool NotEquals(XNA.Point other) => this != (Vector2I)other;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly bool NotEquals(XTilePoint other) => this != (Vector2I)other;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly bool NotEquals(DrawingSize other) => this != (Vector2I)other;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly bool NotEquals(XTileSize other) => this != (Vector2I)other;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(Vector2I lhs, Vector2I rhs) => lhs.Packed == rhs.Packed;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(Vector2I lhs, Vector2I rhs) => lhs.Packed != rhs.Packed;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(Vector2I lhs, in (int X, int Y) rhs) => lhs.Equals(rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(Vector2I lhs, in (int X, int Y) rhs) => lhs.NotEquals(rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(in (int X, int Y) lhs, Vector2I rhs) => rhs.Equals(lhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(in (int X, int Y) lhs, Vector2I rhs) => rhs.NotEquals(lhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(Vector2I lhs, DrawingPoint rhs) => lhs.Equals(rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(Vector2I lhs, DrawingPoint rhs) => lhs.NotEquals(rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(DrawingPoint lhs, Vector2I rhs) => rhs.Equals(lhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(DrawingPoint lhs, Vector2I rhs) => rhs.NotEquals(lhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(Vector2I lhs, XNA.Point rhs) => lhs.Equals(rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(Vector2I lhs, XNA.Point rhs) => lhs.NotEquals(rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(XNA.Point lhs, Vector2I rhs) => rhs.Equals(lhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(XNA.Point lhs, Vector2I rhs) => rhs.NotEquals(lhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(Vector2I lhs, XTilePoint rhs) => lhs.Equals(rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(Vector2I lhs, XTilePoint rhs) => lhs.NotEquals(rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(XTilePoint lhs, Vector2I rhs) => rhs.Equals(lhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(XTilePoint lhs, Vector2I rhs) => rhs.NotEquals(lhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(Vector2I lhs, DrawingSize rhs) => lhs.Equals(rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(Vector2I lhs, DrawingSize rhs) => lhs.NotEquals(rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(DrawingSize lhs, Vector2I rhs) => rhs.Equals(lhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(DrawingSize lhs, Vector2I rhs) => rhs.NotEquals(lhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(Vector2I lhs, XTileSize rhs) => lhs.Equals(rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(Vector2I lhs, XTileSize rhs) => lhs.NotEquals(rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(XTileSize lhs, Vector2I rhs) => rhs.Equals(lhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(XTileSize lhs, Vector2I rhs) => rhs.NotEquals(lhs);
 }

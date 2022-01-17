@@ -3,6 +3,8 @@
 using System;
 using System.Runtime.CompilerServices;
 
+#nullable enable
+
 namespace SpriteMaster;
 
 static class Performance {
@@ -37,7 +39,7 @@ static class Performance {
 #if TRACK_PERFORMANCE
 		internal static IDisposable Track([CallerMemberName] string name = "") {
 #else
-	internal static IDisposable Track(string _ = null) {
+	internal static IDisposable Track(string? _ = null) {
 #endif
 #if TRACK_PERFORMANCE
 			return new PerformanceTrackerDisposable(name);

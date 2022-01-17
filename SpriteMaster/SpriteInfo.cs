@@ -133,7 +133,7 @@ sealed class SpriteInfo : IDisposable {
 			}
 			WasCached = false;
 		}
-		else if (ReferenceData == MTexture2D.BlockedSentinel) {
+		else if (ReferenceData == Texture2DMeta.BlockedSentinel) {
 			refData = null;
 			WasCached = false;
 		}

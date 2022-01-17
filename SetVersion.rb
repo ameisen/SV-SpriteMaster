@@ -146,6 +146,7 @@ class Module
 end
 
 module Options
+	@quiet = false
 	@dry_run = false
 	@force = false
 	@pretty_manifest = false
@@ -201,6 +202,8 @@ def parse_args(*args)
 
 		if in_args
 			case arg
+			when *bool_arg('quiet'), '-q'
+				Options::quiet = parse_bool(arg, $1)
 			when *bool_arg('force'), '-f'
 				Options::force = parse_bool(arg, $1)
 			when *bool_arg('dry'), *bool_arg('dry-run')
@@ -255,11 +258,13 @@ $version = SemanticVersion.new(
 	tag_version: Options::Version::tag_version
 )
 
-puts "Version    : '#{$version}'"
-indent_puts "Manifest : '#{$version.to_manifest}'"
-indent_puts "Assembly : '#{$version.to_assembly}'"
-indent_puts "File     : '#{$version.to_file}'"
-puts
+unless Options::quiet
+	puts "Version    : '#{$version}'"
+	indent_puts "Manifest : '#{$version.to_manifest}'"
+	indent_puts "Assembly : '#{$version.to_assembly}'"
+	indent_puts "File     : '#{$version.to_file}'"
+	puts
+end
 
 def update_manifest
 	manifest = nil
@@ -267,12 +272,12 @@ def update_manifest
 		manifest = JSON.parse(file.read)
 	}
 	if !Options::force && manifest["Version"] == $version.to_manifest
-		puts "Manifest Unchanged (#{manifest["Version"]})"
+		puts "Manifest Unchanged (#{manifest["Version"]})" unless Options::quiet
 		return
 	end
 	manifest["Version"] = $version.to_manifest
 	pretty = JSON.pretty_generate(manifest);
-	puts "New Manifest: ", pretty
+	puts "New Manifest: ", pretty unless Options::quiet
 	unless Options::dry_run
 		File.open(Paths::Manifest.to_s, "w:bom|utf-8") { |file|
 			file.write(Options::pretty_manifest ? pretty : JSON.dump(manifest))
@@ -315,11 +320,11 @@ def update_props
 	}
 
 	if !changed
-		puts "Project Properties Unchanged"
+		puts "Project Properties Unchanged" unless Options::quiet
 		return
 	end
 
-	puts "New Props: ", project
+	puts "New Props: ", project unless Options::quiet
 
 	unless Options::dry_run
 		File.open(Paths::Props.to_s, "w:bom|utf-8") { |file|
@@ -370,10 +375,10 @@ def update_assembly
 	changed = update_attribute["FullVersion", $version.to_s] || changed
 
 	unless changed
-		puts "Assembly Unchanged"
+		puts "Assembly Unchanged" unless Options::quiet
 	end
 
-	puts "New Assembly: ", lines
+	puts "New Assembly: ", lines unless Options::quiet
 
 	unless Options::dry_run
 		File.open(Paths::Assembly.to_s, "w:bom|utf-8") { |file|

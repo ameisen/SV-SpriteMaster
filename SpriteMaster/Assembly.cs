@@ -7,6 +7,7 @@ global using XTilePoint = xTile.Dimensions.Location;
 global using XTileRectangle = xTile.Dimensions.Rectangle;
 global using XTileSize = xTile.Dimensions.Size;
 global using half = System.Half;
+global using XTexture2D = Microsoft.Xna.Framework.Graphics.Texture2D;
 
 #nullable enable
 
@@ -17,15 +18,17 @@ using System;
 [assembly: CompilationRelaxations(CompilationRelaxations.NoStringInterning)]
 
 // https://stackoverflow.com/questions/24802222/performance-of-expression-trees#comment44537873_24802222
+[assembly: CLSCompliant(false)]
 [assembly: AllowPartiallyTrustedCallers]
 [assembly: SecurityTransparent]
 [assembly: SecurityRules(SecurityRuleSet.Level2, SkipVerificationInFullTrust = true)]
 [assembly: InternalsVisibleToAttribute("xBRZ")]
-[assembly: ChangeList("319d1e5:0.13.alpha.2-4-g319d1e5")]
+[assembly: ChangeList("aa42cb2:0.13.alpha.2-5-gaa42cb2")]
 [assembly: BuildComputerName("Palatinate")]
 [assembly: FullVersion("0.13.0.2-alpha.2")]
 // [assembly: SuppressUnmanagedCodeSecurity]
 
+[module: CLSCompliant(false)]
 [module: SkipLocalsInit]
 
 [AttributeUsage(validOn: AttributeTargets.Assembly, AllowMultiple = false, Inherited = true)]

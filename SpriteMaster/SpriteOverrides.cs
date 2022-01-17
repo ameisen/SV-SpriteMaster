@@ -4,6 +4,8 @@ using SpriteMaster.Types;
 using System;
 using System.Runtime.CompilerServices;
 
+#nullable enable
+
 namespace SpriteMaster;
 
 static class SpriteOverrides {

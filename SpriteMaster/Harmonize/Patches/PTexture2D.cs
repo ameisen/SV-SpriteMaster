@@ -35,7 +35,7 @@ static class PTexture2D {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static void SetDataPurge<T>(Texture2D texture, in XNA.Rectangle? rect, T[] data, int startIndex, int elementCount) where T : struct {
-		if (!ScaledTexture.Validate(texture)) {
+		if (!ManagedSpriteInstance.Validate(texture)) {
 			return;
 		}
 
@@ -55,7 +55,7 @@ static class PTexture2D {
 					)
 				), byteData);
 #else
-		ScaledTexture.Purge(
+		ManagedSpriteInstance.Purge(
 			reference: texture,
 			bounds: rect,
 			data: new DataRef<byte>(

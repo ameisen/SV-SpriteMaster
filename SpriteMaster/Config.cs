@@ -1,14 +1,16 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using SpriteMaster.Resample;
-using SpriteMaster.Types;
 using StardewModdingAPI;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using TeximpNet.Compression;
 
+#nullable enable
+
 namespace SpriteMaster;
+
 static class Config {
 	internal sealed class CommentAttribute : Attribute {
 		internal readonly string Message;
@@ -29,19 +31,19 @@ static class Config {
 		}
 	}
 
-	internal static readonly string ModuleName = typeof(Config).Namespace;
+	internal static readonly string ModuleName = typeof(Config).Namespace ?? "SpriteMaster";
 
 	internal const bool IgnoreConfig = true;
 	internal const bool SkipIntro = IgnoreConfig;
 
 	[ConfigIgnore]
-	internal static readonly Version CurrentVersionObj = typeof(Config).Assembly.GetName().Version;
+	internal static readonly Version CurrentVersionObj = typeof(Config).Assembly.GetName().Version ?? new Version("0.0.0.0");
 	[ConfigIgnore]
 	internal static readonly string CurrentVersion = CurrentVersionObj.ToString(3);
 
 	internal static string ConfigVersion = "";
 	[ConfigIgnore]
-	internal static string ClearConfigBefore = "0.14.0.0";
+	internal static string ClearConfigBefore = "0.13.0.0";
 
 	[ConfigIgnore]
 	internal static bool ForcedDisable = false;

@@ -2,6 +2,8 @@
 using Microsoft.Xna.Framework.Graphics;
 using System;
 
+#nullable enable
+
 namespace SpriteMaster;
 
 static class SystemInfo {

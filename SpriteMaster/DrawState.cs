@@ -87,7 +87,7 @@ static class DrawState {
 	internal static void OnPresent() {
 		Thread.CurrentThread.Priority = ThreadPriority.Highest;
 		if (TriggerGC) {
-			ScaledTexture.PurgeTextures((Config.Garbage.RequiredFreeMemory * Config.Garbage.RequiredFreeMemoryHysterisis).NearestLong() * 1024 * 1024);
+			ManagedSpriteInstance.PurgeTextures((Config.Garbage.RequiredFreeMemory * Config.Garbage.RequiredFreeMemoryHysterisis).NearestLong() * 1024 * 1024);
 			//Garbage.Collect();
 			Garbage.Collect(compact: true, blocking: true, background: false);
 

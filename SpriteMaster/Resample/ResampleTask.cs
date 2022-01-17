@@ -7,12 +7,12 @@ using System.Threading.Tasks;
 namespace SpriteMaster.Resample;
 
 static class ResampleTask {
-	private static readonly TaskFactory<ScaledTexture?> Factory = new(ThreadedTaskScheduler.Instance);
+	private static readonly TaskFactory<ManagedSpriteInstance?> Factory = new(ThreadedTaskScheduler.Instance);
 
-	private static ScaledTexture? Resample(object? parametersObj) => ResampleFunction((TaskParameters)parametersObj!);
+	private static ManagedSpriteInstance? Resample(object? parametersObj) => ResampleFunction((TaskParameters)parametersObj!);
 
-	private static ScaledTexture? ResampleFunction(in TaskParameters parameters) {
-		return new ScaledTexture(
+	private static ManagedSpriteInstance? ResampleFunction(in TaskParameters parameters) {
+		return new ManagedSpriteInstance(
 			assetName: parameters.SpriteInfo.Reference.SafeName(),
 			textureWrapper: parameters.SpriteInfo,
 			sourceRectangle: parameters.SpriteInfo.Bounds,
@@ -27,7 +27,7 @@ static class ResampleTask {
 		bool Async
 	);
 
-	internal static Task<ScaledTexture?> Dispatch(
+	internal static Task<ManagedSpriteInstance?> Dispatch(
 		SpriteInfo spriteInfo,
 		bool async
 	) {
@@ -40,7 +40,7 @@ static class ResampleTask {
 			return Factory.StartNew(Resample, parameters);
 		}
 		else {
-			return Task<ScaledTexture?>.FromResult(ResampleFunction(parameters));
+			return Task<ManagedSpriteInstance?>.FromResult(ResampleFunction(parameters));
 		}
 	}
 

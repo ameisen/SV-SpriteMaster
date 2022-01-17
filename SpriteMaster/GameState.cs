@@ -1,5 +1,7 @@
 ﻿using StardewValley;
 
+#nullable enable
+
 namespace SpriteMaster;
 
 static class GameState {

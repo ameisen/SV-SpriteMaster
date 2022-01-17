@@ -59,7 +59,7 @@ where T : class {
 
 	internal bool TryGetTarget(out T target) => _Reference.TryGetTarget(out target);
 
-	internal void SetTarget(T target) => _Reference.SetTarget(target);
+	internal void SetTarget(T? target) => _Reference.SetTarget(target);
 
 	public void GetObjectData(SerializationInfo info, StreamingContext context) {
 		if (info == null) {

@@ -5,24 +5,29 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
+#nullable enable
+
 namespace SpriteMaster.Types;
+
 // TODO : this can be replaced with a WeakSet, I believe.
-class WeakCollection<T> : ICollection<T>, IEnumerable<T>, IEnumerable, /*ICollection, */IReadOnlyList<T>, IReadOnlyCollection<T> where T : class {
+class WeakCollection<T> : ICollection<T?>, IEnumerable<T?>, IEnumerable, /*ICollection, */IReadOnlyList<T?>, IReadOnlyCollection<T?> where T : class? {
 	static private class Reflect {
-		internal static readonly PropertyInfo IsReadOnly = typeof(List<ComparableWeakReference<T>>).GetProperty("IsReadOnly", BindingFlags.Instance | BindingFlags.NonPublic);
+		internal static readonly Func<List<ComparableWeakReference<T>>, bool> IsReadOnlyFunc = typeof(List<ComparableWeakReference<T>>).GetPropertyGetter<List<ComparableWeakReference<T>>, bool>(
+			typeof(List<ComparableWeakReference<T>>).GetProperty("IsReadOnly", BindingFlags.Instance | BindingFlags.NonPublic)
+		);
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		private static string GetName(string name) => $"{typeof(WeakCollection<T>).Name}.{name}";
 
 		static Reflect() {
-			_ = IsReadOnly ?? throw new NullReferenceException(GetName(nameof(IsReadOnly)));
+			_ = IsReadOnlyFunc ?? throw new NullReferenceException(GetName(nameof(IsReadOnlyFunc)));
 		}
 	}
 
 	private readonly List<ComparableWeakReference<T>> _List;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static ComparableWeakReference<T> Weak(T obj) => new(obj);
+	private static ComparableWeakReference<T> Weak(T? obj) => new(obj!);
 
 	public int Count => _List.Count;
 
@@ -33,11 +38,13 @@ class WeakCollection<T> : ICollection<T>, IEnumerable<T>, IEnumerable, /*ICollec
 		set => _List.Capacity = value;
 	}
 
-	public bool IsReadOnly => (bool)Reflect.IsReadOnly.GetValue(_List);
+	public bool IsReadOnly => (bool)Reflect.IsReadOnlyFunc(_List);
 
-	public T this[int index] {
+	public T? this[int index] {
 		[MethodImpl(Runtime.MethodImpl.Hot)]
+#pragma warning disable CS8766 // Nullability of reference types in return type doesn't match implicitly implemented member (possibly because of nullability attributes).
 		get => _List[index].TryGetTarget(out T target) ? target : null;
+#pragma warning restore CS8766 // Nullability of reference types in return type doesn't match implicitly implemented member (possibly because of nullability attributes).
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		set => _List[index].SetTarget(value);
 	}
@@ -83,7 +90,7 @@ class WeakCollection<T> : ICollection<T>, IEnumerable<T>, IEnumerable, /*ICollec
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public void Add(T item) {
+	public void Add(T? item) {
 		_List.Add(item?.MakeWeak());
 	}
 
@@ -140,7 +147,14 @@ class WeakCollection<T> : ICollection<T>, IEnumerable<T>, IEnumerable, /*ICollec
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static int Comparison(ComparableWeakReference<T> x, ComparableWeakReference<T> y, Comparison<T> comparer) {
+	private static int Comparison(ComparableWeakReference<T>? x, ComparableWeakReference<T>? y, Comparison<T> comparer) {
+		if (x is null) {
+			return int.MinValue;
+		}
+		if (y is null) {
+			return int.MaxValue;
+		}
+
 		bool hasX = x.TryGetTarget(out T xTarget);
 		bool hasY = y.TryGetTarget(out T yTarget);
 
@@ -163,7 +177,7 @@ class WeakCollection<T> : ICollection<T>, IEnumerable<T>, IEnumerable, /*ICollec
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		int IComparer<ComparableWeakReference<T>>.Compare(ComparableWeakReference<T> x, ComparableWeakReference<T> y) {
+		int IComparer<ComparableWeakReference<T>>.Compare(ComparableWeakReference<T>? x, ComparableWeakReference<T>? y) {
 			return Comparison(x, y, Comparer.Compare);
 		}
 	}
@@ -189,7 +203,7 @@ class WeakCollection<T> : ICollection<T>, IEnumerable<T>, IEnumerable, /*ICollec
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public bool Contains(T item) {
+	public bool Contains(T? item) {
 		return _List.Contains(Weak(item));
 	}
 
@@ -230,7 +244,7 @@ class WeakCollection<T> : ICollection<T>, IEnumerable<T>, IEnumerable, /*ICollec
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public void CopyTo(T[] array, int arrayIndex) {
+	public void CopyTo(T?[] array, int arrayIndex) {
 		CopyTo(array: array, arrayIndex: arrayIndex, array.Length - arrayIndex);
 	}
 
@@ -245,7 +259,7 @@ class WeakCollection<T> : ICollection<T>, IEnumerable<T>, IEnumerable, /*ICollec
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private void Check_CopyTo<U>(U[] array, int arrayIndex, int count) where U : class {
+	private void Check_CopyTo<U>(U?[] array, int arrayIndex, int count) where U : class? {
 		_ = array ?? throw new ArgumentNullException(nameof(array));
 		if (arrayIndex < 0)
 			throw new ArgumentOutOfRangeException(nameof(arrayIndex));
@@ -256,7 +270,7 @@ class WeakCollection<T> : ICollection<T>, IEnumerable<T>, IEnumerable, /*ICollec
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal void CopyTo(T[] array, int arrayIndex, int count) {
+	internal void CopyTo(T?[] array, int arrayIndex, int count) {
 		Check_CopyTo(array, arrayIndex, count);
 		Purge();
 
@@ -333,7 +347,7 @@ class WeakCollection<T> : ICollection<T>, IEnumerable<T>, IEnumerable, /*ICollec
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal T Find(Predicate<T> match) {
+	internal T? Find(Predicate<T> match) {
 		foreach (var item in _List) {
 			if (item.TryGetTarget(out T target) && match.Invoke(target)) {
 				return target;
@@ -343,7 +357,7 @@ class WeakCollection<T> : ICollection<T>, IEnumerable<T>, IEnumerable, /*ICollec
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal WeakReference<T> Find(Predicate<WeakReference<T>> match) {
+	internal WeakReference<T>? Find(Predicate<WeakReference<T>> match) {
 		foreach (var item in _List) {
 			if (match.Invoke(item)) {
 				return item;
@@ -353,7 +367,7 @@ class WeakCollection<T> : ICollection<T>, IEnumerable<T>, IEnumerable, /*ICollec
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal ComparableWeakReference<T> Find(Predicate<ComparableWeakReference<T>> match) {
+	internal ComparableWeakReference<T>? Find(Predicate<ComparableWeakReference<T>> match) {
 		foreach (var item in _List) {
 			if (match.Invoke(item)) {
 				return item;
@@ -443,7 +457,7 @@ class WeakCollection<T> : ICollection<T>, IEnumerable<T>, IEnumerable, /*ICollec
 	// LastIndexof
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public bool Remove(T item) {
+	public bool Remove(T? item) {
 		return _List.Remove(Weak(item));
 	}
 
@@ -579,7 +593,7 @@ class WeakCollection<T> : ICollection<T>, IEnumerable<T>, IEnumerable, /*ICollec
 		}
 		return true;
 	}
-	internal sealed class Enumerator : IEnumerator<T> {
+	internal sealed class Enumerator : IEnumerator<T?> {
 		private readonly IEnumerator<ComparableWeakReference<T>> _Enumerator;
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -587,13 +601,13 @@ class WeakCollection<T> : ICollection<T>, IEnumerable<T>, IEnumerable, /*ICollec
 			_Enumerator = enumerator;
 		}
 
-		public T Current => GetCurrent();
+		public T? Current => GetCurrent();
 
-		object IEnumerator.Current => GetCurrent();
+		object? IEnumerator.Current => GetCurrent();
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		private T GetCurrent() {
-			T target = null;
+		private T? GetCurrent() {
+			T? target = null;
 			while (!_Enumerator.Current.TryGetTarget(out target)) {
 				if (!_Enumerator.MoveNext()) {
 					return null; // TODO
@@ -629,7 +643,7 @@ class WeakCollection<T> : ICollection<T>, IEnumerable<T>, IEnumerable, /*ICollec
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public IEnumerator<T> GetEnumerator() => new Enumerator(_List.GetEnumerator());
+	public IEnumerator<T?> GetEnumerator() => new Enumerator(_List.GetEnumerator());
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	IEnumerator IEnumerable.GetEnumerator() => new Enumerator(_List.GetEnumerator());
