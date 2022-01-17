@@ -1,8 +1,9 @@
-﻿using SpriteMaster.Extensions;
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+
+#nullable enable
 
 using SystemVector2 = System.Numerics.Vector2;
 
@@ -10,15 +11,7 @@ namespace SpriteMaster.Types;
 
 [DebuggerDisplay("[{X}, {Y}}")]
 [StructLayout(LayoutKind.Explicit, Pack = sizeof(float) * 2, Size = sizeof(float) * 2)]
-unsafe struct Vector2F : 
-	ICloneable,
-	IComparable,
-	IComparable<Vector2F>,
-	IComparable<(float, float)>,
-	IComparable<XNA.Vector2>,
-	IEquatable<Vector2F>,
-	IEquatable<(float, float)>,
-	IEquatable<XNA.Vector2> {
+unsafe partial struct Vector2F : ILongHash, ICloneable {
 
 	internal static readonly Vector2F Zero = (0.0f, 0.0f);
 	internal static readonly Vector2F One = (1.0f, 1.0f);
@@ -45,28 +38,34 @@ unsafe struct Vector2F :
 	}
 
 
-	internal float Width { [MethodImpl(Runtime.MethodImpl.Hot)] readonly get => X; [MethodImpl(Runtime.MethodImpl.Hot)] set { X = value; } }
-	internal float Height { [MethodImpl(Runtime.MethodImpl.Hot)] readonly get => Y; [MethodImpl(Runtime.MethodImpl.Hot)] set { Y = value; } }
+	internal float Width {
+		[MethodImpl(Runtime.MethodImpl.Hot)]
+		readonly get => X;
+		[MethodImpl(Runtime.MethodImpl.Hot)]
+		set => X = value;
+	}
+	internal float Height {
+		[MethodImpl(Runtime.MethodImpl.Hot)]
+		readonly get => Y;
+		[MethodImpl(Runtime.MethodImpl.Hot)]
+		set => Y = value;
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot), DebuggerStepThrough, DebuggerHidden()]
+	private static int CheckIndex(int index) {
+#if DEBUG
+		if (index < 0 || index >= 2) {
+			throw new IndexOutOfRangeException(nameof(index));
+		}
+#endif
+		return index;
+	}
 
 	internal float this[int index] {
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		readonly get {
-#if DEBUG
-			if (index < 0 || index >= 2) {
-				throw new IndexOutOfRangeException(nameof(index));
-			}
-#endif
-			return Value[index];
-		}
+		readonly get => Value[CheckIndex(index)];
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		set {
-#if DEBUG
-			if (index < 0 || index >= 2) {
-				throw new IndexOutOfRangeException(nameof(index));
-			}
-#endif
-			Value[index] = value;
-		}
+		set => Value[CheckIndex(index)] = value;
 	}
 
 	internal readonly float Area => X * Y;
@@ -77,9 +76,7 @@ unsafe struct Vector2F :
 	internal readonly float MaxOf => Math.Max(X, Y);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Vector2F(float X, float Y) {
-		NumericVector = new(X, Y);
-	}
+	internal Vector2F(float X, float Y) => NumericVector = new(X, Y);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static Vector2F From(float X, float Y) => new(X, Y);
@@ -219,110 +216,10 @@ unsafe struct Vector2F :
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public override readonly string ToString() => $"{{{X}, {Y}}}";
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly int CompareTo(Vector2F other) {
-		var result = X.CompareTo(other.X);
-		if (result == 0) {
-			return Y.CompareTo(other.Y);
-		}
-		return result;
-	}
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly int CompareTo((float, float) other) => CompareTo((Vector2F)other);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly int CompareTo(Vector2I other) => CompareTo((Vector2F)other);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly int CompareTo(XNA.Vector2 other) => CompareTo((Vector2F)other);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	readonly int IComparable.CompareTo(object other) => other switch {
-		Vector2F vec => CompareTo(vec),
-		Vector2I vec => CompareTo(vec),
-		XNA.Vector2 vec => CompareTo(vec),
-		_ => throw new ArgumentException(),
-	};
-
 	// C# GetHashCode on all integer primitives, even longs, just returns it truncated to an int.
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public readonly override int GetHashCode() => NumericVector.GetHashCode();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly override bool Equals(object other) => other switch {
-		Vector2F vec => Equals(vec),
-		Vector2I vec => Equals(vec),
-		XNA.Vector2 vec => Equals(vec),
-		_ => throw new ArgumentException(),
-	};
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly bool Equals(Vector2F other) => NumericVector == other.NumericVector;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly bool Equals((float, float) other) => this == (Vector2F)other;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly bool Equals(in (float X, float Y) other) => this == (Vector2F)other;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly bool Equals(Vector2I other) => this == (Vector2F)other;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly bool Equals(XNA.Vector2 other) => this == (Vector2F)other;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly bool NotEquals(Vector2F other) => NumericVector != other.NumericVector;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly bool NotEquals(in (float X, float Y) other) => this != (Vector2F)other;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly bool NotEquals(Vector2I other) => this != (Vector2F)other;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly bool NotEquals(XNA.Vector2 other) => this != (Vector2F)other;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(Vector2F lhs, Vector2F rhs) => lhs.NumericVector == rhs.NumericVector;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(Vector2F lhs, Vector2F rhs) => lhs.NumericVector != rhs.NumericVector;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(Vector2F lhs, in (float X, float Y) rhs) => lhs.Equals(rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(Vector2F lhs, in (float X, float Y) rhs) => lhs.NotEquals(rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(in (float X, float Y) lhs, Vector2F rhs) => rhs.Equals(lhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(in (float X, float Y) lhs, Vector2F rhs) => rhs.NotEquals(lhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(Vector2F lhs, Vector2I rhs) => lhs.Equals(rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(Vector2F lhs, Vector2I rhs) => lhs.NotEquals(rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(Vector2I lhs, Vector2F rhs) => rhs.Equals(lhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(Vector2I lhs, Vector2F rhs) => rhs.NotEquals(lhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(Vector2F lhs, XNA.Vector2 rhs) => lhs.Equals(rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(Vector2F lhs, XNA.Vector2 rhs) => lhs.NotEquals(rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(XNA.Vector2 lhs, Vector2F rhs) => rhs.Equals(lhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(XNA.Vector2 lhs, Vector2F rhs) => rhs.NotEquals(lhs);
+	readonly ulong ILongHash.GetLongHashCode() => (ulong)NumericVector.GetHashCode();
 }

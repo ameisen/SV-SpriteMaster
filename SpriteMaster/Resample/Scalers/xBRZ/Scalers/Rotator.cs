@@ -22,7 +22,7 @@ static class Rotator {
 
 	static Rotator() {
 		var rotation = ArrayExt.Range(0, MaxPositions);
-		var sideLength = (int)Math.Sqrt(MaxPositions).RoundToInt();
+		var sideLength = Math.Sqrt(MaxPositions).RoundToInt();
 		for (var rot = 0; rot < MaxRotations; rot++) {
 			for (var pos = 0; pos < MaxPositions; pos++) {
 				RotationsArray[pos * MaxRotations + rot] = rotation[pos];

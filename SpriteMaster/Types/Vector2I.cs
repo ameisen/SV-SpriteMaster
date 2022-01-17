@@ -30,36 +30,43 @@ unsafe partial struct Vector2I :
 	private fixed int Value[2];
 
 	[FieldOffset(0)]
+	internal ulong Packed;
+
+	[FieldOffset(0)]
 	internal int X;
 	[FieldOffset(sizeof(int))]
 	internal int Y;
 
-	[FieldOffset(0)]
-	internal ulong Packed;
+
+	internal int Width {
+		[MethodImpl(Runtime.MethodImpl.Hot)]
+		readonly get => X;
+		[MethodImpl(Runtime.MethodImpl.Hot)]
+		set => X = value;
+	}
+	internal int Height {
+		[MethodImpl(Runtime.MethodImpl.Hot)]
+		readonly get => Y;
+		[MethodImpl(Runtime.MethodImpl.Hot)]
+		set => Y = value;
+	}
 
 
-	internal int Width { [MethodImpl(Runtime.MethodImpl.Hot)] readonly get => X; [MethodImpl(Runtime.MethodImpl.Hot)] set { X = value; } }
-	internal int Height { [MethodImpl(Runtime.MethodImpl.Hot)] readonly get => Y; [MethodImpl(Runtime.MethodImpl.Hot)] set { Y = value; } }
+	[MethodImpl(Runtime.MethodImpl.Hot), DebuggerStepThrough, DebuggerHidden()]
+	private static int CheckIndex(int index) {
+#if DEBUG
+		if (index < 0 || index >= 2) {
+			throw new IndexOutOfRangeException(nameof(index));
+		}
+#endif
+		return index;
+	}
 
 	internal int this[int index] {
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		readonly get {
-#if DEBUG
-			if (index < 0 || index >= 2) {
-				throw new IndexOutOfRangeException(nameof(index));
-			}
-#endif
-			return Value[index];
-		}
+		readonly get => Value[CheckIndex(index)];
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		set {
-#if DEBUG
-			if (index < 0 || index >= 2) {
-				throw new IndexOutOfRangeException(nameof(index));
-			}
-#endif
-			Value[index] = value;
-		}
+		set => Value[CheckIndex(index)] = value;
 	}
 
 	internal readonly int Area => X * Y;

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SpriteMaster.Extensions;
+using System;
 using System.Runtime.CompilerServices;
 
 #nullable enable
@@ -72,6 +73,8 @@ partial struct Vector2I :
 		XTilePoint vec => CompareTo((Vector2I)vec),
 		DrawingSize vec => CompareTo((Vector2I)vec),
 		XTileSize vec => CompareTo((Vector2I)vec),
-		_ => throw new ArgumentException(),
+		Tuple<int, int> vector => CompareTo(new Vector2I(vector.Item1, vector.Item2)),
+		ValueTuple<int, int> vector => CompareTo(vector),
+		_ => throw new ArgumentException(Exceptions.BuildArgumentException(nameof(other), other))
 	};
 }

@@ -35,15 +35,15 @@ struct Vector2B :
 	private const byte All_Value = X_Value | Y_Value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static byte GetX(bool Value) => Value ? X_Value : ZeroByte;
+	private static byte GetX(bool Value) => (byte)(Value.ToByte() << X_Bit);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static byte GetY(bool Value) => Value ? Y_Value : ZeroByte;
+	private static byte GetY(bool Value) => (byte)(Value.ToByte() << Y_Bit);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static byte Get(bool X, bool Y) => (byte)(GetX(X) | GetY(Y));
 
-	internal byte Packed;
+	private byte Packed = 0;
 
 	internal bool X {
 		[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -58,11 +58,31 @@ struct Vector2B :
 		set => Packed.SetBit(Y_Bit, value);
 	}
 
-	internal bool Width { [MethodImpl(Runtime.MethodImpl.Hot)] readonly get => X; [MethodImpl(Runtime.MethodImpl.Hot)] set => X = value; }
-	internal bool Height { [MethodImpl(Runtime.MethodImpl.Hot)] readonly get => Y; [MethodImpl(Runtime.MethodImpl.Hot)] set => Y = value; }
+	internal bool Width {
+		[MethodImpl(Runtime.MethodImpl.Hot)]
+		readonly get => X;
+		[MethodImpl(Runtime.MethodImpl.Hot)]
+		set => X = value;
+	}
+	internal bool Height {
+		[MethodImpl(Runtime.MethodImpl.Hot)]
+		readonly get => Y;
+		[MethodImpl(Runtime.MethodImpl.Hot)]
+		set => Y = value;
+	}
 
-	internal bool Negative { [MethodImpl(Runtime.MethodImpl.Hot)] readonly get => X; [MethodImpl(Runtime.MethodImpl.Hot)] set => X = value; }
-	internal bool Positive { [MethodImpl(Runtime.MethodImpl.Hot)] readonly get => Y; [MethodImpl(Runtime.MethodImpl.Hot)] set => Y = value; }
+	internal bool Negative {
+		[MethodImpl(Runtime.MethodImpl.Hot)]
+		readonly get => X;
+		[MethodImpl(Runtime.MethodImpl.Hot)]
+		set => X = value;
+	}
+	internal bool Positive {
+		[MethodImpl(Runtime.MethodImpl.Hot)]
+		readonly get => Y;
+		[MethodImpl(Runtime.MethodImpl.Hot)]
+		set => Y = value;
+	}
 
 	internal readonly bool None => Packed == ZeroByte;
 	internal readonly bool Any => Packed != ZeroByte;
@@ -70,25 +90,21 @@ struct Vector2B :
 
 	internal readonly Vector2B Invert => (!X, !Y);
 
+	[MethodImpl(Runtime.MethodImpl.Hot), DebuggerStepThrough, DebuggerHidden()]
+	private static int CheckIndex(int index) {
+#if DEBUG
+		if (index < 0 || index >= 2) {
+			throw new IndexOutOfRangeException(nameof(index));
+		}
+#endif
+		return index;
+	}
+
 	internal bool this[int index] {
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		readonly get {
-#if DEBUG
-			if (index < 0 || index >= Y_Value) {
-				throw new IndexOutOfRangeException(nameof(index));
-			}
-#endif
-			return Packed.GetBit(index);
-		}
+		readonly get => Packed.GetBit(CheckIndex(index));
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		set {
-#if DEBUG
-			if (index < 0 || index >= Y_Value) {
-				throw new IndexOutOfRangeException(nameof(index));
-			}
-#endif
-			Packed.SetBit(index, value);
-		}
+		set => Packed.SetBit(CheckIndex(index), value);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -120,30 +136,6 @@ struct Vector2B :
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static Vector2B From(Vector2B Vector) => new(Vector: Vector);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Vector2B Set(Vector2B Vector) {
-		Packed = Vector.Packed;
-		return this;
-	}
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Vector2B Set(bool X, bool Y) {
-		Packed = Get(X, Y);
-		return this;
-	}
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Vector2B Set(in (bool X, bool Y) Value) {
-		Packed = Get(Value.X, Value.Y);
-		return this;
-	}
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Vector2B Set(bool Value) {
-		Packed = Value ? All_Value : ZeroByte;
-		return this;
-	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal readonly Vector2B Clone() => this;
@@ -181,8 +173,10 @@ struct Vector2B :
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public readonly int CompareTo(object obj) => obj switch {
 		Vector2B vector => CompareTo(vector),
+		Tuple<bool, bool> vector => CompareTo(new Vector2B(vector.Item1, vector.Item2)),
+		ValueTuple<bool, bool> vector => CompareTo(vector),
 		bool boolean => CompareTo(boolean),
-		_ => throw new ArgumentException(obj.GetType().Name),
+		_ => throw new ArgumentException(Exceptions.BuildArgumentException(nameof(obj), obj))
 	};
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]

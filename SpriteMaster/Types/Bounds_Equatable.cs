@@ -21,7 +21,7 @@ partial struct Bounds :
 		DrawingRectangle rect => Equals(rect),
 		XNA.Rectangle rect => Equals(rect),
 		XTileRectangle rect => Equals(rect),
-		_ => throw new ArgumentException(),
+		_ => false,
 	};
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]

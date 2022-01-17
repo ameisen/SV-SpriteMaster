@@ -31,7 +31,9 @@ partial struct Vector2I :
 		XTilePoint vec => Equals(vec),
 		DrawingSize vec => Equals(vec),
 		XTileSize vec => Equals(vec),
-		_ => throw new ArgumentException(),
+		Tuple<int, int> vector => Equals(new Vector2F(vector.Item1, vector.Item2)),
+		ValueTuple<int, int> vector => Equals(vector),
+		_ => false,
 	};
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]

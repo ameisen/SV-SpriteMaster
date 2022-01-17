@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SpriteMaster.Extensions;
+using System;
 using System.Runtime.CompilerServices;
 
 #nullable enable
@@ -22,7 +23,7 @@ partial struct Bounds :
 		DrawingRectangle rect => CompareTo((Bounds)rect),
 		XNA.Rectangle rect => CompareTo((Bounds)rect),
 		XTileRectangle rect => CompareTo((Bounds)rect),
-		_ => throw new ArgumentException(),
+		_ => throw new ArgumentException(Exceptions.BuildArgumentException(nameof(other), other))
 	};
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]

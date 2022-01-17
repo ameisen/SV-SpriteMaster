@@ -153,14 +153,15 @@ static class Analysis {
 		bool premultipliedAlpha = true;
 
 		// https://stackoverflow.com/a/9148428
-		if (Config.Resample.PremultiplyAlpha) {
+		if (Config.Resample.PremultiplyAlpha && Config.Resample.PremultiplyAlphaAssume) {
 			foreach (var element in data) {
-				var alpha = element.A.Value;
-				byte R = element.R.Value;
-				byte G = element.G.Value;
-				byte B = element.B.Value;
-				var maxColor = Math.Max(Math.Max(R, G), B);
-				int colorDifference = maxColor - alpha;
+				var alpha = element.A;
+				var maxColor = MathExt.Max(
+					element.R,
+					element.G,
+					element.B
+				);
+				int colorDifference = maxColor.Value - alpha.Value;
 				if (colorDifference >= Config.Resample.PremultipliedAlphaThreshold) {
 					premultipliedAlpha = false;
 					break;
@@ -175,7 +176,7 @@ static class Analysis {
 			repeatY: RepeatY,
 			edgeX: Vector2B.False,
 			edgeY: Vector2B.False,
-			premultipliedAlpha: true
+			premultipliedAlpha: premultipliedAlpha
 		);
 	}
 }

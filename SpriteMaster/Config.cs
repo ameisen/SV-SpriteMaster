@@ -163,6 +163,8 @@ static class Config {
 		internal static int PremultipliedAlphaThreshold = 1;
 		[Comment("Should transparent pixels be premultiplied to prevent a 'halo' effect?")]
 		internal static bool PremultiplyAlpha = true;
+		[Comment("Should sprites be assumed to be premultiplied, or should they instead by analyzed?")]
+		internal static bool PremultiplyAlphaAssume = true;
 		[ConfigIgnore]
 		internal static class Deposterization {
 			[Comment("Should deposterization be performed?")]

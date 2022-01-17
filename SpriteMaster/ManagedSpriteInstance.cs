@@ -1,5 +1,6 @@
 ﻿using LinqFasterer;
 using Microsoft.Xna.Framework.Graphics;
+using Nito.Collections;
 using Pastel;
 using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
@@ -10,13 +11,17 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using WeakTexture = System.WeakReference<Microsoft.Xna.Framework.Graphics.Texture2D>;
+using WeakInstance = System.WeakReference<SpriteMaster.ManagedSpriteInstance>;
+using WeakInstanceList = System.Collections.Generic.LinkedList<System.WeakReference<SpriteMaster.ManagedSpriteInstance>>;
+using WeakInstanceListNode = System.Collections.Generic.LinkedListNode<System.WeakReference<SpriteMaster.ManagedSpriteInstance>>;
+using SpriteMaster.Types.Volatile;
 
 #nullable enable
 
 namespace SpriteMaster;
 
 sealed partial class ManagedSpriteInstance : IDisposable {
-	private static readonly LinkedList<WeakReference<ManagedSpriteInstance>> MostRecentList = new();
+	private static readonly WeakInstanceList RecentAccessList = new();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static bool HasLegalFormat(Texture2D texture) => AllowedFormats.ContainsF(texture.Format);
@@ -312,8 +317,12 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 
 	internal Vector2F AdjustedScale = Vector2F.One;
 
-	private LinkedListNode<WeakReference<ManagedSpriteInstance>>? CurrentRecentNode = null;
-	internal volatile bool IsDisposed = false;
+	/// <summary>
+	/// Node into the most-recent accessed instance list.
+	/// Should only be <seealso cref="null"/> after the instance is <seealso cref="ManagedSpriteInstance.Dispose">disposed</seealso>
+	/// </summary>
+	private WeakInstanceListNode? RecentAccessNode = null;
+	internal VolatileBool IsDisposed { get; private set; } = false;
 
 	internal static long TotalMemoryUsage = 0U;
 
@@ -346,18 +355,18 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 
 		Debug.TraceLn($"Attempting to purge {purgeTotalBytes.AsDataSize()} from currently loaded textures");
 
-		lock (MostRecentList) {
+		lock (RecentAccessList) {
 			long totalPurge = 0;
-			while (purgeTotalBytes > 0 && MostRecentList.Count > 0) {
-				if (MostRecentList.Last?.Value.TryGetTarget(out var target) ?? false) {
+			while (purgeTotalBytes > 0 && RecentAccessList.Count > 0) {
+				if (RecentAccessList.Last?.Value.TryGetTarget(out var target) ?? false) {
 					var textureSize = (long)target.MemorySize;
 					Debug.TraceLn($"Purging {target.SafeName()} ({textureSize.AsDataSize()})");
 					purgeTotalBytes -= textureSize;
 					totalPurge += textureSize;
-					target.CurrentRecentNode = null;
+					target.RecentAccessNode = null;
 					target.Dispose(true);
 				}
-				MostRecentList.RemoveLast();
+				RecentAccessList.RemoveLast();
 			}
 			Debug.TraceLn($"Total Purged: {totalPurge.AsDataSize()}");
 		}
@@ -392,37 +401,37 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 			// TODO : this should be fixed by making sure that all of the resample tasks _at least_ get to this point before the end of the frame.
 			// TODO : That might not be sufficient either if the _same_ draw ends up happening again.
 			Dispose();
-			return;
 		}
+		else {
+			switch (TexType) {
+				case TextureType.Sprite:
+					originalSize = sourceRectangle.Extent;
+					break;
+				case TextureType.Image:
+					originalSize = source.Extent();
+					break;
+				case TextureType.SlicedImage:
+					throw new NotImplementedException("Sliced Images not yet implemented");
+			}
 
-		switch (TexType) {
-			case TextureType.Sprite:
-				originalSize = sourceRectangle.Extent;
-				break;
-			case TextureType.Image:
-				originalSize = source.Extent();
-				break;
-			case TextureType.SlicedImage:
-				throw new NotImplementedException("Sliced Images not yet implemented");
-		}
+			// TODO store the HD Texture in _this_ object instead. Will confuse things like subtexture updates, though.
+			Hash = GetHash();
+			this.Texture = Resampler.Upscale(
+				spriteInstance: this,
+				scale: ref ReferenceScale,
+				input: textureWrapper,
+				hash: Hash,
+				wrapped: ref Wrapped,
+				async: false
+			);
 
-		// TODO store the HD Texture in _this_ object instead. Will confuse things like subtexture updates, though.
-		Hash = GetHash();
-		this.Texture = Resampler.Upscale(
-			spriteInstance: this,
-			scale: ref ReferenceScale,
-			input: textureWrapper,
-			hash: Hash,
-			wrapped: ref Wrapped,
-			async: false
-		);
+			// TODO : I would love to dispose of this texture _now_, but we rely on it disposing to know if we need to dispose of ours.
+			// There is a better way to do this using weak references, I just need to analyze it further. Memory leaks have been a pain so far.
+			source.Disposing += (object? sender, EventArgs args) => { OnParentDispose(sender as Texture2D); };
 
-		// TODO : I would love to dispose of this texture _now_, but we rely on it disposing to know if we need to dispose of ours.
-		// There is a better way to do this using weak references, I just need to analyze it further. Memory leaks have been a pain so far.
-		source.Disposing += (object? sender, EventArgs args) => { OnParentDispose(sender as Texture2D); };
-
-		lock (MostRecentList) {
-			CurrentRecentNode = MostRecentList.AddFirst(this.MakeWeak());
+			lock (RecentAccessList) {
+				RecentAccessNode = RecentAccessList.AddFirst(this.MakeWeak());
+			}
 		}
 	}
 
@@ -476,13 +485,13 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 
 		this.LastReferencedFrame = DrawState.CurrentFrame;
 
-		lock (MostRecentList) {
-			if (CurrentRecentNode is not null) {
-				MostRecentList.Remove(CurrentRecentNode);
-				MostRecentList.AddFirst(CurrentRecentNode);
+		lock (RecentAccessList) {
+			if (RecentAccessNode is not null) {
+				RecentAccessList.Remove(RecentAccessNode);
+				RecentAccessList.AddFirst(RecentAccessNode);
 			}
 			else {
-				CurrentRecentNode = MostRecentList.AddFirst(this.MakeWeak());
+				RecentAccessNode = RecentAccessList.AddFirst(this.MakeWeak());
 			}
 		}
 	}
@@ -507,11 +516,11 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 		if (Reference.TryGetTarget(out var reference)) {
 			SpriteMap.Remove(this, reference);
 		}
-		if (CurrentRecentNode is not null) {
-			lock (MostRecentList) {
-				MostRecentList.Remove(CurrentRecentNode);
+		if (RecentAccessNode is not null) {
+			lock (RecentAccessList) {
+				RecentAccessList.Remove(RecentAccessNode);
 			}
-			CurrentRecentNode = null;
+			RecentAccessNode = null;
 		}
 		IsDisposed = true;
 

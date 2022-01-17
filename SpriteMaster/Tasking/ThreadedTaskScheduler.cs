@@ -25,7 +25,7 @@ sealed class ThreadedTaskScheduler : TaskScheduler, IDisposable {
 			Scheduler = scheduler ?? throw new ArgumentNullException(nameof(scheduler));
 		}
 
-		public IEnumerable<Task> ScheduledTasks => Scheduler.BlockingTaskQueue;
+		public IEnumerable<Task> ScheduledTasks => Scheduler.PendingTasks;
 	}
 
 	private readonly CancellationTokenSource DisposeCancellation = new();
@@ -35,9 +35,9 @@ sealed class ThreadedTaskScheduler : TaskScheduler, IDisposable {
 	private static bool IsTaskProcessingThread = false;
 
 	private readonly Thread[] Threads;
-	private readonly BlockingCollection<Task> BlockingTaskQueue = new();
+	private readonly BlockingCollection<Task> PendingTasks = new();
 
-	private int DebugTaskCount => BlockingTaskQueue.Count;
+	private int DebugTaskCount => PendingTasks.Count;
 
 	internal ThreadedTaskScheduler(
 		int? concurrencyLevel = null,
@@ -97,7 +97,7 @@ sealed class ThreadedTaskScheduler : TaskScheduler, IDisposable {
 				try {
 					while (!Config.ForcedDisable) {
 						try {
-							foreach (var task in BlockingTaskQueue.GetConsumingEnumerable(DisposeCancellation.Token)) {
+							foreach (var task in PendingTasks.GetConsumingEnumerable(DisposeCancellation.Token)) {
 								if (task is not null) {
 									if (TryExecuteTask(task) || task.IsCompleted) {
 										task.Dispose();
@@ -134,12 +134,12 @@ sealed class ThreadedTaskScheduler : TaskScheduler, IDisposable {
 			throw new ObjectDisposedException(GetType().Name);
 		}
 
-		BlockingTaskQueue.Add(task);
+		PendingTasks.Add(task);
 	}
 
 	protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued) => IsTaskProcessingThread && TryExecuteTask(task);
 
-	protected override IEnumerable<Task> GetScheduledTasks() => BlockingTaskQueue;
+	protected override IEnumerable<Task> GetScheduledTasks() => PendingTasks;
 
 	public void Dispose() => DisposeCancellation.Cancel();
 }
