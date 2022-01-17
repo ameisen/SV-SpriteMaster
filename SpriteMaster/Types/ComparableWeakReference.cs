@@ -1,7 +1,10 @@
-﻿using System;
+﻿using SpriteMaster.Extensions;
+using System;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Security;
+
+//#nullable enable
 
 namespace SpriteMaster.Types;
 
@@ -12,28 +15,33 @@ sealed class ComparableWeakReference<T> :
 	IEquatable<WeakReference<T>>,
 	IEquatable<ComparableWeakReference<T>>
 where T : class {
+	private static readonly Type WeakReferenceType = typeof(WeakReference<T>);
+
 	internal const int NullHash = 0;
 	internal const ulong NullLongHash = LongHash.Null;
 
 	static private class Reflect {
-		internal static readonly PropertyInfo Target = typeof(WeakReference<T>).GetProperty("Target", BindingFlags.Instance | BindingFlags.NonPublic);
-		internal static readonly MethodInfo Create = typeof(WeakReference<T>).GetMethod("Create", BindingFlags.Instance | BindingFlags.NonPublic);
-		internal static readonly MethodInfo IsTrackResurrection = typeof(WeakReference<T>).GetMethod("IsTrackResurrection", BindingFlags.Instance | BindingFlags.NonPublic);
+		internal static readonly Action<WeakReference<T>, T> SetTarget = WeakReferenceType.GetPropertySetter<WeakReference<T>, T>(WeakReferenceType.GetProperty("Target", BindingFlags.Instance | BindingFlags.NonPublic)) ??
+			throw new NullReferenceException(GetName(nameof(SetTarget)));
+		internal static readonly Func<WeakReference<T>, T> GetTarget = WeakReferenceType.GetPropertyGetter<WeakReference<T>, T>(WeakReferenceType.GetProperty("Target", BindingFlags.Instance | BindingFlags.NonPublic)) ??
+			throw new NullReferenceException(GetName(nameof(GetTarget)));
+
+		internal static readonly Action<WeakReference<T>, T, bool> Create = typeof(WeakReference<T>).
+			GetMethod("Create", BindingFlags.Instance | BindingFlags.NonPublic)?.CreateDelegate<Action<WeakReference<T>, T, bool>>() ??
+			throw new NullReferenceException(GetName(nameof(Create)));
+
+		internal static readonly Func<WeakReference<T>, bool> IsTrackResurrection = typeof(WeakReference<T>).
+			GetMethod("IsTrackResurrection", BindingFlags.Instance | BindingFlags.NonPublic)?.CreateDelegate<Func<WeakReference<T>, bool>>() ??
+			throw new NullReferenceException(GetName(nameof(IsTrackResurrection)));
 
 		private static string GetName(string name) => $"{typeof(ComparableWeakReference<T>).Name}.{name}";
-
-		static Reflect() {
-			_ = Target ?? throw new NullReferenceException(GetName(nameof(Target)));
-			_ = Create ?? throw new NullReferenceException(GetName(nameof(Create)));
-			_ = IsTrackResurrection ?? throw new NullReferenceException(GetName(nameof(IsTrackResurrection)));
-		}
 	}
 
 	private readonly WeakReference<T> _Reference;
 
 	private T Target {
 		[SecuritySafeCritical]
-		get => (T)Reflect.Target.GetValue(_Reference);
+		get => Reflect.GetTarget(_Reference);
 		[SecuritySafeCritical]
 		set => _Reference.SetTarget(value);
 	}
@@ -70,10 +78,10 @@ where T : class {
 	}
 
 	[SecuritySafeCritical]
-	private void Create(T target, bool trackResurrection) => Reflect.Create.Invoke(_Reference, new object[] { target, trackResurrection });
+	private void Create(T target, bool trackResurrection) => Reflect.Create(_Reference, target, trackResurrection);
 
 	[SecuritySafeCritical]
-	private bool IsTrackResurrection() => (bool)Reflect.IsTrackResurrection.Invoke(_Reference, null);
+	private bool IsTrackResurrection() => Reflect.IsTrackResurrection(_Reference);
 
 	public override int GetHashCode() {
 		if (_Reference.TryGetTarget(out T target)) {
