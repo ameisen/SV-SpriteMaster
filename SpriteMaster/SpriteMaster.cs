@@ -286,7 +286,7 @@ public sealed class SpriteMaster : Mod {
 		var season = SDate.Now().Season.ToLower();
 		if (season != CurrentSeason) {
 			CurrentSeason = season;
-			ManagedSpriteInstance.SpriteMap.SeasonPurge(season.ToLowerInvariant());
+			SpriteMap.SeasonPurge(season.ToLowerInvariant());
 		}
 
 		// And again after purge

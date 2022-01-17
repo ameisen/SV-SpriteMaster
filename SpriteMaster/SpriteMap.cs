@@ -12,9 +12,9 @@ namespace SpriteMaster;
 
 // TODO : This class, and Texture2DMeta, have a _lot_ of inter-play and it makes it very confusing.
 // This needs to be cleaned up badly.
-sealed class SpriteMap {
-	private readonly SharedLock Lock = new();
-	private readonly WeakCollection<ManagedSpriteInstance> SpriteInstanceReferences = new();
+static class SpriteMap {
+	private static readonly SharedLock Lock = new();
+	private static readonly WeakCollection<ManagedSpriteInstance> SpriteInstanceReferences = new();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ulong SpriteHash(Texture2D texture, in Bounds source, uint expectedScale) {
@@ -22,7 +22,7 @@ sealed class SpriteMap {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal bool Add(Texture2D reference, ManagedSpriteInstance texture) {
+	internal static bool Add(Texture2D reference, ManagedSpriteInstance texture) {
 		var meta = reference.Meta();
 		using (Lock.Write) {
 			SpriteInstanceReferences.Add(texture);  
@@ -33,7 +33,7 @@ sealed class SpriteMap {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal bool TryGetReady(Texture2D texture, in Bounds source, uint expectedScale, [NotNullWhen(true)] out ManagedSpriteInstance? result) {
+	internal static bool TryGetReady(Texture2D texture, in Bounds source, uint expectedScale, [NotNullWhen(true)] out ManagedSpriteInstance? result) {
 		if (TryGet(texture, source, expectedScale, out var internalResult) && internalResult.IsReady) {
 			result = internalResult;
 			return true;
@@ -43,7 +43,7 @@ sealed class SpriteMap {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal bool TryGet(Texture2D texture, in Bounds source, uint expectedScale, [NotNullWhen(true)] out ManagedSpriteInstance? result) {
+	internal static bool TryGet(Texture2D texture, in Bounds source, uint expectedScale, [NotNullWhen(true)] out ManagedSpriteInstance? result) {
 		var rectangleHash = SpriteHash(texture: texture, source: source, expectedScale: expectedScale);
 
 		var meta = texture.Meta();
@@ -51,8 +51,17 @@ sealed class SpriteMap {
 		using (meta.Lock.Read) {
 			if (Map.TryGetValue(rectangleHash, out var spriteInstance)) {
 				if (spriteInstance.Texture?.IsDisposed == true) {
+					var removeList = new List<ulong>();
 					using (meta.Lock.Promote) {
-						meta.ClearSpriteInstanceTable();
+						foreach (var skv in meta.SpriteInstanceTable) {
+							if (skv.Value?.Texture?.IsDisposed ?? false) {
+								removeList.Add(skv.Key);
+								skv.Value.Dispose();
+							}
+						}
+						foreach (var key in removeList) {
+							meta.SpriteInstanceTable.Remove(key);
+						}
 					}
 				}
 				else {
@@ -67,7 +76,7 @@ sealed class SpriteMap {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal void Remove(ManagedSpriteInstance spriteInstance, Texture2D texture) {
+	internal static void Remove(ManagedSpriteInstance spriteInstance, Texture2D texture) {
 		try {
 			var meta = texture.Meta();
 			var spriteTable = meta.SpriteInstanceTable;
@@ -105,7 +114,7 @@ sealed class SpriteMap {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal void Purge(Texture2D reference, in Bounds? sourceRectangle = null) {
+	internal static void Purge(Texture2D reference, in Bounds? sourceRectangle = null) {
 		try {
 			var meta = reference.Meta();
 			var spriteTable = meta.SpriteInstanceTable;
@@ -156,12 +165,12 @@ sealed class SpriteMap {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal void SeasonPurge(string season) {
+	internal static void SeasonPurge(string season) {
 		try {
 			var purgeList = new List<ManagedSpriteInstance>();
 			using (Lock.Read) {
 				foreach (var spriteInstance in SpriteInstanceReferences) {
-					if (spriteInstance.Anonymous()) {
+					if (spriteInstance is null || spriteInstance.Anonymous()) {
 						continue;
 					}
 
@@ -193,11 +202,11 @@ sealed class SpriteMap {
 		catch { }
 	}
 
-	internal Dictionary<Texture2D, List<ManagedSpriteInstance>> GetDump() {
+	internal static Dictionary<Texture2D, List<ManagedSpriteInstance>> GetDump() {
 		var result = new Dictionary<Texture2D, List<ManagedSpriteInstance>>();
 
 		foreach (var spriteInstance in SpriteInstanceReferences) {
-			if (spriteInstance.Reference.TryGetTarget(out var referenceTexture)) {
+			if (spriteInstance is not null && spriteInstance.Reference.TryGetTarget(out var referenceTexture)) {
 				if (!result.TryGetValue(referenceTexture, out var resultList)) {
 					resultList = new List<ManagedSpriteInstance>();
 					result.Add(referenceTexture, resultList);

@@ -16,9 +16,6 @@ using WeakTexture = System.WeakReference<Microsoft.Xna.Framework.Graphics.Textur
 namespace SpriteMaster;
 
 sealed partial class ManagedSpriteInstance : IDisposable {
-	// TODO : This can grow unbounded. Should fix.
-	internal static readonly SpriteMap SpriteMap = new();
-
 	private static readonly LinkedList<WeakReference<ManagedSpriteInstance>> MostRecentList = new();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -330,22 +327,10 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 		}
 	}
 
-	internal long OriginalMemorySize {
-		[MethodImpl(Runtime.MethodImpl.Hot)]
-		get {
-			return originalSize.Width * originalSize.Height * sizeof(int);
-		}
-	}
-
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	~ManagedSpriteInstance() {
-		Debug.Warning($"ManagedSpriteInstance '{Name}' reached destructor; was not initially disposed");
+		Debug.Trace($"ManagedSpriteInstance '{Name}' reached destructor; was not initially disposed");
 		Dispose();
-	}
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static void Purge(Texture2D reference) {
-		Purge(reference, null, DataRef<byte>.Null);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
