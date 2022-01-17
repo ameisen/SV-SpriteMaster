@@ -27,7 +27,7 @@ static class SpriteMap {
 		using (Lock.Write) {
 			SpriteInstanceReferences.Add(texture);  
 			using (meta.Lock.Write) {
-				return meta.SpriteInstanceTable.TryAdd(texture.SpriteMapHash, texture);
+				return meta.TryAddToSpriteInstanceTable(texture.SpriteMapHash, texture);
 			}
 		}
 	}
@@ -47,20 +47,20 @@ static class SpriteMap {
 		var rectangleHash = SpriteHash(texture: texture, source: source, expectedScale: expectedScale);
 
 		var meta = texture.Meta();
-		var Map = meta.SpriteInstanceTable;
+		var spriteTable = meta.GetSpriteInstanceTable();
+
 		using (meta.Lock.Read) {
-			if (Map.TryGetValue(rectangleHash, out var spriteInstance)) {
+			if (spriteTable.TryGetValue(rectangleHash, out var spriteInstance)) {
 				if (spriteInstance.Texture?.IsDisposed == true) {
 					var removeList = new List<ulong>();
 					using (meta.Lock.Promote) {
-						foreach (var skv in meta.SpriteInstanceTable) {
+						foreach (var skv in spriteTable) {
 							if (skv.Value?.Texture?.IsDisposed ?? false) {
 								removeList.Add(skv.Key);
-								skv.Value.Dispose();
 							}
 						}
 						foreach (var key in removeList) {
-							meta.SpriteInstanceTable.Remove(key);
+							meta.RemoveFromSpriteInstanceTable(key);
 						}
 					}
 				}
@@ -79,7 +79,7 @@ static class SpriteMap {
 	internal static void Remove(ManagedSpriteInstance spriteInstance, Texture2D texture) {
 		try {
 			var meta = texture.Meta();
-			var spriteTable = meta.SpriteInstanceTable;
+			var spriteTable = meta.GetSpriteInstanceTable();
 
 			using (Lock.Write) {
 				try {
@@ -99,8 +99,7 @@ static class SpriteMap {
 			}
 			using (meta.Lock.Write) {
 				if (spriteTable.TryGetValue(spriteInstance.SpriteMapHash, out var currentValue) && currentValue == spriteInstance) {
-					spriteTable.Remove(spriteInstance.SpriteMapHash);
-					currentValue?.Dispose();
+					meta.RemoveFromSpriteInstanceTable(spriteInstance.SpriteMapHash);
 				}
 			}
 		}
@@ -117,7 +116,8 @@ static class SpriteMap {
 	internal static void Purge(Texture2D reference, in Bounds? sourceRectangle = null) {
 		try {
 			var meta = reference.Meta();
-			var spriteTable = meta.SpriteInstanceTable;
+			var spriteTable = meta.GetSpriteInstanceTable();
+
 			using (meta.Lock.Read) {
 				if (spriteTable.Count == 0) {
 					return;
@@ -151,7 +151,7 @@ static class SpriteMap {
 				using (meta.Lock.Promote) {
 					if (hasSourceRect) {
 						foreach (var hash in removeTexture) {
-							spriteTable.Remove(hash);
+							meta.RemoveFromSpriteInstanceTable(hash);
 						}
 					}
 					else {
@@ -192,7 +192,6 @@ static class SpriteMap {
 				if (purgable.Reference.TryGetTarget(out var reference)) {
 					purgable.Dispose();
 					var meta = reference.Meta();
-					var spriteTable = meta.SpriteInstanceTable;
 					using (meta.Lock.Write) {
 						meta.ClearSpriteInstanceTable();
 					}

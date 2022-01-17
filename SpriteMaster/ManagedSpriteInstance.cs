@@ -1,20 +1,17 @@
 ﻿using LinqFasterer;
 using Microsoft.Xna.Framework.Graphics;
-using Nito.Collections;
 using Pastel;
 using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
 using SpriteMaster.Resample;
 using SpriteMaster.Types;
+using SpriteMaster.Types.Volatile;
 using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using WeakTexture = System.WeakReference<Microsoft.Xna.Framework.Graphics.Texture2D>;
-using WeakInstance = System.WeakReference<SpriteMaster.ManagedSpriteInstance>;
 using WeakInstanceList = System.Collections.Generic.LinkedList<System.WeakReference<SpriteMaster.ManagedSpriteInstance>>;
 using WeakInstanceListNode = System.Collections.Generic.LinkedListNode<System.WeakReference<SpriteMaster.ManagedSpriteInstance>>;
-using SpriteMaster.Types.Volatile;
+using WeakTexture = System.WeakReference<Microsoft.Xna.Framework.Graphics.Texture2D>;
 
 #nullable enable
 
@@ -26,8 +23,16 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static bool HasLegalFormat(Texture2D texture) => AllowedFormats.ContainsF(texture.Format);
 
+	private static void PurgeInvalidated(Texture2D texture) {
+		// If somehow it passed validation earlier (like a SetData before a name) make sure no cached data
+		// or handles are left dangling around.
+
+		var meta = texture.Meta();
+		meta.Purge();
+	}
+
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static bool Validate(Texture2D texture) {
+	internal static bool Validate(Texture2D texture, bool clean = false) {
 		var meta = texture.Meta();
 		if (meta.Validation.HasValue) {
 			return meta.Validation.Value;
@@ -39,6 +44,9 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', Is Internal Texture");
 			}
 			meta.Validation = false;
+			if (clean) {
+				PurgeInvalidated(texture);
+			}
 			return false;
 		}
 
@@ -53,6 +61,9 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', Is System Render Target");
 			}
 			meta.Validation = false;
+			if (clean) {
+				PurgeInvalidated(texture);
+			}
 			return false;
 		}
 
@@ -62,6 +73,9 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', Is Too Small: ({texture.Extent().ToString(DrawingColor.Orange)} < {Config.Resample.MinimumTextureDimensions.ToString(DrawingColor.Orange)})");
 			}
 			meta.Validation = false;
+			if (clean) {
+				PurgeInvalidated(texture);
+			}
 			return false;
 		}
 
@@ -71,6 +85,9 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', Zero Area (Degenerate)");
 			}
 			meta.Validation = false;
+			if (clean) {
+				PurgeInvalidated(texture);
+			}
 			return false;
 		}
 
@@ -81,6 +98,9 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', Is Zombie");
 			}
 			meta.Validation = false;
+			if (clean) {
+				PurgeInvalidated(texture);
+			}
 			return false;
 		}
 
@@ -91,6 +111,9 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', Is Unknown Texture");
 			}
 			meta.Validation = false;
+			if (clean) {
+				PurgeInvalidated(texture);
+			}
 			return false;
 		}
 
@@ -109,6 +132,9 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', Format Unsupported: {texture.Format.ToString(DrawingColor.Orange)}");
 			}
 			meta.Validation = false;
+			if (clean) {
+				PurgeInvalidated(texture);
+			}
 			return false;
 		}
 
@@ -120,6 +146,9 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 						Debug.TraceLn($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', Is Blacklisted");
 					}
 					meta.Validation = false;
+					if (clean) {
+						PurgeInvalidated(texture);
+					}
 					return false;
 				}
 			}
@@ -128,6 +157,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 		if (!texture.Anonymous()) {
 			meta.Validation = true;
 		}
+
 		return true;
 	}
 
@@ -180,7 +210,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 			return scaleTexture;
 		}
 
-		if (!Validate(texture)) {
+		if (!Validate(texture, clean: true)) {
 			return null;
 		}
 

@@ -5,6 +5,7 @@ using SpriteMaster.Resample;
 using SpriteMaster.Types;
 using SpriteMaster.Types.Interlocking;
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using SpriteDictionary = System.Collections.Generic.Dictionary<ulong, SpriteMaster.ManagedSpriteInstance>;
@@ -14,13 +15,33 @@ using SpriteDictionary = System.Collections.Generic.Dictionary<ulong, SpriteMast
 namespace SpriteMaster.Metadata;
 
 sealed class Texture2DMeta {
-	internal readonly SpriteDictionary SpriteInstanceTable = new();
+	private readonly SpriteDictionary SpriteInstanceTable = new();
+
+	internal IReadOnlyDictionary<ulong, ManagedSpriteInstance> GetSpriteInstanceTable() => SpriteInstanceTable;
 
 	internal void ClearSpriteInstanceTable() {
-		foreach (var spriteInstance in SpriteInstanceTable.Values) {
-			spriteInstance?.Dispose();
+		using (Lock.Write) {
+			foreach (var spriteInstance in SpriteInstanceTable.Values) {
+				spriteInstance?.Dispose();
+			}
+			SpriteInstanceTable.Clear();
 		}
-		SpriteInstanceTable.Clear();
+	}
+
+	internal bool RemoveFromSpriteInstanceTable(ulong key) {
+		using (Lock.Write) {
+			if (SpriteInstanceTable.Remove(key, out var value)) {
+				value?.Dispose();
+				return true;
+			}
+			return false;
+		}
+	}
+
+	internal bool TryAddToSpriteInstanceTable(ulong key, ManagedSpriteInstance instance) {
+		using (Lock.Write) {
+			return SpriteInstanceTable.TryAdd(key, instance);
+		}
 	}
 
 	/// <summary>The current (static) ID, incremented every time a new <see cref="Texture2DMeta"/> is created.</summary>
@@ -62,6 +83,14 @@ sealed class Texture2DMeta {
 			using (Lock.Read) {
 				return _CachedData.TryGetTarget(out var target);
 			}
+		}
+	}
+
+	// Flushes the Metadata altogether, and all cached textures and related instances
+	internal void Purge() {
+		using (Lock.Write) {
+			ClearSpriteInstanceTable();
+			CachedRawData = null;
 		}
 	}
 
