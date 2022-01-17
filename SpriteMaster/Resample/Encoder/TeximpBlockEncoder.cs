@@ -28,7 +28,7 @@ static class TeximpBlockEncoder {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static unsafe Span<byte> Encode(ReadOnlySpan<byte> data, ref TextureFormat format, Vector2I dimensions, bool hasAlpha, bool isPunchthroughAlpha, bool isMasky, bool hasR, bool hasG, bool hasB) {
+	internal static unsafe Span<byte> Encode(ReadOnlySpan<Color8> data, ref TextureFormat format, Vector2I dimensions, bool hasAlpha, bool isPunchthroughAlpha, bool isMasky, bool hasR, bool hasG, bool hasB) {
 		if (!BlockCompressionFunctional) {
 			return null;
 		}
@@ -59,7 +59,7 @@ static class TeximpBlockEncoder {
 			compressor.Output.OutputHeader = false;
 
 			//public MipData (int width, int height, int rowPitch, IntPtr data, bool ownData = true)
-			fixed (byte* p = data) {
+			fixed (byte* p = data.Cast<byte>()) {
 				using var mipData = new MipData(dimensions.Width, dimensions.Height, dimensions.Width * sizeof(int), (IntPtr)p, false);
 				compressor.Input.SetData(mipData, false);
 				var memoryBuffer = new byte[((SurfaceFormat)textureFormat).SizeBytes(dimensions.Area)];

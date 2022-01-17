@@ -68,7 +68,7 @@ sealed class Resampler {
 		Unknown
 	}
 
-	private static unsafe Span<Color8> CreateNewTexture(
+	private static unsafe Span<byte> CreateNewTexture(
 		ManagedSpriteInstance texture,
 		bool async,
 		SpriteInfo input,
@@ -306,6 +306,7 @@ sealed class Resampler {
 
 		// Narrow
 		var bitmapData = Color8.Convert(bitmapDataWide);
+		var resultData = bitmapData.AsBytes();
 
 		// We don't want to use block compression if asynchronous loads are enabled but this is not an asynchronous load... unless that is explicitly enabled.
 		if (Config.Resample.BlockCompression.Enabled /*&& (Config.Resample.BlockCompression.Synchronized || !Config.AsyncScaling.Enabled || async)*/ && scaledSizeClamped.MinOf >= 4) {
@@ -388,7 +389,7 @@ sealed class Resampler {
 				scaledSizeClamped = blockPaddedSize;
 			}
 
-			bitmapData = TextureEncode.Encode(
+			resultData = TextureEncode.Encode(
 				data: bitmapData,
 				format: ref format,
 				dimensions: scaledSizeClamped,
@@ -402,7 +403,7 @@ sealed class Resampler {
 		}
 
 		size = scaledSizeClamped;
-		return bitmapData;
+		return resultData;
 	}
 
 	internal static ManagedTexture2D? Upscale(ManagedSpriteInstance spriteInstance, ref uint scale, SpriteInfo input, ulong hash, ref Vector2B wrapped, bool async) {
@@ -496,7 +497,7 @@ sealed class Resampler {
 						format: out spriteFormat,
 						padding: out spriteInstance.Padding,
 						blockPadding: out spriteInstance.BlockPadding
-					).AsBytes();
+					);
 				}
 				catch (OutOfMemoryException) {
 					Debug.Error($"OutOfMemoryException thrown trying to create texture [texture: {spriteInstance.SafeName()}, bounds: {input.Bounds}, textureSize: {input.ReferenceSize}, scale: {scale}]");
