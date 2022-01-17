@@ -82,6 +82,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 			return false;
 		}
 
+		// TODO : this can invalidate sprites that haven't had their Name/Tag set prior to SetData!
 		if (Config.IgnoreUnknownTextures && texture.Anonymous()) {
 			if (!meta.TracePrinted) {
 				meta.TracePrinted = true;
@@ -122,7 +123,9 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 			}
 		}
 
-		meta.Validation = true;
+		if (!texture.Anonymous()) {
+			meta.Validation = true;
+		}
 		return true;
 	}
 
