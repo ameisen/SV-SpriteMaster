@@ -42,15 +42,10 @@
 
 	<ItemGroup>
 		<!--<PackageReference Include="Brokenevent.ILStrip.CLI" Version="1.1.4" GeneratePathProperty="true" ExcludeAssets="all" />-->
-		<PackageReference Include="FastEnum" Version="1.7.0" />
-		<PackageReference Include="FastExpressionCompiler" Version="3.2.1" />
 		<PackageReference Include="FastExpressionCompiler.LightExpression" Version="3.2.1" />
-		<PackageReference Include="FastMember" Version="1.5.0" />
 		<PackageReference Include="ILRepack" Version="2.1.0-beta1" GeneratePathProperty="true" ExcludeAssets="all" />
 		<PackageReference Include="LinqFasterer" Version="2.1.0" />
 		<PackageReference Include="LZMA-SDK" Version="19.0.0" />
-		<PackageReference Include="Microsoft.FASTER.Core" Version="1.9.10" />
-		<PackageReference Include="Microsoft.Toolkit" Version="7.1.2" />
 		<PackageReference Include="Microsoft.Toolkit.HighPerformance" Version="7.1.2" />
 		<PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" ExcludeAssets="all" />
 		<PackageReference Include="Pastel" Version="3.0.0" />
