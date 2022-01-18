@@ -10,8 +10,10 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Runtime;
+using System.Text;
 using System.Threading;
 
 namespace SpriteMaster;
@@ -153,8 +155,69 @@ public sealed class SpriteMaster : Mod {
 		return false;
 	}
 
+	private static string GetVersionStringHeader() => $"SpriteMaster {FullVersion} build {Config.CurrentVersionObj.Revision} ({Config.BuildConfiguration}, {ChangeList}, {BuildComputerName})";
+
+	private static void ConsoleTriggerGC() {
+		lock (Self.CollectLock!) {
+			Garbage.Collect(compact: true, blocking: true, background: false);
+			DrawState.TriggerGC.Set(true);
+		}
+	}
+
+	private static void ConsoleTriggerPurge() {
+		lock (Self.CollectLock!) {
+			Garbage.Collect(compact: true, blocking: true, background: false);
+			ResidentCache.Purge();
+			Garbage.Collect(compact: true, blocking: true, background: false);
+			DrawState.TriggerGC.Set(true);
+		}
+	}
+
+	private static readonly Dictionary<string, (Action Action, string Description)> ConsoleCommandMap = new() {
+		{ "help", (() => ConsoleHelp(null), "Prints this command guide") }, 
+		{ "stats", (DumpStats, "Dump Statistics") },
+		{ "memory", (Debug.DumpMemory, "Dump Memory") },
+		{ "gc", (ConsoleTriggerGC, "Trigger full GC") },
+		{ "purge", (ConsoleTriggerPurge, "Trigger Purge") }
+	};
+
+	private static void ConsoleHelp(string? unknownCommand = null) {
+		var output = new StringBuilder();
+		output.AppendLine();
+		output.AppendLine(GetVersionStringHeader());
+		if (unknownCommand is not null) {
+			output.AppendLine($"Unknown Command: '{unknownCommand}'");
+		}
+		output.AppendLine("Help Command Guide");
+		output.AppendLine();
+
+		int maxKeyLength = ConsoleCommandMap.Keys.Select(k => k.Length).Max();
+
+		foreach (var kv in ConsoleCommandMap) {
+			output.AppendLine($"{kv.Key.PadRight(maxKeyLength)} : {kv.Value.Description}");
+		}
+
+		Debug.Message(output.ToString());
+	}
+
+	private void ConsoleCommand(string command, string[] arguments) {
+		string? subCommand = arguments.ElementAtOrDefault(0);
+		if (subCommand is null) {
+			ConsoleHelp();
+			return;
+		}
+		var invariantCommand = subCommand.ToLowerInvariant();
+		if (ConsoleCommandMap.TryGetValue(invariantCommand, out var commandPair)) {
+			commandPair.Action();
+		}
+		else {
+			ConsoleHelp(subCommand);
+			return;
+		}
+	}
+
 	public override void Entry(IModHelper help) {
-		Debug.Message($"SpriteMaster {FullVersion} build {Config.CurrentVersionObj.Revision} ({Config.BuildConfiguration}, {ChangeList}, {BuildComputerName})");
+		Debug.Message(GetVersionStringHeader());
 
 		AssemblyPath = help.DirectoryPath;
 
@@ -188,22 +251,7 @@ public sealed class SpriteMaster : Mod {
 
 		help.Events.Input.ButtonPressed += OnButtonPressed;
 
-		help.ConsoleCommands.Add("spritemaster_stats", "Dump SpriteMaster Statistics", (_, _) =>  DumpStats());
-		help.ConsoleCommands.Add("spritemaster_memory", "Dump SpriteMaster Memory", (_, _) => Debug.DumpMemory());
-		help.ConsoleCommands.Add("spritemaster_gc", "Trigger Spritemaster GC", (_, _) => {
-			lock (CollectLock!) {
-				Garbage.Collect(compact: true, blocking: true, background: false);
-				DrawState.TriggerGC.Set(true);
-			}
-		});
-		help.ConsoleCommands.Add("spritemaster_purge", "Trigger Spritemaster Purge", (_, _) => {
-			lock (CollectLock!) {
-				Garbage.Collect(compact: true, blocking: true, background: false);
-				ResidentCache.Purge();
-				Garbage.Collect(compact: true, blocking: true, background: false);
-				DrawState.TriggerGC.Set(true);
-			}
-		});
+		help.ConsoleCommands.Add("spritemaster", "SpriteMaster Commands", ConsoleCommand);
 
 		help.Events.GameLoop.DayStarted += OnDayStarted;
 		// GC after major events
