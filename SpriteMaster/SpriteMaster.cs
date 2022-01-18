@@ -3,6 +3,7 @@ using LinqFasterer;
 using SpriteMaster.Caching;
 using SpriteMaster.Extensions;
 using SpriteMaster.Harmonize;
+using SpriteMaster.Metadata;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
@@ -271,63 +272,67 @@ public sealed class SpriteMaster : Mod {
 		MemoryPressureThread?.Start();
 		GarbageCollectThread?.Start();
 
+		if (Game1.lightmap is not null) {
+			Game1.lightmap.Meta().IsSystemRenderTarget = true;
+		}
+
 		// TODO : Iterate deeply with reflection over 'StardewValley' namespace to find any Texture2D objects sitting around
 
-		// Tell SMAPI to flush all assets loaded so that SM can precache already-loaded assets
-		//bool invalidated = help.Content.InvalidateCache<XNA.Graphics.Texture>();
+				// Tell SMAPI to flush all assets loaded so that SM can precache already-loaded assets
+				//bool invalidated = help.Content.InvalidateCache<XNA.Graphics.Texture>();
 
-		/*
-		var light = Game1.cauldronLight;
-		//Game1
-		//FarmerRenderer
-		//MovieTheater
-		//CraftingRecipe
-		//Flooring
-		//HoeDirt
-		//Furniture
-		//Tool
-		//FruitTree
-		//Bush
-		//titleMenu
-		try {
-			var texturesToCache = new List<XNA.Graphics.Texture2D>();
-			var resourcesLockField = typeof(XNA.Graphics.GraphicsDevice).GetField("_resourcesLock", BindingFlags.NonPublic | BindingFlags.Instance);
-			var resourcesField = typeof(XNA.Graphics.GraphicsDevice).GetField("_resources", BindingFlags.NonPublic | BindingFlags.Instance);
-			var resourcesLock = resourcesLockField.GetValue(DrawState.Device);
-			var resources = resourcesField.GetValue<IEnumerable<WeakReference>>(DrawState.Device);
+				/*
+				var light = Game1.cauldronLight;
+				//Game1
+				//FarmerRenderer
+				//MovieTheater
+				//CraftingRecipe
+				//Flooring
+				//HoeDirt
+				//Furniture
+				//Tool
+				//FruitTree
+				//Bush
+				//titleMenu
+				try {
+					var texturesToCache = new List<XNA.Graphics.Texture2D>();
+					var resourcesLockField = typeof(XNA.Graphics.GraphicsDevice).GetField("_resourcesLock", BindingFlags.NonPublic | BindingFlags.Instance);
+					var resourcesField = typeof(XNA.Graphics.GraphicsDevice).GetField("_resources", BindingFlags.NonPublic | BindingFlags.Instance);
+					var resourcesLock = resourcesLockField.GetValue(DrawState.Device);
+					var resources = resourcesField.GetValue<IEnumerable<WeakReference>>(DrawState.Device);
 
-			lock (resourcesLock) {
-				foreach (var resource in resources) {
-					if (resource.Target is XNA.Graphics.Texture2D texture) {
-						texturesToCache.Add(texture);
-					}
-				}
-			}
-
-			texturesToCache = texturesToCache;
-		}
-		catch { }
-
-		try {
-			var texturesToCache = new List<XNA.Graphics.Texture2D>();
-			var assetsField = typeof(XNA.Content.ContentManager).GetField("disposableAssets", BindingFlags.NonPublic | BindingFlags.Instance);
-			var cmField = typeof(XNA.Content.ContentManager).GetField("ContentManagers", BindingFlags.NonPublic | BindingFlags.Static);
-			var contentManagers = cmField.GetValue<IEnumerable<WeakReference>>(null);
-			foreach (var weakRef in contentManagers) {
-				if (weakRef.Target is XNA.Content.ContentManager cm) {
-					var assets = assetsField.GetValue<IEnumerable<IDisposable>>(cm);
-					foreach (var asset in assets) {
-						if (asset is XNA.Graphics.Texture2D texture) {
-							texturesToCache.Add(texture);
+					lock (resourcesLock) {
+						foreach (var resource in resources) {
+							if (resource.Target is XNA.Graphics.Texture2D texture) {
+								texturesToCache.Add(texture);
+							}
 						}
 					}
-				}
-			}
 
-			texturesToCache = texturesToCache;
-		}
-		catch { }
-		*/
+					texturesToCache = texturesToCache;
+				}
+				catch { }
+
+				try {
+					var texturesToCache = new List<XNA.Graphics.Texture2D>();
+					var assetsField = typeof(XNA.Content.ContentManager).GetField("disposableAssets", BindingFlags.NonPublic | BindingFlags.Instance);
+					var cmField = typeof(XNA.Content.ContentManager).GetField("ContentManagers", BindingFlags.NonPublic | BindingFlags.Static);
+					var contentManagers = cmField.GetValue<IEnumerable<WeakReference>>(null);
+					foreach (var weakRef in contentManagers) {
+						if (weakRef.Target is XNA.Content.ContentManager cm) {
+							var assets = assetsField.GetValue<IEnumerable<IDisposable>>(cm);
+							foreach (var asset in assets) {
+								if (asset is XNA.Graphics.Texture2D texture) {
+									texturesToCache.Add(texture);
+								}
+							}
+						}
+					}
+
+					texturesToCache = texturesToCache;
+				}
+				catch { }
+				*/
 	}
 
 	private static class ModUID {

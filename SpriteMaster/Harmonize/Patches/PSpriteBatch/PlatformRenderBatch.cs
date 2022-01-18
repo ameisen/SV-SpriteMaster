@@ -15,11 +15,8 @@ static class PlatformRenderBatch {
 			return reference;
 		}
 
-		if (texture is ManagedTexture2D managedTexture && managedTexture.Texture != null) {
+		if (texture is ManagedTexture2D managedTexture/* && managedTexture.Texture != null*/) {
 			return SamplerState.LinearClamp;
-		}
-		else if (reference.Filter == TextureFilter.Linear) {
-			return SamplerState.PointClamp;
 		}
 
 		return reference;
@@ -39,15 +36,21 @@ static class PlatformRenderBatch {
 		int end,
 		Effect effect,
 		Texture texture,
-		GraphicsDevice ____device
+		GraphicsDevice ____device,
+		ref SamplerState? __state
 	) {
 		try {
-			var OriginalState = ____device?.SamplerStates[0] ?? SamplerState.PointClamp;
+			var originalState = ____device?.SamplerStates[0] ?? SamplerState.PointClamp;
 
-			var newState = GetNewSamplerState(texture, OriginalState);
+			var newState = GetNewSamplerState(texture, originalState);
 
-			if (newState != OriginalState && ____device?.SamplerStates != null)
+			if (newState != originalState && ____device?.SamplerStates != null) {
+				__state = originalState;
 				____device.SamplerStates[0] = newState;
+			}
+			else {
+				__state = null;
+			}
 		}
 		catch (Exception ex) {
 			ex.PrintError();
@@ -57,35 +60,29 @@ static class PlatformRenderBatch {
 	}
 
 	[Harmonize(
-		"PlatformRenderBatch",
-		Harmonize.Fixation.Prefix,
-		PriorityLevel.First,
-		platform: Harmonize.Platform.XNA
-	)]
-	internal static bool OnPlatformRenderBatch(
-		SpriteBatch __instance,
-		Texture2D texture,
-		object[] sprites,
-		int offset,
-		int count,
-		ref SamplerState ___samplerState
-	) {
+	"Microsoft.Xna.Framework.Graphics",
+	"Microsoft.Xna.Framework.Graphics.SpriteBatcher",
+	"FlushVertexArray",
+	Harmonize.Fixation.Postfix,
+	PriorityLevel.Last,
+	platform: Harmonize.Platform.MonoGame
+)]
+	internal static void OnFlushVertexArray(
+	SpriteBatcher __instance,
+	int start,
+	int end,
+	Effect effect,
+	Texture texture,
+	GraphicsDevice ____device,
+	SamplerState? __state
+) {
 		try {
-			var OriginalState = ___samplerState ?? SamplerState.PointClamp;
-
-			var newState = GetNewSamplerState(texture, OriginalState);
-
-			if (newState != OriginalState) {
-				if (__instance?.GraphicsDevice?.SamplerStates != null)
-					__instance.GraphicsDevice.SamplerStates[0] = newState;
-
-				___samplerState = newState;
+			if (__state is not null && ____device?.SamplerStates != null && __state != ____device.SamplerStates[0]) {
+				____device.SamplerStates[0] = __state;
 			}
 		}
 		catch (Exception ex) {
 			ex.PrintError();
 		}
-
-		return true;
 	}
 }

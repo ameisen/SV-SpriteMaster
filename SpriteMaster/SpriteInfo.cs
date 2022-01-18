@@ -6,6 +6,7 @@ using SpriteMaster.Types;
 using SpriteMaster.Types.Interlocking;
 using System;
 using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace SpriteMaster;
 
@@ -26,8 +27,7 @@ sealed class SpriteInfo : IDisposable {
 	internal readonly bool BlendEnabled;
 	internal readonly bool IsWater;
 	internal readonly bool IsFont;
-	// For statistics and throttling
-	internal readonly bool WasCached;
+	private volatile bool _Broken = false;
 
 	public override string ToString() => $"SpriteInfo[Name: '{Reference.Name}', ReferenceSize: {ReferenceSize}, Size: {Bounds}]";
 
@@ -35,7 +35,10 @@ sealed class SpriteInfo : IDisposable {
 	private byte[]? _ReferenceData = null;
 	internal byte[]? ReferenceData {
 		get => _ReferenceData;
-		set {
+		private set {
+			if (_Broken) {
+				return;
+			}
 			if (_ReferenceData == value) {
 				return;
 			}
@@ -44,22 +47,41 @@ sealed class SpriteInfo : IDisposable {
 				SpriteDataHash = 0;
 			}
 			else {
-				int formatSize = Reference.Format.IsCompressed() ? 4 : (int)Reference.Format.SizeBytes(1);
+				float realFormatSize = (float)Reference.Format.SizeBytes(4) / 4.0f;
+				var format = Reference.Format.IsCompressed() ? SurfaceFormat.Color : Reference.Format;
+				
+				int actualWidth = (int)format.SizeBytes(Bounds.Extent.X);
 
-				int actualWidth = Bounds.Extent.X * formatSize;
+				try {
+					var spriteData = new Span2D<byte>(
+						array: _ReferenceData,
+						offset: RawOffset,
+						width: actualWidth,
+						height: Bounds.Extent.Y,
+						// 'pitch' is the distance between the end of one row and the start of another
+						// whereas 'stride' is the distance between the starts of rows
+						// Ergo, 'pitch' is 'stride' - 'width'.
+						pitch: RawStride - actualWidth
+					);
 
-				var spriteData = new Span2D<byte>(
-					array: _ReferenceData,
-					offset: RawOffset,
-					width: Bounds.Extent.X * formatSize,
-					height: Bounds.Extent.Y,
-					// 'pitch' is the distance between the end of one row and the start of another
-					// whereas 'stride' is the distance between the starts of rows
-					// Ergo, 'pitch' is 'stride' - 'width'.
-					pitch: RawStride - actualWidth
-				);
-
-				SpriteDataHash = spriteData.Hash();
+					SpriteDataHash = spriteData.Hash();
+				}
+				catch (ArgumentOutOfRangeException) {
+					var errorBuilder = new StringBuilder();
+					errorBuilder.AppendLine("SpriteInfo.ReferenceData: arguments out of range");
+					errorBuilder.AppendLine($"Reference: {Reference.SafeName()}");
+					errorBuilder.AppendLine($"Reference Extent: {Reference.Extent()}");
+					errorBuilder.AppendLine($"raw offset: {RawOffset}");
+					errorBuilder.AppendLine($"offset: {Bounds.Offset}");
+					errorBuilder.AppendLine($"extent: {Bounds.Extent}");
+					errorBuilder.AppendLine($"formatSize: {realFormatSize} ({Reference.Format})");
+					errorBuilder.AppendLine($"New Format: {format}");
+					errorBuilder.AppendLine($"pitch: {RawStride - actualWidth}");
+					errorBuilder.AppendLine($"referenceDataSize: {_ReferenceData.Length}");
+					Debug.ErrorLn(errorBuilder.ToString());
+					_Broken = true;
+					_ReferenceData = null;
+				}
 			}
 		}
 	}
@@ -98,48 +120,73 @@ sealed class SpriteInfo : IDisposable {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool IsCached(Texture2D reference) => reference.Meta().CachedDataNonBlocking is not null;
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal SpriteInfo(Texture2D reference, in Bounds dimensions, uint expectedScale, TextureType textureType) {
-		Reference = reference;
-		BlendState = DrawState.CurrentBlendState;
-		ExpectedScale = expectedScale;
-		Bounds = dimensions;
-		TextureType = textureType;
-		if (Bounds.Bottom > ReferenceSize.Height) {
-			Bounds.Height -= (Bounds.Bottom - ReferenceSize.Height);
-		}
-		if (Bounds.Right > ReferenceSize.Width) {
-			Bounds.Width -= (Bounds.Right - ReferenceSize.Width);
-		}
+	internal ref struct Initializer {
+		internal readonly byte[]? ReferenceData;
+		internal readonly Bounds Bounds;
+		internal readonly Texture2D Reference;
+		internal readonly BlendState BlendState;
+		internal readonly uint ExpectedScale;
+		internal readonly TextureType TextureType;
+		// For statistics and throttling
+		internal readonly bool WasCached;
 
-		int formatSize = reference.Format.IsCompressed() ? 4 : (int)reference.Format.SizeBytes(1);
+		internal Initializer(Texture2D reference, in Bounds dimensions, uint expectedScale, TextureType textureType) {
+			Reference = reference;
+			BlendState = DrawState.CurrentBlendState;
+			ExpectedScale = expectedScale;
+			Bounds = dimensions;
 
-		RawStride = formatSize * ReferenceSize.Width;
-		RawOffset = (RawStride * dimensions.Top) + (formatSize * dimensions.Left);
+			TextureType = textureType;
 
-		var refMeta = reference.Meta();
-		var refData = refMeta.CachedData;
+			// Truncate the bounds so that it fits if it wouldn't otherwise fit
+			var oldBounds = Bounds;
+			Bounds = Bounds.ClampTo(Reference.Bounds);
 
-		if (refData is null) {
-			// TODO : Switch this around to use ReadOnlySequence so our hash is specific to the sprite
-			refData = new byte[reference.SizeBytes()];
-			Debug.TraceLn($"Reloading Texture Data (not in cache): {reference.SafeName(DrawingColor.LightYellow)}");
-			reference.GetData(refData);
-			reference.Meta().CachedRawData = refData;
-			if (refMeta.IsCompressed) {
-				refData = null; // we can only use uncompressed data at this stage.
+			if (Bounds != oldBounds) {
+				Debug.WarningLn($"SpriteInfo for '{reference.SafeName()}' bounds '{dimensions}' are not contained in reference bounds '{(Bounds)reference.Bounds}'");
 			}
-			WasCached = false;
-		}
-		else if (ReferenceData == Texture2DMeta.BlockedSentinel) {
-			refData = null;
-			WasCached = false;
-		}
-		else {
-			WasCached = true;
-		}
 
-		ReferenceData = refData;
+			var refMeta = reference.Meta();
+			var refData = refMeta.CachedData;
+
+			if (refData is null) {
+				// TODO : Switch this around to use ReadOnlySequence so our hash is specific to the sprite
+				refData = new byte[reference.SizeBytes()];
+				Debug.TraceLn($"Reloading Texture Data (not in cache): {reference.SafeName(DrawingColor.LightYellow)}");
+				reference.GetData(refData);
+				reference.Meta().CachedRawData = refData;
+				if (refMeta.IsCompressed) {
+					refData = null; // we can only use uncompressed data at this stage.
+				}
+				WasCached = false;
+			}
+			else if (refData == Texture2DMeta.BlockedSentinel) {
+				refData = null;
+				WasCached = false;
+			}
+			else {
+				WasCached = true;
+			}
+
+			ReferenceData = refData;
+		}
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal SpriteInfo(in Initializer initializer) {
+		Reference = initializer.Reference;
+		BlendState = initializer.BlendState;
+		ExpectedScale = initializer.ExpectedScale;
+		Bounds = initializer.Bounds;
+		TextureType = initializer.TextureType;
+		var format = Reference.Format.IsCompressed() ? SurfaceFormat.Color : Reference.Format;
+		RawStride = (int)format.SizeBytes(ReferenceSize.Width);
+		RawOffset = (RawStride * Bounds.Top) + (int)format.SizeBytes(Bounds.Left);
+		ReferenceData = initializer.ReferenceData;
+
+		if (ReferenceData is null) {
+			throw new ArgumentNullException(nameof(initializer.ReferenceData));
+		}
 
 		BlendEnabled = DrawState.CurrentBlendState.AlphaSourceBlend != Blend.One;
 		Wrapped = new(

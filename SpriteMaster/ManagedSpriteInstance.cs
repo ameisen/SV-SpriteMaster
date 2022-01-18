@@ -65,6 +65,21 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 			return false;
 		}
 
+		// For now, render targets are disabled. General ones _can_ be made to work - they need to be invalidated once they are bound to a render target slot,
+		// and a hold set on using them until they are no longer bound to a render target slot. Or on clear calls. If the render target is not a persist-type,
+		// it should be processed _immediately_. If it is, it should be processed synchronously on first use.
+		if (texture is RenderTarget2D) {
+			if (!meta.TracePrinted) {
+				meta.TracePrinted = true;
+				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', Is Render Target");
+			}
+			meta.Validation = false;
+			if (clean) {
+				PurgeInvalidated(texture);
+			}
+			return false;
+		}
+
 		if (Math.Max(texture.Width, texture.Height) <= Config.Resample.MinimumTextureDimensions) {
 			if (!meta.TracePrinted) {
 				meta.TracePrinted = true;
@@ -193,6 +208,10 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	static internal ManagedSpriteInstance? Fetch(Texture2D texture, in Bounds source, uint expectedScale) {
+		if (!Validate(texture, clean: true)) {
+			return null;
+		}
+
 		if (SpriteMap.TryGetReady(texture, source, expectedScale, out var scaleTexture)) {
 			return scaleTexture;
 		}
@@ -204,12 +223,12 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 	static internal ManagedSpriteInstance? FetchOrCreate(Texture2D texture, in Bounds source, uint expectedScale) {
 		using var _ = Performance.Track();
 
-		if (SpriteMap.TryGet(texture, source, expectedScale, out var scaleTexture)) {
-			return scaleTexture;
-		}
-
 		if (!Validate(texture, clean: true)) {
 			return null;
+		}
+
+		if (SpriteMap.TryGet(texture, source, expectedScale, out var scaleTexture)) {
+			return scaleTexture;
 		}
 
 		bool useStalling = Config.Resample.UseFrametimeStalling && !GameState.IsLoading;
@@ -262,11 +281,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 			//textureType = TextureType.Image;
 		}
 
-		SpriteInfo textureWrapper;
-
-		using (Performance.Track("new SpriteInfo")) {
-			textureWrapper = new(reference: texture, dimensions: source, expectedScale: expectedScale, textureType: textureType);
-		}
+		SpriteInfo.Initializer spriteInfoInitializer = new SpriteInfo.Initializer(reference: texture, dimensions: source, expectedScale: expectedScale, textureType: textureType);
 
 		string getRemainingTime() {
 			if (!remainingTime.HasValue) {
@@ -276,7 +291,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 		}
 
 		// If this is null, it can only happen due to something being blocked, so we should try again later.
-		if (textureWrapper.ReferenceData is null) {
+		if (spriteInfoInitializer.ReferenceData is null) {
 			Debug.TraceLn($"Texture Data fetch for {getNameString()} was {"blocked".Pastel(DrawingColor.Red)}; retrying later#{getRemainingTime()}");
 			return null;
 		}
@@ -287,7 +302,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 
 		try {
 			var resampleTask = ResampleTask.Dispatch(
-				spriteInfo: textureWrapper,
+				spriteInfo: new(spriteInfoInitializer),
 				async: useAsync
 			);
 
@@ -304,7 +319,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 		finally {
 			watch.Stop();
 			var duration = watch.Elapsed;
-			var averager = GetTimer(cached: textureWrapper.WasCached, async: useAsync);
+			var averager = GetTimer(cached: spriteInfoInitializer.WasCached, async: useAsync);
 			TimeSpanSamples++;
 			MeanTimeSpan += duration;
 			Debug.TraceLn($"Duration {getNameString()}: {(MeanTimeSpan / TimeSpanSamples).TotalMilliseconds.ToString(DrawingColor.LightYellow)} ms");

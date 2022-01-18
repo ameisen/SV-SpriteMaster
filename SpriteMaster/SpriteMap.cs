@@ -110,6 +110,10 @@ static class SpriteMap {
 		}
 	}
 
+	// TODO : CP-A support - we hit here repeatedly for animated textures.
+	// This obviously prevents things from caching or functioning for sprites that are animated.
+	// The logic needs to be overridden and previously-cached textures stored in some fashion for sprites
+	// that are determined to be animated
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void Purge(Texture2D reference, in Bounds? sourceRectangle = null) {
 		try {
@@ -140,7 +144,6 @@ static class SpriteMap {
 						}
 						spriteInstance.Texture = null;
 						if (hasSourceRect) {
-							spriteInstance.Dispose();
 							removeTexture.Add(pairs.Key);
 						}
 					}
