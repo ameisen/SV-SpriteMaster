@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using LinqFasterer;
 using SpriteMaster.Caching;
 using SpriteMaster.Extensions;
 using SpriteMaster.Harmonize;
@@ -252,6 +253,11 @@ public sealed class SpriteMaster : Mod {
 		help.Events.Input.ButtonPressed += OnButtonPressed;
 
 		help.ConsoleCommands.Add("spritemaster", "SpriteMaster Commands", ConsoleCommand);
+		try {
+			// Try to add 'sm' as a shortcut for my own sanity.
+			help.ConsoleCommands.Add("sm", "SpriteMaster Commands", ConsoleCommand);
+		}
+		catch { }
 
 		help.Events.GameLoop.DayStarted += OnDayStarted;
 		// GC after major events
@@ -260,6 +266,7 @@ public sealed class SpriteMaster : Mod {
 		help.Events.GameLoop.GameLaunched += (_, _) => { ForceGarbageCollect(); ManagedSpriteInstance.ClearTimers(); };
 		help.Events.GameLoop.ReturnedToTitle += (_, _) => ForceGarbageCollect();
 		help.Events.GameLoop.SaveCreated += (_, _) => ForceGarbageCollect();
+		help.Events.GameLoop.GameLaunched += (_, _) => OnGameLaunched();
 
 		MemoryPressureThread?.Start();
 		GarbageCollectThread?.Start();
@@ -321,6 +328,29 @@ public sealed class SpriteMaster : Mod {
 		}
 		catch { }
 		*/
+	}
+
+	private static class ModUID {
+		internal const string DynamicGameAssets = "spacechase0.DynamicGameAssets";
+		internal const string ContentPatcher = "Pathoschild.ContentPatcher";
+		internal const string ContentPatcherAnimations = "spacechase0.ContentPatcherAnimations";
+	}
+
+	private void OnGameLaunched() {
+		foreach (var mod in Helper.ModRegistry.GetAll()) {
+			if (mod is null) {
+				continue;
+			}
+			var manifest = mod.Manifest;
+
+			if (manifest.Dependencies.AnyF(d => d.UniqueID == ModUID.ContentPatcherAnimations) || manifest.ContentPackFor?.UniqueID == ModUID.ContentPatcherAnimations) {
+				Debug.Warning($"Mod '{manifest.Name}' has a dependency on Content Patcher Animations ({ModUID.ContentPatcherAnimations}), which is presently unsupported by SpriteMaster");
+			}
+
+			if (manifest.Dependencies.AnyF(d => d.UniqueID == ModUID.DynamicGameAssets) || manifest.ContentPackFor?.UniqueID == ModUID.DynamicGameAssets) {
+				Debug.Warning($"Mod '{manifest.Name}' has a dependency on Dynamic Game Assets ({ModUID.DynamicGameAssets}), which is presently not fully supported by SpriteMaster");
+			}
+		}
 	}
 
 	// SMAPI/CP won't do this, so we do. Purge the cached textures for the previous season on a season change.
