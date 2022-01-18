@@ -2,8 +2,6 @@
 using SpriteMaster.Types;
 using System;
 
-#nullable enable
-
 namespace SpriteMaster.Resample.Passes;
 
 static class Padding {

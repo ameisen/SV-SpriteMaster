@@ -4,8 +4,6 @@ using SpriteMaster.Types;
 using System;
 using System.IO;
 
-#nullable enable
-
 namespace SpriteMaster.Resample.Decoder;
 
 static class GraphicsBlockDecoder {

@@ -17,6 +17,9 @@
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<RepositoryUrl>https://github.com/ameisen/SV-SpriteMaster</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
+		<IsPublishable>False</IsPublishable>
+		<Nullable>enable</Nullable>
+		<DebugType>portable</DebugType>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">

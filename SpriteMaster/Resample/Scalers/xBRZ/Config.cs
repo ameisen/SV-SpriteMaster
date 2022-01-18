@@ -3,8 +3,6 @@ using SpriteMaster.Types;
 using System;
 using System.Runtime.CompilerServices;
 
-#nullable enable
-
 // TODO : Handle X or Y-only scaling, since the game has a lot of 1xY and Xx1 sprites - 1D textures.
 namespace SpriteMaster.Resample.Scalers.xBRZ;
 

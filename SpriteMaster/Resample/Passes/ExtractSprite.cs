@@ -3,8 +3,6 @@ using SpriteMaster.Types;
 using System;
 using System.Runtime.InteropServices;
 
-#nullable enable
-
 namespace SpriteMaster.Resample.Passes;
 
 static class ExtractSprite {

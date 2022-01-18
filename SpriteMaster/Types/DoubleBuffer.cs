@@ -1,4 +1,5 @@
 ﻿using SpriteMaster.Extensions;
+using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
@@ -30,8 +31,6 @@ sealed class DoubleBuffer<T> {
 	internal T Current => GetBuffer(CurrentBufferIndex);
 
 	internal T Next => GetBuffer(CurrentBufferIndex + 1U);
-
-
 	internal T this[int index] => GetBuffer((uint)index);
 	internal T this[uint index] => GetBuffer(index);
 
@@ -60,8 +59,8 @@ sealed class DoubleBuffer<T> {
 
 	internal DoubleBuffer(params object[] parameters) : this(
 		// We do, indeed, want to create two seperate instances.
-		ReflectionExt.CreateInstance<T>(parameters),
-		ReflectionExt.CreateInstance<T>(parameters)
+		ReflectionExt.CreateInstance<T>(parameters) ?? throw new NullReferenceException(nameof(parameters)),
+		ReflectionExt.CreateInstance<T>(parameters) ?? throw new NullReferenceException(nameof(parameters))
 	) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]

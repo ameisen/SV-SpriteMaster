@@ -28,8 +28,11 @@ static class NVTT {
 			);
 
 			foreach (var dlType in dlTypes) {
-				var newDL = (LibDL)Activator.CreateInstance(dlType);
+				var newDL = (LibDL?)Activator.CreateInstance(dlType);
 				try {
+					if (newDL is null) {
+						throw new NullReferenceException(nameof(newDL));
+					}
 					newDL.error();
 				}
 				catch {
@@ -56,7 +59,7 @@ private static extern void mono_dllmap_insert(IntPtr assembly, string dll, strin
 mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null);
 	*/
 
-	private static readonly LibDL dl = null;
+	private static readonly LibDL? dl = null;
 
 	// NVTT's CUDA compressor for block compression is _not_ threadsafe. I have a version locally from a while back that I made threadsafe,
 	// but I never validated it and am not comfortable jamming it in here.
@@ -91,7 +94,7 @@ mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null)
 		Harmonize.PriorityLevel.First,
 		instance: false
 	)]
-	internal static bool GetAppBaseDirectory(ref string __result) {
+	internal static bool GetAppBaseDirectory(ref string? __result) {
 		__result = SpriteMaster.AssemblyPath;
 		Debug.TraceLn($"GetAppBaseDirectory: {__result}");
 		return false;
@@ -132,6 +135,10 @@ mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null)
 		platform: Harmonize.Platform.Linux
 	)]
 	internal static bool NativeLoadLibrary(UnmanagedLibrary __instance, ref IntPtr __result, String path) {
+		if (dl is null) {
+			throw new NullReferenceException(nameof(dl));
+		}
+
 		var libraryHandle = dl.open(path, RTLD_NOW);
 
 		if (libraryHandle == IntPtr.Zero && __instance.ThrowOnLoadFailure) {
@@ -157,6 +164,10 @@ mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null)
 		platform: Harmonize.Platform.Linux
 	)]
 	internal static bool NativeGetProcAddress(ref IntPtr __result, IntPtr handle, String functionName) {
+		if (dl is null) {
+			throw new NullReferenceException(nameof(dl));
+		}
+
 		__result = dl.sym(handle, functionName);
 
 		return false;
@@ -171,7 +182,7 @@ mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null)
 		platform: Harmonize.Platform.Linux
 	)]
 	internal static bool NativeFreeLibrary(IntPtr handle) {
-		dl.close(handle);
+		dl?.close(handle);
 		return false;
 	}
 

@@ -1,4 +1,3 @@
-﻿#nullable enable
 
 namespace SpriteMaster.Resample.Scalers.xBRZ.Common;
 

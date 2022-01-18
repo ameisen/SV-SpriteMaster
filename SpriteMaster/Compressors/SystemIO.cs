@@ -44,7 +44,7 @@ static class SystemIO {
 
 	[MethodImpl(Runtime.MethodImpl.RunOnce)]
 	internal static byte[] CompressTest(byte[] data) {
-		IOC.DeflateStream compressor = null;
+		IOC.DeflateStream? compressor = null;
 		try {
 			using var val = new MemoryStream(CompressedLengthEstimate(data));
 			using (compressor = new IOC.DeflateStream(val, IOC.CompressionLevel.Optimal)) {

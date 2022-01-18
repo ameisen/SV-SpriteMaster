@@ -1,8 +1,6 @@
 ﻿using SpriteMaster.Types;
 using System.Runtime.CompilerServices;
 
-#nullable enable
-
 namespace SpriteMaster.Resample.Scalers.xBRZ.Color;
 
 sealed class ColorEq : ColorDist {

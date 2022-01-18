@@ -13,8 +13,6 @@ using WeakInstanceList = System.Collections.Generic.LinkedList<System.WeakRefere
 using WeakInstanceListNode = System.Collections.Generic.LinkedListNode<System.WeakReference<SpriteMaster.ManagedSpriteInstance>>;
 using WeakTexture = System.WeakReference<Microsoft.Xna.Framework.Graphics.Texture2D>;
 
-#nullable enable
-
 namespace SpriteMaster;
 
 sealed partial class ManagedSpriteInstance : IDisposable {
@@ -359,7 +357,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 	internal long MemorySize {
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		get {
-			if (!IsReady) {
+			if (!IsReady || Texture is null) {
 				return 0;
 			}
 			return Texture.SizeBytes();

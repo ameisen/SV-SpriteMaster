@@ -9,7 +9,7 @@ namespace SpriteMaster.Extensions;
 
 static class String {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static string ToString<T>(this T obj, in System.Drawing.Color color) => obj.ToString().Pastel(color);
+	internal static string ToString<T>(this T? obj, in System.Drawing.Color color) => obj?.ToString().Pastel(color) ?? "[null]".Pastel(color);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool IsEmpty(this string str) => str.Length == 0;

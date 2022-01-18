@@ -172,7 +172,7 @@ static class PTexture2D {
 						null
 					);
 
-					ctor.Invoke(texture, new object[] { DrawState.Device, texture.Width, texture.Height, texture.LevelCount > 1, texture.Format });
+					ctor?.Invoke(texture, new object[] { DrawState.Device, texture.Width, texture.Height, texture.LevelCount > 1, texture.Format });
 					//pComPtr = (IntPtr)(void*)texture.GetField("pComPtr");
 					return false;
 				}

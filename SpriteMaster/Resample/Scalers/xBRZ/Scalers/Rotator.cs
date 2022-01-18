@@ -3,8 +3,6 @@ using System;
 using System.Runtime.CompilerServices;
 using static SpriteMaster.Extensions.Collections;
 
-#nullable enable
-
 namespace SpriteMaster.Resample.Scalers.xBRZ.Scalers;
 
 static class Rotator {

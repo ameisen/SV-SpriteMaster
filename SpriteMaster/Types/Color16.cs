@@ -3,8 +3,6 @@ using SpriteMaster.Types.Fixed;
 using System;
 using System.Runtime.InteropServices;
 
-#nullable enable
-
 namespace SpriteMaster.Types;
 
 [StructLayout(LayoutKind.Explicit, Pack = sizeof(ulong), Size = sizeof(ulong))]

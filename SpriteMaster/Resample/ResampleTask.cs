@@ -2,8 +2,6 @@
 using SpriteMaster.Tasking;
 using System.Threading.Tasks;
 
-#nullable enable
-
 namespace SpriteMaster.Resample;
 
 static class ResampleTask {
@@ -43,6 +41,5 @@ static class ResampleTask {
 			return Task<ManagedSpriteInstance?>.FromResult(ResampleFunction(parameters));
 		}
 	}
-
 
 }

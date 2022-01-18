@@ -7,8 +7,6 @@ using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 
-#nullable enable
-
 namespace SpriteMaster;
 
 static class Runtime {

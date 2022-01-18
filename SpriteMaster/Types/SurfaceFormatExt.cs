@@ -15,7 +15,7 @@ static class SurfaceFormatExt {
 	}
 
 	private static int LastArtificialSurfaceFormat = -1;
-	internal static SurfaceFormat GetSurfaceFormat(string name) {
+	internal static SurfaceFormat? GetSurfaceFormat(string name) {
 		var EnumType = typeof(SurfaceFormat);
 		var Enums = EnumType.GetFields();
 		var largestValue = (SurfaceFormat)0;
@@ -23,7 +23,10 @@ static class SurfaceFormatExt {
 			if (enumerator.FieldType != EnumType.UnderlyingSystemType) {
 				continue;
 			}
-			var enumValue = (SurfaceFormat)Convert.ChangeType(enumerator.GetValue(EnumType), typeof(SurfaceFormat));
+			var enumValue = (SurfaceFormat?)Convert.ChangeType(enumerator.GetValue(EnumType), typeof(SurfaceFormat));
+			if (enumValue is null) {
+				return null;
+			}
 			if (name == enumerator.Name) {
 				return enumValue;
 			}

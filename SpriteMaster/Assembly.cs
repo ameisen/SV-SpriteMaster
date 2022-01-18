@@ -9,8 +9,6 @@ global using XTileSize = xTile.Dimensions.Size;
 global using half = System.Half;
 global using XTexture2D = Microsoft.Xna.Framework.Graphics.Texture2D;
 
-#nullable enable
-
 using System.Runtime.CompilerServices;
 using System.Security;
 using System;
@@ -23,7 +21,7 @@ using System;
 [assembly: SecurityTransparent]
 [assembly: SecurityRules(SecurityRuleSet.Level2, SkipVerificationInFullTrust = true)]
 [assembly: InternalsVisibleToAttribute("xBRZ")]
-[assembly: ChangeList("5f9c398:0.13.0-alpha.3-1-g5f9c398")]
+[assembly: ChangeList("0a6904a:0.13.0-alpha.3-2-g0a6904a")]
 [assembly: BuildComputerName("Palatinate")]
 [assembly: FullVersion("0.13.0.3-alpha.3")]
 // [assembly: SuppressUnmanagedCodeSecurity]

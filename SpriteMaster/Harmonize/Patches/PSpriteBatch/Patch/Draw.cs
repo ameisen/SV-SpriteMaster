@@ -159,7 +159,6 @@ static class Draw {
 		return false;
 	}
 
-
 	[Harmonize("Draw", priority: Harmonize.PriorityLevel.Last)]
 	internal static bool OnDraw(SpriteBatch __instance, ref Texture2D texture, ref XNA.Vector2 position, ref XNA.Rectangle? sourceRectangle, XNA.Color color, float rotation, ref XNA.Vector2 origin, ref XNA.Vector2 scale, SpriteEffects effects, float layerDepth) {
 		if (!Config.IsEnabled)

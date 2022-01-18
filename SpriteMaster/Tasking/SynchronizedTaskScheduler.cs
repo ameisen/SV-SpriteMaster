@@ -16,7 +16,12 @@ sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
 	internal static readonly SynchronizedTaskScheduler Instance = new();
 	internal static readonly TaskFactory TaskFactory = new(Instance);
 
-	internal static readonly Func<bool> IsUIThread = typeof(XNA.Graphics.Texture2D).Assembly.GetType("Microsoft.Xna.Framework.Threading").GetMethod("IsOnUIThread", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static).CreateDelegate<Func<bool>>();
+	internal static readonly Func<bool>? IsUIThread = typeof(XNA.Graphics.Texture2D).Assembly.GetType(
+		"Microsoft.Xna.Framework.Threading"
+	)?.GetMethod(
+		"IsOnUIThread",
+		BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static
+	)?.CreateDelegate<Func<bool>>();
 
 	internal sealed class TextureActionTask : Task {
 		internal readonly TextureAction ActionData;
@@ -204,7 +209,7 @@ sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
 		task.Start(this);
 	}
 
-	protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued) => IsUIThread() && TryExecuteTask(task);
+	protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued) => (IsUIThread?.Invoke() ?? false) && TryExecuteTask(task);
 
 	protected override IEnumerable<Task> GetScheduledTasks() {
 		var immediate = PendingImmediate.Both;

@@ -3,8 +3,6 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-#nullable enable
-
 using SystemVector2 = System.Numerics.Vector2;
 
 namespace SpriteMaster.Types;
@@ -36,7 +34,6 @@ unsafe partial struct Vector2F : ILongHash, ICloneable {
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		set => NumericVector.Y = value;
 	}
-
 
 	internal float Width {
 		[MethodImpl(Runtime.MethodImpl.Hot)]

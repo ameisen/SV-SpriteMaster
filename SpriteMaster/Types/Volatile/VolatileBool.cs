@@ -1,7 +1,5 @@
 ﻿using System.Runtime.InteropServices;
 
-#nullable enable
-
 namespace SpriteMaster.Types.Volatile;
 
 [StructLayout(LayoutKind.Sequential, Pack = sizeof(bool), Size = sizeof(bool))]

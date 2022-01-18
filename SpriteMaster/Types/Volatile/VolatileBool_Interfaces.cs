@@ -1,8 +1,6 @@
 ﻿using SpriteMaster.Extensions;
 using System;
 
-#nullable enable
-
 namespace SpriteMaster.Types.Volatile;
 
 partial struct VolatileBool :

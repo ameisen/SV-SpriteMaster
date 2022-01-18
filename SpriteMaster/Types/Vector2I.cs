@@ -4,8 +4,6 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-#nullable enable
-
 namespace SpriteMaster.Types;
 
 [CLSCompliant(false)]
@@ -37,7 +35,6 @@ unsafe partial struct Vector2I :
 	[FieldOffset(sizeof(int))]
 	internal int Y;
 
-
 	internal int Width {
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		readonly get => X;
@@ -50,7 +47,6 @@ unsafe partial struct Vector2I :
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		set => Y = value;
 	}
-
 
 	[MethodImpl(Runtime.MethodImpl.Hot), DebuggerStepThrough, DebuggerHidden()]
 	private static int CheckIndex(int index) {

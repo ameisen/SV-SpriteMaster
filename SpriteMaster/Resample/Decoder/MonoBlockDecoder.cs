@@ -4,8 +4,6 @@ using System;
 using System.IO;
 using System.Reflection;
 
-#nullable enable
-
 namespace SpriteMaster.Resample.Decoder;
 
 static class MonoBlockDecoder {

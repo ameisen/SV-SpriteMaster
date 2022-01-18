@@ -6,8 +6,6 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
-#nullable enable
-
 namespace SpriteMaster.Harmonize.Patches.PSpriteBatch;
 
 [SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]

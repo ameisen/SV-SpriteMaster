@@ -15,7 +15,7 @@ struct InterlockedULong :
 	IEquatable<ulong>,
 	IEquatable<InterlockedULong> {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly int CompareTo(object obj) => obj switch {
+	public readonly int CompareTo(object? obj) => obj switch {
 		ulong value => CompareTo(value),
 		InterlockedULong value => CompareTo(value),
 		_ => throw new ArgumentException($"{obj} is neither type {typeof(ulong)} nor {typeof(InterlockedULong)}"),
@@ -37,7 +37,7 @@ struct InterlockedULong :
 	public override readonly int GetHashCode() => Value.GetHashCode();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public override readonly bool Equals(object obj) => obj switch {
+	public override readonly bool Equals(object? obj) => obj switch {
 		ulong value => Equals(value),
 		InterlockedULong value => Equals(value),
 		_ => throw new ArgumentException($"{obj} is neither type {typeof(ulong)} nor {typeof(InterlockedULong)}"),

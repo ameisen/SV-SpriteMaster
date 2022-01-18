@@ -90,7 +90,7 @@ static class Zstd {
 
 	[MethodImpl(MethodImpl.RunOnce)]
 	private static byte[] CompressTest(byte[] data) {
-		Compressor encoder = null;
+		Compressor? encoder = null;
 		try {
 			using (encoder = GetEncoder()) {
 				return encoder.Wrap(data);

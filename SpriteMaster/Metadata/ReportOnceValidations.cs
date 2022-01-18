@@ -3,8 +3,6 @@ using SpriteMaster.Types;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
-#nullable enable
-
 namespace SpriteMaster.Metadata;
 
 static class ReportOnceValidations {

@@ -14,8 +14,6 @@ using System.Reflection;
 using System.Runtime;
 using System.Threading;
 
-#nullable enable
-
 namespace SpriteMaster;
 
 public sealed class SpriteMaster : Mod {
@@ -206,7 +204,6 @@ public sealed class SpriteMaster : Mod {
 				DrawState.TriggerGC.Set(true);
 			}
 		});
-
 
 		help.Events.GameLoop.DayStarted += OnDayStarted;
 		// GC after major events

@@ -8,13 +8,19 @@ static class HashExt {
 	//internal static int GetSafeHash(this char[] value) => (int)Hashing.Hash(Encoding.Unicode.GetBytes(value ?? Array.Empty<char>()));
 	internal static int GetSafeHash(this StringBuilder value) => value.ToString().GetSafeHash();
 
-	internal static int GetSafeHash<T>(this T value) {
-		if (value is string s) {
-			return s.GetSafeHash();
-		}
-		else if (value is StringBuilder v) {
-			return v.ToString().GetSafeHash();
-		}
-		return value.GetHashCode();
-	}
+	internal static int GetSafeHash(this byte value) => value.GetHashCode();
+	internal static int GetSafeHash(this sbyte value) => value.GetHashCode();
+	internal static int GetSafeHash(this ushort value) => value.GetHashCode();
+	internal static int GetSafeHash(this short value) => value.GetHashCode();
+	internal static int GetSafeHash(this uint value) => value.GetHashCode();
+	internal static int GetSafeHash(this int value) => value.GetHashCode();
+	internal static int GetSafeHash(this ulong value) => value.GetHashCode();
+	internal static int GetSafeHash(this long value) => value.GetHashCode();
+
+	internal static int GetSafeHash<T>(this T? value) => value switch {
+		null => Hashing.Null32,
+		string s => s.GetSafeHash(),
+		StringBuilder s => s.ToString().GetSafeHash(),
+		_ => value.GetHashCode()
+	};
 }

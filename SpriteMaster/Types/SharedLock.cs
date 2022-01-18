@@ -8,10 +8,10 @@ namespace SpriteMaster;
 using LockType = ReaderWriterLockSlim;
 
 sealed class SharedLock : CriticalFinalizerObject, IDisposable {
-	private LockType Lock;
+	private LockType? Lock;
 
 	internal ref struct ReadCookie {
-		private LockType Lock = null;
+		private LockType? Lock = null;
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		private ReadCookie(LockType rwlock) => Lock = rwlock;
@@ -39,7 +39,7 @@ sealed class SharedLock : CriticalFinalizerObject, IDisposable {
 		public static implicit operator bool(in ReadCookie cookie) => cookie.Lock is not null;
 	}
 	internal ref struct ExclusiveCookie {
-		private LockType Lock = null;
+		private LockType? Lock = null;
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		private ExclusiveCookie(LockType rwlock) => Lock = rwlock;
@@ -68,7 +68,7 @@ sealed class SharedLock : CriticalFinalizerObject, IDisposable {
 	}
 
 	internal ref struct PromotedCookie {
-		private LockType Lock = null;
+		private LockType? Lock = null;
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		private PromotedCookie(LockType rwlock) {
@@ -107,17 +107,17 @@ sealed class SharedLock : CriticalFinalizerObject, IDisposable {
 	~SharedLock() => Dispose();
 
 	internal bool IsLocked => IsReadLock || IsWriteLock || IsPromotedLock;
-	internal bool IsReadLock => Lock.IsReadLockHeld;
-	internal bool IsWriteLock => Lock.IsWriteLockHeld;
-	internal bool IsPromotedLock => Lock.IsUpgradeableReadLockHeld;
+	internal bool IsReadLock => Lock?.IsReadLockHeld ?? false;
+	internal bool IsWriteLock => Lock?.IsWriteLockHeld ?? false;
+	internal bool IsPromotedLock => Lock?.IsUpgradeableReadLockHeld ?? false;
 	internal bool IsDisposed => Lock == null;
 
-	internal ReadCookie Read => ReadCookie.Create(Lock);
-	internal ReadCookie TryRead => ReadCookie.TryCreate(Lock);
-	internal ExclusiveCookie Write => ExclusiveCookie.Create(Lock);
-	internal ExclusiveCookie TryWrite => ExclusiveCookie.TryCreate(Lock);
-	internal PromotedCookie Promote => PromotedCookie.Create(Lock);
-	internal PromotedCookie TryPromote => PromotedCookie.TryCreate(Lock);
+	internal ReadCookie Read => ReadCookie.Create(Lock!);
+	internal ReadCookie TryRead => ReadCookie.TryCreate(Lock!);
+	internal ExclusiveCookie Write => ExclusiveCookie.Create(Lock!);
+	internal ExclusiveCookie TryWrite => ExclusiveCookie.TryCreate(Lock!);
+	internal PromotedCookie Promote => PromotedCookie.Create(Lock!);
+	internal PromotedCookie TryPromote => PromotedCookie.TryCreate(Lock!);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public void Dispose() {

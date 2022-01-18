@@ -11,8 +11,6 @@ using System;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
-#nullable enable
-
 namespace SpriteMaster.Resample;
 
 sealed class Resampler {
@@ -340,7 +338,6 @@ sealed class Resampler {
 					green[color.G.Value]++;
 					red[color.R.Value]++;
 				}
-
 
 				hasR = red[0] != bitmapData.Length;
 				hasG = green[0] != bitmapData.Length;

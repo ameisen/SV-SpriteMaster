@@ -7,8 +7,8 @@ namespace SpriteMaster.Harmonize;
 
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
 class HarmonizeAttribute : Attribute {
-	internal readonly Type Type;
-	internal readonly string Name;
+	internal readonly Type? Type;
+	internal readonly string? Name;
 	internal readonly int PatchPriority;
 	internal readonly Fixation PatchFixation;
 	internal readonly Generic GenericType;
@@ -43,8 +43,15 @@ class HarmonizeAttribute : Attribute {
 		}
 	}
 
-	private static Type ResolveType(Assembly assembly, Type parent, string[] type, int offset = 0) {
+	private static Type? ResolveType(Assembly assembly, Type? parent, string[] type, int offset = 0) {
+		if (parent is null) {
+			return null;
+		}
+
 		var foundType = parent.GetNestedType(type[offset], BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+		if (foundType is null) {
+			return parent;
+		}
 		offset += 1;
 		if (offset >= type.Length)
 			return foundType;
@@ -52,11 +59,11 @@ class HarmonizeAttribute : Attribute {
 			return ResolveType(assembly, foundType, type, offset);
 	}
 
-	private static Type ResolveType(Assembly assembly, string[] type, int offset = 0) => ResolveType(assembly, assembly.GetType(type[0], true), type, offset + 1);
+	private static Type? ResolveType(Assembly assembly, string[] type, int offset = 0) => ResolveType(assembly, assembly.GetType(type[0], true), type, offset + 1);
 
 	internal HarmonizeAttribute(
-		Type type,
-		string method,
+		Type? type,
+		string? method,
 		Fixation fixation = Fixation.Prefix,
 		PriorityLevel priority = PriorityLevel.Average,
 		Generic generic = Generic.None,

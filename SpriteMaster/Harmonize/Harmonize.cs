@@ -5,6 +5,7 @@ using Pastel;
 using SpriteMaster.Extensions;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 
@@ -75,12 +76,16 @@ static class Harmonize {
 	};
 
 	private static string GetMethodName(MethodInfo method, HarmonizeAttribute attribute) => attribute.Name ?? method.Name.Split('`', 2)[0];
-	private static string GetFullMethodName(Type type, MethodInfo method, HarmonizeAttribute attribute) => (attribute.Name is not null) ? $"{type.FullName}.{attribute.Name}" : method.GetFullName();
+	private static string GetFullMethodName(Type type, MethodInfo? method, HarmonizeAttribute attribute) => (attribute.Name is not null) ? $"{type.FullName}.{attribute.Name}" : (method?.GetFullName() ?? "[null]");
 
-	private static void ApplyPatch(Harmony @this, Type type, MethodInfo method, HarmonizeAttribute attribute) {
+	private static void ApplyPatch(Harmony @this, Type type, MethodInfo? method, HarmonizeAttribute attribute) {
 		try {
 			if (!attribute.CheckPlatform()) {
 				return;
+			}
+
+			if (method is null) {
+				throw new ArgumentNullException(nameof(method));
 			}
 
 			string methodName = GetMethodName(method, attribute);
@@ -127,7 +132,7 @@ static class Harmonize {
 			}
 		}
 		catch (Exception ex) {
-			Debug.ConditionalError(attribute.Critical, $"Exception Patching Method {GetFullMethodName(type, method, attribute)} ({method.GetFullName()})", ex);
+			Debug.ConditionalError(attribute.Critical, $"Exception Patching Method {GetFullMethodName(type, method, attribute)} ({(method?.GetFullName() ?? "[null]")})", ex);
 		}
 	}
 
@@ -174,7 +179,7 @@ static class Harmonize {
 	}
 
 	private static Type[] GetArguments(this MethodInfo method) {
-		var filteredParameters = method.GetParameters().WhereF(t => !t.Name.StartsWith("__") || t.Name.StartsWith("__unnamed"));
+		var filteredParameters = method.GetParameters().WhereF(t => t.Name is null || !t.Name.StartsWith("__") || t.Name.StartsWith("__unnamed"));
 		return filteredParameters.SelectF(p => p.ParameterType).ToArrayF();
 	}
 
@@ -186,7 +191,7 @@ static class Harmonize {
 		return type.GetMethods(name, StaticFlags);
 	}
 
-	internal static MethodInfo GetStaticMethod(this Type type, string name) {
+	internal static MethodInfo? GetStaticMethod(this Type type, string name) {
 		return type.GetMethod(name, StaticFlags);
 	}
 
@@ -194,7 +199,7 @@ static class Harmonize {
 		return type.GetMethods(name, InstanceFlags);
 	}
 
-	internal static MethodInfo GetInstanceMethod(this Type type, string name) {
+	internal static MethodInfo? GetInstanceMethod(this Type type, string name) {
 		return type.GetMethod(name, InstanceFlags);
 	}
 
@@ -210,7 +215,7 @@ static class Harmonize {
 		return typeof(T).GetInstanceMethods(name);
 	}
 
-	private static MethodBase GetPatchMethod(Type type, string name, MethodInfo method, bool instance, bool isFinalizer, bool transpile = false) {
+	private static MethodBase? GetPatchMethod(Type type, string name, MethodInfo method, bool instance, bool isFinalizer, bool transpile = false) {
 		bool constructor = (name == Constructor);
 		var flags = instance ? InstanceFlags : StaticFlags;
 
@@ -235,22 +240,22 @@ static class Harmonize {
 			}
 		}
 
-		MethodBase GetMethod(string name) => constructor ?
-			type.GetConstructor(
+		MethodBase? GetMethod(string name) => constructor ?
+			type!.GetConstructor(
 				bindingAttr: bindingFlags,
 				binder: null,
 				types: methodParameters,
 				modifiers: null
 			) :
-			type.GetMethod(
+			type!.GetMethod(
 				name: name,
 				bindingAttr: bindingFlags,
 				binder: null,
 				types: methodParameters,
 				modifiers: null
 			);
-		MethodBase typeMethod = null;
-		Exception exception = null;
+		MethodBase? typeMethod = null;
+		Exception? exception = null;
 		try {
 			typeMethod = GetMethod(name);
 		}
@@ -262,13 +267,19 @@ static class Harmonize {
 			if (name[0] == '~') {
 				name = "Finalize";
 				typeMethod = GetMethod(name);
+				if (typeMethod is null) {
+					// This shouldn't be possible, as Object has a finalizer.
+					return null;
+				}
 				if (typeMethod.DeclaringType != type) {
 					if (typeMethod.DeclaringType == typeof(Object)) {
 						return null;
 					}
 					else {
-						type = typeMethod.DeclaringType;
-						typeMethod = GetMethod(name);
+						if (typeMethod.DeclaringType is not null) {
+							type = typeMethod.DeclaringType;
+							typeMethod = GetMethod(name);
+						}
 					}
 				}
 			}
@@ -293,10 +304,10 @@ static class Harmonize {
 				foreach (int i in 0.RangeTo(testParameters.Length)) {
 					var testParameter = testParameters[i].ParameterType.RemoveRef();
 					var testParameterRef = testParameter.AddRef();
-					var testBaseParameter = testParameter.IsArray ? testParameter.GetElementType() : testParameter;
+					var testBaseParameter = testParameter.IsArray ? testParameter.GetElementType()! : testParameter;
 					var methodParameter = methodParameters[i].RemoveRef();
 					var methodParameterRef = methodParameter.AddRef();
-					var baseParameter = methodParameter.IsArray ? methodParameter.GetElementType() : methodParameter;
+					var baseParameter = methodParameter.IsArray ? methodParameter.GetElementType()! : methodParameter;
 					if (
 						!(testParameter.IsPointer && methodParameter.IsPointer) &&
 						!testParameterRef.Equals(methodParameterRef) &&
@@ -334,14 +345,15 @@ static class Harmonize {
 		this Harmony instance,
 		Type type,
 		string name,
-		MethodInfo pre = null,
-		MethodInfo post = null,
-		MethodInfo finalizer = null,
-		MethodInfo trans = null,
+		MethodInfo? pre = null,
+		MethodInfo? post = null,
+		MethodInfo? finalizer = null,
+		MethodInfo? trans = null,
 		int priority = Priority.Last,
 		bool instanceMethod = true
 	) {
-		HarmonyMethod MakeHarmonyMethod(MethodInfo methodInfo) => (methodInfo is null) ? null : new(methodInfo) { priority = GetPriority(methodInfo, priority) };
+		[return: NotNullIfNotNull("methodInfo")]
+		HarmonyMethod? MakeHarmonyMethod(MethodInfo? methodInfo) => (methodInfo is null) ? null : new(methodInfo) { priority = GetPriority(methodInfo, priority) };
 
 		var referenceMethod = pre ?? post ?? finalizer;
 		if (referenceMethod is not null) {
@@ -380,14 +392,15 @@ static class Harmonize {
 		Type type,
 		Type genericType,
 		string name,
-		MethodInfo pre = null,
-		MethodInfo post = null,
-		MethodInfo finalizer = null,
-		MethodInfo trans = null,
+		MethodInfo? pre = null,
+		MethodInfo? post = null,
+		MethodInfo? finalizer = null,
+		MethodInfo? trans = null,
 		int priority = Priority.Last,
 		bool instanceMethod = true
 	) {
-		HarmonyMethod MakeHarmonyMethod(MethodInfo methodInfo) => (methodInfo is null) ? null : new(methodInfo.MakeGenericMethod(genericType)) { priority = GetPriority(methodInfo, priority) };
+		[return: NotNullIfNotNull("methodInfo")]
+		HarmonyMethod? MakeHarmonyMethod(MethodInfo? methodInfo) => (methodInfo is null) ? null : new(methodInfo.MakeGenericMethod(genericType)) { priority = GetPriority(methodInfo, priority) };
 
 		var referenceMethod = pre ?? post ?? finalizer;
 		if (referenceMethod != null) {

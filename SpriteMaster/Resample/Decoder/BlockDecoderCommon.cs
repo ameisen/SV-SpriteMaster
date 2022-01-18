@@ -3,8 +3,6 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-#nullable enable
-
 namespace SpriteMaster.Resample.Decoder;
 
 static class BlockDecoderCommon {

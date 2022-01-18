@@ -39,7 +39,7 @@ struct Fixed16 : IEquatable<Fixed16>, IEquatable<ushort>, ILongHash {
 	public static bool operator ==(Fixed16 lhs, Fixed16 rhs) => lhs.InternalValue == rhs.InternalValue;
 	public static bool operator !=(Fixed16 lhs, Fixed16 rhs) => lhs.InternalValue != rhs.InternalValue;
 
-	public override readonly bool Equals(object obj) {
+	public override readonly bool Equals(object? obj) {
 		if (obj is Fixed16 valueF) {
 			return this == valueF;
 		}
@@ -61,5 +61,5 @@ struct Fixed16 : IEquatable<Fixed16>, IEquatable<ushort>, ILongHash {
 	public static implicit operator Fixed16(ushort value) => new(value);
 	public static explicit operator Fixed8(Fixed16 value) => new(Fixed8.FromU16(value.InternalValue));
 
-	readonly ulong ILongHash.GetLongHashCode() => Hashing.Combine(InternalValue);
+	readonly ulong ILongHash.GetLongHashCode() => InternalValue.GetLongHashCode();
 }

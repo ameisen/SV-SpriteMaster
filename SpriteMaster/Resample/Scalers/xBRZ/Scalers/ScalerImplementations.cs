@@ -4,8 +4,6 @@ using SpriteMaster.Types;
 using SpriteMaster.Types.Fixed;
 using System.Runtime.CompilerServices;
 
-#nullable enable
-
 namespace SpriteMaster.Resample.Scalers.xBRZ.Scalers;
 
 abstract class IScaler {

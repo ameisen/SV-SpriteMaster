@@ -171,7 +171,7 @@ struct Vector2B :
 	public override readonly string ToString() => $"[{X}, {Y}]";
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly int CompareTo(object obj) => obj switch {
+	public readonly int CompareTo(object? obj) => obj switch {
 		Vector2B vector => CompareTo(vector),
 		Tuple<bool, bool> vector => CompareTo(new Vector2B(vector.Item1, vector.Item2)),
 		ValueTuple<bool, bool> vector => CompareTo(vector),

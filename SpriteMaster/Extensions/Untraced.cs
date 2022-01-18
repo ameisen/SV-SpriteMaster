@@ -16,7 +16,7 @@ static class Untraced {
 	internal static string GetStackTrace(this Exception e) {
 		var tracedStrings = new List<string>();
 		foreach (var frame in new StackTrace(e, true).GetFrames()) {
-			if (!frame.GetMethod().IsUntraced()) {
+			if (!frame.GetMethod()?.IsUntraced() ?? false) {
 				tracedStrings.Add(new StackTrace(frame).ToString());
 			}
 		}

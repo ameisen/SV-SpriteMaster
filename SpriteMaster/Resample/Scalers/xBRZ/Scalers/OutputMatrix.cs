@@ -3,8 +3,6 @@ using SpriteMaster.Types;
 using System;
 using System.Runtime.CompilerServices;
 
-#nullable enable
-
 namespace SpriteMaster.Resample.Scalers.xBRZ.Scalers;
 
 //access matrix area, top-left at position "out" for image with given width

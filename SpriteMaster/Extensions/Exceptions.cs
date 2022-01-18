@@ -4,8 +4,6 @@ using System.Runtime.CompilerServices;
 
 using static SpriteMaster.Runtime;
 
-#nullable enable
-
 namespace SpriteMaster.Extensions;
 
 static class Exceptions {

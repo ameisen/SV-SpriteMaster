@@ -6,8 +6,6 @@ using System.Runtime.CompilerServices;
 using TeximpNet.Compression;
 using TeximpNet.DDS;
 
-#nullable enable
-
 namespace SpriteMaster.Resample.Encoder;
 
 static class TeximpBlockEncoder {

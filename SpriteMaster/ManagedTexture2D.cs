@@ -6,8 +6,6 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
-#nullable enable
-
 namespace SpriteMaster;
 
 sealed class ManagedTexture2D : InternalTexture2D {

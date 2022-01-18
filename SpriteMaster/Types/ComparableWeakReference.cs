@@ -4,7 +4,7 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using System.Security;
 
-//#nullable enable
+//
 
 namespace SpriteMaster.Types;
 
@@ -14,7 +14,7 @@ sealed class ComparableWeakReference<T> :
 	ILongHash,
 	IEquatable<WeakReference<T>>,
 	IEquatable<ComparableWeakReference<T>>
-where T : class {
+where T : class? {
 	private static readonly Type WeakReferenceType = typeof(WeakReference<T>);
 
 	internal const int NullHash = 0;
@@ -37,7 +37,7 @@ where T : class {
 		private static string GetName(string name) => $"{typeof(ComparableWeakReference<T>).Name}.{name}";
 	}
 
-	private readonly WeakReference<T> _Reference;
+	private readonly WeakReference<T> _Reference = new(null!);
 
 	private T Target {
 		[SecuritySafeCritical]
@@ -51,23 +51,23 @@ where T : class {
 	internal ComparableWeakReference(T target) : this(new WeakReference<T>(target)) { }
 
 	internal ComparableWeakReference(WeakReference<T> reference) {
-		T target = null;
+		T? target = null;
 		reference.TryGetTarget(out target);
-		_Reference = new WeakReference<T>(target);
+		_Reference = new WeakReference<T>(target!);
 	}
 
 	internal ComparableWeakReference(SerializationInfo info, StreamingContext context) {
 		if (info is null) {
 			throw new ArgumentNullException(nameof(info));
 		}
-		var target = (T)info.GetValue("TrackedObject", typeof(T));
-		var boolean = info.GetBoolean("TrackResurrection");
-		Create(target, boolean);
+		var target = (T?)info.GetValue("TrackedObject", typeof(T));
+		var trackResurrection = info.GetBoolean("TrackResurrection");
+		Reflect.Create(_Reference, target!, trackResurrection);
 	}
 
-	internal bool TryGetTarget(out T target) => _Reference.TryGetTarget(out target);
+	internal bool TryGetTarget(out T target) => _Reference.TryGetTarget(out target!);
 
-	internal void SetTarget(T? target) => _Reference.SetTarget(target);
+	internal void SetTarget(T? target) => _Reference.SetTarget(target!);
 
 	public void GetObjectData(SerializationInfo info, StreamingContext context) {
 		if (info == null) {
@@ -78,20 +78,17 @@ where T : class {
 	}
 
 	[SecuritySafeCritical]
-	private void Create(T target, bool trackResurrection) => Reflect.Create(_Reference, target, trackResurrection);
-
-	[SecuritySafeCritical]
 	private bool IsTrackResurrection() => Reflect.IsTrackResurrection(_Reference);
 
 	public override int GetHashCode() {
-		if (_Reference.TryGetTarget(out T target)) {
+		if (_Reference.TryGetTarget(out T? target)) {
 			return target.GetHashCode();
 		}
 		return NullHash;
 	}
 
 	public ulong GetLongHashCode() {
-		if (_Reference.TryGetTarget(out T target)) {
+		if (_Reference.TryGetTarget(out T? target)) {
 			return LongHash.From(target);
 		}
 		return LongHash.Null;
@@ -101,15 +98,15 @@ where T : class {
 
 	public static implicit operator ComparableWeakReference<T>(WeakReference<T> reference) => new(reference);
 
-	public bool Equals(ComparableWeakReference<T> obj) => this == obj;
+	public bool Equals(ComparableWeakReference<T>? obj) => obj is ComparableWeakReference<T> reference && this == reference;
 
-	public bool Equals(WeakReference<T> obj) => this == obj;
+	public bool Equals(WeakReference<T>? obj) => obj is WeakReference<T> reference && this == reference;
 
 	public static bool Equals(WeakReference<T> objA, ComparableWeakReference<T> objB) => objA == objB;
 
 	internal static bool Equals(object objA, ComparableWeakReference<T> objB) => objB.Equals(objA);
 
-	public override bool Equals(object obj) => obj switch {
+	public override bool Equals(object? obj) => obj switch {
 		ComparableWeakReference<T> reference => this == reference,
 		WeakReference<T> reference => this == reference,
 		_ => false,
@@ -123,7 +120,7 @@ where T : class {
 	}
 
 	public static bool operator ==(ComparableWeakReference<T> objA, WeakReference<T> objB) {
-		if (objA.TryGetTarget(out T l) && objB.TryGetTarget(out T r)) {
+		if (objA.TryGetTarget(out T l) && objB.TryGetTarget(out T? r)) {
 			return l == r;
 		}
 		return false;
@@ -139,7 +136,7 @@ where T : class {
 	}
 
 	public static bool operator !=(ComparableWeakReference<T> objA, WeakReference<T> objB) {
-		if (objA.TryGetTarget(out T l) && objB.TryGetTarget(out T r)) {
+		if (objA.TryGetTarget(out T l) && objB.TryGetTarget(out T? r)) {
 			return l != r;
 		}
 		return true;

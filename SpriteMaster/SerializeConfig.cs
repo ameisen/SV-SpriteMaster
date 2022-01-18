@@ -8,8 +8,6 @@ using System.Reflection;
 using Tomlyn;
 using Tomlyn.Syntax;
 
-#nullable enable
-
 namespace SpriteMaster;
 
 static class SerializeConfig {

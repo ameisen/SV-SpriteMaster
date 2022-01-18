@@ -9,7 +9,7 @@ namespace SpriteMaster.Compressors;
 
 //[HarmonizeFinalizeCatcher<ZlibStream, DllNotFoundException>(critical: false)]
 static class Deflate {
-	private static readonly Action<ZlibStream, CompressionStrategy> SetStrategy = typeof(ZlibStream).GetFieldSetter<ZlibStream, CompressionStrategy>("Strategy");
+	private static readonly Action<ZlibStream, CompressionStrategy>? SetStrategy = typeof(ZlibStream).GetFieldSetter<ZlibStream, CompressionStrategy>("Strategy");
 
 	internal static bool IsSupported {
 		[MethodImpl(Runtime.MethodImpl.RunOnce)]
@@ -43,7 +43,7 @@ static class Deflate {
 
 	[MethodImpl(Runtime.MethodImpl.RunOnce)]
 	internal static byte[] CompressTest(byte[] data) {
-		ZlibStream compressor = null;
+		ZlibStream? compressor = null;
 		try {
 			using var val = new MemoryStream(CompressedLengthEstimate(data));
 			using (compressor = new ZlibStream(val, CompressionMode.Compress, CompressionLevel.BestCompression)) {

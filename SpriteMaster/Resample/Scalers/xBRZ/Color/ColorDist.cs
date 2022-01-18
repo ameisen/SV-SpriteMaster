@@ -5,8 +5,6 @@ using SpriteMaster.Types.Fixed;
 using System;
 using System.Runtime.CompilerServices;
 
-#nullable enable
-
 namespace SpriteMaster.Resample.Scalers.xBRZ.Color;
 
 class ColorDist {

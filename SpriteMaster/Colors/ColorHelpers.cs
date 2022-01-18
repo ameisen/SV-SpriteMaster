@@ -2,8 +2,6 @@
 using SpriteMaster.Types.Fixed;
 using System.Runtime.CompilerServices;
 
-#nullable enable
-
 namespace SpriteMaster.Colors;
 
 static class ColorHelpers {

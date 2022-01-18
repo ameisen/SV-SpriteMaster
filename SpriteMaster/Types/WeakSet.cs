@@ -1,8 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Security;
 
-#nullable enable
-
 namespace SpriteMaster.Types;
 
 class WeakSet<T> where T : class {

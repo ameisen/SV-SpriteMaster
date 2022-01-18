@@ -5,8 +5,6 @@ using System.Threading.Tasks;
 
 namespace SpriteMaster.Resample;
 
-#nullable enable
-
 static class DecodeTask {
 	private static readonly TaskFactory Factory = new(ThreadedTaskScheduler.Instance);
 

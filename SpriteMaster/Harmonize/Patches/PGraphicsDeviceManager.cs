@@ -68,9 +68,13 @@ static class PGraphicsDeviceManager {
 			switch (method?.Name) {
 				case "SetWindowSize": {
 					__state = true;
-					GraphicsDevice device = null;
-					if (!LastGraphicsDevice?.TryGetTarget(out device) ?? false || device is null) {
+					GraphicsDevice? device = null;
+					if (!LastGraphicsDevice?.TryGetTarget(out device) ?? true) {
 						return true;
+					}
+
+					if (device is null) {
+							return true;
 					}
 
 					preferredMultiSampleCount = Config.DrawState.EnableMSAA ? 16 : 0;
@@ -132,7 +136,7 @@ static class PGraphicsDeviceManager {
 	}
 
 	private static bool DumpedSystemInfo = false;
-	private static WeakReference<GraphicsDevice> LastGraphicsDevice = null;
+	private static WeakReference<GraphicsDevice>? LastGraphicsDevice = null;
 
 	[Harmonize("ApplyChanges", Harmonize.Fixation.Postfix, PriorityLevel.Last)]
 	internal static void OnApplyChangesPost(GraphicsDeviceManager __instance) {
@@ -159,7 +163,7 @@ static class PGraphicsDeviceManager {
 		}
 
 		try {
-			static FieldInfo getPrivateField(object obj, string name, bool instance = true) {
+			static FieldInfo? getPrivateField(object obj, string name, bool instance = true) {
 				return obj.GetType().GetField(name, BindingFlags.NonPublic | BindingFlags.Public | (instance ? BindingFlags.Instance : BindingFlags.Static));
 			}
 
@@ -176,8 +180,12 @@ static class PGraphicsDeviceManager {
 			else {
 				var capabilitiesMember = capabilitiesProperty.GetValue(device);
 
+				if (capabilitiesMember is null) {
+					throw new NullReferenceException(nameof(capabilitiesMember));
+				}
+
 				var capabilitiesList = new[] {
-					getPrivateField(capabilitiesMember, "HiDef", instance: false).GetValue(capabilitiesMember),
+					getPrivateField(capabilitiesMember, "HiDef", instance: false)?.GetValue(capabilitiesMember),
 					capabilitiesMember
 				};
 
@@ -186,9 +194,18 @@ static class PGraphicsDeviceManager {
 						continue;
 					}
 					var maxTextureSizeProperty = getPrivateField(capabilities, "MaxTextureSize");
+
+					if (maxTextureSizeProperty is null) {
+						throw new NullReferenceException(nameof(maxTextureSizeProperty));
+					}
+
 					for (var currentDimension = Config.AbsoluteMaxTextureDimension; currentDimension >= Config.BaseMaxTextureDimension; currentDimension >>= 1) {
 						maxTextureSizeProperty.SetValue(capabilities, currentDimension);
-						getPrivateField(capabilities, "MaxTextureAspectRatio").SetValue(capabilities, currentDimension / 2);
+						var maxTextureAspectRatioField = getPrivateField(capabilities, "MaxTextureAspectRatio");
+						if (maxTextureAspectRatioField is null) {
+							throw new NullReferenceException(nameof(maxTextureAspectRatioField));
+						}
+						maxTextureAspectRatioField.SetValue(capabilities, currentDimension / 2);
 						try {
 							Config.ClampDimension = currentDimension;
 							//Math.Min(i, Config.PreferredMaxTextureDimension);
@@ -201,7 +218,7 @@ static class PGraphicsDeviceManager {
 						catch {
 							Config.ClampDimension = Config.BaseMaxTextureDimension;
 							maxTextureSizeProperty.SetValue(capabilities, Config.BaseMaxTextureDimension);
-							getPrivateField(capabilities, "MaxTextureAspectRatio").SetValue(capabilities, Config.BaseMaxTextureDimension / 2);
+							maxTextureAspectRatioField.SetValue(capabilities, Config.BaseMaxTextureDimension / 2);
 						}
 						Garbage.Collect(compact: true, blocking: true, background: false);
 					}

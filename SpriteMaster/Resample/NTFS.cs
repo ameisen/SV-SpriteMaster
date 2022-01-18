@@ -18,10 +18,15 @@ sealed class NTFS {
 
 				var managementAssembly = Assembly.Load("System.Management");
 				var managementObjectClass = managementAssembly.GetType("System.Management.ManagementObject");
+
+				if (managementObjectClass is null) {
+					return false;
+				}
+
 				var invokeMethod = managementObjectClass.GetMethod("InvokeMethod", new [] { typeof(string), typeof(object[]) });
 
-				using var obj = (IDisposable)Activator.CreateInstance(managementObjectClass, new object[] { objectPath });
-				using ((IDisposable)invokeMethod.Invoke(obj, new object[] { "Compress", new object[] { } })) {
+				using var obj = (IDisposable?)Activator.CreateInstance(managementObjectClass, new object[] { objectPath });
+				using ((IDisposable?)invokeMethod?.Invoke(obj, new object[] { "Compress", new object[] { } })) {
 					// I don't really care about the return value, 
 					// if we enabled it great but it can also be done manually
 					// if really needed

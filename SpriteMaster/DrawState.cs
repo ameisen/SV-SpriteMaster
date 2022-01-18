@@ -10,8 +10,6 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
-#nullable enable
-
 namespace SpriteMaster;
 
 static class DrawState {
@@ -46,7 +44,6 @@ static class DrawState {
 		internal const SpriteSortMode SortMode = SpriteSortMode.Deferred;
 	}
 
-
 	internal static SamplerState CurrentSamplerState = Defaults.SamplerState;
 	internal static BlendState CurrentBlendState = Defaults.BlendState;
 	internal static SpriteSortMode CurrentSortMode = Defaults.SortMode;
@@ -70,7 +67,6 @@ static class DrawState {
 
 	internal static bool PushedUpdateWithin(int frames) => (long)((ulong)CurrentFrame - LastPushedUpdateFrame) <= frames;
 
-
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static TimeSpan RemainingFrameTime(float multiplier = 1.0f, in TimeSpan? offset = null) {
 		var actualRemainingTime = ActualRemainingFrameTime();
@@ -81,7 +77,6 @@ static class DrawState {
 	private static TimeSpan ActualRemainingFrameTime() => ExpectedFrameTime - FrameStopwatch.Elapsed;
 
 	//static bool testOnce = true;
-
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void OnPresent() {

@@ -3,8 +3,6 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-#nullable enable
-
 namespace SpriteMaster.Types;
 
 [StructLayout(LayoutKind.Sequential, Pack = Vector2I.Alignment)]

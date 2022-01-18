@@ -6,8 +6,6 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
-#nullable enable
-
 namespace SpriteMaster;
 
 // TODO : This class, and Texture2DMeta, have a _lot_ of inter-play and it makes it very confusing.

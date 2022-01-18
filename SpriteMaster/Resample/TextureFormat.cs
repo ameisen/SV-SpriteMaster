@@ -5,8 +5,6 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using TeximpNet.Compression;
 
-#nullable enable
-
 namespace SpriteMaster.Resample;
 
 [StructLayout(LayoutKind.Sequential)]
@@ -84,5 +82,5 @@ readonly struct TextureFormat {
 		return false;
 	}
 
-	public override int GetHashCode() => (int)Hashing.Combine(SurfaceFormat, CompressionFormat);
+	public override int GetHashCode() => Hashing.Combine32(SurfaceFormat, CompressionFormat);
 }

@@ -72,7 +72,7 @@ static class LZMA {
 		using var output = new MemoryStream(CompressedLengthEstimate(data));
 
 		using (var input = new MemoryStream(data)) {
-			SevenLZMA.Encoder encoder = null;
+			SevenLZMA.Encoder? encoder = null;
 			try {
 				encoder = GetEncoder();
 				encoder.Code(input, output, data.Length, -1, null);

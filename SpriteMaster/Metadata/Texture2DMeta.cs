@@ -10,8 +10,6 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using SpriteDictionary = System.Collections.Generic.Dictionary<ulong, SpriteMaster.ManagedSpriteInstance>;
 
-#nullable enable
-
 namespace SpriteMaster.Metadata;
 
 sealed class Texture2DMeta {

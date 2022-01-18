@@ -39,7 +39,7 @@ struct Fixed8 : IEquatable<Fixed8>, IEquatable<byte>, ILongHash {
 	public static bool operator ==(Fixed8 lhs, Fixed8 rhs) => lhs.InternalValue == rhs.InternalValue;
 	public static bool operator !=(Fixed8 lhs, Fixed8 rhs) => lhs.InternalValue != rhs.InternalValue;
 
-	public override readonly bool Equals(object obj) {
+	public override readonly bool Equals(object? obj) {
 		if (obj is Fixed8 valueF) {
 			return this == valueF;
 		}
@@ -61,5 +61,5 @@ struct Fixed8 : IEquatable<Fixed8>, IEquatable<byte>, ILongHash {
 	public static implicit operator Fixed8(byte value) => new(value);
 	public static explicit operator Fixed16(Fixed8 value) => new(Fixed16.FromU8(value.InternalValue));
 
-	readonly ulong ILongHash.GetLongHashCode() => Hashing.Combine(InternalValue);
+	readonly ulong ILongHash.GetLongHashCode() => InternalValue.GetLongHashCode();
 }

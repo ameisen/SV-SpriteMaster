@@ -4,8 +4,6 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 
-#nullable enable
-
 namespace SpriteMaster.Extensions;
 
 static class SpanExt {

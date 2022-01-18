@@ -2,8 +2,6 @@
 using System;
 using System.Runtime.CompilerServices;
 
-#nullable enable
-
 namespace SpriteMaster.Resample.Passes;
 
 static class PremultipliedAlpha {

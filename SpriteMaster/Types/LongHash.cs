@@ -2,7 +2,7 @@
 
 namespace SpriteMaster.Types;
 static class LongHash {
-	internal const ulong Null = 0UL;
+	internal const ulong Null = Hashing.Null;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ulong GetLongHashCode<T>(this T obj) {
@@ -13,7 +13,7 @@ static class LongHash {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static ulong From(int hashCode) => Hashing.Combine(hashCode, hashCode << 32);
+	internal static ulong From(int hashCode) => Hashing.Combine((ulong)hashCode, (ulong)(~hashCode) << 32);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ulong From(ILongHash obj) => obj.GetLongHashCode();
@@ -22,6 +22,9 @@ static class LongHash {
 	internal static ulong From<T>(T obj) {
 		if (obj is ILongHash hashable) {
 			return hashable.GetLongHashCode();
+		}
+		if (obj is null) {
+			return Null;
 		}
 		return From(obj.GetHashCode());
 	}

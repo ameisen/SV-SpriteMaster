@@ -7,8 +7,6 @@ using SpriteMaster.Types.Interlocking;
 using System;
 using System.Runtime.CompilerServices;
 
-#nullable enable
-
 namespace SpriteMaster;
 
 /// <summary>

@@ -3,8 +3,6 @@
 using System;
 using System.Runtime.CompilerServices;
 
-#nullable enable
-
 namespace SpriteMaster;
 
 static class Performance {

@@ -5,8 +5,6 @@ using System;
 using System.Runtime.InteropServices;
 using static SpriteMaster.Resample.Decoder.BlockDecoderCommon;
 
-#nullable enable
-
 namespace SpriteMaster.Resample.Decoder;
 
 static class InternalBlockDecoder {
@@ -60,7 +58,6 @@ static class InternalBlockDecoder {
 			private readonly uint PackedB => PackedInt >> (int)Offset.B & (uint)Mask.B;
 			private readonly uint PackedG => PackedInt >> (int)Offset.G & (uint)Mask.G;
 			private readonly uint PackedR => PackedInt >> (int)Offset.R & (uint)Mask.R;
-
 
 			internal readonly byte B => (byte)((uint)Multiplier.B * PackedB & 0xFF);
 			internal readonly byte G => (byte)((uint)Multiplier.G * PackedG & 0xFF);

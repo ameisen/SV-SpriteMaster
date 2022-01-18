@@ -6,9 +6,9 @@ namespace SpriteMaster.Harmonize;
 
 abstract class HarmonizeFinalizeCatcherFixedAttribute : HarmonizeAttribute {
 	internal readonly Type Exception;
-	internal readonly MethodInfo MethodInfo;
+	internal readonly MethodInfo? MethodInfo;
 
-	internal HarmonizeFinalizeCatcherFixedAttribute(Type type, Type exception, Platform platform, MethodInfo methodInfo, bool critical) : base(
+	internal HarmonizeFinalizeCatcherFixedAttribute(Type type, Type exception, Platform platform, MethodInfo? methodInfo, bool critical) : base(
 		type: type,
 		method: $"~{type.Name.Split('`', 2)[0]}",
 		fixation: Fixation.Finalizer,
@@ -27,7 +27,7 @@ sealed class HarmonizeFinalizeCatcherAttribute<T, E> : HarmonizeFinalizeCatcherF
 	internal static readonly new Type Type = typeof(T);
 	internal static readonly new Type Exception = typeof(E);
 
-	private static Exception Implementation(T __instance, Exception __exception) => (__exception is E) ? null : __exception;
+	private static Exception? Implementation(T __instance, Exception __exception) => (__exception is E) ? null : __exception;
 
 	internal HarmonizeFinalizeCatcherAttribute(bool critical = true, Platform platform = Platform.All) : base(
 		type: Type,

@@ -7,8 +7,6 @@ using System.Collections.Generic;
 using System.IO;
 using TeximpNet.Compression;
 
-#nullable enable
-
 namespace SpriteMaster;
 
 static class Config {

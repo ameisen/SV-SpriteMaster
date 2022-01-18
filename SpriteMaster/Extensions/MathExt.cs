@@ -1,8 +1,6 @@
 ﻿using SpriteMaster.Types.Fixed;
 using System;
 
-#nullable enable
-
 namespace SpriteMaster.Extensions;
 
 static class MathExt {

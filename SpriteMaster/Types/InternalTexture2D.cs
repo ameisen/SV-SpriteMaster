@@ -1,7 +1,5 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 
-#nullable enable
-
 namespace SpriteMaster.Types;
 
 /// <summary>

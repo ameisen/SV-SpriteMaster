@@ -8,15 +8,19 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
 
-#nullable enable
-
 namespace SpriteMaster;
 
 static partial class Hashing {
 	internal const ulong Default = 0x9e3779b97f4a7c15UL;
+	internal const int Default32 = unchecked((int)Default);
+	internal const ulong Null = ~Default;
+	internal const int Null32 = unchecked((int)Null);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static ulong Accumulate(ulong hash, ulong hashend) => hash ^ hashend + 0x9e3779b9ul + (hash << 6) + (hash >> 2);
+	internal static ulong Accumulate(ulong hash, ulong hashend) => hash ^ hashend + Default + (hash << 6) + (hash >> 2);
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static int Accumulate(int hash, int hashend) => hash ^ (int)((uint)hashend + (uint)Default32) + (hash << 6) + (int)((uint)hash >> 2);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ulong Accumulate(ulong hash, int hashend) => Accumulate(hash, (ulong)hashend);
@@ -31,15 +35,46 @@ static partial class Hashing {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static ulong Combine(params object[] hashes) {
+	internal static int Combine(params int[] hashes) {
+		int hash = Default32;
+		foreach (var subHash in hashes) {
+			hash = Accumulate(hash, subHash);
+		}
+		return hash;
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static ulong Combine(params object?[] hashes) {
 		ulong hash = Default;
 
 		foreach (var subHash in hashes) {
 			hash = subHash switch {
+				int i => Accumulate(hash, i),
+				uint i => Accumulate(hash, (int)i),
 				long i => Accumulate(hash, (ulong)i),
 				ulong i => Accumulate(hash, i),
 				string s => Accumulate(hash, s.GetSafeHash()),
-				StringBuilder s => Accumulate(hash, s.ToString().GetSafeHash()),
+				StringBuilder s => Accumulate(hash, s.GetSafeHash()),
+				null => Accumulate(hash, Null),
+				_ => Accumulate(hash, subHash.GetHashCode()),
+			};
+		}
+		return hash;
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static int Combine32(params object?[] hashes) {
+		int hash = Default32;
+
+		foreach (var subHash in hashes) {
+			hash = subHash switch {
+				int i => Accumulate(hash, i),
+				uint i => Accumulate(hash, (int)i),
+				long i => Accumulate(hash, i.GetSafeHash()),
+				ulong i => Accumulate(hash, i.GetSafeHash()),
+				string s => Accumulate(hash, s.GetSafeHash()),
+				StringBuilder s => Accumulate(hash, s.GetSafeHash()),
+				null => Accumulate(hash, Null32),
 				_ => Accumulate(hash, subHash.GetHashCode()),
 			};
 		}

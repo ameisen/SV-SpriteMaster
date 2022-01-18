@@ -5,23 +5,18 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
-#nullable enable
-
 namespace SpriteMaster.Types;
 
 // TODO : this can be replaced with a WeakSet, I believe.
-class WeakCollection<T> : ICollection<T?>, IEnumerable<T?>, IEnumerable, /*ICollection, */IReadOnlyList<T?>, IReadOnlyCollection<T?> where T : class? {
+// TODO : https://github.com/dotnet/runtime/blob/main/src/libraries/System.Private.CoreLib/src/System/Runtime/CompilerServices/ConditionalWeakTable.cs
+class WeakCollection<T> : ICollection<T>, IEnumerable<T>, IEnumerable, /*ICollection, */IReadOnlyList<T>, IReadOnlyCollection<T> where T : class {
 	static private class Reflect {
 		internal static readonly Func<List<ComparableWeakReference<T>>, bool> IsReadOnlyFunc = typeof(List<ComparableWeakReference<T>>).GetPropertyGetter<List<ComparableWeakReference<T>>, bool>(
 			typeof(List<ComparableWeakReference<T>>).GetProperty("IsReadOnly", BindingFlags.Instance | BindingFlags.NonPublic)
-		);
+		) ?? throw new NullReferenceException(GetName(nameof(IsReadOnlyFunc)));
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		private static string GetName(string name) => $"{typeof(WeakCollection<T>).Name}.{name}";
-
-		static Reflect() {
-			_ = IsReadOnlyFunc ?? throw new NullReferenceException(GetName(nameof(IsReadOnlyFunc)));
-		}
 	}
 
 	private readonly List<ComparableWeakReference<T>> _List;
@@ -57,7 +52,9 @@ class WeakCollection<T> : ICollection<T?>, IEnumerable<T?>, IEnumerable, /*IColl
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal WeakCollection(IEnumerable<T> collection) : this() {
 		foreach (var obj in collection) {
-			_List.Add(obj.MakeWeak());
+			if (obj is not null) {
+				_List.Add(((T)obj).MakeWeak());
+			}
 		}
 	}
 
@@ -91,38 +88,47 @@ class WeakCollection<T> : ICollection<T?>, IEnumerable<T?>, IEnumerable, /*IColl
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public void Add(T? item) {
-		_List.Add(item?.MakeWeak());
+		if (item is null) {
+			return;
+		}
+		_List.Add(item.MakeWeak());
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal void Add(WeakReference<T> item) {
+		if (!item.TryGetTarget(out var target) || target is null) {
+			return;
+		}
 		_List.Add(item);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal void Add(ComparableWeakReference<T> item) {
+		if (!item.TryGetTarget(out var target) || target is null) {
+			return;
+		}
 		_List.Add(item);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal void AddRange(IEnumerable<T> collection) {
 		foreach (T item in collection) {
-			_List.Add(item?.MakeWeak());
+			if (item is not null) {
+				_List.Add(item.MakeWeak());
+			}
 		}
 	}
-
-
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal void AddRange(IEnumerable<WeakReference<T>> collection) {
 		foreach (var item in collection) {
-			_List.Add(item);
+			Add(item);
 		}
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal void AddRange(IEnumerable<ComparableWeakReference<T>> collection) {
 		foreach (var item in collection) {
-			_List.Add(item);
+			Add(item);
 		}
 	}
 
@@ -593,7 +599,7 @@ class WeakCollection<T> : ICollection<T?>, IEnumerable<T?>, IEnumerable, /*IColl
 		}
 		return true;
 	}
-	internal sealed class Enumerator : IEnumerator<T?> {
+	internal sealed class Enumerator : IEnumerator<T> {
 		private readonly IEnumerator<ComparableWeakReference<T>> _Enumerator;
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -601,14 +607,14 @@ class WeakCollection<T> : ICollection<T?>, IEnumerable<T?>, IEnumerable, /*IColl
 			_Enumerator = enumerator;
 		}
 
-		public T? Current => GetCurrent();
+		public T Current => GetCurrent()!;
 
 		object? IEnumerator.Current => GetCurrent();
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		private T? GetCurrent() {
 			T? target = null;
-			while (!_Enumerator.Current.TryGetTarget(out target)) {
+			while (!_Enumerator.Current.TryGetTarget(out target) || target is null) {
 				if (!_Enumerator.MoveNext()) {
 					return null; // TODO
 				}
@@ -643,7 +649,7 @@ class WeakCollection<T> : ICollection<T?>, IEnumerable<T?>, IEnumerable, /*IColl
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public IEnumerator<T?> GetEnumerator() => new Enumerator(_List.GetEnumerator());
+	public IEnumerator<T> GetEnumerator() => new Enumerator(_List.GetEnumerator());
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	IEnumerator IEnumerable.GetEnumerator() => new Enumerator(_List.GetEnumerator());

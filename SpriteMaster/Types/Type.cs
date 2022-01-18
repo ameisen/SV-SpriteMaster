@@ -4,8 +4,6 @@ using System.Globalization;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
-#nullable enable
-
 namespace SpriteMaster.Types;
 
 static class TypeExt {

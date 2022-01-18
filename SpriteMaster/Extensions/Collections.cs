@@ -4,8 +4,6 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using static SpriteMaster.Runtime;
 
-#nullable enable
-
 namespace SpriteMaster.Extensions;
 
 static class Collections {
@@ -44,13 +42,11 @@ static class Collections {
 	#endregion
 
 	#region Blanked
-	#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
 	[MethodImpl(MethodImpl.Hot)]
 	internal static T? Blanked<T>(this T? enumerable) where T : class?, IEnumerable<T> => enumerable.IsBlank() ? null : enumerable;
 
 	[MethodImpl(MethodImpl.Hot)]
 	internal static T[]? Blanked<T>(this T[]? array) => array.IsBlank() ? null : array;
-#pragma warning restore CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
 	#endregion
 
 	[MethodImpl(MethodImpl.Hot)]
@@ -72,8 +68,8 @@ static class Collections {
 
 	// TODO : define me for .NET and .NETfx
 	private static class ListReflectImpl<T> {
-		internal static readonly Action<List<T>, T[]> ListSetItems = typeof(List<T>).GetFieldSetter<List<T>, T[]>("_items");
-		internal static readonly Action<List<T>, int> ListSetSize = typeof(List<T>).GetFieldSetter<List<T>, int>("_size");
+		internal static readonly Action<List<T>, T[]>? ListSetItems = typeof(List<T>).GetFieldSetter<List<T>, T[]>("_items");
+		internal static readonly Action<List<T>, int>? ListSetSize = typeof(List<T>).GetFieldSetter<List<T>, int>("_size");
 	}
 
 	/// <summary>
@@ -82,6 +78,10 @@ static class Collections {
 	/// </summary>
 	[MethodImpl(MethodImpl.Hot)]
 	internal static List<T> BeList<T>(this T[] array) {
+		if (ListReflectImpl<T>.ListSetItems is null || ListReflectImpl<T>.ListSetSize is null) {
+			return array.ToList();
+		}
+
 		var newList = new List<T>();
 		ListReflectImpl<T>.ListSetItems(newList, array);
 		ListReflectImpl<T>.ListSetSize(newList, array.Length);

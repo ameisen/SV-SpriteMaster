@@ -17,7 +17,7 @@ static class Cleanup {
 		FinalizePost(__instance);
 	}
 
-	private static readonly ThreadLocal<object> CurrentFinalizer = new ThreadLocal<object>();
+	private static readonly ThreadLocal<object?> CurrentFinalizer = new();
 	/*
 	[Harmonize("Finalize", Harmonize.Fixation.Prefix, PriorityLevel.First, platform: Harmonize.Platform.All)]
 	private static bool FinalizePre(object __instance) {
@@ -60,17 +60,17 @@ static class Cleanup {
 					var type = @this.GetType();
 					const BindingFlags bindingAttr = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
-					if (type.TryGetProperty("IsDisposed", out var disposedProperty, bindingAttr) && (bool)disposedProperty.GetValue(@this)) {
+					if (type.TryGetProperty("IsDisposed", out var disposedProperty, bindingAttr) && ((bool?)disposedProperty?.GetValue(@this) ?? false)) {
 						return;
 					}
-					if (type.TryGetField("IsDisposed", out var disposedField, bindingAttr) && (bool)disposedProperty.GetValue(@this)) {
+					if (type.TryGetField("IsDisposed", out var disposedField, bindingAttr) && ((bool?)disposedProperty?.GetValue(@this) ?? false)) {
 						return;
 					}
 
 					Contracts.AssertNull(CurrentFinalizer.Value);
 					CurrentFinalizer.Value = @this;
 
-					if (disposedProperty != null || disposedField != null) {
+					if (disposedProperty is not null || disposedField is not null) {
 						//Debug.WarningLn($"Leak Corrected for {@this.GetType().FullName} {@this.ToString()}");
 					}
 
