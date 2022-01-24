@@ -16,22 +16,26 @@ static class ResampleTask {
 			sourceRectangle: parameters.SpriteInfo.Bounds,
 			textureType: parameters.SpriteInfo.TextureType,
 			async: parameters.Async,
-			expectedScale: parameters.SpriteInfo.ExpectedScale
+			expectedScale: parameters.SpriteInfo.ExpectedScale,
+			previous: parameters.PreviousInstance
 		);
 	}
 
 	private readonly record struct TaskParameters(
 		SpriteInfo SpriteInfo,
-		bool Async
+		bool Async,
+		ManagedSpriteInstance? PreviousInstance = null
 	);
 
 	internal static Task<ManagedSpriteInstance?> Dispatch(
 		SpriteInfo spriteInfo,
-		bool async
+		bool async,
+		ManagedSpriteInstance? previousInstance = null
 	) {
 		var parameters = new TaskParameters(
 			SpriteInfo: spriteInfo,
-			Async: async
+			Async: async,
+			PreviousInstance: previousInstance
 		);
 
 		if (async) {

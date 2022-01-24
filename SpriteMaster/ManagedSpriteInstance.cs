@@ -227,8 +227,18 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 			return null;
 		}
 
+		ManagedSpriteInstance? currentInstance = null;
+
 		if (SpriteMap.TryGet(texture, source, expectedScale, out var scaleTexture)) {
-			return scaleTexture;
+			if (scaleTexture.Invalidated) {
+				currentInstance = scaleTexture;
+			}
+			else if (!scaleTexture.IsReady && scaleTexture.PreviousSpriteInstance is not null && scaleTexture.PreviousSpriteInstance.IsReady) {
+				return scaleTexture.PreviousSpriteInstance;
+			}
+			else {
+				return scaleTexture;
+			}
 		}
 
 		bool useStalling = Config.Resample.UseFrametimeStalling && !GameState.IsLoading;
@@ -255,14 +265,14 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 		if (useStalling && DrawState.PushedUpdateWithin(0)) {
 			remainingTime = DrawState.RemainingFrameTime();
 			if (remainingTime <= TimeSpan.Zero) {
-				return null;
+				return currentInstance;
 			}
 
 			var estimatedDuration = GetTimer(texture: texture, async: useAsync, out bool cached).Estimate((int)texture.Format.SizeBytes(source.Area));
 			isCached = cached;
 			if (estimatedDuration > TimeSpan.Zero && estimatedDuration > remainingTime) {
 				Debug.TraceLn($"Not enough frame time left to begin resampling {getNameString()} ({estimatedDuration.TotalMilliseconds.ToString(DrawingColor.LightBlue)} ms >= {remainingTime?.TotalMilliseconds.ToString(DrawingColor.LightBlue)} ms)");
-				return null;
+				return currentInstance;
 			}
 		}
 
@@ -293,7 +303,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 		// If this is null, it can only happen due to something being blocked, so we should try again later.
 		if (spriteInfoInitializer.ReferenceData is null) {
 			Debug.TraceLn($"Texture Data fetch for {getNameString()} was {"blocked".Pastel(DrawingColor.Red)}; retrying later#{getRemainingTime()}");
-			return null;
+			return currentInstance;
 		}
 
 		Debug.TraceLn($"Beginning Rescale Process for {getNameString()} #{getRemainingTime()}");
@@ -303,10 +313,11 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 		try {
 			var resampleTask = ResampleTask.Dispatch(
 				spriteInfo: new(spriteInfoInitializer),
-				async: useAsync
+				async: useAsync,
+				previousInstance: currentInstance
 			);
 
-			var result = resampleTask.IsCompletedSuccessfully ? resampleTask.Result : null;
+			var result = resampleTask.IsCompletedSuccessfully ? resampleTask.Result : currentInstance;
 
 			if (useAsync) {
 				// It adds itself to the relevant maps.
@@ -355,6 +366,8 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 	private readonly uint ExpectedScale;
 	internal readonly ulong SpriteMapHash;
 	private readonly uint ReferenceScale;
+	internal ManagedSpriteInstance? PreviousSpriteInstance = null;
+	internal volatile bool Invalidated = false;
 
 	internal ulong LastReferencedFrame = DrawState.CurrentFrame;
 
@@ -388,8 +401,13 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void Purge(Texture2D reference, in Bounds? bounds, in DataRef<byte> data) {
 		SpriteInfo.Purge(reference, bounds, data);
-		SpriteMap.Purge(reference, bounds);
-		Resampler.PurgeHash(reference);
+		if (data.IsNull) {
+			SpriteMap.Purge(reference, bounds);
+		}
+		else {
+			SpriteMap.Invalidate(reference, bounds);
+		}
+		//Resampler.PurgeHash(reference);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -416,8 +434,10 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal ManagedSpriteInstance(string assetName, SpriteInfo textureWrapper, Bounds sourceRectangle, TextureType textureType, bool async, uint expectedScale) {
+	internal ManagedSpriteInstance(string assetName, SpriteInfo textureWrapper, in Bounds sourceRectangle, TextureType textureType, bool async, uint expectedScale, ManagedSpriteInstance? previous = null) {
 		using var _ = Performance.Track();
+
+		PreviousSpriteInstance = previous;
 
 		TexType = textureType;
 
@@ -438,7 +458,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 		Name = source.Anonymous() ? assetName.SafeName() : source.SafeName();
 		// TODO : I believe we need a lock here until when the texture is _fully created_, preventing new instantiations from starting of a texture
 		// already in-flight
-		if (!SpriteMap.Add(source, this)) {
+		if (!SpriteMap.AddReplaceInvalidated(source, this)) {
 			// If false, then the sprite already exists in the map (which can be caused by gap between the Resample task being kicked off, and hitting this, and _another_ sprite getting
 			// past the earlier try-block, and getting here.
 			// TODO : this should be fixed by making sure that all of the resample tasks _at least_ get to this point before the end of the frame.
@@ -518,6 +538,10 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 
 		Thread.MemoryBarrier();
 		_isReady = true;
+		if (PreviousSpriteInstance is not null) {
+			PreviousSpriteInstance.Dispose(true);
+			PreviousSpriteInstance = null;
+		}
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -554,6 +578,11 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 	public void Dispose() {
 		if (IsDisposed) {
 			return;
+		}
+
+		if (PreviousSpriteInstance is not null) {
+			PreviousSpriteInstance.Dispose(true);
+			PreviousSpriteInstance = null;
 		}
 
 		if (Reference.TryGetTarget(out var reference)) {

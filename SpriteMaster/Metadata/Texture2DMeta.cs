@@ -7,6 +7,7 @@ using SpriteMaster.Types.Interlocking;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading;
 using SpriteDictionary = System.Collections.Generic.Dictionary<ulong, SpriteMaster.ManagedSpriteInstance>;
 
@@ -33,6 +34,12 @@ sealed class Texture2DMeta {
 				return true;
 			}
 			return false;
+		}
+	}
+
+	internal void ReplaceInSpriteInstanceTable(ulong key, ManagedSpriteInstance instance) {
+		using (Lock.Write) {
+			SpriteInstanceTable[key] = instance;
 		}
 	}
 
@@ -118,13 +125,27 @@ sealed class Texture2DMeta {
 					Debug.TraceLn($"{(hasCachedData ? "Overriding" : "Setting")} '{reference.SafeName(DrawingColor.LightYellow)}' Cache in Purge: {bounds.HasValue}, {data.Offset}, {data.Length}");
 					CachedRawData = data.Data;
 				}
-				// TODO : This doesn't update the compressed cache.
-				else if (!IsCompressed && !bounds.HasValue && CachedRawData is var currentData && currentData is not null) {
+				else if (!IsCompressed && (bounds.HasValue != (data.Offset != 0)) && CachedRawData is var currentData && currentData is not null) {
 					Debug.TraceLn($"{(hasCachedData ? "Updating" : "Setting")} '{reference.SafeName(DrawingColor.LightYellow)}' Cache in Purge: {bounds.HasValue}");
-					var byteSpan = data.Data;
-					var untilOffset = Math.Min(currentData.Length - data.Offset, data.Length);
-					foreach (int i in 0.RangeTo(untilOffset)) {
-						currentData[i + data.Offset] = byteSpan[i];
+
+					if (bounds.HasValue) {
+						var source = data.Data.AsSpan<uint>();
+						var dest = currentData.AsSpan<uint>();
+						int sourceOffset = 0;
+						for (int y = bounds.Value.Top; y < bounds.Value.Bottom; ++y) {
+							int destOffset = (y * reference.Width) + bounds.Value.Left;
+							var sourceSlice = source.Slice(sourceOffset, bounds.Value.Width);
+							var destSlice = dest.Slice(destOffset, bounds.Value.Width);
+							sourceSlice.CopyTo(destSlice);
+							sourceOffset += bounds.Value.Width;
+						}
+					}
+					else {
+						var byteSpan = data.Data;
+						var untilOffset = Math.Min(currentData.Length - data.Offset, data.Length);
+						for (int i = 0; i < untilOffset; ++i) {
+							currentData[i + data.Offset] = byteSpan[i];
+						}
 					}
 					Hash = 0;
 					CachedRawData = currentData; // Force it to update the global cache.

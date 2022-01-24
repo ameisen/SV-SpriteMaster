@@ -20,21 +20,54 @@ static class SpriteMap {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static bool Add(Texture2D reference, ManagedSpriteInstance texture) {
+	internal static bool Add(Texture2D reference, ManagedSpriteInstance instance, out ManagedSpriteInstance? current) {
 		var meta = reference.Meta();
 		using (Lock.Write) {
-			SpriteInstanceReferences.Add(texture);  
+			SpriteInstanceReferences.Add(instance);  
 			using (meta.Lock.Write) {
-				return meta.TryAddToSpriteInstanceTable(texture.SpriteMapHash, texture);
+				var result = meta.TryAddToSpriteInstanceTable(instance.SpriteMapHash, instance);
+				if (result) {
+					current = null;
+				}
+				else {
+					current = null;
+					meta.GetSpriteInstanceTable().TryGetValue(instance.SpriteMapHash, out current);
+				}
+				return result;
+			}
+		}
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static bool AddReplaceInvalidated(Texture2D reference, ManagedSpriteInstance instance) {
+		var meta = reference.Meta();
+		using (Lock.Write) {
+			SpriteInstanceReferences.Add(instance);
+			using (meta.Lock.Write) {
+				var result = meta.TryAddToSpriteInstanceTable(instance.SpriteMapHash, instance);
+				if (!result) {
+					meta.GetSpriteInstanceTable().TryGetValue(instance.SpriteMapHash, out var current);
+					if (current is null || current.Invalidated) {
+						meta.ReplaceInSpriteInstanceTable(instance.SpriteMapHash, instance);
+						result = true;
+					}
+				}
+				return result;
 			}
 		}
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool TryGetReady(Texture2D texture, in Bounds source, uint expectedScale, [NotNullWhen(true)] out ManagedSpriteInstance? result) {
-		if (TryGet(texture, source, expectedScale, out var internalResult) && internalResult.IsReady) {
-			result = internalResult;
-			return true;
+		if (TryGet(texture, source, expectedScale, out var internalResult)) {
+			if (internalResult.IsReady) {
+				result = internalResult;
+				return true;
+			}
+			else if (internalResult.PreviousSpriteInstance?.IsReady ?? false) {
+				result = internalResult.PreviousSpriteInstance;
+				return true;
+			}
 		}
 		result = null;
 		return false;
@@ -160,6 +193,34 @@ static class SpriteMap {
 					}
 				}
 				// : TODO dispose sprites?
+			}
+		}
+		catch { }
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static void Invalidate(Texture2D reference, in Bounds? sourceRectangle = null) {
+		try {
+			var meta = reference.Meta();
+			var spriteTable = meta.GetSpriteInstanceTable();
+
+			using (meta.Lock.Read) {
+				if (spriteTable.Count == 0) {
+					return;
+				}
+
+				// TODO : handle sourceRectangle meaningfully.
+				Debug.TraceLn($"Invalidating Texture {reference.SafeName()}");
+
+				foreach (var pairs in spriteTable) {
+					var spriteInstance = pairs.Value;
+					lock (spriteInstance) {
+						if (sourceRectangle.HasValue && !spriteInstance.OriginalSourceRectangle.Overlaps(sourceRectangle.Value)) {
+							continue;
+						}
+						spriteInstance.Invalidated = true;
+					}
+				}
 			}
 		}
 		catch { }

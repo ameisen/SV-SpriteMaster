@@ -20,7 +20,7 @@ using System;
 [assembly: AllowPartiallyTrustedCallers]
 [assembly: SecurityTransparent]
 [assembly: SecurityRules(SecurityRuleSet.Level2, SkipVerificationInFullTrust = true)]
-[assembly: ChangeList("c18258c:0.13.0-alpha.3-6-gc18258c")]
+[assembly: ChangeList("3955e82:0.13.0-alpha.3-7-g3955e82")]
 [assembly: BuildComputerName("Palatinate")]
 [assembly: FullVersion("0.13.0.3-alpha.3")]
 // [assembly: SuppressUnmanagedCodeSecurity]
