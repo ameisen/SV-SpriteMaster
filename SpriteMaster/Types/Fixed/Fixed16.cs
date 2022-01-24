@@ -1,4 +1,5 @@
 ﻿using SpriteMaster.Colors;
+using SpriteMaster.Extensions;
 using System;
 using System.Runtime.InteropServices;
 
@@ -15,6 +16,9 @@ struct Fixed16 : IEquatable<Fixed16>, IEquatable<ushort>, ILongHash {
 	internal readonly ushort Value => InternalValue;
 
 	internal static ushort FromU8(byte value) => value.Color8To16();
+
+	internal readonly Fixed8 Narrow => Value.Color16to8();
+	internal readonly float Real => (float)ColorHelpers.ValueToScalar(Value);
 
 	internal Fixed16(ushort value) => InternalValue = value;
 	internal Fixed16(Fixed16 value) => InternalValue = value.InternalValue;
@@ -60,6 +64,22 @@ struct Fixed16 : IEquatable<Fixed16>, IEquatable<ushort>, ILongHash {
 	public static explicit operator ushort(Fixed16 value) => value.InternalValue;
 	public static implicit operator Fixed16(ushort value) => new(value);
 	public static explicit operator Fixed8(Fixed16 value) => new(Fixed8.FromU16(value.InternalValue));
+
+	internal static Span<float> ConvertToReal(ReadOnlySpan<Fixed16> values) {
+		var result = SpanExt.MakeUninitialized<float>(values.Length);
+		for (int i = 0; i < values.Length; ++i) {
+			result[i] = values[i].Real;
+		}
+		return result;
+	}
+
+	internal static Span<Fixed16> ConvertFromReal(ReadOnlySpan<float> values) {
+		var result = SpanExt.MakeUninitialized<Fixed16>(values.Length);
+		for (int i = 0; i < values.Length; ++i) {
+			result[i] = ColorHelpers.ScalarToValue16(values[i]);
+		}
+		return result;
+	}
 
 	readonly ulong ILongHash.GetLongHashCode() => InternalValue.GetLongHashCode();
 }

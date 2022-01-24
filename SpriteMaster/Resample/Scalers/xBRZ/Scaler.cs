@@ -231,7 +231,7 @@ sealed class Scaler {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private int getX(int x) {
+	private int GetX(int x) {
 		if (Configuration.Wrapped.X) {
 			x = (x + SourceSize.Width) % SourceSize.Width;
 		}
@@ -242,7 +242,7 @@ sealed class Scaler {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private int getY(int y) {
+	private int GetY(int y) {
 		if (Configuration.Wrapped.Y) {
 			y = (y + SourceSize.Height) % SourceSize.Height;
 		}
@@ -294,15 +294,15 @@ sealed class Scaler {
 		{
 			var y = -1;
 
-			var sM1 = SourceSize.X * getY(y - 1);
-			var s0 = SourceSize.X * getY(y); //center line
-			var sP1 = SourceSize.X * getY(y + 1);
-			var sP2 = SourceSize.X * getY(y + 2);
+			var sM1 = SourceSize.X * GetY(y - 1);
+			var s0 = SourceSize.X * GetY(y); //center line
+			var sP1 = SourceSize.X * GetY(y + 1);
+			var sP2 = SourceSize.X * GetY(y + 2);
 
 			for (var x = 0; x < SourceSize.Width; ++x) {
-				var xM1 = getX(x - 1);
-				var xP1 = getX(x + 1);
-				var xP2 = getX(x + 2);
+				var xM1 = GetX(x - 1);
+				var xP1 = GetX(x + 1);
+				var xP2 = GetX(x + 2);
 
 				//read sequentially from memory as far as possible
 				var ker4 = new Kernel4x4(
@@ -354,17 +354,17 @@ sealed class Scaler {
 			//consider MT "striped" access
 			var targetIndex = y * targetStride;
 
-			var sM1 = SourceSize.X * getY(y - 1);
+			var sM1 = SourceSize.X * GetY(y - 1);
 			var s0 = SourceSize.X * y; //center line
-			var sP1 = SourceSize.X * getY(y + 1);
-			var sP2 = SourceSize.X * getY(y + 2);
+			var sP1 = SourceSize.X * GetY(y + 1);
+			var sP2 = SourceSize.X * GetY(y + 2);
 
 			PreprocessType blendXY1 = 0;
 
 			for (var x = 0; x < SourceSize.Width; ++x, targetIndex += ScalerInterface.Scale) {
-				var xM1 = getX(x - 1);
-				var xP1 = getX(x + 1);
-				var xP2 = getX(x + 2);
+				var xM1 = GetX(x - 1);
+				var xP1 = GetX(x + 1);
+				var xP2 = GetX(x + 2);
 
 				//evaluate the four corners on bottom-right of current pixel
 				//blend_xy for current (x, y) position

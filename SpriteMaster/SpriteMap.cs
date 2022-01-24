@@ -47,11 +47,11 @@ static class SpriteMap {
 		var meta = texture.Meta();
 		var spriteTable = meta.GetSpriteInstanceTable();
 
-		using (meta.Lock.Read) {
+		using (meta.Lock.ReadWrite) {
 			if (spriteTable.TryGetValue(rectangleHash, out var spriteInstance)) {
 				if (spriteInstance.Texture?.IsDisposed == true) {
 					var removeList = new List<ulong>();
-					using (meta.Lock.Promote) {
+					using (meta.Lock.Write) {
 						foreach (var skv in spriteTable) {
 							if (skv.Value?.Texture?.IsDisposed ?? false) {
 								removeList.Add(skv.Key);
@@ -120,7 +120,7 @@ static class SpriteMap {
 			var meta = reference.Meta();
 			var spriteTable = meta.GetSpriteInstanceTable();
 
-			using (meta.Lock.Read) {
+			using (meta.Lock.ReadWrite) {
 				if (spriteTable.Count == 0) {
 					return;
 				}
@@ -149,7 +149,7 @@ static class SpriteMap {
 					}
 				}
 
-				using (meta.Lock.Promote) {
+				using (meta.Lock.Write) {
 					if (hasSourceRect) {
 						foreach (var hash in removeTexture) {
 							meta.RemoveFromSpriteInstanceTable(hash);

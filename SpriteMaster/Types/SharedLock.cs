@@ -67,22 +67,22 @@ sealed class SharedLock : CriticalFinalizerObject, IDisposable {
 		public static implicit operator bool(in ExclusiveCookie cookie) => cookie.Lock is not null;
 	}
 
-	internal ref struct PromotedCookie {
+	internal ref struct ReadWriteCookie {
 		private LockType? Lock = null;
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		private PromotedCookie(LockType rwlock) {
+		private ReadWriteCookie(LockType rwlock) {
 			Lock = rwlock;
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		internal static PromotedCookie Create(LockType rwlock) {
+		internal static ReadWriteCookie Create(LockType rwlock) {
 			rwlock.EnterUpgradeableReadLock();
 			return new(rwlock);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		internal static PromotedCookie TryCreate(LockType rwlock) => rwlock.TryEnterUpgradeableReadLock(0) ? new(rwlock) : new();
+		internal static ReadWriteCookie TryCreate(LockType rwlock) => rwlock.TryEnterUpgradeableReadLock(0) ? new(rwlock) : new();
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		public void Dispose() {
@@ -95,7 +95,7 @@ sealed class SharedLock : CriticalFinalizerObject, IDisposable {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		public static implicit operator bool(in PromotedCookie cookie) => cookie.Lock is not null;
+		public static implicit operator bool(in ReadWriteCookie cookie) => cookie.Lock is not null;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -106,18 +106,18 @@ sealed class SharedLock : CriticalFinalizerObject, IDisposable {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	~SharedLock() => Dispose();
 
-	internal bool IsLocked => IsReadLock || IsWriteLock || IsPromotedLock;
+	internal bool IsLocked => IsReadLock || IsWriteLock || IsReadWriteLock;
 	internal bool IsReadLock => Lock?.IsReadLockHeld ?? false;
 	internal bool IsWriteLock => Lock?.IsWriteLockHeld ?? false;
-	internal bool IsPromotedLock => Lock?.IsUpgradeableReadLockHeld ?? false;
+	internal bool IsReadWriteLock => Lock?.IsUpgradeableReadLockHeld ?? false;
 	internal bool IsDisposed => Lock == null;
 
 	internal ReadCookie Read => ReadCookie.Create(Lock!);
 	internal ReadCookie TryRead => ReadCookie.TryCreate(Lock!);
 	internal ExclusiveCookie Write => ExclusiveCookie.Create(Lock!);
 	internal ExclusiveCookie TryWrite => ExclusiveCookie.TryCreate(Lock!);
-	internal PromotedCookie Promote => PromotedCookie.Create(Lock!);
-	internal PromotedCookie TryPromote => PromotedCookie.TryCreate(Lock!);
+	internal ReadWriteCookie ReadWrite => ReadWriteCookie.Create(Lock!);
+	internal ReadWriteCookie TryReadWrite => ReadWriteCookie.TryCreate(Lock!);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public void Dispose() {
@@ -125,7 +125,7 @@ sealed class SharedLock : CriticalFinalizerObject, IDisposable {
 			return;
 		}
 
-		if (IsPromotedLock) {
+		if (IsReadWriteLock) {
 			Lock.ExitUpgradeableReadLock();
 		}
 		if (IsWriteLock) {

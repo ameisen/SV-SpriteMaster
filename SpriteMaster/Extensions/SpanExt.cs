@@ -1,5 +1,7 @@
 ﻿using Microsoft.Toolkit.HighPerformance;
+using SpriteMaster.Resample.Scalers.SuperXBR.Cg;
 using SpriteMaster.Types;
+using SpriteMaster.Types.Fixed;
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -48,4 +50,13 @@ static class SpanExt {
 	internal static ReadOnlySpan<U> AsReadOnlySpan<U>(this uint[] array) where U : unmanaged => array.AsSpan().Cast<uint, U>();
 	internal static ReadOnlySpan<U> AsReadOnlySpan<U>(this Color8[] array) where U : unmanaged => array.AsSpan().Cast<Color8, U>();
 	internal static ReadOnlySpan<U> AsReadOnlySpan<U>(this Color16[] array) where U : unmanaged => array.AsSpan().Cast<Color16, U>();
+
+	internal static Span<Fixed8> Elements(this Span<Color8> span) => span.Cast<Fixed8>();
+	internal static ReadOnlySpan<Fixed8> Elements(this ReadOnlySpan<Color8> span) => span.Cast<Fixed8>();
+
+	internal static Span<Fixed16> Elements(this Span<Color16> span) => span.Cast<Fixed16>();
+	internal static ReadOnlySpan<Fixed16> Elements(this ReadOnlySpan<Color16> span) => span.Cast<Fixed16>();
+
+	internal static Span<float> Elements(this Span<Float4> span) => span.Cast<Float4, float>();
+	internal static ReadOnlySpan<float> Elements(this ReadOnlySpan<Float4> span) => span.Cast<Float4, float>();
 }

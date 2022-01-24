@@ -514,6 +514,7 @@ sealed class Resampler {
 				if (input.Reference.GraphicsDevice.IsDisposed) {
 					return null;
 				}
+				//var newTexture2 = GL.GLTexture.CreateTexture2D(newSize, false, spriteFormat);
 				var newTexture = new ManagedTexture2D(
 					texture: spriteInstance,
 					reference: input.Reference,

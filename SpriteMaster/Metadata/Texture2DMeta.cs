@@ -190,14 +190,14 @@ sealed class Texture2DMeta {
 				//	return;
 				//}
 				if (value is null) {
-					using (Lock.Promote) {
+					using (Lock.Write) {
 						_CachedRawData.SetTarget(null!);
 						_CachedData.SetTarget(null!);
 						ResidentCache.Remove<byte[]>(UniqueIDString);
 					}
 				}
 				else {
-					using (Lock.Promote) {
+					using (Lock.Write) {
 						ResidentCache.Set(UniqueIDString, value);
 						_CachedRawData.SetTarget(value);
 						if (!IsCompressed) {
@@ -234,14 +234,14 @@ sealed class Texture2DMeta {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal ulong GetHash(SpriteInfo info) {
-		using (Lock.Read) {
+		using (Lock.ReadWrite) {
 			ulong hash = Hash;
 			if (hash == 0) {
 				if (info.ReferenceData is null) {
 					throw new NullReferenceException(nameof(info.ReferenceData));
 				}
 				hash = info.ReferenceData.Hash();
-				using (Lock.Promote) {
+				using (Lock.Write) {
 					Hash = hash;
 				}
 			}

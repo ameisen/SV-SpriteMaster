@@ -51,7 +51,6 @@
 		<PackageReference Include="LZMA-SDK" Version="19.0.0" />
 		<PackageReference Include="Microsoft.Toolkit.HighPerformance" Version="7.1.2" />
 		<PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" ExcludeAssets="all" />
-		<PackageReference Include="Nito.Collections.Deque" Version="1.1.1" />
 		<PackageReference Include="Pastel" Version="3.0.0" />
 		<PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.0.0" />
 		<PackageReference Include="System.Runtime.Caching" Version="5.0.0" />
@@ -68,6 +67,10 @@
 		<Reference Update="Stardew Valley">
 			<Aliases>destination</Aliases>
 		</Reference>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Resample\Scalers\SuperXBR\Reference\" />
 	</ItemGroup>
 
 	<Target Name="PreBuild" BeforeTargets="PreBuildEvent">
