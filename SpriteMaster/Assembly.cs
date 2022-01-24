@@ -21,9 +21,9 @@ using System;
 [assembly: SecurityTransparent]
 [assembly: InternalsVisibleToAttribute("xBRZ")]
 [assembly: SecurityRules(SecurityRuleSet.Level2, SkipVerificationInFullTrust = true)]
-[assembly: ChangeList("040269f:0.13.0-alpha.3-8-g040269f")]
+[assembly: ChangeList("99eae5b:0.13.0-alpha.4")]
 [assembly: BuildComputerName("Palatinate")]
-[assembly: FullVersion("0.13.0.3-alpha.3")]
+[assembly: FullVersion("0.13.0.4-alpha.4")]
 // [assembly: SuppressUnmanagedCodeSecurity]
 
 [module: CompilationRelaxations(CompilationRelaxations.NoStringInterning)]
