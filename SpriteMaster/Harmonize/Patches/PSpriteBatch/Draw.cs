@@ -263,7 +263,7 @@ static class Draw {
 		factoredScale += Config.Resample.ScaleBias;
 		factoredScale = factoredScale.Clamp(2.0f, (float)Config.Resample.MaxScale);
 		uint factoredScaleN = (uint)factoredScale.NextInt();
-		return Resample.Scalers.xBRZ.Scaler.ClampScale(factoredScaleN);
+		return Resample.Scalers.IScaler.Current.ClampScale(factoredScaleN);
 	}
 
 	internal static bool OnDraw(
@@ -320,14 +320,14 @@ static class Draw {
 			var innerSize = (Vector2F)spriteInstance.UnpaddedSize;
 
 			// This is the scale factor to bring the inner size to the draw size.
-			var innerRatio = textureSize / innerSize;
+			var innerRatio = textureSize / innerSize; // spriteInstance.InnerRatio;
 
 			// Scale the... scale by the scale factor.
 			adjustedScale *= innerRatio;
 
 			adjustedOrigin *= (Vector2F)spriteInstance.Scale;
 			adjustedOrigin /= innerRatio;
-			adjustedOrigin += (textureSize - innerSize) * 0.5f;
+			adjustedOrigin += (Vector2F)spriteInstance.Padding.Offset;
 		}
 		else {
 			adjustedOrigin *= (Vector2F)spriteInstance.Scale;

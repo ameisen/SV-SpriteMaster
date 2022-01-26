@@ -72,6 +72,8 @@ unsafe partial struct Vector2I :
 	internal readonly int MinOf => Math.Min(X, Y);
 	internal readonly int MaxOf => Math.Max(X, Y);
 
+	internal readonly int Sum => X + Y;
+
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal Vector2I(ulong Packed) : this() => this.Packed = Packed;
 

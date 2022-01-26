@@ -61,9 +61,11 @@ static class PreviewProgram {
 		if (GammaCorrection)
 			SpriteMaster.Resample.Passes.GammaCorrection.Linearize(spriteData, spriteSize);
 
-		if (scale != 1) {;
-			spriteData = SpriteMaster.Resample.Scalers.xBRZ.Scaler.Apply(
-				new(
+		if (scale != 1) {
+			var xBRZInterface = new SpriteMaster.Resample.Scalers.xBRZ.Scaler.ScalerInterface();
+
+			spriteData = xBRZInterface.Apply(
+				new SpriteMaster.Resample.Scalers.xBRZ.Config(
 					wrapped: Vector2B.False,
 					luminanceWeight: LuminanceWeight,
 					equalColorTolerance: EqualColorTolerance,
@@ -74,6 +76,7 @@ static class PreviewProgram {
 				scaleMultiplier: scale,
 				sourceData: spriteData,
 				sourceSize: spriteSize,
+				targetData: null,
 				targetSize: scaledSize
 			);
 			spriteSize = scaledSize;

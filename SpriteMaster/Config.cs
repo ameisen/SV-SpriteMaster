@@ -1,4 +1,6 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+﻿global using SMConfig = SpriteMaster.Config;
+
+using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using SpriteMaster.Resample;
 using StardewModdingAPI;
@@ -165,8 +167,10 @@ static class Config {
 		internal static bool PremultiplyAlphaAssume = true;
 		[ConfigIgnore]
 		internal static class Deposterization {
-			[Comment("Should deposterization be performed?")]
-			internal const bool Enabled = false; // disabled as the system needs more work
+			[Comment("Should deposterization prepass be performed?")]
+			internal const bool PreEnabled = false; // disabled as the system needs more work
+			[Comment("Should deposterization postpass be performed?")]
+			internal const bool PostEnabled = false; // disabled as the system needs more work
 			[Comment("Deposterization Color Threshold")]
 			internal static int Threshold = 32;
 			[Comment("Deposterization Block Size")]
@@ -221,7 +225,7 @@ static class Config {
 				"LooseSprites/Cursors"
 			};
 			[Comment("What spritesheets should always be padded?")]
-			internal static List<string> Whitelist = new() {
+			internal static List<string> AlwaysList = new() {
 				"LooseSprites/font_bold",
 				"Characters/Farmer/hairstyles",
 				"Characters/Farmer/hairstyles2",
@@ -254,7 +258,7 @@ static class Config {
 			};
 
 			[Comment("What spritesheets should never be padded?")]
-			internal static List<string> Blacklist = new() {
+			internal static List<string> BlackList = new() {
 				"LooseSprites/Cloudy_Ocean_BG",
 				"LooseSprites/Cloudy_Ocean_BG_Night"
 			};
@@ -270,6 +274,8 @@ static class Config {
 			internal static double SteepDirectionThreshold = 2.2;
 			[Comment("Bias towards kernel center applied to corner-direction calculations")]
 			internal static double CenterDirectionBias = 3.0;
+			[Comment("Should gradient block copies be used? (Note: Very Broken)")]
+			internal static bool UseGradientBlockCopy = false;
 		}
 	}
 

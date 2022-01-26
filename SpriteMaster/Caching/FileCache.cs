@@ -42,7 +42,7 @@ static class FileCache {
 		internal ulong ConfigHash = SerializeConfig.ConfigHash;
 		internal ulong DataHash;
 		internal Vector2I Size;
-		internal Vector2I Padding;
+		internal PaddingQuad Padding;
 		internal Vector2I BlockPadding;
 		internal TextureFormat Format;
 		[MarshalAs(UnmanagedType.U4)]
@@ -137,7 +137,7 @@ static class FileCache {
 		out Vector2I size,
 		out TextureFormat format,
 		out Vector2B wrapped,
-		out Vector2I padding,
+		out PaddingQuad padding,
 		out Vector2I blockPadding,
 		out Span<byte> data
 	) {
@@ -145,7 +145,7 @@ static class FileCache {
 		size = Vector2I.Zero;
 		format = TextureFormat.Color;
 		wrapped = Vector2B.False;
-		padding = Vector2I.Zero;
+		padding = PaddingQuad.Zero;
 		blockPadding = Vector2I.Zero;
 		data = null;
 
@@ -224,7 +224,7 @@ static class FileCache {
 		Vector2I size,
 		TextureFormat format,
 		Vector2B wrapped,
-		Vector2I padding,
+		PaddingQuad padding,
 		Vector2I blockPadding,
 		ReadOnlySpan<byte> data
 	) {

@@ -4,7 +4,7 @@ using SpriteMaster.Types;
 using SpriteMaster.Types.Fixed;
 using System.Runtime.CompilerServices;
 
-namespace SpriteMaster.Resample.Scalers.xBRZ.Scalers;
+namespace SpriteMaster.Resample.Scalers.xBRZ.Structures;
 
 abstract class IScaler {
 	internal readonly int Scale;
@@ -144,10 +144,10 @@ sealed class Scaler3X : IScaler {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal override void BlendCorner(Color16 color, ref OutputMatrix matrix) {
 		//model a round corner
-		AlphaBlend(91,  200, ref matrix[2, 2], color); //exact: 0.4545939598
+		AlphaBlend(91, 200, ref matrix[2, 2], color); //exact: 0.4545939598
 #if true
-		AlphaBlend( 3,  200, ref matrix[2, 1], color); //0.01413008627 -> negligible + avoid conflicts with other rotations for this odd scale
-		AlphaBlend( 3,  200, ref matrix[1, 2], color); //0.01413008627
+		AlphaBlend(3, 200, ref matrix[2, 1], color); //0.01413008627 -> negligible + avoid conflicts with other rotations for this odd scale
+		AlphaBlend(3, 200, ref matrix[1, 2], color); //0.01413008627
 #endif
 	}
 }
@@ -192,7 +192,7 @@ sealed class Scaler4X : IScaler {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal override void BlendLineDiagonal(Color16 color, ref OutputMatrix matrix) {
-		AlphaBlend(1, 2, ref matrix[Scale - 1, Scale / 2    ], color);
+		AlphaBlend(1, 2, ref matrix[Scale - 1, Scale / 2], color);
 		AlphaBlend(1, 2, ref matrix[Scale - 2, Scale / 2 + 1], color);
 		matrix[Scale - 1, Scale - 1] = color;
 	}
@@ -201,8 +201,8 @@ sealed class Scaler4X : IScaler {
 	internal override void BlendCorner(Color16 color, ref OutputMatrix matrix) {
 		//model a round corner
 		AlphaBlend(137, 200, ref matrix[3, 3], color); //exact: 0.6848532563
-		AlphaBlend( 17, 200, ref matrix[3, 2], color); //0.08677704501
-		AlphaBlend( 17, 200, ref matrix[2, 3], color); //0.08677704501
+		AlphaBlend(17, 200, ref matrix[3, 2], color); //0.08677704501
+		AlphaBlend(17, 200, ref matrix[2, 3], color); //0.08677704501
 	}
 }
 
@@ -256,7 +256,7 @@ sealed class Scaler5X : IScaler {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal override void BlendLineDiagonal(Color16 color, ref OutputMatrix matrix) {
-		AlphaBlend(1, 8, ref matrix[Scale - 1, Scale / 2    ], color); //conflict with other rotations for this odd scale
+		AlphaBlend(1, 8, ref matrix[Scale - 1, Scale / 2], color); //conflict with other rotations for this odd scale
 		AlphaBlend(1, 8, ref matrix[Scale - 2, Scale / 2 + 1], color);
 		AlphaBlend(1, 8, ref matrix[Scale - 3, Scale / 2 + 2], color);
 		AlphaBlend(7, 8, ref matrix[4, 3], color);
@@ -268,11 +268,11 @@ sealed class Scaler5X : IScaler {
 	internal override void BlendCorner(Color16 color, ref OutputMatrix matrix) {
 		//model a round corner
 		AlphaBlend(173, 200, ref matrix[4, 4], color); //exact: 0.8631434088
-		AlphaBlend( 46, 200, ref matrix[4, 3], color); //0.2306749731
-		AlphaBlend( 46, 200, ref matrix[3, 4], color); //0.2306749731
+		AlphaBlend(46, 200, ref matrix[4, 3], color); //0.2306749731
+		AlphaBlend(46, 200, ref matrix[3, 4], color); //0.2306749731
 #if true
-		AlphaBlend(  3, 200, ref matrix[4, 2], color); //0.01676812367 -> negligible + avoid conflicts with other rotations for this odd scale
-		AlphaBlend(  3, 200, ref matrix[2, 4], color); //0.01676812367
+		AlphaBlend(3, 200, ref matrix[4, 2], color); //0.01676812367 -> negligible + avoid conflicts with other rotations for this odd scale
+		AlphaBlend(3, 200, ref matrix[2, 4], color); //0.01676812367
 #endif
 	}
 }
@@ -353,9 +353,9 @@ sealed class Scaler6X : IScaler {
 	internal override void BlendCorner(Color16 color, ref OutputMatrix matrix) {
 		//model a round corner
 		AlphaBlend(194, 200, ref matrix[5, 5], color); //exact: 0.9711013910
-		AlphaBlend( 85, 200, ref matrix[4, 5], color); //0.4236372243
-		AlphaBlend( 85, 200, ref matrix[5, 4], color); //0.4236372243
-		AlphaBlend( 11, 200, ref matrix[5, 3], color); //0.05652034508
-		AlphaBlend( 11, 200, ref matrix[3, 5], color); //0.05652034508
+		AlphaBlend(85, 200, ref matrix[4, 5], color); //0.4236372243
+		AlphaBlend(85, 200, ref matrix[5, 4], color); //0.4236372243
+		AlphaBlend(11, 200, ref matrix[5, 3], color); //0.05652034508
+		AlphaBlend(11, 200, ref matrix[3, 5], color); //0.05652034508
 	}
 }

@@ -9,17 +9,21 @@ sealed partial class Scaler {
 	private const uint MinScale = 2;
 	private const uint MaxScale = Config.MaxScale;
 
-	internal static uint ClampScale(uint scale) => 2;// Math.Clamp((uint)MathExt.RoundToInt(Math.Pow(Math.Ceiling(Math.Log2(scale)), 2)), MinScale, MaxScale);
+	private static uint ClampScale(uint scale) => 2;// Math.Clamp((uint)MathExt.RoundToInt(Math.Pow(Math.Ceiling(Math.Log2(scale)), 2)), MinScale, MaxScale);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static Span<Color16> Apply(
-		in Config configuration,
+	private static Span<Color16> Apply(
+		Config? config,
 		uint scaleMultiplier,
 		ReadOnlySpan<Color16> sourceData,
 		Vector2I sourceSize,
-		Vector2I targetSize,
-		Span<Color16> targetData = default
+		Span<Color16> targetData,
+		Vector2I targetSize
 	) {
+		if (config is null) {
+			throw new ArgumentNullException(nameof(config));
+		}
+
 		if (scaleMultiplier < MinScale || scaleMultiplier > MaxScale || !NumericsExt.IsPow2(scaleMultiplier)) {
 			throw new ArgumentOutOfRangeException(nameof(scaleMultiplier));
 		}
@@ -43,7 +47,7 @@ sealed partial class Scaler {
 		}
 
 		var scalerInstance = new Scaler(
-			configuration: in configuration,
+			configuration: in config,
 			scaleMultiplier: scaleMultiplier,
 			sourceSize: sourceSize,
 			targetSize: targetSize

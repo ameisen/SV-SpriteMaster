@@ -64,6 +64,18 @@ partial struct Float4 {
 	internal readonly Float4 Max(in Float4 other) => Vector4.Max(Value, other.Value);
 	internal readonly Float4 Clamp(in Float4 min, in Float4 max) => Vector4.Clamp(Value, min.Value, max.Value);
 
+	public static Float4 operator -(in Float4 vec) => Vector4.Negate(vec.Value);
+	public static Float4 operator +(in Float4 vec) => vec;
+
+	public static Float4 operator +(in Float4 a, in Float4 b) => Vector4.Add(a.Value, b.Value);
+	public static Float4 operator -(in Float4 a, in Float4 b) => Vector4.Subtract(a.Value, b.Value);
+
+	public static Float4 operator *(in Float4 a, in Float4 b) => Vector4.Multiply(a.Value, b.Value);
+	public static Float4 operator *(in Float4 a, float b) => Vector4.Multiply(a.Value, b);
+	public static Float4 operator *(float a, in Float4 b) => Vector4.Multiply(a, b.Value);
+	public static Float4 operator /(in Float4 a, in Float4 b) => Vector4.Divide(a.Value, b.Value);
+	public static Float4 operator /(in Float4 a, float b) => Vector4.Divide(a.Value, b);
+
 	public static implicit operator Float4(in Vector4 value) => new(value);
 	public static implicit operator Float4(in (float X, float Y, float Z, float W) value) => new(value);
 }

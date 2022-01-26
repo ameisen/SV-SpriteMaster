@@ -9,6 +9,8 @@ global using XTileSize = xTile.Dimensions.Size;
 global using half = System.Half;
 global using XTexture2D = Microsoft.Xna.Framework.Graphics.Texture2D;
 
+global using DefaultScaler = SpriteMaster.Resample.Scalers.xBRZ;
+
 using System.Runtime.CompilerServices;
 using System.Security;
 using System;
@@ -21,7 +23,7 @@ using System;
 [assembly: SecurityTransparent]
 [assembly: InternalsVisibleToAttribute("xBRZ")]
 [assembly: SecurityRules(SecurityRuleSet.Level2, SkipVerificationInFullTrust = true)]
-[assembly: ChangeList("99eae5b:0.13.0-alpha.4")]
+[assembly: ChangeList("7aac8ed:0.13.0-alpha.4-1-g7aac8ed")]
 [assembly: BuildComputerName("Palatinate")]
 [assembly: FullVersion("0.13.0.4-alpha.4")]
 // [assembly: SuppressUnmanagedCodeSecurity]

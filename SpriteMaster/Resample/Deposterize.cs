@@ -174,7 +174,7 @@ static class Deposterize {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		private void DeposterizeV(ReadOnlySpan<Color16> inData, Span<Color16> outData) {
+		private void DeposterizeV2(ReadOnlySpan<Color16> inData, Span<Color16> outData) {
 			int minY = -1;
 			int maxY = Size.Height + 1;
 
@@ -208,14 +208,14 @@ static class Deposterize {
 			}
 		}
 
-		private void DeposterizeV2(ReadOnlySpan<Color16> inData, Span<Color16> outData) {
-			int minY = 1;
+		private void DeposterizeV(ReadOnlySpan<Color16> inData, Span<Color16> outData) {
+			//int minY = 1;
 			int maxY = Size.Height;
 
 			int minX = -(Size.X % BlockSize);
 			int maxX = Size.Width + -minX;
 
-			int minXBlock = 0;
+			//int minXBlock = 0;
 			int maxXBlock = (maxX / BlockSize) + 1;
 
 			for (int xb = 0; xb < Size.X / BlockSize + 1; ++xb) {

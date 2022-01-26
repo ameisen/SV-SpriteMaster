@@ -85,11 +85,13 @@ static class ConverterProgram {
 		uint scale = 6;
 		if (scale != 1) {
 			var targetSize = imageSize * scale;
-			imageData = SpriteMaster.Resample.Scalers.xBRZ.Scaler.Apply(
+			var xBRZInterface = new SpriteMaster.Resample.Scalers.xBRZ.Scaler.ScalerInterface();
+			imageData = xBRZInterface.Apply(
 				scalerConfig,
 				scaleMultiplier: scale,
 				sourceData: imageData,
 				sourceSize: imageSize,
+				targetData: null,
 				targetSize: targetSize
 			);
 			imageSize = targetSize;

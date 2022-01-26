@@ -2,7 +2,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace SpriteMaster.Resample.Scalers.xBRZ.Scalers;
+namespace SpriteMaster.Resample.Scalers.xBRZ.Structures;
 
 /*
 		input kernel area naming convention:

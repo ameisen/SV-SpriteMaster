@@ -24,25 +24,8 @@ sealed class Pass1 : Pass {
 																P2
 	*/
 
-	private static readonly float[] PixelWeights = new float[] { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
-
-	private static float WeightedDifferenceDiagonal(float b0, float b1, float c0, float c1, float c2, float d0, float d1, float d2, float d3, float e1, float e2, float e3, float f2, float f3) {
-		return (
-			PixelWeights[0] * (Difference(c1, c2) + Difference(c1, c0) + Difference(e2, e1) + Difference(e2, e3)) +
-			PixelWeights[1] * (Difference(d2, d3) + Difference(d0, d1)) +
-			PixelWeights[2] * (Difference(d1, d3) + Difference(d0, d2)) +
-			PixelWeights[3] * Difference(d1, d2) +
-			PixelWeights[4] * (Difference(c0, c2) + Difference(e1, e3)) +
-			PixelWeights[5] * (Difference(b0, b1) + Difference(f2, f3))
-		);
-	}
-
-	private static float WeightedDifferenceHorizontalVertical(float i1, float i2, float i3, float i4, float e1, float e2, float e3, float e4) {
-		return (
-			PixelWeights[3] * (Difference(i1, i2) + Difference(i3, i4)) +
-			PixelWeights[0] * (Difference(i1, e1) + Difference(i2, e2) + Difference(i3, e3) + Difference(i4, e4))
-		);
-	}
+	private static readonly float[] _PixelWeights = new float[] { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
+	protected override float[] PixelWeights => _PixelWeights;
 
 	//           X   Y   Z   W
 	// VAR.t1 = -1, -1,  2,  2
@@ -90,44 +73,42 @@ sealed class Pass1 : Pass {
 				Float2 g1 = (fracP.X > 0.5f) ? (0.5f, 0.0f) : (0.0f, 0.5f);
 				Float2 g2 = (fracP.X > 0.5f) ? (0.0f, 0.5f) : (0.5f, 0.0f);
 
-				var centroid = prev.Sample(sourceOffset);
-
-				var P0 =   prev.Sample(sourceOffset    -3.0f*g1            ).RGB;
-				var P1 = source.Sample(sourceOffset                -3.0f*g2).RGB;
-				var P2 = source.Sample(sourceOffset                +3.0f*g2).RGB;
-				var P3 =   prev.Sample(sourceOffset    +3.0f*g1            ).RGB;
+				var P0 =   prev.Sample(sourceOffset    -3.0f*g1            );
+				var P1 = source.Sample(sourceOffset                -3.0f*g2);
+				var P2 = source.Sample(sourceOffset                +3.0f*g2);
+				var P3 =   prev.Sample(sourceOffset    +3.0f*g1            );
 
 				// float3 B = tex2D(s0, VAR.texCoord - 2.0 * g1 - g2).xyz;
 				// (2 * 0.5 texels) - 0.5 texels
 				// 1 texel - 0.5 texels
 				// 0.5 texels should become 0 texels.
-				var B =  source.Sample(sourceOffset    -2.0f*g1         -g2).RGB;
-				var C =    prev.Sample(sourceOffset         -g1    -2.0f*g2).RGB;
-				var D =  source.Sample(sourceOffset    -2.0f*g1         +g2).RGB;
-				var E =    prev.Sample(sourceOffset         -g1            ).RGB;
-				var F =  source.Sample(sourceOffset                     -g2).RGB;
-				var G =    prev.Sample(sourceOffset         -g1    +2.0f*g2).RGB;
-				var H =  source.Sample(sourceOffset                     +g2).RGB;
-				var I =    prev.Sample(sourceOffset    +2.0f*g1         +g2).RGB;
+				var B =  source.Sample(sourceOffset    -2.0f*g1         -g2);
+				var C =    prev.Sample(sourceOffset         -g1    -2.0f*g2);
+				var D =  source.Sample(sourceOffset    -2.0f*g1         +g2);
+				var E =    prev.Sample(sourceOffset         -g1            );
+				var F =  source.Sample(sourceOffset                     -g2);
+				var G =    prev.Sample(sourceOffset         -g1    +2.0f*g2);
+				var H =  source.Sample(sourceOffset                     +g2);
+				var I =    prev.Sample(sourceOffset         +g1            );
 
-				var F4 = source.Sample(sourceOffset         +g1    -2.0f*g2).RGB;
-				var I4 =   prev.Sample(sourceOffset    +2.0f*g1         -g2).RGB;
-				var H5 = source.Sample(sourceOffset         +g1    +2.0f*g2).RGB;
-				var I5 =   prev.Sample(sourceOffset    +2.0f*g1         +g2).RGB;
+				var F4 = source.Sample(sourceOffset         +g1    -2.0f*g2);
+				var I4 =   prev.Sample(sourceOffset    +2.0f*g1         -g2);
+				var H5 = source.Sample(sourceOffset         +g1    +2.0f*g2);
+				var I5 =   prev.Sample(sourceOffset    +2.0f*g1         +g2);
 
-				float b = RGBToYUV(B);
-				float c = RGBToYUV(C);
-				float d = RGBToYUV(D);
-				float e = RGBToYUV(E);
-				float f = RGBToYUV(F);
-				float g = RGBToYUV(G);
-				float h = RGBToYUV(H);
-				float i = RGBToYUV(I);
+				var b = CgMath.ToDiffTexel(B);
+				var c = CgMath.ToDiffTexel(C);
+				var d = CgMath.ToDiffTexel(D);
+				var e = CgMath.ToDiffTexel(E);
+				var f = CgMath.ToDiffTexel(F);
+				var g = CgMath.ToDiffTexel(G);
+				var h = CgMath.ToDiffTexel(H);
+				var i = CgMath.ToDiffTexel(I);
 
-				float i4 = RGBToYUV(I4); float p0 = RGBToYUV(P0);
-				float i5 = RGBToYUV(I5); float p1 = RGBToYUV(P1);
-				float h5 = RGBToYUV(H5); float p2 = RGBToYUV(P2);
-				float f4 = RGBToYUV(F4); float p3 = RGBToYUV(P3);
+				var i4 = CgMath.ToDiffTexel(I4); var p0 = CgMath.ToDiffTexel(P0);
+				var i5 = CgMath.ToDiffTexel(I5); var p1 = CgMath.ToDiffTexel(P1);
+				var h5 = CgMath.ToDiffTexel(H5); var p2 = CgMath.ToDiffTexel(P2);
+				var f4 = CgMath.ToDiffTexel(F4); var p3 = CgMath.ToDiffTexel(P3);
 
 				// Calc edgeness in diagonal directions.
 				float dEdge =
@@ -147,22 +128,20 @@ sealed class Pass1 : Pass {
 				Float4 w2 = (-Weight2, Weight2 + 0.25f, Weight2 + 0.25f, -Weight2);
 
 				// Filtering and normalization in four direction generating four colors.
-				Float3 c1 = CgMath.MatrixMul(w1, P2, H, F, P1);
-				Float3 c2 = CgMath.MatrixMul(w1, P0, E, I, P3);
-				Float3 c3 = CgMath.MatrixMul(w2, D + G, E + H, F + I, F4 + I4);
-				Float3 c4 = CgMath.MatrixMul(w2, C + B, F + E, I + H, I5 + H5);
-
-				float alpha = centroid.A;
+				Float4 c1 = CgMath.MatrixMul(w1, P2, H, F, P1);
+				Float4 c2 = CgMath.MatrixMul(w1, P0, E, I, P3);
+				Float4 c3 = CgMath.MatrixMul(w2, D + G, E + H, F + I, F4 + I4);
+				Float4 c4 = CgMath.MatrixMul(w2, C + B, F + E, I + H, I5 + H5);
 
 				// Smoothly blends the two strongest directions (one in diagonal and the other in vert/horiz direction).
-				Float3 color = CgMath.Lerp(
+				Float4 color = CgMath.Lerp(
 					CgMath.Lerp(c1, c2, CgMath.Step(0.0f, dEdge)),
 					CgMath.Lerp(c3, c4, CgMath.Step(0.0f, hvEdge)),
 					1.0f - edgeStrength
 				);
 
 				// Anti-ringing code.
-				Float3 minSample =
+				Float4 minSample =
 					CgMath.Min4(E, F, H, I) +
 					(1.0f - Configuration.AntiRinging) *
 					CgMath.Lerp(
@@ -170,7 +149,7 @@ sealed class Pass1 : Pass {
 						(P0 - E) * (I - P3),
 						CgMath.Step(0.0f, dEdge)
 					);
-				Float3 maxSample =
+				Float4 maxSample =
 					CgMath.Max4(E, F, H, I) -
 					(1.0f - Configuration.AntiRinging) *
 					CgMath.Lerp(
@@ -180,7 +159,7 @@ sealed class Pass1 : Pass {
 					);
 				color = color.Clamp(minSample, maxSample);
 
-				target[targetOffset] = new(color, alpha);
+				target[targetOffset] = color;
 			}
 		}
 	}

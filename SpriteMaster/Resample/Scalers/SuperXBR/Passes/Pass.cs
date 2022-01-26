@@ -7,6 +7,8 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
+using static SpriteMaster.Resample.Scalers.SuperXBR.Cg.CgMath;
+
 namespace SpriteMaster.Resample.Scalers.SuperXBR.Passes;
 
 internal abstract class Pass {
@@ -17,6 +19,26 @@ internal abstract class Pass {
 		Configuration = config;
 		SourceSize = sourceSize;
 		TargetSize = targetSize;
+	}
+
+	protected abstract float[] PixelWeights { get; }
+
+	protected float WeightedDifferenceDiagonal(in DiffTexel b0, in DiffTexel b1, in DiffTexel c0, in DiffTexel c1, in DiffTexel c2, in DiffTexel d0, in DiffTexel d1, in DiffTexel d2, in DiffTexel d3, in DiffTexel e1, in DiffTexel e2, in DiffTexel e3, in DiffTexel f2, in DiffTexel f3) {
+		return (
+			PixelWeights[0] * (Difference(c1, c2) + Difference(c1, c0) + Difference(e2, e1) + Difference(e2, e3)) +
+			PixelWeights[1] * (Difference(d2, d3) + Difference(d0, d1)) +
+			PixelWeights[2] * (Difference(d1, d3) + Difference(d0, d2)) +
+			PixelWeights[3] * Difference(d1, d2) +
+			PixelWeights[4] * (Difference(c0, c2) + Difference(e1, e3)) +
+			PixelWeights[5] * (Difference(b0, b1) + Difference(f2, f3))
+		);
+	}
+
+	protected float WeightedDifferenceHorizontalVertical(in DiffTexel i1, in DiffTexel i2, in DiffTexel i3, in DiffTexel i4, in DiffTexel e1, in DiffTexel e2, in DiffTexel e3, in DiffTexel e4) {
+		return (
+			PixelWeights[3] * (Difference(i1, i2) + Difference(i3, i4)) +
+			PixelWeights[0] * (Difference(i1, e1) + Difference(i2, e2) + Difference(i3, e3) + Difference(i4, e4))
+		);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]

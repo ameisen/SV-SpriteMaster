@@ -75,14 +75,14 @@ sealed class Resampler {
 		ref uint scale,
 		out Vector2I size,
 		out TextureFormat format,
-		out Vector2I padding,
+		out PaddingQuad padding,
 		out Vector2I blockPadding
 	) {
 		if (input.ReferenceData is null) {
 			throw new ArgumentNullException(nameof(input.ReferenceData));
 		}
 
-		padding = Vector2I.Zero;
+		padding = PaddingQuad.Zero;
 		blockPadding = Vector2I.Zero;
 
 		if (Config.Debug.Sprite.DumpReference) {
@@ -160,6 +160,10 @@ sealed class Resampler {
 			Wrapped: input.Wrapped
 		);
 
+		if (input.Reference.SafeName().StartsWith("Buildings/houses")) {
+			input = input;
+		}
+
 		if (Config.Resample.EnableWrappedAddressing) {
 			wrapped = analysis.Wrapped;
 		}
@@ -201,7 +205,7 @@ sealed class Resampler {
 					Passes.PremultipliedAlpha.Reverse(spriteRawData, spriteRawExtent);
 				}
 
-				if (Config.Resample.Deposterization.Enabled) {
+				if (Config.Resample.Deposterization.PreEnabled) {
 					spriteRawData = Deposterize.Enhance<Color16>(spriteRawData, spriteRawExtent, doWrap);
 
 					if (Config.Debug.Sprite.DumpReference) {
@@ -216,16 +220,12 @@ sealed class Resampler {
 
 				switch (Config.Resample.Scaler) {
 					case Scaler.xBRZ: {
-							var scalerConfig = new Scalers.xBRZ.Config(
+							var scalerConfig = Resample.Scalers.IScaler.Current.CreateConfig(
 								wrapped: doWrap,
-								luminanceWeight: Config.Resample.xBRZ.LuminanceWeight,
-								equalColorTolerance: Config.Resample.xBRZ.EqualColorTolerance,
-								dominantDirectionThreshold: Config.Resample.xBRZ.DominantDirectionThreshold,
-								steepDirectionThreshold: Config.Resample.xBRZ.SteepDirectionThreshold,
-								centerDirectionBias: Config.Resample.xBRZ.CenterDirectionBias
+								hasAlpha: true
 							);
 
-							bitmapDataWide = Scalers.xBRZ.Scaler.Apply(
+							bitmapDataWide = Resample.Scalers.IScaler.Current.Apply(
 								configuration: scalerConfig,
 								scaleMultiplier: scale,
 								sourceData: spriteRawData,
@@ -248,7 +248,7 @@ sealed class Resampler {
 						throw new InvalidOperationException($"Unknown Scaler Type: {Config.Resample.Scaler}");
 				}
 
-				if (Config.Resample.Deposterization.Enabled) {
+				if (Config.Resample.Deposterization.PostEnabled) {
 					bitmapDataWide = Deposterize.Enhance<Color16>(bitmapDataWide, scaledSize, doWrap);
 				}
 
@@ -507,8 +507,8 @@ sealed class Resampler {
 				catch { }
 			}
 
-			spriteInstance.UnpaddedSize = newSize - (spriteInstance.Padding + spriteInstance.BlockPadding);
-			spriteInstance.AdjustedScale = (Vector2)spriteInstance.UnpaddedSize / inputSize;
+			spriteInstance.UnpaddedSize = newSize - (spriteInstance.Padding.Sum + spriteInstance.BlockPadding);
+			spriteInstance.InnerRatio = (Vector2F)newSize / (Vector2F)spriteInstance.UnpaddedSize;
 
 			ManagedTexture2D? CreateTexture(byte[] data) {
 				if (input.Reference.GraphicsDevice.IsDisposed) {

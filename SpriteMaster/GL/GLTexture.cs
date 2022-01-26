@@ -112,7 +112,6 @@ static class GLTexture {
 		var newNewObj = Activator.CreateInstance(typeof(Texture2D), BindingFlags.NonPublic | BindingFlags.Instance, null, new object[] { DrawState.Device, size.Width, size.Height, false, SurfaceFormat.Dxt5, SwapChainRenderTarget, false, 0 }, null) as Texture2D;
 
 		var newObj = CreateInstance(DrawState.Device, size.Width, size.Height, SurfaceFormat.Dxt5, SwapChainRenderTarget);
-		newObj = newObj;
 		return newObj;
 	}
 }

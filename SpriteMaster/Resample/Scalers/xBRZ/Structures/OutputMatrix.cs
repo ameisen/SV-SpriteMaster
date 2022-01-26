@@ -3,7 +3,7 @@ using SpriteMaster.Types;
 using System;
 using System.Runtime.CompilerServices;
 
-namespace SpriteMaster.Resample.Scalers.xBRZ.Scalers;
+namespace SpriteMaster.Resample.Scalers.xBRZ.Structures;
 
 //access matrix area, top-left at position "out" for image with given width
 ref struct OutputMatrix {

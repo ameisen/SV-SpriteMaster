@@ -358,7 +358,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 	internal readonly Bounds OriginalSourceRectangle;
 	internal readonly ulong Hash = 0U;
 
-	internal Vector2I Padding = Vector2I.Zero;
+	internal PaddingQuad Padding = PaddingQuad.Zero;
 	internal Vector2I UnpaddedSize;
 	internal Vector2I BlockPadding = Vector2I.Zero;
 	private readonly Vector2I originalSize;
@@ -371,7 +371,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 
 	internal ulong LastReferencedFrame = DrawState.CurrentFrame;
 
-	internal Vector2F AdjustedScale = Vector2F.One;
+	internal Vector2F InnerRatio = Vector2F.One;
 
 	/// <summary>
 	/// Node into the most-recent accessed instance list.
