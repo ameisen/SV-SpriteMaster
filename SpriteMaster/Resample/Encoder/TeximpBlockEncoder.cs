@@ -67,8 +67,8 @@ static class TeximpBlockEncoder {
 					return memoryBuffer;
 				}
 				else {
-					Debug.WarningLn($"Failed to use {(CompressionFormat)textureFormat} compression: " + compressor.LastErrorString);
-					Debug.WarningLn($"Dimensions: [{dimensions.Width}, {dimensions.Height}]");
+					Debug.Warning($"Failed to use {(CompressionFormat)textureFormat} compression: " + compressor.LastErrorString);
+					Debug.Warning($"Dimensions: [{dimensions.Width}, {dimensions.Height}]");
 				}
 			}
 		}

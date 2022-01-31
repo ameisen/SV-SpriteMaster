@@ -103,6 +103,7 @@ static class PTexture2D {
 		if (__instance is (ManagedTexture2D or InternalTexture2D)) {
 			return;
 		}
+		using var watchdogScoped = WatchDog.WatchDog.ScopedWorkingState;
 		using var _ = Performance.Track("SetData");
 		SetDataPurge(
 			__instance,
@@ -118,6 +119,8 @@ static class PTexture2D {
 	/*
 	[Harmonize("PlatformSetData", Harmonize.Fixation.Postfix, PriorityLevel.Last, Harmonize.Generic.Struct, platform: Harmonize.Platform.MonoGame)]
 	private static void OnPlatformSetData<T>(Texture2D __instance, int level, T[] data, int startIndex, int elementCount) where T : struct {
+		using var watchdogScoped = WatchDog.WatchDog.ScopedWorkingState;
+
 		using var _ = Performance.Track("OnPlatformSetData0");
 		SetDataPurge(
 			__instance,
@@ -130,6 +133,8 @@ static class PTexture2D {
 
 	[Harmonize("PlatformSetData", Harmonize.Fixation.Postfix, PriorityLevel.Last, Harmonize.Generic.Struct, platform: Harmonize.Platform.MonoGame)]
 	private static void OnPlatformSetData<T>(Texture2D __instance, int level, int arraySlice, XNA.Rectangle rect, T[] data, int startIndex, int elementCount) where T : struct {
+		using var watchdogScoped = WatchDog.WatchDog.ScopedWorkingState;
+
 		using var _ = Performance.Track("OnPlatformSetData1");
 		SetDataPurge(
 			__instance,
@@ -140,44 +145,4 @@ static class PTexture2D {
 		);
 	}
 	*/
-
-	// A horrible, horrible hack to stop a rare-ish crash when zooming or when the device resets. It doesn't appear to originate in SpriteMaster, but SM most certainly
-	// makes it worse. This will force the texture to regenerate on the fly if it is in a zombie state.
-	[Harmonize("Microsoft.Xna.Framework", "Microsoft.Xna.Framework.Helpers", "CheckDisposed", Harmonize.Fixation.Prefix, PriorityLevel.Last, instance: false, platform: Harmonize.Platform.XNA)]
-	private static unsafe bool CheckDisposed(object obj, ref IntPtr pComPtr) {
-		if (obj is ManagedTexture2D) {
-			return true;
-		}
-
-		if (obj is GraphicsResource resource) {
-			if (pComPtr == IntPtr.Zero || resource.IsDisposed) {
-				if (!resource.IsDisposed) {
-					resource.Dispose();
-				}
-
-				if (resource is Texture2D texture) {
-					Debug.WarningLn("CheckDisposed is going to throw, attempting to restore state");
-
-					// TODO : we should probably use the helper function it calls instead, just in case the user defined a child class.
-					var ctor = texture.GetType().GetConstructor(
-						BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
-						null,
-						new[] {
-								typeof(GraphicsDevice),
-								typeof(int),
-								typeof(int),
-								typeof(bool),
-								typeof(SurfaceFormat)
-						},
-						null
-					);
-
-					ctor?.Invoke(texture, new object[] { DrawState.Device, texture.Width, texture.Height, texture.LevelCount > 1, texture.Format });
-					//pComPtr = (IntPtr)(void*)texture.GetField("pComPtr");
-					return false;
-				}
-			}
-		}
-		return true;
-	}
 }

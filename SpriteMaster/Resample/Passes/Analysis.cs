@@ -43,7 +43,7 @@ static class Analysis {
 		Vector2B boundsInverted = bounds.Invert;
 
 		if (bounds.Width < 0 || bounds.Height < 0) {
-			Debug.ErrorLn($"Inverted Sprite Bounds Value leaked to AnalyzeLegacy: {bounds}");
+			Debug.Error($"Inverted Sprite Bounds Value leaked to AnalyzeLegacy: {bounds}");
 
 			boundsInverted.X = bounds.Width < 0;
 			boundsInverted.Y = bounds.Height < 0;

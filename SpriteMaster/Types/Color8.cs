@@ -96,6 +96,14 @@ struct Color8 : IEquatable<Color8>, IEquatable<uint>, ILongHash {
 	internal readonly bool Equals(Color8 other) => this == other;
 	internal readonly bool Equals(uint other) => this == (Color8)other;
 
+	internal readonly bool Equals(Color8 other, int threshold) {
+		var diffR = Math.Abs(R.Value - other.R.Value);
+		var diffG = Math.Abs(G.Value - other.G.Value);
+		var diffB = Math.Abs(B.Value - other.B.Value);
+		var diffA = Math.Abs(A.Value - other.A.Value);
+		return diffR <= threshold && diffG <= threshold && diffB <= threshold && diffA <= threshold;
+	}
+
 	readonly bool IEquatable<Color8>.Equals(Color8 other) => this.Equals(other);
 
 	readonly bool IEquatable<uint>.Equals(uint other) => this.Equals(other);

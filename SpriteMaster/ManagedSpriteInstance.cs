@@ -7,8 +7,10 @@ using SpriteMaster.Resample;
 using SpriteMaster.Types;
 using SpriteMaster.Types.Volatile;
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using static SpriteMaster.ResourceManager;
 using WeakInstanceList = System.Collections.Generic.LinkedList<System.WeakReference<SpriteMaster.ManagedSpriteInstance>>;
 using WeakInstanceListNode = System.Collections.Generic.LinkedListNode<System.WeakReference<SpriteMaster.ManagedSpriteInstance>>;
 using WeakTexture = System.WeakReference<Microsoft.Xna.Framework.Graphics.Texture2D>;
@@ -306,8 +308,6 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 			return currentInstance;
 		}
 
-		Debug.TraceLn($"Beginning Rescale Process for {getNameString()} #{getRemainingTime()}");
-
 		DrawState.PushedUpdateThisFrame = true;
 
 		try {
@@ -333,7 +333,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 			var averager = GetTimer(cached: spriteInfoInitializer.WasCached, async: useAsync);
 			TimeSpanSamples++;
 			MeanTimeSpan += duration;
-			Debug.TraceLn($"Duration {getNameString()}: {(MeanTimeSpan / TimeSpanSamples).TotalMilliseconds.ToString(DrawingColor.LightYellow)} ms");
+			Debug.TraceLn($"Rescale Duration {getNameString()}: {(MeanTimeSpan / TimeSpanSamples).TotalMilliseconds.ToString(DrawingColor.LightYellow)} ms (was remaining {getRemainingTime()})");
 			averager.Add(source.Area, duration);
 		}
 	}
@@ -377,7 +377,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 	/// Node into the most-recent accessed instance list.
 	/// Should only be <seealso cref="null"/> after the instance is <seealso cref="ManagedSpriteInstance.Dispose">disposed</seealso>
 	/// </summary>
-	private WeakInstanceListNode? RecentAccessNode = null;
+	internal WeakInstanceListNode? RecentAccessNode = null;
 	internal VolatileBool IsDisposed { get; private set; } = false;
 
 	internal static long TotalMemoryUsage = 0U;
@@ -390,12 +390,6 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 			}
 			return Texture.SizeBytes();
 		}
-	}
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	~ManagedSpriteInstance() {
-		Debug.Trace($"ManagedSpriteInstance '{Name}' reached destructor; was not initially disposed");
-		Dispose();
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -434,20 +428,20 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal ManagedSpriteInstance(string assetName, SpriteInfo textureWrapper, in Bounds sourceRectangle, TextureType textureType, bool async, uint expectedScale, ManagedSpriteInstance? previous = null) {
+	internal ManagedSpriteInstance(string assetName, SpriteInfo spriteInfo, in Bounds sourceRectangle, TextureType textureType, bool async, uint expectedScale, ManagedSpriteInstance? previous = null) {
 		using var _ = Performance.Track();
 
 		PreviousSpriteInstance = previous;
 
 		TexType = textureType;
 
-		ulong GetHash() {
+		static ulong GetHash(SpriteInfo info, TextureType type) {
 			using (Performance.Track("Upscaler.GetHash")) {
-				return Resampler.GetHash(textureWrapper, textureType);
+				return Resampler.GetHash(info, type);
 			}
 		}
 
-		var source = textureWrapper.Reference;
+		var source = spriteInfo.Reference;
 
 		OriginalSourceRectangle = sourceRectangle;
 		Reference = source.MakeWeak();
@@ -478,11 +472,11 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 			}
 
 			// TODO store the HD Texture in _this_ object instead. Will confuse things like subtexture updates, though.
-			Hash = GetHash();
+			Hash = GetHash(spriteInfo, textureType);
 			this.Texture = Resampler.Upscale(
 				spriteInstance: this,
 				scale: ref ReferenceScale,
-				input: textureWrapper,
+				input: spriteInfo,
 				hash: Hash,
 				wrapped: ref Wrapped,
 				async: false
@@ -490,6 +484,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 
 			// TODO : I would love to dispose of this texture _now_, but we rely on it disposing to know if we need to dispose of ours.
 			// There is a better way to do this using weak references, I just need to analyze it further. Memory leaks have been a pain so far.
+			// TODO 2: This won't get hit if the texture is disposed of via the finalizer.
 			source.Disposing += (object? sender, EventArgs args) => { OnParentDispose(sender as Texture2D); };
 
 			lock (RecentAccessList) {
@@ -513,6 +508,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 		UpdateReferenceFrame();
 
 		Interlocked.Add(ref TotalMemoryUsage, texture.SizeBytes());
+		// TODO : this won't get hit if the texture is disposed of via the finalizer
 		texture.Disposing += (object? sender, EventArgs args) => { Interlocked.Add(ref TotalMemoryUsage, -texture.SizeBytes()); };
 
 		{
@@ -563,6 +559,29 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 		}
 	}
 
+	internal struct CleanupData {
+		internal readonly ManagedSpriteInstance? PreviousSpriteInstance;
+		internal readonly WeakReference<XNA.Graphics.Texture2D> ReferenceTexture;
+		internal readonly LinkedListNode<System.WeakReference<ManagedSpriteInstance>>? RecentAccessNode;
+		internal readonly ulong MapHash;
+
+		internal CleanupData(ManagedSpriteInstance instance) {
+			PreviousSpriteInstance = instance.PreviousSpriteInstance;
+			ReferenceTexture = instance.Reference;
+			RecentAccessNode = instance.RecentAccessNode;
+			MapHash = instance.SpriteMapHash;
+		}
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	~ManagedSpriteInstance() {
+		if (IsDisposed) {
+			return;
+		}
+		//Debug.Trace($"ManagedSpriteInstance '{Name}' reached destructor; was not initially disposed");
+		ReleasedSpriteInstances.Push(new(this));
+	}
+
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal void Dispose(bool disposeChildren) {
 		if (disposeChildren && Texture is not null) {
@@ -597,6 +616,25 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 		IsDisposed = true;
 
 		GC.SuppressFinalize(this);
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static void Cleanup(in CleanupData data) {
+		Debug.Trace("Cleaning up finalized ManagedSpriteInstance");
+
+		if (data.PreviousSpriteInstance is not null) {
+			data.PreviousSpriteInstance.Dispose(true);
+		}
+
+		if (data.ReferenceTexture.TryGetTarget(out var reference)) {
+			SpriteMap.Remove(data, reference);
+		}
+
+		if (data.RecentAccessNode is not null) {
+			lock (RecentAccessList) {
+				RecentAccessList.Remove(data.RecentAccessNode);
+			}
+		}
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]

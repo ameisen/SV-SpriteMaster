@@ -38,6 +38,8 @@ partial struct Bounds :
 	internal readonly Vector2F ExtentF => new Vector2F(Extent);
 	internal Vector2B Invert;
 
+	internal void ForceSetExtent(in Vector2I extent) => ExtentReal = extent;
+
 	internal Vector2I Position {
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		readonly get => Offset;
@@ -191,7 +193,7 @@ partial struct Bounds :
 	//internal Bounds(System.Drawing.Bitmap bmp) : this(bmp.Width, bmp.Height) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal bool Overlaps(in Bounds other) =>
+	internal readonly bool Overlaps(in Bounds other) =>
 	!(
 		other.Left > Right ||
 		other.Right < Left ||
@@ -200,7 +202,7 @@ partial struct Bounds :
 	);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal bool Contains(in Bounds other) =>
+	internal readonly bool Contains(in Bounds other) =>
 	(
 		Left <= other.Left &&
 		Right >= other.Right &&
@@ -244,6 +246,11 @@ partial struct Bounds :
 	internal readonly Bounds ClampTo(in Bounds clamp) {
 		Bounds source = this;
 
+		// Validate that the bounds even overlap at all
+		if (source.Left >= clamp.Right || source.Right <= clamp.Left || source.Top >= clamp.Bottom || source.Bottom <= clamp.Top) {
+			return Bounds.Empty;
+		}
+
 		int leftDiff = clamp.Left - source.Left;
 		if (leftDiff > 0) {
 			source.X += leftDiff;
@@ -267,5 +274,18 @@ partial struct Bounds :
 		}
 
 		return source;
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal readonly bool ClampToChecked(in Bounds clamp, out Bounds clamped) {
+		Bounds result = this.ClampTo(clamp);
+		if (result != this) {
+			clamped = result;
+			return false;
+		}
+		else {
+			clamped = result;
+			return true;
+		}
 	}
 }

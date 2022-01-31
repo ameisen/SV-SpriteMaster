@@ -7,13 +7,13 @@ using SpriteMaster.Types.Interlocking;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Threading;
 using SpriteDictionary = System.Collections.Generic.Dictionary<ulong, SpriteMaster.ManagedSpriteInstance>;
 
 namespace SpriteMaster.Metadata;
 
-sealed class Texture2DMeta {
+// TODO : This needs a Finalize thread dispatcher, and needs to remove cached data for it from the ResidentCache.
+sealed class Texture2DMeta : IDisposable {
 	private readonly SpriteDictionary SpriteInstanceTable = new();
 
 	internal IReadOnlyDictionary<ulong, ManagedSpriteInstance> GetSpriteInstanceTable() => SpriteInstanceTable;
@@ -27,10 +27,9 @@ sealed class Texture2DMeta {
 		}
 	}
 
-	internal bool RemoveFromSpriteInstanceTable(ulong key) {
+	internal bool RemoveFromSpriteInstanceTable(ulong key, bool dispose, out ManagedSpriteInstance? instance) {
 		using (Lock.Write) {
-			if (SpriteInstanceTable.Remove(key, out var value)) {
-				value?.Dispose();
+			if (SpriteInstanceTable.Remove(key, out instance)) {
 				return true;
 			}
 			return false;
@@ -239,14 +238,20 @@ sealed class Texture2DMeta {
 
 	internal byte[]? CachedData {
 		get {
-			if (_CachedData.TryGetTarget(out var data)) {
-				return data;
+			using (Lock.Read) {
+				if (_CachedData.TryGetTarget(out var data)) {
+					return data;
+				}
+				return null;
 			}
-			return null;
 		}
 	}
 
-	internal void SetCachedDataUnsafe(Span<byte> data) => _CachedData.SetTarget(data.ToArray());
+	internal void SetCachedDataUnsafe(Span<byte> data) {
+		using (Lock.Write) {
+			_CachedData.SetTarget(data.ToArray());
+		}
+	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal void UpdateLastAccess() {
@@ -277,5 +282,16 @@ sealed class Texture2DMeta {
 		}
 		ReportedErrors |= error;
 		return true;
+	}
+
+	~Texture2DMeta() => Dispose();
+
+	public void Dispose() {
+		ResourceManager.ReleasedTextureMetas.Push(UniqueIDString);
+		GC.SuppressFinalize(this);
+	}
+
+	internal static void Cleanup(in string idString) {
+		ResidentCache.Remove<byte[]>(idString);
 	}
 }

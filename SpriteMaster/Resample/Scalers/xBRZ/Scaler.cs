@@ -251,7 +251,7 @@ sealed partial class Scaler {
 		}
 		//make sure there is no second blending in an adjacent
 		//rotation for this pixel: handles insular pixels, mario eyes
-		//but support double-blending for 90� corners
+		//but support double-blending for 90° corners
 		else if (blend.GetTopR() != BlendType.None && !eq.IsColorEqual(e, g)) {
 			doLineBlend = false;
 		}
@@ -349,12 +349,12 @@ sealed partial class Scaler {
 			// This will effectively cause a filtering effect and hopefully prevent the hard edge problems
 
 			if (stride < 0) {
-				Debug.WarningLn($"xBRZ GetPixel out of range: stride: {stride}, value clamped");
+				Debug.Warning($"xBRZ GetPixel out of range: stride: {stride}, value clamped");
 				stride = Math.Max(0, stride);
 			}
 
 			if (offset < 0) {
-				Debug.WarningLn($"xBRZ GetPixel out of range: offset: {offset}, value clamped");
+				Debug.Warning($"xBRZ GetPixel out of range: offset: {offset}, value clamped");
 				offset = Math.Max(0, offset);
 			}
 

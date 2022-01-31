@@ -15,13 +15,14 @@ static class Draw {
 	private const bool Stop = false;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static bool Cleanup(this ref Bounds sourceRectangle, Texture2D reference) {
-		if (Config.ClampInvalidBounds) {
-			sourceRectangle = sourceRectangle.ClampTo(new(reference.Width, reference.Height));
+	private static bool Cleanup(this ref Bounds sourceBounds, Texture2D reference) {
+		if (Config.ClampInvalidBounds && !sourceBounds.ClampToChecked(reference.Extent(), out var clampedBounds)) {
+			//Debug.Warning($"Draw.Cleanup: '{reference.SafeName()}' bounds '{sourceBounds}' are not contained in reference bounds '{(Bounds)reference.Bounds}' - clamped ({(sourceBounds.Degenerate ? "degenerate" : "")})");
+			sourceBounds = clampedBounds;
 		}
 
 		// Let's just skip potentially invalid draws since I have no idea what to do with them.
-		return !sourceRectangle.Degenerate;
+		return !sourceBounds.Degenerate;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -48,11 +49,11 @@ static class Draw {
 		ref Bounds source,
 		bool create = false
 	) {
-		var newSource = source;
+		var clampedSource = source;
 
 		try {
 			// If the (potentially-clamped) source bounds are invalid, return null
-			if (!newSource.Cleanup(reference)) {
+			if (!clampedSource.Cleanup(reference)) {
 				return null;
 			}
 
@@ -67,8 +68,8 @@ static class Draw {
 			}
 
 			var spriteInstance = create ?
-				ManagedSpriteInstance.FetchOrCreate(texture: reference, source: newSource, expectedScale: expectedScale) :
-				ManagedSpriteInstance.Fetch(texture: reference, source: newSource, expectedScale: expectedScale);
+				ManagedSpriteInstance.FetchOrCreate(texture: reference, source: clampedSource, expectedScale: expectedScale) :
+				ManagedSpriteInstance.Fetch(texture: reference, source: clampedSource, expectedScale: expectedScale);
 
 			if (spriteInstance is null || !spriteInstance.IsReady) {
 				return null;
@@ -80,7 +81,38 @@ static class Draw {
 				return null;
 			}
 
-			source = t.Dimensions;
+			// if "source" is _not_ within the expected bounds, we should adjust the result accordingly.
+			if (!((Bounds)reference.Bounds).Contains(source)) {
+				int leftDiff = reference.Bounds.Left - Math.Min(reference.Bounds.Left, source.Left);
+				int rightDiff = Math.Max(reference.Bounds.Right, source.Right) - reference.Bounds.Right;
+				int topDiff = reference.Bounds.Top - Math.Min(reference.Bounds.Top, source.Top);
+				int bottomDiff = Math.Max(reference.Bounds.Bottom, source.Bottom) - reference.Bounds.Bottom;
+
+				var clampedBounds = source.ClampTo(reference.Bounds);
+				float leftDiffFrac = (float)leftDiff / clampedBounds.Width;
+				float rightDiffFrac = (float)rightDiff / clampedBounds.Width;
+				float topDiffFrac = (float)topDiff / clampedBounds.Height;
+				float bottomDiffFrac = (float)bottomDiff / clampedBounds.Height;
+
+				int addLeft = (int)Math.Round(leftDiffFrac * spriteInstance.UnpaddedSize.Width);
+				int addRight = (int)Math.Round(rightDiffFrac * spriteInstance.UnpaddedSize.Width);
+				int addTop = (int)Math.Round(topDiffFrac * spriteInstance.UnpaddedSize.Height);
+				int addBottom = (int)Math.Round(bottomDiffFrac * spriteInstance.UnpaddedSize.Height);
+
+				var adjustedBounds = (Bounds)t.Dimensions;
+				Vector2I offset = adjustedBounds.Offset;
+				Vector2I extent = adjustedBounds.Extent;
+				offset.X -= addLeft;
+				extent.X += addLeft + addRight;
+				offset.Y -= addTop;
+				extent.Y += addTop + addBottom;
+				adjustedBounds.Offset = offset;
+				adjustedBounds.ForceSetExtent(extent);
+				source = adjustedBounds;
+			}
+			else {
+				source = t.Dimensions;
+			}
 
 			return spriteInstance;
 		}
@@ -96,7 +128,9 @@ static class Draw {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static void GetDrawParameters(Texture2D texture, in XNA.Rectangle? source, out Bounds bounds, out float scaleFactor) {
-		texture.Meta().UpdateLastAccess();
+		if (texture is not InternalTexture2D) {
+			texture.Meta().UpdateLastAccess();
+		}
 
 		var sourceRectangle = (Bounds)source.GetValueOrDefault(new(0, 0, texture.Width, texture.Height));
 
@@ -125,14 +159,17 @@ static class Draw {
 		float layerDepth,
 		ref ManagedTexture2D __state
 	) {
+		using var watchdogScoped = WatchDog.WatchDog.ScopedWorkingState;
 		using var _ = Performance.Track();
 
+		/*
 		if (destination.Width < 0 || destination.Height < 0) {
 			Debug.Trace("destination invert");
 		}
 		if (source is XNA.Rectangle sourceRect && (sourceRect.Width < 0 || sourceRect.Height < 0)) {
 			Debug.Trace("source invert");
 		}
+		*/
 
 		GetDrawParameters(
 			texture: texture,

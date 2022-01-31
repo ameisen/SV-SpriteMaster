@@ -113,7 +113,7 @@ static class Harmonize {
 					break;
 				case Generic.Struct:
 					foreach (var structType in StructTypes) {
-						Debug.TraceLn($"\tGeneric Type: {structType.FullName}");
+						//Debug.TraceLn($"\tGeneric Type: {structType.FullName}");
 						Patch(
 							@this,
 							instanceType,
@@ -324,7 +324,7 @@ static class Harmonize {
 			}
 
 			if (typeMethod is null) {
-				Debug.ErrorLn($"Failed to patch {type.Name.Pastel(DrawingColor.LightYellow)}.{name.Pastel(DrawingColor.LightYellow)}");
+				Debug.Error($"Failed to patch {type.Name.Pastel(DrawingColor.LightYellow)}.{name.Pastel(DrawingColor.LightYellow)}");
 				return null;
 			}
 		}

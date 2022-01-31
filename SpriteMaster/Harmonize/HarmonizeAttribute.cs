@@ -38,7 +38,7 @@ class HarmonizeAttribute : Attribute {
 			return AppDomain.CurrentDomain.GetAssemblies().SingleF(assembly => assembly.GetName().Name == name);
 		}
 		catch {
-			Debug.ErrorLn($"Assembly Not Found For Harmonize: {name}");
+			Debug.Error($"Assembly Not Found For Harmonize: {name}");
 			throw;
 		}
 	}

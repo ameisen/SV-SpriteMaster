@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Caching;
 using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
+using SpriteMaster.Resample.Passes;
 using SpriteMaster.Tasking;
 using SpriteMaster.Types;
 using System;
@@ -117,13 +118,30 @@ sealed class Resampler {
 
 		// Water in the game is pre-upscaled by 4... which is weird.
 		int blockSize = 1;
-		if ((input.IsWater || input.Reference == StardewValley.Game1.rainTexture) && WaterBlock != 1) {
+		if (input.IsWater || input.Reference == StardewValley.Game1.rainTexture) {
 			blockSize = WaterBlock;
 		}
 		else if (input.IsFont && FontBlock != 1) {
 			blockSize = FontBlock;
 			scale = Config.Resample.MaxScale;
 		}
+		else if (SMConfig.Resample.FourXTextures.AnyF(prefix => input.Reference.SafeName().StartsWith(prefix))) {
+			blockSize = 4;
+		}
+		else if (SMConfig.Resample.TwoXTextures.AnyF(prefix => input.Reference.SafeName().StartsWith(prefix))) {
+			blockSize = 2;
+		}
+		else if (SMConfig.Resample.BlockMultipleAnalysis.Enabled) {
+			blockSize = BlockMultipleAnalysis.Analyze(
+				data: input.ReferenceData.AsSpan<Color8>(),
+				textureBounds: input.Reference.Bounds,
+				spriteBounds: inputBounds,
+				stride: input.ReferenceSize.Width
+			);
+		}
+		scale *= (uint)blockSize;
+		scale = Math.Min(scale, Resample.Scalers.IScaler.Current.MaxScale);
+
 		// TODO : handle inverted input.Bounds
 		var spriteRawData8 = Passes.ExtractSprite.Extract(
 			data: input.ReferenceData.AsSpan<Color8>(),
@@ -159,10 +177,6 @@ sealed class Resampler {
 			bounds: spriteRawExtent,
 			Wrapped: input.Wrapped
 		);
-
-		if (input.Reference.SafeName().StartsWith("Buildings/houses")) {
-			input = input;
-		}
 
 		if (Config.Resample.EnableWrappedAddressing) {
 			wrapped = analysis.Wrapped;
@@ -343,7 +357,7 @@ sealed class Resampler {
 				hasG = green[0] != bitmapData.Length;
 				hasB = blue[0] != bitmapData.Length;
 
-				//Debug.WarningLn($"Punch-through Alpha: {intData.Length}");
+				//Debug.Warning($"Punch-through Alpha: {intData.Length}");
 				IsPunchThroughAlpha = IsMasky = alpha[0] + alpha[MaxShades - 1] == bitmapData.Length;
 				HasAlpha = alpha[MaxShades - 1] != bitmapData.Length;
 
@@ -418,7 +432,7 @@ sealed class Resampler {
 					);
 				}
 				catch (OutOfMemoryException) {
-					Debug.WarningLn("OutOfMemoryException encountered during Upscale, garbage collecting and deferring.");
+					Debug.Warning("OutOfMemoryException encountered during Upscale, garbage collecting and deferring.");
 					Garbage.Collect(compact: true, blocking: true, background: false);
 				}
 			}
@@ -440,6 +454,7 @@ sealed class Resampler {
 
 		if (Config.Garbage.CollectAccountUnownedTextures && GarbageMarkSet.Add(input.Reference)) {
 			Garbage.Mark(input.Reference);
+			// TODO : this won't be hit if the object is finalized without disposal
 			input.Reference.Disposing += (obj, _) => {
 				Garbage.Unmark((Texture2D)obj!);
 			};
@@ -532,7 +547,7 @@ sealed class Resampler {
 			}
 
 			var isAsync = Config.AsyncScaling.Enabled && async;
-			if (!isAsync || Config.AsyncScaling.ForceSynchronousStores) {
+			if (!isAsync || Config.AsyncScaling.ForceSynchronousStores || DrawState.ForceSynchronous) {
 				var reference = input.Reference;
 				var bitmapDataArray = bitmapData.ToArray();
 				void syncCall() {

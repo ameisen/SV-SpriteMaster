@@ -45,7 +45,7 @@ static class NVTT {
 			}
 
 			if (dl == null) {
-				Debug.ErrorLn("A valid libdl could not be found.");
+				Debug.Error("A valid libdl could not be found.");
 				throw new NotSupportedException("A valid libdl could not be found.");
 			}
 		}

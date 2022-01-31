@@ -7,6 +7,7 @@ using StardewModdingAPI;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime;
 using TeximpNet.Compression;
 
 namespace SpriteMaster;
@@ -33,7 +34,12 @@ static class Config {
 
 	internal static readonly string ModuleName = typeof(Config).Namespace ?? "SpriteMaster";
 
-	internal const bool IgnoreConfig = true;
+	internal const bool IgnoreConfig = false ||
+#if DEBUG
+		true;
+#else
+		false;
+#endif
 	internal const bool SkipIntro = IgnoreConfig;
 
 	[ConfigIgnore]
@@ -96,6 +102,17 @@ static class Config {
 	[Comment("If the data cache is preferred to be elsewhere, it can be set here")]
 	internal static string DataStoreOverride = "";
 
+	internal static class WatchDog {
+		[Comment("Should the watchdog be enabled?")]
+		internal static bool Enabled = false;
+		[Comment("What should the default sleep interval be (in milliseconds)?")]
+		internal static int DefaultSleepInterval = 5_000;
+		[Comment("What should the short sleep interval be (in milliseconds)?")]
+		internal static int ShortSleepInterval = 500;
+		[Comment("What should the interrupt interval be (in milliseconds)?")]
+		internal static int InterruptInterval = 10_000;
+	}
+
 	internal static class Garbage {
 		[Comment("Should unowned textures be marked in the garbage collector's statistics?")]
 		internal static bool CollectAccountUnownedTextures = false;
@@ -109,6 +126,10 @@ static class Config {
 		internal static int RequiredFreeMemory = 64;
 		[Comment("Hysterisis applied to RequiredFreeMemory")]
 		internal static double RequiredFreeMemoryHysterisis = 1.5;
+		[Comment("Should sprites containing season names be purged on a seasonal basis?")]
+		internal static bool SeasonalPurge = true;
+		[Comment("What runtime garbage collection latency mode should be set?")]
+		internal static GCLatencyMode LatencyMode = GCLatencyMode.SustainedLowLatency;
 	}
 
 	internal static class Debug {
@@ -165,6 +186,56 @@ static class Config {
 		internal static bool PremultiplyAlpha = true;
 		[Comment("Should sprites be assumed to be premultiplied, or should they instead by analyzed?")]
 		internal static bool PremultiplyAlphaAssume = true;
+		internal static class BlockMultipleAnalysis {
+			[Comment("Should sprites be analyzed to see if they are block multiples?")]
+			internal static bool Enabled = true;
+			[Comment("What threshold should be used for block multiple analysis?")]
+			internal static int EqualityThreshold = 1;
+			[Comment("How many blocks can be different for the test to still pass?")]
+			internal static int MaxInequality = 1;
+		}
+
+		[Comment("What textures or spritesheets use 4xblock sizes?")]
+		internal static List<string> TwoXTextures = new() {
+			"Maps/WoodBuildings" // is _almost_ TwoX.
+		};
+		[Comment("What textures or spritesheets use 4xblock sizes?")]
+		internal static List<string> FourXTextures = new() {
+			"Characters/Monsters/Crow",
+			"Characters/femaleRival",
+			"Characters/maleRival",
+			"LooseSprites/Bat",
+			"LooseSprites/buildingPlacementTiles",
+			"LooseSprites/chatBox",
+			"LooseSprites/daybg",
+			"LooseSprites/DialogBoxGreen",
+			"LooseSprites/hoverBox",
+			"LooseSprites/nightbg",
+			"LooseSprites/robinAtWork",
+			"LooseSprites/skillTitles",
+			"LooseSprites/textBox",
+			"Maps/busPeople",
+			"Maps/cavedarker",
+			"Maps/FarmhouseTiles",
+			"Maps/GreenHouseInterior",
+			"Maps/MenuTiles",
+			"Maps/MenuTilesUncolored",
+			"Maps/spring_BusStop",
+			"Maps/TownIndoors",
+			"TerrainFeatures/BuffsIcons",
+			"TerrainFeatures/DiggableWall_basic",
+			"TerrainFeatures/DiggableWall_basic_dark",
+			"TerrainFeatures/DiggableWall_frost",
+			"TerrainFeatures/DiggableWall_frost_dark",
+			"TerrainFeatures/DiggableWall_lava",
+			"TerrainFeatures/DiggableWall_lava_dark",
+			"TerrainFeatures/Stalagmite",
+			"TerrainFeatures/Stalagmite_Frost",
+			"TerrainFeatures/Stalagmite_Lava",
+			"TileSheets/Fireball",
+			"TileSheets/rain",
+			"TileSheets/animations"
+		};
 		[ConfigIgnore]
 		internal static class Deposterization {
 			[Comment("Should deposterization prepass be performed?")]

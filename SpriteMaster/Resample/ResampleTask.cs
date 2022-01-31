@@ -1,5 +1,7 @@
 ﻿using SpriteMaster.Extensions;
 using SpriteMaster.Tasking;
+using System;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace SpriteMaster.Resample;
@@ -10,15 +12,20 @@ static class ResampleTask {
 	private static ManagedSpriteInstance? Resample(object? parametersObj) => ResampleFunction((TaskParameters)parametersObj!);
 
 	private static ManagedSpriteInstance? ResampleFunction(in TaskParameters parameters) {
-		return new ManagedSpriteInstance(
-			assetName: parameters.SpriteInfo.Reference.SafeName(),
-			textureWrapper: parameters.SpriteInfo,
-			sourceRectangle: parameters.SpriteInfo.Bounds,
-			textureType: parameters.SpriteInfo.TextureType,
-			async: parameters.Async,
-			expectedScale: parameters.SpriteInfo.ExpectedScale,
-			previous: parameters.PreviousInstance
-		);
+		try {
+			return new ManagedSpriteInstance(
+				assetName: parameters.SpriteInfo.Reference.SafeName(),
+				spriteInfo: parameters.SpriteInfo,
+				sourceRectangle: parameters.SpriteInfo.Bounds,
+				textureType: parameters.SpriteInfo.TextureType,
+				async: parameters.Async,
+				expectedScale: parameters.SpriteInfo.ExpectedScale,
+				previous: parameters.PreviousInstance
+			);
+		}
+		finally {
+			parameters.SpriteInfo.Dispose();
+		}
 	}
 
 	private readonly record struct TaskParameters(

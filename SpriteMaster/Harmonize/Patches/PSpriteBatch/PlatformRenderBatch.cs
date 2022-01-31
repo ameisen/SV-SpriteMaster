@@ -40,6 +40,8 @@ static class PlatformRenderBatch {
 		ref SamplerState? __state
 	) {
 		try {
+			using var watchdogScoped = WatchDog.WatchDog.ScopedWorkingState;
+
 			var originalState = ____device?.SamplerStates[0] ?? SamplerState.PointClamp;
 
 			var newState = GetNewSamplerState(texture, originalState);
@@ -77,6 +79,8 @@ static class PlatformRenderBatch {
 	SamplerState? __state
 ) {
 		try {
+			using var watchdogScoped = WatchDog.WatchDog.ScopedWorkingState;
+
 			if (__state is not null && ____device?.SamplerStates != null && __state != ____device.SamplerStates[0]) {
 				____device.SamplerStates[0] = __state;
 			}

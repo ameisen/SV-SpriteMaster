@@ -5,6 +5,7 @@ using SpriteMaster.Extensions;
 using SpriteMaster.Harmonize;
 using SpriteMaster.Metadata;
 using StardewModdingAPI;
+using StardewModdingAPI.Enums;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 using StardewValley;
@@ -51,7 +52,7 @@ public sealed class SpriteMaster : Mod {
 		ManagedTexture2D.DumpStats(lines);
 
 		foreach (var line in lines) {
-			Debug.InfoLn(line);
+			Debug.Info(line);
 		}
 	}
 
@@ -66,7 +67,7 @@ public sealed class SpriteMaster : Mod {
 					using var _ = new MemoryFailPoint(Config.Garbage.RequiredFreeMemory);
 				}
 				catch (InsufficientMemoryException) {
-					Debug.WarningLn($"Less than {(Config.Garbage.RequiredFreeMemory * 1024 * 1024).AsDataSize(decimals: 0)} available for block allocation, forcing full garbage collection");
+					Debug.Warning($"Less than {(Config.Garbage.RequiredFreeMemory * 1024 * 1024).AsDataSize(decimals: 0)} available for block allocation, forcing full garbage collection");
 					ResidentCache.Purge();
 					DrawState.TriggerGC.Set(true);
 					Thread.Sleep(10000);
@@ -108,6 +109,8 @@ public sealed class SpriteMaster : Mod {
 	public SpriteMaster() {
 		Contracts.AssertNull(Self);
 		Self = this;
+
+		Garbage.EnterNonInteractive();
 
 		if (DotNet) {
 			MemoryPressureThread = new Thread(MemoryPressureLoop) {
@@ -235,7 +238,7 @@ public sealed class SpriteMaster : Mod {
 			}
 
 			if (IsVersionOutdated(Config.ConfigVersion)) {
-				Debug.WarningLn("config.toml is out of date, rewriting it.");
+				Debug.Warning($"config.toml is out of date ({Config.ConfigVersion} < {Config.ClearConfigBefore}), rewriting it.");
 
 				SerializeConfig.Load(tempStream, retain: true);
 				Config.ConfigVersion = Config.CurrentVersion;
@@ -262,12 +265,32 @@ public sealed class SpriteMaster : Mod {
 
 		help.Events.GameLoop.DayStarted += OnDayStarted;
 		// GC after major events
-		help.Events.GameLoop.SaveLoaded += (_, _) => ForceGarbageCollect();
+		help.Events.GameLoop.SaveLoaded += (_, _) => {
+			ForceGarbageCollect();
+			Garbage.EnterInteractive();
+		};
 		help.Events.GameLoop.DayEnding += (_, _) => ForceGarbageCollect();
-		help.Events.GameLoop.GameLaunched += (_, _) => { ForceGarbageCollect(); ManagedSpriteInstance.ClearTimers(); };
-		help.Events.GameLoop.ReturnedToTitle += (_, _) => ForceGarbageCollect();
+		help.Events.GameLoop.ReturnedToTitle += (_, _) => OnTitle();
 		help.Events.GameLoop.SaveCreated += (_, _) => ForceGarbageCollect();
 		help.Events.GameLoop.GameLaunched += (_, _) => OnGameLaunched();
+		help.Events.GameLoop.SaveCreating += (_, _) => OnSaveStart();
+		help.Events.GameLoop.Saving += (_, _) => OnSaveStart();
+		help.Events.GameLoop.SaveCreated += (_, _) => OnSaveFinish();
+		help.Events.GameLoop.Saved += (_, _) => OnSaveFinish();
+		help.Events.Player.Warped += (_, _) => {
+			ForceGarbageCollect();
+		};
+		help.Events.Specialized.LoadStageChanged += (_, args) => {
+			switch (args.NewStage) {
+				case LoadStage.SaveLoadedBasicInfo:
+				case LoadStage.SaveLoadedLocations:
+				case LoadStage.Preloaded:
+				case LoadStage.ReturningToTitle:
+					Garbage.EnterNonInteractive();
+					break;
+			}
+		};
+		help.Events.Display.MenuChanged += OnMenuChanged;
 
 		MemoryPressureThread?.Start();
 		GarbageCollectThread?.Start();
@@ -278,67 +301,90 @@ public sealed class SpriteMaster : Mod {
 
 		// TODO : Iterate deeply with reflection over 'StardewValley' namespace to find any Texture2D objects sitting around
 
-				// Tell SMAPI to flush all assets loaded so that SM can precache already-loaded assets
-				//bool invalidated = help.Content.InvalidateCache<XNA.Graphics.Texture>();
+		// Tell SMAPI to flush all assets loaded so that SM can precache already-loaded assets
+		//bool invalidated = help.Content.InvalidateCache<XNA.Graphics.Texture>();
 
-				/*
-				var light = Game1.cauldronLight;
-				//Game1
-				//FarmerRenderer
-				//MovieTheater
-				//CraftingRecipe
-				//Flooring
-				//HoeDirt
-				//Furniture
-				//Tool
-				//FruitTree
-				//Bush
-				//titleMenu
-				try {
-					var texturesToCache = new List<XNA.Graphics.Texture2D>();
-					var resourcesLockField = typeof(XNA.Graphics.GraphicsDevice).GetField("_resourcesLock", BindingFlags.NonPublic | BindingFlags.Instance);
-					var resourcesField = typeof(XNA.Graphics.GraphicsDevice).GetField("_resources", BindingFlags.NonPublic | BindingFlags.Instance);
-					var resourcesLock = resourcesLockField.GetValue(DrawState.Device);
-					var resources = resourcesField.GetValue<IEnumerable<WeakReference>>(DrawState.Device);
+		/*
+		var light = Game1.cauldronLight;
+		//Game1
+		//FarmerRenderer
+		//MovieTheater
+		//CraftingRecipe
+		//Flooring
+		//HoeDirt
+		//Furniture
+		//Tool
+		//FruitTree
+		//Bush
+		//titleMenu
+		try {
+			var texturesToCache = new List<XNA.Graphics.Texture2D>();
+			var resourcesLockField = typeof(XNA.Graphics.GraphicsDevice).GetField("_resourcesLock", BindingFlags.NonPublic | BindingFlags.Instance);
+			var resourcesField = typeof(XNA.Graphics.GraphicsDevice).GetField("_resources", BindingFlags.NonPublic | BindingFlags.Instance);
+			var resourcesLock = resourcesLockField.GetValue(DrawState.Device);
+			var resources = resourcesField.GetValue<IEnumerable<WeakReference>>(DrawState.Device);
 
-					lock (resourcesLock) {
-						foreach (var resource in resources) {
-							if (resource.Target is XNA.Graphics.Texture2D texture) {
-								texturesToCache.Add(texture);
-							}
+			lock (resourcesLock) {
+				foreach (var resource in resources) {
+					if (resource.Target is XNA.Graphics.Texture2D texture) {
+						texturesToCache.Add(texture);
+					}
+				}
+			}
+
+			texturesToCache = texturesToCache;
+		}
+		catch { }
+
+		try {
+			var texturesToCache = new List<XNA.Graphics.Texture2D>();
+			var assetsField = typeof(XNA.Content.ContentManager).GetField("disposableAssets", BindingFlags.NonPublic | BindingFlags.Instance);
+			var cmField = typeof(XNA.Content.ContentManager).GetField("ContentManagers", BindingFlags.NonPublic | BindingFlags.Static);
+			var contentManagers = cmField.GetValue<IEnumerable<WeakReference>>(null);
+			foreach (var weakRef in contentManagers) {
+				if (weakRef.Target is XNA.Content.ContentManager cm) {
+					var assets = assetsField.GetValue<IEnumerable<IDisposable>>(cm);
+					foreach (var asset in assets) {
+						if (asset is XNA.Graphics.Texture2D texture) {
+							texturesToCache.Add(texture);
 						}
 					}
-
-					texturesToCache = texturesToCache;
 				}
-				catch { }
+			}
 
-				try {
-					var texturesToCache = new List<XNA.Graphics.Texture2D>();
-					var assetsField = typeof(XNA.Content.ContentManager).GetField("disposableAssets", BindingFlags.NonPublic | BindingFlags.Instance);
-					var cmField = typeof(XNA.Content.ContentManager).GetField("ContentManagers", BindingFlags.NonPublic | BindingFlags.Static);
-					var contentManagers = cmField.GetValue<IEnumerable<WeakReference>>(null);
-					foreach (var weakRef in contentManagers) {
-						if (weakRef.Target is XNA.Content.ContentManager cm) {
-							var assets = assetsField.GetValue<IEnumerable<IDisposable>>(cm);
-							foreach (var asset in assets) {
-								if (asset is XNA.Graphics.Texture2D texture) {
-									texturesToCache.Add(texture);
-								}
-							}
-						}
-					}
-
-					texturesToCache = texturesToCache;
-				}
-				catch { }
-				*/
+			texturesToCache = texturesToCache;
+		}
+		catch { }
+		*/
+		System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(FileCache).TypeHandle);
+		WatchDog.WatchDog.Initialize();
 	}
 
 	private static class ModUID {
 		internal const string DynamicGameAssets = "spacechase0.DynamicGameAssets";
 		internal const string ContentPatcher = "Pathoschild.ContentPatcher";
 		internal const string ContentPatcherAnimations = "spacechase0.ContentPatcherAnimations";
+	}
+
+	private void OnMenuChanged(object? _, MenuChangedEventArgs args) {
+		//_ = _;
+	}
+
+	private void OnSaveStart() {
+		Garbage.EnterNonInteractive();
+	}
+
+	private void OnSaveFinish() {
+		Garbage.EnterInteractive();
+	}
+
+	private void OnTitle() {
+		ForceGarbageCollect();
+		Garbage.EnterInteractive();
+	}
+
+	internal void OnFirstDraw() {
+		Garbage.EnterInteractive();
 	}
 
 	private void OnGameLaunched() {
@@ -356,6 +402,12 @@ public sealed class SpriteMaster : Mod {
 				Debug.Warning($"Mod '{manifest.Name}' has a dependency on Dynamic Game Assets ({ModUID.DynamicGameAssets}), which is presently not fully supported by SpriteMaster");
 			}
 		}
+
+		Debug.Trace("Waiting for FileCache to initialize...");
+		FileCache.Initialized.Wait();
+
+		ForceGarbageCollect();
+		ManagedSpriteInstance.ClearTimers();
 	}
 
 	// SMAPI/CP won't do this, so we do. Purge the cached textures for the previous season on a season change.
@@ -375,6 +427,10 @@ public sealed class SpriteMaster : Mod {
 
 	private static void ForceGarbageCollect() {
 		Garbage.Collect(compact: true, blocking: true, background: false);
+	}
+
+	private static void ForceGarbageCollectConcurrent() {
+		Garbage.Collect(compact: false, blocking: false, background: false);
 	}
 
 	private void ConfigureHarmony() {

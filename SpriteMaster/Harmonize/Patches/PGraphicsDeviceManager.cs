@@ -53,6 +53,7 @@ static class PGraphicsDeviceManager {
 		int arraySize,
 		out bool __state
 	) {
+		using var watchdogScoped = WatchDog.WatchDog.ScopedWorkingState;
 		var stackTrace = new StackTrace(fNeedFileInfo: false);
 
 		if (stackTrace.GetFrame(0)?.GetMethod()?.DeclaringType == typeof(StardewValley.Game1)) {
@@ -109,6 +110,7 @@ static class PGraphicsDeviceManager {
 		int arraySize,
 		bool __state
 	) {
+		using var watchdogScoped = WatchDog.WatchDog.ScopedWorkingState;
 		if (__state) {
 			__instance.Meta().IsSystemRenderTarget = true;
 		}
@@ -116,6 +118,7 @@ static class PGraphicsDeviceManager {
 
 	[Harmonize("ApplyChanges", Harmonize.Fixation.Prefix, PriorityLevel.First)]
 	internal static bool OnApplyChanges(GraphicsDeviceManager __instance) {
+		using var watchdogScoped = WatchDog.WatchDog.ScopedWorkingState;
 		var @this = __instance;
 
 		if (!LastState.Dirty(@this)) {
@@ -140,6 +143,7 @@ static class PGraphicsDeviceManager {
 
 	[Harmonize("ApplyChanges", Harmonize.Fixation.Postfix, PriorityLevel.Last)]
 	internal static void OnApplyChangesPost(GraphicsDeviceManager __instance) {
+		using var watchdogScoped = WatchDog.WatchDog.ScopedWorkingState;
 		var @this = __instance;
 
 		var device = @this.GraphicsDevice;

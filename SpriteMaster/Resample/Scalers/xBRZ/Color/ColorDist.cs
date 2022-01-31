@@ -35,9 +35,9 @@ class ColorDist {
 
 		//http://en.wikipedia.org/wiki/YCbCr#ITU-R_BT.601_conversion
 		//YCbCr conversion is a matrix multiplication => take advantage of linearity by subtracting first!
-		var rDiff = TexelDiff(pix1.R, pix2.R); //we may delay division by 255 to after matrix multiplication
+		var rDiff = TexelDiff(pix1.R, pix2.R);
 		var gDiff = TexelDiff(pix1.G, pix2.G);
-		var bDiff = TexelDiff(pix1.B, pix2.B); //subtraction for int is noticeable faster than for double
+		var bDiff = TexelDiff(pix1.B, pix2.B);
 
 		var coefficient = CurrentColorSpace.LumaCoefficient;
 		var scale = CurrentColorSpace.LumaScale;

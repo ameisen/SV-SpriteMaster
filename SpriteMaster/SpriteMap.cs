@@ -1,8 +1,11 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+﻿#define WITH_SPRITE_REFERENCE_SET
+
+using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
 using SpriteMaster.Types;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
@@ -11,8 +14,19 @@ namespace SpriteMaster;
 // TODO : This class, and Texture2DMeta, have a _lot_ of inter-play and it makes it very confusing.
 // This needs to be cleaned up badly.
 static class SpriteMap {
-	private static readonly SharedLock Lock = new();
-	private static readonly WeakCollection<ManagedSpriteInstance> SpriteInstanceReferences = new();
+#if WITH_SPRITE_REFERENCE_SET
+	private static readonly WeakSet<ManagedSpriteInstance> SpriteInstanceReferences = new();
+
+	private static WeakSet<ManagedSpriteInstance> SpriteInstanceReferencesGet => SpriteInstanceReferences;
+#else
+	private static WeakSet<ManagedSpriteInstance> SpriteInstanceReferencesGet => null!;
+#endif
+
+	[Conditional("WITH_SPRITE_REFERENCE_SET")]
+	private static void AddInternal(ManagedSpriteInstance instance) => SpriteInstanceReferencesGet.AddOrIgnore(instance);
+
+	[Conditional("WITH_SPRITE_REFERENCE_SET")]
+	private static void RemoveInternal(ManagedSpriteInstance instance) => SpriteInstanceReferencesGet.Remove(instance);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ulong SpriteHash(Texture2D texture, in Bounds source, uint expectedScale) {
@@ -21,39 +35,39 @@ static class SpriteMap {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool Add(Texture2D reference, ManagedSpriteInstance instance, out ManagedSpriteInstance? current) {
+		AddInternal(instance);
+
 		var meta = reference.Meta();
-		using (Lock.Write) {
-			SpriteInstanceReferences.Add(instance);  
-			using (meta.Lock.Write) {
-				var result = meta.TryAddToSpriteInstanceTable(instance.SpriteMapHash, instance);
-				if (result) {
-					current = null;
-				}
-				else {
-					current = null;
-					meta.GetSpriteInstanceTable().TryGetValue(instance.SpriteMapHash, out current);
-				}
-				return result;
+
+		using (meta.Lock.Write) {
+			var result = meta.TryAddToSpriteInstanceTable(instance.SpriteMapHash, instance);
+			if (result) {
+				current = null;
 			}
+			else {
+				current = null;
+				meta.GetSpriteInstanceTable().TryGetValue(instance.SpriteMapHash, out current);
+			}
+			return result;
 		}
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool AddReplaceInvalidated(Texture2D reference, ManagedSpriteInstance instance) {
+		AddInternal(instance);
+
 		var meta = reference.Meta();
-		using (Lock.Write) {
-			SpriteInstanceReferences.Add(instance);
-			using (meta.Lock.Write) {
-				var result = meta.TryAddToSpriteInstanceTable(instance.SpriteMapHash, instance);
-				if (!result) {
-					meta.GetSpriteInstanceTable().TryGetValue(instance.SpriteMapHash, out var current);
-					if (current is null || current.Invalidated) {
-						meta.ReplaceInSpriteInstanceTable(instance.SpriteMapHash, instance);
-						result = true;
-					}
+
+		using (meta.Lock.Write) {
+			var result = meta.TryAddToSpriteInstanceTable(instance.SpriteMapHash, instance);
+			if (!result) {
+				meta.GetSpriteInstanceTable().TryGetValue(instance.SpriteMapHash, out var current);
+				if (current is null || current.Invalidated) {
+					meta.ReplaceInSpriteInstanceTable(instance.SpriteMapHash, instance);
+					result = true;
 				}
-				return result;
 			}
+			return result;
 		}
 	}
 
@@ -80,6 +94,8 @@ static class SpriteMap {
 		var meta = texture.Meta();
 		var spriteTable = meta.GetSpriteInstanceTable();
 
+		var instanceDisposeList = new List<ManagedSpriteInstance>();
+
 		using (meta.Lock.ReadWrite) {
 			if (spriteTable.TryGetValue(rectangleHash, out var spriteInstance)) {
 				if (spriteInstance.Texture?.IsDisposed == true) {
@@ -91,7 +107,10 @@ static class SpriteMap {
 							}
 						}
 						foreach (var key in removeList) {
-							meta.RemoveFromSpriteInstanceTable(key);
+							meta.RemoveFromSpriteInstanceTable(key, dispose: false, out var instance);
+							if (instance is not null) {
+								instanceDisposeList.Add(instance);
+							}
 						}
 					}
 				}
@@ -102,6 +121,10 @@ static class SpriteMap {
 			}
 		}
 
+		foreach (var instance in instanceDisposeList) {
+			instance.Dispose();
+		}
+
 		result = null;
 		return false;
 	}
@@ -109,37 +132,50 @@ static class SpriteMap {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void Remove(ManagedSpriteInstance spriteInstance, Texture2D texture) {
 		try {
+			RemoveInternal(spriteInstance);
+
 			var meta = texture.Meta();
 			var spriteTable = meta.GetSpriteInstanceTable();
 
-			using (Lock.Write) {
-				try {
-					SpriteInstanceReferences.Purge();
-					var removeElements = new List<ManagedSpriteInstance>();
-					foreach (var element in SpriteInstanceReferences) {
-						if (element == spriteInstance) {
-							removeElements.Add(element);
-						}
-					}
-
-					foreach (var element in removeElements) {
-						SpriteInstanceReferences.Remove(element);
-					}
-				}
-				catch { }
-			}
+			ManagedSpriteInstance? instance = null;
 			using (meta.Lock.Write) {
 				if (spriteTable.TryGetValue(spriteInstance.SpriteMapHash, out var currentValue) && currentValue == spriteInstance) {
-					meta.RemoveFromSpriteInstanceTable(spriteInstance.SpriteMapHash);
+					meta.RemoveFromSpriteInstanceTable(spriteInstance.SpriteMapHash, dispose: false, out instance);
 				}
 			}
+
+			instance?.Dispose();
 		}
 		finally {
-			if (spriteInstance.Texture != null && !spriteInstance.Texture.IsDisposed) {
+			if (spriteInstance.Texture is not null && !spriteInstance.Texture.IsDisposed) {
 				Debug.TraceLn($"Disposing Active HD Texture: {spriteInstance.SafeName()}");
 
 				//spriteInstance.Texture.Dispose();
 			}
+		}
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static void Remove(in ManagedSpriteInstance.CleanupData instanceData, Texture2D texture) {
+		try {
+			var meta = texture.Meta();
+			var spriteTable = meta.GetSpriteInstanceTable();
+
+			ManagedSpriteInstance? instance = null;
+			using (meta.Lock.Write) {
+				if (spriteTable.TryGetValue(instanceData.MapHash, out var currentValue) && currentValue is null) {
+					meta.RemoveFromSpriteInstanceTable(instanceData.MapHash, dispose: false, out instance);
+				}
+			}
+
+			instance?.Dispose();
+		}
+		finally {
+			//if (spriteInstance.Texture is not null && !spriteInstance.Texture.IsDisposed) {
+			//	Debug.TraceLn($"Disposing Active HD Texture: {spriteInstance.SafeName()}");
+
+				//spriteInstance.Texture.Dispose();
+			//}
 		}
 	}
 
@@ -164,6 +200,7 @@ static class SpriteMap {
 				bool hasSourceRect = sourceRectangle.HasValue;
 
 				var removeTexture = hasSourceRect ? new List<ulong>() : null!;
+				var nullTextures = new List<ManagedTexture2D>();
 
 				foreach (var pairs in spriteTable) {
 					var spriteInstance = pairs.Value;
@@ -172,8 +209,7 @@ static class SpriteMap {
 							continue;
 						}
 						if (spriteInstance.Texture is not null) {
-							// TODO : should this be locked?
-							spriteInstance.Texture.Dispose();
+							nullTextures.Add(spriteInstance.Texture);
 						}
 						spriteInstance.Texture = null;
 						if (hasSourceRect) {
@@ -182,10 +218,19 @@ static class SpriteMap {
 					}
 				}
 
+				var instanceDisposeList = new List<ManagedSpriteInstance>();
+
 				using (meta.Lock.Write) {
+					foreach (var instance in nullTextures) {
+						instance.Dispose();
+					}
+					
 					if (hasSourceRect) {
 						foreach (var hash in removeTexture) {
-							meta.RemoveFromSpriteInstanceTable(hash);
+							meta.RemoveFromSpriteInstanceTable(hash, dispose: false, out var instance);
+							if (instance is not null) {
+								instanceDisposeList.Add(instance);
+							}
 						}
 					}
 					else {
@@ -193,6 +238,10 @@ static class SpriteMap {
 					}
 				}
 				// : TODO dispose sprites?
+
+				foreach (var instance in instanceDisposeList) {
+					instance.Dispose();
+				}
 			}
 		}
 		catch { }
@@ -228,34 +277,28 @@ static class SpriteMap {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void SeasonPurge(string season) {
-		try {
-			var purgeList = new List<ManagedSpriteInstance>();
-			using (Lock.Read) {
-				foreach (var spriteInstance in SpriteInstanceReferences) {
-					if (spriteInstance is null || spriteInstance.Anonymous()) {
-						continue;
-					}
+		if (!Config.Garbage.SeasonalPurge) {
+			return;
+		}
 
-					var textureName = spriteInstance.SafeName().ToLowerInvariant();
-					if (
-						!textureName.Contains(season) &&
-						(
-							textureName.Contains("spring") ||
-							textureName.Contains("summer") ||
-							textureName.Contains("fall") ||
-							textureName.Contains("winter")
-						)
-					) {
-						purgeList.Add(spriteInstance);
-					}
+		try {
+			foreach (var spriteInstance in SpriteInstanceReferences) {
+				if (spriteInstance is null || spriteInstance.Anonymous()) {
+					continue;
 				}
-			}
-			foreach (var purgable in purgeList) {
-				if (purgable.Reference.TryGetTarget(out var reference)) {
-					purgable.Dispose();
-					var meta = reference.Meta();
-					using (meta.Lock.Write) {
-						meta.ClearSpriteInstanceTable();
+
+				var textureName = spriteInstance.SafeName().ToLowerInvariant();
+				if (
+					!textureName.Contains(season) &&
+					(
+						textureName.Contains("spring") ||
+						textureName.Contains("summer") ||
+						textureName.Contains("fall") ||
+						textureName.Contains("winter")
+					)
+				) {
+					if (spriteInstance.Reference.TryGetTarget(out var reference)) {
+						spriteInstance.Dispose();
 					}
 				}
 			}
@@ -266,6 +309,7 @@ static class SpriteMap {
 	internal static Dictionary<Texture2D, List<ManagedSpriteInstance>> GetDump() {
 		var result = new Dictionary<Texture2D, List<ManagedSpriteInstance>>();
 
+		/*
 		foreach (var spriteInstance in SpriteInstanceReferences) {
 			if (spriteInstance is not null && spriteInstance.Reference.TryGetTarget(out var referenceTexture)) {
 				if (!result.TryGetValue(referenceTexture, out var resultList)) {
@@ -275,6 +319,7 @@ static class SpriteMap {
 				resultList.Add(spriteInstance);
 			}
 		}
+		*/
 
 		return result;
 	}

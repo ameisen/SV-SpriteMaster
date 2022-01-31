@@ -67,7 +67,7 @@ static class Performance {
 			}
 
 			if (isWorst) {
-				Debug.ErrorLn($"Worst Time Recorded for '{tracker.Name}': {tracker.Duration}");
+				Debug.Error($"Worst Time Recorded for '{tracker.Name}': {tracker.Duration}");
 			}
 		}
 #endif

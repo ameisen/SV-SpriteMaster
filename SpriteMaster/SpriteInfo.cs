@@ -78,7 +78,7 @@ sealed class SpriteInfo : IDisposable {
 					errorBuilder.AppendLine($"New Format: {format}");
 					errorBuilder.AppendLine($"pitch: {RawStride - actualWidth}");
 					errorBuilder.AppendLine($"referenceDataSize: {_ReferenceData.Length}");
-					Debug.ErrorLn(errorBuilder.ToString());
+					Debug.Error(errorBuilder.ToString());
 					_Broken = true;
 					_ReferenceData = null;
 				}
@@ -139,11 +139,9 @@ sealed class SpriteInfo : IDisposable {
 			TextureType = textureType;
 
 			// Truncate the bounds so that it fits if it wouldn't otherwise fit
-			var oldBounds = Bounds;
-			Bounds = Bounds.ClampTo(Reference.Bounds);
-
-			if (Bounds != oldBounds) {
-				Debug.WarningLn($"SpriteInfo for '{reference.SafeName()}' bounds '{dimensions}' are not contained in reference bounds '{(Bounds)reference.Bounds}'");
+			if (!Bounds.ClampToChecked(Reference.Bounds, out var clampedBounds)) {
+				Debug.Warning($"SpriteInfo for '{reference.SafeName()}' bounds '{dimensions}' are not contained in reference bounds '{(Bounds)reference.Bounds}'");
+				Bounds = clampedBounds;
 			}
 
 			var refMeta = reference.Meta();
@@ -202,6 +200,5 @@ sealed class SpriteInfo : IDisposable {
 	public void Dispose() {
 		ReferenceData = null;
 		_Hash = 0;
-		GC.SuppressFinalize(this);
 	}
 }
