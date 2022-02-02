@@ -2,6 +2,7 @@
 using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
 using SpriteMaster.Types;
+using StardewValley.Locations;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -18,6 +19,7 @@ sealed class ManagedTexture2D : InternalTexture2D {
 	internal readonly WeakReference<Texture2D> Reference;
 	internal readonly ManagedSpriteInstance Texture;
 	internal readonly Vector2I Dimensions;
+	private volatile bool Disposed = false;
 
 	internal static void DumpStats(List<string> output) {
 		output.AddRange(new[]{
@@ -41,17 +43,12 @@ sealed class ManagedTexture2D : InternalTexture2D {
 		Texture = texture;
 		Dimensions = dimensions - texture.BlockPadding;
 
-		reference.Disposing += (resource, _) => OnParentDispose(resource as Texture2D);
+		reference.Disposing += OnParentDispose;
 
 		Interlocked.Add(ref TotalAllocatedSize, (ulong)this.SizeBytes());
 		Interlocked.Increment(ref TotalManagedTextures);
 
 		Garbage.MarkOwned(format, dimensions.Area);
-		Disposing += (resource, _) => {
-			Garbage.UnmarkOwned(format, dimensions.Area);
-			Interlocked.Add(ref TotalAllocatedSize, (ulong)-this.SizeBytes());
-			Interlocked.Decrement(ref TotalManagedTextures);
-		};
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -63,6 +60,9 @@ sealed class ManagedTexture2D : InternalTexture2D {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
+	private void OnParentDispose(object? resource, EventArgs args) => OnParentDispose(resource as Texture2D);
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private void OnParentDispose(Texture2D? referenceTexture) {
 		if (!IsDisposed) {
 			Debug.TraceLn($"Disposing ManagedTexture2D '{Name}'");
@@ -70,5 +70,23 @@ sealed class ManagedTexture2D : InternalTexture2D {
 		}
 
 		referenceTexture?.Meta().Dispose();
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	protected sealed override void Dispose(bool disposing) {
+		base.Dispose(disposing);
+
+		if (Disposed) {
+			return;
+		}
+		Disposed = true;
+
+		if (Reference.TryGetTarget(out var reference)) {
+			reference.Disposing -= OnParentDispose;
+}
+
+		Garbage.UnmarkOwned(Format, Width * Height);
+		Interlocked.Add(ref TotalAllocatedSize, (ulong)-this.SizeBytes());
+		Interlocked.Decrement(ref TotalManagedTextures);
 	}
 }

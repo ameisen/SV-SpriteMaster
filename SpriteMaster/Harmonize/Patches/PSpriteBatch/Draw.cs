@@ -15,6 +15,25 @@ static class Draw {
 	private const bool Stop = false;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
+	private static bool GetIsSliced(in Bounds bounds, Texture2D reference, [NotNullWhen(true)] out Config.TextureRef? result) {
+		foreach (var slicedTexture in Config.Resample.SlicedTexturesS) {
+			if (!reference.SafeName().StartsWith(slicedTexture.Texture)) {
+				continue;
+			}
+			if (slicedTexture.Bounds.IsEmpty) {
+				result = slicedTexture;
+				return true;
+			}
+			if (slicedTexture.Bounds.Contains(bounds)) {
+				result = slicedTexture;
+				return true;
+			}
+		}
+		result = null;
+		return false;
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static bool Cleanup(this ref Bounds sourceBounds, Texture2D reference) {
 		if (Config.ClampInvalidBounds && !sourceBounds.ClampToChecked(reference.Extent(), out var clampedBounds)) {
 			//Debug.Warning($"Draw.Cleanup: '{reference.SafeName()}' bounds '{sourceBounds}' are not contained in reference bounds '{(Bounds)reference.Bounds}' - clamped ({(sourceBounds.Degenerate ? "degenerate" : "")})");
@@ -67,8 +86,14 @@ static class Draw {
 				return null;
 			}
 
+			bool isSliced = false;
+			if (GetIsSliced(clampedSource, reference, out var textureRef)) {
+				clampedSource = textureRef.Value.Bounds;
+				isSliced = true;
+			}
+
 			var spriteInstance = create ?
-				ManagedSpriteInstance.FetchOrCreate(texture: reference, source: clampedSource, expectedScale: expectedScale) :
+				ManagedSpriteInstance.FetchOrCreate(texture: reference, source: clampedSource, expectedScale: expectedScale, sliced: isSliced) :
 				ManagedSpriteInstance.Fetch(texture: reference, source: clampedSource, expectedScale: expectedScale);
 
 			if (spriteInstance is null || !spriteInstance.IsReady) {
@@ -160,7 +185,6 @@ static class Draw {
 		ref ManagedTexture2D __state
 	) {
 		using var watchdogScoped = WatchDog.WatchDog.ScopedWorkingState;
-		using var _ = Performance.Track();
 
 		/*
 		if (destination.Width < 0 || destination.Height < 0) {
@@ -245,8 +269,6 @@ static class Draw {
 		ref float layerDepth,
 		ref ManagedTexture2D __state
 	) {
-		using var _ = Performance.Track("OnDraw0");
-
 		Bounds sourceRectangle;
 		ManagedSpriteInstance? spriteInstance;
 		ManagedTexture2D resampledTexture;
@@ -271,6 +293,11 @@ static class Draw {
 			)) {
 				return Continue;
 			}
+
+			if (spriteInstance.TexType == TextureType.SlicedImage) {
+				sourceRectangle = source ?? spriteInstance.Texture!.Bounds;
+			}
+
 			spriteInstance.UpdateReferenceFrame();
 
 			resampledTexture = spriteInstance.Texture!;
@@ -279,6 +306,17 @@ static class Draw {
 			resampledTexture = __state;
 			spriteInstance = resampledTexture.Texture;
 			sourceRectangle = resampledTexture.Dimensions;
+			if (spriteInstance.TexType == TextureType.SlicedImage) {
+				sourceRectangle = source ?? resampledTexture.Bounds;
+				if (source.HasValue) {
+					sourceRectangle = new Bounds(
+						(Vector2I)source.Value.Location - spriteInstance.OriginalSourceRectangle.Offset,
+						source.Value.Size
+					);
+					sourceRectangle.Offset = (sourceRectangle.OffsetF * spriteInstance.Scale).NearestInt();
+					sourceRectangle.Extent = (sourceRectangle.ExtentF * spriteInstance.Scale).NearestInt();
+				}
+			}
 		}
 
 		var scaledOrigin = (Vector2F)origin / spriteInstance.Scale;
@@ -315,14 +353,14 @@ static class Draw {
 		SpriteEffects effects,
 		ref float layerDepth
 	) {
-		using var _ = Performance.Track("OnDraw1");
-
 		GetDrawParameters(
 			texture: texture,
 			source: source,
 			bounds: out var sourceRectangle,
 			scaleFactor: out var scaleFactor
 		);
+
+		var originalSourceRect = sourceRectangle;
 
 		ManagedSpriteInstance? spriteInstance;
 		ManagedTexture2D? resampledTexture;
@@ -351,6 +389,18 @@ static class Draw {
 		var adjustedScale = (Vector2F)scale / (Vector2F)spriteInstance.Scale;
 		var adjustedPosition = position;
 		var adjustedOrigin = (Vector2F)origin;
+
+		if (spriteInstance.TexType == TextureType.SlicedImage) {
+			sourceRectangle = source ?? resampledTexture.Bounds;
+			if (source is not null) {
+				sourceRectangle = new Bounds(
+					(Vector2I)source.Value.Location - spriteInstance.OriginalSourceRectangle.Offset,
+					source.Value.Size
+				);
+				sourceRectangle.Offset = (sourceRectangle.OffsetF * spriteInstance.Scale).NearestInt();
+				sourceRectangle.Extent = (sourceRectangle.ExtentF * spriteInstance.Scale).NearestInt();
+			}
+		}
 
 		if (!spriteInstance.Padding.IsZero) {
 			var textureSize = new Vector2F(sourceRectangle.Extent);

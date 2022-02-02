@@ -4,6 +4,7 @@ using SpriteMaster.Caching;
 using SpriteMaster.Extensions;
 using SpriteMaster.Harmonize;
 using SpriteMaster.Metadata;
+using SpriteMaster.Types;
 using StardewModdingAPI;
 using StardewModdingAPI.Enums;
 using StardewModdingAPI.Events;
@@ -242,6 +243,31 @@ public sealed class SpriteMaster : Mod {
 
 				SerializeConfig.Load(tempStream, retain: true);
 				Config.ConfigVersion = Config.CurrentVersion;
+			}
+		}
+
+		// handle sliced textures. At some point I will add struct support.
+		foreach (var slicedTexture in Config.Resample.SlicedTextures) {
+			//"LooseSprites/Cursors::0,640:2000,256"
+			var elements = slicedTexture.Split("::", 2);
+			var texture = elements[0];
+			var bounds = Bounds.Empty;
+			if (elements.Length > 1) {
+				try {
+					var boundElements = elements[1].Split(":");
+					var offsetElements = (boundElements.ElementAtOrDefaultF(0) ?? "0,0").Split(",", 2);
+					var extentElements = (boundElements.ElementAtOrDefaultF(1) ?? "0,0").Split(",", 2);
+
+					var offset = new Vector2I(int.Parse(offsetElements[0]), int.Parse(offsetElements[1]));
+					var extent = new Vector2I(int.Parse(extentElements[0]), int.Parse(extentElements[1]));
+
+					bounds = new Bounds(offset, extent);
+				}
+				catch {
+					Debug.Error($"Invalid SlicedTexture Bounds: '{elements[1]}'");
+				}
+
+				Config.Resample.SlicedTexturesS.Add(new(texture, bounds));
 			}
 		}
 

@@ -104,7 +104,6 @@ static class PTexture2D {
 			return;
 		}
 		using var watchdogScoped = WatchDog.WatchDog.ScopedWorkingState;
-		using var _ = Performance.Track("SetData");
 		SetDataPurge(
 			__instance,
 			rect,

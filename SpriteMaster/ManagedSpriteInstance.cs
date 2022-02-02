@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using static SpriteMaster.ResourceManager;
+using static StardewValley.Menus.CharacterCustomization;
 using WeakInstanceList = System.Collections.Generic.LinkedList<System.WeakReference<SpriteMaster.ManagedSpriteInstance>>;
 using WeakInstanceListNode = System.Collections.Generic.LinkedListNode<System.WeakReference<SpriteMaster.ManagedSpriteInstance>>;
 using WeakTexture = System.WeakReference<Microsoft.Xna.Framework.Graphics.Texture2D>;
@@ -222,9 +223,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	static internal ManagedSpriteInstance? FetchOrCreate(Texture2D texture, in Bounds source, uint expectedScale) {
-		using var _ = Performance.Track();
-
+	static internal ManagedSpriteInstance? FetchOrCreate(Texture2D texture, in Bounds source, uint expectedScale, bool sliced) {
 		if (!Validate(texture, clean: true)) {
 			return null;
 		}
@@ -282,7 +281,10 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 		var watch = System.Diagnostics.Stopwatch.StartNew();
 
 		TextureType textureType;
-		if (!source.Offset.IsZero || source.Extent != texture.Extent()) {
+		if (sliced) {
+			textureType = TextureType.SlicedImage;
+		}
+		else if (!source.Offset.IsZero || source.Extent != texture.Extent()) {
 			textureType = TextureType.Sprite;
 		}
 		else {
@@ -333,7 +335,11 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 			var averager = GetTimer(cached: spriteInfoInitializer.WasCached, async: useAsync);
 			TimeSpanSamples++;
 			MeanTimeSpan += duration;
-			Debug.TraceLn($"Rescale Duration {getNameString()}: {(MeanTimeSpan / TimeSpanSamples).TotalMilliseconds.ToString(DrawingColor.LightYellow)} ms (was remaining {getRemainingTime()})");
+			var remainingTimeStr = getRemainingTime();
+			if (!string.IsNullOrEmpty(remainingTimeStr)) {
+				remainingTimeStr = $"({remainingTimeStr} was remaining)";
+			}
+			Debug.TraceLn($"Rescale Duration {getNameString()}: {(MeanTimeSpan / TimeSpanSamples).TotalMilliseconds.ToString(DrawingColor.LightYellow)} ms {remainingTimeStr}");
 			averager.Add(source.Area, duration);
 		}
 	}
@@ -429,17 +435,11 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal ManagedSpriteInstance(string assetName, SpriteInfo spriteInfo, in Bounds sourceRectangle, TextureType textureType, bool async, uint expectedScale, ManagedSpriteInstance? previous = null) {
-		using var _ = Performance.Track();
-
 		PreviousSpriteInstance = previous;
 
 		TexType = textureType;
 
-		static ulong GetHash(SpriteInfo info, TextureType type) {
-			using (Performance.Track("Upscaler.GetHash")) {
-				return Resampler.GetHash(info, type);
-			}
-		}
+		static ulong GetHash(SpriteInfo info, TextureType type) => Resampler.GetHash(info, type);
 
 		var source = spriteInfo.Reference;
 
@@ -468,7 +468,8 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 					originalSize = source.Extent();
 					break;
 				case TextureType.SlicedImage:
-					throw new NotImplementedException("Sliced Images not yet implemented");
+					originalSize = sourceRectangle.Extent;
+					break;
 			}
 
 			// TODO store the HD Texture in _this_ object instead. Will confuse things like subtexture updates, though.
@@ -485,13 +486,16 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 			// TODO : I would love to dispose of this texture _now_, but we rely on it disposing to know if we need to dispose of ours.
 			// There is a better way to do this using weak references, I just need to analyze it further. Memory leaks have been a pain so far.
 			// TODO 2: This won't get hit if the texture is disposed of via the finalizer.
-			source.Disposing += (object? sender, EventArgs args) => { OnParentDispose(sender as Texture2D); };
+			source.Disposing += OnParentDispose;
 
 			lock (RecentAccessList) {
 				RecentAccessNode = RecentAccessList.AddFirst(this.MakeWeak());
 			}
 		}
 	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	public void OnParentDispose(object? sender, EventArgs args) => OnParentDispose(sender as Texture2D);
 
 	// Async Call
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -606,6 +610,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 
 		if (Reference.TryGetTarget(out var reference)) {
 			SpriteMap.Remove(this, reference);
+			reference.Disposing -= OnParentDispose;
 		}
 		if (RecentAccessNode is not null) {
 			lock (RecentAccessList) {

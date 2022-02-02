@@ -3,6 +3,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using SpriteMaster.Resample;
+using SpriteMaster.Types;
 using StardewModdingAPI;
 using System;
 using System.Collections.Generic;
@@ -155,6 +156,8 @@ static class Config {
 		internal static SurfaceFormat BackbufferFormat = SurfaceFormat.Color;
 	}
 
+	internal readonly record struct TextureRef(string Texture, Bounds Bounds);
+
 	internal static class Resample {
 		[Comment("Should resampling be enabled?")]
 		internal static bool Enabled = true;
@@ -186,6 +189,23 @@ static class Config {
 		internal static bool PremultiplyAlpha = true;
 		[Comment("Should sprites be assumed to be premultiplied, or should they instead by analyzed?")]
 		internal static bool PremultiplyAlphaAssume = true;
+		internal static List<string> SlicedTextures = new() {
+			"LooseSprites/Cursors::0,2000:640,256",
+			"LooseSprites/Cloudy_Ocean_BG",
+			"LooseSprites/Cloudy_Ocean_BG_Night",
+			"LooseSprites/stardewPanorama",
+			"Maps/nightSceneMaru",
+			"Maps/nightSceneMaruTrees",
+			"Maps/sebastianMountainTiles",
+			"Maps/sebastianRideTiles",
+			// SVE
+			"Tilesheets/GuntherExpedition2_Shadows",
+			"Tilesheets/Highlands_Fog",
+			"Tilesheets/Highlands_FogBackground",
+
+		};
+		[ConfigIgnore]
+		internal static List<TextureRef> SlicedTexturesS = new();
 		internal static class BlockMultipleAnalysis {
 			[Comment("Should sprites be analyzed to see if they are block multiples?")]
 			internal static bool Enabled = true;
@@ -276,9 +296,7 @@ static class Config {
 		}
 		[Comment("What spritesheets will absolutely not be resampled or processed?")]
 		internal static List<string> Blacklist = new() {
-			"LooseSprites/Lighting/",
-			"LooseSprites/Cloudy_Ocean_BG",
-			"LooseSprites/Cloudy_Ocean_BG_Night"
+			"LooseSprites/Lighting/"
 		};
 		internal static class Padding {
 			[Comment("Should padding be applied to sprites to allow resampling to extend beyond the natural sprite boundaries?")]

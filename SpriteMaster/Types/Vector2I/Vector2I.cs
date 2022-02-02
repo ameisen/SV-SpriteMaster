@@ -132,9 +132,6 @@ unsafe partial struct Vector2I :
 	internal Vector2I(System.Drawing.Bitmap bmp) : this(bmp.Width, bmp.Height) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Vector2I(TeximpNet.Surface surface) : this(surface.Width, surface.Height) { }
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static implicit operator Vector2I(in (int X, int Y) vec) => new (vec.X, vec.Y);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]

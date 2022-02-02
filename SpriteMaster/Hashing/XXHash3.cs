@@ -2,6 +2,7 @@
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics.X86;
 using System.Text;
@@ -334,9 +335,9 @@ partial class Hashing {
 		[MethodImpl(MethodImpl.Hot)]
 		private static ulong swap64(ulong value) => BinaryPrimitives.ReverseEndianness(value);
 		[MethodImpl(MethodImpl.Hot)]
-		private static ulong rotl64(ulong value, int shift) => (value << shift) | (value >> (64 - shift));
+		private static ulong rotl64(ulong value, int shift) => BitOperations.RotateLeft(value, shift);
 		[MethodImpl(MethodImpl.Hot)]
-		private static ulong rotr64(ulong value, int shift) => (value << (64 - shift)) | (value >> shift);
+		private static ulong rotr64(ulong value, int shift) => BitOperations.RotateRight(value, shift);
 
 		[MethodImpl(MethodImpl.Hot)]
 		public static byte _mm_shuffle(byte p3, byte p2, byte p1, byte p0) => (byte)((p3 << 6) | (p2 << 4) | (p1 << 2) | p0);

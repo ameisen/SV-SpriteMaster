@@ -9,6 +9,7 @@ using SpriteMaster.Resample.Passes;
 using SpriteMaster.Tasking;
 using SpriteMaster.Types;
 using System;
+using System.Buffers;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
@@ -67,6 +68,8 @@ sealed class Resampler {
 		Unknown
 	}
 
+	//internal static readonly ArrayPool<Color16> ResamplerArrayPool = ArrayPool<Color16>.Shared;
+
 	private static unsafe Span<byte> CreateNewTexture(
 		ManagedSpriteInstance texture,
 		bool async,
@@ -98,6 +101,7 @@ sealed class Resampler {
 		var initialGammaState = GammaState.Gamma;
 		var currentGammaState = initialGammaState;
 
+		bool directImage = input.TextureType == TextureType.SlicedImage;
 		Bounds inputBounds;
 		switch (input.TextureType) {
 			case TextureType.Sprite:
@@ -107,7 +111,8 @@ sealed class Resampler {
 				inputBounds = input.ReferenceSize;
 				break;
 			case TextureType.SlicedImage:
-				throw new NotImplementedException("Sliced Images not yet implemented");
+				inputBounds = input.Bounds;
+				break;
 			default:
 				throw new NotImplementedException("Unknown Texture Type provided");
 		}
@@ -192,15 +197,17 @@ sealed class Resampler {
 
 		if (Config.Resample.Enabled) {
 			// Apply padding to the sprite if necessary
-			spriteRawData = Passes.Padding.Apply(
-				data: spriteRawData,
-				spriteSize: spriteRawExtent,
-				scale: scale,
-				input: input,
-				analysis: analysis,
-				padding: out padding,
-				paddedSize: out spriteRawExtent
-			);
+			if (!directImage) {
+				spriteRawData = Passes.Padding.Apply(
+					data: spriteRawData,
+					spriteSize: spriteRawExtent,
+					scale: scale,
+					input: input,
+					analysis: analysis,
+					padding: out padding,
+					paddedSize: out spriteRawExtent
+				);
+			}
 
 			scaledSize = spriteRawExtent * scale;
 			scaledSizeClamped = scaledSize.Min(Config.ClampDimension);
@@ -466,7 +473,7 @@ sealed class Resampler {
 		var inputSize = input.TextureType switch {
 			TextureType.Sprite => input.Bounds.Extent,
 			TextureType.Image => input.ReferenceSize,
-			TextureType.SlicedImage => throw new NotImplementedException("Sliced Images not yet implemented"),
+			TextureType.SlicedImage => input.Bounds.Extent,
 			_ => throw new NotImplementedException("Unknown Image Type provided")
 		};
 

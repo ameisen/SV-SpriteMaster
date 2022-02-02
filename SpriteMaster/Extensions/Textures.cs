@@ -91,36 +91,6 @@ static class Textures {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static long SizeBytes(this ManagedTexture2D texture) => (long)texture.Area() * 4;
 
-	internal static TeximpNet.Surface Resize(this TeximpNet.Surface source, in Vector2I size, TeximpNet.ImageFilter filter = TeximpNet.ImageFilter.Lanczos3, bool discard = true) {
-		if (size == new Vector2I(source)) {
-			try {
-				return source.Clone();
-			}
-			finally {
-				if (discard) {
-					source.Dispose();
-				}
-			}
-		}
-
-		var output = source.Clone();
-		try {
-			if (!output.Resize(size.Width, size.Height, filter)) {
-				throw new Exception("Failed to resize surface");
-			}
-
-			if (discard) {
-				source.Dispose();
-			}
-
-			return output;
-		}
-		catch {
-			output.Dispose();
-			throw;
-		}
-	}
-
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool Anonymous(this Texture2D texture) => texture.Name.IsBlank();
 

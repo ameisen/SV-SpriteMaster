@@ -17,7 +17,7 @@ static class Garbage {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void EnterInteractive() {
-		Debug.Error("Interactive GC");
+		//Debug.Error("Interactive GC");
 
 		try {
 			GCSettings.LatencyMode = Config.Garbage.LatencyMode;
