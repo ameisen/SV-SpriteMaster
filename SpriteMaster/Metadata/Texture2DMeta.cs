@@ -239,7 +239,7 @@ sealed class Texture2DMeta : IDisposable {
 	internal byte[]? CachedData {
 		get {
 			using (Lock.Read) {
-				if (_CachedData.TryGetTarget(out var data)) {
+				if (_CachedData?.TryGetTarget(out var data) ?? false) {
 					return data;
 				}
 				return null;

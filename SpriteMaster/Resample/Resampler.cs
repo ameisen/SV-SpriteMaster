@@ -467,7 +467,7 @@ sealed class Resampler {
 			};
 		}
 
-		var hashString = hash.ToString("x");
+		var hashString = hash.ToString64();
 		var cachePath = FileCache.GetPath($"{hashString}.cache");
 
 		var inputSize = input.TextureType switch {

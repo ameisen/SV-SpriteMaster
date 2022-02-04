@@ -28,7 +28,7 @@ static class TeximpBlockEncoder {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static unsafe Span<byte> Encode(ReadOnlySpan<Color8> data, ref TextureFormat format, Vector2I dimensions, bool hasAlpha, bool isPunchthroughAlpha, bool isMasky, bool hasR, bool hasG, bool hasB) {
 		if (!BlockCompressionFunctional) {
-			return null;
+			return data.ToSpanUnsafe().Cast<byte>();
 		}
 
 		var oldSpriteFormat = format;
@@ -78,6 +78,6 @@ static class TeximpBlockEncoder {
 		}
 		format = oldSpriteFormat;
 
-		return null;
+		return data.ToSpanUnsafe().Cast<byte>(); ;
 	}
 }
