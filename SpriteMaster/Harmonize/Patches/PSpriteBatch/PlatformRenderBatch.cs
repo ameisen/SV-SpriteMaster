@@ -39,6 +39,10 @@ static class PlatformRenderBatch {
 		GraphicsDevice ____device,
 		ref SamplerState? __state
 	) {
+		if (!Config.IsEnabled) {
+			return true;
+		}
+
 		try {
 			using var watchdogScoped = WatchDog.WatchDog.ScopedWorkingState;
 
@@ -78,6 +82,10 @@ static class PlatformRenderBatch {
 	GraphicsDevice ____device,
 	SamplerState? __state
 ) {
+		if (!Config.IsEnabled) {
+			return;
+		}
+
 		try {
 			using var watchdogScoped = WatchDog.WatchDog.ScopedWorkingState;
 
