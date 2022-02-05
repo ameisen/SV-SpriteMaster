@@ -25,6 +25,10 @@ static class WatchDog {
 	internal static WorkingStateCookie ScopedWorkingState => new();
 
 	internal static void Initialize() {
+		if (!Config.WatchDog.Enabled) {
+			return;
+		}
+
 		if (WatchdogThread is not null) {
 			Debug.Warning("Tried to initialize watchdog, but it is already running");
 			return;

@@ -23,6 +23,7 @@ sealed class ConcurrentConsumer<T> {
 			Priority = ThreadPriority.BelowNormal,
 			IsBackground = true
 		};
+		ConsumerThread.Start();
 	}
 
 	internal void Push(in T instance) {
@@ -34,31 +35,9 @@ sealed class ConcurrentConsumer<T> {
 		var dequeued = new List<T>();
 
 		while (true) {
-			dequeued.Clear();
-
 			try {
 				Event.WaitOne();
-				bool noGC = GC.TryStartNoGCRegion(0x4000);
-				try {
-					while (DataQueue.TryDequeue(out var data)) {
-						try {
-							dequeued.Add(data);
-						}
-						catch (Exception ex) {
-							Debug.Error($"Exception during ConcurrentConsumer '{Name}' Loop", ex);
-						}
-					}
-				}
-				finally {
-					if (noGC) {
-						try {
-							GC.EndNoGCRegion();
-						}
-						catch { }
-					}
-				}
-
-				foreach (var item in dequeued) {
+				while (DataQueue.TryDequeue(out var item)) {
 					try {
 						Callback(item);
 					}

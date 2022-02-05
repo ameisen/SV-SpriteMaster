@@ -55,6 +55,25 @@ sealed class Resampler {
 		return hash;
 	}
 
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static ulong? GetHash(in SpriteInfo.Initializer input, TextureType textureType) {
+		if (!input.Hash.HasValue) {
+			return null;
+		}
+
+		// Need to make Hashing.CombineHash work better.
+		ulong hash = input.Hash.Value;
+
+		if (Config.Resample.EnableDynamicScale) {
+			hash = Hashing.Combine(hash, HashULong(input.ExpectedScale));
+		}
+
+		if (textureType == TextureType.Sprite) {
+			hash = Hashing.Combine(hash, input.Bounds.Extent.GetLongHashCode());
+		}
+		return hash;
+	}
+
 	private static readonly WeakSet<Texture2D> GarbageMarkSet = Config.Garbage.CollectAccountUnownedTextures ? new() : null!;
 
 	private const int WaterBlock = 4;
@@ -467,7 +486,7 @@ sealed class Resampler {
 			};
 		}
 
-		var hashString = hash.ToString64();
+		var hashString = hash.ToString("x");
 		var cachePath = FileCache.GetPath($"{hashString}.cache");
 
 		var inputSize = input.TextureType switch {

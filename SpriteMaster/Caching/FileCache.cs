@@ -35,7 +35,7 @@ static class FileCache {
 	internal static string GetPath(params string[] path) => Path.Combine(LocalDataPath, Path.Combine(path));
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static string GetDumpPath(params string[] path) => Path.Combine(DumpPath, Path.Combine(path));
+	internal static string GetDumpPath(params string[] path) => Path.Combine(DumpPath, Path.Combine(path)).Replace('=', '_');
 
 	[StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Unicode)]
 	private struct CacheHeader {

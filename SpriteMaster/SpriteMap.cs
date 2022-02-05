@@ -80,6 +80,7 @@ static class SpriteMap {
 			}
 			else if (internalResult.PreviousSpriteInstance?.IsReady ?? false) {
 				result = internalResult.PreviousSpriteInstance;
+				result.Resurrect(texture, internalResult.SpriteMapHash);
 				return true;
 			}
 		}
@@ -122,11 +123,17 @@ static class SpriteMap {
 		}
 
 		foreach (var instance in instanceDisposeList) {
-			instance.Dispose();
+			instance.Suspend();
 		}
 
 		result = null;
 		return false;
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static void DirectRemove(ManagedSpriteInstance instance) {
+		RemoveInternal(instance);
+		instance?.Suspend();
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -144,7 +151,7 @@ static class SpriteMap {
 				}
 			}
 
-			instance?.Dispose();
+			instance?.Suspend();
 		}
 		finally {
 			if (spriteInstance.Texture is not null && !spriteInstance.Texture.IsDisposed) {
@@ -168,7 +175,7 @@ static class SpriteMap {
 				}
 			}
 
-			instance?.Dispose();
+			instance?.Suspend();
 		}
 		finally {
 			//if (spriteInstance.Texture is not null && !spriteInstance.Texture.IsDisposed) {
@@ -234,13 +241,13 @@ static class SpriteMap {
 						}
 					}
 					else {
-						meta.ClearSpriteInstanceTable();
+						meta.ClearSpriteInstanceTable(true);
 					}
 				}
 				// : TODO dispose sprites?
 
 				foreach (var instance in instanceDisposeList) {
-					instance.Dispose();
+					instance.Suspend();
 				}
 			}
 		}
@@ -298,7 +305,7 @@ static class SpriteMap {
 					)
 				) {
 					if (spriteInstance.Reference.TryGetTarget(out var reference)) {
-						spriteInstance.Dispose();
+						spriteInstance.Suspend();
 					}
 				}
 			}

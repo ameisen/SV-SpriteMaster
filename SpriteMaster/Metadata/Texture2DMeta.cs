@@ -5,6 +5,7 @@ using SpriteMaster.Resample;
 using SpriteMaster.Types;
 using SpriteMaster.Types.Interlocking;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -14,14 +15,20 @@ namespace SpriteMaster.Metadata;
 
 // TODO : This needs a Finalize thread dispatcher, and needs to remove cached data for it from the ResidentCache.
 sealed class Texture2DMeta : IDisposable {
-	private readonly SpriteDictionary SpriteInstanceTable = new();
+	private static readonly ConcurrentDictionary<ulong, SpriteDictionary> SpriteDictionaries = new();
+	private readonly SpriteDictionary SpriteInstanceTable;
 
 	internal IReadOnlyDictionary<ulong, ManagedSpriteInstance> GetSpriteInstanceTable() => SpriteInstanceTable;
 
-	internal void ClearSpriteInstanceTable() {
+	internal void ClearSpriteInstanceTable(bool allowSuspend = false) {
 		using (Lock.Write) {
 			foreach (var spriteInstance in SpriteInstanceTable.Values) {
-				spriteInstance?.Dispose();
+				if (allowSuspend) {
+					spriteInstance?.Suspend();
+				}
+				else {
+					spriteInstance?.Dispose();
+				}
 			}
 			SpriteInstanceTable.Clear();
 		}
@@ -51,7 +58,8 @@ sealed class Texture2DMeta : IDisposable {
 	/// <summary>The current (static) ID, incremented every time a new <see cref="Texture2DMeta"/> is created.</summary>
 	private static ulong CurrentID = 0U;
 	/// <summary>Whenever a new <see cref="Texture2DMeta"/> is created, <see cref="CurrentID"/> is incremented and <see cref="UniqueIDString"/> is set to a string representation of it.</summary>
-	private readonly string UniqueIDString = Interlocked.Increment(ref CurrentID).ToString64();
+	private readonly ulong MetaID = Interlocked.Increment(ref CurrentID);
+	private readonly string UniqueIDString;
 
 	internal readonly SharedLock Lock = new(LockRecursionPolicy.SupportsRecursion);
 
@@ -68,9 +76,11 @@ sealed class Texture2DMeta : IDisposable {
 	internal InterlockedULong Hash { get; private set; } = 0;
 
 	internal Texture2DMeta(Texture2D texture) {
+		UniqueIDString = MetaID.ToString64();
 		IsCompressed = texture.Format.IsCompressed();
 		Format = texture.Format;
 		Size = texture.Extent();
+		SpriteInstanceTable = SpriteDictionaries.GetOrAdd(MetaID, id => new());
 	}
 
 	// TODO : this presently is not threadsafe.
@@ -213,7 +223,7 @@ sealed class Texture2DMeta : IDisposable {
 					using (Lock.Write) {
 						_CachedRawData.SetTarget(null!);
 						_CachedData.SetTarget(null!);
-						ResidentCache.Remove<byte[]>(UniqueIDString);
+						ResidentCache.Remove(UniqueIDString);
 					}
 				}
 				else {
@@ -287,11 +297,26 @@ sealed class Texture2DMeta : IDisposable {
 	~Texture2DMeta() => Dispose();
 
 	public void Dispose() {
-		ResourceManager.ReleasedTextureMetas.Push(UniqueIDString);
+		ResourceManager.ReleasedTextureMetas.Push(MetaID);
+		//ResourceManager.SuspendableSpriteInstances.Push(new(SpriteInstanceTable.Values));
+
 		GC.SuppressFinalize(this);
 	}
 
-	internal static void Cleanup(in string idString) {
-		ResidentCache.Remove<byte[]>(idString);
+	internal static void Cleanup(in ulong id) {
+		ResidentCache.Remove(id.ToString64());
+		if (SpriteDictionaries.Remove(id, out var instances)) {
+			foreach (var instance in instances.Values) {
+				instance.Suspend();
+			}
+		}
 	}
+
+	/*
+	internal static void Cleanup(in List<ManagedSpriteInstance> instances) {
+		foreach (var instance in instances) {
+			SpriteMap.DirectRemove(instance);
+		}
+	}
+	*/
 }
