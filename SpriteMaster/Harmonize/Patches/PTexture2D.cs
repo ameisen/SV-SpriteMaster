@@ -111,6 +111,8 @@ static class PTexture2D {
 			startIndex,
 			elementCount
 		);
+
+		TextureCache.Remove(__instance);
 	}
 
 	#endregion

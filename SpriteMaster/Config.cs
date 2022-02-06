@@ -406,6 +406,11 @@ static class Config {
 		internal static bool Enabled = true;
 	}
 
+	internal static class TextureCache {
+		[Comment("Should the experimental SMAPI texture cache patch be enabled?")]
+		internal static bool Enabled = true;
+	}
+
 	internal static class FileCache {
 		internal const bool Purge = false;
 		[Comment("Should the file cache be enabled?")]
