@@ -115,7 +115,7 @@ sealed class Texture2DMeta : IDisposable {
 
 			if (data.IsNull) {
 				if (!hasCachedData) {
-					Debug.TraceLn($"Clearing '{reference.SafeName(DrawingColor.LightYellow)}' Cache");
+					Debug.Trace($"Clearing '{reference.SafeName(DrawingColor.LightYellow)}' Cache");
 				}
 				CachedRawData = null;
 				return;
@@ -131,11 +131,11 @@ sealed class Texture2DMeta : IDisposable {
 					forcePurge = true;
 				}
 				else if (!bounds.HasValue && data.Offset == 0 && data.Length == refSize) {
-					Debug.TraceLn($"{(hasCachedData ? "Overriding" : "Setting")} '{reference.SafeName(DrawingColor.LightYellow)}' Cache in Purge: {bounds.HasValue}, {data.Offset}, {data.Length}");
+					Debug.Trace($"{(hasCachedData ? "Overriding" : "Setting")} '{reference.SafeName(DrawingColor.LightYellow)}' Cache in Purge: {bounds.HasValue}, {data.Offset}, {data.Length}");
 					CachedRawData = data.Data;
 				}
 				else if (!IsCompressed && (bounds.HasValue != (data.Offset != 0)) && CachedRawData is var currentData && currentData is not null) {
-					Debug.TraceLn($"{(hasCachedData ? "Updating" : "Setting")} '{reference.SafeName(DrawingColor.LightYellow)}' Cache in Purge: {bounds.HasValue}");
+					Debug.Trace($"{(hasCachedData ? "Updating" : "Setting")} '{reference.SafeName(DrawingColor.LightYellow)}' Cache in Purge: {bounds.HasValue}");
 
 					if (bounds.HasValue) {
 						var source = data.Data.AsSpan<uint>();
@@ -161,7 +161,7 @@ sealed class Texture2DMeta : IDisposable {
 				}
 				else {
 					if (hasCachedData) {
-						Debug.TraceLn($"Forcing full '{reference.SafeName(DrawingColor.LightYellow)}' Purge");
+						Debug.Trace($"Forcing full '{reference.SafeName(DrawingColor.LightYellow)}' Purge");
 					}
 					forcePurge = true;
 				}

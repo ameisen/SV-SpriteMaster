@@ -39,6 +39,10 @@ static class WatchDog {
 	}
 
 	internal static void Tick() {
+		if (!Config.WatchDog.Enabled) {
+			return;
+		}
+
 		var thread = Thread.CurrentThread;
 		var timestamp = Stopwatch.GetTimestamp();
 
@@ -54,6 +58,10 @@ static class WatchDog {
 	}
 
 	internal static void SetWorkingState(bool state) {
+		if (!Config.WatchDog.Enabled) {
+			return;
+		}
+
 		Tick();
 		ThreadWorkingState[Thread.CurrentThread] = state;
 	}

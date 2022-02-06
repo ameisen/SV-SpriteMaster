@@ -35,11 +35,13 @@ static partial class DrawState {
 	private static class Defaults {
 		internal static readonly SamplerState SamplerState = SamplerState.LinearClamp;
 		internal static readonly BlendState BlendState = BlendState.AlphaBlend;
+		internal static readonly RasterizerState RasterizerState = RasterizerState.CullCounterClockwise;
 		internal const SpriteSortMode SortMode = SpriteSortMode.Deferred;
 	}
 
 	internal static SamplerState CurrentSamplerState = Defaults.SamplerState;
 	internal static BlendState CurrentBlendState = Defaults.BlendState;
+	internal static RasterizerState CurrentRasterizerState = Defaults.RasterizerState;
 	internal static SpriteSortMode CurrentSortMode = Defaults.SortMode;
 
 	internal static readonly Condition TriggerGC = new(false);
@@ -133,8 +135,9 @@ static partial class DrawState {
 		}
 
 		CurrentSortMode = sortMode;
-		CurrentSamplerState = ConditionallyClone(samplerState, Defaults.SamplerState);
-		CurrentBlendState = ConditionallyClone(blendState, Defaults.BlendState);
+		CurrentSamplerState = samplerState ?? Defaults.SamplerState;// ConditionallyClone(samplerState, Defaults.SamplerState);
+		CurrentBlendState = blendState ?? Defaults.BlendState; // ConditionallyClone(blendState, Defaults.BlendState);
+		CurrentRasterizerState = rasterizerState ?? Defaults.RasterizerState;
 
 		CheckStates();
 

@@ -54,4 +54,7 @@ static class String {
 		var validLines = removeEmpty ? strings.WhereF(l => !l.IsBlank()) : strings.WhereF(l => l is not null);
 		return validLines;
 	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static bool EqualsInsensitive(this string str1, string str2) => str1.Equals(str2, System.StringComparison.InvariantCultureIgnoreCase);
 }

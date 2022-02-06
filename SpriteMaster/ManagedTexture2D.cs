@@ -65,7 +65,7 @@ sealed class ManagedTexture2D : InternalTexture2D {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private void OnParentDispose(Texture2D? referenceTexture) {
 		if (!IsDisposed) {
-			Debug.TraceLn($"Disposing ManagedTexture2D '{Name}'");
+			Debug.Trace($"Disposing ManagedTexture2D '{Name}'");
 			Dispose();
 		}
 

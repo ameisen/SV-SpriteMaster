@@ -208,7 +208,7 @@ static class FileCache {
 							try { File.Delete(path); } catch { }
 							return false;
 						case IOException iox when WasLocked(iox):
-							Debug.TraceLn($"File was locked when trying to load cache file '{path}': {ex} - {ex.Message} [{retries} retries]");
+							Debug.Trace($"File was locked when trying to load cache file '{path}': {ex} - {ex.Message} [{retries} retries]");
 							Thread.Sleep(Config.FileCache.LockSleepMS);
 							break;
 					}
@@ -238,7 +238,6 @@ static class FileCache {
 
 		TaskFactory.StartNew(obj => {
 			var data = (byte[])obj!;
-			using var _ = new AsyncTracker($"File Cache Write {path}");
 			bool failure = false;
 			try {
 				long start_time = Config.FileCache.Profile ? DateTime.Now.Ticks : 0L;
@@ -284,7 +283,7 @@ static class FileCache {
 				}
 			}
 			catch (IOException ex) {
-				Debug.TraceLn($"Failed to write texture cache file '{path}': {ex.Message}");
+				Debug.Trace($"Failed to write texture cache file '{path}': {ex.Message}");
 				failure = true;
 			}
 			catch (Exception ex) {

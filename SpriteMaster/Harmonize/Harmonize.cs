@@ -89,7 +89,7 @@ static class Harmonize {
 			}
 
 			string methodName = GetMethodName(method, attribute);
-			Debug.TraceLn($"Patching Method {GetFullMethodName(type, method, attribute)} ({method.GetFullName()})");
+			Debug.Trace($"Patching Method {GetFullMethodName(type, method, attribute)} ({method.GetFullName()})");
 
 			var instanceType = attribute.Type;
 			if (instanceType is null) {
@@ -113,7 +113,7 @@ static class Harmonize {
 					break;
 				case Generic.Struct:
 					foreach (var structType in StructTypes) {
-						//Debug.TraceLn($"\tGeneric Type: {structType.FullName}");
+						//Debug.Trace($"\tGeneric Type: {structType.FullName}");
 						Patch(
 							@this,
 							instanceType,
@@ -153,7 +153,7 @@ static class Harmonize {
 
 	internal static void ApplyPatches(this Harmony @this) {
 		Contracts.AssertNotNull(@this);
-		Debug.TraceLn("Applying Patches");
+		Debug.Trace("Applying Patches");
 		var assembly = typeof(Harmonize).Assembly;
 		foreach (var type in assembly.GetTypes()) {
 			var typeAttributes = type.GetCustomAttributes<HarmonizeFinalizeCatcherFixedAttribute>();
@@ -175,7 +175,7 @@ static class Harmonize {
 				);
 			}
 		}
-		Debug.TraceLn("Done Applying Patches");
+		Debug.Trace("Done Applying Patches");
 	}
 
 	private static Type[] GetArguments(this MethodInfo method) {

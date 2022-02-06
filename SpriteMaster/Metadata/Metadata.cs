@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Types;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Metadata;
@@ -19,6 +20,6 @@ static class Metadata {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static bool TryMeta(this Texture2D @this, out Texture2DMeta? value) => Texture2DMetaTable.TryGetValue(@this, out value);
+	internal static bool TryMeta(this Texture2D @this, [NotNullWhen(true)] out Texture2DMeta? value) => Texture2DMetaTable.TryGetValue(@this, out value);
 }
 

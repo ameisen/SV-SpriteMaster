@@ -163,7 +163,7 @@ sealed class SpriteInfo : IDisposable {
 			if (refData is null) {
 				// TODO : Switch this around to use ReadOnlySequence so our hash is specific to the sprite
 				refData = new byte[reference.SizeBytes()];
-				Debug.TraceLn($"Reloading Texture Data (not in cache): {reference.SafeName(DrawingColor.LightYellow)}");
+				Debug.Trace($"Reloading Texture Data (not in cache): {reference.SafeName(DrawingColor.LightYellow)}");
 				reference.GetData(refData);
 				reference.Meta().CachedRawData = refData;
 				if (refMeta.IsCompressed) {

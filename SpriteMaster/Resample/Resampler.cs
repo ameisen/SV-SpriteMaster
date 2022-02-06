@@ -330,7 +330,7 @@ sealed class Resampler {
 				throw new Exception($"Resampled texture size {scaledSize} is smaller than expected {scaledSizeClamped}");
 			}
 
-			Debug.TraceLn($"Sprite {texture.SafeName()} requires rescaling");
+			Debug.Trace($"Sprite {texture.SafeName()} requires rescaling");
 			// This should be incredibly rare - we very rarely need to scale back down.
 			// I don't actually have a solution for this case.
 			scaledSizeClamped = scaledSize;

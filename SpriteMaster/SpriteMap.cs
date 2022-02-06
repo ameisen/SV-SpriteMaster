@@ -1,5 +1,6 @@
 ﻿#define WITH_SPRITE_REFERENCE_SET
 
+using LinqFasterer;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
@@ -155,7 +156,7 @@ static class SpriteMap {
 		}
 		finally {
 			if (spriteInstance.Texture is not null && !spriteInstance.Texture.IsDisposed) {
-				Debug.TraceLn($"Disposing Active HD Texture: {spriteInstance.SafeName()}");
+				Debug.Trace($"Disposing Active HD Texture: {spriteInstance.SafeName()}");
 
 				//spriteInstance.Texture.Dispose();
 			}
@@ -179,7 +180,7 @@ static class SpriteMap {
 		}
 		finally {
 			//if (spriteInstance.Texture is not null && !spriteInstance.Texture.IsDisposed) {
-			//	Debug.TraceLn($"Disposing Active HD Texture: {spriteInstance.SafeName()}");
+			//	Debug.Trace($"Disposing Active HD Texture: {spriteInstance.SafeName()}");
 
 				//spriteInstance.Texture.Dispose();
 			//}
@@ -202,7 +203,7 @@ static class SpriteMap {
 				}
 
 				// TODO : handle sourceRectangle meaningfully.
-				Debug.TraceLn($"Purging Texture {reference.SafeName()}");
+				Debug.Trace($"Purging Texture {reference.SafeName()}");
 
 				bool hasSourceRect = sourceRectangle.HasValue;
 
@@ -266,7 +267,7 @@ static class SpriteMap {
 				}
 
 				// TODO : handle sourceRectangle meaningfully.
-				Debug.TraceLn($"Invalidating Texture {reference.SafeName()}");
+				Debug.Trace($"Invalidating Texture {reference.SafeName()}");
 
 				foreach (var pairs in spriteTable) {
 					var spriteInstance = pairs.Value;
@@ -282,6 +283,13 @@ static class SpriteMap {
 		catch { }
 	}
 
+	private static readonly string[] Seasons = new [] {
+		"spring",
+		"summer",
+		"fall",
+		"winter"
+	};
+
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void SeasonPurge(string season) {
 		if (!Config.Garbage.SeasonalPurge) {
@@ -295,15 +303,7 @@ static class SpriteMap {
 				}
 
 				var textureName = spriteInstance.SafeName().ToLowerInvariant();
-				if (
-					!textureName.Contains(season) &&
-					(
-						textureName.Contains("spring") ||
-						textureName.Contains("summer") ||
-						textureName.Contains("fall") ||
-						textureName.Contains("winter")
-					)
-				) {
+				if (!textureName.Contains(season) && Seasons.AnyF(s => textureName.Contains(s))) {
 					if (spriteInstance.Reference.TryGetTarget(out var reference)) {
 						spriteInstance.Suspend();
 					}
@@ -316,9 +316,8 @@ static class SpriteMap {
 	internal static Dictionary<Texture2D, List<ManagedSpriteInstance>> GetDump() {
 		var result = new Dictionary<Texture2D, List<ManagedSpriteInstance>>();
 
-		/*
 		foreach (var spriteInstance in SpriteInstanceReferences) {
-			if (spriteInstance is not null && spriteInstance.Reference.TryGetTarget(out var referenceTexture)) {
+			if (spriteInstance?.Reference.TryGetTarget(out var referenceTexture) ?? false) {
 				if (!result.TryGetValue(referenceTexture, out var resultList)) {
 					resultList = new List<ManagedSpriteInstance>();
 					result.Add(referenceTexture, resultList);
@@ -326,7 +325,6 @@ static class SpriteMap {
 				resultList.Add(spriteInstance);
 			}
 		}
-		*/
 
 		return result;
 	}

@@ -36,11 +36,11 @@ static class NVTT {
 					newDL.error();
 				}
 				catch {
-					Debug.TraceLn($"Failed DL: {dlType}");
+					Debug.Trace($"Failed DL: {dlType}");
 					continue;
 				}
 				dl = newDL;
-				Debug.TraceLn($"New DL: {dlType}");
+				Debug.Trace($"New DL: {dlType}");
 				break;
 			}
 
@@ -96,7 +96,7 @@ mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null)
 	)]
 	internal static bool GetAppBaseDirectory(ref string? __result) {
 		__result = SpriteMaster.AssemblyPath;
-		Debug.TraceLn($"GetAppBaseDirectory: {__result}");
+		Debug.Trace($"GetAppBaseDirectory: {__result}");
 		return false;
 	}
 

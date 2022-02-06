@@ -16,7 +16,20 @@ static class PlatformRenderBatch {
 		}
 
 		if (texture is ManagedTexture2D managedTexture/* && managedTexture.Texture != null*/) {
-			return SamplerState.LinearClamp;
+			if (reference.AddressU == TextureAddressMode.Wrap && reference.AddressV == TextureAddressMode.Wrap) {
+				return SamplerState.LinearWrap;
+			}
+			/*
+			else if (reference.AddressU == TextureAddressMode.Border && reference.AddressV == TextureAddressMode.Border) {
+
+			}
+			else if (reference.AddressU == TextureAddressMode.Mirror && reference.AddressV == TextureAddressMode.Mirror) {
+
+			}
+			*/
+			else {
+				return SamplerState.LinearClamp;
+			}
 		}
 
 		return reference;

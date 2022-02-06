@@ -39,7 +39,7 @@ static class Garbage {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void MarkCompact() {
-		Debug.TraceLn("Marking for Compact");
+		Debug.Trace("Marking for Compact");
 		try {
 			GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
 		}
@@ -53,7 +53,7 @@ static class Garbage {
 		try {
 			ManualCollection = true;
 
-			Debug.TraceLn("Garbage Collecting");
+			Debug.Trace("Garbage Collecting");
 			if (compact) {
 				MarkCompact();
 			}

@@ -45,7 +45,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 		if (texture is InternalTexture2D) {
 			if (!meta.TracePrinted) {
 				meta.TracePrinted = true;
-				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', Is Internal Texture");
+				Debug.Trace($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', Is Internal Texture");
 			}
 			meta.Validation = false;
 			if (clean) {
@@ -62,7 +62,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 		) {
 			if (!meta.TracePrinted) {
 				meta.TracePrinted = true;
-				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', Is System Render Target");
+				Debug.Trace($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', Is System Render Target");
 			}
 			meta.Validation = false;
 			if (clean) {
@@ -77,7 +77,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 		if (texture is RenderTarget2D) {
 			if (!meta.TracePrinted) {
 				meta.TracePrinted = true;
-				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', Is Render Target");
+				Debug.Trace($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', Is Render Target");
 			}
 			meta.Validation = false;
 			if (clean) {
@@ -89,7 +89,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 		if (Math.Max(texture.Width, texture.Height) <= Config.Resample.MinimumTextureDimensions) {
 			if (!meta.TracePrinted) {
 				meta.TracePrinted = true;
-				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', Is Too Small: ({texture.Extent().ToString(DrawingColor.Orange)} < {Config.Resample.MinimumTextureDimensions.ToString(DrawingColor.Orange)})");
+				Debug.Trace($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', Is Too Small: ({texture.Extent().ToString(DrawingColor.Orange)} < {Config.Resample.MinimumTextureDimensions.ToString(DrawingColor.Orange)})");
 			}
 			meta.Validation = false;
 			if (clean) {
@@ -101,7 +101,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 		if (texture.Area() == 0) {
 			if (!meta.TracePrinted) {
 				meta.TracePrinted = true;
-				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', Zero Area (Degenerate)");
+				Debug.Trace($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', Zero Area (Degenerate)");
 			}
 			meta.Validation = false;
 			if (clean) {
@@ -114,7 +114,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 		if (texture.IsDisposed || texture.GraphicsDevice.IsDisposed) {
 			if (!meta.TracePrinted) {
 				meta.TracePrinted = true;
-				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', Is Zombie");
+				Debug.Trace($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', Is Zombie");
 			}
 			meta.Validation = false;
 			if (clean) {
@@ -127,7 +127,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 		if (Config.IgnoreUnknownTextures && texture.Anonymous()) {
 			if (!meta.TracePrinted) {
 				meta.TracePrinted = true;
-				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', Is Unknown Texture");
+				Debug.Trace($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', Is Unknown Texture");
 			}
 			meta.Validation = false;
 			if (clean) {
@@ -139,7 +139,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 		if (texture.LevelCount > 1) {
 			if (!meta.TracePrinted) {
 				meta.TracePrinted = true;
-				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', Multi-Level Textures Unsupported: {texture.LevelCount.ToString(DrawingColor.Orange)} levels");
+				Debug.Trace($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', Multi-Level Textures Unsupported: {texture.LevelCount.ToString(DrawingColor.Orange)} levels");
 			}
 			meta.Validation = false;
 			return false;
@@ -148,7 +148,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 		if (!HasLegalFormat(texture)) {
 			if (!meta.TracePrinted) {
 				meta.TracePrinted = true;
-				Debug.TraceLn($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', Format Unsupported: {texture.Format.ToString(DrawingColor.Orange)}");
+				Debug.Trace($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', Format Unsupported: {texture.Format.ToString(DrawingColor.Orange)}");
 			}
 			meta.Validation = false;
 			if (clean) {
@@ -162,7 +162,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 				if (texture.SafeName().StartsWith(blacklisted)) {
 					if (!meta.TracePrinted) {
 						meta.TracePrinted = true;
-						Debug.TraceLn($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', Is Blacklisted");
+						Debug.Trace($"Not Scaling Texture '{texture.SafeName(DrawingColor.LightYellow)}', Is Blacklisted");
 					}
 					meta.Validation = false;
 					if (clean) {
@@ -313,7 +313,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 			var estimatedDuration = GetTimer(texture: texture, async: useAsync, out bool cached).Estimate((int)texture.Format.SizeBytes(source.Area));
 			isCached = cached;
 			if (estimatedDuration > TimeSpan.Zero && estimatedDuration > remainingTime) {
-				Debug.TraceLn($"Not enough frame time left to begin resampling {getNameString()} ({estimatedDuration.TotalMilliseconds.ToString(DrawingColor.LightBlue)} ms >= {remainingTime?.TotalMilliseconds.ToString(DrawingColor.LightBlue)} ms)");
+				Debug.Trace($"Not enough frame time left to begin resampling {getNameString()} ({estimatedDuration.TotalMilliseconds.ToString(DrawingColor.LightBlue)} ms >= {remainingTime?.TotalMilliseconds.ToString(DrawingColor.LightBlue)} ms)");
 				return currentInstance;
 			}
 		}
@@ -327,7 +327,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 
 		// If this is null, it can only happen due to something being blocked, so we should try again later.
 		if (spriteInfoInitializer.ReferenceData is null) {
-			Debug.TraceLn($"Texture Data fetch for {getNameString()} was {"blocked".Pastel(DrawingColor.Red)}; retrying later#{getRemainingTime()}");
+			Debug.Trace($"Texture Data fetch for {getNameString()} was {"blocked".Pastel(DrawingColor.Red)}; retrying later#{getRemainingTime()}");
 			return currentInstance;
 		}
 
@@ -360,7 +360,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 			if (!string.IsNullOrEmpty(remainingTimeStr)) {
 				remainingTimeStr = $"({remainingTimeStr} was remaining)";
 			}
-			Debug.TraceLn($"Rescale Duration {getNameString()}: {(MeanTimeSpan / TimeSpanSamples).TotalMilliseconds.ToString(DrawingColor.LightYellow)} ms {remainingTimeStr}");
+			Debug.Trace($"Rescale Duration {getNameString()}: {(MeanTimeSpan / TimeSpanSamples).TotalMilliseconds.ToString(DrawingColor.LightYellow)} ms {remainingTimeStr}");
 			averager.Add(source.Area, duration);
 		}
 	}
@@ -436,14 +436,14 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 	internal static void PurgeTextures(long purgeTotalBytes) {
 		Contracts.AssertPositive(purgeTotalBytes);
 
-		Debug.TraceLn($"Attempting to purge {purgeTotalBytes.AsDataSize()} from currently loaded textures");
+		Debug.Trace($"Attempting to purge {purgeTotalBytes.AsDataSize()} from currently loaded textures");
 
 		lock (RecentAccessList) {
 			long totalPurge = 0;
 			while (purgeTotalBytes > 0 && RecentAccessList.Count > 0) {
 				if (RecentAccessList.Last?.Value.TryGetTarget(out var target) ?? false) {
 					var textureSize = (long)target.MemorySize;
-					Debug.TraceLn($"Purging {target.SafeName()} ({textureSize.AsDataSize()})");
+					Debug.Trace($"Purging {target.SafeName()} ({textureSize.AsDataSize()})");
 					purgeTotalBytes -= textureSize;
 					totalPurge += textureSize;
 					target.RecentAccessNode = null;
@@ -451,7 +451,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 				}
 				RecentAccessList.RemoveLast();
 			}
-			Debug.TraceLn($"Total Purged: {totalPurge.AsDataSize()}");
+			Debug.Trace($"Total Purged: {totalPurge.AsDataSize()}");
 		}
 	}
 
@@ -540,16 +540,16 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 			var nameString = this.SafeName(DrawingColor.LightYellow);
 			switch (TexType) {
 				case TextureType.Sprite:
-					Debug.TraceLn($"Creating Sprite [{formatString} x{ReferenceScale}]: {nameString} {SourceRectangle}");
+					Debug.Trace($"Creating Sprite [{formatString} x{ReferenceScale}]: {nameString} {SourceRectangle}");
 					break;
 				case TextureType.Image:
-					Debug.TraceLn($"Creating Image [{formatString} x{ReferenceScale}]: {nameString}");
+					Debug.Trace($"Creating Image [{formatString} x{ReferenceScale}]: {nameString}");
 					break;
 				case TextureType.SlicedImage:
-					Debug.TraceLn($"Creating Sliced Image [{formatString} x{ReferenceScale}]: {nameString}");
+					Debug.Trace($"Creating Sliced Image [{formatString} x{ReferenceScale}]: {nameString}");
 					break;
 				default:
-					Debug.TraceLn($"Creating UNKNOWN [{formatString} x{ReferenceScale}]: {nameString}");
+					Debug.Trace($"Creating UNKNOWN [{formatString} x{ReferenceScale}]: {nameString}");
 					break;
 			}
 		}
@@ -669,7 +669,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private void OnParentDispose(Texture2D? texture) {
-		Debug.TraceLn($"Parent Texture Disposing: {texture?.SafeName() ?? "[NULL]"}, suspending/disposing ManagedSpriteInstance");
+		Debug.Trace($"Parent Texture Disposing: {texture?.SafeName() ?? "[NULL]"}, suspending/disposing ManagedSpriteInstance");
 
 		Suspend();
 	}
@@ -701,7 +701,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 		Suspended = true;
 		SuspendedSpriteCache.Add(this);
 
-		Debug.Warning($"Sprite Instance '{Name}' {"Suspended".Pastel(System.Drawing.Color.LightGoldenrodYellow)}");
+		Debug.Trace($"Sprite Instance '{Name}' {"Suspended".Pastel(System.Drawing.Color.LightGoldenrodYellow)}");
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -723,7 +723,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 		SpriteMapHash = spriteMapHash;
 		texture.Meta().ReplaceInSpriteInstanceTable(SpriteMapHash, this);
 
-		Debug.Warning($"Sprite Instance '{Name}' {"Resurrected".Pastel(System.Drawing.Color.LightCyan)}");
+		Debug.Trace($"Sprite Instance '{Name}' {"Resurrected".Pastel(System.Drawing.Color.LightCyan)}");
 
 		return true;
 	}

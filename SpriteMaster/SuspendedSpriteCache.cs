@@ -15,7 +15,7 @@ static class SuspendedSpriteCache {
 
 		var key = instance.Hash.ToString64();
 		Cache.Set(key, instance);
-		Debug.Warning($"+ SuspendedSpriteCache Size: {Cache.Count.ToString(System.Drawing.Color.LightCoral)}");
+		Debug.Trace($"SuspendedSpriteCache Size: {Cache.Count.ToString(System.Drawing.Color.LightCoral)}");
 	}
 
 	internal static ManagedSpriteInstance? Fetch(ulong hash) {
@@ -34,7 +34,6 @@ static class SuspendedSpriteCache {
 
 	internal static bool Remove(ulong hash) {
 		var result = Cache.Remove(hash.ToString64()) is not null;
-		Debug.Warning($"- SuspendedSpriteCache Size: {Cache.Count.ToString(System.Drawing.Color.LightCoral)}");
 		return result;
 	}
 

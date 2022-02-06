@@ -17,8 +17,10 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace SpriteMaster;
 
@@ -321,9 +323,16 @@ public sealed class SpriteMaster : Mod {
 		MemoryPressureThread?.Start();
 		GarbageCollectThread?.Start();
 
-		if (Game1.lightmap is not null) {
-			Game1.lightmap.Meta().IsSystemRenderTarget = true;
+		static void SetSystemTarget(XNA.Graphics.RenderTarget2D? target) {
+			if (target is null) {
+				return;
+			}
+			target.Meta().IsSystemRenderTarget = true;
 		}
+
+		SetSystemTarget(Game1.lightmap);
+		SetSystemTarget(Game1.game1.screen);
+		SetSystemTarget(Game1.game1.uiScreen);
 
 		// TODO : Iterate deeply with reflection over 'StardewValley' namespace to find any Texture2D objects sitting around
 
@@ -413,24 +422,63 @@ public sealed class SpriteMaster : Mod {
 		Garbage.EnterInteractive();
 	}
 
-	private void OnGameLaunched() {
+	private const string UnderTestingMessage = "which is still in testing under SpriteMaster - results may vary";
+	private static readonly (string UID, string Name, string Message)[] WarnFrameworks = new (string UID, string Name, string Message)[] {
+		(ModUID.ContentPatcherAnimations, "Content Patcher Animations", UnderTestingMessage),
+		(ModUID.DynamicGameAssets, "Dynamic Game Assets", UnderTestingMessage),
+	};
+
+	[MethodImpl(Runtime.MethodImpl.RunOnce)]
+	private void CheckMods() {
+		var frameworkedMods = new Dictionary<string, List<IModInfo>>();
+
 		foreach (var mod in Helper.ModRegistry.GetAll()) {
 			if (mod is null) {
 				continue;
 			}
 			var manifest = mod.Manifest;
 
-			if (manifest.Dependencies.AnyF(d => d.UniqueID == ModUID.ContentPatcherAnimations) || manifest.ContentPackFor?.UniqueID == ModUID.ContentPatcherAnimations) {
-				Debug.Warning($"Mod '{manifest.Name}' has a dependency on Content Patcher Animations ({ModUID.ContentPatcherAnimations}), which is presently unsupported by SpriteMaster");
+			if (manifest is null) {
+				continue;
 			}
 
-			if (manifest.Dependencies.AnyF(d => d.UniqueID == ModUID.DynamicGameAssets) || manifest.ContentPackFor?.UniqueID == ModUID.DynamicGameAssets) {
-				Debug.Warning($"Mod '{manifest.Name}' has a dependency on Dynamic Game Assets ({ModUID.DynamicGameAssets}), which is presently not fully supported by SpriteMaster");
+			foreach (var framework in WarnFrameworks) {
+				if (manifest.Dependencies.AnyF(d => d.UniqueID == framework.UID) || manifest.ContentPackFor?.UniqueID == framework.UID) {
+					if (!frameworkedMods.TryGetValue(framework.UID, out var list)) {
+						list = new();
+						frameworkedMods.Add(framework.UID, list);
+					}
+					list.Add(mod);
+					break;
+				}
 			}
 		}
 
+		foreach (var modsPair in frameworkedMods) {
+			if (modsPair.Value.Count == 0) {
+				continue;
+			}
+
+			var framework = WarnFrameworks.FirstF(framework => framework.UID == modsPair.Key);
+
+			var sb = new StringBuilder();
+			sb.AppendLine($"The following mods have a dependency on {framework.Name} ({framework.UID}), {framework.Message}:");
+
+			foreach (var mod in modsPair.Value) {
+				sb.AppendLine($"\t{mod.Manifest.Name} ({mod.Manifest.UniqueID})");
+			}
+
+			Debug.Warning(sb.ToString());
+		}
+	}
+
+	private void OnGameLaunched() {
+		using var modCheckTask = Task.Run(CheckMods);
+
 		Debug.Trace("Waiting for FileCache to initialize...");
 		FileCache.Initialized.Wait();
+
+		modCheckTask.Wait();
 
 		ForceGarbageCollect();
 		ManagedSpriteInstance.ClearTimers();
@@ -441,8 +489,8 @@ public sealed class SpriteMaster : Mod {
 		// Do a full GC at the start of each day
 		Garbage.Collect(compact: true, blocking: true, background: false);
 
-		var season = SDate.Now().Season.ToLower();
-		if (season != CurrentSeason) {
+		var season = SDate.Now().Season;
+		if (!season.EqualsInsensitive(CurrentSeason)) {
 			CurrentSeason = season;
 			SpriteMap.SeasonPurge(season.ToLowerInvariant());
 		}
@@ -460,7 +508,7 @@ public sealed class SpriteMaster : Mod {
 	}
 
 	private void ConfigureHarmony() {
-		var instance = new Harmony($"DigitalCarbide.${Config.ModuleName}");
+		var instance = new Harmony(ModManifest.UniqueID);
 		instance.ApplyPatches();
 	}
 

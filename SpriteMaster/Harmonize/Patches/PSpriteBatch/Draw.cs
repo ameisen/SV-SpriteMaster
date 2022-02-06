@@ -3,6 +3,7 @@ using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
 using SpriteMaster.Types;
 using System;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
@@ -230,6 +231,10 @@ static class Draw {
 			var newScale = destinationSize / originalSize;
 			var newPosition = destinationBounds.OffsetF;
 
+			if ((destinationBounds.Invert.X || destinationBounds.Invert.Y) && DrawState.CurrentRasterizerState.CullMode == CullMode.CullCounterClockwiseFace) {
+				// Winding order is invalid
+				return Stop;
+			}
 			if (destinationBounds.Invert.X) {
 				effects ^= SpriteEffects.FlipHorizontally;
 			}
@@ -340,6 +345,8 @@ static class Draw {
 		uint factoredScaleN = (uint)factoredScale.NextInt();
 		return Resample.Scalers.IScaler.Current.ClampScale(factoredScaleN);
 	}
+
+	private static Vector2I test = (0, 1408);
 
 	internal static bool OnDraw(
 		this SpriteBatch @this,
