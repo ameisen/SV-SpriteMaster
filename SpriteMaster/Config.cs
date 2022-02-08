@@ -50,7 +50,7 @@ static class Config {
 
 	internal static string ConfigVersion = "";
 	[ConfigIgnore]
-	internal static string ClearConfigBefore = "0.13.0.0";
+	internal static string ClearConfigBefore = "0.13.0.100";
 
 	[ConfigIgnore]
 	internal static bool ForcedDisable = false;
@@ -404,7 +404,7 @@ static class Config {
 		[Comment("Should the suspended sprite cache be enabled?")]
 		internal static bool Enabled = true;
 		[Comment("What is the maximum size (in bytes) to store in suspended sprite cache?")]
-		internal static long MaxCacheSize = 1048576L;
+		internal static long MaxCacheSize = 0x2000_0000L;
 		//[Comment("What is the maximum number of sprites to store in suspended sprite cache?")]
 		//internal static long MaxCacheCount = 2_000L;
 	}

@@ -20,7 +20,7 @@ static class SuspendedSpriteCache {
 			TrimEvent.Wait();
 
 			var totalCachedSize = Interlocked.Read(ref TotalCachedSize);
-			if (Interlocked.Read(ref TotalCachedSize) < Config.SuspendedCache.MaxCacheSize) {
+			if (Interlocked.Read(ref TotalCachedSize) <= Config.SuspendedCache.MaxCacheSize) {
 				continue;
 			}
 
@@ -79,6 +79,10 @@ static class SuspendedSpriteCache {
 	}
 
 	internal static bool Remove(ManagedSpriteInstance instance) => Remove(instance.Hash);
+
+	internal static void Purge() {
+		Cache.Clear();
+	}
 
 	[SMAPIConsole.StatsMethod]
 	internal static string[] DumpStats() {

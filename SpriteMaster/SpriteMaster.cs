@@ -76,6 +76,7 @@ public sealed class SpriteMaster : Mod {
 				catch (InsufficientMemoryException) {
 					Debug.Warning($"Less than {(Config.Garbage.RequiredFreeMemory * 1024 * 1024).AsDataSize(decimals: 0)} available for block allocation, forcing full garbage collection");
 					ResidentCache.Purge();
+					SuspendedSpriteCache.Purge();
 					DrawState.TriggerGC.Set(true);
 					Thread.Sleep(10000);
 				}
