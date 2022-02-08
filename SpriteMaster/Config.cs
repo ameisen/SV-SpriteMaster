@@ -46,7 +46,7 @@ static class Config {
 	[ConfigIgnore]
 	internal static readonly Version CurrentVersionObj = typeof(Config).Assembly.GetName().Version ?? new Version("0.0.0.0");
 	[ConfigIgnore]
-	internal static readonly string CurrentVersion = CurrentVersionObj.ToString(3);
+	internal static readonly string CurrentVersion = CurrentVersionObj.ToString();
 
 	internal static string ConfigVersion = "";
 	[ConfigIgnore]

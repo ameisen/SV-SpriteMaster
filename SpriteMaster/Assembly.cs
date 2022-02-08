@@ -23,7 +23,7 @@ using System;
 [assembly: SecurityTransparent]
 [assembly: InternalsVisibleToAttribute("xBRZ")]
 [assembly: SecurityRules(SecurityRuleSet.Level2, SkipVerificationInFullTrust = true)]
-[assembly: ChangeList("5dc8a83:0.13.0-beta.1-1-g5dc8a83")]
+[assembly: ChangeList("0ddabf8:0.13.0-beta.1-2-g0ddabf8")]
 [assembly: BuildComputerName("Palatinate")]
 [assembly: FullVersion("0.13.0.101-beta.1")]
 // [assembly: SuppressUnmanagedCodeSecurity]
