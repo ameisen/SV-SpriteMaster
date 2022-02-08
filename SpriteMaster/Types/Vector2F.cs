@@ -210,6 +210,11 @@ unsafe partial struct Vector2F : ILongHash, ICloneable {
 		lhs.Y % rhs
 	);
 
+	internal readonly float LengthSquared => SystemVector2.Dot(NumericVector, NumericVector);
+	internal readonly float Length => (float)Math.Sqrt(LengthSquared);
+
+	internal readonly Vector2F Normalized => SystemVector2.Normalize(NumericVector);
+
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public override readonly string ToString() => $"{{{X}, {Y}}}";
 

@@ -305,7 +305,7 @@ static class SpriteMap {
 				var textureName = spriteInstance.SafeName().ToLowerInvariant();
 				if (!textureName.Contains(season) && Seasons.AnyF(s => textureName.Contains(s))) {
 					if (spriteInstance.Reference.TryGetTarget(out var reference)) {
-						spriteInstance.Suspend();
+						spriteInstance.Dispose();
 					}
 				}
 			}

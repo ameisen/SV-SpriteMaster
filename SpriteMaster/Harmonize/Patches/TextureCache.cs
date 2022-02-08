@@ -1,7 +1,9 @@
 ﻿using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Pastel;
+using SpriteMaster.Extensions;
 using SpriteMaster.Types;
+using System;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Runtime.CompilerServices;
@@ -11,14 +13,13 @@ using static SpriteMaster.Harmonize.Harmonize;
 namespace SpriteMaster.Harmonize.Patches;
 
 static class TextureCache {
-	private static readonly ConcurrentDictionary<string, XTexture2D> TextureCacheTable = new();
+	private static readonly ConcurrentDictionary<string, WeakReference<XTexture2D>> TextureCacheTable = new();
 	private static readonly ConditionalWeakTable<XTexture2D, string> TexturePaths = new();
-	private static readonly ThreadLocal<XTexture2D> CurrentLoadingTexture = new();
 	private static readonly WeakSet<XTexture2D> PremultipliedTable = new();
 
 	[Harmonize(typeof(XTexture2D), "FromStream", Harmonize.Fixation.Prefix, PriorityLevel.Last, platform: Harmonize.Platform.MonoGame, instance: false)]
 	public static bool FromStreamPre(ref XTexture2D __result, GraphicsDevice graphicsDevice, FileStream stream) {
-		if (!Config.TextureCache.Enabled) {
+		if (!Config.SMAPI.TextureCacheEnabled) {
 			return true;
 		}
 
@@ -26,7 +27,7 @@ static class TextureCache {
 
 		if (graphicsDevice is not null && stream is not null) {
 			var path = stream.Name;
-			if (TextureCacheTable.TryGetValue(path, out var texture)) {
+			if (TextureCacheTable.TryGetValue(path, out var textureRef) && textureRef.TryGetTarget(out var texture)) {
 				if (texture.IsDisposed || texture.GraphicsDevice != graphicsDevice) {
 					TextureCacheTable.TryRemove(path, out var _);
 					TexturePaths.Remove(texture);
@@ -44,7 +45,7 @@ static class TextureCache {
 
 	[Harmonize(typeof(XTexture2D), "FromStream", Harmonize.Fixation.Postfix, PriorityLevel.Last, platform: Harmonize.Platform.MonoGame, instance: false)]
 	public static void FromStreamPost(ref XTexture2D __result, GraphicsDevice graphicsDevice, FileStream stream) {
-		if (!Config.TextureCache.Enabled) {
+		if (!Config.SMAPI.TextureCacheEnabled) {
 			return;
 		}
 
@@ -56,21 +57,21 @@ static class TextureCache {
 
 		var result = __result;
 		PremultipliedTable.Remove(result);
-		TextureCacheTable.AddOrUpdate(stream.Name, result, (name, original) => result);
+		TextureCacheTable.AddOrUpdate(stream.Name, result.MakeWeak(), (name, original) => result.MakeWeak());
 		TexturePaths.AddOrUpdate(result, stream.Name);
 	}
 
-	private static readonly ThreadLocal<XTexture2D> CurrentPremultiplyingTexture = new();
+	private static readonly ThreadLocal<WeakReference<XTexture2D>> CurrentPremultiplyingTexture = new();
 
 	[Harmonize(
-	typeof(StardewModdingAPI.Framework.ModLoading.RewriteFacades.AccessToolsFacade),
-	"StardewModdingAPI.Framework.ContentManagers.ModContentManager",
-	"PremultiplyTransparency",
-	Harmonize.Fixation.Prefix,
-	Harmonize.PriorityLevel.First
-)]
+		typeof(StardewModdingAPI.Framework.ModLoading.RewriteFacades.AccessToolsFacade),
+		"StardewModdingAPI.Framework.ContentManagers.ModContentManager",
+		"PremultiplyTransparency",
+		Harmonize.Fixation.Prefix,
+		Harmonize.PriorityLevel.First
+	)]
 	public static bool PremultiplyTransparencyPre(ContentManager __instance, ref XTexture2D __result, XTexture2D texture) {
-		if (!Config.TextureCache.Enabled) {
+		if (!Config.SMAPI.TextureCacheEnabled) {
 			return true;
 		}
 
@@ -80,7 +81,7 @@ static class TextureCache {
 			return false;
 		}
 
-		CurrentPremultiplyingTexture.Value = texture;
+		CurrentPremultiplyingTexture.Value = texture.MakeWeak();
 		return true;
 	}
 
@@ -92,7 +93,7 @@ static class TextureCache {
 		Harmonize.PriorityLevel.First
 	)]
 	public static void PremultiplyTransparencyPost(ContentManager __instance, ref XTexture2D __result, XTexture2D texture) {
-		if (!Config.TextureCache.Enabled) {
+		if (!Config.SMAPI.TextureCacheEnabled) {
 			return;
 		}
 
@@ -101,12 +102,12 @@ static class TextureCache {
 	}
 
 	internal static void Remove(XTexture2D texture) {
-		if (!Config.TextureCache.Enabled) {
+		if (!Config.SMAPI.TextureCacheEnabled) {
 			return;
 		}
 
 		// Prevent an annoying circular logic problem
-		if (CurrentPremultiplyingTexture.Value == texture) {
+		if (CurrentPremultiplyingTexture.Value?.TryGetTarget(out var currentTexture) ?? false && currentTexture == texture) {
 			return;
 		}
 

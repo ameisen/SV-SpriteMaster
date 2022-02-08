@@ -72,6 +72,10 @@ static class Draw {
 		var clampedSource = source;
 
 		try {
+			if (reference is InternalTexture2D) {
+				return null;
+			}
+
 			// If the (potentially-clamped) source bounds are invalid, return null
 			if (!clampedSource.Cleanup(reference)) {
 				return null;

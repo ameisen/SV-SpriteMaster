@@ -6,6 +6,7 @@ using SpriteMaster.Types;
 using SpriteMaster.Types.Interlocking;
 using StardewValley;
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -38,6 +39,17 @@ static partial class DrawState {
 		internal static readonly RasterizerState RasterizerState = RasterizerState.CullCounterClockwise;
 		internal const SpriteSortMode SortMode = SpriteSortMode.Deferred;
 	}
+
+	internal static readonly Lazy<SamplerState> LinearBorder = new(() => {
+		var state = SamplerStateClone!(SamplerState.LinearClamp);
+		state.AddressU = state.AddressV = TextureAddressMode.Border;
+		return state;
+	});
+	internal static readonly Lazy<SamplerState> LinearMirror = new(() => {
+		var state = SamplerStateClone!(SamplerState.LinearClamp);
+		state.AddressU = state.AddressV = TextureAddressMode.Mirror;
+		return state;
+	});
 
 	internal static SamplerState CurrentSamplerState = Defaults.SamplerState;
 	internal static BlendState CurrentBlendState = Defaults.BlendState;

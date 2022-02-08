@@ -42,8 +42,8 @@ static class PGraphicsDeviceManager {
 	[Harmonize(typeof(Microsoft.Xna.Framework.Graphics.RenderTarget2D), Harmonize.Constructor, Harmonize.Fixation.Prefix, PriorityLevel.Last)]
 	internal static bool OnRenderTarget2DConstruct(
 		GraphicsDevice graphicsDevice,
-		int width,
-		int height,
+		ref int width,
+		ref int height,
 		bool mipMap,
 		ref SurfaceFormat preferredFormat,
 		ref DepthFormat preferredDepthFormat,
@@ -78,7 +78,7 @@ static class PGraphicsDeviceManager {
 							return true;
 					}
 
-					preferredMultiSampleCount = Config.DrawState.EnableMSAA ? 16 : 0;
+					preferredMultiSampleCount = (Config.DrawState.MSAASamples > 1) ? Config.DrawState.MSAASamples : 0;
 					preferredDepthFormat = device.PresentationParameters.DepthStencilFormat;
 					preferredFormat = device.PresentationParameters.BackBufferFormat;
 				} return true;
@@ -128,7 +128,7 @@ static class PGraphicsDeviceManager {
 		DrawState.UpdateDeviceManager(@this);
 
 		@this.GraphicsProfile = GraphicsProfile.HiDef;
-		@this.PreferMultiSampling = Config.DrawState.EnableMSAA;
+		//@this.PreferMultiSampling = Config.DrawState.MSAASamples > 1;
 		@this.SynchronizeWithVerticalRetrace = true;
 		@this.PreferredBackBufferFormat = Config.DrawState.BackbufferFormat;
 		if (Config.DrawState.DisableDepthBuffer) {

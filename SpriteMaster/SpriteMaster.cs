@@ -37,7 +37,7 @@ public sealed class SpriteMaster : Mod {
 	internal static readonly string BuildComputerName = typeof(SpriteMaster).Assembly.GetCustomAttribute<BuildComputerNameAttribute>()?.Value ?? "unknown";
 	internal static readonly string FullVersion = typeof(SpriteMaster).Assembly.GetCustomAttribute<FullVersionAttribute>()?.Value ?? Config.CurrentVersionObj.ToString();
 
-	internal static void DumpStats() {
+	internal static void DumpAllStats() {
 		var currentProcess = Process.GetCurrentProcess();
 		var workingSet = currentProcess.WorkingSet64;
 		var virtualMem = currentProcess.VirtualMemorySize64;
@@ -51,6 +51,10 @@ public sealed class SpriteMaster : Mod {
 			$"\t\tGC Allocated Memory    : {gcAllocated.AsDataSize()}:",
 			"",
 		};
+
+		lines.Add("Suspended Sprite Cache Stats:");
+		lines.AddRange(SuspendedSpriteCache.DumpStats());
+		lines.Add("");
 
 		ManagedTexture2D.DumpStats(lines);
 
@@ -183,7 +187,7 @@ public sealed class SpriteMaster : Mod {
 
 	private static readonly Dictionary<string, (Action Action, string Description)> ConsoleCommandMap = new() {
 		{ "help", (() => ConsoleHelp(null), "Prints this command guide") }, 
-		{ "stats", (DumpStats, "Dump Statistics") },
+		{ "all-stats", (DumpAllStats, "Dump Statistics") },
 		{ "memory", (Debug.DumpMemory, "Dump Memory") },
 		{ "gc", (ConsoleTriggerGC, "Trigger full GC") },
 		{ "purge", (ConsoleTriggerPurge, "Trigger Purge") }
@@ -209,13 +213,15 @@ public sealed class SpriteMaster : Mod {
 	}
 
 	private void ConsoleCommand(string command, string[] arguments) {
-		string? subCommand = arguments.ElementAtOrDefault(0);
-		if (subCommand is null) {
+		var argumentQueue = new Queue<string>(arguments);
+
+		if (argumentQueue.Count == 0) {
 			ConsoleHelp();
 			return;
 		}
-		var invariantCommand = subCommand.ToLowerInvariant();
-		if (ConsoleCommandMap.TryGetValue(invariantCommand, out var commandPair)) {
+
+		var subCommand = argumentQueue.Dequeue().ToLowerInvariant();
+		if (ConsoleCommandMap.TryGetValue(subCommand, out var commandPair)) {
 			commandPair.Action();
 		}
 		else {

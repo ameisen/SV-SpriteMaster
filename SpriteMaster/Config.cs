@@ -60,7 +60,6 @@ static class Config {
 	[Comment("Button to toggle SpriteMaster")]
 	internal static SButton ToggleButton = SButton.F11;
 
-	internal const int MaxSamplers = 16;
 	[ConfigIgnore]
 	internal static int ClampDimension = BaseMaxTextureDimension; // this is adjustable by the system itself. The user shouldn't be able to touch it.
 	[Comment("The preferred maximum texture edge length, if allowed by the hardware")]
@@ -148,8 +147,8 @@ static class Config {
 	internal static class DrawState {
 		[Comment("Enable linear sampling for sprites")]
 		internal static bool SetLinear = true;
-		[Comment("Enable MSAA")]
-		internal static bool EnableMSAA = false;
+		[Comment("How many MSAA samples should be used?")]
+		internal static int MSAASamples = 0;
 		[Comment("Disable the depth buffer (unused in this game)")]
 		internal static bool DisableDepthBuffer = false;
 		[Comment("The default backbuffer format to request")]
@@ -193,7 +192,7 @@ static class Config {
 			"LooseSprites/Cursors::0,2000:640,256",
 			"LooseSprites/Cloudy_Ocean_BG",
 			"LooseSprites/Cloudy_Ocean_BG_Night",
-			"LooseSprites/stardewPanorama",
+			//"LooseSprites/stardewPanorama",
 			"Maps/nightSceneMaru",
 			"Maps/nightSceneMaruTrees",
 			"Maps/sebastianMountainTiles",
@@ -404,11 +403,26 @@ static class Config {
 	internal static class SuspendedCache {
 		[Comment("Should the suspended sprite cache be enabled?")]
 		internal static bool Enabled = true;
+		[Comment("What is the maximum size (in bytes) to store in suspended sprite cache?")]
+		internal static long MaxCacheSize = 0x2000_0000L;
 	}
 
-	internal static class TextureCache {
+	internal static class SMAPI {
 		[Comment("Should the experimental SMAPI texture cache patch be enabled?")]
-		internal static bool Enabled = true;
+		internal static bool TextureCacheEnabled = true;
+		[Comment("Should the ApplyPatch method be patched?")]
+		internal static bool ApplyPatchEnabled = true;
+		[Comment("Should the ApplyPatch patch use SpriteMaster caches?")]
+		internal static bool ApplyPatchUseCache = true;
+		[Comment("Should ApplyPatch pin temporary memory?")]
+		internal static bool ApplyPatchPinMemory = false;
+	}
+
+	internal static class Extras {
+		[Comment("Should line drawing be smoothed?")]
+		internal static bool SmoothLines = true;
+		[Comment("Should the default batch sort be replaced with a stable sort?")]
+		internal static bool StableSort = true;
 	}
 
 	internal static class FileCache {

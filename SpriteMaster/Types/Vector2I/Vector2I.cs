@@ -74,6 +74,9 @@ unsafe partial struct Vector2I :
 
 	internal readonly int Sum => X + Y;
 
+	internal readonly int LengthSquared => X * X + Y * Y;
+	internal readonly float Length => (float)Math.Sqrt(LengthSquared);
+
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal Vector2I(ulong Packed) : this() => this.Packed = Packed;
 

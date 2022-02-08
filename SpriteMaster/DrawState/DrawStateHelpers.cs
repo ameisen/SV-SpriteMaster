@@ -16,6 +16,9 @@ static partial class DrawState {
 	private static readonly Func<BlendState, BlendState> BlendStateClone =
 		typeof(BlendState).GetMethod("Clone", BindingFlags.Instance | BindingFlags.NonPublic)?.CreateDelegate<Func<BlendState, BlendState>>() ?? throw new NullReferenceException(nameof(SamplerStateClone));
 
+	private static readonly Func<RasterizerState, RasterizerState> RasterizerStateClone =
+		typeof(RasterizerState).GetMethod("Clone", BindingFlags.Instance | BindingFlags.NonPublic)?.CreateDelegate<Func<RasterizerState, RasterizerState>>() ?? throw new NullReferenceException(nameof(RasterizerStateClone));
+
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static SamplerState ConditionallyClone(SamplerState value, SamplerState defaultValue) {
 		if (value is null) {

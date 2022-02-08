@@ -24,6 +24,10 @@ static class PAssetDataForImage {
 		Harmonize.PriorityLevel.Last
 	)]
 	public static unsafe bool PatchImage(IAssetDataForImage __instance, Texture2D source, XNA.Rectangle? sourceArea, XNA.Rectangle? targetArea, PatchMode patchMode) {
+		if (!Config.SMAPI.ApplyPatchEnabled) {
+			return true;
+		}
+
 		// get texture
 		if (source is null) {
 			throw new ArgumentNullException(nameof(source), "Can't patch from a null source texture.");
@@ -50,26 +54,28 @@ static class PAssetDataForImage {
 		static byte[] GetTextureData(Texture2D texture, in Bounds bounds, int count) {
 			count *= sizeof(Color8);
 			byte[] dataArray;
-			if (texture.TryMeta(out var sourceMeta) && sourceMeta.CachedData is byte[] cachedSourceData) {
+			if (Config.SMAPI.ApplyPatchUseCache && texture.TryMeta(out var sourceMeta) && sourceMeta.CachedData is byte[] cachedSourceData) {
 				if (bounds == texture.Bounds) {
 					dataArray = cachedSourceData;
 				}
 				else {
 					// We need a subcopy
-					dataArray = GC.AllocateUninitializedArray<byte>(count, pinned: true);
-					int sourceStride = texture.Width * sizeof(Color8);
-					int destStride = bounds.Width * sizeof(Color8);
+					dataArray = GC.AllocateUninitializedArray<byte>(count, pinned: Config.SMAPI.ApplyPatchPinMemory);
+					var cachedData = cachedSourceData.AsReadOnlySpan<Color8>();
+					var destData = dataArray.AsSpan<Color8>();
+					int sourceStride = texture.Width;
+					int destStride = bounds.Width;
 					int sourceOffset = (bounds.Top * sourceStride) + bounds.Left;
 					int destOffset = 0;
 					for (int y = 0; y < bounds.Height; ++y) {
-						Array.Copy(cachedSourceData, sourceOffset, dataArray, destOffset, destStride);
+						cachedData.Slice(sourceOffset, destStride).CopyTo(destData.Slice(destOffset, destStride));
 						sourceOffset += sourceStride;
 						destOffset += destStride;
 					}
 				}
 			}
 			else {
-				dataArray = GC.AllocateUninitializedArray<byte>(count, pinned: true);
+				dataArray = GC.AllocateUninitializedArray<byte>(count, pinned: Config.SMAPI.ApplyPatchPinMemory);
 				texture.GetData(0, bounds, dataArray, 0, count);
 			}
 			return dataArray;

@@ -583,7 +583,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 		}
 	}
 
-	internal struct CleanupData {
+	internal readonly struct CleanupData {
 		internal readonly ManagedSpriteInstance? PreviousSpriteInstance;
 		internal readonly WeakReference<XNA.Graphics.Texture2D> ReferenceTexture;
 		internal readonly LinkedListNode<System.WeakReference<ManagedSpriteInstance>>? RecentAccessNode;
@@ -680,6 +680,10 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 			return;
 		}
 
+		if (StardewValley.Game1.quit) {
+			return;
+		}
+
 		if (!_isReady || !Config.SuspendedCache.Enabled) {
 			Dispose(clearChildrenIfDispose);
 			return;
@@ -706,6 +710,10 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal bool Resurrect(Texture2D texture, ulong spriteMapHash) {
+		if (StardewValley.Game1.quit) {
+			return false;
+		}
+
 		if (IsDisposed || !Suspended) {
 			SuspendedSpriteCache.Remove(this);
 			return false;
