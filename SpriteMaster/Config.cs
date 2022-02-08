@@ -423,6 +423,12 @@ static class Config {
 		internal static bool SmoothLines = true;
 		[Comment("Should the default batch sort be replaced with a stable sort?")]
 		internal static bool StableSort = true;
+		[Comment("Should custom snowfall be used during snowstorms?")]
+		internal static bool CustomSnow = true;
+		[Comment("Minimum Custom Snow Density")]
+		internal static int MinimumSnowDensity = 1024;
+		[Comment("Maximum Custom Snow Density")]
+		internal static int MaximumSnowDensity = 3072;
 	}
 
 	internal static class FileCache {

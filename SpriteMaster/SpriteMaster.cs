@@ -303,6 +303,7 @@ public sealed class SpriteMaster : Mod {
 			ForceGarbageCollect();
 			Garbage.EnterInteractive();
 		};
+		help.Events.GameLoop.DayStarted += (_, _) => OnDayStarted();
 		help.Events.GameLoop.DayEnding += (_, _) => ForceGarbageCollect();
 		help.Events.GameLoop.ReturnedToTitle += (_, _) => OnTitle();
 		help.Events.GameLoop.SaveCreated += (_, _) => ForceGarbageCollect();
@@ -405,6 +406,10 @@ public sealed class SpriteMaster : Mod {
 		internal const string DynamicGameAssets = "spacechase0.DynamicGameAssets";
 		internal const string ContentPatcher = "Pathoschild.ContentPatcher";
 		internal const string ContentPatcherAnimations = "spacechase0.ContentPatcherAnimations";
+	}
+
+	private void OnDayStarted() {
+		Harmonize.Patches.Snow.PopulateDebrisWeatherArray();
 	}
 
 	private void OnMenuChanged(object? _, MenuChangedEventArgs args) {
