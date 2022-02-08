@@ -404,7 +404,9 @@ static class Config {
 		[Comment("Should the suspended sprite cache be enabled?")]
 		internal static bool Enabled = true;
 		[Comment("What is the maximum size (in bytes) to store in suspended sprite cache?")]
-		internal static long MaxCacheSize = 0x2000_0000L;
+		internal static long MaxCacheSize = 1048576L;
+		//[Comment("What is the maximum number of sprites to store in suspended sprite cache?")]
+		//internal static long MaxCacheCount = 2_000L;
 	}
 
 	internal static class SMAPI {

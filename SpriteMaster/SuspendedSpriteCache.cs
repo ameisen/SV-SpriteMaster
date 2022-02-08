@@ -1,7 +1,7 @@
 ﻿using SpriteMaster.Extensions;
 using SpriteMaster.Types;
+using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Caching;
 using System.Threading;
@@ -12,6 +12,28 @@ namespace SpriteMaster;
 static class SuspendedSpriteCache {
 	private static long TotalCachedSize = 0L;
 	private static readonly TypedMemoryCache<ManagedSpriteInstance> Cache = new("SuspendedSpriteCache", OnEntryRemoved);
+	private static readonly Condition TrimEvent = new();
+	private static readonly Thread CacheTrimThread = ThreadExt.Run(CacheTrimLoop, background: true);
+
+	private static void CacheTrimLoop() {
+		while (true) {
+			TrimEvent.Wait();
+
+			var totalCachedSize = Interlocked.Read(ref TotalCachedSize);
+			if (Interlocked.Read(ref TotalCachedSize) < Config.SuspendedCache.MaxCacheSize) {
+				continue;
+			}
+
+			// How much is needed to be reduced, with an additional safety of 25% or so?
+			var goal = (Config.SuspendedCache.MaxCacheSize * 0.75);
+			var multiplier = goal / totalCachedSize;
+			var percentageF = 1.0 - multiplier;
+			var percentageI = Math.Clamp((int)Math.Round(percentageF * 100.0), 0, 100);
+
+			Debug.Trace($"Trimming SuspendedSpriteCache: {percentageI}%, from {totalCachedSize.AsDataSize()} to {GenericUriParser.AsDataSize()}");
+			Cache.Trim(percentageI);
+		}
+	}
 
 	private static void OnEntryRemoved(CacheEntryRemovedReason reason, ManagedSpriteInstance element) {
 		Interlocked.Add(ref TotalCachedSize, -element.MemorySize);
@@ -30,7 +52,7 @@ static class SuspendedSpriteCache {
 		Debug.Trace($"SuspendedSpriteCache Size: {Cache.Count.ToString(System.Drawing.Color.LightCoral)}");
 
 		if (Interlocked.Read(ref TotalCachedSize) > Config.SuspendedCache.MaxCacheSize) {
-			Cache.Trim(10);
+			TrimEvent.Set();
 		}
 	}
 
@@ -51,7 +73,6 @@ static class SuspendedSpriteCache {
 	internal static bool Remove(ulong hash) {
 		var element = Cache.Remove(hash.ToString64());
 		if (element is not null) {
-			Interlocked.Add(ref TotalCachedSize, -element.MemorySize);
 			return true;
 		}
 		return false;
