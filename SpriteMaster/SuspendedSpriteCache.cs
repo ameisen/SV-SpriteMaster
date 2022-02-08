@@ -30,7 +30,7 @@ static class SuspendedSpriteCache {
 			var percentageF = 1.0 - multiplier;
 			var percentageI = Math.Clamp((int)Math.Round(percentageF * 100.0), 0, 100);
 
-			Debug.Trace($"Trimming SuspendedSpriteCache: {percentageI}%, from {totalCachedSize.AsDataSize()} to {GenericUriParser.AsDataSize()}");
+			Debug.Trace($"Trimming SuspendedSpriteCache: {percentageI}%, from {totalCachedSize.AsDataSize()} to {((long)Math.Round(goal)).AsDataSize()}");
 			Cache.Trim(percentageI);
 		}
 	}
