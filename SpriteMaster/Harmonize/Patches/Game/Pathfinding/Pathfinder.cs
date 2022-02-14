@@ -15,7 +15,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using static StardewValley.PathFindController;
 
-namespace SpriteMaster.Harmonize.Patches.Game;
+namespace SpriteMaster.Harmonize.Patches.Game.Pathfinding;
 
 static class Pathfinder {
 	private static readonly Action<List<List<string>>>? RoutesFromLocationToLocationSet = typeof(NPC).GetFieldSetter<List<List<string>>>("routesFromLocationToLocation");
@@ -53,7 +53,7 @@ static class Pathfinder {
 		instance: false
 	)]
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool WarpCharacter(NPC character, GameLocation targetLocation, XNA.Vector2 position) {
+	public static bool WarpCharacter(NPC character, GameLocation targetLocation, Vector2 position) {
 		if (!Config.Enabled || !Config.Extras.AllowNPCsOnFarm || !Config.Extras.OptimizeWarpPoints) {
 			return true;
 		}
@@ -75,7 +75,7 @@ static class Pathfinder {
 			var trace = new StackTrace();
 			foreach (var frame in trace.GetFrames()) {
 				if (frame.GetMethod() is MethodBase method) {
-					if (method.DeclaringType == typeof(StardewValley.Event)) {
+					if (method.DeclaringType == typeof(Event)) {
 						return true;
 					}
 				}
@@ -100,7 +100,7 @@ static class Pathfinder {
 		instance: false
 	)]
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool WarpCharacter(NPC character, string targetLocationName, XNA.Vector2 position) {
+	public static bool WarpCharacter(NPC character, string targetLocationName, Vector2 position) {
 		return WarpCharacter(character, Game1.getLocationFromName(targetLocationName), position);
 	}
 
@@ -112,7 +112,7 @@ static class Pathfinder {
 		instance: false
 	)]
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool WarpCharacter(NPC character, string targetLocationName, XNA.Point position) {
+	public static bool WarpCharacter(NPC character, string targetLocationName, Point position) {
 		return WarpCharacter(character, Game1.getLocationFromName(targetLocationName), Utility.PointToVector2(position));
 	}
 
@@ -123,12 +123,12 @@ static class Pathfinder {
 		Harmonize.PriorityLevel.Last
 	)]
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool CharacterDestroyObjectWithinRectangle(GameLocation __instance, ref bool __result, XNA.Rectangle rect, bool showDestroyedObject) {
+	public static bool CharacterDestroyObjectWithinRectangle(GameLocation __instance, ref bool __result, Rectangle rect, bool showDestroyedObject) {
 		if (__instance.IsFarm || __instance.IsGreenhouse) {
 			__result = false;
 			return false;
 		}
-		
+
 		return true;
 	}
 
@@ -154,7 +154,7 @@ static class Pathfinder {
 		var locations = new Dictionary<string, GameLocation?>(Game1.locations.Select(location => new KeyValuePair<string, GameLocation?>(location.Name, location)));
 
 		Parallel.ForEach(Game1.locations, location => {
-			if (Config.Extras.AllowNPCsOnFarm || (location is not Farm && location.Name != "Backwoods")) {
+			if (Config.Extras.AllowNPCsOnFarm || location is not Farm && location.Name != "Backwoods") {
 				var route = new List<string>();
 				ExploreWarpPointsImpl(location, route, routeList, locations);
 			}
@@ -240,7 +240,7 @@ static class Pathfinder {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static GameLocation? GetTarget(this KeyValuePair<XNA.Point, string> door, Dictionary<string, GameLocation?> locations) {
+	private static GameLocation? GetTarget(this KeyValuePair<Point, string> door, Dictionary<string, GameLocation?> locations) {
 		if (door.Value is null) {
 			return null;
 		}
@@ -343,10 +343,10 @@ static class Pathfinder {
 					bool result;
 					lock (node) {
 						if (node.Name == "Farm") {
-							result = PathFindController.FindPathOnFarm(entryPosition.Value, point, node, int.MaxValue) is not null;
+							result = FindPathOnFarm(entryPosition.Value, point, node, int.MaxValue) is not null;
 						}
 						else {
-							result = PathFindController.findPathForNPCSchedules(entryPosition.Value, point, node, int.MaxValue) is not null;
+							result = findPathForNPCSchedules(entryPosition.Value, point, node, int.MaxValue) is not null;
 						}
 					}
 					pointDictionary.TryAdd(new(entryPosition.Value, point), result);
