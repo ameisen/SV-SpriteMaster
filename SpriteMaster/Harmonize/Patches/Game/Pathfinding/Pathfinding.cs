@@ -5,6 +5,7 @@ using StardewValley;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using static StardewValley.PathFindController;
@@ -24,169 +25,219 @@ static partial class Pathfinding {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static GameLocation? GetTarget(this Warp? warp, Dictionary<string, GameLocation?> locations) {
+	private static bool GetTarget(this Warp? warp, Dictionary<string, GameLocation?> locations, [NotNullWhen(true)] out GameLocation? target) {
 		if (warp is null) {
-			return null;
+			target = null;
+			return false;
 		}
 
-		switch (warp.TargetName) {
-			case "BoatTunnel":
-				return locations.GetValueOrDefault("IslandSouth", null);
-			case "Farm":
-			case "Woods":
-			case "Backwoods":
-			case "Tunnel":
-				return Config.Extras.AllowNPCsOnFarm ? locations.GetValueOrDefault(warp.TargetName, null) : null;
-			case "Volcano":
-				return null;
-			default:
-				return locations.GetValueOrDefault(warp.TargetName, null);
+		// Warps can never path to "Volcano", and can only path to certain Locations when it's explicitly allowed in the settings.
+		if (warp.TargetName is "Volcano" || (!Config.Extras.AllowNPCsOnFarm && warp.TargetName is "Farm" or "Woods" or "Backwoods" or "Tunnel")) {
+			target = null;
+			return false;
 		}
+
+		target = locations.GetValueOrDefault(
+			key: warp.TargetName switch {
+				"BoatTunnel" => "IslandSouth",
+				_ => warp.TargetName
+			},
+			defaultValue: null
+		);
+		return target is not null;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static GameLocation? GetTarget(this DoorPair door, Dictionary<string, GameLocation?> locations) {
+	private static bool GetTarget(this in DoorPair door, Dictionary<string, GameLocation?> locations, [NotNullWhen(true)]  out GameLocation? target) {
 		if (door.Value is null) {
-			return null;
+			target = null;
+			return false;
 		}
 
-		switch (door.Value) {
-			case "BoatTunnel":
-				return locations.GetValueOrDefault("IslandSouth", null);
-			default:
-				return locations.GetValueOrDefault(door.Value, null);
-		}
+		target = locations.GetValueOrDefault(
+			key: door.Value switch {
+				"BoatTunnel" => "IslandSouth",
+				_ => door.Value
+			},
+			defaultValue: null
+		);
+		return target is not null;
 	}
 
 	private readonly record struct PointPair(Vector2I Start, Vector2I End);
 	private static readonly ConcurrentDictionary<GameLocation, ConcurrentDictionary<PointPair, bool>> CachedPathfindPoints = new();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
+	private static NPC? GetDummyNPC() {
+		NPC? dummyNPC = null;
+		foreach (var location in Game1.locations) {
+			dummyNPC = location.getCharacters().FirstOrDefault(c => c is NPC);
+			if (dummyNPC is not null) {
+				break;
+			}
+		}
+
+		return dummyNPC;
+	}
+
+	private sealed class QueueLocation {
+		internal readonly GameLocation Location;
+		internal QueueLocation? Previous = null;
+		internal Vector2I? StartPosition = null;
+		internal int ListDistance = int.MaxValue;
+
+		internal QueueLocation(GameLocation location) => Location = location;
+
+		internal struct Comparer : IEqualityComparer<QueueLocation> {
+			[MethodImpl(Runtime.MethodImpl.Hot)]
+			public bool Equals(QueueLocation? x, QueueLocation? y) => x?.Location == y?.Location;
+			[MethodImpl(Runtime.MethodImpl.Hot)]
+			public int GetHashCode([DisallowNull] QueueLocation obj) => obj.Location.GetHashCode();
+		}
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static List<string>? Dijkstra(GameLocation start, GameLocation end, Dictionary<string, GameLocation?> locations) {
 		try {
-			NPC? dummyNPC = null;
-			foreach (var location in Game1.locations) {
-				dummyNPC = location.getCharacters().FirstOrDefault(c => c is NPC);
-				if (dummyNPC is not null) {
-					break;
-				}
-			}
-			var queue = new SimplePriorityQueue<GameLocation, int>((x, y) => x - y);
-			var listDistances = new Dictionary<GameLocation, int>() { { start, 0 } };
-			var previous = new Dictionary<GameLocation, GameLocation?>(Game1.locations.Count);
-			var startPositions = new Dictionary<GameLocation, Vector2I>();
+			// Get a dummy NPC to pass to the sub-pathfinders to validate routes to warps/doors.
+			NPC? dummyNPC = GetDummyNPC();
 
-			queue.Enqueue(start, 0);
+			var queue = new SimplePriorityQueue<QueueLocation, int>(
+				priorityComparer: (x, y) => x - y,
+				itemEquality: new QueueLocation.Comparer()
+			);
+			var startQueueLocation = new QueueLocation(start) { ListDistance = 0 };
+			var queueDataMap = new Dictionary<GameLocation, QueueLocation>(locations.Count) {
+				[start] = startQueueLocation
+			};
+
+			queue.Enqueue(startQueueLocation, 0);
+
 			foreach (var location in Game1.locations) {
-				if (previous.TryAdd(location, null)) {
-					queue.EnqueueWithoutDuplicates(location, int.MaxValue);
-					listDistances.TryAdd(location, int.MaxValue);
+				var queueLocation = new QueueLocation(location);
+				if (queueDataMap.TryAdd(location, queueLocation)) {
+					queue.EnqueueWithoutDuplicates(queueLocation, int.MaxValue);
 				}
 			}
 
 			while (queue.Count != 0) {
 				var distance = queue.GetPriority(queue.First);
-				var location = queue.Dequeue();
-				var listDistance = listDistances[location];
-				Vector2I? entryPosition = null;
-				if (startPositions.TryGetValue(location, out var pos)) {
-					entryPosition = pos;
-				}
 
+				// There was no valid path to the destination.
 				if (distance == int.MaxValue) {
-					return null; // No path
+					return null;
 				}
 
-				if (location == end) {
-					var result = new string[listDistance + 1];
+				var qLocation = queue.Dequeue();
 
-					GameLocation? current = location;
-					int insertionIndex = listDistance;
-					while (current is not null) {
-						result[insertionIndex--] = current.Name;
-						current = previous.GetValueOrDefault(current, null);
+				// Once we've reached the end node, traverse in reverse over the previous instances, to build a route
+				if (qLocation.Location == end) {
+					var result = new string[qLocation.ListDistance + 1];
+
+					QueueLocation? current = qLocation;
+					int insertionIndex = qLocation.ListDistance;
+					while (current is QueueLocation qCurrent) {
+						result[insertionIndex--] = qCurrent.Location.Name;
+						current = qCurrent.Previous;
 					}
 
 					return result.BeList();
 				}
 
-				void ProcessNeighbor(GameLocation node, Vector2I egress, Vector2I? start) {
-					if (!queue.Contains(node)) {
+				// Process a neighboring node and potentially add it to the queue
+				void ProcessNeighbor(GameLocation node, Vector2I egress, Vector2I? ingress) {
+					var dataNode = queueDataMap[node];
+
+					if (!queue.Contains(dataNode)) {
 						return;
 					}
 
 					int nodeDistance;
 
-					if (Config.Extras.TrueShortestPath && entryPosition is Vector2I currentPos) {
+					// Calculate the distance
+					if (Config.Extras.TrueShortestPath && qLocation.StartPosition is Vector2I currentPos) {
+						// If we are (and can) calculate the true distance, we do that based upon egress position
 						var straightDistance = (egress - currentPos).LengthSquared;
 						nodeDistance = distance + 1 + straightDistance;
 					}
 					else {
+						// Otherwise, we assume a distance of '1' for each node (this is vanilla behavior)
 						nodeDistance = distance + 1;
 					}
-					if (nodeDistance < queue.GetPriority(node)) {
-						if (start.HasValue) {
-							startPositions[node] = start.Value;
-						}
-						listDistances[node] = listDistance + 1;
-						previous[node] = location;
-						queue.UpdatePriority(node, nodeDistance);
+
+					if (nodeDistance < queue.GetPriority(dataNode)) {
+						dataNode.StartPosition = ingress;
+						dataNode.ListDistance = qLocation.ListDistance + 1;
+						dataNode.Previous = qLocation;
+						queue.UpdatePriority(dataNode, nodeDistance);
 					}
 				}
 
+				// Check if a given point within a given GameLocation is accessible from our current position.
 				bool IsPointAccessible(GameLocation node, Vector2I point) {
-					if (!entryPosition.HasValue) {
+					if (!qLocation.StartPosition.HasValue) {
 						return true;
 					}
 
+					var pointPair = new PointPair(qLocation.StartPosition.Value, point);
+
+					// Check if this ingress/point pair has already been calculated.
 					var pointDictionary = CachedPathfindPoints.GetOrAdd(node, _ => new());
-					if (pointDictionary.TryGetValue(new(entryPosition.Value, point), out var hasPath)) {
+					if (pointDictionary.TryGetValue(pointPair, out var hasPath)) {
 						return hasPath;
 					}
 
+					// Check for a valid path. Locked because the 'findPath' methods rely on some internal state within the game
+					// and thus are not threadsafe
 					bool result;
 					lock (node) {
 						if (node.Name == "Farm") {
-							result = FindPathOnFarm(entryPosition.Value, point, node, int.MaxValue) is not null;
+							result = FindPathOnFarm(qLocation.StartPosition.Value, point, node, int.MaxValue) is not null;
 						}
 						else {
-							result = findPathForNPCSchedules(entryPosition.Value, point, node, int.MaxValue) is not null;
+							result = findPathForNPCSchedules(qLocation.StartPosition.Value, point, node, int.MaxValue) is not null;
 						}
 					}
-					pointDictionary.TryAdd(new(entryPosition.Value, point), result);
+					pointDictionary.TryAdd(pointPair, result);
 
 					return result;
 				}
 
-				foreach (var warp in location.warps) {
-					var neighbor = warp.GetTarget(locations);
-					if (neighbor is null) {
+				foreach (var warp in qLocation.Location.warps) {
+					if (!warp.GetTarget(locations, out var neighbor)) {
 						continue;
 					}
 
-					if (!IsPointAccessible(location, (warp.X, warp.Y))) {
+					// If the warp is not accessible from the start location, skip it. This prevents NPCs from trying to path in,
+					// for instance, the backwoods to get to the bus.
+					if (!IsPointAccessible(qLocation.Location, (warp.X, warp.Y))) {
 						continue;
 					}
 
 					ProcessNeighbor(neighbor, (warp.X, warp.Y), (warp.TargetX, warp.TargetY));
 				}
 
-				foreach (var door in location.doors.Pairs) {
-					var neighbor = door.GetTarget(locations);
-					if (neighbor is null) {
+				foreach (var door in qLocation.Location.doors.Pairs) {
+					if (!door.GetTarget(locations, out var neighbor)) {
 						continue;
 					}
 
-					if (!IsPointAccessible(location, (door.Key.X, door.Key.Y))) {
+					Vector2I doorIngress = (door.Key.X, door.Key.Y);
+
+					// If the warp is not accessible from the start location, skip it. This prevents NPCs from trying to path in,
+					// for instance, the backwoods to get to the bus.
+					if (!IsPointAccessible(qLocation.Location, doorIngress)) {
 						continue;
 					}
 
+					// Try to find the door's egress position, and process the node.
 					try {
-						var warp = location.getWarpFromDoor(door.Key, dummyNPC);
-						ProcessNeighbor(neighbor, (door.Key.X, door.Key.Y), (warp.TargetX, warp.TargetY));
+						var warp = qLocation.Location.getWarpFromDoor(door.Key, dummyNPC);
+						Vector2I? doorEgress = (warp is null) ? null : (warp.TargetX, warp.TargetY);
+						ProcessNeighbor(neighbor, doorIngress, doorEgress);
 					}
 					catch (Exception) {
-						ProcessNeighbor(neighbor, (door.Key.X, door.Key.Y), null);
+						ProcessNeighbor(neighbor, doorIngress, null);
 					}
 				}
 			}
@@ -200,11 +251,11 @@ static partial class Pathfinding {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static bool ExploreWarpPointsImpl(GameLocation startLocation, List<string> route, ConcurrentBag<List<string>> routeList, Dictionary<string, GameLocation?> locations) {
-		// This really should be using A*, but simple Dijkstra will work for now
-		var foundTargetsSet = new HashSet<string>();
-		foundTargetsSet.Add(startLocation.Name);
+		var foundTargetsSet = new HashSet<string>(locations.Count) { startLocation.Name };
 
+		// Iterate over each location, performing a recursive Dijkstra traversal on each.
 		foreach (var location in Game1.locations) {
+			// If we've already found a path to this location, there is no reason to process it again.
 			if (!foundTargetsSet.Add(location.Name)) {
 				continue;
 			}
@@ -215,6 +266,8 @@ static partial class Pathfinding {
 			}
 			routeList.Add(result);
 
+			// Repeatedly remove the last element from the route, and add it into the routeList. This allows us to bypass having to recalculate for smaller paths in many cases,
+			// as we've already calculated them.
 			for (int len = result.Count - 1; len >= 2; --len) {
 				if (!foundTargetsSet.Add(result[len - 1])) {
 					break;

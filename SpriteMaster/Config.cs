@@ -461,9 +461,9 @@ static class Config {
 		[Comment("Should NPC Warp Points code be optimized?")]
 		internal static bool OptimizeWarpPoints = true;
 		[Comment("Should NPCs take true shortest paths?")]
-		internal static bool TrueShortestPath = true;
+		internal static bool TrueShortestPath = false;
 		[Comment("Allow NPCs onto the farm?")]
-		internal static bool AllowNPCsOnFarm = true;
+		internal static bool AllowNPCsOnFarm = false;
 		[Comment("Should the default batch sort be replaced with a stable sort?")]
 		internal static bool StableSort = true;
 		[Comment("Should the game be prevented from going 'unresponsive' during loads?")]

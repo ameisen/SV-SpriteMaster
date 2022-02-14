@@ -72,24 +72,6 @@ static partial class Pathfinding {
 			innerRoutes![route.Last()] = route;
 		}
 
-		// temporary debug TODO: dump paths
-		if (Config.IsDebug) {
-			using var fs = new StreamWriter(@"D:\sdv_paths.txt");
-			foreach (var outerRoutes in FasterRouteMap) {
-				fs.WriteLine($"{outerRoutes.Key}:");
-
-				int len = 0;
-				foreach (var innerRoutes in outerRoutes.Value) {
-					len = Math.Max(len, innerRoutes.Key.Length);
-				}
-
-				int i = 0;
-				foreach (var innerRoutes in outerRoutes.Value) {
-					fs.WriteLine($" {(++i == outerRoutes.Value.Count ? '└' : '├')} {innerRoutes.Key.PadRight(len)} :: {string.Join(" → ", innerRoutes.Value)}");
-				}
-			}
-		}
-
 		return false;
 	}
 
