@@ -38,7 +38,7 @@ public sealed class SpriteMaster : Mod {
 
 	internal static readonly string ChangeList = typeof(SpriteMaster).Assembly.GetCustomAttribute<ChangeListAttribute>()?.Value ?? "local";
 	internal static readonly string BuildComputerName = typeof(SpriteMaster).Assembly.GetCustomAttribute<BuildComputerNameAttribute>()?.Value ?? "unknown";
-	internal static readonly string FullVersion = typeof(SpriteMaster).Assembly.GetCustomAttribute<FullVersionAttribute>()?.Value ?? Config.CurrentVersionObj.ToString();
+	internal static readonly string FullVersion = typeof(SpriteMaster).Assembly.GetCustomAttribute<FullVersionAttribute>()?.Value ?? Config.CurrentVersion;
 
 	internal static void DumpAllStats() {
 		var currentProcess = Process.GetCurrentProcess();
@@ -171,7 +171,7 @@ public sealed class SpriteMaster : Mod {
 		return false;
 	}
 
-	private static string GetVersionStringHeader() => $"SpriteMaster {FullVersion} build {Config.CurrentVersionObj.Revision} ({Config.BuildConfiguration}, {ChangeList}, {BuildComputerName})";
+	private static string GetVersionStringHeader() => $"SpriteMaster {FullVersion} build {Config.AssemblyVersionObj.Revision} ({Config.BuildConfiguration}, {ChangeList}, {BuildComputerName})";
 
 	private static void ConsoleTriggerGC() {
 		lock (Self.CollectLock!) {

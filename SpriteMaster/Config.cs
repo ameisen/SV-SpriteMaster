@@ -8,6 +8,8 @@ using StardewModdingAPI;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Runtime;
 using System.Text.RegularExpressions;
 using TeximpNet.Compression;
@@ -46,10 +48,14 @@ static class Config {
 	internal const bool SkipIntro = IgnoreConfig;
 
 	[ConfigIgnore]
-	internal static readonly Version CurrentVersionObj = typeof(Config).Assembly.GetName().Version ??
+	internal static readonly string CurrentVersion = typeof(Config).Assembly.GetCustomAttribute<FullVersionAttribute>()?.Value?.Split('-', 2)?.ElementAtOrDefault(0) ??
+		throw new BadImageFormatException($"Could not extract version from assembly {typeof(Config).Assembly.FullName ?? typeof(Config).Assembly.ToString()}");
+
+	[ConfigIgnore]
+	internal static readonly Version AssemblyVersionObj = typeof(Config).Assembly.GetName().Version ??
 		throw new BadImageFormatException($"Could not extract version from assembly {typeof(Config).Assembly.FullName ?? typeof(Config).Assembly.ToString()}");
 	[ConfigIgnore]
-	internal static readonly string CurrentVersion = CurrentVersionObj.ToString();
+	internal static readonly string AssemblyVersion = AssemblyVersionObj.ToString();
 
 	private enum BuildType {
 		Alpha,
@@ -59,7 +65,7 @@ static class Config {
 	}
 
 	[ConfigIgnore]
-	private static string GenerateAssemblyVersionString(int major, int minor, int revision, int build, BuildType type = BuildType.Final, int release = 1) {
+	private static string GenerateAssemblyVersionString(int major, int minor, int revision, int build, BuildType type = BuildType.Final, int release = 0) {
 		switch (type) {
 			case BuildType.Alpha:
 				break;
@@ -76,7 +82,7 @@ static class Config {
 				throw new ArgumentOutOfRangeException(nameof(type), type.ToString());
 		}
 
-		return $"{major}.{minor}.{revision}.{build}";
+		return $"{major}.{minor}.{revision}.{build + release}";
 	}
 
 	internal static string ConfigVersion = "";
