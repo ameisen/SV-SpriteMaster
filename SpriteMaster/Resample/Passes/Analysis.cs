@@ -54,7 +54,7 @@ static class Analysis {
 
 		float edgeThreshold = Config.WrapDetection.edgeThreshold;
 
-		if (!reference.Anonymous() && Config.Resample.Padding.StrictList.Contains(reference.SafeName())) {
+		if (!reference.Anonymous() && Config.Resample.Padding.StrictList.Contains(reference.NormalizedName())) {
 			var ratio = (float)bounds.Extent.MaxOf / (float)bounds.Extent.MinOf;
 			if (ratio >= 4.0f) {
 				edgeThreshold = 2.0f;

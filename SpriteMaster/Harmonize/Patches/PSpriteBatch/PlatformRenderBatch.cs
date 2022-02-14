@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
+using SpriteMaster.Harmonize.Patches.Game;
 using SpriteMaster.Types;
 using System;
 using System.Diagnostics.CodeAnalysis;
@@ -16,7 +17,7 @@ static class PlatformRenderBatch {
 			return reference;
 		}
 
-		if (texture is InternalTexture2D managedTexture/* && managedTexture.Texture != null*/) {
+		if (texture is InternalTexture2D managedTexture/* && managedTexture.Texture != null*/ || (texture?.NormalizedName().StartsWith(@"LooseSprites\Lighting\") ?? false)) {
 			if (reference.AddressU == TextureAddressMode.Wrap && reference.AddressV == TextureAddressMode.Wrap) {
 				return SamplerState.LinearWrap;
 			}

@@ -3,6 +3,7 @@ using LinqFasterer;
 using SpriteMaster.Caching;
 using SpriteMaster.Extensions;
 using SpriteMaster.Harmonize;
+using SpriteMaster.Harmonize.Patches.Game;
 using SpriteMaster.Metadata;
 using SpriteMaster.Types;
 using StardewModdingAPI;
@@ -19,6 +20,7 @@ using System.Reflection;
 using System.Runtime;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -31,6 +33,7 @@ public sealed class SpriteMaster : Mod {
 	private readonly Thread? MemoryPressureThread = null;
 	private readonly Thread? GarbageCollectThread = null;
 	private readonly object? CollectLock = DotNet ? new() : null;
+	internal bool IsGameLoaded { get; private set; } = false;
 	internal static string? AssemblyPath { get; private set; }
 
 	internal static readonly string ChangeList = typeof(SpriteMaster).Assembly.GetCustomAttribute<ChangeListAttribute>()?.Value ?? "local";
@@ -52,8 +55,8 @@ public sealed class SpriteMaster : Mod {
 			"",
 		};
 
-		lines.Add("Suspended Sprite Cache Stats:");
-		lines.AddRange(SuspendedSpriteCache.DumpStats());
+		lines.Add("\tSuspended Sprite Cache Stats:");
+		lines.AddRange(SuspendedSpriteCache.DumpStats().SelectF(s => $"\t{s}"));
 		lines.Add("");
 
 		ManagedTexture2D.DumpStats(lines);
@@ -257,7 +260,7 @@ public sealed class SpriteMaster : Mod {
 
 		// handle sliced textures. At some point I will add struct support.
 		foreach (var slicedTexture in Config.Resample.SlicedTextures) {
-			//"LooseSprites/Cursors::0,640:2000,256"
+			//@"LooseSprites\Cursors::0,640:2000,256"
 			var elements = slicedTexture.Split("::", 2);
 			var texture = elements[0];
 			var bounds = Bounds.Empty;
@@ -277,6 +280,18 @@ public sealed class SpriteMaster : Mod {
 				}
 
 				Config.Resample.SlicedTexturesS.Add(new(texture, bounds));
+			}
+		}
+
+		// Compile blacklist patterns
+		Config.Resample.BlacklistPatterns.Capacity = Config.Resample.Blacklist.Count;
+		foreach (var pattern in Config.Resample.Blacklist) {
+			if (!pattern.StartsWith('@')) {
+				Config.Resample.BlacklistPatterns.Add(new($"^{Regex.Escape(pattern)}.*", RegexOptions.Compiled));
+			}
+			else {
+				var reducedPattern = pattern.Substring(1);
+				Config.Resample.BlacklistPatterns.Add(new(reducedPattern, RegexOptions.Compiled));
 			}
 		}
 
@@ -304,7 +319,6 @@ public sealed class SpriteMaster : Mod {
 			ForceGarbageCollect();
 			Garbage.EnterInteractive();
 		};
-		help.Events.GameLoop.DayStarted += (_, _) => OnDayStarted();
 		help.Events.GameLoop.DayEnding += (_, _) => ForceGarbageCollect();
 		help.Events.GameLoop.ReturnedToTitle += (_, _) => OnTitle();
 		help.Events.GameLoop.SaveCreated += (_, _) => ForceGarbageCollect();
@@ -313,6 +327,7 @@ public sealed class SpriteMaster : Mod {
 		help.Events.GameLoop.Saving += (_, _) => OnSaveStart();
 		help.Events.GameLoop.SaveCreated += (_, _) => OnSaveFinish();
 		help.Events.GameLoop.Saved += (_, _) => OnSaveFinish();
+		help.Events.Display.WindowResized += (_, args) => OnWindowResized(args);
 		help.Events.Player.Warped += (_, _) => {
 			ForceGarbageCollect();
 		};
@@ -401,6 +416,7 @@ public sealed class SpriteMaster : Mod {
 		*/
 		System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(FileCache).TypeHandle);
 		WatchDog.WatchDog.Initialize();
+		ClickCrash.Initialize();
 	}
 
 	private static class ModUID {
@@ -409,8 +425,11 @@ public sealed class SpriteMaster : Mod {
 		internal const string ContentPatcherAnimations = "spacechase0.ContentPatcherAnimations";
 	}
 
-	private void OnDayStarted() {
-		Harmonize.Patches.Snow.PopulateDebrisWeatherArray();
+	private void OnWindowResized(WindowResizedEventArgs args) {
+		if (args.NewSize == args.OldSize) {
+			return;
+		}
+		Snow.OnWindowResized(args.NewSize);
 	}
 
 	private void OnMenuChanged(object? _, MenuChangedEventArgs args) {
@@ -494,21 +513,25 @@ public sealed class SpriteMaster : Mod {
 
 		ForceGarbageCollect();
 		ManagedSpriteInstance.ClearTimers();
+
+		IsGameLoaded = true;
 	}
 
 	// SMAPI/CP won't do this, so we do. Purge the cached textures for the previous season on a season change.
 	private static void OnDayStarted(object? _, DayStartedEventArgs _1) {
+		Harmonize.Patches.Game.Snow.PopulateDebrisWeatherArray();
+
 		// Do a full GC at the start of each day
 		Garbage.Collect(compact: true, blocking: true, background: false);
 
 		var season = SDate.Now().Season;
-		if (!season.EqualsInsensitive(CurrentSeason)) {
+		if (!season.EqualsInvariantInsensitive(CurrentSeason)) {
 			CurrentSeason = season;
 			SpriteMap.SeasonPurge(season.ToLowerInvariant());
-		}
 
-		// And again after purge
-		Garbage.Collect(compact: true, blocking: true, background: false);
+			// And again after purge
+			Garbage.Collect(compact: true, blocking: true, background: false);
+		}
 	}
 
 	private static void ForceGarbageCollect() {

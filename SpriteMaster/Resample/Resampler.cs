@@ -113,7 +113,7 @@ sealed class Resampler {
 				source: input.ReferenceData,
 				sourceSize: input.ReferenceSize,
 				destBounds: input.Bounds,
-				path: FileCache.GetDumpPath($"{input.Reference.SafeName().Replace('/', '.')}.{hashString}.reference.png")
+				path: FileCache.GetDumpPath($"{input.Reference.NormalizedName().Replace('\\', '.')}.{hashString}.reference.png")
 			);
 		}
 
@@ -137,7 +137,7 @@ sealed class Resampler {
 		}
 
 		if (input.Reference.Format.IsCompressed()) {
-			throw new InvalidOperationException($"Compressed texture '{input.Reference.SafeName()}' reached Resampler");
+			throw new InvalidOperationException($"Compressed texture '{input.Reference.NormalizedName()}' reached Resampler");
 		}
 
 		// Water in the game is pre-upscaled by 4... which is weird.
@@ -149,10 +149,10 @@ sealed class Resampler {
 			blockSize = FontBlock;
 			scale = Config.Resample.MaxScale;
 		}
-		else if (SMConfig.Resample.FourXTextures.AnyF(prefix => input.Reference.SafeName().StartsWith(prefix))) {
+		else if (SMConfig.Resample.FourXTextures.AnyF(prefix => input.Reference.NormalizedName().StartsWith(prefix))) {
 			blockSize = 4;
 		}
-		else if (SMConfig.Resample.TwoXTextures.AnyF(prefix => input.Reference.SafeName().StartsWith(prefix))) {
+		else if (SMConfig.Resample.TwoXTextures.AnyF(prefix => input.Reference.NormalizedName().StartsWith(prefix))) {
 			blockSize = 2;
 		}
 		else if (SMConfig.Resample.BlockMultipleAnalysis.Enabled) {
@@ -253,7 +253,7 @@ sealed class Resampler {
 							source: spriteRawData,
 							sourceSize: spriteRawExtent,
 							adjustGamma: 2.2,
-							path: FileCache.GetDumpPath($"{input.Reference.SafeName().Replace('/', '.')}.{hashString}.reference.deposter.png")
+							path: FileCache.GetDumpPath($"{input.Reference.NormalizedName().Replace('\\', '.')}.{hashString}.reference.deposter.png")
 						);
 					}
 				}
@@ -321,7 +321,7 @@ sealed class Resampler {
 				source: bitmapDataWide,
 				sourceSize: scaledSize,
 				swap: (2, 1, 0, 4),
-				path: FileCache.GetDumpPath($"{input.Reference.SafeName().Replace('/', '.')}.{hashString}.resample-wrap[{SimplifyBools(analysis.Wrapped)}]-repeat[{SimplifyBools(analysis.RepeatX)},{SimplifyBools(analysis.RepeatY)}]-pad[{padding.X},{padding.Y}].png")
+				path: FileCache.GetDumpPath($"{input.Reference.NormalizedName().Replace('\\', '.')}.{hashString}.resample-wrap[{SimplifyBools(analysis.Wrapped)}]-repeat[{SimplifyBools(analysis.RepeatX)},{SimplifyBools(analysis.RepeatY)}]-pad[{padding.X},{padding.Y}].png")
 			);
 		}
 
@@ -330,7 +330,7 @@ sealed class Resampler {
 				throw new Exception($"Resampled texture size {scaledSize} is smaller than expected {scaledSizeClamped}");
 			}
 
-			Debug.Trace($"Sprite {texture.SafeName()} requires rescaling");
+			Debug.Trace($"Sprite {texture.NormalizedName()} requires rescaling");
 			// This should be incredibly rare - we very rarely need to scale back down.
 			// I don't actually have a solution for this case.
 			scaledSizeClamped = scaledSize;
@@ -538,7 +538,7 @@ sealed class Resampler {
 					);
 				}
 				catch (OutOfMemoryException) {
-					Debug.Error($"OutOfMemoryException thrown trying to create texture [texture: {spriteInstance.SafeName()}, bounds: {input.Bounds}, textureSize: {input.ReferenceSize}, scale: {scale}]");
+					Debug.Error($"OutOfMemoryException thrown trying to create texture [texture: {spriteInstance.NormalizedName()}, bounds: {input.Bounds}, textureSize: {input.ReferenceSize}, scale: {scale}]");
 					throw;
 				}
 

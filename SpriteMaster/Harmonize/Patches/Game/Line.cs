@@ -3,7 +3,7 @@ using SpriteMaster.Types;
 using StardewValley;
 using System;
 
-namespace SpriteMaster.Harmonize.Patches;
+namespace SpriteMaster.Harmonize.Patches.Game;
 
 static class Line {
 	internal static readonly Lazy<InternalTexture2D> LineTexture = new(() => {
@@ -14,13 +14,13 @@ static class Line {
 	});
 
 	[Harmonize(
-		typeof(StardewValley.Utility),
+		typeof(Utility),
 		"drawLineWithScreenCoordinates",
 		Harmonize.Fixation.Prefix,
 		Harmonize.PriorityLevel.Last,
 		instance: false
 	)]
-	public static bool drawLineWithScreenCoordinates(int x1, int y1, int x2, int y2, SpriteBatch b, XNA.Color color1, float layerDepth) {
+	public static bool DrawLineWithScreenCoordinates(int x1, int y1, int x2, int y2, SpriteBatch b, XNA.Color color1, float layerDepth) {
 		if (!Config.Enabled || !Config.Extras.SmoothLines) {
 			return true;
 		}
@@ -33,7 +33,7 @@ static class Line {
 		}
 
 		var integralVector = start - end;
-		float angle = (float)Math.Atan2(integralVector.Y, integralVector.X);
+		float angle = MathF.Atan2(integralVector.Y, integralVector.X);
 
 		Vector2F expectedSize = (integralVector.Length + 1.0f, 3.0f);
 		if (expectedSize.X == 0.0f || expectedSize.Y == 0.0f) {
@@ -47,7 +47,7 @@ static class Line {
 
 		var vector = ((Vector2F)integralVector).Normalized * 0.5f;
 
-		Vector2F startPoint = (((Vector2F)end) + (0f, 2.0f)) - (Vector2F)vector;
+		Vector2F startPoint = (Vector2F)end + (0f, 2.0f) - vector;
 		b.Draw(texture, startPoint, null, color1, angle, Vector2F.Zero, scale, SpriteEffects.None, layerDepth);
 		return false;
 	}

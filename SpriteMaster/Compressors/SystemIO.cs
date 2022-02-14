@@ -33,7 +33,7 @@ static class SystemIO {
 				IsSupported_ = false;
 			}
 			catch (Exception ex) {
-				Debug.Info($"System.IO Compression not supported: '{ex}'");
+				Debug.Info($"System.IO Compression not supported: '{ex.GetType().Name} {ex.Message}'");
 				IsSupported_ = false;
 			}
 

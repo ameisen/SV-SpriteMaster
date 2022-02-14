@@ -69,8 +69,8 @@ unsafe partial struct Vector2F : ILongHash, ICloneable {
 
 	internal readonly bool IsEmpty => NumericVector.Equals(SystemVector2.Zero);
 	internal readonly bool IsZero => IsEmpty;
-	internal readonly float MinOf => Math.Min(X, Y);
-	internal readonly float MaxOf => Math.Max(X, Y);
+	internal readonly float MinOf => MathF.Min(X, Y);
+	internal readonly float MaxOf => MathF.Max(X, Y);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal Vector2F(float X, float Y) => NumericVector = new(X, Y);
@@ -145,10 +145,10 @@ unsafe partial struct Vector2F : ILongHash, ICloneable {
 	public static implicit operator SystemVector2(Vector2F vec) => vec.NumericVector;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly Vector2F Min() => new(Math.Min(X, Y));
+	internal readonly Vector2F Min() => new(MathF.Min(X, Y));
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly Vector2F Max() => new(Math.Max(X, Y));
+	internal readonly Vector2F Max() => new(MathF.Max(X, Y));
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal readonly Vector2F Min(Vector2F v) => SystemVector2.Min(this, v);
@@ -211,7 +211,7 @@ unsafe partial struct Vector2F : ILongHash, ICloneable {
 	);
 
 	internal readonly float LengthSquared => SystemVector2.Dot(NumericVector, NumericVector);
-	internal readonly float Length => (float)Math.Sqrt(LengthSquared);
+	internal readonly float Length => MathF.Sqrt(LengthSquared);
 
 	internal readonly Vector2F Normalized => SystemVector2.Normalize(NumericVector);
 

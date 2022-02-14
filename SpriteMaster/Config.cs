@@ -9,11 +9,13 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime;
+using System.Text.RegularExpressions;
 using TeximpNet.Compression;
 
 namespace SpriteMaster;
 
 static class Config {
+	[AttributeUsage(AttributeTargets.All, AllowMultiple = true)]
 	internal sealed class CommentAttribute : Attribute {
 		internal readonly string Message;
 
@@ -44,13 +46,42 @@ static class Config {
 	internal const bool SkipIntro = IgnoreConfig;
 
 	[ConfigIgnore]
-	internal static readonly Version CurrentVersionObj = typeof(Config).Assembly.GetName().Version ?? new Version("0.0.0.0");
+	internal static readonly Version CurrentVersionObj = typeof(Config).Assembly.GetName().Version ??
+		throw new BadImageFormatException($"Could not extract version from assembly {typeof(Config).Assembly.FullName ?? typeof(Config).Assembly.ToString()}");
 	[ConfigIgnore]
 	internal static readonly string CurrentVersion = CurrentVersionObj.ToString();
 
+	private enum BuildType {
+		Alpha,
+		Beta,
+		Candidate,
+		Final
+	}
+
+	[ConfigIgnore]
+	private static string GenerateAssemblyVersionString(int major, int minor, int revision, int build, BuildType type = BuildType.Final, int release = 1) {
+		switch (type) {
+			case BuildType.Alpha:
+				break;
+			case BuildType.Beta:
+				release += 100;
+				break;
+			case BuildType.Candidate:
+				release += 200;
+				break;
+			case BuildType.Final:
+				release += 300;
+				break;
+			default:
+				throw new ArgumentOutOfRangeException(nameof(type), type.ToString());
+		}
+
+		return $"{major}.{minor}.{revision}.{build}";
+	}
+
 	internal static string ConfigVersion = "";
 	[ConfigIgnore]
-	internal static string ClearConfigBefore = "0.13.0.100";
+	internal static string ClearConfigBefore = GenerateAssemblyVersionString(0, 13, 0, 0, BuildType.Beta, 2);
 
 	[ConfigIgnore]
 	internal static bool ForcedDisable = false;
@@ -118,10 +149,6 @@ static class Config {
 		internal static bool CollectAccountUnownedTextures = false;
 		[Comment("Should owned textures be marked in the garbage collector's statistics?")]
 		internal static bool CollectAccountOwnedTextures = false;
-		[Comment("Should SM attempt to detect and prevent texture memory leaks?")]
-		internal static bool LeakPreventTexture = false;
-		[Comment("Should SM attempt to detect and prevent disposable object memory leaks?")]
-		internal static bool LeakPreventAll = false;
 		[Comment("The amount of free memory required by SM after which it triggers recovery operations")]
 		internal static int RequiredFreeMemory = 64;
 		[Comment("Hysterisis applied to RequiredFreeMemory")]
@@ -153,6 +180,11 @@ static class Config {
 		internal static bool DisableDepthBuffer = false;
 		[Comment("The default backbuffer format to request")]
 		internal static SurfaceFormat BackbufferFormat = SurfaceFormat.Color;
+	}
+
+	internal static class Performance {
+		[Comment("Perform a Generation 0 and 1 garbage collection pass every N ticks (if <= 0, disabled)")]
+		internal static int TransientGCTickCount = 150;
 	}
 
 	internal readonly record struct TextureRef(string Texture, Bounds Bounds);
@@ -189,18 +221,18 @@ static class Config {
 		[Comment("Should sprites be assumed to be premultiplied, or should they instead by analyzed?")]
 		internal static bool PremultiplyAlphaAssume = true;
 		internal static List<string> SlicedTextures = new() {
-			"LooseSprites/Cursors::0,2000:640,256",
-			"LooseSprites/Cloudy_Ocean_BG",
-			"LooseSprites/Cloudy_Ocean_BG_Night",
-			//"LooseSprites/stardewPanorama",
-			"Maps/nightSceneMaru",
-			"Maps/nightSceneMaruTrees",
-			"Maps/sebastianMountainTiles",
-			"Maps/sebastianRideTiles",
+			@"LooseSprites\Cursors::0,2000:640,256",
+			@"LooseSprites\Cloudy_Ocean_BG",
+			@"LooseSprites\Cloudy_Ocean_BG_Night",
+			@"LooseSprites\stardewPanorama",
+			@"Maps\nightSceneMaru",
+			@"Maps\nightSceneMaruTrees",
+			@"Maps\sebastianMountainTiles",
+			@"Maps\sebastianRideTiles",
 			// SVE
-			"Tilesheets/GuntherExpedition2_Shadows",
-			"Tilesheets/Highlands_Fog",
-			"Tilesheets/Highlands_FogBackground",
+			@"Tilesheets\GuntherExpedition2_Shadows",
+			@"Tilesheets\Highlands_Fog",
+			@"Tilesheets\Highlands_FogBackground",
 
 		};
 		[ConfigIgnore]
@@ -216,44 +248,44 @@ static class Config {
 
 		[Comment("What textures or spritesheets use 4xblock sizes?")]
 		internal static List<string> TwoXTextures = new() {
-			"Maps/WoodBuildings" // is _almost_ TwoX.
+			@"Maps\WoodBuildings" // is _almost_ TwoX.
 		};
 		[Comment("What textures or spritesheets use 4xblock sizes?")]
 		internal static List<string> FourXTextures = new() {
-			"Characters/Monsters/Crow",
-			"Characters/femaleRival",
-			"Characters/maleRival",
-			"LooseSprites/Bat",
-			"LooseSprites/buildingPlacementTiles",
-			"LooseSprites/chatBox",
-			"LooseSprites/daybg",
-			"LooseSprites/DialogBoxGreen",
-			"LooseSprites/hoverBox",
-			"LooseSprites/nightbg",
-			"LooseSprites/robinAtWork",
-			"LooseSprites/skillTitles",
-			"LooseSprites/textBox",
-			"Maps/busPeople",
-			"Maps/cavedarker",
-			"Maps/FarmhouseTiles",
-			"Maps/GreenHouseInterior",
-			"Maps/MenuTiles",
-			"Maps/MenuTilesUncolored",
-			"Maps/spring_BusStop",
-			"Maps/TownIndoors",
-			"TerrainFeatures/BuffsIcons",
-			"TerrainFeatures/DiggableWall_basic",
-			"TerrainFeatures/DiggableWall_basic_dark",
-			"TerrainFeatures/DiggableWall_frost",
-			"TerrainFeatures/DiggableWall_frost_dark",
-			"TerrainFeatures/DiggableWall_lava",
-			"TerrainFeatures/DiggableWall_lava_dark",
-			"TerrainFeatures/Stalagmite",
-			"TerrainFeatures/Stalagmite_Frost",
-			"TerrainFeatures/Stalagmite_Lava",
-			"TileSheets/Fireball",
-			"TileSheets/rain",
-			"TileSheets/animations"
+			@"Characters\Monsters\Crow",
+			@"Characters\femaleRival",
+			@"Characters\maleRival",
+			@"LooseSprites\Bat",
+			@"LooseSprites\buildingPlacementTiles",
+			@"LooseSprites\chatBox",
+			@"LooseSprites\daybg",
+			@"LooseSprites\DialogBoxGreen",
+			@"LooseSprites\hoverBox",
+			@"LooseSprites\nightbg",
+			@"LooseSprites\robinAtWork",
+			@"LooseSprites\skillTitles",
+			@"LooseSprites\textBox",
+			@"Maps\busPeople",
+			@"Maps\cavedarker",
+			@"Maps\FarmhouseTiles",
+			@"Maps\GreenHouseInterior",
+			@"Maps\MenuTiles",
+			@"Maps\MenuTilesUncolored",
+			@"Maps\spring_BusStop",
+			@"Maps\TownIndoors",
+			@"TerrainFeatures\BuffsIcons",
+			@"TerrainFeatures\DiggableWall_basic",
+			@"TerrainFeatures\DiggableWall_basic_dark",
+			@"TerrainFeatures\DiggableWall_frost",
+			@"TerrainFeatures\DiggableWall_frost_dark",
+			@"TerrainFeatures\DiggableWall_lava",
+			@"TerrainFeatures\DiggableWall_lava_dark",
+			@"TerrainFeatures\Stalagmite",
+			@"TerrainFeatures\Stalagmite_Frost",
+			@"TerrainFeatures\Stalagmite_Lava",
+			@"TileSheets\Fireball",
+			@"TileSheets\rain",
+			@"TileSheets\animations"
 		};
 		[ConfigIgnore]
 		internal static class Deposterization {
@@ -286,8 +318,6 @@ static class Config {
 			[ConfigIgnore]
 			private const bool MacSupported = false;
 			private const bool DevEnabled = true;
-			[Comment("Should block compression of sprites be synchronous?")]
-			internal static bool Synchronized = false;
 			[Comment("What quality level should be used?")]
 			internal static CompressionQuality Quality = CompressionQuality.Highest;
 			[Comment("What alpha deviation threshold should be applied to determine if a sprite's transparency is smooth or mask-like (determines between bc2 and bc3)?")]
@@ -295,8 +325,16 @@ static class Config {
 		}
 		[Comment("What spritesheets will absolutely not be resampled or processed?")]
 		internal static List<string> Blacklist = new() {
-			"LooseSprites/Lighting/"
+			@"LooseSprites\Lighting\",
+			@"@^Maps\\.+Mist",
+			@"@^Maps\\.+mist",
+			@"@^Maps\\.+Shadow",
+			@"@^Maps\\.+Shadows",
+			@"@^Maps\\.+Fog",
+			@"@^Maps\\.+FogBackground",
 		};
+		[ConfigIgnore]
+		internal static List<Regex> BlacklistPatterns = new();
 		internal static class Padding {
 			[Comment("Should padding be applied to sprites to allow resampling to extend beyond the natural sprite boundaries?")]
 			internal static bool Enabled = DevEnabled && true;
@@ -310,45 +348,39 @@ static class Config {
 
 			[Comment("What spritesheets should have a stricter edge-detection algorithm applied?")]
 			internal static List<string> StrictList = new() {
-				"LooseSprites/Cursors"
+				@"LooseSprites\Cursors"
 			};
 			[Comment("What spritesheets should always be padded?")]
 			internal static List<string> AlwaysList = new() {
-				"LooseSprites/font_bold",
-				"Characters/Farmer/hairstyles",
-				"Characters/Farmer/hairstyles2",
-				"Characters/Farmer/hats",
-				"Characters/Farmer/pants",
-				"Characters/Farmer/shirts",
-				"TileSheets/weapons",
-				"TileSheets/bushes",
-				"TerrainFeatures/grass",
-				"TileSheets/debris",
-				"TileSheets/animations",
-				"Maps/springobjects",
-				"Maps/summerobjects",
-				"Maps/winterobjects",
-				"Maps/fallobjects",
-				"Buildings/houses",
-				"TileSheets/furniture",
-				"TerrainFeatures/tree1_spring",
-				"TerrainFeatures/tree2_spring",
-				"TerrainFeatures/tree3_spring",
-				"TerrainFeatures/tree1_summer",
-				"TerrainFeatures/tree2_summer",
-				"TerrainFeatures/tree3_summer",
-				"TerrainFeatures/tree1_fall",
-				"TerrainFeatures/tree2_fall",
-				"TerrainFeatures/tree3_fall",
-				"TerrainFeatures/tree1_winter",
-				"TerrainFeatures/tree2_winter",
-				"TerrainFeatures/tree3_winter",
-			};
-
-			[Comment("What spritesheets should never be padded?")]
-			internal static List<string> BlackList = new() {
-				"LooseSprites/Cloudy_Ocean_BG",
-				"LooseSprites/Cloudy_Ocean_BG_Night"
+				@"LooseSprites\font_bold",
+				@"Characters\Farmer\hairstyles",
+				@"Characters\Farmer\hairstyles2",
+				@"Characters\Farmer\hats",
+				@"Characters\Farmer\pants",
+				@"Characters\Farmer\shirts",
+				@"TileSheets\weapons",
+				@"TileSheets\bushes",
+				@"TerrainFeatures\grass",
+				@"TileSheets\debris",
+				@"TileSheets\animations",
+				@"Maps\springobjects",
+				@"Maps\summerobjects",
+				@"Maps\winterobjects",
+				@"Maps\fallobjects",
+				@"Buildings\houses",
+				@"TileSheets\furniture",
+				@"TerrainFeatures\tree1_spring",
+				@"TerrainFeatures\tree2_spring",
+				@"TerrainFeatures\tree3_spring",
+				@"TerrainFeatures\tree1_summer",
+				@"TerrainFeatures\tree2_summer",
+				@"TerrainFeatures\tree3_summer",
+				@"TerrainFeatures\tree1_fall",
+				@"TerrainFeatures\tree2_fall",
+				@"TerrainFeatures\tree3_fall",
+				@"TerrainFeatures\tree1_winter",
+				@"TerrainFeatures\tree2_winter",
+				@"TerrainFeatures\tree3_winter",
 			};
 		}
 		internal static class xBRZ {
@@ -396,8 +428,6 @@ static class Config {
 		private const bool DevEnabled = true;
 		[Comment("Should memory cache elements always be flushed upon update?")]
 		internal static bool AlwaysFlush = false;
-		[Comment("Should the memory cache be asynchronous?")]
-		internal static bool Async = true;
 	}
 
 	internal static class SuspendedCache {
@@ -412,6 +442,9 @@ static class Config {
 	internal static class SMAPI {
 		[Comment("Should the experimental SMAPI texture cache patch be enabled?")]
 		internal static bool TextureCacheEnabled = true;
+		[Comment("Should the experimental SMAPI texture cache have high memory usage enabled?")]
+		[Comment("Unrecommended: This results in the game's texture being retained (and thus loaded faster) but doesn't suspend the resampled sprite instances.")]
+		internal static bool TextureCacheHighMemoryEnabled = false;
 		[Comment("Should the ApplyPatch method be patched?")]
 		internal static bool ApplyPatchEnabled = true;
 		[Comment("Should the ApplyPatch patch use SpriteMaster caches?")]
@@ -421,16 +454,40 @@ static class Config {
 	}
 
 	internal static class Extras {
+		[Comment("Should the game have 'fast quitting' enabled?")]
+		internal static bool FastQuit = true;
 		[Comment("Should line drawing be smoothed?")]
 		internal static bool SmoothLines = true;
+		[Comment("Should NPC Warp Points code be optimized?")]
+		internal static bool OptimizeWarpPoints = true;
+		[Comment("Should NPCs take true shortest paths?")]
+		internal static bool TrueShortestPath = true;
+		[Comment("Allow NPCs onto the farm?")]
+		internal static bool AllowNPCsOnFarm = false;
 		[Comment("Should the default batch sort be replaced with a stable sort?")]
 		internal static bool StableSort = true;
-		[Comment("Should custom snowfall be used during snowstorms?")]
-		internal static bool CustomSnow = true;
-		[Comment("Minimum Custom Snow Density")]
-		internal static int MinimumSnowDensity = 1024;
-		[Comment("Maximum Custom Snow Density")]
-		internal static int MaximumSnowDensity = 3072;
+		[Comment("Should the game be prevented from going 'unresponsive' during loads?")]
+		internal static bool PreventUnresponsive = true;
+		[Comment("Should the engine's deferred thread task runner be optimized?")]
+		internal static bool OptimizeEngineTaskRunner = true;
+		internal static class Snow {
+			[Comment("Should custom snowfall be used during snowstorms?")]
+			internal static bool Enabled = true;
+			[Comment("Minimum Snow Density")]
+			internal static int MinimumDensity = 1024;
+			[Comment("Maximum Snow Density")]
+			internal static int MaximumDensity = 3072;
+			[Comment("Maximum Snow Rotation Speed")]
+			internal static double MaximumRotationSpeed = 1.0 / 60.0;
+			[Comment("Maximum Snow Scale")]
+			internal static float MaximumScale = 3.0f;
+			[Comment("Puffersnow Chance")]
+			internal static float PuffersnowChance = -1.0f;
+		}
+		internal static class ModPatches {
+			[Comment("Patch CustomNPCFixes in order to improve load times?")]
+			internal static bool PatchCustomNPCFixes = false;
+		}
 	}
 
 	internal static class FileCache {

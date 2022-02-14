@@ -13,7 +13,7 @@ static class SuspendedSpriteCache {
 	private static long TotalCachedSize = 0L;
 	private static readonly TypedMemoryCache<ManagedSpriteInstance> Cache = new("SuspendedSpriteCache", OnEntryRemoved);
 	private static readonly Condition TrimEvent = new();
-	private static readonly Thread CacheTrimThread = ThreadExt.Run(CacheTrimLoop, background: true);
+	private static readonly Thread CacheTrimThread = ThreadExt.Run(CacheTrimLoop, background: true, name: "Cache Trim Thread");
 
 	private static void CacheTrimLoop() {
 		while (true) {

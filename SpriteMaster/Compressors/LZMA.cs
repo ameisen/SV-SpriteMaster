@@ -35,7 +35,7 @@ static class LZMA {
 				IsSupported_ = false;
 			}
 			catch (Exception ex) {
-				Debug.Info($"LZMA Compression not supported: '{ex}'");
+				Debug.Info($"LZMA Compression not supported: '{ex.GetType().Name} {ex.Message}'");
 				IsSupported_ = false;
 			}
 

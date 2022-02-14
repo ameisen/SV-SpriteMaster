@@ -156,7 +156,7 @@ static class SpriteMap {
 		}
 		finally {
 			if (spriteInstance.Texture is not null && !spriteInstance.Texture.IsDisposed) {
-				Debug.Trace($"Disposing Active HD Texture: {spriteInstance.SafeName()}");
+				Debug.Trace($"Disposing Active HD Texture: {spriteInstance.NormalizedName()}");
 
 				//spriteInstance.Texture.Dispose();
 			}
@@ -203,7 +203,7 @@ static class SpriteMap {
 				}
 
 				// TODO : handle sourceRectangle meaningfully.
-				Debug.Trace($"Purging Texture {reference.SafeName()}");
+				Debug.Trace($"Purging Texture {reference.NormalizedName()}");
 
 				bool hasSourceRect = sourceRectangle.HasValue;
 
@@ -267,7 +267,7 @@ static class SpriteMap {
 				}
 
 				// TODO : handle sourceRectangle meaningfully.
-				Debug.Trace($"Invalidating Texture {reference.SafeName()}");
+				Debug.Trace($"Invalidating Texture {reference.NormalizedName()}");
 
 				foreach (var pairs in spriteTable) {
 					var spriteInstance = pairs.Value;
@@ -302,7 +302,7 @@ static class SpriteMap {
 					continue;
 				}
 
-				var textureName = spriteInstance.SafeName().ToLowerInvariant();
+				var textureName = spriteInstance.NormalizedName().ToLowerInvariant();
 				if (!textureName.Contains(season) && Seasons.AnyF(s => textureName.Contains(s))) {
 					if (spriteInstance.Reference.TryGetTarget(out var reference)) {
 						spriteInstance.Dispose();

@@ -341,8 +341,11 @@ static class SerializeConfig {
 				value
 			);
 
-			if (field.GetAttribute<Config.CommentAttribute>(out var attribute)) {
-				keyValue.AddLeadingTrivia(TokenKind.Comment, $"# {attribute.Message}\n");
+			var commentAttributes = field.GetCustomAttributes<Config.CommentAttribute>();
+			if (commentAttributes?.IsEmpty() ?? false) {
+				foreach (var attribute in commentAttributes) {
+					keyValue.AddLeadingTrivia(TokenKind.Comment, $"# {attribute.Message}\n");
+				}
 			}
 
 			tableItems.Add(keyValue);

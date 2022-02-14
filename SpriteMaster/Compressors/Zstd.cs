@@ -76,7 +76,7 @@ static class Zstd {
 				IsSupported_ = false;
 			}
 			catch (Exception ex) {
-				Debug.Info($"Zstd Compression not supported: '{ex}'".Pastel(DrawingColor.Red));
+				Debug.Info($"Zstd Compression not supported: '{ex.GetType().Name} {ex.Message}'".Pastel(DrawingColor.Red));
 				IsSupported_ = false;
 			}
 

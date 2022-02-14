@@ -117,7 +117,22 @@ static partial class DrawState {
 		else {
 			PushedUpdateThisFrame = false;
 		}
-		++CurrentFrame;
+
+		TransientGC(++CurrentFrame);
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	private static void TransientGC(ulong currentFrame) {
+		var tickCount = Config.Performance.TransientGCTickCount;
+		if (tickCount > 0 && (currentFrame % 150) == 0) {
+			// No trace message as that would be _incredibly_ annoying.
+			GC.Collect(
+				generation: 1,
+				mode: GCCollectionMode.Forced,
+				blocking: false,
+				compacting: false
+			);
+		}
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]

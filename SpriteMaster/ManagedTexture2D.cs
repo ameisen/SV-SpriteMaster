@@ -37,7 +37,7 @@ sealed class ManagedTexture2D : InternalTexture2D {
 		SurfaceFormat format,
 		string? name = null
 	) : base(reference.GraphicsDevice.IsDisposed ? DrawState.Device : reference.GraphicsDevice, dimensions.Width, dimensions.Height, UseMips, format) {
-		this.Name = name ?? $"{reference.SafeName()} [internal managed <{format}>]";
+		this.Name = name ?? $"{reference.NormalizedName()} [internal managed <{format}>]";
 
 		Reference = reference.MakeWeak();
 		Texture = texture;

@@ -138,6 +138,9 @@ partial struct Bounds :
 		set => Height = value - Offset.Y;
 	}
 
+	internal readonly ExtentI XAxis => new(Left, Right);
+	internal readonly ExtentI YAxis => new(Top, Bottom);
+
 	internal readonly int Area => Extent.X * Extent.Y;
 
 	internal readonly bool Degenerate => Extent.X == 0 || Extent.Y == 0;

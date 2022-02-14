@@ -82,7 +82,7 @@ sealed class SpriteInfo : IDisposable {
 		catch (ArgumentOutOfRangeException) {
 			var errorBuilder = new StringBuilder();
 			errorBuilder.AppendLine("SpriteInfo.ReferenceData: arguments out of range");
-			errorBuilder.AppendLine($"Reference: {reference.SafeName()}");
+			errorBuilder.AppendLine($"Reference: {reference.NormalizedName()}");
 			errorBuilder.AppendLine($"Reference Extent: {reference.Extent()}");
 			errorBuilder.AppendLine($"raw offset: {rawOffset}");
 			errorBuilder.AppendLine($"offset: {bounds.Offset}");
@@ -153,7 +153,7 @@ sealed class SpriteInfo : IDisposable {
 
 			// Truncate the bounds so that it fits if it wouldn't otherwise fit
 			if (!Bounds.ClampToChecked(Reference.Bounds, out var clampedBounds)) {
-				Debug.Warning($"SpriteInfo for '{reference.SafeName()}' bounds '{dimensions}' are not contained in reference bounds '{(Bounds)reference.Bounds}'");
+				Debug.Warning($"SpriteInfo for '{reference.NormalizedName()}' bounds '{dimensions}' are not contained in reference bounds '{(Bounds)reference.Bounds}'");
 				Bounds = clampedBounds;
 			}
 
@@ -163,7 +163,7 @@ sealed class SpriteInfo : IDisposable {
 			if (refData is null) {
 				// TODO : Switch this around to use ReadOnlySequence so our hash is specific to the sprite
 				refData = new byte[reference.SizeBytes()];
-				Debug.Trace($"Reloading Texture Data (not in cache): {reference.SafeName(DrawingColor.LightYellow)}");
+				Debug.Trace($"Reloading Texture Data (not in cache): {reference.NormalizedName(DrawingColor.LightYellow)}");
 				reference.GetData(refData);
 				reference.Meta().CachedRawData = refData;
 				if (refMeta.IsCompressed) {

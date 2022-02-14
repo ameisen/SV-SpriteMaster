@@ -18,7 +18,7 @@ static class Draw {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static bool GetIsSliced(in Bounds bounds, Texture2D reference, [NotNullWhen(true)] out Config.TextureRef? result) {
 		foreach (var slicedTexture in Config.Resample.SlicedTexturesS) {
-			if (!reference.SafeName().StartsWith(slicedTexture.Texture)) {
+			if (!reference.NormalizedName().StartsWith(slicedTexture.Texture)) {
 				continue;
 			}
 			if (slicedTexture.Bounds.IsEmpty) {
@@ -111,38 +111,7 @@ static class Draw {
 				return null;
 			}
 
-			// if "source" is _not_ within the expected bounds, we should adjust the result accordingly.
-			if (!((Bounds)reference.Bounds).Contains(source)) {
-				int leftDiff = reference.Bounds.Left - Math.Min(reference.Bounds.Left, source.Left);
-				int rightDiff = Math.Max(reference.Bounds.Right, source.Right) - reference.Bounds.Right;
-				int topDiff = reference.Bounds.Top - Math.Min(reference.Bounds.Top, source.Top);
-				int bottomDiff = Math.Max(reference.Bounds.Bottom, source.Bottom) - reference.Bounds.Bottom;
-
-				var clampedBounds = source.ClampTo(reference.Bounds);
-				float leftDiffFrac = (float)leftDiff / clampedBounds.Width;
-				float rightDiffFrac = (float)rightDiff / clampedBounds.Width;
-				float topDiffFrac = (float)topDiff / clampedBounds.Height;
-				float bottomDiffFrac = (float)bottomDiff / clampedBounds.Height;
-
-				int addLeft = (int)Math.Round(leftDiffFrac * spriteInstance.UnpaddedSize.Width);
-				int addRight = (int)Math.Round(rightDiffFrac * spriteInstance.UnpaddedSize.Width);
-				int addTop = (int)Math.Round(topDiffFrac * spriteInstance.UnpaddedSize.Height);
-				int addBottom = (int)Math.Round(bottomDiffFrac * spriteInstance.UnpaddedSize.Height);
-
-				var adjustedBounds = (Bounds)t.Dimensions;
-				Vector2I offset = adjustedBounds.Offset;
-				Vector2I extent = adjustedBounds.Extent;
-				offset.X -= addLeft;
-				extent.X += addLeft + addRight;
-				offset.Y -= addTop;
-				extent.Y += addTop + addBottom;
-				adjustedBounds.Offset = offset;
-				adjustedBounds.ForceSetExtent(extent);
-				source = adjustedBounds;
-			}
-			else {
-				source = t.Dimensions;
-			}
+			source = t.Dimensions;
 
 			return spriteInstance;
 		}
@@ -224,6 +193,13 @@ static class Draw {
 		}
 		spriteInstance.UpdateReferenceFrame();
 
+		if (referenceRectangle.X < 0) {
+			destinationBounds.Left -= referenceRectangle.X;
+		}
+		if (referenceRectangle.Y < 0) {
+			destinationBounds.Top -= referenceRectangle.Y;
+		}
+
 		var resampledTexture = spriteInstance.Texture!;
 
 		if (!spriteInstance.Padding.IsZero) {
@@ -284,6 +260,8 @@ static class Draw {
 
 		Bounds destinationBounds = destination;
 
+		var referenceSource = source.GetValueOrDefault();
+
 		if (__state is null) {
 			GetDrawParameters(
 				texture: texture,
@@ -326,6 +304,13 @@ static class Draw {
 					sourceRectangle.Extent = (sourceRectangle.ExtentF * spriteInstance.Scale).NearestInt();
 				}
 			}
+		}
+
+		if (referenceSource.X < 0) {
+			destination.X -= referenceSource.X;
+		}
+		if (referenceSource.Y < 0) {
+			destination.Y -= referenceSource.Y;
 		}
 
 		var scaledOrigin = (Vector2F)origin / spriteInstance.Scale;
@@ -395,6 +380,13 @@ static class Draw {
 
 		if (spriteInstance is null || resampledTexture is null) {
 			return Continue;
+		}
+
+		if (originalSourceRect.X < 0) {
+			position.X -= originalSourceRect.X * scale.X;
+		}
+		if (originalSourceRect.Y < 0) {
+			position.Y -= originalSourceRect.Y * scale.Y;
 		}
 
 		var adjustedScale = (Vector2F)scale / (Vector2F)spriteInstance.Scale;

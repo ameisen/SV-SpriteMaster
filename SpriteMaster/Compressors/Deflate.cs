@@ -34,7 +34,7 @@ static class Deflate {
 				IsSupported_ = false;
 			}
 			catch (Exception ex) {
-				Debug.Info($"Deflate Compression not supported: '{ex}'");
+				Debug.Info($"Deflate Compression not supported: '{ex.GetType().Name} {ex.Message}'");
 				IsSupported_ = false;
 			}
 

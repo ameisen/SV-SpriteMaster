@@ -14,7 +14,7 @@ static class ResampleTask {
 	private static ManagedSpriteInstance? ResampleFunction(in TaskParameters parameters) {
 		try {
 			return new ManagedSpriteInstance(
-				assetName: parameters.SpriteInfo.Reference.SafeName(),
+				assetName: parameters.SpriteInfo.Reference.NormalizedName(),
 				spriteInfo: parameters.SpriteInfo,
 				sourceRectangle: parameters.SpriteInfo.Bounds,
 				textureType: parameters.SpriteInfo.TextureType,
