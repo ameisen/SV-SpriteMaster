@@ -17,7 +17,7 @@ using static StardewValley.PathFindController;
 
 namespace SpriteMaster.Harmonize.Patches.Game.Pathfinding;
 
-static class Pathfinder {
+static class Pathfinding {
 	private static readonly Action<List<List<string>>>? RoutesFromLocationToLocationSet = typeof(NPC).GetFieldSetter<List<List<string>>>("routesFromLocationToLocation");
 	private static readonly Dictionary<string, Dictionary<string, List<string>>> FasterRouteMap = new();
 
