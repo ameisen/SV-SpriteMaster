@@ -17,7 +17,8 @@ static class ThreadRun {
 		"Run",
 		Harmonize.Fixation.Prefix,
 		Harmonize.PriorityLevel.Last,
-		instance: false
+		instance: false,
+		critical: false
 	)]
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static bool Run() {
@@ -32,7 +33,7 @@ static class ThreadRun {
 			actions.Clear();
 		}
 
-		foreach (var action in actions) {
+		foreach (var action in localList) {
 			action();
 		}
 
