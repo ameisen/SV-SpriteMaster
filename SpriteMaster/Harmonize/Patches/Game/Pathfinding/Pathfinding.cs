@@ -1,221 +1,26 @@
-﻿using Microsoft.Xna.Framework;
-using Priority_Queue;
+﻿using Priority_Queue;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using StardewValley;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Threading;
-using System.Threading.Tasks;
 using static StardewValley.PathFindController;
 
 namespace SpriteMaster.Harmonize.Patches.Game.Pathfinding;
 
-static class Pathfinding {
+using DoorPair = KeyValuePair<XNA.Point, string>;
+
+static partial class Pathfinding {
 	private static readonly Action<List<List<string>>>? RoutesFromLocationToLocationSet = typeof(NPC).GetFieldSetter<List<List<string>>>("routesFromLocationToLocation");
 	private static readonly Dictionary<string, Dictionary<string, List<string>>> FasterRouteMap = new();
 
-	[Harmonize(
-		typeof(NPC),
-		"getLocationRoute",
-		Harmonize.Fixation.Prefix,
-		Harmonize.PriorityLevel.Last
-	)]
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool GetLocationRoute(NPC __instance, ref List<string>? __result, string startingLocation, string endingLocation) {
-		if (!Config.Enabled || !Config.Extras.OptimizeWarpPoints) {
-			return true;
-		}
-
-		// && ((int)this.gender == 0 || !s.Contains<string>("BathHouse_MensLocker", StringComparer.Ordinal)) && ((int)this.gender != 0 || !s.Contains<string>("BathHouse_WomensLocker", StringComparer.Ordinal))
-
-		if (FasterRouteMap.TryGetValue(startingLocation, out var innerRoute)) {
-			if (innerRoute.TryGetValue(endingLocation, out var route) && route is not null && route.Count != 0) {
-				__result = route;
-				return false;
-			}
-		}
-
-		return true;
-	}
-
-	[Harmonize(
-		typeof(Game1),
-		"warpCharacter",
-		Harmonize.Fixation.Prefix,
-		Harmonize.PriorityLevel.Last,
-		instance: false
-	)]
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool WarpCharacter(NPC character, GameLocation targetLocation, Vector2 position) {
-		if (!Config.Enabled || !Config.Extras.AllowNPCsOnFarm || !Config.Extras.OptimizeWarpPoints) {
-			return true;
-		}
-
-		if (character is null || Game1.player is not Farmer player) {
-			return true;
-		}
-
-		bool isFamily = false;
-		if (player.friendshipData.TryGetValue(character.Name, out var value)) {
-			isFamily = value.IsMarried() || value.IsRoommate();
-		}
-		if (!isFamily && (player.getChildren()?.Contains(character) ?? false)) {
-			isFamily = true;
-		}
-
-		// https://github.com/aedenthorn/StardewValleyMods/blob/master/FreeLove/FarmerPatches.cs
-		if (character == player.getSpouse() || character == player.getPet() || isFamily) {
-			var trace = new StackTrace();
-			foreach (var frame in trace.GetFrames()) {
-				if (frame.GetMethod() is MethodBase method) {
-					if (method.DeclaringType == typeof(Event)) {
-						return true;
-					}
-				}
-			}
-
-			character.controller = new PathFindController(c: character, location: targetLocation, endPoint: Utility.Vector2ToPoint(position), finalFacingDirection: -1);
-			if (character.controller.pathToEndPoint is null) {
-				character.controller = null;
-				return true;
-			}
-			return false;
-		}
-
-		return true;
-	}
-
-	[Harmonize(
-		typeof(Game1),
-		"warpCharacter",
-		Harmonize.Fixation.Prefix,
-		Harmonize.PriorityLevel.Last,
-		instance: false
-	)]
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool WarpCharacter(NPC character, string targetLocationName, Vector2 position) {
-		return WarpCharacter(character, Game1.getLocationFromName(targetLocationName), position);
-	}
-
-	[Harmonize(
-		typeof(Game1),
-		"warpCharacter",
-		Harmonize.Fixation.Prefix,
-		Harmonize.PriorityLevel.Last,
-		instance: false
-	)]
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool WarpCharacter(NPC character, string targetLocationName, Point position) {
-		return WarpCharacter(character, Game1.getLocationFromName(targetLocationName), Utility.PointToVector2(position));
-	}
-
-	[Harmonize(
-		typeof(GameLocation),
-		"characterDestroyObjectWithinRectangle",
-		Harmonize.Fixation.Prefix,
-		Harmonize.PriorityLevel.Last
-	)]
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool CharacterDestroyObjectWithinRectangle(GameLocation __instance, ref bool __result, Rectangle rect, bool showDestroyedObject) {
-		if (__instance.IsFarm || __instance.IsGreenhouse) {
-			__result = false;
-			return false;
-		}
-
-		return true;
-	}
-
-	[Harmonize(
-		typeof(NPC),
-		"populateRoutesFromLocationToLocationList",
-		Harmonize.Fixation.Prefix,
-		Harmonize.PriorityLevel.Last,
-		instance: false
-	)]
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool PopulateRoutesFromLocationToLocationList() {
-		if (!Config.Enabled || !Config.Extras.OptimizeWarpPoints) {
-			return true;
-		}
-
+	static Pathfinding() {
 		if (RoutesFromLocationToLocationSet is null) {
-			return true;
+			Debug.Warning($"Could not find 'NPC.routesFromLocationToLocation'");
 		}
-
-		var routeList = new ConcurrentBag<List<string>>();
-
-		var locations = new Dictionary<string, GameLocation?>(Game1.locations.Select(location => new KeyValuePair<string, GameLocation?>(location.Name, location)));
-
-		Parallel.ForEach(Game1.locations, location => {
-			if (Config.Extras.AllowNPCsOnFarm || location is not Farm && location.Name != "Backwoods") {
-				var route = new List<string>();
-				ExploreWarpPointsImpl(location, route, routeList, locations);
-			}
-		});
-
-		RoutesFromLocationToLocationSet(routeList.ToList());
-		foreach (var route in routeList) {
-			var innerRoutes = FasterRouteMap.GetOrAddDefault(route.First(), () => new Dictionary<string, List<string>>());
-			innerRoutes![route.Last()] = route;
-		}
-
-		// →
-
-		using var fs = new StreamWriter(@"D:\sdv_paths.txt");
-		foreach (var outerRoutes in FasterRouteMap) {
-			fs.WriteLine($"{outerRoutes.Key}:");
-
-			int len = 0;
-			foreach (var innerRoutes in outerRoutes.Value) {
-				len = Math.Max(len, innerRoutes.Key.Length);
-			}
-
-			int i = 0;
-			foreach (var innerRoutes in outerRoutes.Value) {
-				fs.WriteLine($" {(++i == outerRoutes.Value.Count ? '└' : '├')} {innerRoutes.Key.PadRight(len)} :: {string.Join(" → ", innerRoutes.Value)}");
-			}
-		}
-
-		return false;
-	}
-
-	[Harmonize(
-		typeof(NPC),
-		"exploreWarpPoints",
-		Harmonize.Fixation.Prefix,
-		Harmonize.PriorityLevel.Last,
-		instance: false
-	)]
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool ExploreWarpPoints(ref bool __result, GameLocation l, List<string> route) {
-		if (!Config.Enabled || !Config.Extras.OptimizeWarpPoints) {
-			return true;
-		}
-
-		if (RoutesFromLocationToLocationSet is null) {
-			return true;
-		}
-
-		// RoutesFromLocationToLocation is always a new list when first entering this method
-		var routeList = new ConcurrentBag<List<string>>();
-
-		var locations = new Dictionary<string, GameLocation?>(Game1.locations.Select(location => new KeyValuePair<string, GameLocation?>(location.Name, location)));
-
-		__result = ExploreWarpPointsImpl(l, route, routeList, locations);
-
-		RoutesFromLocationToLocationSet(routeList.ToList());
-		foreach (var listedRoute in routeList) {
-			var innerRoutes = FasterRouteMap.GetOrAddDefault(listedRoute.First(), () => new Dictionary<string, List<string>>());
-			innerRoutes![listedRoute.Last()] = listedRoute;
-		}
-		return false;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -240,7 +45,7 @@ static class Pathfinding {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static GameLocation? GetTarget(this KeyValuePair<Point, string> door, Dictionary<string, GameLocation?> locations) {
+	private static GameLocation? GetTarget(this DoorPair door, Dictionary<string, GameLocation?> locations) {
 		if (door.Value is null) {
 			return null;
 		}
@@ -254,7 +59,6 @@ static class Pathfinding {
 	}
 
 	private readonly record struct PointPair(Vector2I Start, Vector2I End);
-
 	private static readonly ConcurrentDictionary<GameLocation, ConcurrentDictionary<PointPair, bool>> CachedPathfindPoints = new();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]

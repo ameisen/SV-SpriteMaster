@@ -21,7 +21,8 @@ static class PAssetDataForImage {
 		"StardewModdingAPI.Framework.Content.AssetDataForImage",
 		"PatchImage",
 		Harmonize.Fixation.Prefix,
-		Harmonize.PriorityLevel.Last
+		Harmonize.PriorityLevel.Last,
+		critical: false
 	)]
 	public static unsafe bool PatchImage(IAssetDataForImage __instance, Texture2D source, XNA.Rectangle? sourceArea, XNA.Rectangle? targetArea, PatchMode patchMode) {
 		if (!Config.SMAPI.ApplyPatchEnabled) {

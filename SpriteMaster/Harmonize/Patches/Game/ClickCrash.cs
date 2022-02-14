@@ -45,7 +45,8 @@ static class ClickCrash {
 		"Microsoft.Xna.Framework.SdlGamePlatform",
 		"SdlRunLoop",
 		Harmonize.Fixation.Postfix,
-		Harmonize.PriorityLevel.Last
+		Harmonize.PriorityLevel.Last,
+		critical: false
 	)]
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static void SdlRunLoop(object __instance) {
@@ -58,7 +59,8 @@ static class ClickCrash {
 		"EnsureUIThread",
 		Harmonize.Fixation.Prefix,
 		Harmonize.PriorityLevel.Last,
-		instance: false
+		instance: false,
+		critical: false
 	)]
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static bool EnsureUIThread() => false;
@@ -71,7 +73,8 @@ static class ClickCrash {
 		"IsOnUIThread",
 		Harmonize.Fixation.Prefix,
 		Harmonize.PriorityLevel.Last,
-		instance: false
+		instance: false,
+		critical: false
 	)]
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static bool IsOnUIThread(ref bool __result) {

@@ -7,7 +7,8 @@ static class PExit {
 		typeof(StardewValley.InstanceGame),
 		"Exit",
 		Harmonize.Fixation.Prefix,
-		Harmonize.PriorityLevel.Last
+		Harmonize.PriorityLevel.Last,
+		critical: false
 	)]
 	public static bool Exit() {
 		if (!Config.Enabled || !Config.Extras.FastQuit) {

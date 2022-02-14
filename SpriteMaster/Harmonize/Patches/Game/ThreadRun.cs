@@ -27,9 +27,9 @@ static class ThreadRun {
 		}
 
 		var actions = ThreadingActionsGet();
-		List<Action> localList;
+		Action[] localList;
 		lock (actions) {
-			localList = new(actions);
+			localList = actions.ToArray();
 			actions.Clear();
 		}
 

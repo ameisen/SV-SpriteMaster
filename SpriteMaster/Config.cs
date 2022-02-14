@@ -463,7 +463,7 @@ static class Config {
 		[Comment("Should NPCs take true shortest paths?")]
 		internal static bool TrueShortestPath = true;
 		[Comment("Allow NPCs onto the farm?")]
-		internal static bool AllowNPCsOnFarm = false;
+		internal static bool AllowNPCsOnFarm = true;
 		[Comment("Should the default batch sort be replaced with a stable sort?")]
 		internal static bool StableSort = true;
 		[Comment("Should the game be prevented from going 'unresponsive' during loads?")]

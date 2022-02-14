@@ -36,7 +36,8 @@ static class Snow {
 		typeof(Game1),
 		"drawWeather",
 		Harmonize.Fixation.Prefix,
-		Harmonize.PriorityLevel.Last
+		Harmonize.PriorityLevel.Last,
+		critical: false
 	)]
 	public static bool DrawWeather(Game1 __instance, GameTime time, RenderTarget2D target_screen) {
 		if (!Config.Enabled || !Config.Extras.Snow.Enabled) {
@@ -96,7 +97,8 @@ static class Snow {
 		"updateWeather",
 		Harmonize.Fixation.Prefix,
 		Harmonize.PriorityLevel.Last,
-		instance: false
+		instance: false,
+		critical: false
 	)]
 	public static bool UpdateWeather(GameTime time) {
 		if (!Config.Enabled || !Config.Extras.Snow.Enabled) {
@@ -141,7 +143,8 @@ static class Snow {
 		"updateRainDropPositionForPlayerMovement",
 		Harmonize.Fixation.Prefix,
 		Harmonize.PriorityLevel.Last,
-		instance: false
+		instance: false,
+		critical: false
 	)]
 	public static bool UpdateRainDropPositionForPlayerMovement(int direction, bool overrideConstraints, float speed) {
 		if (!Config.Enabled || !Config.Extras.Snow.Enabled) {
@@ -167,7 +170,8 @@ static class Snow {
 		"populateDebrisWeatherArray",
 		Harmonize.Fixation.Prefix,
 		Harmonize.PriorityLevel.Last,
-		instance: false
+		instance: false,
+		critical: false
 	)]
 	public static bool PopulateDebrisWeatherArray() {
 		if (!Config.Enabled || !Config.Extras.Snow.Enabled) {

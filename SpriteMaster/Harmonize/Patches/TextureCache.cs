@@ -22,7 +22,15 @@ static class TextureCache {
 	private static readonly ConditionalWeakTable<XTexture2D, string> TexturePaths = new();
 	private static readonly WeakSet<XTexture2D> PremultipliedTable = new();
 
-	[Harmonize(typeof(XTexture2D), "FromStream", Harmonize.Fixation.Prefix, PriorityLevel.Last, platform: Harmonize.Platform.MonoGame, instance: false)]
+	[Harmonize(
+		typeof(XTexture2D),
+		"FromStream",
+		Harmonize.Fixation.Prefix,
+		PriorityLevel.Last,
+		platform: Harmonize.Platform.MonoGame,
+		instance: false,
+		critical: false
+	)]
 	public static bool FromStreamPre(ref XTexture2D __result, GraphicsDevice graphicsDevice, Stream stream) {
 		if (!Config.SMAPI.TextureCacheEnabled) {
 			return true;
