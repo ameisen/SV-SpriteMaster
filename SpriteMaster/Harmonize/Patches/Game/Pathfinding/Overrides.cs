@@ -67,6 +67,7 @@ static partial class Pathfinding {
 		if (RoutesFromLocationToLocationSet is not null) {
 			RoutesFromLocationToLocationSet(routeList.ToList());
 		}
+		FasterRouteMap.Clear();
 		foreach (var route in routeList) {
 			var innerRoutes = FasterRouteMap.GetOrAddDefault(route.First(), () => new Dictionary<string, List<string>>());
 			innerRoutes![route.Last()] = route;
@@ -100,6 +101,7 @@ static partial class Pathfinding {
 		if (RoutesFromLocationToLocationSet is not null) {
 			RoutesFromLocationToLocationSet(routeList.ToList());
 		}
+		FasterRouteMap.Clear();
 		foreach (var listedRoute in routeList) {
 			var innerRoutes = FasterRouteMap.GetOrAddDefault(listedRoute.First(), () => new Dictionary<string, List<string>>());
 			innerRoutes![listedRoute.Last()] = listedRoute;

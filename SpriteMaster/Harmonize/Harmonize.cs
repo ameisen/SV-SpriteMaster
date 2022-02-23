@@ -23,7 +23,8 @@ static class Harmonize {
 		Prefix,
 		Postfix,
 		Finalizer,
-		Transpile
+		Transpile,
+		Reverse
 	}
 
 	internal enum Generic {
@@ -108,6 +109,7 @@ static class Harmonize {
 						post: (attribute.PatchFixation == Fixation.Postfix) ? method : null,
 						finalizer: (attribute.PatchFixation == Fixation.Finalizer) ? method : null,
 						trans: (attribute.PatchFixation == Fixation.Transpile) ? method : null,
+						reverse: (attribute.PatchFixation == Fixation.Reverse) ? method : null,
 						instanceMethod: attribute.Instance
 					);
 					break;
@@ -123,6 +125,7 @@ static class Harmonize {
 							post: (attribute.PatchFixation == Fixation.Postfix) ? method : null,
 							finalizer: (attribute.PatchFixation == Fixation.Finalizer) ? method : null,
 							trans: (attribute.PatchFixation == Fixation.Transpile) ? method : null,
+							reverse: (attribute.PatchFixation == Fixation.Reverse) ? method : null,
 							instanceMethod: attribute.Instance
 						);
 					}
@@ -349,6 +352,7 @@ static class Harmonize {
 		MethodInfo? post = null,
 		MethodInfo? finalizer = null,
 		MethodInfo? trans = null,
+		MethodInfo? reverse = null,
 		int priority = Priority.Last,
 		bool instanceMethod = true
 	) {
@@ -385,6 +389,19 @@ static class Harmonize {
 				transpiler: MakeHarmonyMethod(trans)
 			);
 		}
+		if (reverse is not null) {
+			var typeMethod = GetPatchMethod(
+				type,
+				name,
+				referenceMethod ?? reverse,
+				instance: instanceMethod,
+				isFinalizer: referenceMethod == finalizer
+			) ?? throw new ArgumentException($"Method '{name}' in type '{type.FullName}' could not be found");
+			instance.CreateReversePatcher(
+				original: typeMethod,
+				standin: MakeHarmonyMethod(reverse)
+			).Patch(HarmonyReversePatchType.Original);
+		}
 	}
 
 	internal static void Patch(
@@ -396,6 +413,7 @@ static class Harmonize {
 		MethodInfo? post = null,
 		MethodInfo? finalizer = null,
 		MethodInfo? trans = null,
+		MethodInfo? reverse = null,
 		int priority = Priority.Last,
 		bool instanceMethod = true
 	) {
@@ -433,6 +451,20 @@ static class Harmonize {
 				original: typeMethodInfo.MakeGenericMethod(genericType),
 				transpiler: MakeHarmonyMethod(trans)
 			);
+		}
+		if (reverse is not null) {
+			var typeMethod = GetPatchMethod(
+				type,
+				name,
+				referenceMethod ?? reverse,
+				instance: instanceMethod,
+				isFinalizer: referenceMethod == finalizer
+			) ?? throw new ArgumentException($"Method '{name}' in type '{type.FullName}' could not be found");
+			var typeMethodInfo = (MethodInfo)typeMethod;
+			instance.CreateReversePatcher(
+				original: typeMethodInfo.MakeGenericMethod(genericType),
+				standin: MakeHarmonyMethod(reverse)
+			).Patch(HarmonyReversePatchType.Original);
 		}
 	}
 }

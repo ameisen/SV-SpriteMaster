@@ -1,12 +1,14 @@
 ﻿using SpriteMaster.Colors;
 using SpriteMaster.Extensions;
 using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using static SpriteMaster.Runtime;
 
 namespace SpriteMaster.Types.Fixed;
 
+[DebuggerDisplay("{InternalValue}")]
 [StructLayout(LayoutKind.Explicit, Pack = sizeof(ushort), Size = sizeof(ushort))]
 struct Fixed16 : IEquatable<Fixed16>, IEquatable<ushort>, ILongHash {
 	internal static readonly Fixed16 Zero = new((ushort)0);
@@ -40,16 +42,29 @@ struct Fixed16 : IEquatable<Fixed16>, IEquatable<ushort>, ILongHash {
 	[MethodImpl(MethodImpl.Hot)]
 	public static Fixed16 operator /(Fixed16 numerator, Fixed16 denominator) {
 		if (denominator == Fixed16.Zero) {
-			return numerator;
+			return 0;
 		}
 		var result = InternalDivide(numerator, denominator);
 		return (ushort)(result >> 16);
 	}
 
 	[MethodImpl(MethodImpl.Hot)]
+	internal Fixed16 ClampedDivide(Fixed16 denominator) {
+		if (denominator == Fixed16.Zero) {
+			return 0;
+		}
+		var result = InternalDivide(this, denominator);
+		// Check if it oversaturated the value
+		if ((result & 0xFFFF_FFFF_0000_0000) != 0) {
+			return (Value <= (32U << 8)) ? Fixed16.Zero : Fixed16.Max;
+		}
+		return (ushort)(result >> 16);
+	}
+
+	[MethodImpl(MethodImpl.Hot)]
 	public static Fixed16 operator %(Fixed16 numerator, Fixed16 denominator) {
 		if (denominator == Fixed16.Zero) {
-			return numerator;
+			return 0;
 		}
 		var result = InternalDivide(numerator, denominator);
 		return (ushort)result;

@@ -22,10 +22,11 @@ using System;
 [assembly: AllowPartiallyTrustedCallers]
 [assembly: SecurityTransparent]
 [assembly: InternalsVisibleToAttribute("xBRZ")]
+[assembly: InternalsVisibleToAttribute("Hashing")]
 [assembly: SecurityRules(SecurityRuleSet.Level2, SkipVerificationInFullTrust = true)]
-[assembly: ChangeList("3497829:0.13.0-beta.2")]
+[assembly: ChangeList("7ca2ba6:0.13.0-beta.2-1-g7ca2ba6")]
 [assembly: BuildComputerName("Palatinate")]
-[assembly: FullVersion("0.13.0.102-beta.2")]
+[assembly: FullVersion("0.13.0.103-beta.3")]
 // [assembly: SuppressUnmanagedCodeSecurity]
 
 [module: CompilationRelaxations(CompilationRelaxations.NoStringInterning)]

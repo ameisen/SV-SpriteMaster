@@ -7,7 +7,7 @@ using SystemVector2 = System.Numerics.Vector2;
 
 namespace SpriteMaster.Types;
 
-[DebuggerDisplay("[{X}, {Y}}")]
+[DebuggerDisplay("[{X}, {Y}]")]
 [StructLayout(LayoutKind.Explicit, Pack = sizeof(float) * 2, Size = sizeof(float) * 2)]
 unsafe partial struct Vector2F : ILongHash, ICloneable {
 

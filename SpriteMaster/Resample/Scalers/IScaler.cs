@@ -6,7 +6,8 @@ namespace SpriteMaster.Resample.Scalers;
 interface IScaler {
 	Config CreateConfig(
 		Vector2B wrapped,
-		bool hasAlpha
+		bool hasAlpha,
+		bool gammaCorrected
 	);
 
 	uint MinScale { get; }

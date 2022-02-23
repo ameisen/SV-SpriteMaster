@@ -196,6 +196,9 @@ static class Textures {
 
 				// PlatformSetData(0, data, 0, data.Length);
 				dumpTexture.SetData(subData);
+				if (Path.GetDirectoryName(path) is string directory) {
+					Directory.CreateDirectory(directory);
+				}
 				using var dumpFile = File.Create(path);
 				dumpTexture.SaveAsPng(dumpFile, destBound.Width, destBound.Height);
 			}
@@ -240,6 +243,9 @@ static class Textures {
 
 				// PlatformSetData(0, data, 0, data.Length);
 				dumpTexture.SetData(subData);
+				if (Path.GetDirectoryName(path) is string directory) {
+					Directory.CreateDirectory(directory);
+				}
 				using var dumpFile = File.Create(path);
 				dumpTexture.SaveAsPng(dumpFile, destBound.Width, destBound.Height);
 			}

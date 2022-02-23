@@ -41,17 +41,19 @@ static class FileCache {
 	private struct CacheHeader {
 		internal ulong Assembly = AssemblyHash;
 		internal ulong ConfigHash = SerializeConfig.ConfigHash;
-		internal ulong DataHash;
-		internal Vector2I Size;
-		internal PaddingQuad Padding;
-		internal Vector2I BlockPadding;
-		internal TextureFormat Format;
+		internal ulong DataHash = default;
+		internal Vector2I Size = default;
+		internal PaddingQuad Padding = default;
+		internal Vector2I BlockPadding = default;
+		internal TextureFormat Format = default;
 		[MarshalAs(UnmanagedType.U4)]
-		internal Compression.Algorithm Algorithm;
-		internal uint RefScale;
-		internal uint UncompressedDataLength;
-		internal uint DataLength;
-		internal Vector2B Wrapped;
+		internal Compression.Algorithm Algorithm = default;
+		internal uint RefScale = default;
+		internal uint UncompressedDataLength = default;
+		internal uint DataLength = default;
+		internal Vector2B Wrapped = default;
+
+		public CacheHeader() { }
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		internal static CacheHeader Read(BinaryReader reader) {

@@ -65,7 +65,7 @@ static partial class Pathfinding {
 	}
 
 	private readonly record struct PointPair(Vector2I Start, Vector2I End);
-	private static readonly ConcurrentDictionary<GameLocation, ConcurrentDictionary<PointPair, bool>> CachedPathfindPoints = new();
+	private static readonly ConcurrentDictionary<GameLocation, ConcurrentDictionary<PointPair, int?>> CachedPathfindPoints = new();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static NPC? GetDummyNPC() {
@@ -145,7 +145,7 @@ static partial class Pathfinding {
 				}
 
 				// Process a neighboring node and potentially add it to the queue
-				void ProcessNeighbor(GameLocation node, Vector2I egress, Vector2I? ingress) {
+				void ProcessNeighbor(GameLocation node, Vector2I egress, Vector2I? ingress, int length) {
 					var dataNode = queueDataMap[node];
 
 					if (!queue.Contains(dataNode)) {
@@ -157,8 +157,8 @@ static partial class Pathfinding {
 					// Calculate the distance
 					if (Config.Extras.TrueShortestPath && qLocation.StartPosition is Vector2I currentPos) {
 						// If we are (and can) calculate the true distance, we do that based upon egress position
-						var straightDistance = (egress - currentPos).LengthSquared;
-						nodeDistance = distance + 1 + straightDistance;
+						//var straightDistance = (egress - currentPos).LengthSquared;
+						nodeDistance = distance + 1 + length;
 					}
 					else {
 						// Otherwise, we assume a distance of '1' for each node (this is vanilla behavior)
@@ -174,33 +174,34 @@ static partial class Pathfinding {
 				}
 
 				// Check if a given point within a given GameLocation is accessible from our current position.
-				bool IsPointAccessible(GameLocation node, Vector2I point) {
+				int? GetPointDistance(GameLocation node, Vector2I point) {
 					if (!qLocation.StartPosition.HasValue) {
-						return true;
+						return 0;
 					}
 
 					var pointPair = new PointPair(qLocation.StartPosition.Value, point);
 
 					// Check if this ingress/point pair has already been calculated.
 					var pointDictionary = CachedPathfindPoints.GetOrAdd(node, _ => new());
-					if (pointDictionary.TryGetValue(pointPair, out var hasPath)) {
-						return hasPath;
+					if (pointDictionary.TryGetValue(pointPair, out var pathLength)) {
+						return pathLength;
 					}
 
 					// Check for a valid path. Locked because the 'findPath' methods rely on some internal state within the game
 					// and thus are not threadsafe
-					bool result;
+					Stack<XNA.Point>? result;
 					lock (node) {
 						if (node.Name == "Farm") {
-							result = FindPathOnFarm(qLocation.StartPosition.Value, point, node, int.MaxValue) is not null;
+							result = FindPathOnFarm(qLocation.StartPosition.Value, point, node, int.MaxValue);
 						}
 						else {
-							result = findPathForNPCSchedules(qLocation.StartPosition.Value, point, node, int.MaxValue) is not null;
+							result = findPathForNPCSchedules(qLocation.StartPosition.Value, point, node, int.MaxValue);
 						}
 					}
-					pointDictionary.TryAdd(pointPair, result);
+					int? count = result?.Count;
+					pointDictionary.TryAdd(pointPair, count);
 
-					return result;
+					return count;
 				}
 
 				foreach (var warp in qLocation.Location.warps) {
@@ -210,11 +211,12 @@ static partial class Pathfinding {
 
 					// If the warp is not accessible from the start location, skip it. This prevents NPCs from trying to path in,
 					// for instance, the backwoods to get to the bus.
-					if (!IsPointAccessible(qLocation.Location, (warp.X, warp.Y))) {
+					var length = GetPointDistance(qLocation.Location, (warp.X, warp.Y));
+					if (!length.HasValue) {
 						continue;
 					}
 
-					ProcessNeighbor(neighbor, (warp.X, warp.Y), (warp.TargetX, warp.TargetY));
+					ProcessNeighbor(neighbor, (warp.X, warp.Y), (warp.TargetX, warp.TargetY), length.Value);
 				}
 
 				foreach (var door in qLocation.Location.doors.Pairs) {
@@ -226,7 +228,8 @@ static partial class Pathfinding {
 
 					// If the warp is not accessible from the start location, skip it. This prevents NPCs from trying to path in,
 					// for instance, the backwoods to get to the bus.
-					if (!IsPointAccessible(qLocation.Location, doorIngress)) {
+					var length = GetPointDistance(qLocation.Location, doorIngress);
+					if (!length.HasValue) {
 						continue;
 					}
 
@@ -234,10 +237,10 @@ static partial class Pathfinding {
 					try {
 						var warp = qLocation.Location.getWarpFromDoor(door.Key, dummyNPC);
 						Vector2I? doorEgress = (warp is null) ? null : (warp.TargetX, warp.TargetY);
-						ProcessNeighbor(neighbor, doorIngress, doorEgress);
+						ProcessNeighbor(neighbor, doorIngress, doorEgress, length.Value);
 					}
 					catch (Exception) {
-						ProcessNeighbor(neighbor, doorIngress, null);
+						ProcessNeighbor(neighbor, doorIngress, null, length.Value);
 					}
 				}
 			}

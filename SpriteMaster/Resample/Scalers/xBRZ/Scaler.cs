@@ -187,11 +187,21 @@ sealed partial class Scaler {
 
 		var dist = ColorDistance;
 
-		var jg = dist.DistYCbCr(ker.I, ker.F) + dist.DistYCbCr(ker.F, ker.C) + dist.DistYCbCr(ker.N, ker.K) + dist.DistYCbCr(ker.K, ker.H) + Configuration.CenterDirectionBias * dist.DistYCbCr(ker.J, ker.G);
-		var fk = dist.DistYCbCr(ker.E, ker.J) + dist.DistYCbCr(ker.J, ker.O) + dist.DistYCbCr(ker.B, ker.G) + dist.DistYCbCr(ker.G, ker.L) + Configuration.CenterDirectionBias * dist.DistYCbCr(ker.F, ker.K);
+		var jg =
+			dist.ColorDistance(ker.I, ker.F) +
+			dist.ColorDistance(ker.F, ker.C) +
+			dist.ColorDistance(ker.N, ker.K) +
+			dist.ColorDistance(ker.K, ker.H) +
+			MathExt.RoundToInt(Configuration.CenterDirectionBias * dist.ColorDistance(ker.J, ker.G));
+		var fk =
+			dist.ColorDistance(ker.E, ker.J) +
+			dist.ColorDistance(ker.J, ker.O) +
+			dist.ColorDistance(ker.B, ker.G) +
+			dist.ColorDistance(ker.G, ker.L) +
+			MathExt.RoundToInt(Configuration.CenterDirectionBias * dist.ColorDistance(ker.F, ker.K));
 
 		if (jg < fk) {
-			var dominantGradient = Configuration.DominantDirectionThreshold * jg < fk ? BlendType.Dominant : BlendType.Normal;
+			var dominantGradient = MathExt.RoundToInt(Configuration.DominantDirectionThreshold * jg) < fk ? BlendType.Dominant : BlendType.Normal;
 			if (ker.F != ker.G && ker.F != ker.J) {
 				result.F = dominantGradient;
 			}
@@ -200,7 +210,7 @@ sealed partial class Scaler {
 			}
 		}
 		else if (fk < jg) {
-			var dominantGradient = Configuration.DominantDirectionThreshold * fk < jg ? BlendType.Dominant : BlendType.Normal;
+			var dominantGradient = MathExt.RoundToInt(Configuration.DominantDirectionThreshold * fk) < jg ? BlendType.Dominant : BlendType.Normal;
 			if (ker.J != ker.F && ker.J != ker.K) {
 				result.J = dominantGradient;
 			}
@@ -267,7 +277,7 @@ sealed partial class Scaler {
 		}
 
 		//choose most similar color
-		var px = dist.DistYCbCr(e, f) <= dist.DistYCbCr(e, h) ? f : h;
+		var px = dist.ColorDistance(e, f) <= dist.ColorDistance(e, h) ? f : h;
 
 		outputMatrix.Move(rotDeg, targetIndex);
 
@@ -278,11 +288,11 @@ sealed partial class Scaler {
 
 		//test sample: 70% of values max(fg, hc) / min(fg, hc)
 		//are between 1.1 and 3.7 with median being 1.9
-		var fg = dist.DistYCbCr(f, g);
-		var hc = dist.DistYCbCr(h, c);
+		var fg = dist.ColorDistance(f, g);
+		var hc = dist.ColorDistance(h, c);
 
-		var haveShallowLine = Configuration.SteepDirectionThreshold * fg <= hc && e != g && d != g;
-		var haveSteepLine = Configuration.SteepDirectionThreshold * hc <= fg && e != c && b != c;
+		var haveShallowLine = MathExt.RoundToInt(Configuration.SteepDirectionThreshold * fg) <= hc && e != g && d != g;
+		var haveSteepLine = MathExt.RoundToInt(Configuration.SteepDirectionThreshold * hc) <= fg && e != c && b != c;
 
 		if (haveShallowLine) {
 			if (haveSteepLine) {

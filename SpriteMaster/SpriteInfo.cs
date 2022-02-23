@@ -6,7 +6,9 @@ using SpriteMaster.Types;
 using SpriteMaster.Types.Interlocking;
 using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 
 namespace SpriteMaster;
 
@@ -60,10 +62,8 @@ sealed class SpriteInfo : IDisposable {
 	}
 
 	private static ulong? GetDataHash(byte[] data, Texture2D reference, in Bounds bounds, int rawOffset, int rawStride) {
-		float realFormatSize = (float)reference.Format.SizeBytes(4) / 4.0f;
-		var format = reference.Format.IsCompressed() ? SurfaceFormat.Color : reference.Format;
-
-		int actualWidth = (int)format.SizeBytes(bounds.Extent.X);
+		//var format = reference.Format.IsCompressed() ? SurfaceFormat.Color : reference.Format;
+		int actualWidth = (int)reference.Format.SizeBytes(bounds.Extent.X);
 
 		try {
 			var spriteData = new Span2D<byte>(
@@ -80,6 +80,8 @@ sealed class SpriteInfo : IDisposable {
 			return spriteData.Hash();
 		}
 		catch (ArgumentOutOfRangeException) {
+			float realFormatSize = (float)reference.Format.SizeBytes(4) / 4.0f;
+
 			var errorBuilder = new StringBuilder();
 			errorBuilder.AppendLine("SpriteInfo.ReferenceData: arguments out of range");
 			errorBuilder.AppendLine($"Reference: {reference.NormalizedName()}");
@@ -87,8 +89,7 @@ sealed class SpriteInfo : IDisposable {
 			errorBuilder.AppendLine($"raw offset: {rawOffset}");
 			errorBuilder.AppendLine($"offset: {bounds.Offset}");
 			errorBuilder.AppendLine($"extent: {bounds.Extent}");
-			errorBuilder.AppendLine($"formatSize: {realFormatSize} ({reference.Format})");
-			errorBuilder.AppendLine($"New Format: {format}");
+			errorBuilder.AppendLine($"Format: {reference.Format}");
 			errorBuilder.AppendLine($"pitch: {rawStride - actualWidth}");
 			errorBuilder.AppendLine($"referenceDataSize: {data.Length}");
 			Debug.Error(errorBuilder.ToString());

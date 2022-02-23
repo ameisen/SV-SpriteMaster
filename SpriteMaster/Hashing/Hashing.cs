@@ -91,6 +91,9 @@ static partial class Hashing {
 	internal static ulong Hash(this Span2D<byte> data) => data.HashXX3();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static ulong Hash(this Span<byte> data) => data.HashXX3();
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ulong Hash(this ReadOnlySpan<byte> data) => data.HashXX3();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]

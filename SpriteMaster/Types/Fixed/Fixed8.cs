@@ -1,12 +1,14 @@
 ﻿using SpriteMaster.Colors;
 using SpriteMaster.Extensions;
 using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using static SpriteMaster.Runtime;
 
 namespace SpriteMaster.Types.Fixed;
 
+[DebuggerDisplay("{InternalValue}")]
 [StructLayout(LayoutKind.Explicit, Pack = sizeof(byte), Size = sizeof(byte))]
 struct Fixed8 : IEquatable<Fixed8>, IEquatable<byte>, ILongHash {
 	internal static readonly Fixed8 Zero = new(0);
@@ -43,6 +45,19 @@ struct Fixed8 : IEquatable<Fixed8>, IEquatable<byte>, ILongHash {
 			return numerator;
 		}
 		var result = InternalDivide(numerator, denominator);
+		return (byte)(result >> 8);
+	}
+
+	[MethodImpl(MethodImpl.Hot)]
+	internal Fixed8 ClampedDivide(Fixed8 denominator) {
+		if (denominator == Fixed8.Zero) {
+			return 0;
+		}
+		var result = InternalDivide(this, denominator);
+		// Check if it oversaturated the value
+		if ((result & 0xFFFF_0000) != 0) {
+			return Fixed8.Max;
+		}
 		return (byte)(result >> 8);
 	}
 

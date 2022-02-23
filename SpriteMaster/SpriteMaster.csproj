@@ -58,7 +58,7 @@
 		<PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.0.0" />
 		<PackageReference Include="System.Runtime.Caching" Version="5.0.0" />
 		<PackageReference Include="TeximpNet" Version="1.4.3" />
-		<PackageReference Include="Tomlyn" Version="0.10.2" />
+		<PackageReference Include="Tomlyn" Version="0.11.0" />
 		<PackageReference Include="ZstdNet" Version="1.4.5" />
 	</ItemGroup>
 	

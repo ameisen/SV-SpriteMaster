@@ -219,6 +219,9 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 		}
 
 		if (SpriteMap.TryGetReady(texture, source, expectedScale, out var scaleTexture)) {
+			if (scaleTexture?.NoResample ?? false) {
+				return null;
+			}
 			return scaleTexture;
 		}
 
@@ -250,6 +253,10 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 				currentInstance = scaleTexture;
 				textureChain = false;
 			}
+		}
+
+		if ((currentInstance?.NoResample ?? false) || texture.Meta().IsNoResample(source)) {
+			return null;
 		}
 
 		bool useStalling = Config.Resample.UseFrametimeStalling && !GameState.IsLoading;
@@ -287,6 +294,9 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 			textureType = TextureType.Image;
 		}
 
+		// TODO : break this up somewhat so that we can delay hashing for things by _one_ frame (still deterministic, but offset so we can parallelize the work).
+		// Presently, this cannot be done because the initializer is a 'ref struct' and is used immediately. If we want to check the suspended cache, it needs to be jammed away
+		// so the hashing can be performed before the next frame.
 		SpriteInfo.Initializer spriteInfoInitializer = new SpriteInfo.Initializer(reference: texture, dimensions: source, expectedScale: expectedScale, textureType: textureType);
 
 		// Check for a suspended sprite instance that happens to match.
@@ -396,6 +406,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 	internal ManagedSpriteInstance? PreviousSpriteInstance = null;
 	internal volatile bool Invalidated = false;
 	internal volatile bool Suspended = false;
+	internal bool NoResample = false;
 
 	internal ulong LastReferencedFrame = DrawState.CurrentFrame;
 
@@ -574,7 +585,14 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 
 		lock (RecentAccessList) {
 			if (RecentAccessNode is not null) {
-				RecentAccessList.Remove(RecentAccessNode);
+				if (RecentAccessNode.List == RecentAccessList) {
+					try {
+						RecentAccessList.Remove(RecentAccessNode);
+					}
+					catch {
+						// Failure is unimportant.
+					}
+				}
 				RecentAccessList.AddFirst(RecentAccessNode);
 			}
 			else {
@@ -634,7 +652,12 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 		}
 		if (RecentAccessNode is not null) {
 			lock (RecentAccessList) {
-				RecentAccessList.Remove(RecentAccessNode);
+				try {
+					RecentAccessList.Remove(RecentAccessNode);
+				}
+				catch {
+					// Error is unimportant
+				}
 			}
 			RecentAccessNode = null;
 		}
@@ -662,7 +685,14 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 
 		if (data.RecentAccessNode is not null) {
 			lock (RecentAccessList) {
-				RecentAccessList.Remove(data.RecentAccessNode);
+				if (data.RecentAccessNode.List == RecentAccessList) {
+					try {
+						RecentAccessList.Remove(data.RecentAccessNode);
+					}
+					catch {
+						// Error is unimportant
+					}
+				}
 			}
 		}
 	}
@@ -694,7 +724,12 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 
 		if (RecentAccessNode is not null) {
 			lock (RecentAccessList) {
-				RecentAccessList.Remove(RecentAccessNode);
+				try {
+					RecentAccessList.Remove(RecentAccessNode);
+				}
+				catch {
+					// Error is unimportant
+				}
 			}
 			RecentAccessNode = null;
 		}

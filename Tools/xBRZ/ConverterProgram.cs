@@ -8,13 +8,19 @@ namespace xBRZ;
 static class ConverterProgram {
 	private record struct Job(Uri Path, int Scale);
 
-	internal static int SubMain(string[] args) {
+	internal static int SubMain(Options options, List<Argument> args) {
 		bool info = true;
 
 		var jobs = new HashSet<Job>();
 		foreach (var arg in args) {
+			if (arg.IsCommand) {
+				throw new ArgumentException($"Unknown Argument: {arg}");
+			}
+		}
+
+		foreach (var job in options.Paths) {
 			jobs.Add(
-				new(new Uri(arg), 6)
+				new(new Uri(job), 6)
 			);
 		}
 
@@ -61,6 +67,12 @@ static class ConverterProgram {
 
 		var imageDataNarrow = Common.ReadFile(job.Path, out var imageSize);
 
+		var analysis = SpriteMaster.Resample.Passes.Analysis.AnalyzeLegacy(
+			data: imageDataNarrow,
+			bounds: imageSize,
+			wrapped: Vector2B.False
+		);
+
 		// Widen
 		var imageData = Color16.Convert(imageDataNarrow);
 		var originalImageData = imageData;
@@ -105,6 +117,9 @@ static class ConverterProgram {
 
 		// Narrow
 		var resampledData = Color8.Convert(imageData);
+
+		// Remove excess padding
+
 
 		Bitmap resampledBitmap;
 		fixed (Color8* ptr = resampledData) {

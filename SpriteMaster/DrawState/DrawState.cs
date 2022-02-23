@@ -135,9 +135,31 @@ static partial class DrawState {
 		}
 	}
 
+	private static WeakReference<xTile.Display.IDisplayDevice> LastMitigatedDevice = new(null!);
+	private static void ApplyPyTKMitigation() {
+		if (!Config.Extras.ModPatches.DisablePyTKMitigation) {
+			return;
+		}
+		if (LastMitigatedDevice.TryGetTarget(out var lastDevice) && lastDevice == Game1.mapDisplayDevice) {
+			return;
+		}
+		if (Game1.mapDisplayDevice is not null && Game1.mapDisplayDevice.GetType().Name.Contains("PyDisplayDevice")) {
+			var adjustOriginField = Game1.mapDisplayDevice.GetType().GetField("adjustOrigin", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy);
+			if (adjustOriginField is not null) {
+				adjustOriginField.SetValue(Game1.mapDisplayDevice, false);
+			}
+
+			LastMitigatedDevice.SetTarget(Game1.mapDisplayDevice);
+		}
+	}
+
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void OnPresentPost() {
 		using var watchdogScoped = WatchDog.WatchDog.ScopedWorkingState;
+
+		// Apply the PyTK mediation here because we do not know when it might be set up
+		ApplyPyTKMitigation();
+		
 		FrameStopwatch.Restart();
 	}
 

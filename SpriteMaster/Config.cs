@@ -200,12 +200,14 @@ static class Config {
 		internal static bool Enabled = true;
 		[Comment("Should texture rescaling be enabled?")]
 		internal static bool Scale = Enabled;
-		[Comment("What scaling algorithm should be used?")]
+		[Comment("What scaling algorithm should be used by default?")]
 		internal const Resampler.Scaler Scaler = Resampler.Scaler.xBRZ;
+		[Comment("What scaling algorithm should be used for gradient sprites?")]
+		internal const Resampler.Scaler ScalerGradient = Resampler.Scaler.None;
 		[Comment("Should dynamic scaling be used (scaling based upon apparent sprite size)")]
 		internal const bool EnableDynamicScale = true;
 		[Comment("Should we assume that input sprites are gamma corrected?")]
-		internal static bool AssumeGammaCorrected = false;
+		internal static bool AssumeGammaCorrected = true;
 		[Comment("Should the scale factor of water be adjusted to account for water sprites being unusual?")]
 		internal static bool TrimWater = true;
 		[Comment("Positive bias applied to sprite scaling calculations")]
@@ -220,12 +222,10 @@ static class Config {
 		internal static bool UseFrametimeStalling = true;
 		[Comment("Should color enhancement/rebalancing be performed?")]
 		internal static bool UseColorEnhancement = true;
-		[Comment("What threshold should be used when determining if a sprite uses premultiplied alpha?")]
-		internal static int PremultipliedAlphaThreshold = 1;
 		[Comment("Should transparent pixels be premultiplied to prevent a 'halo' effect?")]
 		internal static bool PremultiplyAlpha = true;
-		[Comment("Should sprites be assumed to be premultiplied, or should they instead by analyzed?")]
-		internal static bool PremultiplyAlphaAssume = true;
+		[Comment("Use redmean algorithm for perceptual color comparisons?")]
+		internal static bool UseRedmean = false;
 		internal static List<string> SlicedTextures = new() {
 			@"LooseSprites\Cursors::0,2000:640,256",
 			@"LooseSprites\Cloudy_Ocean_BG",
@@ -293,6 +293,14 @@ static class Config {
 			@"TileSheets\rain",
 			@"TileSheets\animations"
 		};
+		internal static class Analysis {
+			[Comment("Max color difference to not consider a sprite to be a gradient?")]
+			internal static int MaxGradientColorDifference = 38;
+			[Comment("Minimum different shades required (per channel) for a sprite to be a gradient?")]
+			internal static int MinimumGradientShades = 5;
+			[Comment("Use redmean algorithm for perceptual color comparisons?")]
+			internal static bool UseRedmean = true;
+		}
 		[ConfigIgnore]
 		internal static class Deposterization {
 			[Comment("Should deposterization prepass be performed?")]
@@ -305,8 +313,10 @@ static class Config {
 			internal static int BlockSize = 1;
 			[Comment("Default number of passes")]
 			internal static int Passes = 2;
-			[Comment("Use YCbCr for color comparisons?")]
-			internal static bool UseYCbCr = true;
+			[Comment("Use perceptual color for color comparisons?")]
+			internal static bool UsePerceptualColor = true;
+			[Comment("Use redmean algorithm for perceptual color comparisons?")]
+			internal static bool UseRedmean = false;
 		}
 		internal static readonly List<SurfaceFormat> SupportedFormats = new() {
 			SurfaceFormat.Color,
@@ -393,7 +403,7 @@ static class Config {
 			[Comment("The weight provided to luminance as opposed to chrominance when performing color comparisons")]
 			internal static double LuminanceWeight = 1.0;
 			[Comment("The tolerance for colors to be considered equal - [0, 256)")]
-			internal static double EqualColorTolerance = 20.0;
+			internal static uint EqualColorTolerance = 20;
 			[Comment("The threshold for a corner-direction to be considered 'dominant'")]
 			internal static double DominantDirectionThreshold = 4.4;
 			[Comment("The threshold for a corner-direction to be considered 'steep'")]
@@ -493,6 +503,8 @@ static class Config {
 		internal static class ModPatches {
 			[Comment("Patch CustomNPCFixes in order to improve load times?")]
 			internal static bool PatchCustomNPCFixes = false;
+			[Comment("Disable PyTK mitigation for SpriteMaster?")]
+			internal static bool DisablePyTKMitigation = true;
 		}
 	}
 

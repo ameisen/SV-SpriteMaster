@@ -17,6 +17,7 @@ namespace SpriteMaster.Metadata;
 sealed class Texture2DMeta : IDisposable {
 	private static readonly ConcurrentDictionary<ulong, SpriteDictionary> SpriteDictionaries = new();
 	private readonly SpriteDictionary SpriteInstanceTable;
+	private readonly ConcurrentDictionary<Bounds, bool> NoResampleSet = new();
 
 	internal IReadOnlyDictionary<ulong, ManagedSpriteInstance> GetSpriteInstanceTable() => SpriteInstanceTable;
 
@@ -53,6 +54,14 @@ sealed class Texture2DMeta : IDisposable {
 		using (Lock.Write) {
 			return SpriteInstanceTable.TryAdd(key, instance);
 		}
+	}
+
+	internal void AddNoResample(in Bounds bounds) {
+		NoResampleSet.TryAdd(bounds, true);
+	}
+
+	internal bool IsNoResample(in Bounds bounds) {
+		return NoResampleSet.ContainsKey(bounds);
 	}
 
 	/// <summary>The current (static) ID, incremented every time a new <see cref="Texture2DMeta"/> is created.</summary>

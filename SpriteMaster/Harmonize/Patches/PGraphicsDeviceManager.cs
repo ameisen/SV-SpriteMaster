@@ -20,6 +20,8 @@ static class PGraphicsDeviceManager {
 		internal bool Initialized = false;
 		internal bool IsFullscreen = false;
 
+		public DeviceState() { }
+
 		internal bool Dirty(GraphicsDeviceManager instance) {
 			bool isFullscreen = instance.IsFullScreen;
 			Vector2I size = (

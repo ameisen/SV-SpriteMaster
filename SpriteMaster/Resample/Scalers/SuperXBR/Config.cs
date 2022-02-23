@@ -18,6 +18,7 @@ sealed class Config : Scalers.Config {
 	internal Config(
 		Vector2B wrapped,
 		bool hasAlpha = true,
+		bool gammaCorrected = true,
 		float edgeStrength = 2.0f,
 		float weight = 1.0f,
 		float edgeShape = 0.0f,
@@ -25,7 +26,8 @@ sealed class Config : Scalers.Config {
 		float antiRinging = 1.0f
 	) : base(
 		wrapped: wrapped,
-		hasAlpha: hasAlpha
+		hasAlpha: hasAlpha,
+		gammaCorrected: gammaCorrected
 	){
 		EdgeStrength = edgeStrength;
 		Weight = weight;
