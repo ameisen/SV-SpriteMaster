@@ -62,6 +62,12 @@ sealed class SpriteInfo : IDisposable {
 	}
 
 	private static ulong? GetDataHash(byte[] data, Texture2D reference, in Bounds bounds, int rawOffset, int rawStride) {
+		var meta = reference.Meta();
+
+		if (meta.TryGetSpriteHash(in bounds, out ulong hash)) {
+			return hash;
+		}
+
 		//var format = reference.Format.IsCompressed() ? SurfaceFormat.Color : reference.Format;
 		int actualWidth = (int)reference.Format.SizeBytes(bounds.Extent.X);
 
@@ -77,7 +83,8 @@ sealed class SpriteInfo : IDisposable {
 				pitch: rawStride - actualWidth
 			);
 
-			return spriteData.Hash();
+			hash = spriteData.Hash();
+			meta.SetSpriteHash(bounds, hash);
 		}
 		catch (ArgumentOutOfRangeException) {
 			float realFormatSize = (float)reference.Format.SizeBytes(4) / 4.0f;

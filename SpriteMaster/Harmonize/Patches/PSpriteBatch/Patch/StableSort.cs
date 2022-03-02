@@ -52,7 +52,7 @@ static class StableSort {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static void ArrayStableSort<T>(T[] array, int index, int length) where T : IComparable<T> {
-		if (!Config.Enabled || !Config.Extras.StableSort) {
+		if (!Config.Enabled || !Config.Extras.StableSort || DrawState.CurrentBlendState == Microsoft.Xna.Framework.Graphics.BlendState.Additive) {
 			Array.Sort(array, index, length);
 			return;
 		}

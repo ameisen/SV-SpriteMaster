@@ -1,4 +1,3 @@
-﻿
+﻿namespace SpriteMaster;
 
-namespace SpriteMaster;
-sealed record TextureAction(int Size) {}
+record struct TextureAction(int Size) {}

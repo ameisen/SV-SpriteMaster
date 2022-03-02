@@ -18,8 +18,17 @@ sealed class Texture2DMeta : IDisposable {
 	private static readonly ConcurrentDictionary<ulong, SpriteDictionary> SpriteDictionaries = new();
 	private readonly SpriteDictionary SpriteInstanceTable;
 	private readonly ConcurrentDictionary<Bounds, bool> NoResampleSet = new();
+	private readonly ConcurrentDictionary<Bounds, ulong> SpriteHashes = new();
 
 	internal IReadOnlyDictionary<ulong, ManagedSpriteInstance> GetSpriteInstanceTable() => SpriteInstanceTable;
+
+	internal void SetSpriteHash(in Bounds bounds, ulong hash) {
+		SpriteHashes[bounds] = hash;
+	}
+
+	internal bool TryGetSpriteHash(in Bounds bounds, out ulong hash) {
+		return SpriteHashes.TryGetValue(bounds, out hash);
+	}
 
 	internal void ClearSpriteInstanceTable(bool allowSuspend = false) {
 		using (Lock.Write) {
@@ -127,12 +136,29 @@ sealed class Texture2DMeta : IDisposable {
 					Debug.Trace($"Clearing '{reference.NormalizedName(DrawingColor.LightYellow)}' Cache");
 				}
 				CachedRawData = null;
+				SpriteHashes.Clear();
 				return;
 			}
 
 			var refSize = (int)reference.SizeBytes();
 
 			bool forcePurge = false;
+
+			if (bounds.HasValue) {
+				var removeList = new List<Bounds>();
+				foreach (var hashPair in SpriteHashes) {
+					if (hashPair.Key.Overlaps(bounds.Value)) {
+						removeList.Add(bounds.Value);
+					}
+				}
+				foreach (var removeBound in removeList) {
+					SpriteHashes.Remove(removeBound, out var _);
+				}
+			}
+			else {
+				SpriteHashes.Clear();
+			}
+
 
 			try {
 				// TODO : lock isn't granular enough.

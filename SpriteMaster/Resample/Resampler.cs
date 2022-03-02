@@ -3,11 +3,13 @@ using Microsoft.Toolkit.HighPerformance;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Caching;
+using SpriteMaster.Colors;
 using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
 using SpriteMaster.Resample.Passes;
 using SpriteMaster.Tasking;
 using SpriteMaster.Types;
+using SpriteMaster.Types.Fixed;
 using System;
 using System.Buffers;
 using System.Reflection;
@@ -206,7 +208,7 @@ sealed class Resampler {
 			wrapped: input.Wrapped
 		);
 
-		bool isGradient = analysis.MaxChannelShades >= Config.Resample.Analysis.MinimumGradientShades && (analysis.GradientDiagonal.All || analysis.GradientAxial.All);
+		bool isGradient = analysis.MaxChannelShades >= Config.Resample.Analysis.MinimumGradientShades && (analysis.GradientDiagonal.Any || analysis.GradientAxial.Any);
 
 		if (isGradient) {
 			if (Config.Debug.Sprite.DumpReference) {
@@ -219,7 +221,7 @@ sealed class Resampler {
 			}
 		}
 
-		if (!Config.Resample.Enabled || (isGradient && Config.Resample.ScalerGradient == Scaler.None)) {
+		if (!Config.Resample.Recolor.Enabled && !Config.Resample.Enabled || (isGradient && Config.Resample.ScalerGradient == Scaler.None)) {
 			result = ResampleStatus.DisabledGradient;
 			size = default;
 			format = default;
@@ -236,10 +238,12 @@ sealed class Resampler {
 					path: FileCache.GetDumpPath("shadeless", $"{input.Reference.NormalizedName().Replace('\\', '.')}.{hashString}.reference.png")
 				);
 			}
-			result = ResampleStatus.DisabledSolid;
-			size = default;
-			format = default;
-			return Span<byte>.Empty;
+			if (!Config.Resample.Recolor.Enabled) {
+				result = ResampleStatus.DisabledSolid;
+				size = default;
+				format = default;
+				return Span<byte>.Empty;
+			}
 		}
 
 		bool resamplingAllowed = Config.Resample.Enabled || Config.Resample.Scaler == Scaler.None;
@@ -256,6 +260,19 @@ sealed class Resampler {
 
 		// Widen data.
 		var spriteRawData = Color16.Convert(spriteRawData8);
+
+		// Apply recolor
+		if (Config.Resample.Recolor.Enabled) {
+			for (int i = 0; i < spriteRawData.Length; ++i) {
+				ref Color16 color = ref spriteRawData[i];
+				float r = Math.Clamp((float)(color.R.Real * Config.Resample.Recolor.RScalar), 0.0f, 1.0f);
+				float g = Math.Clamp((float)(color.G.Real * Config.Resample.Recolor.GScalar), 0.0f, 1.0f);
+				float b = Math.Clamp((float)(color.B.Real * Config.Resample.Recolor.BScalar), 0.0f, 1.0f);
+				color.R = Fixed16.FromReal(r);
+				color.G = Fixed16.FromReal(g);
+				color.B = Fixed16.FromReal(b);
+			}
+		}
 
 		Span<Color16> bitmapDataWide = spriteRawData;
 
@@ -388,7 +405,7 @@ sealed class Resampler {
 		var resultData = bitmapData.AsBytes();
 
 		// We don't want to use block compression if asynchronous loads are enabled but this is not an asynchronous load... unless that is explicitly enabled.
-		if (Config.Resample.BlockCompression.Enabled /*&& (Config.Resample.BlockCompression.Synchronized || !Config.AsyncScaling.Enabled || async)*/ && scaledSizeClamped.MinOf >= 4) {
+		if (Config.Resample.BlockCompression.Enabled && scaledSizeClamped.MinOf >= 4) {
 			// TODO : We can technically allocate the block padding before the scaling phase, and pass it a stride
 			// so it will just ignore the padding areas. That would be more efficient than this.
 

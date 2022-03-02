@@ -7,7 +7,11 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Extensions;
 
-static class String {
+static class StringExt {
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[return: NotNullIfNotNull("str")]
+	internal static string? Intern(this string? str) => str is null ? null : string.Intern(str);
+
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static string ToString<T>(this T? obj, in System.Drawing.Color color) => (obj?.ToString() ?? "[null]").Pastel(color);
 

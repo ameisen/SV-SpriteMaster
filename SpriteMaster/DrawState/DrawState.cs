@@ -91,6 +91,12 @@ static partial class DrawState {
 
 		using var watchdogScoped = WatchDog.WatchDog.ScopedWorkingState;
 
+		Debug.Mode.Draw();
+
+		if (!Config.Enabled) {
+			return;
+		}
+
 		if (TriggerGC.GetAndClear()) {
 			ManagedSpriteInstance.PurgeTextures((Config.Garbage.RequiredFreeMemory * Config.Garbage.RequiredFreeMemoryHysterisis).NearestLong() * 1024 * 1024);
 			Garbage.Collect(compact: true, blocking: true, background: false);

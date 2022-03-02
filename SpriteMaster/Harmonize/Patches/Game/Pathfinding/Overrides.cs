@@ -24,6 +24,11 @@ static partial class Pathfinding {
 			return true;
 		}
 
+		if (__instance is StardewValley.Monsters.Monster) {
+			__result = null;
+			return false;
+		}
+
 		// TODO : Handle the MensLocker/WomensLocker overrides. We effectively will need two more route maps (or one if gender can never be 'neither'.
 		// && ((int)this.gender == 0 || !s.Contains<string>("BathHouse_MensLocker", StringComparer.Ordinal)) && ((int)this.gender != 0 || !s.Contains<string>("BathHouse_WomensLocker", StringComparer.Ordinal))
 

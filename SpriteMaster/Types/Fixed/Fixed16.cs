@@ -25,6 +25,8 @@ struct Fixed16 : IEquatable<Fixed16>, IEquatable<ushort>, ILongHash {
 	internal readonly Fixed8 Narrow => Value.Color16to8();
 	internal readonly float Real => (float)ColorHelpers.ValueToScalar(Value);
 
+	internal static Fixed16 FromReal(float value) => ColorHelpers.ScalarToValue16(value);
+
 	[MethodImpl(MethodImpl.Hot)]
 	internal Fixed16(ushort value) => InternalValue = value;
 	[MethodImpl(MethodImpl.Hot)]

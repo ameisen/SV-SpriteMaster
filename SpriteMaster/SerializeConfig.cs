@@ -122,7 +122,7 @@ static class SerializeConfig {
 							object? fieldValue = field.GetValue(null);
 							switch (fieldValue) {
 								case string v:
-									field.SetValue(null, (string?)((StringValueSyntax?)value.Value)?.Value?.Trim());
+									field.SetValue(null, (string?)((StringValueSyntax?)value.Value)?.Value?.Trim()?.Intern());
 									break;
 								case sbyte v:
 									field.SetValue(null, (sbyte?)((IntegerValueSyntax?)value.Value)?.Value);
@@ -178,11 +178,11 @@ static class SerializeConfig {
 													var ovalue = obj.Value;
 													if (ovalue is StringValueSyntax svalue) {
 														if (svalue.Value is not null) {
-															list.Add(svalue.Value);
+															list.Add(svalue.Value.Intern());
 														}
 													}
 													else if (ovalue is IntegerValueSyntax ivalue) {
-														list.Add(ivalue.Value.ToString());
+														list.Add(ivalue.Value.ToString().Intern());
 													}
 												}
 												field.SetValue(null, list);

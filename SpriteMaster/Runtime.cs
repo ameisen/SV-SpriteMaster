@@ -28,9 +28,9 @@ static class Runtime {
 		var result = string.Empty;
 		// https://stackoverflow.com/questions/5510343/escape-command-line-arguments-in-c-sharp/6040946#6040946
 		foreach (var arg in args) {
-			var s = Regex.Replace(arg, @"(\\*)" + "\"", @"$1$1\" + "\"");
-			s = "\"" + Regex.Replace(s, @"(\\+)$", @"$1$1") + "\"";
-			result += s + " ";
+			var s = Regex.Replace(arg, @"(\\*)""", @"$1$1\""");
+			s = $"\"{Regex.Replace(s, @"(\\+)$", @"$1$1")}\" ";
+			result += s;
 		}
 		return result.Remove(result.Length - 1);
 	}

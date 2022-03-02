@@ -130,7 +130,7 @@ sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
 							}
 
 							var estimate = TexelAverage.Estimate(task.ActionData);
-							if (DrawState.PushedUpdateWithin(0) && watch.Elapsed + estimate > remainingTime) {
+							if (remainingTime <= TimeSpan.Zero || (DrawState.PushedUpdateWithin(0) && watch.Elapsed + estimate > remainingTime)) {
 								break;
 							}
 
@@ -138,7 +138,7 @@ sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
 							var start = watch.Elapsed;
 							InvokeTask(task);
 							var duration = watch.Elapsed - start;
-							Debug.Trace($"Sprite Finished: Est: {estimate.TotalMilliseconds}  Act: {duration.TotalMilliseconds}   ({task.ActionData.Size}) ({remainingTime.TotalMilliseconds})");
+							Debug.Info($"Sprite Finished: Est: {estimate.TotalMilliseconds} ms, Act: {duration.TotalMilliseconds} ms  ({task.ActionData.Size} B) (rem: {remainingTime.TotalMilliseconds} ms)");
 							TexelAverage.Add(task.ActionData, duration);
 
 							++processed;

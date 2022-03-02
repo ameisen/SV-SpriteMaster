@@ -242,7 +242,7 @@ static class Config {
 
 		};
 		[ConfigIgnore]
-		internal static List<TextureRef> SlicedTexturesS = new();
+		internal static TextureRef[] SlicedTexturesS = Array.Empty<TextureRef>();
 		internal static class BlockMultipleAnalysis {
 			[Comment("Should sprites be analyzed to see if they are block multiples?")]
 			internal static bool Enabled = true;
@@ -297,7 +297,7 @@ static class Config {
 			[Comment("Max color difference to not consider a sprite to be a gradient?")]
 			internal static int MaxGradientColorDifference = 38;
 			[Comment("Minimum different shades required (per channel) for a sprite to be a gradient?")]
-			internal static int MinimumGradientShades = 5;
+			internal static int MinimumGradientShades = 2;
 			[Comment("Use redmean algorithm for perceptual color comparisons?")]
 			internal static bool UseRedmean = true;
 		}
@@ -328,6 +328,16 @@ static class Config {
 			SurfaceFormat.Dxt1SRgb,
 			SurfaceFormat.Dxt1a,
 		};
+
+		[Comment("Experimental resample-based recolor support")]
+		internal static class Recolor {
+			[Comment("Should (experimental) resample-based recoloring be enabled?")]
+			internal static bool Enabled = false;
+			internal static double RScalar = 0.897642;
+			internal static double GScalar = 0.998476;
+			internal static double BScalar = 1.18365;
+		}
+
 		internal static class BlockCompression {
 			[Comment("Should block compression of sprites be enabled?")]
 			internal static bool Enabled = DevEnabled && (!Runtime.IsMacintosh || MacSupported) && true; // I cannot build a proper libnvtt for OSX presently.
@@ -474,6 +484,10 @@ static class Config {
 		internal static bool FastQuit = true;
 		[Comment("Should line drawing be smoothed?")]
 		internal static bool SmoothLines = true;
+		[Comment("Should Harmony patches have inlining re-enabled?")]
+		internal static bool HarmonyInlining = false;
+		[Comment("Should the game's 'parseMasterSchedule' method be fixed and optimized?")]
+		internal static bool FixMasterSchedule = true;
 		[Comment("Should NPC Warp Points code be optimized?")]
 		internal static bool OptimizeWarpPoints = true;
 		[Comment("Should NPCs take true shortest paths?")]

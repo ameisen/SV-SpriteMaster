@@ -17,15 +17,13 @@ static class Draw {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static bool GetIsSliced(in Bounds bounds, Texture2D reference, [NotNullWhen(true)] out Config.TextureRef? result) {
+		var normalizedName = reference.NormalizedName();
+
 		foreach (var slicedTexture in Config.Resample.SlicedTexturesS) {
-			if (!reference.NormalizedName().StartsWith(slicedTexture.Texture)) {
+			if (!normalizedName.StartsWith(slicedTexture.Texture)) {
 				continue;
 			}
-			if (slicedTexture.Bounds.IsEmpty) {
-				result = slicedTexture;
-				return true;
-			}
-			if (slicedTexture.Bounds.Contains(bounds)) {
+			if (slicedTexture.Bounds.IsEmpty || slicedTexture.Bounds.Contains(bounds)) {
 				result = slicedTexture;
 				return true;
 			}
@@ -247,7 +245,7 @@ static class Draw {
 		ref Texture2D texture,
 		ref XNA.Rectangle destination,
 		ref XNA.Rectangle? source,
-		XNA.Color color,
+		ref XNA.Color color,
 		float rotation,
 		ref XNA.Vector2 origin,
 		ref SpriteEffects effects,
@@ -320,6 +318,19 @@ static class Draw {
 			sourceRectangle.Invert.Y = (source.Value.Height < 0);
 		}
 
+		if (Debug.Mode.RegisterDrawForSelect(
+			texture: texture,
+			destination: destination,
+			source: sourceRectangle,
+			color: color,
+			rotation: rotation,
+			origin: scaledOrigin,
+			effects: effects,
+			layerDepth: layerDepth
+		)) {
+			color = XNA.Color.Red;
+		}
+
 		source = sourceRectangle;
 		origin = scaledOrigin;
 		texture = resampledTexture;
@@ -342,7 +353,7 @@ static class Draw {
 		ref Texture2D texture,
 		ref XNA.Vector2 position,
 		ref XNA.Rectangle? source,
-		XNA.Color color,
+		ref XNA.Color color,
 		float rotation,
 		ref XNA.Vector2 origin,
 		ref XNA.Vector2 scale,
@@ -426,6 +437,20 @@ static class Draw {
 		if (source.HasValue) {
 			sourceRectangle.Invert.X = (source.Value.Width < 0);
 			sourceRectangle.Invert.Y = (source.Value.Height < 0);
+		}
+
+		if (Debug.Mode.RegisterDrawForSelect(
+			texture: texture,
+			position: adjustedPosition,
+			source: sourceRectangle,
+			color: color,
+			rotation: rotation,
+			origin: adjustedOrigin,
+			scale: adjustedScale,
+			effects: effects,
+			layerDepth: layerDepth
+		)) {
+			color = XNA.Color.Red;
 		}
 
 		texture = resampledTexture;

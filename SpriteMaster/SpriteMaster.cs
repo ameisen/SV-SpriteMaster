@@ -1,9 +1,11 @@
 ﻿using HarmonyLib;
 using LinqFasterer;
 using SpriteMaster.Caching;
+using SpriteMaster.Experimental;
 using SpriteMaster.Extensions;
 using SpriteMaster.Harmonize;
 using SpriteMaster.Harmonize.Patches.Game;
+using SpriteMaster.Harmonize.Patches.SMAPI;
 using SpriteMaster.Metadata;
 using SpriteMaster.Types;
 using StardewModdingAPI;
@@ -259,16 +261,17 @@ public sealed class SpriteMaster : Mod {
 		}
 
 		// handle sliced textures. At some point I will add struct support.
+		var tempSlicedTextures = new List<Config.TextureRef>(Config.Resample.SlicedTextures.Count);
 		foreach (var slicedTexture in Config.Resample.SlicedTextures) {
 			//@"LooseSprites\Cursors::0,640:2000,256"
 			var elements = slicedTexture.Split("::", 2);
-			var texture = elements[0];
+			var texture = elements[0]!;
 			var bounds = Bounds.Empty;
 			if (elements.Length > 1) {
 				try {
-					var boundElements = elements[1].Split(":");
-					var offsetElements = (boundElements.ElementAtOrDefaultF(0) ?? "0,0").Split(",", 2);
-					var extentElements = (boundElements.ElementAtOrDefaultF(1) ?? "0,0").Split(",", 2);
+					var boundElements = elements[1].Split(':');
+					var offsetElements = (boundElements.ElementAtOrDefaultF(0) ?? "0,0").Split(',', 2);
+					var extentElements = (boundElements.ElementAtOrDefaultF(1) ?? "0,0").Split(',', 2);
 
 					var offset = new Vector2I(int.Parse(offsetElements[0]), int.Parse(offsetElements[1]));
 					var extent = new Vector2I(int.Parse(extentElements[0]), int.Parse(extentElements[1]));
@@ -279,8 +282,9 @@ public sealed class SpriteMaster : Mod {
 					Debug.Error($"Invalid SlicedTexture Bounds: '{elements[1]}'");
 				}
 
-				Config.Resample.SlicedTexturesS.Add(new(texture, bounds));
+				tempSlicedTextures.Add(new(string.Intern(texture), bounds));
 			}
+			Config.Resample.SlicedTexturesS = tempSlicedTextures.ToArray();
 		}
 
 		// Compile blacklist patterns
@@ -503,13 +507,42 @@ public sealed class SpriteMaster : Mod {
 		}
 	}
 
+	private readonly struct WaitWrapper : IDisposable {
+		private readonly object Waiter;
+
+		internal WaitWrapper(object waiter) => Waiter = waiter;
+
+		public readonly void Dispose() {
+			if (Waiter is IDisposable disposable) {
+				disposable.Dispose();
+			}
+		}
+
+		internal readonly void Wait() {
+			switch (Waiter) {
+				case Task task:
+					task.Wait();
+					break;
+				case ManualCondition condition:
+					condition.Wait();
+					break;
+				default:
+					throw new InvalidOperationException(Waiter.GetType().Name);
+			}
+		}
+	}
+
 	private void OnGameLaunched() {
-		using var modCheckTask = Task.Run(CheckMods);
+		var waiters = new WaitWrapper[] {
+			new(Task.Run(CheckMods)),
+			new(Task.Run(Inlining.Reenable)),
+			new(FileCache.Initialized)
+		};
 
-		Debug.Trace("Waiting for FileCache to initialize...");
-		FileCache.Initialized.Wait();
-
-		modCheckTask.Wait();
+		foreach (var waiter in waiters) {
+			waiter.Wait();
+			waiter.Dispose();
+		}
 
 		ForceGarbageCollect();
 		ManagedSpriteInstance.ClearTimers();
