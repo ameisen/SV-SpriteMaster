@@ -2,15 +2,18 @@
 using Microsoft.Xna.Framework.Graphics;
 using Pastel;
 using SpriteMaster.Extensions;
+using SpriteMaster.GL;
 using SpriteMaster.Metadata;
 using SpriteMaster.Resample;
 using SpriteMaster.Types;
 using SpriteMaster.Types.Volatile;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using static SpriteMaster.ResourceManager;
+using static StardewValley.Menus.CharacterCustomization;
 using WeakInstanceList = System.Collections.Generic.LinkedList<System.WeakReference<SpriteMaster.ManagedSpriteInstance>>;
 using WeakInstanceListNode = System.Collections.Generic.LinkedListNode<System.WeakReference<SpriteMaster.ManagedSpriteInstance>>;
 using WeakTexture = System.WeakReference<Microsoft.Xna.Framework.Graphics.Texture2D>;
@@ -213,7 +216,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 	static int TimeSpanSamples = 0;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	static internal ManagedSpriteInstance? Fetch(Texture2D texture, in Bounds source, uint expectedScale) {
+	internal static ManagedSpriteInstance? Fetch(Texture2D texture, in Bounds source, uint expectedScale) {
 		if (!Validate(texture, clean: true)) {
 			return null;
 		}
@@ -229,7 +232,49 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	static internal ManagedSpriteInstance? FetchOrCreate(Texture2D texture, in Bounds source, uint expectedScale, bool sliced) {
+	internal static bool TryResurrect(in SpriteInfo.Initializer initializer, [NotNullWhen(true)] out ManagedSpriteInstance? resurrected) {
+		// Check for a suspended sprite instance that happens to match.
+		if (!Config.SuspendedCache.Enabled) {
+			resurrected = null;
+			return false;
+		}
+
+		var spriteHash = ManagedSpriteInstance.GetHash(initializer, initializer.TextureType);
+		if (spriteHash.HasValue && SuspendedSpriteCache.TryFetch(spriteHash.Value, out var instance)) {
+			var spriteMapHash = SpriteMap.SpriteHash(initializer.Reference, initializer.Bounds, initializer.ExpectedScale);
+			if (instance.Resurrect(initializer.Reference, spriteMapHash)) {
+				resurrected = instance;
+				return true;
+			}
+		}
+
+		resurrected = null;
+		return false;
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static bool TryResurrect(SpriteInfo info, [NotNullWhen(true)] out ManagedSpriteInstance? resurrected) {
+// Check for a suspended sprite instance that happens to match.
+		if (!Config.SuspendedCache.Enabled) {
+			resurrected = null;
+			return false;
+		}
+
+		var spriteHash = ManagedSpriteInstance.GetHash(info, info.TextureType);
+		if (SuspendedSpriteCache.TryFetch(spriteHash, out var instance)) {
+			var spriteMapHash = SpriteMap.SpriteHash(info.Reference, info.Bounds, info.ExpectedScale);
+			if (instance.Resurrect(info.Reference, spriteMapHash)) {
+				resurrected = instance;
+				return true;
+			}
+		}
+
+		resurrected = null;
+		return false;
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static ManagedSpriteInstance? FetchOrCreate(Texture2D texture, in Bounds source, uint expectedScale, bool sliced) {
 		if (!Validate(texture, clean: true)) {
 			return null;
 		}
@@ -297,17 +342,17 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 		// TODO : break this up somewhat so that we can delay hashing for things by _one_ frame (still deterministic, but offset so we can parallelize the work).
 		// Presently, this cannot be done because the initializer is a 'ref struct' and is used immediately. If we want to check the suspended cache, it needs to be jammed away
 		// so the hashing can be performed before the next frame.
-		SpriteInfo.Initializer spriteInfoInitializer = new SpriteInfo.Initializer(reference: texture, dimensions: source, expectedScale: expectedScale, textureType: textureType);
+		SpriteInfo.Initializer spriteInfoInitializer = new SpriteInfo.Initializer(
+			reference: texture,
+			dimensions: source,
+			expectedScale: expectedScale,
+			textureType: textureType,
+			animated: texture.Meta().IsAnimated(in source)
+		);
 
 		// Check for a suspended sprite instance that happens to match.
-		if (Config.SuspendedCache.Enabled) {
-			var spriteHash = ManagedSpriteInstance.GetHash(spriteInfoInitializer, textureType);
-			if (spriteHash.HasValue && SuspendedSpriteCache.TryFetch(spriteHash.Value, out var instance)) {
-				var spriteMapHash = SpriteMap.SpriteHash(texture, source, expectedScale);
-				if (instance.Resurrect(texture, spriteMapHash)) {
-					return instance;
-				}
-			}
+		if (TryResurrect(in spriteInfoInitializer, out var resurrectedInstance)) {
+			return currentInstance;
 		}
 
 		if (!textureChain && currentInstance is not null) {
@@ -337,7 +382,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 
 		// If this is null, it can only happen due to something being blocked, so we should try again later.
 		if (spriteInfoInitializer.ReferenceData is null) {
-			Debug.Trace($"Texture Data fetch for {getNameString()} was {"blocked".Pastel(DrawingColor.Red)}; retrying later#{getRemainingTime()}");
+			Debug.Trace($"Texture Data fetch for {getNameString()} was {"blocked".Pastel(DrawingColor.Red)}; retrying later{getRemainingTime()}");
 			return currentInstance;
 		}
 
@@ -432,13 +477,13 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static void Purge(Texture2D reference, in Bounds? bounds, in DataRef<byte> data) {
-		SpriteInfo.Purge(reference, bounds, data);
+	internal static void Purge(Texture2D reference, in Bounds? bounds, in DataRef<byte> data, bool animated = false) {
+		SpriteInfo.Purge(reference, bounds, data, animated: animated);
 		if (data.IsNull) {
-			SpriteMap.Purge(reference, bounds);
+			SpriteMap.Purge(reference, bounds, animated: animated);
 		}
 		else {
-			SpriteMap.Invalidate(reference, bounds);
+			SpriteMap.Invalidate(reference, bounds, animated: animated);
 		}
 		//Resampler.PurgeHash(reference);
 	}
@@ -765,6 +810,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 
 		SpriteMapHash = spriteMapHash;
 		texture.Meta().ReplaceInSpriteInstanceTable(SpriteMapHash, this);
+		SpriteMap.AddReplace(texture, this);
 
 		Debug.Trace($"Sprite Instance '{Name}' {"Resurrected".Pastel(System.Drawing.Color.LightCyan)}");
 

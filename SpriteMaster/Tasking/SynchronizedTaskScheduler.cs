@@ -130,7 +130,7 @@ sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
 							}
 
 							var estimate = TexelAverage.Estimate(task.ActionData);
-							if (remainingTime <= TimeSpan.Zero || (DrawState.PushedUpdateWithin(0) && watch.Elapsed + estimate > remainingTime)) {
+							if (DrawState.PushedUpdateWithin(0) && watch.Elapsed + estimate > remainingTime) {
 								break;
 							}
 

@@ -3,8 +3,11 @@ using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
 using SpriteMaster.Types;
+using StardewValley.GameData.HomeRenovations;
 using System;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -36,7 +39,7 @@ static class PTexture2D {
 	private static bool Cacheable(Texture2D texture) => texture.LevelCount <= 1;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static void SetDataPurge<T>(Texture2D texture, in XNA.Rectangle? rect, T[] data, int startIndex, int elementCount) where T : struct {
+	private static void SetDataPurge<T>(Texture2D texture, in XNA.Rectangle? rect, T[] data, int startIndex, int elementCount, bool animated) where T : struct {
 		if (!ManagedSpriteInstance.Validate(texture, clean: true)) {
 			return;
 		}
@@ -64,7 +67,8 @@ static class PTexture2D {
 				data: byteData,
 				offset: startIndex * elementSize,
 				length: elementCount * elementSize
-			)
+			),
+			animated: animated
 		);
 #endif
 	}
@@ -187,18 +191,43 @@ static class PTexture2D {
 
 	#endregion
 
+	//private void PlatformSetData<T>(int level, T[] data, int startIndex, int elementCount) where T : struct
+
+	//private void PlatformSetData<T>(int level, int arraySlice, Rectangle rect, T[] data, int startIndex, int elementCount) where T : struct
+
+
+	private static readonly Assembly? CPAAssembly = AppDomain.CurrentDomain.GetAssemblies().SingleOrDefault(assembly => assembly.GetName().Name == "ContentPatcherAnimations");
+	private static bool IsFromContentPatcherAnimations() {
+		if (CPAAssembly is null) {
+			return false;
+		}
+
+		var stackTrace = new StackTrace(skipFrames: 2, fNeedFileInfo: false);
+		foreach (var frame in stackTrace.GetFrames()) {
+			if (frame.GetMethod() is MethodBase method) {
+				if (method.DeclaringType?.Assembly == CPAAssembly) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
 	[Harmonize("PlatformSetData", Harmonize.Fixation.Postfix, PriorityLevel.Average, Harmonize.Generic.Struct, platform: Harmonize.Platform.MonoGame)]
 	public static void OnPlatformSetDataPost<T>(Texture2D __instance, int level, T[] data, int startIndex, int elementCount) where T : unmanaged {
 		if (__instance is (ManagedTexture2D or InternalTexture2D)) {
 			return;
 		}
 
+
 		SetDataPurge(
 			__instance,
 			null,
 			data,
 			startIndex,
-			elementCount
+			elementCount,
+			animated: IsFromContentPatcherAnimations()
 		);
 	}
 
@@ -210,10 +239,11 @@ static class PTexture2D {
 
 		SetDataPurge(
 			__instance,
-			null,
+			rect,
 			data,
 			startIndex,
-			elementCount
+			elementCount,
+			animated: IsFromContentPatcherAnimations()
 		);
 	}
 }
