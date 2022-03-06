@@ -163,6 +163,8 @@ static partial class DrawState {
 	internal static void OnPresentPost() {
 		using var watchdogScoped = WatchDog.WatchDog.ScopedWorkingState;
 
+		Core.OnDrawImpl.ResetLastDrawCache();
+
 		// Apply the PyTK mediation here because we do not know when it might be set up
 		ApplyPyTKMitigation();
 		

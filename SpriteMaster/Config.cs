@@ -226,6 +226,7 @@ static class Config {
 		internal static bool PremultiplyAlpha = true;
 		[Comment("Use redmean algorithm for perceptual color comparisons?")]
 		internal static bool UseRedmean = false;
+		[Comment("What textures are drawn in 'slices' and thus should be special-cased to be resampled as one texture?")]
 		internal static List<string> SlicedTextures = new() {
 			@"LooseSprites\Cursors::0,2000:640,256",
 			@"LooseSprites\Cloudy_Ocean_BG",

@@ -29,10 +29,10 @@ struct Color8 : IEquatable<Color8>, IEquatable<uint>, ILongHash {
 
 	private static uint MakeMask(bool r, bool g, bool b, bool a) {
 		// ToSByte returns 0 or 1 for the mask. Negating it will turn that into 0 or -1, and -1 is 0xFF...
-		var rr = (uint)(byte)(-r.ToSByte());
-		var gg = ((uint)(byte)(-g.ToSByte())) << 8;
-		var bb = ((uint)(byte)(-b.ToSByte())) << 16;
-		var aa = ((uint)(byte)(-a.ToSByte())) << 24;
+		var rr = (uint)(byte)(-r.ToByte());
+		var gg = ((uint)(byte)(-g.ToByte())) << 8;
+		var bb = ((uint)(byte)(-b.ToByte())) << 16;
+		var aa = ((uint)(byte)(-a.ToByte())) << 24;
 		return rr | gg | bb | aa;
 	}
 	internal readonly Color8 Mask(bool r = true, bool g = true, bool b = true, bool a = true) => new(Packed & MakeMask(r, g, b, a));

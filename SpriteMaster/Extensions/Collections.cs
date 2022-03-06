@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using static SpriteMaster.Runtime;
@@ -86,6 +87,47 @@ static class Collections {
 		ListReflectImpl<T>.ListSetItems(newList, array);
 		ListReflectImpl<T>.ListSetSize(newList, array.Length);
 		return newList;
+	}
+	#endregion
+
+	#region TryAt
+	internal static bool TryAt<T>(this List<T> list, int index, out T? item) {
+		if (index < 0) {
+			throw new ArgumentOutOfRangeException(nameof(index), $"{index} is less than zero");
+		}
+		if (index >= list.Count) {
+			item = default(T);
+			return false;
+		}
+
+		item = list[index];
+		return true;
+	}
+
+	internal static bool TryAt<T>(this IReadOnlyList<T> list, int index, out T? item) {
+		if (index < 0) {
+			throw new ArgumentOutOfRangeException(nameof(index), $"{index} is less than zero");
+		}
+		if (index >= list.Count) {
+			item = default(T);
+			return false;
+		}
+
+		item = list[index];
+		return true;
+	}
+
+	internal static bool TryAt<T>(this T[] array, int index, out T? item) {
+		if (index < 0) {
+			throw new ArgumentOutOfRangeException(nameof(index), $"{index} is less than zero");
+		}
+		if (index >= array.Length) {
+			item = default(T);
+			return false;
+		}
+
+		item = array[index];
+		return true;
 	}
 	#endregion
 

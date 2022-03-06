@@ -216,8 +216,6 @@ static partial class OnDrawImpl {
 		return Resample.Scalers.IScaler.Current.ClampScale(factoredScaleN);
 	}
 
-	private static Vector2I test = (0, 1408);
-
 	internal static bool OnDraw(
 		this SpriteBatch @this,
 		ref Texture2D texture,

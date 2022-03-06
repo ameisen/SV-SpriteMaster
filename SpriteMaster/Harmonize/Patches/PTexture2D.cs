@@ -1,6 +1,7 @@
 ﻿using Microsoft.Toolkit.HighPerformance;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
+using SpriteMaster.GL;
 using SpriteMaster.Metadata;
 using SpriteMaster.Types;
 using StardewValley.GameData.HomeRenovations;
@@ -154,6 +155,77 @@ static class PTexture2D {
 
 		if (!CheckDataChange(__instance, level, arraySlice, rect, data, startIndex, elementCount)) {
 			return false;
+		}
+
+		return true;
+	}
+
+	[Harmonize("GetData", Harmonize.Fixation.Prefix, PriorityLevel.Last, Harmonize.Generic.Struct)]
+	public static bool OnGetData<T>(Texture2D __instance, T[] data) where T : unmanaged {
+		return OnGetData<T>(__instance, 0, null, data, 0, data.Length);
+	}
+
+	[Harmonize("GetData", Harmonize.Fixation.Prefix, PriorityLevel.Last, Harmonize.Generic.Struct)]
+	public static bool OnGetData<T>(Texture2D __instance, T[] data, int startIndex, int elementCount) where T : unmanaged {
+		return OnGetData<T>(__instance, 0, null, data, startIndex, elementCount);
+	}
+
+	[Harmonize("GetData", Harmonize.Fixation.Prefix, PriorityLevel.Last, Harmonize.Generic.Struct)]
+	public static bool OnGetData<T>(Texture2D __instance, int level, in XNA.Rectangle? rect, T[] data, int startIndex, int elementCount) where T : unmanaged {
+		return OnGetData<T>(__instance, level, 0, rect, data, startIndex, elementCount);
+	}
+
+	[Harmonize("GetData", Harmonize.Fixation.Prefix, PriorityLevel.Last, Harmonize.Generic.Struct)]
+	public static unsafe bool OnGetData<T>(Texture2D __instance, int level, int arraySlice, in XNA.Rectangle? rect, T[] data, int startIndex, int elementCount) where T : unmanaged {
+		if (data is null) {
+			throw new ArgumentNullException(nameof(data));
+		}
+
+		try {
+			if (
+				Config.SMAPI.ApplyPatchUseCache &&
+				level == 0 &&
+				arraySlice == 0 &&
+				__instance.TryMeta(out var sourceMeta) && sourceMeta.CachedData is byte[] cachedSourceData
+			) {
+				Bounds bounds = rect ?? __instance.Bounds;
+
+				if (cachedSourceData.Length < elementCount * sizeof(T)) {
+					throw new ArgumentException($"{cachedSourceData.Length} < {elementCount * sizeof(T)}", nameof(elementCount));
+				}
+
+				if (data.Length < elementCount + startIndex) {
+					throw new ArgumentException($"{data.Length} < {elementCount + startIndex}", nameof(data));
+				}
+
+				if (bounds == __instance.Bounds) {
+					ReadOnlySpan<byte> sourceBytes = cachedSourceData;
+					var source = sourceBytes.Cast<T>();
+					Span<T> dest = data;
+					source.CopyTo(dest, 0, startIndex, elementCount);
+
+					return false;
+				}
+				else if (__instance.Bounds.Contains(bounds)) {
+					// We need a subcopy
+					var cachedData = cachedSourceData.AsReadOnlySpan<T>();
+					var destData = data.AsSpan();
+					int sourceStride = __instance.Width;
+					int destStride = bounds.Width;
+					int sourceOffset = (bounds.Top * sourceStride) + bounds.Left;
+					int destOffset = startIndex;
+					for (int y = 0; y < bounds.Height; ++y) {
+						cachedData.Slice(sourceOffset, destStride).CopyTo(destData.Slice(destOffset, destStride));
+						sourceOffset += sourceStride;
+						destOffset += destStride;
+					}
+
+					return false;
+				}
+			}
+		}
+		catch (Exception ex) {
+			Debug.Error("OnGetData optimization threw an exception", ex);
 		}
 
 		return true;

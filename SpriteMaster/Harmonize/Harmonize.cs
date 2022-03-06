@@ -390,6 +390,8 @@ static class Harmonize {
 			);
 		}
 		if (reverse is not null) {
+			priority = Priority.Normal;
+
 			var typeMethod = GetPatchMethod(
 				type,
 				name,
@@ -453,6 +455,8 @@ static class Harmonize {
 			);
 		}
 		if (reverse is not null) {
+			priority = Priority.Normal;
+
 			var typeMethod = GetPatchMethod(
 				type,
 				name,

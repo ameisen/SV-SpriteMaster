@@ -281,9 +281,8 @@ public sealed class SpriteMaster : Mod {
 				catch {
 					Debug.Error($"Invalid SlicedTexture Bounds: '{elements[1]}'");
 				}
-
-				tempSlicedTextures.Add(new(string.Intern(texture), bounds));
 			}
+			tempSlicedTextures.Add(new(string.Intern(texture), bounds));
 			Config.Resample.SlicedTexturesS = tempSlicedTextures.ToArray();
 		}
 

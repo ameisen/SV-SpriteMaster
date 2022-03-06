@@ -37,9 +37,6 @@ static partial class ReflectionExt {
 
 		var objExp = Expression.Parameter(type, "object");
 		Expression memberExp = Expression.Field(objExp, field);
-		if (!field.FieldType.IsClass) {
-			memberExp = Expression.Convert(memberExp, typeof(object));
-		}
 		return Expression.Lambda<Func<T, U>>(memberExp, objExp).CompileFast();
 	}
 	#endregion
@@ -102,9 +99,6 @@ static partial class ReflectionExt {
 
 		var objExp = Expression.Parameter(type, "object");
 		Expression memberExp = Expression.Property(objExp, property);
-		if (!property.PropertyType.IsClass) {
-			memberExp = Expression.Convert(memberExp, typeof(object));
-		}
 		return Expression.Lambda<Func<T, U>>(memberExp, objExp).CompileFast();
 	}
 	#endregion

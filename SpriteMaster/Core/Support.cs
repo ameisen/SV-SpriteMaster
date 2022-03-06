@@ -37,6 +37,16 @@ static partial class OnDrawImpl {
 		return !sourceBounds.Degenerate;
 	}
 
+	// Odds are high that we will run into the same textures/sprites being drawn one after another.
+	// Thus, if we cache the last one, we will more-often-than-not likely be able to avoid a lot of work.
+	private static (Texture2D? Reference, uint ExpectedScale, Bounds? Source, Bounds UpdatedSource) LastDrawParams = new(null, 0, null, new());
+	private static ManagedSpriteInstance? LastDrawSpriteInstance = null;
+
+	internal static void ResetLastDrawCache() {
+		LastDrawParams = new(null, 0, null, new());
+		LastDrawSpriteInstance = null;
+	}
+
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static bool FetchScaledTexture(
 		this Texture2D reference,
@@ -45,6 +55,19 @@ static partial class OnDrawImpl {
 		[NotNullWhen(true)] out ManagedSpriteInstance? spriteInstance,
 		bool create = false
 	) {
+		if (
+			LastDrawSpriteInstance != null &&
+			LastDrawSpriteInstance.IsReady && !LastDrawSpriteInstance.IsDisposed && !LastDrawSpriteInstance.Suspended &&
+			LastDrawParams.Reference == reference &&
+			LastDrawParams.ExpectedScale == expectedScale &&
+			LastDrawParams.Source == source
+		) {
+			source = LastDrawParams.UpdatedSource;
+			spriteInstance = LastDrawSpriteInstance;
+			return true;
+		}
+
+		var originalSource = source;
 		var invert = source.Invert;
 		spriteInstance = reference.FetchScaledTexture(
 			expectedScale: expectedScale,
@@ -52,7 +75,14 @@ static partial class OnDrawImpl {
 			create: create
 		);
 		source.Invert = invert;
-		return spriteInstance is not null;
+
+		if (spriteInstance is not null) {
+			LastDrawParams = new(reference, expectedScale, originalSource, source);
+			LastDrawSpriteInstance = spriteInstance;
+			return true;
+		}
+
+		return false;
 	}
 
 	private static ManagedSpriteInstance? FetchScaledTexture(
