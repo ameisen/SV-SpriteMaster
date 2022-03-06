@@ -518,7 +518,7 @@ sealed class Resampler {
 					);
 
 					if (result is (ResampleStatus.DisabledGradient or ResampleStatus.DisabledSolid)) {
-						Debug.Info($"Skipping resample of {spriteInstance.Name} {input.Bounds}: NoResample");
+						Debug.Trace($"Skipping resample of {spriteInstance.Name} {input.Bounds}: NoResample");
 						spriteInstance.NoResample = true;
 						if (input.Reference is Texture2D texture) {
 							texture.Meta().AddNoResample(input.Bounds);
