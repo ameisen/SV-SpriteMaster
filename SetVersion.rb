@@ -87,8 +87,20 @@ class SemanticVersion
 					tag_version = tag_version.to_i
 					tag_build = tag_version
 					case tag
+						when nil
+							# do nothing
+						when "alpha"
+							# do nothing
 						when "beta"
 							tag_build += 100
+						when "rc"
+							tag_build += 200
+						when "final"
+							tag_build += 300
+							tag = nil
+						else
+							STDERR.puts "Unknown Tag: #{tag}"
+							exit 2
 					end
 				end
 			end

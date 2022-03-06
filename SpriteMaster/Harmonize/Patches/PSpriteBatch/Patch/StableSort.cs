@@ -1,4 +1,6 @@
-﻿using HarmonyLib;
+﻿//#define PROFILE_STABLESORT
+
+using HarmonyLib;
 using SpriteMaster.Extensions;
 using System;
 using System.Collections.Generic;
@@ -142,10 +144,12 @@ static class StableSort {
 		QuickSort(span, indices, 0, length - 1);
 	}*/
 
+#if PROFILE_STABLESORT
 	private static int TotalElements = 0;
 	private static long TotalDuration = 0;
 	private static int CountCount = 0;
 	private static readonly Stopwatch Stopwatch = Stopwatch.StartNew();
+#endif
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static void ArrayStableSortByKey<T>(T[] array, int index, int length) where T : IComparable<T> {
@@ -159,7 +163,9 @@ static class StableSort {
 			return;
 		}
 
+#if PROFILE_STABLESORT
 		var startTime = Stopwatch.Elapsed;
+#endif
 
 		// Not _optimal_, really need a proper stable sort. Optimize later.
 		Span<int> indices = stackalloc int[length];
@@ -174,6 +180,7 @@ static class StableSort {
 			QuickSortByKey(span, indices, 0, length - 1);
 		}
 
+#if PROFILE_STABLESORT
 		var fromStart = Stopwatch.Elapsed - startTime;
 		TotalDuration += fromStart.Ticks;
 		TotalElements += array.Length;
@@ -184,6 +191,7 @@ static class StableSort {
 
 			Debug.Info($"Total Duration: {duration}, Total Count: {TotalElements} :: Per 1,000 Elements: {durationPerElement}");
 		}
+#endif
 	}
 
 	[Harmonize(
