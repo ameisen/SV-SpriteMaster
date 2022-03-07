@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using SpriteMaster.Extensions;
 using System;
 using System.Text;
 
@@ -15,6 +16,13 @@ static class SystemInfo {
 			dumpBuilder.AppendLine($"\tArchitecture: {(Environment.Is64BitProcess ? "x64" : "x86")}");
 			dumpBuilder.AppendLine($"\tNumber of Cores: {Environment.ProcessorCount}");
 			dumpBuilder.AppendLine($"\tOS Version: {Environment.OSVersion}");
+		}
+		catch { }
+
+		try {
+			var memoryInfo = GC.GetGCMemoryInfo();
+			dumpBuilder.AppendLine($"\tTotal Committed Memory: {memoryInfo.TotalCommittedBytes.AsDataSize()}");
+			dumpBuilder.AppendLine($"\tTotal Available Memory: {memoryInfo.TotalAvailableMemoryBytes.AsDataSize()}");
 		}
 		catch { }
 
