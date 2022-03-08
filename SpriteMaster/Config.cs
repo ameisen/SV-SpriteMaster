@@ -482,7 +482,7 @@ static class Config {
 
 	internal static class Extras {
 		[Comment("Should the game have 'fast quitting' enabled?")]
-		internal static bool FastQuit = true;
+		internal static bool FastQuit = false;
 		[Comment("Should line drawing be smoothed?")]
 		internal static bool SmoothLines = true;
 		[Comment("Should Harmony patches have inlining re-enabled?")]

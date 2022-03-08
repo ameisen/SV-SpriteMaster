@@ -656,6 +656,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 			PreviousSpriteInstance = instance.PreviousSpriteInstance;
 			ReferenceTexture = instance.Reference;
 			RecentAccessNode = instance.RecentAccessNode;
+			instance.RecentAccessNode = null;
 			MapHash = instance.SpriteMapHash;
 		}
 	}
