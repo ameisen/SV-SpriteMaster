@@ -2,7 +2,6 @@
 using Microsoft.Xna.Framework.Graphics;
 using Pastel;
 using SpriteMaster.Extensions;
-using SpriteMaster.GL;
 using SpriteMaster.Metadata;
 using SpriteMaster.Resample;
 using SpriteMaster.Types;
@@ -13,7 +12,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using static SpriteMaster.ResourceManager;
-using static StardewValley.Menus.CharacterCustomization;
 using WeakInstanceList = System.Collections.Generic.LinkedList<System.WeakReference<SpriteMaster.ManagedSpriteInstance>>;
 using WeakInstanceListNode = System.Collections.Generic.LinkedListNode<System.WeakReference<SpriteMaster.ManagedSpriteInstance>>;
 using WeakTexture = System.WeakReference<Microsoft.Xna.Framework.Graphics.Texture2D>;

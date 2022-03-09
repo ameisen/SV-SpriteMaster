@@ -70,9 +70,8 @@ mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null)
 		Harmonize.Fixation.Prefix,
 		Harmonize.PriorityLevel.Last
 	)]
-	internal static bool EnableCudaAcceleration(IntPtr compressor, ref bool value) {
+	public static void EnableCudaAcceleration(IntPtr compressor, ref bool value) {
 		value = true;
-		return true;
 	}
 
 	[Harmonize(
@@ -82,7 +81,7 @@ mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null)
 		Harmonize.Fixation.Postfix,
 		Harmonize.PriorityLevel.Last
 	)]
-	internal static void IsCudaAccelerationEnabled(IntPtr compressor, ref bool __result) {
+	public static void IsCudaAccelerationEnabled(IntPtr compressor, ref bool __result) {
 		__result = false;
 	}
 
@@ -94,7 +93,7 @@ mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null)
 		Harmonize.PriorityLevel.First,
 		instance: false
 	)]
-	internal static bool GetAppBaseDirectory(ref string? __result) {
+	public static bool GetAppBaseDirectory(ref string? __result) {
 		__result = SpriteMaster.AssemblyPath;
 		Debug.Trace($"GetAppBaseDirectory: {__result}");
 		return false;
@@ -110,7 +109,7 @@ mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null)
 		Harmonize.PriorityLevel.First,
 		platform: Harmonize.Platform.Linux
 	)]
-	internal static bool NativeLoadLibrary(UnmanagedLibrary __instance, ref IntPtr __result, String path) {
+	public static bool NativeLoadLibrary(UnmanagedLibrary __instance, ref IntPtr __result, String path) {
 		if (dl is null) {
 			throw new NullReferenceException(nameof(dl));
 		}
@@ -139,7 +138,7 @@ mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null)
 		Harmonize.PriorityLevel.First,
 		platform: Harmonize.Platform.Linux
 	)]
-	internal static bool NativeGetProcAddress(ref IntPtr __result, IntPtr handle, String functionName) {
+	public static bool NativeGetProcAddress(ref IntPtr __result, IntPtr handle, String functionName) {
 		if (dl is null) {
 			throw new NullReferenceException(nameof(dl));
 		}
@@ -157,7 +156,7 @@ mono_dllmap_insert(IntPtr.Zero, "somelib", null, "/path/to/libsomelib.so", null)
 		Harmonize.PriorityLevel.First,
 		platform: Harmonize.Platform.Linux
 	)]
-	internal static bool NativeFreeLibrary(IntPtr handle) {
+	public static bool NativeFreeLibrary(IntPtr handle) {
 		dl?.close(handle);
 		return false;
 	}

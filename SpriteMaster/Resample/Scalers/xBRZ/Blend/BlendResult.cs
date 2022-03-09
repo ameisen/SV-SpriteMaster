@@ -1,6 +1,3 @@
-
-using SpriteMaster;
-
 namespace SpriteMaster.Resample.Scalers.xBRZ.Blend;
 
 ref struct BlendResult {

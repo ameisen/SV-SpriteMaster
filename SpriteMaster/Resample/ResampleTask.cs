@@ -1,7 +1,5 @@
 ﻿using SpriteMaster.Extensions;
 using SpriteMaster.Tasking;
-using System;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace SpriteMaster.Resample;

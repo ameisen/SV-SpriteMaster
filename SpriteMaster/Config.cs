@@ -361,7 +361,7 @@ static class Config {
 			@"@^Maps\\.+FogBackground",
 		};
 		[ConfigIgnore]
-		internal static List<Regex> BlacklistPatterns = new();
+		internal static Regex[] BlacklistPatterns = new Regex[0];
 		internal static class Padding {
 			[Comment("Should padding be applied to sprites to allow resampling to extend beyond the natural sprite boundaries?")]
 			internal static bool Enabled = DevEnabled && true;

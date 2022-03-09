@@ -1,6 +1,4 @@
-﻿using SpriteMaster.Types;
-using System;
-using System.Runtime.CompilerServices;
+﻿using System;
 
 namespace SpriteMaster.Resample.Scalers.SuperXBR.Cg;
 

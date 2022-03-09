@@ -5,7 +5,6 @@ using SpriteMaster.Experimental;
 using SpriteMaster.Extensions;
 using SpriteMaster.Harmonize;
 using SpriteMaster.Harmonize.Patches.Game;
-using SpriteMaster.Harmonize.Patches.SMAPI;
 using SpriteMaster.Metadata;
 using SpriteMaster.Types;
 using StardewModdingAPI;
@@ -261,8 +260,9 @@ public sealed class SpriteMaster : Mod {
 		}
 
 		// handle sliced textures. At some point I will add struct support.
-		var tempSlicedTextures = new List<Config.TextureRef>(Config.Resample.SlicedTextures.Count);
-		foreach (var slicedTexture in Config.Resample.SlicedTextures) {
+		Config.Resample.SlicedTexturesS = new Config.TextureRef[Config.Resample.SlicedTextures.Count];
+		for (int i = 0; i < Config.Resample.SlicedTexturesS.Length; ++i) {
+			var slicedTexture = Config.Resample.SlicedTextures[i];
 			//@"LooseSprites\Cursors::0,640:2000,256"
 			var elements = slicedTexture.Split("::", 2);
 			var texture = elements[0]!;
@@ -282,20 +282,20 @@ public sealed class SpriteMaster : Mod {
 					Debug.Error($"Invalid SlicedTexture Bounds: '{elements[1]}'");
 				}
 			}
-			tempSlicedTextures.Add(new(string.Intern(texture), bounds));
-			Config.Resample.SlicedTexturesS = tempSlicedTextures.ToArray();
+			Config.Resample.SlicedTexturesS[i] = new(string.Intern(texture), bounds);
 		}
 
 		// Compile blacklist patterns
-		Config.Resample.BlacklistPatterns.Capacity = Config.Resample.Blacklist.Count;
-		foreach (var pattern in Config.Resample.Blacklist) {
+		Config.Resample.BlacklistPatterns = new Regex[Config.Resample.Blacklist.Count];
+		for (int i = 0; i < Config.Resample.Blacklist.Count; ++i) {
+			var pattern = Config.Resample.Blacklist[i];
 			if (!pattern.StartsWith('@')) {
-				Config.Resample.BlacklistPatterns.Add(new($"^{Regex.Escape(pattern)}.*", RegexOptions.Compiled));
+				pattern = $"^{Regex.Escape(pattern)}.*";
 			}
 			else {
-				var reducedPattern = pattern.Substring(1);
-				Config.Resample.BlacklistPatterns.Add(new(reducedPattern, RegexOptions.Compiled));
+				pattern = pattern.Substring(1);
 			}
+			Config.Resample.BlacklistPatterns[i] = new(pattern, RegexOptions.Compiled);
 		}
 
 		if (Config.ShowIntroMessage && !Config.SkipIntro) {

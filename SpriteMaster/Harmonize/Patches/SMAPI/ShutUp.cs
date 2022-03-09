@@ -1,7 +1,6 @@
 ﻿#if !SHIPPING
 
 using StardewModdingAPI;
-using System;
 
 namespace SpriteMaster.Harmonize.Patches.SMAPI;
 
@@ -14,8 +13,8 @@ static class ShutUp {
 		Harmonize.PriorityLevel.Last,
 		critical: false
 	)]
-	static public bool LogImplPre(IMonitor __instance, string? source, string? message, object level) {
-		if (level.ToString() != "Trace") {
+	public static bool LogImplPre(IMonitor __instance, string? source, string? message, object level) {
+		if ((int)level != (int)LogLevel.Trace) {
 			return true;
 		}
 

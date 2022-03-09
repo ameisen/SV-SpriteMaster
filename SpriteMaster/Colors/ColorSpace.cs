@@ -3,7 +3,6 @@ using SpriteMaster.Types;
 using SpriteMaster.Types.Fixed;
 using System;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
 namespace SpriteMaster.Colors;
 

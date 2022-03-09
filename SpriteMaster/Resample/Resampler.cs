@@ -1,9 +1,7 @@
 ﻿using LinqFasterer;
 using Microsoft.Toolkit.HighPerformance;
-using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Caching;
-using SpriteMaster.Colors;
 using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
 using SpriteMaster.Resample.Passes;
@@ -11,7 +9,6 @@ using SpriteMaster.Tasking;
 using SpriteMaster.Types;
 using SpriteMaster.Types.Fixed;
 using System;
-using System.Buffers;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 

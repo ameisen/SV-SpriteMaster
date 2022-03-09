@@ -1,10 +1,8 @@
 ﻿using Microsoft.Toolkit.HighPerformance;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
-using SpriteMaster.GL;
 using SpriteMaster.Metadata;
 using SpriteMaster.Types;
-using StardewValley.GameData.HomeRenovations;
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -291,7 +289,6 @@ static class PTexture2D {
 		if (__instance is (ManagedTexture2D or InternalTexture2D)) {
 			return;
 		}
-
 
 		SetDataPurge(
 			__instance,

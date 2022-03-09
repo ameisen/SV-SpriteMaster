@@ -1,9 +1,4 @@
-﻿using Microsoft.Xna.Framework.Graphics;
-using SpriteMaster.Types;
-
-using static SpriteMaster.Harmonize.Harmonize;
-
-namespace SpriteMaster.Harmonize.Patches;
+﻿namespace SpriteMaster.Harmonize.Patches;
 
 static class GraphicsResource {
 	/*

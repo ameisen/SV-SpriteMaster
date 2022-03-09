@@ -1,8 +1,4 @@
-﻿using SpriteMaster.Extensions;
-using SpriteMaster.Types.Fixed;
-using System.Runtime.CompilerServices;
-
-namespace SpriteMaster.Colors;
+﻿namespace SpriteMaster.Colors;
 
 static class ColorConstant {
 	internal static class Shift {

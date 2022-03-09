@@ -8,8 +8,6 @@ using StardewValley;
 using StardewValley.Locations;
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using System.Security.Policy;
 
 namespace SpriteMaster.Harmonize.Patches.Game;
 

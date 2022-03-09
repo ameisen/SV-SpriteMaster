@@ -1,6 +1,5 @@
 ﻿using SpriteMaster.Extensions;
 using SpriteMaster.Types;
-using StardewValley.Characters;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -188,6 +187,28 @@ static class SerializeConfig {
 												}
 												field.SetValue(null, list);
 											} break;
+										case string[] _: {
+												var arrayValue = ((ArraySyntax?)value.Value)?.Items;
+												if (arrayValue is null) {
+													break;
+												}
+												var list = new string[arrayValue.ChildrenCount];
+												int i = 0;
+												foreach (var obj in arrayValue) {
+													var ovalue = obj.Value;
+													if (ovalue is StringValueSyntax svalue) {
+														if (svalue.Value is not null) {
+															list[i++] = svalue.Value.Intern();
+														}
+													}
+													else if (ovalue is IntegerValueSyntax ivalue) {
+														list[i++] = ivalue.Value.ToString().Intern();
+													}
+												}
+												Array.Resize(ref list, i);
+												field.SetValue(null, list);
+											}
+											break;
 										case List<int> _: {
 												var arrayValue = ((ArraySyntax?)value.Value)?.Items;
 												if (arrayValue is null) {
@@ -207,6 +228,27 @@ static class SerializeConfig {
 												}
 												field.SetValue(null, list);
 											} break;
+										case int[] _: {
+												var arrayValue = ((ArraySyntax?)value.Value)?.Items;
+												if (arrayValue is null) {
+													break;
+												}
+												var list = new int[arrayValue.ChildrenCount];
+												int i = 0;
+												foreach (var obj in arrayValue) {
+													var ovalue = obj.Value;
+													if (ovalue is StringValueSyntax svalue) {
+														if (svalue.Value is not null) {
+															list[i++] = Int32.Parse(svalue.Value);
+														}
+													}
+													else if (ovalue is IntegerValueSyntax ivalue) {
+														list[i++] = (int)ivalue.Value;
+													}
+												}
+												field.SetValue(null, list);
+											}
+											break;
 										case Enum enumValue: {
 												var enumNames = fieldValue.GetType().GetEnumNames();
 												var values = fieldValue.GetType().GetEnumValues();
@@ -319,8 +361,14 @@ static class SerializeConfig {
 						case List<string> stringList:
 							value = new ArraySyntax(stringList.ToArray());
 							break;
+						case string[] stringList:
+							value = new ArraySyntax(stringList);
+							break;
 						case List<int> intList:
 							value = new ArraySyntax(intList.ToArray());
+							break;
+						case int[] intList:
+							value = new ArraySyntax(intList);
 							break;
 						case Enum enumValue:
 							var enumName = enumValue.GetType().GetEnumName(fieldValue);

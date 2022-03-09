@@ -1,7 +1,6 @@
 ﻿using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using System;
-using System.Runtime.InteropServices;
 
 namespace SpriteMaster.Resample.Passes;
 

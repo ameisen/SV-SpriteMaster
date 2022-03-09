@@ -45,7 +45,7 @@ static class PlatformRenderBatch {
 		PriorityLevel.First,
 		platform: Harmonize.Platform.MonoGame
 	)]
-	internal static bool OnFlushVertexArray(
+	public static void OnFlushVertexArray(
 		SpriteBatcher __instance,
 		int start,
 		int end,
@@ -55,7 +55,7 @@ static class PlatformRenderBatch {
 		ref States __state
 	) {
 		if (!Config.IsEnabled) {
-			return true;
+			return;
 		}
 
 		SamplerState? originalSamplerState = null;
@@ -96,18 +96,18 @@ static class PlatformRenderBatch {
 
 		__state = new(originalSamplerState, originalBlendState);
 
-		return true;
+		return;
 	}
 
 	[Harmonize(
-	"Microsoft.Xna.Framework.Graphics",
-	"Microsoft.Xna.Framework.Graphics.SpriteBatcher",
-	"FlushVertexArray",
-	Harmonize.Fixation.Postfix,
-	PriorityLevel.Last,
-	platform: Harmonize.Platform.MonoGame
-)]
-	internal static void OnFlushVertexArray(
+		"Microsoft.Xna.Framework.Graphics",
+		"Microsoft.Xna.Framework.Graphics.SpriteBatcher",
+		"FlushVertexArray",
+		Harmonize.Fixation.Postfix,
+		PriorityLevel.Last,
+		platform: Harmonize.Platform.MonoGame
+	)]
+	public static void OnFlushVertexArray(
 	SpriteBatcher __instance,
 	int start,
 	int end,

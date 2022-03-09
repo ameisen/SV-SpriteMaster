@@ -4,7 +4,6 @@ using HarmonyLib;
 using SpriteMaster.Extensions;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -122,28 +121,6 @@ static class StableSort {
 		}
 	}
 
-	/*
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static void ArrayStableSort<T>(T[] array, int index, int length) where T : IComparable<T> {
-		if (DrawState.CurrentBlendState == Microsoft.Xna.Framework.Graphics.BlendState.Additive) {
-			// There is basically no reason to sort when the blend state is additive.
-			return;
-		}
-		
-		if (!Config.Enabled || !Config.Extras.StableSort) {
-			Array.Sort(array, index, length);
-			return;
-		}
-
-		// Not _optimal_, really need a proper stable sort. Optimize later.
-		Span<int> indices = stackalloc int[length];
-		for (int i = 0; i < length; ++i) {
-			indices[i] = i;
-		}
-		var span = new Span<T>(array, index, length);
-		QuickSort(span, indices, 0, length - 1);
-	}*/
-
 #if PROFILE_STABLESORT
 	private static int TotalElements = 0;
 	private static long TotalDuration = 0;
@@ -152,7 +129,7 @@ static class StableSort {
 #endif
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static void ArrayStableSortByKey<T>(T[] array, int index, int length) where T : IComparable<T> {
+	public static void ArrayStableSort<T>(T[] array, int index, int length) where T : IComparable<T> {
 		if (DrawState.CurrentBlendState == Microsoft.Xna.Framework.Graphics.BlendState.Additive) {
 			// There is basically no reason to sort when the blend state is additive.
 			return;
@@ -200,7 +177,7 @@ static class StableSort {
 		"DrawBatch",
 		fixation: Harmonize.Fixation.Transpile
 	)]
-	internal static IEnumerable<CodeInstruction> SpriteBatcherTranspiler(IEnumerable<CodeInstruction> instructions) {
+	public static IEnumerable<CodeInstruction> SpriteBatcherTranspiler(IEnumerable<CodeInstruction> instructions) {
 		if (SpriteBatchItemType is null) {
 			Debug.Error($"Could not apply SpriteBatcher stable sorting patch: {nameof(SpriteBatchItemType)} was null");
 			return instructions;
@@ -211,7 +188,7 @@ static class StableSort {
 		}
 
 
-		var newMethod = typeof(StableSort).GetMethod(GetSortKeyImpl is null ? "ArrayStableSortByKey" : "ArrayStableSortByKey", BindingFlags.Static | BindingFlags.NonPublic)?.MakeGenericMethod(new Type[] { SpriteBatchItemType });
+		var newMethod = typeof(StableSort).GetMethod("ArrayStableSort", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public)?.MakeGenericMethod(new Type[] { SpriteBatchItemType });
 		//var newMethod = typeof(StableSort).GetMethod("ArrayStableSort", BindingFlags.Static | BindingFlags.NonPublic)?.MakeGenericMethod(new Type[] { SpriteBatchItemType });
 
 		if (newMethod is null) {

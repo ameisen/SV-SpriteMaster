@@ -4,8 +4,10 @@ using System.Threading;
 
 namespace SpriteMaster.Harmonize.Patches.Game;
 
+using MasterSchedule = Dictionary<int, SchedulePathDescription>;
+
 class MasterSchedulePatch {
-	private static readonly ThreadLocal<HashSet<string>> MasterScheduleSet = new();
+	private static readonly ThreadLocal<HashSet<string?>> MasterScheduleSet = new();
 	private static readonly ThreadLocal<int> MasterScheduleDepth = new();
 
 	[Harmonize(
@@ -15,11 +17,14 @@ class MasterSchedulePatch {
 	Harmonize.PriorityLevel.Last,
 	critical: false
 )]
-	public static bool ParseMasterSchedulePre(StardewValley.NPC __instance, ref Dictionary<int, SchedulePathDescription>? __result, string rawData) {
+	public static bool ParseMasterSchedulePre(StardewValley.NPC __instance, ref MasterSchedule? __result, string? rawData, ref bool __state) {
+		__state = false;
+
 		if (!Config.Enabled || !Config.Extras.FixMasterSchedule) {
 			return true;
 		}
 
+		// Optimization for mods like Custom NPC Fixes
 		if (__instance is StardewValley.Monsters.Monster) {
 			__result = null;
 			return false;
@@ -40,6 +45,7 @@ class MasterSchedulePatch {
 			++MasterScheduleDepth.Value;
 		}
 
+		__state = true;
 		return true;
 	}
 
@@ -50,8 +56,12 @@ class MasterSchedulePatch {
 		Harmonize.PriorityLevel.Last,
 		critical: false
 	)]
-	public static void ParseMasterSchedulePost(StardewValley.NPC __instance, string rawData) {
+	public static void ParseMasterSchedulePost(StardewValley.NPC __instance, string rawData, bool __state) {
 		if (!Config.Enabled || !Config.Extras.FixMasterSchedule) {
+			return;
+		}
+
+		if (!__state) {
 			return;
 		}
 
@@ -74,11 +84,12 @@ class MasterSchedulePatch {
 		Harmonize.PriorityLevel.Last,
 		critical: false
 	)]
-	public static bool ParseMasterSchedulePost(StardewValley.NPC __instance, ref Dictionary<int, SchedulePathDescription>? __result, int dayOfMonth) {
+	public static bool getSchedulePre(StardewValley.NPC __instance, ref MasterSchedule? __result, int dayOfMonth) {
 		if (!Config.Enabled || !Config.Extras.FixMasterSchedule) {
 			return true;
 		}
 
+		// Optimization for mods such as Custom NPC Fixes
 		if (__instance is StardewValley.Monsters.Monster) {
 			__result = null;
 			return false;

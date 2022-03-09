@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace SpriteMaster.Extensions;
+﻿namespace SpriteMaster.Extensions;
 
 static class Reinterpret {
 	internal static unsafe U ReinterpretAs<T, U>(this T value) where T : unmanaged where U : unmanaged {
