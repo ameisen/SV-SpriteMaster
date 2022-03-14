@@ -175,13 +175,16 @@ static class PTexture2D {
 
 	[Harmonize("GetData", Harmonize.Fixation.Prefix, PriorityLevel.Last, Harmonize.Generic.Struct)]
 	public static unsafe bool OnGetData<T>(Texture2D __instance, int level, int arraySlice, in XNA.Rectangle? rect, T[] data, int startIndex, int elementCount) where T : unmanaged {
+		if (!Config.IsEnabled || !Config.SMAPI.ApplyGetDataPatch) {
+			return true;
+		}
+		
 		if (data is null) {
 			throw new ArgumentNullException(nameof(data));
 		}
 
 		try {
 			if (
-				Config.SMAPI.ApplyPatchUseCache &&
 				level == 0 &&
 				arraySlice == 0 &&
 				__instance.TryMeta(out var sourceMeta) && sourceMeta.CachedData is byte[] cachedSourceData

@@ -474,10 +474,10 @@ static class Config {
 		internal static bool TextureCacheHighMemoryEnabled = false;
 		[Comment("Should the ApplyPatch method be patched?")]
 		internal static bool ApplyPatchEnabled = true;
-		[Comment("Should the ApplyPatch patch use SpriteMaster caches?")]
-		internal static bool ApplyPatchUseCache = true;
 		[Comment("Should ApplyPatch pin temporary memory?")]
 		internal static bool ApplyPatchPinMemory = false;
+		[Comment("Should 'GetData' be patched to use SM caches?")]
+		internal static bool ApplyGetDataPatch = true;
 	}
 
 	internal static class Extras {
