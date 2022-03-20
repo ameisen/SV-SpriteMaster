@@ -57,6 +57,10 @@ static class ClickCrash {
 	)]
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static void SdlRunLoopPost(object __instance) {
+		if (!Config.IsEnabled) {
+			return;
+		}
+
 		if (IsRunnable) {
 			SdlUpdate.Restart();
 		}
@@ -87,6 +91,10 @@ static class ClickCrash {
 	)]
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static void StartTaskPre(object __instance, Task task, string id) {
+		if (!Config.IsEnabled) {
+			return;
+		}
+
 		OnStartTask();
 	}
 
@@ -101,6 +109,10 @@ static class ClickCrash {
 	)]
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static void StartTaskPre<T>(T __instance, Task<T> task, string id) {
+		if (!Config.IsEnabled) {
+			return;
+		}
+
 		OnStartTask();
 	}
 }

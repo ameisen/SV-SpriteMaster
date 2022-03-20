@@ -60,15 +60,15 @@ static class PAssetDataForImage {
 
 			// merge pixels
 			for (int i = 0; i < sourceData.Length; i++) {
-				var above = (Color8)sourceData[i];
-				var below = (Color8)targetData[i];
+				var above = sourceData[i];
+				var below = targetData[i];
 
 				// shortcut transparency
-				if (above.A.Value < MinOpacity) {
+				if (above.A < MinOpacity) {
 					sourceData[i] = below;
 					continue;
 				}
-				if (below.A.Value < MinOpacity) {
+				if (below.A < MinOpacity) {
 					sourceData[i] = above;
 					continue;
 				}
@@ -77,12 +77,12 @@ static class PAssetDataForImage {
 				// This performs a conventional alpha blend for the pixels, which are already
 				// premultiplied by the content pipeline. The formula is derived from
 				// https://shawnhargreaves.com/blog/premultiplied-alpha.html.
-				Fixed8 alphaBelow = (byte)(byte.MaxValue - above.A);
-				sourceData[i] = new Color8(
-					r: above.R.AddClamped(below.R * alphaBelow),
-					g: above.G.AddClamped(below.G * alphaBelow),
-					b: above.B.AddClamped(below.B * alphaBelow),
-					a: MathExt.Max(above.A, below.A)
+				float alphaBelow = 1 - (above.A / 255f);
+				sourceData[i] = new XNA.Color(
+						(int)(above.R + (below.R * alphaBelow)), // r
+						(int)(above.G + (below.G * alphaBelow)), // g
+						(int)(above.B + (below.B * alphaBelow)), // b
+						Math.Max(above.A, below.A) // a
 				);
 			}
 		}
