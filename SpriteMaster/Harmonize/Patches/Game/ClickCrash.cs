@@ -10,7 +10,7 @@ namespace SpriteMaster.Harmonize.Patches.Game;
 static class ClickCrash {
 	private const BindingFlags AllMethods = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.FlattenHierarchy;
 
-	private static bool HasWindow => StardewValley.Game1.game1.Window != null;
+	private static bool HasWindow => StardewValley.Game1.game1.Window is not null;
 	private static readonly TimeSpan RunLoopAfter = TimeSpan.FromMilliseconds(100);
 
 	private static readonly Stopwatch SdlUpdate = Stopwatch.StartNew();

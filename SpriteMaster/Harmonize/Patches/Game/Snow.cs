@@ -64,7 +64,7 @@ static class Snow {
 			return true;
 		}
 
-		if (Game1.debrisWeather.Count == 0 && LastDebrisWeather != null && LastDebrisWeather.Count != 0) {
+		if (Game1.debrisWeather.Count == 0 && LastDebrisWeather is not null && LastDebrisWeather.Count != 0) {
 			Game1.debrisWeather = LastDebrisWeather;
 			LastDebrisWeather = null;
 		}
@@ -206,7 +206,7 @@ static class Snow {
 				Game1.windGust += Game1.random.Next(-10, -1) / 100f;
 				PreviousWind = WeatherDebris.globalWind;
 				WeatherDebris.globalWind += Game1.windGust;
-				if (Game1.soundBank != null) {
+				if (Game1.soundBank is not null) {
 					Game1.wind = Game1.soundBank.GetCue("wind");
 					Game1.wind.Play();
 				}

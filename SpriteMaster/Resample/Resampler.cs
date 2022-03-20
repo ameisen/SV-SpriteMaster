@@ -667,7 +667,7 @@ sealed class Resampler {
 					}
 					catch (Exception ex) {
 						ex.PrintError();
-						if (newTexture != null) {
+						if (newTexture is not null) {
 							newTexture.Dispose();
 						}
 						spriteInstance.Dispose();
@@ -688,7 +688,7 @@ sealed class Resampler {
 				}
 				catch (Exception ex) {
 					ex.PrintError();
-					if (newTexture != null) {
+					if (newTexture is not null) {
 						newTexture.Dispose();
 					}
 				}

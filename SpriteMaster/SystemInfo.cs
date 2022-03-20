@@ -29,7 +29,7 @@ static class SystemInfo {
 		try {
 			if (!(device?.IsDisposed).GetValueOrDefault(false)) {
 				var adapter = device?.Adapter;
-				if (adapter != null) {
+				if (adapter is not null) {
 					dumpBuilder.AppendLine($"\tGraphics Adapter: {adapter}");
 					dumpBuilder.AppendLine($"\tGraphics Adapter Description: {adapter.Description}");
 				}

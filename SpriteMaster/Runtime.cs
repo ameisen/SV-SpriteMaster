@@ -132,7 +132,7 @@ static class Runtime {
 		};
 
 		// Check for Mono
-		if (Type.GetType("Mono.Runtime") != null) {
+		if (Type.GetType("Mono.Runtime") is not null) {
 			Framework = FrameworkType.Mono;
 		}
 		else {

@@ -36,7 +36,7 @@ static partial class Debug {
 
 			long resampledSize = 0;
 			foreach (var sprite in list.Value) {
-				if (sprite.IsReady && sprite.Texture != null) {
+				if (sprite.IsReady && sprite.Texture is not null) {
 					resampledSize += sprite.MemorySize;
 				}
 			}
@@ -99,7 +99,7 @@ static partial class Debug {
 			});
 
 			foreach (var sprite in sortedSprites) {
-				if (sprite.IsReady && sprite.Texture != null) {
+				if (sprite.IsReady && sprite.Texture is not null) {
 					bool last = object.ReferenceEquals(list.Value.Last(), sprite);
 					var spriteDisposed = sprite.Texture.IsDisposed;
 					dumpBuilder.AppendLine($"│ {(last ? '└' : '├')} sprite: {sprite.OriginalSourceRectangle} :: {sprite.MemorySize.AsDataSize()} {DisposedString(spriteDisposed)}");

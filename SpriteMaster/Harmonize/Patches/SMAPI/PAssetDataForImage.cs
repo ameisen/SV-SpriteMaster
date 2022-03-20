@@ -52,13 +52,6 @@ static class PAssetDataForImage {
 		var sourceData = GC.AllocateUninitializedArray<XNA.Color>(pixelCount);
 		source.GetData(0, sourceArea, sourceData, 0, pixelCount);
 
-		static byte[] GetTextureData(Texture2D texture, in Bounds bounds, int count) {
-			count *= sizeof(Color8);
-			var dataArray = GC.AllocateUninitializedArray<byte>(count, pinned: Config.SMAPI.ApplyPatchPinMemory);
-			texture.GetData(0, bounds, dataArray, 0, count);
-			return dataArray;
-		}
-
 		// merge data in overlay mode
 		if (patchMode == PatchMode.Overlay) {
 			// get target data

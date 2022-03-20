@@ -20,7 +20,7 @@ static partial class Debug {
 
 	[DebuggerStepThrough, DebuggerHidden()]
 	private static void DebugWrite(LogLevel level, string str) {
-		if (LogFile != null) {
+		if (LogFile is not null) {
 			try {
 				var prefix = level switch {
 					LogLevel.Debug => 'T',

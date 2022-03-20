@@ -469,7 +469,7 @@ static class Harmonize {
 		HarmonyMethod? MakeHarmonyMethod(MethodInfo? methodInfo) => (methodInfo is null) ? null : new(methodInfo.MakeGenericMethod(genericType)) { priority = GetPriority(methodInfo, priority) };
 
 		var referenceMethod = pre ?? post ?? finalizer;
-		if (referenceMethod != null) {
+		if (referenceMethod is not null) {
 			var typeMethod = GetPatchMethod(
 				type,
 				name,

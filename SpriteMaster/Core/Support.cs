@@ -56,7 +56,7 @@ static partial class OnDrawImpl {
 		bool create = false
 	) {
 		if (
-			LastDrawSpriteInstance != null &&
+			LastDrawSpriteInstance is not null &&
 			LastDrawSpriteInstance.IsReady && !LastDrawSpriteInstance.IsDisposed && !LastDrawSpriteInstance.Suspended &&
 			LastDrawParams.Reference == reference &&
 			LastDrawParams.ExpectedScale == expectedScale &&

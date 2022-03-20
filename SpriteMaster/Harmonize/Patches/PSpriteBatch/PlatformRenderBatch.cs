@@ -17,7 +17,7 @@ static class PlatformRenderBatch {
 			return reference;
 		}
 
-		if (texture is InternalTexture2D managedTexture/* && managedTexture.Texture != null*/ || (texture?.NormalizedName().StartsWith(@"LooseSprites\Lighting\") ?? false)) {
+		if (texture is InternalTexture2D managedTexture/* && managedTexture.Texture is not null*/ || (texture?.NormalizedName().StartsWith(@"LooseSprites\Lighting\") ?? false)) {
 			if (reference.AddressU == TextureAddressMode.Wrap && reference.AddressV == TextureAddressMode.Wrap) {
 				return SamplerState.LinearWrap;
 			}
@@ -69,7 +69,7 @@ static class PlatformRenderBatch {
 
 				var newState = GetNewSamplerState(texture, originalState);
 
-				if (newState != originalState && ____device?.SamplerStates != null) {
+				if (newState != originalState && ____device?.SamplerStates is not null) {
 					originalSamplerState = originalState;
 					____device.SamplerStates[0] = newState;
 				}
@@ -123,10 +123,10 @@ static class PlatformRenderBatch {
 		try {
 			using var watchdogScoped = WatchDog.WatchDog.ScopedWorkingState;
 
-			if (__state.SamplerState is not null && ____device?.SamplerStates != null && __state.SamplerState != ____device.SamplerStates[0]) {
+			if (__state.SamplerState is not null && ____device?.SamplerStates is not null && __state.SamplerState != ____device.SamplerStates[0]) {
 				____device.SamplerStates[0] = __state.SamplerState;
 			}
-			if (__state.BlendState is not null && ____device?.BlendState != null && __state.BlendState != ____device.BlendState) {
+			if (__state.BlendState is not null && ____device?.BlendState is not null && __state.BlendState != ____device.BlendState) {
 				____device.BlendState = __state.BlendState;
 			}
 		}
