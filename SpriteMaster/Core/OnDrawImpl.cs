@@ -284,6 +284,19 @@ static partial class OnDrawImpl {
 		}
 
 		if (!spriteInstance.Padding.IsZero) {
+			var paddingX = spriteInstance.Padding.X;
+			var paddingY = spriteInstance.Padding.Y;
+
+			if (effects.HasFlag(SpriteEffects.FlipHorizontally)) {
+				paddingX = (paddingX.Y, paddingX.X);
+			}
+
+			if (effects.HasFlag(SpriteEffects.FlipVertically)) {
+				paddingY = (paddingY.Y, paddingY.X);
+			}
+
+			var padding = new PaddingQuad(paddingX, paddingY);
+
 			var textureSize = new Vector2F(sourceRectangle.Extent);
 			var innerSize = (Vector2F)spriteInstance.UnpaddedSize;
 
@@ -295,7 +308,7 @@ static partial class OnDrawImpl {
 
 			adjustedOrigin *= spriteInstance.Scale;
 			adjustedOrigin /= innerRatio;
-			adjustedOrigin += (Vector2F)spriteInstance.Padding.Offset;
+			adjustedOrigin += (Vector2F)padding.Offset;
 		}
 		else {
 			adjustedOrigin *= spriteInstance.Scale;
