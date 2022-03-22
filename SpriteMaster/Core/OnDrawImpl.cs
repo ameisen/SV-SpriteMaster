@@ -210,7 +210,6 @@ static partial class OnDrawImpl {
 
 	internal static uint EstimateScale(Vector2F scale, float scaleFactor) {
 		float factoredScale = scale.MaxOf * scaleFactor;
-		factoredScale += Config.Resample.ScaleBias;
 		factoredScale = factoredScale.Clamp(2.0f, Config.Resample.MaxScale);
 		uint factoredScaleN = (uint)factoredScale.NextInt();
 		return Resample.Scalers.IScaler.Current.ClampScale(factoredScaleN);
@@ -309,6 +308,8 @@ static partial class OnDrawImpl {
 
 		if (Debug.Mode.RegisterDrawForSelect(
 			texture: texture,
+			originalPosition: position,
+			originalSource: source,
 			position: adjustedPosition,
 			source: sourceRectangle,
 			color: color,

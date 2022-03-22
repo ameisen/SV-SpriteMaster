@@ -16,6 +16,8 @@ using TeximpNet.Compression;
 
 namespace SpriteMaster;
 
+using SMResample = Resample;
+
 static class Config {
 	[AttributeUsage(AttributeTargets.All, AllowMultiple = true)]
 	internal sealed class CommentAttribute : Attribute {
@@ -156,7 +158,7 @@ static class Config {
 		[Comment("Should owned textures be marked in the garbage collector's statistics?")]
 		internal static bool CollectAccountOwnedTextures = false;
 		[Comment("The amount of free memory required by SM after which it triggers recovery operations")]
-		internal static int RequiredFreeMemory = 64;
+		internal static int RequiredFreeMemory = 128;
 		[Comment("Hysterisis applied to RequiredFreeMemory")]
 		internal static double RequiredFreeMemoryHysterisis = 1.5;
 		[Comment("Should sprites containing season names be purged on a seasonal basis?")]
@@ -186,6 +188,10 @@ static class Config {
 		internal static bool DisableDepthBuffer = false;
 		[Comment("The default backbuffer format to request")]
 		internal static SurfaceFormat BackbufferFormat = SurfaceFormat.Color;
+		[Comment("The default HDR backbuffer format to request")]
+		internal static SurfaceFormat BackbufferHDRFormat = SurfaceFormat.Rgba64;
+		[Comment("Should the system HDR settings be honored?")]
+		internal static bool HonorHDRSettings = true;
 	}
 
 	internal static class Performance {
@@ -210,10 +216,8 @@ static class Config {
 		internal static bool AssumeGammaCorrected = true;
 		[Comment("Should the scale factor of water be adjusted to account for water sprites being unusual?")]
 		internal static bool TrimWater = true;
-		[Comment("Positive bias applied to sprite scaling calculations")]
-		internal static float ScaleBias = 0.1f;
 		[Comment("Maximum scale factor of sprites (dependant on chosen scaler)")]
-		internal static uint MaxScale = uint.MaxValue;
+		internal static uint MaxScale = SMResample.Scalers.IScaler.Current.MaxScale;
 		[Comment("Minimum edge length of a sprite to be considered for resampling")]
 		internal static int MinimumTextureDimensions = 1;
 		[Comment("Should wrapped addressing be enabled for sprite resampling (when analysis suggests it)?")]
@@ -461,9 +465,9 @@ static class Config {
 		[Comment("Should the suspended sprite cache be enabled?")]
 		internal static bool Enabled = true;
 		[Comment("What is the maximum size (in bytes) to store in suspended sprite cache?")]
-		internal static long MaxCacheSize = 0x2000_0000L;
-		//[Comment("What is the maximum number of sprites to store in suspended sprite cache?")]
-		//internal static long MaxCacheCount = 2_000L;
+		internal static long MaxCacheSize = 0x1000_0000L;
+		[Comment("What is the maximum number of sprites to store in suspended sprite cache?")]
+		internal static long MaxCacheCount = 2_000L;
 	}
 
 	internal static class SMAPI {

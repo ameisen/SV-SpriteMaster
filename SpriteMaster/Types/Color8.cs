@@ -8,7 +8,7 @@ namespace SpriteMaster.Types;
 
 [DebuggerDisplay("[{R.Value}, {G.Value}, {B.Value}, {A.Value}]")]
 [StructLayout(LayoutKind.Explicit, Pack = sizeof(uint), Size = sizeof(uint))]
-struct Color8 : IEquatable<Color8>, IEquatable<uint>, ILongHash {
+partial struct Color8 : IEquatable<Color8>, IEquatable<uint>, ILongHash {
 	internal static readonly Color8 Zero = new(0U);
 
 	[FieldOffset(0)]
@@ -24,6 +24,10 @@ struct Color8 : IEquatable<Color8>, IEquatable<uint>, ILongHash {
 	internal Fixed8 B = 0;
 	[FieldOffset(3)]
 	internal Fixed8 A = 0;
+
+	internal uint ARGB => new PackedUInt(
+		A.Value, R.Value, G.Value, B.Value
+	);
 
 	internal readonly Color8 NoAlpha => new(R, G, B, 0);
 

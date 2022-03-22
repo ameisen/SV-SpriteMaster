@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 namespace SpriteMaster.Extensions;
 
 static class StringExt {
+	#region General
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	[return: NotNullIfNotNull("str")]
 	internal static string? Intern(this string? str) => str is null ? null : string.Intern(str);
@@ -62,9 +63,25 @@ static class StringExt {
 		return validLines;
 	}
 
+	#endregion General
+
+	#region Equality
+
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool EqualsInvariantInsensitive(this string str1, string str2) => str1.Equals(str2, System.StringComparison.InvariantCultureIgnoreCase);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool EqualsOrdinal(this string str1, string str2) => str1.Equals(str2, System.StringComparison.Ordinal);
+
+	#endregion Equality
+
+	#region Color
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static string Colorized(this string str, DrawingColor color) => str.Pastel(color);
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static string Colorized(this string str, DrawingColor foregroundColor, DrawingColor backgroundColor) => str.Pastel(foregroundColor).PastelBg(backgroundColor);
+
+	#endregion Color
 }

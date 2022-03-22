@@ -146,7 +146,7 @@ static class PGraphicsDeviceManager {
 		@this.GraphicsProfile = GraphicsProfile.HiDef;
 		//@this.PreferMultiSampling = Config.DrawState.MSAASamples > 1;
 		@this.SynchronizeWithVerticalRetrace = true;
-		@this.PreferredBackBufferFormat = Config.DrawState.BackbufferFormat;
+		@this.PreferredBackBufferFormat = (Config.DrawState.HonorHDRSettings && Runtime.IsHDR) ? Config.DrawState.BackbufferHDRFormat : Config.DrawState.BackbufferFormat;
 		if (Config.DrawState.DisableDepthBuffer) {
 			@this.PreferredDepthStencilFormat = DepthFormat.None;
 		}

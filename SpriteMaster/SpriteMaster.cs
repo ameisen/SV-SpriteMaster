@@ -30,10 +30,7 @@ namespace SpriteMaster;
 public sealed class SpriteMaster : Mod {
 	internal static SpriteMaster Self { get; private set; } = default!;
 
-	private static readonly bool DotNet = (Runtime.Framework != Runtime.FrameworkType.Mono);
-	private readonly Thread? MemoryPressureThread = null;
-	private readonly Thread? GarbageCollectThread = null;
-	private readonly object? CollectLock = DotNet ? new() : null;
+	internal MemoryMonitor MemoryMonitor;
 	internal bool IsGameLoaded { get; private set; } = false;
 	internal static string? AssemblyPath { get; private set; }
 
@@ -67,53 +64,6 @@ public sealed class SpriteMaster : Mod {
 		}
 	}
 
-	private void MemoryPressureLoop() {
-		for (; ; ) {
-			if (DrawState.TriggerGC && DrawState.TriggerGC.Wait()) {
-				continue;
-			}
-
-			lock (CollectLock!) {
-				try {
-					using var _ = new MemoryFailPoint(Config.Garbage.RequiredFreeMemory);
-				}
-				catch (InsufficientMemoryException) {
-					Debug.Warning($"Less than {(Config.Garbage.RequiredFreeMemory * 1024 * 1024).AsDataSize(decimals: 0)} available for block allocation, forcing full garbage collection");
-					ResidentCache.Purge();
-					SuspendedSpriteCache.Purge();
-					DrawState.TriggerGC.Set(true);
-					Thread.Sleep(10000);
-				}
-			}
-			Thread.Sleep(512);
-		}
-	}
-
-	private void GarbageCheckLoop() {
-		try {
-			for (; ; ) {
-				GC.RegisterForFullGCNotification(10, 10);
-				GC.WaitForFullGCApproach();
-				if (Garbage.ManualCollection) {
-					Thread.Sleep(128);
-					continue;
-				}
-				lock (CollectLock!) {
-					if (DrawState.TriggerGC && DrawState.TriggerGC.Wait()) {
-						continue;
-					}
-
-					ResidentCache.Purge();
-					DrawState.TriggerGC.Set(true);
-					// TODO : Do other cleanup attempts here.
-				}
-			}
-		}
-		catch {
-
-		}
-	}
-
 	private const string ConfigName = "config.toml";
 
 	private static volatile string CurrentSeason = "";
@@ -124,19 +74,7 @@ public sealed class SpriteMaster : Mod {
 
 		Garbage.EnterNonInteractive();
 
-		if (DotNet) {
-			MemoryPressureThread = new Thread(MemoryPressureLoop) {
-				Name = "Memory Pressure Thread",
-				Priority = ThreadPriority.BelowNormal,
-				IsBackground = true
-			};
-
-			GarbageCollectThread = new Thread(GarbageCheckLoop) {
-				Name = "Garbage Collection Thread",
-				Priority = ThreadPriority.BelowNormal,
-				IsBackground = true
-			};
-		}
+		MemoryMonitor = new MemoryMonitor();
 	}
 
 	private bool IsVersionOutdated(string configVersion) {
@@ -175,19 +113,11 @@ public sealed class SpriteMaster : Mod {
 	private static string GetVersionStringHeader() => $"SpriteMaster {FullVersion} build {Config.AssemblyVersionObj.Revision} ({Config.BuildConfiguration}, {ChangeList}, {BuildComputerName})";
 
 	private static void ConsoleTriggerGC() {
-		lock (Self.CollectLock!) {
-			Garbage.Collect(compact: true, blocking: true, background: false);
-			DrawState.TriggerGC.Set(true);
-		}
+		Self.MemoryMonitor.TriggerGC();
 	}
 
 	private static void ConsoleTriggerPurge() {
-		lock (Self.CollectLock!) {
-			Garbage.Collect(compact: true, blocking: true, background: false);
-			ResidentCache.Purge();
-			Garbage.Collect(compact: true, blocking: true, background: false);
-			DrawState.TriggerGC.Set(true);
-		}
+		Self.MemoryMonitor.TriggerPurge();
 	}
 
 	private static readonly Dictionary<string, (Action Action, string Description)> ConsoleCommandMap = new() {
@@ -346,8 +276,7 @@ public sealed class SpriteMaster : Mod {
 		};
 		help.Events.Display.MenuChanged += OnMenuChanged;
 
-		MemoryPressureThread?.Start();
-		GarbageCollectThread?.Start();
+		MemoryMonitor.Start();
 
 		static void SetSystemTarget(XNA.Graphics.RenderTarget2D? target) {
 			if (target is null) {

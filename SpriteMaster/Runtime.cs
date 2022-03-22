@@ -254,4 +254,10 @@ static class Runtime {
 		internal static bool AsyncStores => Renderer != RendererType.OpenGL;
 		internal static bool AsynchronousRenderingAPI => Renderer == RendererType.D3D11;
 	}
+
+	internal static bool IsHDR => GetIsHDR();
+
+	private static bool GetIsHDR() {
+		return false;
+	}
 }

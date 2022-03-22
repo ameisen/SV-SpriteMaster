@@ -42,6 +42,8 @@ static partial class Debug {
 
 		private readonly struct DrawInfo {
 			internal readonly XNA.Graphics.Texture2D Texture;
+			internal readonly Vector2F? OriginalPosition = null;
+			internal readonly Bounds? OriginalSource = null;
 			internal readonly Bounds Destination;
 			internal readonly Bounds Source;
 			internal readonly XNA.Color Color;
@@ -58,7 +60,9 @@ static partial class Debug {
 				float rotation,
 				Vector2F origin,
 				XNA.Graphics.SpriteEffects effects,
-				float layerDepth
+				float layerDepth,
+				in Vector2F? originalPosition = null,
+				in Bounds? originalSource = null
 			) {
 				Texture = texture;
 				Destination = destination;
@@ -68,6 +72,8 @@ static partial class Debug {
 				Origin = origin;
 				Effects = effects;
 				LayerDepth = layerDepth;
+				OriginalPosition = originalPosition;
+				OriginalSource = originalSource;
 			}
 		}
 
@@ -81,7 +87,9 @@ static partial class Debug {
 			float rotation,
 			Vector2F origin,
 			XNA.Graphics.SpriteEffects effects,
-			float layerDepth
+			float layerDepth,
+			in Vector2F? originalPosition = null,
+			in Bounds? originalSource = null
 		) {
 			if (!IsModeEnabled(DebugModeFlags.Select)) {
 				return false;
@@ -103,6 +111,8 @@ static partial class Debug {
 			if (realDestination.Contains(currentCursor)) {
 				SelectedDraws.Add(new(
 					texture: texture,
+					originalPosition: originalPosition,
+					originalSource: originalSource,
 					destination: destination,
 					source: source,
 					color: color,
@@ -127,7 +137,9 @@ static partial class Debug {
 			Vector2F origin,
 			Vector2F scale,
 			XNA.Graphics.SpriteEffects effects,
-			float layerDepth
+			float layerDepth,
+			in Vector2F? originalPosition = null,
+			in Bounds? originalSource = null
 		) {
 			if (!IsModeEnabled(DebugModeFlags.Select)) {
 				return false;
@@ -142,6 +154,8 @@ static partial class Debug {
 			);
 			return RegisterDrawForSelect(
 				texture: texture,
+				originalPosition: originalPosition,
+				originalSource: originalSource,
 				destination: destination,
 				source: source,
 				color: color,
@@ -171,6 +185,12 @@ static partial class Debug {
 					sb.AppendLine(draw.Texture.NormalizedName());
 					sb.AppendLine($"  dst: {draw.Destination}");
 					sb.AppendLine($"  src: {draw.Source}");
+					if (draw.OriginalPosition.HasValue) {
+						sb.AppendLine($" opos: {draw.OriginalPosition.Value}");
+					}
+					if (draw.OriginalSource.HasValue) {
+						sb.AppendLine($" osrc: {draw.OriginalSource.Value}");
+					}
 					sb.AppendLine($"  org: {draw.Origin}");
 					lines.Add(sb);
 				}
