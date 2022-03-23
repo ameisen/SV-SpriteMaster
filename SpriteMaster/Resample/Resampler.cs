@@ -169,6 +169,16 @@ sealed class Resampler {
 				stride: input.ReferenceSize.Width
 			);
 		}
+
+		if (blockSize == Math.Max(inputBounds.Width, inputBounds.Height)) {
+			if (!Config.Resample.Recolor.Enabled) {
+				result = ResampleStatus.DisabledSolid;
+				size = default;
+				format = default;
+				return Span<byte>.Empty;
+			}
+		}
+
 		scale *= (uint)blockSize;
 		scale = Math.Min(scale, Resample.Scalers.IScaler.Current.MaxScale);
 
