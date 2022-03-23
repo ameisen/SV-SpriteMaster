@@ -13,6 +13,8 @@ struct PaddingQuad {
 
 	internal readonly Vector2I Offset => (X.X, Y.X);
 
+	internal readonly Vector2I InverseOffset => (X.Y, Y.Y);
+
 	internal readonly Vector2I Sum => (X.Sum, Y.Sum);
 
 	internal readonly bool IsZero => X.IsZero && Y.IsZero;
