@@ -377,6 +377,13 @@ static class Config {
 			[Comment("Should solid edges be padded?")]
 			internal static bool PadSolidEdges = false;
 
+			[Comment("What spritesheets should not be padded?")]
+			internal static List<string> BlackList = new() {
+				@"LooseSprites\Cursors::256,308:50,34", // UI borders
+			};
+			[ConfigIgnore]
+			internal static TextureRef[] BlackListS = Array.Empty<TextureRef>();
+
 			[Comment("What spritesheets should have a stricter edge-detection algorithm applied?")]
 			internal static List<string> StrictList = new() {
 				@"LooseSprites\Cursors"

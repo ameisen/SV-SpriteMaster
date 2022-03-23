@@ -284,8 +284,16 @@ sealed class Resampler {
 		Span<Color16> bitmapDataWide = spriteRawData;
 
 		if (Config.Resample.Scaler != Scaler.None) {
+			bool handlePadding = !directImage;
+
+			if (handlePadding) {
+				if (Passes.Padding.IsBlacklisted(inputBounds, input.Reference)) {
+					handlePadding = false;
+				}
+			}
+
 			// Apply padding to the sprite if necessary
-			if (!directImage) {
+			if (handlePadding) {
 				spriteRawData = Passes.Padding.Apply(
 					data: spriteRawData,
 					spriteSize: spriteRawExtent,

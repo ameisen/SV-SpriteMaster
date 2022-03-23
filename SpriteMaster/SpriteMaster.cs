@@ -189,31 +189,37 @@ public sealed class SpriteMaster : Mod {
 			}
 		}
 
-		// handle sliced textures. At some point I will add struct support.
-		Config.Resample.SlicedTexturesS = new Config.TextureRef[Config.Resample.SlicedTextures.Count];
-		for (int i = 0; i < Config.Resample.SlicedTexturesS.Length; ++i) {
-			var slicedTexture = Config.Resample.SlicedTextures[i];
-			//@"LooseSprites\Cursors::0,640:2000,256"
-			var elements = slicedTexture.Split("::", 2);
-			var texture = elements[0]!;
-			var bounds = Bounds.Empty;
-			if (elements.Length > 1) {
-				try {
-					var boundElements = elements[1].Split(':');
-					var offsetElements = (boundElements.ElementAtOrDefaultF(0) ?? "0,0").Split(',', 2);
-					var extentElements = (boundElements.ElementAtOrDefaultF(1) ?? "0,0").Split(',', 2);
+		static Config.TextureRef[] ProcessTextureRefs(List<string> textureRefStrings) {
+			// handle sliced textures. At some point I will add struct support.
+			var result = new Config.TextureRef[textureRefStrings.Count];
+			for (int i = 0; i < result.Length; ++i) {
+				var slicedTexture = textureRefStrings[i];
+				//@"LooseSprites\Cursors::0,640:2000,256"
+				var elements = slicedTexture.Split("::", 2);
+				var texture = elements[0]!;
+				var bounds = Bounds.Empty;
+				if (elements.Length > 1) {
+					try {
+						var boundElements = elements[1].Split(':');
+						var offsetElements = (boundElements.ElementAtOrDefaultF(0) ?? "0,0").Split(',', 2);
+						var extentElements = (boundElements.ElementAtOrDefaultF(1) ?? "0,0").Split(',', 2);
 
-					var offset = new Vector2I(int.Parse(offsetElements[0]), int.Parse(offsetElements[1]));
-					var extent = new Vector2I(int.Parse(extentElements[0]), int.Parse(extentElements[1]));
+						var offset = new Vector2I(int.Parse(offsetElements[0]), int.Parse(offsetElements[1]));
+						var extent = new Vector2I(int.Parse(extentElements[0]), int.Parse(extentElements[1]));
 
-					bounds = new Bounds(offset, extent);
+						bounds = new Bounds(offset, extent);
+					}
+					catch {
+						Debug.Error($"Invalid SlicedTexture Bounds: '{elements[1]}'");
+					}
 				}
-				catch {
-					Debug.Error($"Invalid SlicedTexture Bounds: '{elements[1]}'");
-				}
+				result[i] = new(string.Intern(texture), bounds);
 			}
-			Config.Resample.SlicedTexturesS[i] = new(string.Intern(texture), bounds);
+			return result;
 		}
+
+		Config.Resample.SlicedTexturesS = ProcessTextureRefs(Config.Resample.SlicedTextures);
+		Config.Resample.Padding.BlackListS = ProcessTextureRefs(Config.Resample.Padding.BlackList);
 
 		// Compile blacklist patterns
 		Config.Resample.BlacklistPatterns = new Regex[Config.Resample.Blacklist.Count];
