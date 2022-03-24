@@ -419,7 +419,6 @@ sealed class Resampler {
 		var bitmapData = Color8.Convert(bitmapDataWide);
 		var resultData = bitmapData.AsBytes();
 
-		// We don't want to use block compression if asynchronous loads are enabled but this is not an asynchronous load... unless that is explicitly enabled.
 		if (Config.Resample.BlockCompression.Enabled && scaledSizeClamped.MinOf >= 4) {
 			// TODO : We can technically allocate the block padding before the scaling phase, and pass it a stride
 			// so it will just ignore the padding areas. That would be more efficient than this.
@@ -473,6 +472,7 @@ sealed class Resampler {
 				var spanSrc = bitmapData;
 
 				int y;
+				// Copy data
 				for (y = 0; y < scaledSizeClamped.Y; ++y) {
 					var newBufferOffset = y * blockPaddedSize.X;
 					var bitmapOffset = y * scaledSizeClamped.X;
@@ -480,13 +480,15 @@ sealed class Resampler {
 					for (x = 0; x < scaledSizeClamped.X; ++x) {
 						spanDst[newBufferOffset + x] = spanSrc[bitmapOffset + x];
 					}
+					// Extent X across
 					int lastX = x - 1;
 					for (; x < blockPaddedSize.X; ++x) {
 						spanDst[newBufferOffset + x] = spanSrc[bitmapOffset + lastX];
 					}
 				}
+				// Extend existing data
 				var lastY = y - 1;
-				var sourceOffset = lastY * scaledSizeClamped.X;
+				var sourceOffset = lastY * blockPaddedSize.X;
 				for (; y < blockPaddedSize.Y; ++y) {
 					int newBufferOffset = y * blockPaddedSize.X;
 					for (int x = 0; x < blockPaddedSize.X; ++x) {
@@ -497,6 +499,19 @@ sealed class Resampler {
 				bitmapData = spanDst;
 				blockPadding += blockPaddedSize - scaledSizeClamped;
 				scaledSizeClamped = blockPaddedSize;
+
+				if (Config.Debug.Sprite.DumpResample) {
+					static string SimplifyBools(in Vector2B vec) {
+						return $"{vec.X.ToInt()}{vec.Y.ToInt()}";
+					}
+
+					Textures.DumpTexture(
+						source: bitmapData,
+						sourceSize: blockPaddedSize,
+						swap: (2, 1, 0, 4),
+						path: FileCache.GetDumpPath($"{input.Reference.NormalizedName().Replace('\\', '.')}.{hashString}.blockpadded.resample-wrap[{SimplifyBools(analysis.Wrapped)}]-repeat[{SimplifyBools(analysis.RepeatX)},{SimplifyBools(analysis.RepeatY)}]-pad[{padding.X},{padding.Y}].png")
+					);
+				}
 			}
 
 			resultData = TextureEncode.Encode(
