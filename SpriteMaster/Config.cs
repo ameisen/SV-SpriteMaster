@@ -228,6 +228,8 @@ static class Config {
 		internal static bool UseColorEnhancement = true;
 		[Comment("Should transparent pixels be premultiplied to prevent a 'halo' effect?")]
 		internal static bool PremultiplyAlpha = true;
+		[Comment("Low pass value that should be filtered when reversing premultiplied alpha.")]
+		internal static int PremultiplicationLowPass = 1024;
 		[Comment("Use redmean algorithm for perceptual color comparisons?")]
 		internal static bool UseRedmean = false;
 		[Comment("What textures are drawn in 'slices' and thus should be special-cased to be resampled as one texture?")]
