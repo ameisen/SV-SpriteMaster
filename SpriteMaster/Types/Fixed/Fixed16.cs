@@ -57,9 +57,9 @@ struct Fixed16 : IEquatable<Fixed16>, IEquatable<ushort>, ILongHash {
 		}
 		var result = InternalDivide(this, denominator);
 		// Check if it oversaturated the value
-		if ((result & 0xFFFF_FFFF_0000_0000) != 0) {
-			return (Value <= (32U << 8)) ? Fixed16.Zero : Fixed16.Max;
-		}
+		//if ((result & 0xFFFF_FFFF_0000_0000) != 0) {
+		//	return (Value <= (32U << 8)) ? Fixed16.Zero : Fixed16.Zero;
+		//}
 		return (ushort)(result >> 16);
 	}
 
