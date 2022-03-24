@@ -40,7 +40,105 @@ static partial class Debug {
 			}
 		}
 
+		[CommandAttribute("debug", "Debug Commands")]
+		public static void OnConsoleCommand(string command, Queue<string> arguments) {
+			if (arguments.Count == 0) {
+				Debug.Error("No arguments passed for 'debug' command");
+				return;
+			}
+
+			var subCommand = arguments.Dequeue();
+			switch (subCommand.ToLowerInvariant()) {
+				case "mode":
+					ProcessModeCommand(arguments);
+					break;
+				default:
+					Debug.Error($"Unknown 'debug' command: '{subCommand}'");
+					break;
+			}
+		}
+
+		private static void ProcessModeCommand(Queue<string> arguments) {
+			if (arguments.Count == 0) {
+				if (CurrentMode == DebugModeFlags.None) {
+					Debug.Info("No Debug Modes are set");
+					return;
+				}
+
+				var modes = new List<string>();
+				foreach (var flag in Enum.GetNames<DebugModeFlags>()) {
+					var value = Enum.Parse<DebugModeFlags>(flag);
+
+					if (value != DebugModeFlags.None && CurrentMode.HasFlag(value)) {
+						modes.Add(flag);
+					}
+				}
+
+				Debug.Info($"Current Debug Modes: {string.Join(", ", modes)}");
+				return;
+			}
+
+			var mode = arguments.Dequeue();
+
+			bool enable = true;
+			if (mode.StartsWith('~')) {
+				enable = false;
+				mode = mode.Substring(1);
+			}
+
+			var invariantMode = mode.ToLowerInvariant();
+			
+			switch (invariantMode) {
+				case "off":
+				case "0":
+				case "disabled":
+				case "disable":
+				case "none":
+					if (enable) {
+						CurrentMode = DebugModeFlags.None;
+						Debug.Info($"Debug Mode set to '{DebugModeFlags.None}'");
+					}
+					else {
+						foreach (var value in Enum.GetValues<DebugModeFlags>()) {
+							CurrentMode |= value;
+						}
+						Debug.Info($"All Debug Mode flags enabled");
+					}
+					break;
+				default:
+					foreach (var flag in Enum.GetNames<DebugModeFlags>()) {
+						if (invariantMode == flag.ToLowerInvariant()) {
+							var value = Enum.Parse<DebugModeFlags>(flag);
+
+							if (enable) {
+								if (CurrentMode.HasFlag(value)) {
+									Debug.Warning($"Debug Mode flag is already set: '{flag}'");
+								}
+								else {
+									CurrentMode |= value;
+									Debug.Info($"Debug Mode flag set: '{flag}'");
+								}
+							}
+							else {
+								if (!CurrentMode.HasFlag(value)) {
+									Debug.Warning($"Debug Mode flag is not set: '{flag}'");
+								}
+								else {
+									CurrentMode &= ~value;
+									Debug.Info($"Debug Mode flag unset: '{flag}'");
+								}
+							}
+
+							return;
+						}
+					}
+					Debug.Error($"Unknown debug mode: '{mode}'");
+					break;
+			}
+		}
+
 		private readonly struct DrawInfo {
+			internal readonly ManagedSpriteInstance? Instance;
 			internal readonly XNA.Graphics.Texture2D Texture;
 			internal readonly Vector2F? OriginalPosition = null;
 			internal readonly Bounds? OriginalSource = null;
@@ -53,6 +151,7 @@ static partial class Debug {
 			internal readonly float LayerDepth;
 
 			internal DrawInfo(
+				ManagedSpriteInstance? instance,
 				XNA.Graphics.Texture2D texture,
 				in Bounds destination,
 				in Bounds source,
@@ -64,6 +163,7 @@ static partial class Debug {
 				in Vector2F? originalPosition = null,
 				in Bounds? originalSource = null
 			) {
+				Instance = instance;
 				Texture = texture;
 				Destination = destination;
 				Source = source;
@@ -80,6 +180,7 @@ static partial class Debug {
 		private static readonly List<DrawInfo> SelectedDraws = new();
 
 		internal static bool RegisterDrawForSelect(
+			ManagedSpriteInstance? instance,
 			XNA.Graphics.Texture2D texture,
 			in Bounds destination,
 			in Bounds source,
@@ -110,6 +211,7 @@ static partial class Debug {
 
 			if (realDestination.Contains(currentCursor)) {
 				SelectedDraws.Add(new(
+					instance: instance,
 					texture: texture,
 					originalPosition: originalPosition,
 					originalSource: originalSource,
@@ -129,6 +231,7 @@ static partial class Debug {
 		}
 
 		internal static bool RegisterDrawForSelect(
+			ManagedSpriteInstance? instance,
 			XNA.Graphics.Texture2D texture,
 			Vector2F position,
 			in Bounds source,
@@ -153,6 +256,7 @@ static partial class Debug {
 				roundedExtent
 			);
 			return RegisterDrawForSelect(
+				instance: instance,
 				texture: texture,
 				originalPosition: originalPosition,
 				originalSource: originalSource,
@@ -167,6 +271,9 @@ static partial class Debug {
 			// new Bounds(((Vector2F)adjustedPosition).NearestInt(), (sourceRectangle.ExtentF * adjustedScale).NearestInt())
 		}
 
+		private static readonly Vector2F DimensionalScalingFactor = (1.0f, 1.0f);
+		private static readonly Vector2F TextOffset = (15.0f, 15.0f);
+
 		internal static bool Draw() {
 			if (!IsModeEnabled(DebugModeFlags.Select)) {
 				return false;
@@ -176,80 +283,93 @@ static partial class Debug {
 				return false;
 			}
 
-			Game1.spriteBatch.Begin();
+			List<StringBuilder> lines = new(SelectedDraws.Count);
+			foreach (var draw in SelectedDraws) {
+				var sb = new StringBuilder();
+				sb.AppendLine(draw.Texture.NormalizedName());
+				if (draw.Instance is not null) {
+					sb.AppendLine(draw.Instance.Hash.ToString16());
+				}
+				sb.AppendLine($"  dst: {draw.Destination}");
+				sb.AppendLine($"  src: {draw.Source}");
 
-			try {
-				List<StringBuilder> lines = new(SelectedDraws.Count);
-				foreach (var draw in SelectedDraws) {
-					var sb = new StringBuilder();
-					sb.AppendLine(draw.Texture.NormalizedName());
-					sb.AppendLine($"  dst: {draw.Destination}");
-					sb.AppendLine($"  src: {draw.Source}");
-					if (draw.OriginalPosition.HasValue) {
-						sb.AppendLine($" opos: {draw.OriginalPosition.Value}");
-					}
-					if (draw.OriginalSource.HasValue) {
-						sb.AppendLine($" osrc: {draw.OriginalSource.Value}");
-					}
-					sb.AppendLine($"  org: {draw.Origin}");
-					lines.Add(sb);
+				if (draw.OriginalPosition.HasValue) {
+					sb.AppendLine($" opos: {draw.OriginalPosition.Value}");
 				}
 
-				if (lines.Count != 0) {
-					var font = Game1.smallFont;
+				var originalSource = draw.OriginalSource ?? draw.Instance?.OriginalSourceRectangle;
 
-					int minWidth = Game1.viewport.Width / 5;
-					int minHeight = Game1.viewport.Height / 5;
-					int totalWidth = 0;
-					int totalHeight = 0;
-					foreach (var line in lines) {
-						var newlines = line.ToString().Count('\n');
-						var spacing = 0;// font.LineSpacing * (newlines - 1);
-						var lineMeasure = font.MeasureString(line);
-						totalWidth = Math.Max(totalWidth, lineMeasure.X.NextInt());
-						totalHeight += lineMeasure.Y.NextInt() + spacing;
-					}
+				if (originalSource.HasValue) {
+					sb.AppendLine($" osrc: {originalSource.Value}");
+				}
 
-					if (totalWidth < minWidth) {
-						totalWidth = minWidth;
-					}
+				sb.AppendLine($"  org: {draw.Origin}");
+				lines.Add(sb);
+			}
 
-					if (totalHeight < minHeight) {
-						totalHeight = minHeight;
-					}
+			if (lines.Count == 0) {
+				return false;
+			}
 
-					Game1.drawDialogueBox(
-							x: 10,
-							y: 0,
-							width: totalWidth,
-							height: (totalHeight * 1.30).NearestInt(),
-							speaker: false,
-							drawOnlyBox: true,
-							message: null,
-							objectDialogueWithPortrait: false,
-							ignoreTitleSafe: true,
-							r: -1,
-							g: -1,
-							b: -1
+			Game1.spriteBatch.Begin();
+			try {
+				var font = Game1.smallFont;
+
+				Vector2I minDimensions = (Vector2I)Game1.viewport.Size / 5;
+				Vector2F actualDimensions = Vector2F.Zero;
+
+				var lineOffsets = new float[lines.Count];
+				int currentLineOffset = 0;
+
+				foreach (var line in lines) {
+					var lineMeasure = font.MeasureString(line);
+					actualDimensions.Width = Math.Max(actualDimensions.Width, lineMeasure.X);
+					lineOffsets[currentLineOffset++] = actualDimensions.Height;
+					actualDimensions.Height += lineMeasure.Y;
+				}
+
+				actualDimensions = actualDimensions.Max(minDimensions);
+
+				actualDimensions *= DimensionalScalingFactor;
+				var dimensions = actualDimensions.NearestInt();
+
+				Game1.DrawBox(
+					x: 10,
+					y: 10,
+					width: dimensions.Width,
+					height: dimensions.Height,
+					color: null
+				);
+
+				/*
+				Game1.drawDialogueBox(
+						x: 10,
+						y: 0,
+						width: dimensions.Width,
+						height: dimensions.Height,
+						speaker: false,
+						drawOnlyBox: true,
+						message: null,
+						objectDialogueWithPortrait: false,
+						ignoreTitleSafe: true,
+						r: -1,
+						g: -1,
+						b: -1
+				);
+				*/
+
+				currentLineOffset = 0;
+				foreach (var line in lines) {
+					var lineOffset = lineOffsets[currentLineOffset++];
+
+					Utility.drawTextWithShadow(
+						b: Game1.spriteBatch,
+						text: line,
+						font: font,
+						position: TextOffset + (0.0f, lineOffset),
+						color: Game1.textColor,
+						scale: 1
 					);
-
-					int heightOffset = 0;
-					foreach (var line in lines) {
-						var newlines = line.ToString().Count('\n');
-						var spacing = 0;// font.LineSpacing * (newlines - 1);
-						var lineHeight = font.MeasureString(line).Y.NextInt() + spacing;
-
-						Utility.drawTextWithShadow(
-							b: Game1.spriteBatch,
-							text: line,
-							font: font,
-							position: new Vector2I(46, heightOffset + 100),
-							color: Game1.textColor,
-							scale: 1
-						);
-
-						heightOffset += lineHeight;
-					}
 				}
 			}
 			finally {

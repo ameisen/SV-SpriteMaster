@@ -189,6 +189,7 @@ static partial class OnDrawImpl {
 		}
 
 		if (Debug.Mode.RegisterDrawForSelect(
+			instance: spriteInstance,
 			texture: texture,
 			destination: destination,
 			source: sourceRectangle,
@@ -320,6 +321,7 @@ static partial class OnDrawImpl {
 		}
 
 		if (Debug.Mode.RegisterDrawForSelect(
+			instance: spriteInstance,
 			texture: texture,
 			originalPosition: position,
 			originalSource: source,

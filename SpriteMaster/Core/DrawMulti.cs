@@ -148,6 +148,7 @@ static partial class OnDrawImpl {
 			sourceRectangle.Invert.Y = source.Height < 0;
 
 			if (Debug.Mode.RegisterDrawForSelect(
+				instance: spriteInstance,
 				texture: texture,
 				position: adjustedPosition,
 				source: sourceRectangle,

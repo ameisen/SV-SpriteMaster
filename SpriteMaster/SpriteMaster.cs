@@ -120,12 +120,12 @@ public sealed class SpriteMaster : Mod {
 		Self.MemoryMonitor.TriggerPurge();
 	}
 
-	private static readonly Dictionary<string, (Action Action, string Description)> ConsoleCommandMap = new() {
-		{ "help", (() => ConsoleHelp(null), "Prints this command guide") }, 
-		{ "all-stats", (DumpAllStats, "Dump Statistics") },
-		{ "memory", (Debug.DumpMemory, "Dump Memory") },
-		{ "gc", (ConsoleTriggerGC, "Trigger full GC") },
-		{ "purge", (ConsoleTriggerPurge, "Trigger Purge") }
+	private static readonly Dictionary<string, (Action<string, Queue<string>> Action, string Description)> ConsoleCommandMap = new() {
+		{ "help", ((_, _) => ConsoleHelp(null), "Prints this command guide") }, 
+		{ "all-stats", ((_, _) => DumpAllStats(), "Dump Statistics") },
+		{ "memory", ((_, _) => Debug.DumpMemory(), "Dump Memory") },
+		{ "gc", ((_, _) => ConsoleTriggerGC(), "Trigger full GC") },
+		{ "purge", ((_, _) => ConsoleTriggerPurge(), "Trigger Purge") }
 	};
 
 	private static void ConsoleHelp(string? unknownCommand = null) {
@@ -157,11 +157,41 @@ public sealed class SpriteMaster : Mod {
 
 		var subCommand = argumentQueue.Dequeue().ToLowerInvariant();
 		if (ConsoleCommandMap.TryGetValue(subCommand, out var commandPair)) {
-			commandPair.Action();
+			commandPair.Action(subCommand, argumentQueue);
 		}
 		else {
 			ConsoleHelp(subCommand);
 			return;
+		}
+	}
+
+	private void InitConsoleCommands() {
+		foreach (var type in typeof(SpriteMaster).Assembly.GetTypes()) {
+			foreach (var method in type.GetMethods(BindingFlags.Static | BindingFlags.Public)) {
+				var command = method.GetCustomAttribute<CommandAttribute>();
+				if (command is not null) {
+					var parameters = method.GetParameters();
+					if (parameters.Length != 2) {
+						Debug.Error($"Console command '{command.Name}' for method '{method.GetFullName()}' does not have the expected number of parameters");
+						continue;
+					}
+					if (parameters[0].ParameterType != typeof(string)) {
+						Debug.Error($"Console command '{command.Name}' for method '{method.GetFullName()}' : parameter 0 type {parameters[0].ParameterType} is not {typeof(string)}");
+						continue;
+					}
+					if (parameters[1].ParameterType != typeof(Queue<string>)) {
+						Debug.Error($"Console command '{command.Name}' for method '{method.GetFullName()}' : parameter 1 type {parameters[1].ParameterType} is not {typeof(Queue<string>)}");
+						continue;
+					}
+
+					if (ConsoleCommandMap.ContainsKey(command.Name)) {
+						Debug.Error($"Console command is already registered: '{command.Name}'");
+						continue;
+					}
+
+					ConsoleCommandMap.Add(command.Name, (method.CreateDelegate<Action<string, Queue<string>>>(), command.Description));
+				}
+			}
 		}
 	}
 
@@ -251,6 +281,8 @@ public sealed class SpriteMaster : Mod {
 			help.ConsoleCommands.Add("sm", "SpriteMaster Commands", ConsoleCommand);
 		}
 		catch { }
+
+		InitConsoleCommands();
 
 		help.Events.GameLoop.DayStarted += OnDayStarted;
 		// GC after major events
