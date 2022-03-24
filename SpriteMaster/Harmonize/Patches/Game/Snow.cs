@@ -35,7 +35,7 @@ static class Snow {
 
 	private static bool IsPuffersnow = false;
 
-	private static bool ShouldDrawSnow => Game1.IsSnowingHere() && Game1.currentLocation.isOutdoors && Game1.currentLocation is not Desert;
+	private static bool ShouldDrawSnow => Game1.IsSnowingHere() && Game1.currentLocation.isOutdoors.Value && Game1.currentLocation is not Desert;
 
 	private static readonly Lazy<Texture2D> FishTexture = new(() => SpriteMaster.Self.Helper.Content.Load<Texture2D>(@"LooseSprites\AquariumFish", StardewModdingAPI.ContentSource.GameContent));
 

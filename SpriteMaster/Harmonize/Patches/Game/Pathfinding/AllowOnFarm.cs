@@ -83,7 +83,7 @@ static partial class Pathfinding {
 		// If the character is family, a pet, or a spouse, run the logic.
 		if (isFamily || character == player.getSpouse() || character == player.getPet()) {
 			// If the character is still sleeping, warp it because otherwise it just glides on the floor creepily.
-			if (character.isSleeping || character.layingDown) {
+			if (character.isSleeping.Value || character.layingDown) {
 				return true;
 			}
 
