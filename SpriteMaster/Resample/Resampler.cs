@@ -226,7 +226,7 @@ sealed class Resampler {
 			}
 		}
 
-			if (isGradient) {
+		if (isGradient) {
 			if (Config.Debug.Sprite.DumpReference) {
 				Textures.DumpTexture(
 					source: input.ReferenceData,
