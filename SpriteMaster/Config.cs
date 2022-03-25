@@ -329,8 +329,6 @@ static class Config {
 			SurfaceFormat.Color,
 			SurfaceFormat.Dxt5,
 			SurfaceFormat.Dxt5SRgb,
-			SurfaceFormat.Dxt3,
-			SurfaceFormat.Dxt3SRgb,
 			SurfaceFormat.Dxt1,
 			SurfaceFormat.Dxt1SRgb,
 			SurfaceFormat.Dxt1a,
@@ -368,6 +366,12 @@ static class Config {
 		};
 		[ConfigIgnore]
 		internal static Regex[] BlacklistPatterns = new Regex[0];
+		[Comment("What spritesheets will absolutely not be treated as gradients?")]
+		internal static List<string> GradientBlacklist = new() {
+			@"TerrainFeatures\hoeDirt"
+		};
+		[ConfigIgnore]
+		internal static Regex[] GradientBlacklistPatterns = new Regex[0];
 		internal static class Padding {
 			[Comment("Should padding be applied to sprites to allow resampling to extend beyond the natural sprite boundaries?")]
 			internal static bool Enabled = DevEnabled && true;

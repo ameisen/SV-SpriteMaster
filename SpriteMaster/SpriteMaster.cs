@@ -252,17 +252,24 @@ public sealed class SpriteMaster : Mod {
 		Config.Resample.Padding.BlackListS = ProcessTextureRefs(Config.Resample.Padding.BlackList);
 
 		// Compile blacklist patterns
-		Config.Resample.BlacklistPatterns = new Regex[Config.Resample.Blacklist.Count];
-		for (int i = 0; i < Config.Resample.Blacklist.Count; ++i) {
-			var pattern = Config.Resample.Blacklist[i];
-			if (!pattern.StartsWith('@')) {
-				pattern = $"^{Regex.Escape(pattern)}.*";
+		static Regex[] ProcessTexturePatterns(List<string> texturePatternStrings) {
+			var result = new Regex[texturePatternStrings.Count];
+			for (int i = 0; i < texturePatternStrings.Count; ++i) {
+				var pattern = texturePatternStrings[i];
+				if (!pattern.StartsWith('@')) {
+					pattern = $"^{Regex.Escape(pattern)}.*";
+				}
+				else {
+					pattern = pattern.Substring(1);
+				}
+				result[i] = new(pattern, RegexOptions.Compiled);
 			}
-			else {
-				pattern = pattern.Substring(1);
-			}
-			Config.Resample.BlacklistPatterns[i] = new(pattern, RegexOptions.Compiled);
+			return result;
 		}
+
+
+		Config.Resample.BlacklistPatterns = ProcessTexturePatterns(Config.Resample.Blacklist);
+		Config.Resample.GradientBlacklistPatterns = ProcessTexturePatterns(Config.Resample.GradientBlacklist);
 
 		if (Config.ShowIntroMessage && !Config.SkipIntro) {
 			help.Events.GameLoop.GameLaunched += (_, _) => {

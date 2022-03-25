@@ -218,6 +218,15 @@ sealed class Resampler {
 		bool isGradient = analysis.MaxChannelShades >= Config.Resample.Analysis.MinimumGradientShades && (analysis.GradientDiagonal.Any || analysis.GradientAxial.Any);
 
 		if (isGradient) {
+			foreach (var blacklistPattern in Config.Resample.GradientBlacklistPatterns) {
+				if (blacklistPattern.IsMatch(input.Reference.NormalizedName())) {
+					isGradient = false;
+					break;
+				}
+			}
+		}
+
+			if (isGradient) {
 			if (Config.Debug.Sprite.DumpReference) {
 				Textures.DumpTexture(
 					source: input.ReferenceData,
