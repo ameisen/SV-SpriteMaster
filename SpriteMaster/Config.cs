@@ -89,7 +89,7 @@ static class Config {
 
 	internal static string ConfigVersion = "";
 	[ConfigIgnore]
-	internal static string ClearConfigBefore = GenerateAssemblyVersionString(0, 13, 0, 0, BuildType.Beta, 2);
+	internal static string ClearConfigBefore = GenerateAssemblyVersionString(0, 13, 0, 0, BuildType.Final, 0);
 
 	[ConfigIgnore]
 	internal static bool ForcedDisable = false;
