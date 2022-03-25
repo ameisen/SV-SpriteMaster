@@ -212,7 +212,7 @@ public sealed class SpriteMaster : Mod {
 			}
 
 			if (IsVersionOutdated(Config.ConfigVersion)) {
-				Debug.Warning($"config.toml is out of date ({Config.ConfigVersion} < {Config.ClearConfigBefore}), rewriting it.");
+				Debug.Info($"config.toml is out of date ({Config.ConfigVersion} < {Config.ClearConfigBefore}), rewriting it.");
 
 				SerializeConfig.Load(tempStream, retain: true);
 				Config.ConfigVersion = Config.CurrentVersion;
@@ -469,7 +469,7 @@ public sealed class SpriteMaster : Mod {
 				sb.AppendLine($"\t{mod.Manifest.Name} ({mod.Manifest.UniqueID})");
 			}
 
-			Debug.Warning(sb.ToString());
+			Debug.Info(sb.ToString());
 		}
 	}
 

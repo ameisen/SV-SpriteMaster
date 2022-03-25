@@ -90,7 +90,6 @@ class MemoryMonitor {
 						continue;
 					}
 
-					Debug.Warning("GarbageCheckLoop triggered");
 					ResidentCache.Purge();
 					DrawState.TriggerGC.Set(true);
 					// TODO : Do other cleanup attempts here.

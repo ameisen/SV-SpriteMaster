@@ -164,7 +164,7 @@ static class Harmonize {
 			}
 		}
 		catch (Exception ex) {
-			Debug.Error($"Exception Patching Method {method.GetFullName()}", ex);
+			Debug.Warning($"Exception Patching Method {method.GetFullName()}", ex);
 		}
 	}
 
@@ -373,7 +373,7 @@ static class Harmonize {
 			}
 
 			if (typeMethod is null) {
-				Debug.Error($"Failed to patch {type.Name.Pastel(DrawingColor.LightYellow)}.{name.Pastel(DrawingColor.LightYellow)}");
+				Debug.Warning($"Failed to patch {type.Name.Pastel(DrawingColor.LightYellow)}.{name.Pastel(DrawingColor.LightYellow)}");
 				return null;
 			}
 		}
