@@ -22,7 +22,7 @@ using System.Security;
 [assembly: InternalsVisibleToAttribute("xBRZ")]
 [assembly: InternalsVisibleToAttribute("Hashing")]
 [assembly: SecurityRules(SecurityRuleSet.Level2, SkipVerificationInFullTrust = true)]
-[assembly: ChangeList("b182c76:0.13.0-beta.2-28-gb182c76")]
+[assembly: ChangeList("dfda7f4:0.13.0")]
 [assembly: BuildComputerName("Palatinate")]
 [assembly: FullVersion("0.13.0.300")]
 // [assembly: SuppressUnmanagedCodeSecurity]
