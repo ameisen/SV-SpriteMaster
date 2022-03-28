@@ -2,10 +2,8 @@
 
 using HarmonyLib;
 using Microsoft.Xna.Framework.Graphics;
-using Netcode;
 using SpriteMaster.Extensions;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
