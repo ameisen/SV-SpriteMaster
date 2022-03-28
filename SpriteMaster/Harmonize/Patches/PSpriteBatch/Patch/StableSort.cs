@@ -1,8 +1,11 @@
 ﻿//#define PROFILE_STABLESORT
 
 using HarmonyLib;
+using Microsoft.Xna.Framework.Graphics;
+using Netcode;
 using SpriteMaster.Extensions;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -14,124 +17,75 @@ static class StableSort {
 	private static readonly Type? SpriteBatchItemType = typeof(XNA.Graphics.SpriteBatch).Assembly.GetType("Microsoft.Xna.Framework.Graphics.SpriteBatchItem");
 	private static readonly Func<object?, float>? GetSortKeyImpl = SpriteBatchItemType?.GetFieldGetter<object?, float>("SortKey");
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static float GetSortKey(object? obj) => obj is null ? float.MinValue : GetSortKeyImpl!(obj);
+	internal static class BySortKey {
+		[MethodImpl(Runtime.MethodImpl.Hot)]
+		private static float GetSortKey(object? obj) => obj is null ? float.MinValue : GetSortKeyImpl!(obj);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static void Swap<T>(ref T a, ref T b) => (a, b) = (b, a);
+		private readonly record struct KeyType(float Key, int Index);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static int Partition<T>(Span<T> data, Span<int> indices, int low, int high) where T : IComparable<T> {
-		var pivot = data[high];
-		var pivotIndex = indices[high];
-
-		var i = low - 1;
-
-		for (int j = low; j <= high - 1; ++j) {
-			var jIndex = indices[j];
-			var compareResult = data[j].CompareTo(pivot);
-			if (compareResult == 0) {
-				compareResult = jIndex - pivotIndex;
-			}
-			if (compareResult < 0) {
-				++i;
-				Swap(ref data[i], ref data[j]);
-				Swap(ref indices[i], ref indices[j]);
+		private sealed class KeyTypeComparerClass : IComparer<KeyType> {
+			public int Compare(KeyType x, KeyType y) {
+				int result = x.Key.CompareTo(y.Key);
+				if (result != 0) {
+					return result;
+				}
+				return x.Index.CompareTo(y.Index);
 			}
 		}
-		Swap(ref data[i + 1], ref data[high]);
-		Swap(ref indices[i + 1], ref indices[high]);
-		return i + 1;
+		private static readonly KeyTypeComparerClass KeyTypeComparer = new();
+
+		private static KeyType[] KeyList = Array.Empty<KeyType>();
+
+		internal static void StableSort<T>(T[] array, int index, int length) where T : IComparable<T> {
+			int requiredLength = length + index;
+			if (requiredLength > KeyList.Length) {
+				KeyList = GC.AllocateUninitializedArray<KeyType>(requiredLength);
+			}
+			for (int i = index; i < requiredLength; ++i) {
+				KeyList[i] = new(Key: GetSortKey(array[i]), Index: i);
+			}
+
+			Array.Sort<KeyType, T>(KeyList, array, index, length, KeyTypeComparer);
+		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static int PartitionByKey<T>(Span<T> data, Span<int> indices, int low, int high) where T : IComparable<T> {
-		var pivot = data[high];
-		var pivotKey = GetSortKey(pivot);
-		var pivotIndex = indices[high];
+	internal static class ByInterface<T> where T : IComparable<T> {
+		private readonly record struct KeyType(T Key, int Index);
 
-		var i = low - 1;
-
-		for (int j = low; j <= high - 1; ++j) {
-			var jIndex = indices[j];
-			var compareResult = GetSortKey(data[j]).CompareTo(pivotKey);
-			if (compareResult == 0) {
-				compareResult = jIndex - pivotIndex;
-			}
-			if (compareResult < 0) {
-				++i;
-				Swap(ref data[i], ref data[j]);
-				Swap(ref indices[i], ref indices[j]);
+		private sealed class KeyTypeComparerClass : IComparer<KeyType> {
+			public int Compare(KeyType x, KeyType y) {
+				int result = x.Key.CompareTo(y.Key);
+				if (result != 0) {
+					return result;
+				}
+				return x.Index.CompareTo(y.Index);
 			}
 		}
-		Swap(ref data[i + 1], ref data[high]);
-		Swap(ref indices[i + 1], ref indices[high]);
-		return i + 1;
-	}
+		private static readonly KeyTypeComparerClass KeyTypeComparer = new();
 
-	private readonly record struct AnchorPair(int Low, int High);
+		private static KeyType[] KeyList = Array.Empty<KeyType>();
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static void QuickSort<T>(Span<T> data, Span<int> indices, int low, int high) where T : IComparable<T> {
-		if (data.Length <= 1) {
-			return;
-		}
-
-		// TODO : this can be parallelized, but I'm not sure if that's actually useful.
-		int queueLength = 1;
-		Span<AnchorPair> queue = stackalloc AnchorPair[data.Length];
-		
-		queue[0] = new(low, high);
-
-		while (queueLength != 0) {
-			var anchor = queue[--queueLength];
-			if (anchor.Low >= anchor.High) {
-				continue;
+		internal static void StableSort(T[] array, int index, int length) {
+			int requiredLength = length + index;
+			if (requiredLength > KeyList.Length) {
+				KeyList = GC.AllocateUninitializedArray<KeyType>(requiredLength);
+			}
+			for (int i = index; i < requiredLength; ++i) {
+				KeyList[i] = new(Key: array[i], Index: i);
 			}
 
-			var pIndex = Partition(data, indices, anchor.Low, anchor.High);
-
-			queue[queueLength++] = new(pIndex + 1, anchor.High);
-			queue[queueLength++] = new(anchor.Low, pIndex - 1);
+			Array.Sort<KeyType, T>(KeyList, array, index, length, KeyTypeComparer);
 		}
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static void QuickSortByKey<T>(Span<T> data, Span<int> indices, int low, int high) where T : IComparable<T> {
-		if (data.Length <= 1) {
-			return;
-		}
-
-		// TODO : this can be parallelized, but I'm not sure if that's actually useful.
-		int queueLength = 1;
-		Span<AnchorPair> queue = stackalloc AnchorPair[data.Length];
-
-		queue[0] = new(low, high);
-
-		while (queueLength != 0) {
-			var anchor = queue[--queueLength];
-			if (anchor.Low >= anchor.High) {
-				continue;
-			}
-
-			var pIndex = PartitionByKey(data, indices, anchor.Low, anchor.High);
-
-			queue[queueLength++] = new(pIndex + 1, anchor.High);
-			queue[queueLength++] = new(anchor.Low, pIndex - 1);
-		}
-	}
-
-#if PROFILE_STABLESORT
-	private static int TotalElements = 0;
-	private static long TotalDuration = 0;
-	private static int CountCount = 0;
-	private static readonly Stopwatch Stopwatch = Stopwatch.StartNew();
-#endif
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static void ArrayStableSort<T>(T[] array, int index, int length) where T : IComparable<T> {
+	public static void ArrayStableSort<T>(T[] array, int index, int length, SpriteSortMode sortMode) where T : IComparable<T> {
 		if (DrawState.CurrentBlendState == Microsoft.Xna.Framework.Graphics.BlendState.Additive) {
 			// There is basically no reason to sort when the blend state is additive.
+			return;
+		}
+
+		if (sortMode != SpriteSortMode.FrontToBack) {
 			return;
 		}
 
@@ -140,35 +94,12 @@ static class StableSort {
 			return;
 		}
 
-#if PROFILE_STABLESORT
-		var startTime = Stopwatch.Elapsed;
-#endif
-
-		// Not _optimal_, really need a proper stable sort. Optimize later.
-		Span<int> indices = stackalloc int[length];
-		for (int i = 0; i < length; ++i) {
-			indices[i] = i;
-		}
-		var span = new Span<T>(array, index, length);
-		if (GetSortKeyImpl is null) {
-			QuickSort(span, indices, 0, length - 1);
+		if (GetSortKeyImpl is not null) {
+			BySortKey.StableSort(array, index, length);
 		}
 		else {
-			QuickSortByKey(span, indices, 0, length - 1);
+			ByInterface<T>.StableSort(array, index, length);
 		}
-
-#if PROFILE_STABLESORT
-		var fromStart = Stopwatch.Elapsed - startTime;
-		TotalDuration += fromStart.Ticks;
-		TotalElements += array.Length;
-
-		if ((++CountCount % 200) == 0) {
-			var duration = TimeSpan.FromTicks(TotalDuration);
-			var durationPerElement = (duration * 1000) / TotalElements;
-
-			Debug.Info($"Total Duration: {duration}, Total Count: {TotalElements} :: Per 1,000 Elements: {durationPerElement}");
-		}
-#endif
 	}
 
 	[Harmonize(
@@ -211,6 +142,7 @@ static class StableSort {
 					continue;
 				}
 
+				yield return new CodeInstruction(OpCodes.Ldarg_1);
 				yield return new CodeInstruction(OpCodes.Call, newMethod);
 			}
 		}
