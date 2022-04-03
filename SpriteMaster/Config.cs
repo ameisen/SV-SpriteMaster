@@ -504,6 +504,8 @@ static class Config {
 	internal static class SMAPI {
 		[Comment("Should the experimental SMAPI texture cache patch be enabled?")]
 		internal static bool TextureCacheEnabled = true;
+		[Comment("Should the PMA texture cache be enabled?")]
+		internal static bool PMATextureCacheEnabled = true;
 		[Comment("Should the experimental SMAPI texture cache have high memory usage enabled?")]
 		[Comment("Unrecommended: This results in the game's texture being retained (and thus loaded faster) but doesn't suspend the resampled sprite instances.")]
 		internal static bool TextureCacheHighMemoryEnabled = false;
