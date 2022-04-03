@@ -171,6 +171,24 @@ static class Config {
 		internal static class Logging {
 			internal static LogLevel LogLevel = LogLevel.Trace;
 			internal const bool OwnLogFile = true;
+#if !SHIPPING
+			internal static bool SilenceOtherMods = true;
+			internal static string[] SilencedMods = new[] {
+				"Farm Type Manager",
+				"Quest Framework",
+				"AntiSocial NPCs",
+				"SMAPI",
+				"Json Assets",
+				"Content Patcher",
+				"Free Love",
+				"Mail Framework Mod",
+				"Shop Tile Framework",
+				"Custom Companions",
+				"Farmer Helper",
+				"Wind Effects",
+				"Multiple Spouse Dialogs"
+			};
+#endif
 		}
 
 		internal static class Sprite {
