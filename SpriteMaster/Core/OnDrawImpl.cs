@@ -181,7 +181,7 @@ static partial class OnDrawImpl {
 			destination.Y -= referenceSource.Y;
 		}
 
-		var scaledOrigin = (Vector2F)origin / spriteInstance.Scale;
+		var scaledOrigin = (Vector2F)origin * spriteInstance.Scale;
 
 		if (source.HasValue) {
 			sourceRectangle.Invert.X = source.Value.Width < 0;
