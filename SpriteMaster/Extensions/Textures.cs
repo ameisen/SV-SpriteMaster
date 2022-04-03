@@ -125,6 +125,34 @@ static class Textures {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
+	private static string? NormalizeNameOrNullInternal(this string? name) {
+		/*
+		if (name.IsWhiteBlank()) {
+			return "[Unknown]";
+		}
+
+		name = name.Replace('/', '\\');
+		string original;
+		do {
+			original = name;
+			name = original.Replace(@"\\", @"\");
+		}
+		while (!object.ReferenceEquals(name, original));
+
+		return name;
+		*/
+
+		if (name.IsWhiteBlank()) {
+			return null;
+		}
+
+		return name.Replace('/', '\\').Replace(@"\\", @"\");
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static string? NormalizedNameOrNull(this string name) => name.NormalizeNameOrNullInternal();
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static string NormalizedName(this string name) => name.NormalizeNameInternal();
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static string NormalizedName(this string name, in DrawingColor color) => name.NormalizeNameInternal().Pastel(color);
@@ -133,21 +161,29 @@ static class Textures {
 	internal static string NormalizedName(this Texture texture) => texture.Name.NormalizedName();
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static string NormalizedName(this Texture texture, in DrawingColor color) => texture.Name.NormalizedName(in color);
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static string? NormalizedNameOrNull(this Texture texture) => texture.Name.NormalizedNameOrNull();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static string NormalizedName(this Texture2D texture) => texture.Name.NormalizedName();
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static string NormalizedName(this Texture2D texture, in DrawingColor color) => texture.Name.NormalizedName(in color);
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static string? NormalizedNameOrNull(this Texture2D texture) => texture.Name.NormalizedNameOrNull();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static string NormalizedName(this ManagedTexture2D texture) => texture.Name;
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static string NormalizedName(this ManagedTexture2D texture, in DrawingColor color) => texture.Name.Pastel(color);
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static string? NormalizedNameOrNull(this ManagedTexture2D texture) => texture.Name.NormalizedNameOrNull();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static string NormalizedName(this ManagedSpriteInstance instance) => instance.Name;
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static string NormalizedName(this ManagedSpriteInstance instance, in DrawingColor color) => instance.Name.Pastel(color);
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static string? NormalizedNameOrNull(this ManagedSpriteInstance texture) => texture.Name.NormalizedNameOrNull();
 
 	internal static void DumpTexture(string path, byte[] source, in Vector2I sourceSize, in double? adjustGamma = null, in Bounds? destBounds = null, in (int i0, int i1, int i2, int i3)? swap = null) {
 		DumpTexture(path, source.AsSpan().Cast<Color8>(), sourceSize, adjustGamma, destBounds, swap);

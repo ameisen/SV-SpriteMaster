@@ -151,4 +151,52 @@ static class Collections {
 		}
 	}
 	#endregion
+
+	#region AddAll
+
+	internal static int AddAll<T>(this HashSet<T> set, IEnumerable<T> collection) {
+		int added = 0;
+		foreach (T item in collection) {
+			if (set.Add(item)) {
+				++added;
+			}
+		}
+		return added;
+	}
+
+	internal static int AddAll<T>(this HashSet<T> set, ICollection<T> collection) {
+		int added = 0;
+		set.EnsureCapacity(set.Count + collection.Count);
+		foreach (T item in collection) {
+			if (set.Add(item)) {
+				++added;
+			}
+		}
+		return added;
+	}
+
+	internal static int AddAll<T>(this HashSet<T> set, IList<T> list) {
+		int added = 0;
+		set.EnsureCapacity(set.Count + list.Count);
+		for (int i = 0; i < list.Count; ++i) {
+			T item = list[i];
+			if (set.Add(item)) {
+				++added;
+			}
+		}
+		return added;
+	}
+
+	internal static int AddAll<T>(this HashSet<T> set, T[] array) {
+		int added = 0;
+		set.EnsureCapacity(set.Count + array.Length);
+		foreach (T item in array) {
+			if (set.Add(item)) {
+				++added;
+			}
+		}
+		return added;
+	}
+
+	#endregion
 }

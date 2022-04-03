@@ -35,7 +35,7 @@ static class TextureCache {
 		critical: false
 	)]
 	public static bool FromStreamPre(ref XTexture2D __result, GraphicsDevice graphicsDevice, Stream stream, ref bool __state) {
-		if (!Config.SMAPI.TextureCacheEnabled) {
+		if (!Config.Enabled || !Config.SMAPI.TextureCacheEnabled) {
 			__state = false;
 			return true;
 		}
@@ -91,7 +91,7 @@ static class TextureCache {
 
 	[Harmonize(typeof(XTexture2D), "FromStream", Harmonize.Fixation.Postfix, PriorityLevel.Last, platform: Harmonize.Platform.MonoGame, instance: false)]
 	public static void FromStreamPost(ref XTexture2D __result, GraphicsDevice graphicsDevice, Stream stream, bool __state) {
-		if (!Config.SMAPI.TextureCacheEnabled) {
+		if (!Config.Enabled || !Config.SMAPI.TextureCacheEnabled) {
 			return;
 		}
 
@@ -138,7 +138,7 @@ static class TextureCache {
 		Harmonize.PriorityLevel.First
 	)]
 	public static bool PremultiplyTransparencyPre(ContentManager __instance, ref XTexture2D __result, XTexture2D texture) {
-		if (!Config.SMAPI.TextureCacheEnabled) {
+		if (!Config.Enabled || !Config.SMAPI.TextureCacheEnabled) {
 			return true;
 		}
 
@@ -160,7 +160,7 @@ static class TextureCache {
 		Harmonize.PriorityLevel.First
 	)]
 	public static void PremultiplyTransparencyPost(ContentManager __instance, ref XTexture2D __result, XTexture2D texture) {
-		if (!Config.SMAPI.TextureCacheEnabled) {
+		if (!Config.Enabled || !Config.SMAPI.TextureCacheEnabled) {
 			return;
 		}
 
@@ -169,7 +169,7 @@ static class TextureCache {
 	}
 
 	internal static void Remove(XTexture2D texture) {
-		if (!Config.SMAPI.TextureCacheEnabled) {
+		if (!Config.Enabled || !Config.SMAPI.TextureCacheEnabled) {
 			return;
 		}
 

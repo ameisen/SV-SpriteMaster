@@ -7,6 +7,8 @@ using SpriteMaster.Types.Interlocking;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using SpriteDictionary = System.Collections.Generic.Dictionary<ulong, SpriteMaster.ManagedSpriteInstance>;
@@ -111,6 +113,43 @@ sealed class Texture2DMeta : IDisposable {
 		return false;
 	}
 
+	private readonly Dictionary<Bounds, Config.TextureRef?> SlicedCache = new();
+
+	internal bool CheckSliced(in Bounds bounds, [NotNullWhen(true)] out Config.TextureRef? result) {
+		if (SlicedCache.TryGetValue(bounds, out var textureRef)) {
+			result = textureRef;
+			return textureRef.HasValue;
+		}
+
+		if (NormalizedName is not null) {
+			foreach (var slicedTexture in Config.Resample.SlicedTexturesS) {
+				if (!NormalizedName.StartsWith(slicedTexture.Texture)) {
+					continue;
+				}
+				if (slicedTexture.Bounds.IsEmpty || slicedTexture.Bounds.Contains(bounds)) {
+					SlicedCache.Add(bounds, slicedTexture);
+					result = slicedTexture;
+					return true;
+				}
+			}
+		}
+		SlicedCache.Add(bounds, null);
+		result = null;
+		return false;
+	}
+
+	private string? _NormalizedName = null;
+	private string? NormalizedName {
+		get {
+			if (_NormalizedName is null) {
+				 if (Owner.TryGetTarget(out var owner)) {
+					_NormalizedName = owner?.NormalizedNameOrNull();
+				}
+			}
+			return _NormalizedName;
+		}
+	}
+
 	/// <summary>The current (static) ID, incremented every time a new <see cref="Texture2DMeta"/> is created.</summary>
 	private static ulong CurrentID = 0U;
 	/// <summary>Whenever a new <see cref="Texture2DMeta"/> is created, <see cref="CurrentID"/> is incremented and <see cref="UniqueIDString"/> is set to a string representation of it.</summary>
@@ -123,15 +162,17 @@ sealed class Texture2DMeta : IDisposable {
 
 	internal bool? Validation = null;
 	internal bool IsSystemRenderTarget = false;
-	internal bool IsCompressed = false;
+	internal readonly bool IsCompressed = false;
 	internal ReportOnceErrors ReportedErrors = 0;
-	internal SurfaceFormat Format;
-	internal Vector2I Size;
+	internal readonly SurfaceFormat Format;
+	internal readonly Vector2I Size;
+	internal readonly WeakReference<Texture2D> Owner;
 
 	internal InterlockedULong LastAccessFrame { get; private set; } = (ulong)DrawState.CurrentFrame;
 	internal InterlockedULong Hash { get; private set; } = 0;
 
 	internal Texture2DMeta(Texture2D texture) {
+		Owner = texture.MakeWeak();
 		UniqueIDString = MetaID.ToString64();
 		IsCompressed = texture.Format.IsCompressed();
 		Format = texture.Format;

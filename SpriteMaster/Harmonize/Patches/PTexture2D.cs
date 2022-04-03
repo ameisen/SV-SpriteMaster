@@ -39,6 +39,8 @@ static class PTexture2D {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static void SetDataPurge<T>(Texture2D texture, in XNA.Rectangle? rect, T[] data, int startIndex, int elementCount, bool animated) where T : struct {
+		TextureCache.Remove(texture);
+
 		if (!ManagedSpriteInstance.Validate(texture, clean: true)) {
 			return;
 		}
@@ -84,12 +86,9 @@ static class PTexture2D {
 			var cachedDataSpan = cachedData.AsReadOnlySpan();
 
 			unsafe {
-				var inSpan = new Span2D<byte>(
-					pointer: Unsafe.AsPointer(ref dataSpan.DangerousGetReferenceAt(startIndex * sizeof(T))),
-					width: rect.Width * sizeof(T),
-					height: rect.Height,
-					pitch: (instance.Width - rect.Width) * sizeof(T)
-				);
+				var inSpan = dataSpan;
+				int inOffset = 0;
+				int inRowLength = rect.Width * sizeof(T);
 
 				var cachedSpan = new Span2D<byte>(
 					array: cachedData,
@@ -101,12 +100,13 @@ static class PTexture2D {
 
 				bool equal = true;
 				for (int y = 0; y < rect.Height; ++y) {
-					var inSpanRow = inSpan.GetRowSpan(y);
+					var inSpanRow = inSpan.Slice(inOffset, inRowLength);
 					var cachedSpanRow = cachedSpan.GetRowSpan(y);
 					if (!inSpanRow.SequenceEqual(cachedSpanRow)) {
 						equal = false;
 						break;
 					}
+					inOffset += inRowLength;
 				}
 
 				return !equal;
@@ -151,8 +151,14 @@ static class PTexture2D {
 			return true;
 		}
 
-		if (!CheckDataChange(__instance, level, arraySlice, rect, data, startIndex, elementCount)) {
-			return false;
+		try {
+			if (!CheckDataChange(__instance, level, arraySlice, rect, data, startIndex, elementCount)) {
+				Debug.Warning($"SetData for '{__instance.NormalizedName()}' skipped; data unchanged ({rect?.ToString() ?? "null"})".Colorized(DrawingColor.LightGreen));
+				return false;
+			}
+		}
+		catch (Exception ex) {
+			Debug.Warning($"Exception while processing SetData for '{__instance.NormalizedName()}'", ex);
 		}
 
 		return true;

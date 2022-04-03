@@ -167,6 +167,7 @@ static class PGraphicsDeviceManager {
 		var @this = __instance;
 
 		var device = @this.GraphicsDevice;
+		DrawState.UpdateDevice();
 
 		if (LastGraphicsDevice is null) {
 			LastGraphicsDevice = device.MakeWeak();

@@ -1,6 +1,4 @@
-﻿//#define PROFILE_STABLESORT
-
-using HarmonyLib;
+﻿using HarmonyLib;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using System;
@@ -11,6 +9,7 @@ using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Harmonize.Patches.PSpriteBatch.Patch;
+
 static class StableSort {
 	private static readonly Type? SpriteBatchItemType = typeof(XNA.Graphics.SpriteBatch).Assembly.GetType("Microsoft.Xna.Framework.Graphics.SpriteBatchItem");
 	private static readonly Func<object?, float>? GetSortKeyImpl = SpriteBatchItemType?.GetFieldGetter<object?, float>("SortKey");

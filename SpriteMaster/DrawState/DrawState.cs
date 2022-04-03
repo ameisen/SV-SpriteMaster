@@ -70,7 +70,20 @@ static partial class DrawState {
 		ExpectedFrameTime = rate.GetValueOrDefault(ExpectedFrameTime);
 	}
 
-	internal static GraphicsDevice Device => Game1.graphics.GraphicsDevice;
+	private static GraphicsDevice? PreviousDevice = null;
+	internal static GraphicsDevice Device {
+		get {
+			UpdateDevice();
+			return PreviousDevice!;
+		}
+	}
+	internal static void UpdateDevice() {
+		var currentDevice = Game1.graphics.GraphicsDevice;
+		if (currentDevice != PreviousDevice) {
+			//Harmonize.Patches.Game.HoeDirt.OnNewGraphicsDevice(currentDevice);
+			PreviousDevice = currentDevice;
+		}
+	}
 
 	internal static bool PushedUpdateWithin(int frames) => (long)(CurrentFrame - LastPushedUpdateFrame) <= frames;
 

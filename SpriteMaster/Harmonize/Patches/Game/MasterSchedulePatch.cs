@@ -11,12 +11,12 @@ class MasterSchedulePatch {
 	private static readonly ThreadLocal<int> MasterScheduleDepth = new();
 
 	[Harmonize(
-	typeof(StardewValley.NPC),
-	"parseMasterSchedule",
-	Harmonize.Fixation.Prefix,
-	Harmonize.PriorityLevel.Last,
-	critical: false
-)]
+		typeof(StardewValley.NPC),
+		"parseMasterSchedule",
+		Harmonize.Fixation.Prefix,
+		Harmonize.PriorityLevel.Last,
+		critical: false
+	)]
 	public static bool ParseMasterSchedulePre(StardewValley.NPC __instance, ref MasterSchedule? __result, string? rawData, ref bool __state) {
 		__state = false;
 

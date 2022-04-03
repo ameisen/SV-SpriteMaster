@@ -11,19 +11,7 @@ namespace SpriteMaster.Core;
 static partial class OnDrawImpl {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static bool GetIsSliced(in Bounds bounds, Texture2D reference, [NotNullWhen(true)] out Config.TextureRef? result) {
-		var normalizedName = reference.NormalizedName();
-
-		foreach (var slicedTexture in Config.Resample.SlicedTexturesS) {
-			if (!normalizedName.StartsWith(slicedTexture.Texture)) {
-				continue;
-			}
-			if (slicedTexture.Bounds.IsEmpty || slicedTexture.Bounds.Contains(bounds)) {
-				result = slicedTexture;
-				return true;
-			}
-		}
-		result = null;
-		return false;
+		return reference.Meta().CheckSliced(in bounds, out result);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
