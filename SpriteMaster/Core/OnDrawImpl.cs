@@ -191,10 +191,12 @@ static partial class OnDrawImpl {
 		if (Debug.Mode.RegisterDrawForSelect(
 			instance: spriteInstance,
 			texture: texture,
+			originalDestination: destinationBounds,
 			destination: destination,
 			source: sourceRectangle,
 			color: color,
 			rotation: rotation,
+			originalOrigin: origin,
 			origin: scaledOrigin,
 			effects: effects,
 			layerDepth: layerDepth
@@ -329,6 +331,7 @@ static partial class OnDrawImpl {
 			source: sourceRectangle,
 			color: color,
 			rotation: rotation,
+			originalOrigin: origin,
 			origin: adjustedOrigin,
 			scale: adjustedScale,
 			effects: effects,
