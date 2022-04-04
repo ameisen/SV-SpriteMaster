@@ -23,5 +23,18 @@ interface IScaler {
 		Vector2I targetSize
 	);
 
-	internal static IScaler Current => new DefaultScaler.Scaler.ScalerInterface();
+	internal static IScaler Default => new DefaultScaler.Scaler.ScalerInterface();
+
+	internal static IScaler Current => SMConfig.Resample.Scaler switch {
+		Resampler.Scaler.xBRZ =>
+			new Resample.Scalers.xBRZ.Scaler.ScalerInterface(),
+		Resampler.Scaler.SuperXBR =>
+			new Resample.Scalers.SuperXBR.Scaler.ScalerInterface(),
+		Resampler.Scaler.EPX =>
+			new Resample.Scalers.EPX.Scaler.ScalerInterface(),
+		Resampler.Scaler.Bilinear =>
+			throw new NotImplementedException("Bilinear scaling is not implemented"),
+		_ =>
+			throw new InvalidOperationException($"Unknown Scaler Type: {SMConfig.Resample.Scaler}")
+	};
 }

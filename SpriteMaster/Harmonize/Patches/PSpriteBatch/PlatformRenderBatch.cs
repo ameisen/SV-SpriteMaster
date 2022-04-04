@@ -17,18 +17,41 @@ static class PlatformRenderBatch {
 			return reference;
 		}
 
-		if (texture is InternalTexture2D managedTexture/* && managedTexture.Texture is not null*/ || (texture?.NormalizedName().StartsWith(@"LooseSprites\Lighting\") ?? false)) {
+		bool isManagedTexture = texture is InternalTexture2D;
+		bool isLighting = !isManagedTexture && (texture?.NormalizedName().StartsWith(@"LooseSprites\Lighting\") ?? false);
+
+		if (isManagedTexture || isLighting) {
 			if (reference.AddressU == TextureAddressMode.Wrap && reference.AddressV == TextureAddressMode.Wrap) {
-				return SamplerState.LinearWrap;
+				if (!isLighting && Config.Resample.Scaler == Resample.Resampler.Scaler.EPX) {
+					return SamplerState.PointWrap;
+				}
+				else {
+					return SamplerState.LinearWrap;
+				}
 			}
 			else if (reference.AddressU == TextureAddressMode.Border && reference.AddressV == TextureAddressMode.Border) {
-				return DrawState.LinearBorder.Value;
+				if (!isLighting && Config.Resample.Scaler == Resample.Resampler.Scaler.EPX) {
+					return DrawState.PointBorder.Value;
+				}
+				else {
+					return DrawState.LinearBorder.Value;
+				}
 			}
 			else if (reference.AddressU == TextureAddressMode.Mirror && reference.AddressV == TextureAddressMode.Mirror) {
-				return DrawState.LinearMirror.Value;
+				if (!isLighting && Config.Resample.Scaler == Resample.Resampler.Scaler.EPX) {
+					return DrawState.PointMirror.Value;
+				}
+				else {
+					return DrawState.LinearMirror.Value;
+				}
 			}
 			else {
-				return SamplerState.LinearClamp;
+				if (!isLighting && Config.Resample.Scaler == Resample.Resampler.Scaler.EPX) {
+					return SamplerState.PointClamp;
+				}
+				else {
+					return SamplerState.LinearClamp;
+				}
 			}
 		}
 

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
+using System.Text;
 using Tomlyn;
 using Tomlyn.Syntax;
 
@@ -13,6 +14,7 @@ namespace SpriteMaster;
 static class SerializeConfig {
 	private const BindingFlags StaticFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static;
 
+	private const int MaxEnumCommentLength = 80;
 	private static void AddTrailingTrivia(this SyntaxNode node, TokenKind kind, string text) {
 		node.TrailingTrivia ??= new List<SyntaxTrivia>();
 		node.TrailingTrivia.Add(new SyntaxTrivia(kind, text));
@@ -406,6 +408,28 @@ static class SerializeConfig {
 				foreach (var attribute in commentAttributes) {
 					keyValue.AddLeadingTrivia(TokenKind.Comment, $"{indent}# {attribute.Message}\n");
 				}
+			}
+
+			var subType = field.FieldType.IsEnum ? field.FieldType : field.FieldType.GetElementType();
+			if (subType?.IsEnum ?? false) {
+				keyValue.AddLeadingTrivia(TokenKind.Comment, $"{indent}# Legal Values: [\n");
+
+				var currentLine = new StringBuilder();
+				foreach (var enumName in Enum.GetNames(subType)) {
+					if (currentLine.Length > 0) {
+						currentLine.Append(", ");
+					}
+					currentLine.Append(enumName);
+					if (currentLine.Length >= MaxEnumCommentLength) {
+						keyValue.AddLeadingTrivia(TokenKind.Comment, $"{indent}#\t{currentLine}\n");
+						currentLine.Clear();
+					}
+				}
+				if (currentLine.Length > 0) {
+					keyValue.AddLeadingTrivia(TokenKind.Comment, $"{indent}#\t{currentLine}\n");
+				}
+
+				keyValue.AddLeadingTrivia(TokenKind.Comment, $"{indent}# ]\n");
 			}
 
 			if (indent.Length != 0) {

@@ -235,7 +235,7 @@ static class Config {
 		[Comment("Should the scale factor of water be adjusted to account for water sprites being unusual?")]
 		internal static bool TrimWater = true;
 		[Comment("Maximum scale factor of sprites (dependant on chosen scaler)")]
-		internal static uint MaxScale = SMResample.Scalers.IScaler.Current.MaxScale;
+		internal static uint MaxScale = SMResample.Scalers.IScaler.Default.MaxScale;
 		[Comment("Minimum edge length of a sprite to be considered for resampling")]
 		internal static int MinimumTextureDimensions = 1;
 		[Comment("Should wrapped addressing be enabled for sprite resampling (when analysis suggests it)?")]

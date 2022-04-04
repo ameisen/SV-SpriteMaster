@@ -18,6 +18,9 @@ sealed class Resampler {
 	internal enum Scaler : int {
 		None = -1,
 		xBRZ = 0,
+		SuperXBR,
+		EPX,
+		Scale2 = EPX,
 		Bilinear
 	}
 
@@ -293,6 +296,9 @@ sealed class Resampler {
 		Span<Color16> bitmapDataWide = spriteRawData;
 
 		if (Config.Resample.Scaler != Scaler.None) {
+			bool premultiplyAlpha = Config.Resample.PremultiplyAlpha;// && Config.Resample.Scaler != Scaler.EPX;
+			bool gammaCorrect = Config.Resample.AssumeGammaCorrected && Config.Resample.Scaler != Scaler.EPX;
+
 			bool handlePadding = !directImage;
 
 			if (handlePadding) {
@@ -322,12 +328,12 @@ sealed class Resampler {
 			try {
 				var doWrap = wrapped | input.IsWater;
 
-				if (Config.Resample.AssumeGammaCorrected && currentGammaState == GammaState.Gamma) {
+				if (gammaCorrect && currentGammaState == GammaState.Gamma) {
 					Passes.GammaCorrection.Linearize(spriteRawData, spriteRawExtent);
 					currentGammaState = GammaState.Linear;
 				}
 
-				if (Config.Resample.PremultiplyAlpha) {
+				if (premultiplyAlpha) {
 					Passes.PremultipliedAlpha.Reverse(spriteRawData, spriteRawExtent);
 				}
 
@@ -344,31 +350,22 @@ sealed class Resampler {
 					}
 				}
 
-				switch (Config.Resample.Scaler) {
-					case Scaler.xBRZ: {
-							var scalerConfig = Resample.Scalers.IScaler.Current.CreateConfig(
-								wrapped: doWrap,
-								hasAlpha: true,
-								gammaCorrected: currentGammaState == GammaState.Gamma
-							);
+				var scaler = Resample.Scalers.IScaler.Current;
 
-							bitmapDataWide = Resample.Scalers.IScaler.Current.Apply(
-								configuration: scalerConfig,
-								scaleMultiplier: scale,
-								sourceData: spriteRawData,
-								sourceSize: spriteRawExtent,
-								targetSize: scaledSize,
-								targetData: bitmapDataWide
-							);
-						}
-						break;
-					case Scaler.Bilinear: {
-							throw new NotImplementedException("Bilinear scaling is not implemented");
-						}
-						break;
-					default:
-						throw new InvalidOperationException($"Unknown Scaler Type: {Config.Resample.Scaler}");
-				}
+				var scalerConfig = scaler.CreateConfig(
+					wrapped: doWrap,
+					hasAlpha: true,
+					gammaCorrected: currentGammaState == GammaState.Gamma
+				);
+
+				bitmapDataWide = scaler.Apply(
+					configuration: scalerConfig,
+					scaleMultiplier: scale,
+					sourceData: spriteRawData,
+					sourceSize: spriteRawExtent,
+					targetSize: scaledSize,
+					targetData: bitmapDataWide
+				);
 
 				if (Config.Resample.Deposterization.PostEnabled) {
 					bitmapDataWide = Deposterize.Enhance<Color16>(bitmapDataWide, scaledSize, doWrap);
@@ -378,11 +375,11 @@ sealed class Resampler {
 					bitmapDataWide = Recolor.Enhance<Color16>(bitmapDataWide, scaledSize);
 				}
 
-				if (Config.Resample.PremultiplyAlpha) {
+				if (premultiplyAlpha) {
 					Passes.PremultipliedAlpha.Apply(bitmapDataWide, scaledSize);
 				}
 
-				if (Config.Resample.AssumeGammaCorrected && currentGammaState == GammaState.Linear) {
+				if (gammaCorrect && currentGammaState == GammaState.Linear) {
 					Passes.GammaCorrection.Delinearize(bitmapDataWide, scaledSize);
 					currentGammaState = GammaState.Gamma;
 				}
@@ -428,7 +425,20 @@ sealed class Resampler {
 		var bitmapData = Color8.Convert(bitmapDataWide);
 		var resultData = bitmapData.AsBytes();
 
-		if (Config.Resample.BlockCompression.Enabled && scaledSizeClamped.MinOf >= 4) {
+		if (Config.Debug.Sprite.DumpResample) {
+			static string SimplifyBools(in Vector2B vec) {
+				return $"{vec.X.ToInt()}{vec.Y.ToInt()}";
+			}
+
+			Textures.DumpTexture(
+				source: bitmapData,
+				sourceSize: scaledSize,
+				swap: (2, 1, 0, 4),
+				path: FileCache.GetDumpPath($"{input.Reference.NormalizedName().Replace('\\', '.')}.{hashString}.narrowed.resample-wrap[{SimplifyBools(analysis.Wrapped)}]-repeat[{SimplifyBools(analysis.RepeatX)},{SimplifyBools(analysis.RepeatY)}]-pad[{padding.X},{padding.Y}].png")
+			);
+		}
+
+		if (Config.Resample.BlockCompression.Enabled && scaledSizeClamped.MinOf >= 4 && Config.Resample.Scaler != Scaler.EPX) {
 			// TODO : We can technically allocate the block padding before the scaling phase, and pass it a stride
 			// so it will just ignore the padding areas. That would be more efficient than this.
 

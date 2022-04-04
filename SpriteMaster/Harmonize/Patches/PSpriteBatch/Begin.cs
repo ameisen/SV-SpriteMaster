@@ -12,9 +12,11 @@ static class Begin {
 			return;
 		}
 
+		/*
 		if (sortMode is (SpriteSortMode.Deferred or SpriteSortMode.Immediate)) {
 			sortMode = SpriteSortMode.Texture;
 		}
+		*/
 
 		DrawState.OnBegin(
 			__instance,

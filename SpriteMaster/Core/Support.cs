@@ -103,7 +103,12 @@ static partial class OnDrawImpl {
 
 			bool isSliced = false;
 			if (GetIsSliced(clampedSource, reference, out var textureRef)) {
-				clampedSource = textureRef.Value.Bounds;
+				if (textureRef.Value.Bounds.IsEmpty) {
+					clampedSource = reference.Extent();
+				}
+				else {
+					clampedSource = textureRef.Value.Bounds;
+				}
 				isSliced = true;
 			}
 

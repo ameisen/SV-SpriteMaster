@@ -44,8 +44,18 @@ static partial class DrawState {
 		state.AddressU = state.AddressV = TextureAddressMode.Border;
 		return state;
 	});
+	internal static readonly Lazy<SamplerState> PointBorder = new(() => {
+		var state = SamplerStateClone!(SamplerState.PointClamp);
+		state.AddressU = state.AddressV = TextureAddressMode.Border;
+		return state;
+	});
 	internal static readonly Lazy<SamplerState> LinearMirror = new(() => {
 		var state = SamplerStateClone!(SamplerState.LinearClamp);
+		state.AddressU = state.AddressV = TextureAddressMode.Mirror;
+		return state;
+	});
+	internal static readonly Lazy<SamplerState> PointMirror = new(() => {
+		var state = SamplerStateClone!(SamplerState.PointClamp);
 		state.AddressU = state.AddressV = TextureAddressMode.Mirror;
 		return state;
 	});
