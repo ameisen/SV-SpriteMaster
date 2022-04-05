@@ -1,5 +1,6 @@
 ﻿using Microsoft.Toolkit.HighPerformance;
 using SpriteMaster.Colors;
+using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using SpriteMaster.Types.Fixed;

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
+using SpriteMaster.Configuration;
 using SpriteMaster.Types;
 using StardewValley;
 using System;

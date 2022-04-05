@@ -1,4 +1,5 @@
-﻿using SpriteMaster.Types;
+﻿using SpriteMaster.Configuration;
+using SpriteMaster.Types;
 using System.Runtime.CompilerServices;
 using System.Security;
 

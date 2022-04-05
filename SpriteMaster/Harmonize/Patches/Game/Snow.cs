@@ -2,6 +2,7 @@
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using SpriteMaster.Configuration;
 using SpriteMaster.Core;
 using SpriteMaster.Types;
 using StardewValley;

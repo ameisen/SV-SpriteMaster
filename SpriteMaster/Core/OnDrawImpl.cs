@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
+using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using System.Diagnostics.CodeAnalysis;
@@ -159,7 +160,7 @@ static partial class OnDrawImpl {
 		}
 		else {
 			resampledTexture = __state;
-			spriteInstance = resampledTexture.Texture;
+			spriteInstance = resampledTexture.SpriteInstance;
 			sourceRectangle = resampledTexture.Dimensions;
 			if (spriteInstance.TexType == TextureType.SlicedImage) {
 				sourceRectangle = source ?? resampledTexture.Bounds;
@@ -243,7 +244,7 @@ static partial class OnDrawImpl {
 		ManagedTexture2D? resampledTexture;
 		if (texture is ManagedTexture2D) {
 			resampledTexture = (ManagedTexture2D)texture;
-			spriteInstance = resampledTexture.Texture;
+			spriteInstance = resampledTexture.SpriteInstance;
 			sourceRectangle = resampledTexture.Dimensions;
 		}
 		else if (texture.FetchScaledTexture(

@@ -1,4 +1,5 @@
-﻿using SpriteMaster.Extensions;
+﻿using SpriteMaster.Configuration;
+using SpriteMaster.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;

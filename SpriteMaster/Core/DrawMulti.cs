@@ -51,7 +51,7 @@ static partial class OnDrawImpl {
 		ManagedTexture2D? resampledTexture = null;
 		if (texture is ManagedTexture2D) {
 			resampledTexture = (ManagedTexture2D)texture;
-			spriteInstance = resampledTexture.Texture;
+			spriteInstance = resampledTexture.SpriteInstance;
 			sourceRectangle = resampledTexture.Dimensions;
 		}
 		else {

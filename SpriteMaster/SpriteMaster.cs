@@ -1,6 +1,7 @@
 ﻿using HarmonyLib;
 using LinqFasterer;
 using SpriteMaster.Caching;
+using SpriteMaster.Configuration;
 using SpriteMaster.Experimental;
 using SpriteMaster.Extensions;
 using SpriteMaster.Harmonize;
@@ -205,16 +206,16 @@ public sealed class SpriteMaster : Mod {
 		var ConfigPath = Path.Combine(help.DirectoryPath, ConfigName);
 
 		using (var tempStream = new MemoryStream()) {
-			SerializeConfig.Save(tempStream);
+			Serialize.Save(tempStream);
 
 			if (!Config.IgnoreConfig) {
-				SerializeConfig.Load(ConfigPath);
+				Serialize.Load(ConfigPath);
 			}
 
 			if (IsVersionOutdated(Config.ConfigVersion)) {
 				Debug.Info($"config.toml is out of date ({Config.ConfigVersion} < {Config.ClearConfigBefore}), rewriting it.");
 
-				SerializeConfig.Load(tempStream, retain: true);
+				Serialize.Load(tempStream, retain: true);
 				Config.ConfigVersion = Config.CurrentVersion;
 			}
 		}
@@ -278,16 +279,23 @@ public sealed class SpriteMaster : Mod {
 			Config.ShowIntroMessage = false;
 		}
 
-		SerializeConfig.Save(ConfigPath);
+		Serialize.Save(ConfigPath);
 
 		help.Events.Input.ButtonPressed += OnButtonPressed;
 
-		help.ConsoleCommands.Add("spritemaster", "SpriteMaster Commands", ConsoleCommand);
+		try {
+			help.ConsoleCommands.Add("spritemaster", "SpriteMaster Commands", ConsoleCommand);
+		}
+		catch (Exception ex) {
+			Debug.Warning("Could not register 'spritemaster' for console commands", ex);
+		}
 		try {
 			// Try to add 'sm' as a shortcut for my own sanity.
 			help.ConsoleCommands.Add("sm", "SpriteMaster Commands", ConsoleCommand);
 		}
-		catch { }
+		catch (Exception ex) {
+			Debug.Warning("Could not register 'sm' for console commands", ex);
+		}
 
 		InitConsoleCommands();
 

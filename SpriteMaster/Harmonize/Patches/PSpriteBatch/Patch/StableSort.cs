@@ -1,5 +1,6 @@
 ﻿using HarmonyLib;
 using Microsoft.Xna.Framework.Graphics;
+using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using System;
 using System.Collections.Generic;

@@ -5,6 +5,8 @@ namespace SpriteMaster.Resample.Scalers.xBRZ;
 
 sealed partial class Scaler {
 	internal sealed class ScalerInterface : IScaler {
+		public IScalerInfo Info => ScalerInfo.Instance;
+
 		public uint MinScale => Scaler.MinScale;
 
 		public uint MaxScale => Scaler.MaxScale;

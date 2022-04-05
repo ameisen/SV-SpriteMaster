@@ -1,4 +1,5 @@
-﻿using StardewValley;
+﻿using SpriteMaster.Configuration;
+using StardewValley;
 using System.Collections.Generic;
 using System.Threading;
 

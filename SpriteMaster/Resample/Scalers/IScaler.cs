@@ -10,6 +10,8 @@ interface IScaler {
 		bool gammaCorrected
 	);
 
+	IScalerInfo Info { get; }
+
 	uint MinScale { get; }
 	uint MaxScale { get; }
 	uint ClampScale(uint scale);
@@ -23,7 +25,23 @@ interface IScaler {
 		Vector2I targetSize
 	);
 
+	internal static IScalerInfo DefaultInfo => DefaultScaler.ScalerInfo.Instance;
+
 	internal static IScaler Default => new DefaultScaler.Scaler.ScalerInterface();
+
+	internal static IScalerInfo? CurrentInfo => SMConfig.Resample.Scaler switch {
+		Resampler.Scaler.xBRZ =>
+			Resample.Scalers.xBRZ.ScalerInfo.Instance,
+		Resampler.Scaler.SuperXBR =>
+			Resample.Scalers.SuperXBR.ScalerInfo.Instance,
+		Resampler.Scaler.EPX =>
+			Resample.Scalers.EPX.ScalerInfo.Instance,
+		Resampler.Scaler.Bilinear =>
+			throw new NotImplementedException("Bilinear scaling is not implemented"),
+		Resampler.Scaler.None => null,
+		_ =>
+			throw new InvalidOperationException($"Unknown Scaler Type: {SMConfig.Resample.Scaler}")
+	};
 
 	internal static IScaler Current => SMConfig.Resample.Scaler switch {
 		Resampler.Scaler.xBRZ =>

@@ -1,6 +1,8 @@
 ﻿using LinqFasterer;
 using Microsoft.Xna.Framework.Graphics;
 using Pastel;
+using SpriteMaster.Caching;
+using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
 using SpriteMaster.Resample;
@@ -252,7 +254,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool TryResurrect(SpriteInfo info, [NotNullWhen(true)] out ManagedSpriteInstance? resurrected) {
-// Check for a suspended sprite instance that happens to match.
+		// Check for a suspended sprite instance that happens to match.
 		if (!Config.SuspendedCache.Enabled) {
 			resurrected = null;
 			return false;
@@ -444,6 +446,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 	private readonly Vector2I originalSize;
 	private readonly Bounds SourceRectangle;
 	private readonly uint ExpectedScale;
+	internal IScalerInfo? ScalerInfo = null;
 	internal ulong SpriteMapHash { get; private set; }
 	private readonly uint ReferenceScale;
 	internal ManagedSpriteInstance? PreviousSpriteInstance = null;

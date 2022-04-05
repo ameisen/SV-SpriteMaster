@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using SpriteMaster.Configuration;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Harmonize.Patches.PSpriteBatch;

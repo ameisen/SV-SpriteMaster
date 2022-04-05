@@ -1,4 +1,4 @@
-﻿using SpriteMaster;
+﻿using SpriteMaster.Configuration;
 using SpriteMaster.Types;
 using System.Drawing.Imaging;
 using System.IO;

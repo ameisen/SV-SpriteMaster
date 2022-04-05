@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
+using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
 using SpriteMaster.Types;
@@ -148,7 +149,7 @@ static partial class OnDrawImpl {
 
 		var sourceRectangle = (Bounds)source.GetValueOrDefault(new(0, 0, texture.Width, texture.Height));
 
-		if (Config.Resample.TrimWater && SpriteOverrides.IsWater(sourceRectangle, texture)) {
+		if (SpriteOverrides.IsWater(sourceRectangle, texture)) {
 			scaleFactor = 4.0f;
 		}
 		else {

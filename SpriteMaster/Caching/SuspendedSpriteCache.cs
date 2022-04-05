@@ -1,4 +1,5 @@
-﻿using SpriteMaster.Extensions;
+﻿using SpriteMaster.Configuration;
+using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using System;
 using System.Collections.Generic;
@@ -6,7 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Caching;
 using System.Threading;
 
-namespace SpriteMaster;
+namespace SpriteMaster.Caching;
 
 [SMAPIConsole.Stats("suspended-sprite-cache")]
 static class SuspendedSpriteCache {
@@ -25,7 +26,7 @@ static class SuspendedSpriteCache {
 		while (totalCachedSize > Config.SuspendedCache.MaxCacheSize) {
 
 			// How much is needed to be reduced, with an additional safety of 25% or so?
-			var goal = (Config.SuspendedCache.MaxCacheSize * 0.75);
+			var goal = Config.SuspendedCache.MaxCacheSize * 0.75;
 			var multiplier = goal / totalCachedSize;
 			var percentageF = 1.0 - multiplier;
 			var percentageI = Math.Clamp((int)Math.Round(percentageF * 100.0), 1, 100);
@@ -55,12 +56,12 @@ static class SuspendedSpriteCache {
 		long totalCachedCount = Cache.Count;
 		while (totalCachedCount > Config.SuspendedCache.MaxCacheCount) {
 			// How much is needed to be reduced, with an additional safety of 25% or so?
-			var goal = (Config.SuspendedCache.MaxCacheCount * 0.75);
+			var goal = Config.SuspendedCache.MaxCacheCount * 0.75;
 			var multiplier = goal / totalCachedCount;
 			var percentageF = 1.0 - multiplier;
 			var percentageI = Math.Clamp((int)Math.Round(percentageF * 100.0) + percentageOffset, 1, 100);
 
-			Debug.Trace($"Trimming (Count) SuspendedSpriteCache: {percentageI}%, from {totalCachedCount} to {((long)Math.Round(goal))}");
+			Debug.Trace($"Trimming (Count) SuspendedSpriteCache: {percentageI}%, from {totalCachedCount} to {(long)Math.Round(goal)}");
 			Cache.Trim(percentageI);
 			var currentTotalCachedCount = Cache.Count;
 			if (currentTotalCachedCount == totalCachedCount) {
@@ -131,6 +132,7 @@ static class SuspendedSpriteCache {
 
 	internal static void Purge() {
 		Cache.Clear();
+		TotalCachedSize = 0L;
 	}
 
 	[SMAPIConsole.StatsMethod]

@@ -1,5 +1,5 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
-
+using SpriteMaster.Configuration;
 using System;
 using System.Runtime;
 using System.Runtime.CompilerServices;

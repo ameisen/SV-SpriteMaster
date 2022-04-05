@@ -1,4 +1,5 @@
-﻿using SpriteMaster.Extensions;
+﻿using SpriteMaster.Configuration;
+using SpriteMaster.Extensions;
 using StardewValley;
 using System.Collections.Concurrent;
 using System.Collections.Generic;

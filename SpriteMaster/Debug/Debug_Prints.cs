@@ -1,4 +1,5 @@
-﻿using StardewModdingAPI;
+﻿using SpriteMaster.Configuration;
+using StardewModdingAPI;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

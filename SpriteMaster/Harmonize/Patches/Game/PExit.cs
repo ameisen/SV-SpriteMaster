@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using SpriteMaster.Configuration;
+using System.Diagnostics;
 
 namespace SpriteMaster.Harmonize.Patches.Game;
 

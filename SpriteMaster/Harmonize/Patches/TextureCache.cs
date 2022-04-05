@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using Nito.Collections;
 using Pastel;
+using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using System;
@@ -232,6 +233,15 @@ static class TextureCache {
 					TextureCacheDeque.RemoveAt(dequeIndex);
 				}
 			}
+		}
+	}
+
+	internal static void Flush(bool reset = false) {
+		lock (Lock) {
+			TextureCacheDeque.Clear();
+			TextureCacheTable.Clear();
+			TexturePaths.Clear();
+			PremultipliedTable.Clear();
 		}
 	}
 }
