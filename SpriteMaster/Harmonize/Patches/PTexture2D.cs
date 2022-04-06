@@ -154,7 +154,7 @@ static class PTexture2D {
 
 		try {
 			if (!CheckDataChange(__instance, level, arraySlice, rect, data, startIndex, elementCount)) {
-				Debug.Warning($"SetData for '{__instance.NormalizedName()}' skipped; data unchanged ({rect?.ToString() ?? "null"})".Colorized(DrawingColor.LightGreen));
+				Debug.Trace($"SetData for '{__instance.NormalizedName()}' skipped; data unchanged ({rect?.ToString() ?? "null"})".Colorized(DrawingColor.LightGreen));
 				return false;
 			}
 		}

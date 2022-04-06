@@ -44,8 +44,18 @@ static class Command {
 		var output = new StringBuilder();
 		if (category.Children.Count != 0) {
 			output.AppendLine("Categories:");
+			int maxCategoryLength = int.MinValue;
 			foreach (var subCategory in category.Children) {
-				output.AppendLine($"\t{subCategory.Value.Name}");
+				maxCategoryLength = Math.Max(maxCategoryLength, subCategory.Value.Name.Length);
+			}
+			foreach (var subCategory in category.Children) {
+				var comment = subCategory.Value.Type.GetCustomAttribute<Attributes.CommentAttribute>();
+				if (comment is null) {
+					output.AppendLine($"\t{subCategory.Value.Name}");
+				}
+				else {
+					output.AppendLine($"\t{subCategory.Value.Name.PadRight(maxCategoryLength)} : {comment.Message}");
+				}
 			}
 			if (category.Fields.Count != 0) {
 				output.AppendLine();
@@ -53,8 +63,19 @@ static class Command {
 		}
 		if (category.Fields.Count != 0) {
 			output.AppendLine("Fields:");
+			int maxFieldLength = int.MinValue;
 			foreach (var field in category.Fields) {
-				output.AppendLine($"\t{field.Value.Name}");
+				maxFieldLength = Math.Max(maxFieldLength, field.Value.Name.Length);
+			}
+
+			foreach (var field in category.Fields) {
+				var comment = field.Value.GetCustomAttribute<Attributes.CommentAttribute>();
+				if (comment is null) {
+					output.AppendLine($"\t{field.Value.Name}");
+				}
+				else {
+					output.AppendLine($"\t{field.Value.Name.PadRight(maxFieldLength)} : {comment.Message}");
+				}
 			}
 		}
 		Debug.Info(output.ToString());
