@@ -8,8 +8,7 @@ partial struct Vector2F :
 	IComparable,
 	IComparable<Vector2F>,
 	IComparable<(float, float)>,
-	IComparable<XNA.Vector2>
-{
+	IComparable<XNA.Vector2> {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public readonly int CompareTo(Vector2F other) {
 		var result = X.CompareTo(other.X);

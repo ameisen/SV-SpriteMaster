@@ -25,7 +25,7 @@ static class Padding {
 			analysis.RepeatX | analysis.Wrapped.X | spriteSize.Width <= 1
 		);
 
-		Vector2B solidEdgeY= (
+		Vector2B solidEdgeY = (
 			analysis.RepeatY | analysis.Wrapped.Y | spriteSize.Height <= 1
 		);
 

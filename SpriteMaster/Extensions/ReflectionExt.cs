@@ -55,7 +55,7 @@ static partial class ReflectionExt {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	[DynamicallyAccessedMembers(AllFields)]
-	internal static bool TryGetField(this Type type, string name, [NotNullWhen(true)]  out FieldInfo? field) => type.TryGetField(name, out field, AllNonFlatBinding);
+	internal static bool TryGetField(this Type type, string name, [NotNullWhen(true)] out FieldInfo? field) => type.TryGetField(name, out field, AllNonFlatBinding);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	[DynamicallyAccessedMembers(AllProperties)]

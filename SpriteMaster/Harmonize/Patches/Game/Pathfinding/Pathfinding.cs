@@ -49,7 +49,7 @@ static partial class Pathfinding {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static bool GetTarget(this in DoorPair door, Dictionary<string, GameLocation?> locations, [NotNullWhen(true)]  out GameLocation? target) {
+	private static bool GetTarget(this in DoorPair door, Dictionary<string, GameLocation?> locations, [NotNullWhen(true)] out GameLocation? target) {
 		if (door.Value is null) {
 			target = null;
 			return false;

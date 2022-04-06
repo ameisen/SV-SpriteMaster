@@ -3,7 +3,7 @@
 namespace SpriteMaster.Resample.Scalers.SuperXBR.Cg;
 
 partial struct Float4 {
-	internal readonly unsafe ref Float3 XYZ => ref *(Float3 *)Unsafe.AsPointer(ref Unsafe.AsRef(this));
+	internal readonly unsafe ref Float3 XYZ => ref *(Float3*)Unsafe.AsPointer(ref Unsafe.AsRef(this));
 	internal readonly ref Float3 RGB => ref XYZ;
 
 	// 2 component

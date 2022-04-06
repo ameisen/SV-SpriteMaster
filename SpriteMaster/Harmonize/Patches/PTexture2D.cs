@@ -185,7 +185,7 @@ static class PTexture2D {
 		if (!Config.IsEnabled || !Config.SMAPI.ApplyGetDataPatch) {
 			return true;
 		}
-		
+
 		if (data is null) {
 			throw new ArgumentNullException(nameof(data));
 		}

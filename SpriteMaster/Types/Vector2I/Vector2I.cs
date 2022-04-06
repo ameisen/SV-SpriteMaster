@@ -93,7 +93,7 @@ unsafe partial struct Vector2I :
 	internal static Vector2I From(int X, int Y) => new(X, Y);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Vector2I(in (int X, int Y) vec) : this(vec.X, vec.Y) {}
+	internal Vector2I(in (int X, int Y) vec) : this(vec.X, vec.Y) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static Vector2I From(in (int X, int Y) vec) => new(vec.X, vec.Y);
@@ -135,7 +135,7 @@ unsafe partial struct Vector2I :
 	internal Vector2I(System.Drawing.Bitmap bmp) : this(bmp.Width, bmp.Height) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static implicit operator Vector2I(in (int X, int Y) vec) => new (vec.X, vec.Y);
+	public static implicit operator Vector2I(in (int X, int Y) vec) => new(vec.X, vec.Y);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static implicit operator (int X, int Y)(Vector2I vec) => (vec.X, vec.Y);

@@ -33,7 +33,7 @@ static class TeximpBlockEncoder {
 		}
 
 		var oldSpriteFormat = format;
-		
+
 		try {
 			using var compressor = new Compressor();
 			compressor.Input.AlphaMode = (hasAlpha) ? AlphaMode.Premultiplied : AlphaMode.None;

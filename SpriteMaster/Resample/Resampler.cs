@@ -424,7 +424,7 @@ sealed class Resampler {
 
 		if (!padding.IsZero) {
 			// Trim excess padding
-			
+
 			// Check initial rows
 			// Check ending rows
 

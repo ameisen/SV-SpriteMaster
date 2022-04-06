@@ -246,11 +246,10 @@ static class Textures {
 		in double? adjustGamma = null,
 		in Bounds? destBounds = null,
 		in (int i0, int i1, int i2, int i3)? swap = null
-	) 
+	)
 		where ColorT : unmanaged
 		where RawT : unmanaged
-		where UnderlyingT : unmanaged
-	{
+		where UnderlyingT : unmanaged {
 		if (format.IsBlock()) {
 			if (destBounds is not null) {
 				throw new ArgumentException($"{nameof(destBounds)} must be null if {nameof(format)} ({format}) is compressed");

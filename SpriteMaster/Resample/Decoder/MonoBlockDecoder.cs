@@ -16,7 +16,7 @@ static class MonoBlockDecoder {
 	internal static readonly DecompressDelegateStream? DecompressDXT1Stream = GetDelegate<DecompressDelegateStream>("DecompressDxt1");
 
 	internal static readonly DecompressDelegateArray? DecompressDXT3Array = GetDelegate<DecompressDelegateArray>("DecompressDxt3");
-	internal static readonly DecompressDelegateStream ?DecompressDXT3Stream = GetDelegate<DecompressDelegateStream>("DecompressDxt3");
+	internal static readonly DecompressDelegateStream? DecompressDXT3Stream = GetDelegate<DecompressDelegateStream>("DecompressDxt3");
 
 	internal static readonly DecompressDelegateArray? DecompressDXT5Array = GetDelegate<DecompressDelegateArray>("DecompressDxt5");
 	internal static readonly DecompressDelegateStream? DecompressDXT5Stream = GetDelegate<DecompressDelegateStream>("DecompressDxt5");

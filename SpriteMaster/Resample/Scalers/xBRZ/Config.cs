@@ -33,7 +33,7 @@ sealed class Config : Resample.Scalers.Config {
 		wrapped: wrapped,
 		hasAlpha: hasAlpha,
 		gammaCorrected: gammaCorrected
-	){
+	) {
 		EqualColorTolerance = equalColorTolerance << 8;
 		DominantDirectionThreshold = dominantDirectionThreshold;
 		SteepDirectionThreshold = steepDirectionThreshold;

@@ -7,7 +7,7 @@ using System.Security;
 
 namespace SpriteMaster.Types;
 
-sealed class WeakSet<T> : 
+sealed class WeakSet<T> :
 	IEnumerable<T>,
 	IEnumerable,
 	ICollection<T>,

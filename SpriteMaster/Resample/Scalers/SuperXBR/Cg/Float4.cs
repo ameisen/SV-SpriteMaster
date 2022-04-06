@@ -49,7 +49,7 @@ partial struct Float4 {
 
 	public Float4() { }
 
-	internal Float4(in Float4 value) : this(value.Value) {}
+	internal Float4(in Float4 value) : this(value.Value) { }
 	internal Float4(in Vector4 value) => Value = value;
 	internal Float4(in Vector3 xyz, float w) : this(new Vector4(xyz, w)) { }
 	internal Float4(in Float3 xyz, float w) : this(new Vector4(xyz.X, xyz.Y, xyz.Z, w)) { }

@@ -6,8 +6,7 @@ namespace SpriteMaster.Types;
 partial struct Vector2F :
 	IEquatable<Vector2F>,
 	IEquatable<(float, float)>,
-	IEquatable<XNA.Vector2>
-{
+	IEquatable<XNA.Vector2> {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public readonly override bool Equals(object? other) => other switch {
 		Vector2F vec => Equals(vec),

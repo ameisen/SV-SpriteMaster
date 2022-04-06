@@ -8,7 +8,7 @@ sealed class Config : Scalers.Config {
 
 	// default, minimum, maximum, optional step
 
-	internal readonly float EdgeStrength; 
+	internal readonly float EdgeStrength;
 	internal readonly float Weight;
 	internal readonly float EdgeShape;
 	internal readonly float TextureShape;
@@ -28,7 +28,7 @@ sealed class Config : Scalers.Config {
 		wrapped: wrapped,
 		hasAlpha: hasAlpha,
 		gammaCorrected: gammaCorrected
-	){
+	) {
 		EdgeStrength = edgeStrength;
 		Weight = weight;
 		EdgeShape = edgeShape;

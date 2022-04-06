@@ -12,8 +12,7 @@ partial struct VolatileBool :
 	IEquatable<VolatileBool?>,
 	IEquatable<VolatileBool>,
 	IEquatable<bool?>,
-	IEquatable<bool>
-{
+	IEquatable<bool> {
 	#region Comparable
 
 	readonly int IComparable.CompareTo(object? obj) => obj switch {

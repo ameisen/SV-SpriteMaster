@@ -81,7 +81,7 @@ sealed class ManagedTexture2D : InternalTexture2D {
 
 		if (Reference.TryGetTarget(out var reference)) {
 			reference.Disposing -= OnParentDispose;
-}
+		}
 
 		Garbage.UnmarkOwned(Format, Width * Height);
 		Interlocked.Add(ref TotalAllocatedSize, (ulong)-this.SizeBytes());

@@ -26,7 +26,7 @@ static class GLTexture {
 	private static readonly Func<Texture, Enum>? GetGLType = TextureType.GetFieldGetter<Texture, Enum>("glType");
 	private static readonly Action<Texture, Enum>? SetGLType = TextureType.GetFieldSetter<Texture, Enum>("glType");
 
-	private static readonly ConstructorInfo? Texture2DConstructor = 
+	private static readonly ConstructorInfo? Texture2DConstructor =
 		Texture2DType.GetConstructor(
 			BindingFlags.NonPublic | BindingFlags.Instance,
 			null,

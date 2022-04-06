@@ -19,11 +19,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace SpriteMaster;
@@ -122,7 +120,7 @@ public sealed class SpriteMaster : Mod {
 	}
 
 	private static readonly Dictionary<string, (Action<string, Queue<string>> Action, string Description)> ConsoleCommandMap = new() {
-		{ "help", ((_, _) => ConsoleHelp(null), "Prints this command guide") }, 
+		{ "help", ((_, _) => ConsoleHelp(null), "Prints this command guide") },
 		{ "all-stats", ((_, _) => DumpAllStats(), "Dump Statistics") },
 		{ "memory", ((_, _) => Debug.DumpMemory(), "Dump Memory") },
 		{ "gc", ((_, _) => ConsoleTriggerGC(), "Trigger full GC") },

@@ -1,5 +1,4 @@
-﻿using Microsoft.Toolkit.HighPerformance;
-using SpriteMaster.Extensions;
+﻿using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using StardewValley;
 using System;
@@ -87,7 +86,7 @@ static partial class Debug {
 			}
 
 			var invariantMode = mode.ToLowerInvariant();
-			
+
 			switch (invariantMode) {
 				case "off":
 				case "0":

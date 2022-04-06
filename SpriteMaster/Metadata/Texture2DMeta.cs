@@ -8,7 +8,6 @@ using SpriteMaster.Types.Interlocking;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -33,8 +32,8 @@ sealed class Texture2DMeta : IDisposable {
 	private sealed class SpriteData {
 		internal ulong? Hash = null;
 		internal SpriteFlag Flags = SpriteFlag.None;
-	
-		public SpriteData() {}
+
+		public SpriteData() { }
 	}
 
 	private readonly ConcurrentDictionary<Bounds, SpriteData> SpriteDataMap = new();
@@ -143,7 +142,7 @@ sealed class Texture2DMeta : IDisposable {
 	private string? NormalizedName {
 		get {
 			if (_NormalizedName is null) {
-				 if (Owner.TryGetTarget(out var owner)) {
+				if (Owner.TryGetTarget(out var owner)) {
 					_NormalizedName = owner?.NormalizedNameOrNull();
 				}
 			}
@@ -317,9 +316,9 @@ sealed class Texture2DMeta : IDisposable {
 			}
 
 			using (var locked = Lock.TryRead) if (locked) {
-				_CachedRawData.TryGetTarget(out var target);
-				return target;
-			}
+					_CachedRawData.TryGetTarget(out var target);
+					return target;
+				}
 			return BlockedSentinel;
 		}
 	}

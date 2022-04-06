@@ -197,7 +197,7 @@ static class SpriteMap {
 			//if (spriteInstance.Texture is not null && !spriteInstance.Texture.IsDisposed) {
 			//	Debug.Trace($"Disposing Active HD Texture: {spriteInstance.SafeName()}");
 
-				//spriteInstance.Texture.Dispose();
+			//spriteInstance.Texture.Dispose();
 			//}
 		}
 	}
@@ -247,7 +247,7 @@ static class SpriteMap {
 					foreach (var instance in nullTextures) {
 						instance.Dispose();
 					}
-					
+
 					if (hasSourceRect) {
 						foreach (var hash in removeTexture) {
 							meta.RemoveFromSpriteInstanceTable(hash, dispose: false, out var instance);
@@ -298,7 +298,7 @@ static class SpriteMap {
 		catch { }
 	}
 
-	private static readonly string[] Seasons = new [] {
+	private static readonly string[] Seasons = new[] {
 		"spring",
 		"summer",
 		"fall",

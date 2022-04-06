@@ -62,7 +62,7 @@ static class PreviewProgram {
 		uint scale = Scale;
 		var spriteSize = SpriteSize;
 		var scaledSize = spriteSize * scale;
-		
+
 		var spriteDataArray = SpriteData!.Clone() as Color16[];
 		var spriteData = spriteDataArray.AsSpan();
 		if (GammaCorrection)

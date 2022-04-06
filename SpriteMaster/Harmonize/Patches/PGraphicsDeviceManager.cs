@@ -76,26 +76,28 @@ static class PGraphicsDeviceManager {
 
 			switch (method?.Name) {
 				case "SetWindowSize": {
-					__state = true;
-					GraphicsDevice? device = null;
-					if (!LastGraphicsDevice?.TryGetTarget(out device) ?? true) {
-						return;
-					}
-
-					if (device is null) {
+						__state = true;
+						GraphicsDevice? device = null;
+						if (!LastGraphicsDevice?.TryGetTarget(out device) ?? true) {
 							return;
-					}
+						}
 
-					preferredMultiSampleCount = (Config.DrawState.MSAASamples > 1) ? Config.DrawState.MSAASamples : 0;
-					preferredDepthFormat = device.PresentationParameters.DepthStencilFormat;
-					preferredFormat = device.PresentationParameters.BackBufferFormat;
-				} return;
+						if (device is null) {
+							return;
+						}
+
+						preferredMultiSampleCount = (Config.DrawState.MSAASamples > 1) ? Config.DrawState.MSAASamples : 0;
+						preferredDepthFormat = device.PresentationParameters.DepthStencilFormat;
+						preferredFormat = device.PresentationParameters.BackBufferFormat;
+					}
+					return;
 
 				case "Initialize":
 				case "allocateLightmap":
 				case "takeMapScreenshot": {
-					__state = true;
-				} return;
+						__state = true;
+					}
+					return;
 			}
 		}
 
