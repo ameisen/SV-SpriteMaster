@@ -472,13 +472,17 @@ static class Config {
 				@"TerrainFeatures\tree3_winter",
 			};
 		}
-		internal static class xBRZ {
-			[Attributes.Comment("The weight provided to luminance as opposed to chrominance when performing color comparisons")]
-			[Attributes.Options(Attributes.Options.Flag.FlushAllInternalCaches)]
-			internal static double LuminanceWeight = 1.0;
+		[Attributes.Comment("Settings common to all scalers")]
+		internal static class Common {
 			[Attributes.Comment("The tolerance for colors to be considered equal - [0, 256)")]
 			[Attributes.Options(Attributes.Options.Flag.FlushAllInternalCaches)]
 			internal static uint EqualColorTolerance = 20;
+			[Attributes.Comment("The weight provided to luminance as opposed to chrominance when performing color comparisons")]
+			[Attributes.Options(Attributes.Options.Flag.FlushAllInternalCaches)]
+			internal static double LuminanceWeight = 1.0;
+		}
+
+		internal static class xBRZ {
 			[Attributes.Comment("The threshold for a corner-direction to be considered 'dominant'")]
 			[Attributes.Options(Attributes.Options.Flag.FlushAllInternalCaches)]
 			internal static double DominantDirectionThreshold = 4.4;

@@ -19,7 +19,10 @@ sealed partial class Scaler {
 		public Resample.Scalers.Config CreateConfig(Vector2B wrapped, bool hasAlpha, bool gammaCorrected) => new Config(
 			wrapped: wrapped,
 			hasAlpha: hasAlpha,
-			gammaCorrected: gammaCorrected
+			luminanceWeight: SMConfig.Resample.Common.LuminanceWeight,
+			gammaCorrected: gammaCorrected,
+			equalColorTolerance: SMConfig.Resample.Common.EqualColorTolerance,
+			useRedmean: SMConfig.Resample.UseRedmean
 		);
 	}
 }

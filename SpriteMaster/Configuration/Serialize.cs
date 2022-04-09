@@ -477,7 +477,7 @@ static class Serialize {
 					}
 				}
 				foreach (var enumNames in enumMap) {
-					var enumName = string.Join('/', enumNames);
+					var enumName = string.Join('/', enumNames.Value);
 					if (currentLine.Length > 0) {
 						currentLine.Append(", ");
 					}

@@ -54,7 +54,6 @@
 		<PackageReference Include="FastExpressionCompiler.LightExpression" Version="3.2.2" />
 		<PackageReference Include="ILRepack" Version="2.1.0-beta1" GeneratePathProperty="true" ExcludeAssets="all" />
 		<PackageReference Include="LinqFasterer" Version="2.1.0" />
-		<PackageReference Include="LZMA-SDK" Version="19.0.0" />
 		<PackageReference Include="Microsoft.Toolkit.HighPerformance" Version="7.1.2" />
 		<PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" ExcludeAssets="all" />
 		<PackageReference Include="Nito.Collections.Deque" Version="1.1.1" />

@@ -11,8 +11,8 @@ static class PreviewProgram {
 	internal static bool GammaCorrection = false;
 	internal static bool AlphaPremultiplication = true;
 	internal static uint Scale = 1;
-	internal static double LuminanceWeight = Config.Resample.xBRZ.LuminanceWeight;
-	internal static uint EqualColorTolerance = Config.Resample.xBRZ.EqualColorTolerance;
+	internal static double LuminanceWeight = Config.Resample.Common.LuminanceWeight;
+	internal static uint EqualColorTolerance = Config.Resample.Common.EqualColorTolerance;
 	internal static double DominantDirectionThreshold = Config.Resample.xBRZ.DominantDirectionThreshold;
 	internal static double SteepDirectionThreshold = Config.Resample.xBRZ.SteepDirectionThreshold;
 	internal static double CenterDirectionBias = Config.Resample.xBRZ.CenterDirectionBias;

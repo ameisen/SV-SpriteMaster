@@ -10,7 +10,6 @@ static class Compression {
 		None = 0,
 		Compress,
 		Deflate,
-		LZMA,
 		Zstd,
 		Best = Zstd,
 	}
@@ -25,7 +24,6 @@ static class Compression {
 			bool supported = algorithm switch {
 				Algorithm.Compress => Compressors.SystemIO.IsSupported,
 				Algorithm.Deflate => Compressors.Deflate.IsSupported,
-				Algorithm.LZMA => Compressors.LZMA.IsSupported,
 				Algorithm.Zstd => Compressors.Zstd.IsSupported,
 				_ => false
 			};
@@ -43,7 +41,6 @@ static class Compression {
 		Algorithm.None => data,
 		Algorithm.Compress => Compressors.SystemIO.Compress(data),
 		Algorithm.Deflate => Compressors.Deflate.Compress(data),
-		Algorithm.LZMA => Compressors.LZMA.Compress(data),
 		Algorithm.Zstd => Compressors.Zstd.Compress(data),
 		_ => throw new Exception($"Unknown Compression Algorithm: '{algorithm}'"),
 	};
@@ -53,7 +50,6 @@ static class Compression {
 		Algorithm.None => data.ToArray(),
 		Algorithm.Compress => Compressors.SystemIO.Compress(data),
 		Algorithm.Deflate => Compressors.Deflate.Compress(data),
-		Algorithm.LZMA => Compressors.LZMA.Compress(data),
 		Algorithm.Zstd => Compressors.Zstd.Compress(data),
 		_ => throw new Exception($"Unknown Compression Algorithm: '{algorithm}'"),
 	};
@@ -80,7 +76,6 @@ static class Compression {
 			Algorithm.None => data,
 			Algorithm.Compress => Compressors.SystemIO.Decompress(data, size),
 			Algorithm.Deflate => Compressors.Deflate.Decompress(data, size),
-			Algorithm.LZMA => Compressors.LZMA.Decompress(data, size),
 			Algorithm.Zstd => Compressors.Zstd.Decompress(data, size),
 			_ => throw new Exception($"Unknown Compression Algorithm: '{algorithm}'"),
 		};
@@ -96,7 +91,6 @@ static class Compression {
 		Algorithm.None => data,
 		Algorithm.Compress => Compressors.SystemIO.Decompress(data),
 		Algorithm.Deflate => Compressors.Deflate.Decompress(data),
-		Algorithm.LZMA => Compressors.LZMA.Decompress(data),
 		Algorithm.Zstd => Compressors.Zstd.Decompress(data),
 		_ => throw new Exception($"Unknown Compression Algorithm: '{algorithm}'"),
 	};

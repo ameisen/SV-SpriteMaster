@@ -19,9 +19,9 @@ sealed partial class Scaler {
 		public Resample.Scalers.Config CreateConfig(Vector2B wrapped, bool hasAlpha, bool gammaCorrected) => new Config(
 			wrapped: wrapped,
 			hasAlpha: hasAlpha,
-			luminanceWeight: SMConfig.Resample.xBRZ.LuminanceWeight,
+			luminanceWeight: SMConfig.Resample.Common.LuminanceWeight,
 			gammaCorrected: gammaCorrected,
-			equalColorTolerance: SMConfig.Resample.xBRZ.EqualColorTolerance,
+			equalColorTolerance: SMConfig.Resample.Common.EqualColorTolerance,
 			dominantDirectionThreshold: SMConfig.Resample.xBRZ.DominantDirectionThreshold,
 			steepDirectionThreshold: SMConfig.Resample.xBRZ.SteepDirectionThreshold,
 			centerDirectionBias: SMConfig.Resample.xBRZ.CenterDirectionBias,

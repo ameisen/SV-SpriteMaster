@@ -186,7 +186,7 @@ static class Command {
 			field.SetValue(null, value);
 		}
 		else if (field.FieldType.IsEnum) {
-			var enumValue = Enum.Parse(field.FieldType, value);
+			var enumValue = Enum.Parse(field.FieldType, value, true);
 			field.SetValue(null, enumValue);
 		}
 		else if (
