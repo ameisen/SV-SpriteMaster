@@ -10,6 +10,7 @@ using SpriteMaster.Tasking;
 using SpriteMaster.Types;
 using SpriteMaster.Types.Fixed;
 using System;
+using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -174,19 +175,17 @@ sealed class Resampler {
 				throw new NotImplementedException("Unknown Texture Type provided");
 		}
 
-		if (input.Reference.Format.IsCompressed()) {
-			throw new InvalidOperationException($"Compressed texture '{input.Reference.NormalizedName()}' reached Resampler");
-		}
-
 		// Water in the game is pre-upscaled by 4... which is weird.
 		int blockSize = 1;
 		if (input.IsWater || input.Reference == StardewValley.Game1.rainTexture) {
 			blockSize = WaterBlock;
 		}
+		/*
 		else if (input.IsFont && FontBlock != 1) {
 			blockSize = FontBlock;
 			scale = Config.Resample.MaxScale;
 		}
+		*/
 		else if (SMConfig.Resample.FourXTextures.AnyF(prefix => input.Reference.NormalizedName().StartsWith(prefix))) {
 			blockSize = 4;
 		}
@@ -224,6 +223,15 @@ sealed class Resampler {
 			newExtent: out Vector2I spriteRawExtent
 		);
 		var innerSpriteRawExtent = spriteRawExtent;
+
+		if (Config.Debug.Sprite.DumpReference) {
+			Textures.DumpTexture(
+				source: spriteRawData8,
+				sourceSize: spriteRawExtent,
+				destBounds: spriteRawExtent,
+				path: MakeDumpPath(modifiers: new[] { "reference", "reduced" })
+			);
+		}
 
 		// At this point, rawData includes just the sprite's raw data.
 
@@ -345,6 +353,7 @@ sealed class Resampler {
 					spriteSize: spriteRawExtent,
 					scale: scale,
 					input: input,
+					forcePadding: input.IsFont || input.Reference.Format.IsCompressed(),
 					analysis: analysis,
 					padding: out padding,
 					paddedSize: out spriteRawExtent
@@ -471,8 +480,15 @@ sealed class Resampler {
 			);
 		}
 
+		bool doRecompress = true;
+
+		// if the texture was originally compressed, do not recompress it for now. There seems to be a bug in the compressor in these cases.
+		//if (input.Reference.Format.IsCompressed()) {
+		//	doRecompress = false;
+		//}
+
 		// TODO : For some reason, block compression gives incorrect results with EPX. I need to investigate this at some point.
-		if (Config.Resample.BlockCompression.Enabled && scaledSizeClamped.MinOf >= 4 && (scalerInfo?.BlockCompress ?? true)) {
+		if (Config.Resample.BlockCompression.Enabled && doRecompress && scaledSizeClamped.MinOf >= 4 && (scalerInfo?.BlockCompress ?? true)) {
 			// TODO : We can technically allocate the block padding before the scaling phase, and pass it a stride
 			// so it will just ignore the padding areas. That would be more efficient than this.
 
@@ -650,7 +666,6 @@ sealed class Resampler {
 		}
 
 		var hashString = hash.ToString("x");
-		var cachePath = FileCache.GetPath($"{hashString}.cache");
 
 		var inputSize = input.TextureType switch {
 			TextureType.Sprite => input.Bounds.Extent,
@@ -665,15 +680,18 @@ sealed class Resampler {
 		try {
 			var newSize = Vector2I.Zero;
 
+			var cachePath = FileCache.GetPath($"{hashString}.cache");
+
 			try {
 				if (FileCache.Fetch(
 					path: cachePath,
-					refScale: out var fetchScale,
+					scale: out var fetchScale,
 					size: out newSize,
 					format: out spriteFormat,
 					wrapped: out wrapped,
 					padding: out spriteInstance.Padding,
 					blockPadding: out spriteInstance.BlockPadding,
+					scalerInfo: out spriteInstance.ScalerInfo,
 					data: out bitmapData
 				)) {
 					scale = fetchScale;
@@ -687,7 +705,7 @@ sealed class Resampler {
 				bitmapData = null;
 			}
 
-			if (bitmapData == null) {
+			if (bitmapData.IsEmpty) {
 				try {
 					bitmapData = CreateNewTexture(
 						async: async,
@@ -714,7 +732,17 @@ sealed class Resampler {
 				}
 
 				try {
-					FileCache.Save(cachePath, scale, newSize, spriteFormat, wrapped, spriteInstance.Padding, spriteInstance.BlockPadding, bitmapData);
+					FileCache.Save(
+						path: cachePath,
+						scale: scale,
+						size: newSize,
+						format: spriteFormat,
+						wrapped: wrapped,
+						padding: spriteInstance.Padding,
+						blockPadding: spriteInstance.BlockPadding,
+						scalerInfo: spriteInstance.ScalerInfo,
+						data: bitmapData
+					);
 				}
 				catch { }
 			}

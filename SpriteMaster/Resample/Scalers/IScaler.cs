@@ -29,7 +29,7 @@ interface IScaler {
 
 	internal static IScaler Default => new DefaultScaler.Scaler.ScalerInterface();
 
-	internal static IScalerInfo? CurrentInfo => SMConfig.Resample.Scaler switch {
+	internal static IScalerInfo? GetScalerInfo(Resampler.Scaler scaler) => scaler switch {
 		Resampler.Scaler.xBRZ =>
 			Resample.Scalers.xBRZ.ScalerInfo.Instance,
 		Resampler.Scaler.SuperXBR =>
@@ -42,6 +42,8 @@ interface IScaler {
 		_ =>
 			throw new InvalidOperationException($"Unknown Scaler Type: {SMConfig.Resample.Scaler}")
 	};
+
+	internal static IScalerInfo? CurrentInfo => GetScalerInfo(SMConfig.Resample.Scaler);
 
 	internal static IScaler Current => SMConfig.Resample.Scaler switch {
 		Resampler.Scaler.xBRZ =>
