@@ -8,9 +8,11 @@ using SpriteMaster.Types.Interlocking;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using System.Threading.Tasks;
 using SpriteDictionary = System.Collections.Generic.Dictionary<ulong, SpriteMaster.ManagedSpriteInstance>;
 
 namespace SpriteMaster.Metadata;
@@ -38,6 +40,9 @@ sealed class Texture2DMeta : IDisposable {
 
 	private readonly ConcurrentDictionary<Bounds, SpriteData> SpriteDataMap = new();
 	private static readonly ConcurrentDictionary<string, ConcurrentDictionary<Bounds, SpriteData>> GlobalSpriteDataMaps = new();
+
+	internal readonly record struct InFlightData(long Revision, Task ResampleTask);
+	internal readonly ConcurrentDictionary<Bounds, InFlightData> InFlightTasks = new();
 
 	internal IReadOnlyDictionary<ulong, ManagedSpriteInstance> GetSpriteInstanceTable() => SpriteInstanceTable;
 
@@ -164,12 +169,15 @@ sealed class Texture2DMeta : IDisposable {
 	internal bool IsSystemRenderTarget = false;
 	internal readonly bool IsCompressed = false;
 	internal ReportOnceErrors ReportedErrors = 0;
+	internal long Revision { get; private set; } = 0;
 	internal readonly SurfaceFormat Format;
 	internal readonly Vector2I Size;
 	internal readonly WeakReference<Texture2D> Owner;
 
 	internal InterlockedULong LastAccessFrame { get; private set; } = (ulong)DrawState.CurrentFrame;
 	internal InterlockedULong Hash { get; private set; } = 0;
+
+	internal void IncrementRevision() => ++Revision;
 
 	internal Texture2DMeta(Texture2D texture) {
 		Owner = texture.MakeWeak();
@@ -205,6 +213,7 @@ sealed class Texture2DMeta : IDisposable {
 		using (Lock.Write) {
 			ClearSpriteInstanceTable();
 			CachedRawData = null;
+			InFlightTasks.Clear();
 		}
 	}
 
