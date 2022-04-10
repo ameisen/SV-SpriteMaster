@@ -16,7 +16,10 @@ using TeximpNet.Compression;
 
 namespace SpriteMaster.Configuration;
 static class Config {
-	internal static readonly string ModuleName = typeof(SMConfig).Namespace ?? "SpriteMaster";
+	internal static readonly string ModuleName = typeof(SMConfig).Namespace?.Split('.')?.ElementAtOrDefault(0) ?? "SpriteMaster";
+
+	internal static string Path { get; private set; } = null!;
+	internal static void SetPath(string path) => Path = path;
 
 	internal const bool IgnoreConfig = false ||
 #if DEBUG
@@ -109,7 +112,7 @@ static class Config {
 	internal const bool IsRelease = BuildConfiguration == Configuration.Release;
 
 	[Attributes.Ignore]
-	internal static readonly string LocalRootDefault = Path.Combine(
+	internal static readonly string LocalRootDefault = System.IO.Path.Combine(
 		Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
 		"StardewValley",
 		"Mods",

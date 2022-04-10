@@ -31,6 +31,13 @@ static class Command {
 			case "s":
 				Set(arguments);
 				break;
+			case "load":
+				Load(arguments);
+				break;
+			case "save":
+			case "commit":
+				Save(arguments);
+				break;
 		}
 	}
 
@@ -182,6 +189,42 @@ static class Command {
 			return;
 		}
 
+		SetValue(field, value);
+	}
+
+	internal static void OnSetValue(FieldInfo field) {
+		var options = field.GetCustomAttribute<Attributes.Options>();
+		if (options is null) {
+			return;
+		}
+
+		if (options.Flags.HasFlag(Attributes.Options.Flag.FlushTextureCache)) {
+			Harmonize.Patches.TextureCache.Flush(reset: true);
+		}
+		if (options.Flags.HasFlag(Attributes.Options.Flag.FlushSuspendedSpriteCache)) {
+			Caching.SuspendedSpriteCache.Purge();
+		}
+		if (options.Flags.HasFlag(Attributes.Options.Flag.FlushFileCache)) {
+			Caching.FileCache.Purge(reset: true);
+		}
+		if (options.Flags.HasFlag(Attributes.Options.Flag.FlushResidentCache)) {
+			Caching.ResidentCache.Purge();
+		}
+		if (options.Flags.HasFlag(Attributes.Options.Flag.ResetDisplay)) {
+			// TODO
+		}
+		if (options.Flags.HasFlag(Attributes.Options.Flag.GarbageCollect)) {
+			Extensions.Garbage.Collect(compact: true, blocking: true, background: false);
+		}
+		if (options.Flags.HasFlag(Attributes.Options.Flag.FlushMetaData)) {
+			Metadata.Metadata.Purge();
+		}
+		if (options.Flags.HasFlag(Attributes.Options.Flag.GarbageCollect)) {
+			Extensions.Garbage.Collect(compact: true, blocking: true, background: false);
+		}
+	}
+
+	internal static void SetValue(FieldInfo field, string value) {
 		if (field.FieldType == typeof(string)) {
 			field.SetValue(null, value);
 		}
@@ -221,32 +264,42 @@ static class Command {
 			throw new NotImplementedException($"Type not yet implemented: {field.FieldType}");
 		}
 
-		var options = field.GetCustomAttribute<Attributes.Options>();
-		if (options is not null) {
-			if (options.Flags.HasFlag(Attributes.Options.Flag.FlushTextureCache)) {
-				Harmonize.Patches.TextureCache.Flush(reset: true);
-			}
-			if (options.Flags.HasFlag(Attributes.Options.Flag.FlushSuspendedSpriteCache)) {
-				Caching.SuspendedSpriteCache.Purge();
-			}
-			if (options.Flags.HasFlag(Attributes.Options.Flag.FlushFileCache)) {
-				Caching.FileCache.Purge(reset: true);
-			}
-			if (options.Flags.HasFlag(Attributes.Options.Flag.FlushResidentCache)) {
-				Caching.ResidentCache.Purge();
-			}
-			if (options.Flags.HasFlag(Attributes.Options.Flag.ResetDisplay)) {
-				// TODO
-			}
-			if (options.Flags.HasFlag(Attributes.Options.Flag.GarbageCollect)) {
-				Extensions.Garbage.Collect(compact: true, blocking: true, background: false);
-			}
-			if (options.Flags.HasFlag(Attributes.Options.Flag.FlushMetaData)) {
-				Metadata.Metadata.Purge();
-			}
-			if (options.Flags.HasFlag(Attributes.Options.Flag.GarbageCollect)) {
-				Extensions.Garbage.Collect(compact: true, blocking: true, background: false);
-			}
+		OnSetValue(field);
+	}
+
+	private static void Load(Queue<string> arguments) {
+		string path = Configuration.Config.Path;
+		if (arguments.Count > 1) {
+			throw new ArgumentException($"Too many arguments for load: expected 0 or 1, found {arguments.Count}");
 		}
+		if (arguments.Count == 1) {
+			path = arguments.Dequeue();
+		}
+
+		LoadConfig(path, retain: true);
+	}
+
+	internal static bool LoadConfig(string? path, bool retain = true) {
+		path ??= Configuration.Config.Path;
+
+		return Serialize.Load(path, retain);
+	}
+
+	private static void Save(Queue<string> arguments) {
+		string path = Configuration.Config.Path;
+		if (arguments.Count > 1) {
+			throw new ArgumentException($"Too many arguments for save: expected 0 or 1, found {arguments.Count}");
+		}
+		if (arguments.Count == 1) {
+			path = arguments.Dequeue();
+		}
+
+		SaveConfig(path);
+	}
+
+	internal static bool SaveConfig(string? path) {
+		path ??= Configuration.Config.Path;
+
+		return Serialize.Save(path);
 	}
 }

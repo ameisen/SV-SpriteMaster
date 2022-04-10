@@ -201,13 +201,13 @@ public sealed class SpriteMaster : Mod {
 
 		ConfigureHarmony();
 
-		var ConfigPath = Path.Combine(help.DirectoryPath, ConfigName);
+		Configuration.Config.SetPath(Path.Combine(help.DirectoryPath, ConfigName));
 
 		using (var tempStream = new MemoryStream()) {
 			Serialize.Save(tempStream);
 
 			if (!Config.IgnoreConfig) {
-				Serialize.Load(ConfigPath);
+				Serialize.Load(Configuration.Config.Path);
 			}
 
 			if (IsVersionOutdated(Config.ConfigVersion)) {
@@ -277,7 +277,7 @@ public sealed class SpriteMaster : Mod {
 			Config.ShowIntroMessage = false;
 		}
 
-		Serialize.Save(ConfigPath);
+		Serialize.Save(Configuration.Config.Path);
 
 		help.Events.Input.ButtonPressed += OnButtonPressed;
 
