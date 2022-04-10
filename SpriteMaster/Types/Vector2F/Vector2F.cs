@@ -103,6 +103,21 @@ unsafe partial struct Vector2F : ILongHash, ICloneable {
 	internal Vector2F(SystemVector2 v) => NumericVector = v;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal Vector2F(DrawingPoint v) : this(v.X, v.Y) { }
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal Vector2F(XNA.Point v) : this(v.X, v.Y) { }
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal Vector2F(XTilePoint v) : this(v.X, v.Y) { }
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal Vector2F(DrawingSize v) : this(v.Width, v.Height) { }
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal Vector2F(XTileSize v) : this(v.Width, v.Height) { }
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal void Set(float x, float y) => NumericVector = new(x, y);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -143,6 +158,21 @@ unsafe partial struct Vector2F : ILongHash, ICloneable {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static implicit operator SystemVector2(Vector2F vec) => vec.NumericVector;
+	  
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	public static implicit operator Vector2F(DrawingPoint vec) => new(vec);
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	public static implicit operator Vector2F(XNA.Point vec) => new(vec);
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	public static implicit operator Vector2F(XTilePoint vec) => new(vec);
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	public static implicit operator Vector2F(DrawingSize vec) => new(vec);
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	public static implicit operator Vector2F(XTileSize vec) => new(vec);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal readonly Vector2F Min() => new(MathF.Min(X, Y));
