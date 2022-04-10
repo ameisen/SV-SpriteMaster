@@ -313,7 +313,7 @@ public sealed class SpriteMaster : Mod {
 		help.Events.GameLoop.Saved += (_, _) => OnSaveFinish();
 		help.Events.Display.WindowResized += (_, args) => OnWindowResized(args);
 		help.Events.Player.Warped += (_, _) => {
-			ForceGarbageCollect();
+			ForceGarbageCollectConcurrent();
 		};
 		help.Events.Specialized.LoadStageChanged += (_, args) => {
 			switch (args.NewStage) {
@@ -551,7 +551,7 @@ public sealed class SpriteMaster : Mod {
 	}
 
 	private static void ForceGarbageCollectConcurrent() {
-		Garbage.Collect(compact: false, blocking: false, background: false);
+		Garbage.Collect(compact: false, blocking: false, background: true);
 	}
 
 	private void ConfigureHarmony() {
