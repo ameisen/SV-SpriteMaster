@@ -25,10 +25,11 @@ static class PTexture2D {
 	// Always returns a duplicate of the array, since we do not own the source array.
 	// It performs a shallow copy, which is fine.
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static unsafe byte[] GetByteArray<T>(T[] data, out int typeSize) where T : struct {
+	private static unsafe byte[] GetByteArray<T>(T[] data, int startIndex, int elementCount, out int typeSize) where T : struct {
 		// TODO : we shouldn't copy all the texture data from this, only the relevant parts from startIndex/elementCount
 		typeSize = Marshal.SizeOf<T>();
 		ReadOnlySpan<T> inData = data;
+		inData = inData.Slice(startIndex, elementCount);
 		var inDataBytes = MemoryMarshal.Cast<T, byte>(inData);
 		var resultData = GC.AllocateUninitializedArray<byte>(inDataBytes.Length);
 		inDataBytes.CopyTo(resultData);
@@ -47,7 +48,8 @@ static class PTexture2D {
 		}
 
 		int elementSize = 0;
-		var byteData = Cacheable(texture) ? GetByteArray(data, out elementSize) : null;
+		var byteData = Cacheable(texture) ? GetByteArray(data, startIndex, elementCount, out elementSize) : null;
+		startIndex = 0;
 
 #if ASYNC_SETDATA
 			ThreadQueue.Queue((data) =>
@@ -161,6 +163,8 @@ static class PTexture2D {
 		catch (Exception ex) {
 			Debug.Warning($"Exception while processing SetData for '{__instance.NormalizedName()}'", ex);
 		}
+
+		__instance.Meta().IncrementRevision();
 
 		return true;
 	}
