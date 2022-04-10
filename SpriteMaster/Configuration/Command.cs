@@ -279,7 +279,7 @@ static class Command {
 		LoadConfig(path, retain: true);
 	}
 
-	internal static bool LoadConfig(string? path, bool retain = true) {
+	internal static bool LoadConfig(string? path = null, bool retain = true) {
 		path ??= Configuration.Config.Path;
 
 		return Serialize.Load(path, retain);
@@ -297,7 +297,7 @@ static class Command {
 		SaveConfig(path);
 	}
 
-	internal static bool SaveConfig(string? path) {
+	internal static bool SaveConfig(string? path = null) {
 		path ??= Configuration.Config.Path;
 
 		return Serialize.Save(path);
