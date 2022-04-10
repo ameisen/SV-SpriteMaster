@@ -44,6 +44,8 @@ static class PlatformRenderBatch {
 						return DrawState.PointBorder.Value;
 					case TextureFilter.Linear:
 						return DrawState.LinearBorder.Value;
+					case TextureFilter.Anisotropic:
+						return DrawState.AnisotropicBorder.Value;
 					default:
 						throw new NotImplementedException($"TextureFilter {filter} is unimplemented");
 				}
@@ -53,6 +55,8 @@ static class PlatformRenderBatch {
 						return DrawState.PointMirror.Value;
 					case TextureFilter.Linear:
 						return DrawState.LinearMirror.Value;
+					case TextureFilter.Anisotropic:
+						return DrawState.AnisotropicMirror.Value;
 					default:
 						throw new NotImplementedException($"TextureFilter {filter} is unimplemented");
 				}

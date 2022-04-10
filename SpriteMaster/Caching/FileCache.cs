@@ -50,9 +50,10 @@ static class FileCache {
 		internal TextureFormat Format = default;
 		[MarshalAs(UnmanagedType.U4)]
 		internal Compression.Algorithm Algorithm = default;
-		internal uint RefScale = default;
+		internal uint Scale = default;
 		internal uint UncompressedDataLength = default;
 		internal uint DataLength = default;
+		internal Resampler.Scaler Scaler = Resampler.Scaler.None;
 		internal Vector2B Wrapped = default;
 
 		public CacheHeader() { }
@@ -138,20 +139,22 @@ static class FileCache {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool Fetch(
 		string path,
-		out uint refScale,
+		out uint scale,
 		out Vector2I size,
 		out TextureFormat format,
 		out Vector2B wrapped,
 		out PaddingQuad padding,
 		out Vector2I blockPadding,
+		out IScalerInfo? scalerInfo,
 		out Span<byte> data
 	) {
-		refScale = 0;
+		scale = 0;
 		size = Vector2I.Zero;
 		format = TextureFormat.Color;
 		wrapped = Vector2B.False;
 		padding = PaddingQuad.Zero;
 		blockPadding = Vector2I.Zero;
+		scalerInfo = null;
 		data = null;
 
 		try {
@@ -172,6 +175,8 @@ static class FileCache {
 						return errorCode is (32 or 33);
 					}
 
+					Resampler.Scaler scaler;
+
 					try {
 						long start_time = Config.FileCache.Profile ? DateTime.Now.Ticks : 0L;
 
@@ -179,12 +184,13 @@ static class FileCache {
 							var header = CacheHeader.Read(reader);
 							header.Validate(path);
 
-							refScale = header.RefScale;
+							scale = header.Scale;
 							size = header.Size;
 							format = header.Format;
 							wrapped = header.Wrapped;
 							padding = header.Padding;
 							blockPadding = header.BlockPadding;
+							scaler = header.Scaler;
 							var uncompressedDataLength = header.UncompressedDataLength;
 							var dataLength = header.DataLength;
 							var dataHash = header.DataHash;
@@ -202,6 +208,8 @@ static class FileCache {
 							var mean_ticks = CacheProfiler.AddFetchTime((ulong)(DateTime.Now.Ticks - start_time));
 							Debug.Info($"Mean Time Per Fetch: {(double)mean_ticks / TimeSpan.TicksPerMillisecond} ms");
 						}
+
+						scalerInfo = Resample.Scalers.IScaler.GetScalerInfo(scaler);
 
 						return true;
 					}
@@ -232,12 +240,13 @@ static class FileCache {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool Save(
 		string path,
-		uint refScale,
+		uint scale,
 		Vector2I size,
 		TextureFormat format,
 		Vector2B wrapped,
 		PaddingQuad padding,
 		Vector2I blockPadding,
+		IScalerInfo? scalerInfo,
 		ReadOnlySpan<byte> data
 	) {
 		if (!Config.FileCache.Enabled) {
@@ -273,7 +282,7 @@ static class FileCache {
 
 							new CacheHeader() {
 								Algorithm = algorithm,
-								RefScale = refScale,
+								Scale = scale,
 								Size = size,
 								Format = format,
 								Wrapped = wrapped,
@@ -281,7 +290,8 @@ static class FileCache {
 								BlockPadding = blockPadding,
 								UncompressedDataLength = (uint)data.Length,
 								DataLength = (uint)compressedData.Length,
-								DataHash = compressedData.Hash()
+								DataHash = compressedData.Hash(),
+								Scaler = scalerInfo?.Scaler ?? Resampler.Scaler.None
 							}.Write(writer);
 
 							writer.Write(compressedData);
