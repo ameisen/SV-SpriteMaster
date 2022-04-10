@@ -20,7 +20,7 @@ static class TextureDecode {
 
 	private static readonly DecodeDelegate[] PreferredDecoders = new DecodeDelegate[] {
 		Decoder.MonoBlockDecoder.Decode,
-		Decoder.GraphicsBlockDecoder.Decode,
+		//Decoder.GraphicsBlockDecoder.Decode,
 		Decoder.InternalBlockDecoder.Decode
 	};
 
