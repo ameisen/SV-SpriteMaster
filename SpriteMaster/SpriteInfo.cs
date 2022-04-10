@@ -45,6 +45,7 @@ sealed class SpriteInfo : IDisposable {
 
 			var result = GetDataHash(_ReferenceData, Reference, Bounds, RawOffset, RawStride);
 			if (result.HasValue) {
+				_SpriteDataHash = result.Value;
 				return result;
 			}
 
@@ -77,8 +78,8 @@ sealed class SpriteInfo : IDisposable {
 			return hash;
 		}
 
-		//var format = reference.Format.IsCompressed() ? SurfaceFormat.Color : reference.Format;
-		int actualWidth = (int)reference.Format.SizeBytes(bounds.Extent.X);
+		var format = reference.Format.IsCompressed() ? SurfaceFormat.Color : reference.Format;
+		int actualWidth = (int)format.SizeBytes(bounds.Extent.X);
 
 		try {
 			var spriteData = new Span2D<byte>(
@@ -106,7 +107,7 @@ sealed class SpriteInfo : IDisposable {
 			errorBuilder.AppendLine($"raw offset: {rawOffset}");
 			errorBuilder.AppendLine($"offset: {bounds.Offset}");
 			errorBuilder.AppendLine($"extent: {bounds.Extent}");
-			errorBuilder.AppendLine($"Format: {reference.Format}");
+			errorBuilder.AppendLine($"Format: {format}");
 			errorBuilder.AppendLine($"pitch: {rawStride - actualWidth}");
 			errorBuilder.AppendLine($"referenceDataSize: {data.Length}");
 			Debug.Error(errorBuilder.ToString());

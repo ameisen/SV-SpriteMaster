@@ -10,9 +10,11 @@ using SpriteMaster.Types;
 using SpriteMaster.Types.Volatile;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using System.Threading.Tasks;
 using static SpriteMaster.ResourceManager;
 using WeakInstanceList = System.Collections.Generic.LinkedList<System.WeakReference<SpriteMaster.ManagedSpriteInstance>>;
 using WeakInstanceListNode = System.Collections.Generic.LinkedListNode<System.WeakReference<SpriteMaster.ManagedSpriteInstance>>;
@@ -389,11 +391,25 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 		DrawState.PushedUpdateThisFrame = true;
 
 		try {
-			var resampleTask = ResampleTask.Dispatch(
-				spriteInfo: new(spriteInfoInitializer),
-				async: useAsync,
-				previousInstance: currentInstance
-			);
+			bool doDispatch = true;
+			var textureMeta = texture.Meta();
+			var currentRevision = textureMeta.Revision;
+			if (textureMeta.InFlightTasks.TryGetValue(source, out var inFlightTask)) {
+				doDispatch = inFlightTask.Revision != currentRevision || inFlightTask.ResampleTask is null || inFlightTask.ResampleTask.Status != System.Threading.Tasks.TaskStatus.WaitingToRun;
+			}
+
+			Task<ManagedSpriteInstance?> resampleTask;
+			if (!useAsync || doDispatch) {
+				resampleTask = ResampleTask.Dispatch(
+					spriteInfo: new(spriteInfoInitializer),
+					async: useAsync,
+					previousInstance: currentInstance
+				);
+				textureMeta.InFlightTasks[source] = new(currentRevision, resampleTask);
+			}
+			else {
+				return null;
+			}
 
 			var result = resampleTask.IsCompletedSuccessfully ? resampleTask.Result : currentInstance;
 
@@ -423,8 +439,8 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 	internal static readonly SurfaceFormat[] AllowedFormats = {
 		SurfaceFormat.Color,
 		SurfaceFormat.Dxt5,
-		SurfaceFormat.Dxt5SRgb
-		//SurfaceFormat.Dxt3 // fonts
+		SurfaceFormat.Dxt5SRgb,
+		SurfaceFormat.Dxt3 // fonts
 	};
 
 	internal ManagedTexture2D? Texture = null;
@@ -535,39 +551,40 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 			// TODO : this should be fixed by making sure that all of the resample tasks _at least_ get to this point before the end of the frame.
 			// TODO : That might not be sufficient either if the _same_ draw ends up happening again.
 			Dispose();
+
+			return;
 		}
-		else {
-			switch (TexType) {
-				case TextureType.Sprite:
-					originalSize = sourceRectangle.Extent;
-					break;
-				case TextureType.Image:
-					originalSize = source.Extent();
-					break;
-				case TextureType.SlicedImage:
-					originalSize = sourceRectangle.Extent;
-					break;
-			}
 
-			// TODO store the HD Texture in _this_ object instead. Will confuse things like subtexture updates, though.
-			Hash = GetHash(spriteInfo, textureType);
-			this.Texture = Resampler.Upscale(
-				spriteInstance: this,
-				scale: ref ReferenceScale,
-				input: spriteInfo,
-				hash: Hash,
-				wrapped: ref Wrapped,
-				async: false
-			);
+		switch (TexType) {
+			case TextureType.Sprite:
+				originalSize = sourceRectangle.Extent;
+				break;
+			case TextureType.Image:
+				originalSize = source.Extent();
+				break;
+			case TextureType.SlicedImage:
+				originalSize = sourceRectangle.Extent;
+				break;
+		}
 
-			// TODO : I would love to dispose of this texture _now_, but we rely on it disposing to know if we need to dispose of ours.
-			// There is a better way to do this using weak references, I just need to analyze it further. Memory leaks have been a pain so far.
-			// TODO 2: This won't get hit if the texture is disposed of via the finalizer.
-			source.Disposing += OnParentDispose;
+		// TODO store the HD Texture in _this_ object instead. Will confuse things like subtexture updates, though.
+		Hash = GetHash(spriteInfo, textureType);
+		this.Texture = Resampler.Upscale(
+			spriteInstance: this,
+			scale: ref ReferenceScale,
+			input: spriteInfo,
+			hash: Hash,
+			wrapped: ref Wrapped,
+			async: false
+		);
 
-			lock (RecentAccessList) {
-				RecentAccessNode = RecentAccessList.AddFirst(this.MakeWeak());
-			}
+		// TODO : I would love to dispose of this texture _now_, but we rely on it disposing to know if we need to dispose of ours.
+		// There is a better way to do this using weak references, I just need to analyze it further. Memory leaks have been a pain so far.
+		// TODO 2: This won't get hit if the texture is disposed of via the finalizer.
+		source.Disposing += OnParentDispose;
+
+		lock (RecentAccessList) {
+			RecentAccessNode = RecentAccessList.AddFirst(this.MakeWeak());
 		}
 	}
 
