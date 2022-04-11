@@ -41,6 +41,8 @@ static partial class Pathfinding {
 		return true;
 	}
 
+
+
 	[Harmonize(
 		typeof(NPC),
 		"populateRoutesFromLocationToLocationList",
@@ -59,9 +61,11 @@ static partial class Pathfinding {
 
 		var locations = new Dictionary<string, GameLocation?>(Game1.locations.SelectF(location => new KeyValuePair<string, GameLocation?>(location.Name, location)));
 
+		GameLocation? backwoodsLocation = Game1.locations.FirstOrDefaultF(location => location.Name == "Backwoods");
+
 		// Iterate over every location in parallel, and collect all paths to every other location.
 		Parallel.ForEach(Game1.locations, location => {
-			if (Config.Extras.AllowNPCsOnFarm || location is not Farm && location.Name != "Backwoods") {
+			if (Config.Extras.AllowNPCsOnFarm || location is not Farm && location != backwoodsLocation) {
 				var route = new List<string>();
 				ExploreWarpPointsImpl(location, route, routeList, locations);
 			}

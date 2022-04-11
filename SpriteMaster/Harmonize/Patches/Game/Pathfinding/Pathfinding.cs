@@ -33,7 +33,7 @@ static partial class Pathfinding {
 		}
 
 		// Warps can never path to "Volcano", and can only path to certain Locations when it's explicitly allowed in the settings.
-		if (warp.TargetName is "Volcano" || (!Config.Extras.AllowNPCsOnFarm && warp.TargetName is "Farm" or "Woods" or "Backwoods" or "Tunnel")) {
+		if (warp.TargetName is "Volcano" || (!Config.Extras.AllowNPCsOnFarm && warp.TargetName is ("Farm" or "Woods" or "Backwoods" or "Tunnel"))) {
 			target = null;
 			return false;
 		}
