@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -12,7 +13,7 @@ static class Collections {
 	internal static bool IsBlank<T>(this IEnumerable<T>? enumerable) => enumerable is null || !enumerable.Any();
 
 	[MethodImpl(MethodImpl.Hot)]
-	internal static bool IsBlank<T>(this ICollection<T>? collection) => collection is null || !collection.Any();
+	internal static bool IsBlank<T>(this ICollection<T>? collection) => collection is null || collection.Count == 0;
 
 	[MethodImpl(MethodImpl.Hot)]
 	internal static bool IsBlank<T>(this IList<T>? list) => list is null || list.Count == 0;
@@ -64,7 +65,18 @@ static class Collections {
 	/// Returns a new List that is constructed from the array.
 	/// </summary>
 	[MethodImpl(MethodImpl.Hot)]
-	internal static List<T> ToList<T>(this T[] array) => new List<T>(array);
+	internal static List<T> ToList<T>(this T[] array) {
+		if (ListReflectImpl<T>.ListSetItems is null || ListReflectImpl<T>.ListSetSize is null) {
+			var newList = new List<T>(array.Length);
+			foreach (var item in array) {
+				newList.Add(item);
+			}
+			return newList;
+		}
+		var newArray = GC.AllocateUninitializedArray<T>(array.Length);
+		array.CopyTo(newArray, 0);
+		return newArray.BeList();
+	}
 
 	// TODO : define me for .NET and .NETfx
 	private static class ListReflectImpl<T> {
@@ -152,9 +164,9 @@ static class Collections {
 	}
 	#endregion
 
-	#region AddAll
+	#region AddRange
 
-	internal static int AddAll<T>(this HashSet<T> set, IEnumerable<T> collection) {
+	internal static int AddRange<T>(this HashSet<T> set, IEnumerable<T> collection) {
 		int added = 0;
 		foreach (T item in collection) {
 			if (set.Add(item)) {
@@ -164,7 +176,7 @@ static class Collections {
 		return added;
 	}
 
-	internal static int AddAll<T>(this HashSet<T> set, ICollection<T> collection) {
+	internal static int AddRange<T>(this HashSet<T> set, ICollection<T> collection) {
 		int added = 0;
 		set.EnsureCapacity(set.Count + collection.Count);
 		foreach (T item in collection) {
@@ -175,7 +187,7 @@ static class Collections {
 		return added;
 	}
 
-	internal static int AddAll<T>(this HashSet<T> set, IList<T> list) {
+	internal static int AddRange<T>(this HashSet<T> set, IList<T> list) {
 		int added = 0;
 		set.EnsureCapacity(set.Count + list.Count);
 		for (int i = 0; i < list.Count; ++i) {
@@ -187,7 +199,7 @@ static class Collections {
 		return added;
 	}
 
-	internal static int AddAll<T>(this HashSet<T> set, T[] array) {
+	internal static int AddRange<T>(this HashSet<T> set, T[] array) {
 		int added = 0;
 		set.EnsureCapacity(set.Count + array.Length);
 		foreach (T item in array) {
@@ -198,5 +210,31 @@ static class Collections {
 		return added;
 	}
 
+	internal static void AddRange<T>(this System.Collections.ObjectModel.Collection<T> collection, params T[] array) {
+		foreach (var item in array) {
+			collection.Add(item);
+		}
+	}
+
+	#endregion
+
+	#region Select
+	/*
+	internal static U[] Select2<T, U>(IList<T> list, Func<T, U> selector) {
+		var result = GC.AllocateUninitializedArray<U>(list.Count);
+
+		for (int i = 0; i < list.Count; ++i) {
+			result[i] = selector(list[i]);
+		}
+
+		return result;
+	}
+	*/
+	#endregion
+
+	#region ToList
+	internal static List<T> ToList<T>(this ConcurrentBag<T> bag) {
+		return bag.ToArray().BeList();
+	}
 	#endregion
 }

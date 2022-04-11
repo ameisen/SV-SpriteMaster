@@ -20,7 +20,7 @@ static class LogMonitor {
 
 		var configSilencedMods = Config.Debug.Logging.SilencedMods;
 		if (SilencedMods.Count == 0 && configSilencedMods.Length != 0) {
-			SilencedMods.AddAll(configSilencedMods);
+			SilencedMods.AddRange(configSilencedMods);
 		}
 
 		return SilencedMods.Contains(source);

@@ -399,7 +399,7 @@ static class FileCache {
 					// Use System compression if it is preferred and no other compression algorithm is supported for some reason.
 					// https://stackoverflow.com/questions/624125/compress-a-folder-using-ntfs-compression-in-net
 					if (Config.FileCache.PreferSystemCompression || (int)Config.FileCache.Compress <= (int)Compression.Algorithm.Deflate) {
-						SystemCompression = NTFS.CompressDirectory(LocalDataPath);
+						SystemCompression = DirectoryExt.CompressDirectory(LocalDataPath);
 					}
 				}
 			}

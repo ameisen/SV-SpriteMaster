@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using LinqFasterer;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
@@ -131,7 +132,7 @@ static class StableSort {
 					instruction.opcode.Value != OpCodes.Call.Value ||
 					instruction.operand is not MethodInfo callee ||
 					!callee.IsGenericMethod ||
-					callee.GetGenericArguments().FirstOrDefault() != SpriteBatchItemType ||
+					callee.GetGenericArguments().FirstOrDefaultF() != SpriteBatchItemType ||
 					callee.DeclaringType != typeof(Array) ||
 					callee.Name != "Sort" ||
 					callee.GetParameters().Length != 3

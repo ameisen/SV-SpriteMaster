@@ -1,4 +1,5 @@
-﻿using Microsoft.Toolkit.HighPerformance;
+﻿using LinqFasterer;
+using Microsoft.Toolkit.HighPerformance;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
@@ -7,7 +8,6 @@ using SpriteMaster.Types;
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -280,7 +280,7 @@ static class PTexture2D {
 	//private void PlatformSetData<T>(int level, int arraySlice, Rectangle rect, T[] data, int startIndex, int elementCount) where T : struct
 
 
-	private static readonly Assembly? CPAAssembly = AppDomain.CurrentDomain.GetAssemblies().SingleOrDefault(assembly => assembly.GetName().Name == "ContentPatcherAnimations");
+	private static readonly Assembly? CPAAssembly = AppDomain.CurrentDomain.GetAssemblies().SingleOrDefaultF(assembly => assembly.GetName().Name == "ContentPatcherAnimations");
 	private static bool IsFromContentPatcherAnimations() {
 		if (CPAAssembly is null) {
 			return false;
@@ -288,10 +288,8 @@ static class PTexture2D {
 
 		var stackTrace = new StackTrace(skipFrames: 2, fNeedFileInfo: false);
 		foreach (var frame in stackTrace.GetFrames()) {
-			if (frame.GetMethod() is MethodBase method) {
-				if (method.DeclaringType?.Assembly == CPAAssembly) {
-					return true;
-				}
+			if (frame.GetMethod() is MethodBase method && method.DeclaringType?.Assembly == CPAAssembly) {
+				return true;
 			}
 		}
 

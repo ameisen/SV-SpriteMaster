@@ -302,7 +302,7 @@ static class Serialize {
 
 												if (configValue is not null) {
 													bool found = false;
-													foreach (int index in 0.RangeTo(enumNames.Length)) {
+													for (int index = 0; index < enumNames.Length; ++index) {
 														if (enumNames[index] == configValue) {
 															field.SetValue(null, values.GetValue(index));
 															found = true;

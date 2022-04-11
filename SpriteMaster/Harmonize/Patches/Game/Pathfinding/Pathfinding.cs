@@ -1,4 +1,5 @@
-﻿using Priority_Queue;
+﻿using LinqFasterer;
+using Priority_Queue;
 using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
@@ -7,7 +8,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using static StardewValley.PathFindController;
 
@@ -72,7 +72,7 @@ static partial class Pathfinding {
 	private static NPC? GetDummyNPC() {
 		NPC? dummyNPC = null;
 		foreach (var location in Game1.locations) {
-			dummyNPC = location.getCharacters().FirstOrDefault(c => c is NPC);
+			dummyNPC = location.getCharacters().FirstOrDefaultF(c => c is NPC);
 			if (dummyNPC is not null) {
 				break;
 			}

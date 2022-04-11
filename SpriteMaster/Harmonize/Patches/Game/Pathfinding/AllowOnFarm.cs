@@ -5,7 +5,6 @@ using StardewValley.Characters;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
@@ -76,7 +75,8 @@ static partial class Pathfinding {
 			isFamily = value.IsMarried() || value.IsRoommate();
 		}
 		// Check if the given character is a child.
-		if (!isFamily && (player.getChildren()?.Contains(character) ?? false)) {
+		var characterChild = character as Child;
+		if (!isFamily && (player.getChildren()?.Contains(characterChild) ?? false)) {
 			isFamily = true;
 		}
 

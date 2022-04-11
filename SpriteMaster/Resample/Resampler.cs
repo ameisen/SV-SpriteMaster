@@ -239,7 +239,7 @@ sealed class Resampler {
 		if (Config.Resample.Scale) {
 			var originalScale = scale;
 			scale = 2;
-			foreach (uint s in originalScale.RangeTo(2U)) {
+			for (uint s = originalScale; s > 2U; --s) {
 				var newDimensions = spriteRawExtent * s;
 				if (newDimensions.X <= Config.PreferredMaxTextureDimension && newDimensions.Y <= Config.PreferredMaxTextureDimension) {
 					scale = s;

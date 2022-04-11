@@ -74,6 +74,14 @@ public sealed class SpriteMaster : Mod {
 		Garbage.EnterNonInteractive();
 
 		MemoryMonitor = new MemoryMonitor();
+
+		var assemblyPath = typeof(SpriteMaster).Assembly.Location;
+		assemblyPath = Path.GetDirectoryName(assemblyPath);
+
+		// Compress our own directory
+		if (assemblyPath is not null) {
+			DirectoryExt.CompressDirectory(assemblyPath, force: true);
+		}
 	}
 
 	private bool IsVersionOutdated(string configVersion) {
@@ -90,7 +98,7 @@ public sealed class SpriteMaster : Mod {
 				configStrArray.Add("0");
 			}
 
-			foreach (int i in 0.RangeTo(configStrArray.Count)) {
+			for (int i = 0; i < configStrArray.Count; ++i) {
 				if (configStrArray[i].IsEmpty()) {
 					return true;
 				}
@@ -137,7 +145,7 @@ public sealed class SpriteMaster : Mod {
 		output.AppendLine("Help Command Guide");
 		output.AppendLine();
 
-		int maxKeyLength = ConsoleCommandMap.Keys.Select(k => k.Length).Max();
+		int maxKeyLength = ConsoleCommandMap.Keys.Max(k => k.Length);
 
 		foreach (var kv in ConsoleCommandMap) {
 			output.AppendLine($"{kv.Key.PadRight(maxKeyLength)} : {kv.Value.Description}");

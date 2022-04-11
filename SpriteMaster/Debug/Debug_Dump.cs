@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+﻿using LinqFasterer;
+using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
 using System;
@@ -42,7 +43,7 @@ static partial class Debug {
 			}
 
 			void PrintSpritesheetProperties(IEnumerable<KeyValuePair<string, string>> properties) {
-				int maxKeyLen = properties.Select(p => p.Key.Length).Max();
+				int maxKeyLen = properties.Max(prop => prop.Key.Length);
 				foreach (var kvp in properties) {
 					dumpBuilder!.AppendLine($"│ ├ {kvp.Key.PadRight(maxKeyLen)}: {kvp.Value}");
 				}
@@ -100,7 +101,7 @@ static partial class Debug {
 
 			foreach (var sprite in sortedSprites) {
 				if (sprite.IsReady && sprite.Texture is not null) {
-					bool last = object.ReferenceEquals(list.Value.Last(), sprite);
+					bool last = object.ReferenceEquals(list.Value.LastF(), sprite);
 					var spriteDisposed = sprite.Texture.IsDisposed;
 					dumpBuilder.AppendLine($"│ {(last ? '└' : '├')} sprite: {sprite.OriginalSourceRectangle} :: {sprite.MemorySize.AsDataSize()} {DisposedString(spriteDisposed)}");
 					totalSize += spriteDisposed ? 0 : sprite.MemorySize;

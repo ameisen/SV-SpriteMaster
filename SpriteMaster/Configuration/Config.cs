@@ -1,5 +1,5 @@
 ﻿global using SMConfig = SpriteMaster.Configuration.Config;
-
+using LinqFasterer;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using SpriteMaster.Resample;
@@ -7,8 +7,6 @@ using SpriteMaster.Types;
 using StardewModdingAPI;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Runtime;
 using System.Text.RegularExpressions;
@@ -16,7 +14,7 @@ using TeximpNet.Compression;
 
 namespace SpriteMaster.Configuration;
 static class Config {
-	internal static readonly string ModuleName = typeof(SMConfig).Namespace?.Split('.')?.ElementAtOrDefault(0) ?? "SpriteMaster";
+	internal static readonly string ModuleName = typeof(SMConfig).Namespace?.Split('.')?.ElementAtOrDefaultF(0) ?? "SpriteMaster";
 
 	internal static string Path { get; private set; } = null!;
 	internal static void SetPath(string path) => Path = path;
@@ -30,7 +28,7 @@ static class Config {
 	internal const bool SkipIntro = IgnoreConfig;
 
 	[Attributes.Ignore]
-	internal static readonly string CurrentVersion = typeof(SMConfig).Assembly.GetCustomAttribute<FullVersionAttribute>()?.Value?.Split('-', 2)?.ElementAtOrDefault(0) ??
+	internal static readonly string CurrentVersion = typeof(SMConfig).Assembly.GetCustomAttribute<FullVersionAttribute>()?.Value?.Split('-', 2)?.ElementAtOrDefaultF(0) ??
 		throw new BadImageFormatException($"Could not extract version from assembly {typeof(SMConfig).Assembly.FullName ?? typeof(SMConfig).Assembly.ToString()}");
 
 	[Attributes.Ignore]
