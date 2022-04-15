@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿#if !SHIPPING
+using System.Numerics;
 using System.Runtime.InteropServices;
 
 namespace SpriteMaster.Resample.Scalers.SuperXBR.Cg;
@@ -79,3 +80,4 @@ partial struct Float4 {
 	public static implicit operator Float4(in Vector4 value) => new(value);
 	public static implicit operator Float4(in (float X, float Y, float Z, float W) value) => new(value);
 }
+#endif

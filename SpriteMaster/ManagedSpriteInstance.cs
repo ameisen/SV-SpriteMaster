@@ -506,6 +506,12 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static void FullPurge(Texture2D reference, bool animated = false) {
+		SpriteInfo.Purge(reference, reference.Bounds, DataRef<byte>.Null, animated: animated);
+		SpriteMap.Purge(reference, reference.Bounds, animated: animated);
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void PurgeTextures(long purgeTotalBytes) {
 		Contracts.AssertPositive(purgeTotalBytes);
 

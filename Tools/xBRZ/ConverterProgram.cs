@@ -89,7 +89,7 @@ static class ConverterProgram {
 		var scalerConfig = new SpriteMaster.Resample.Scalers.xBRZ.Config(
 			wrapped: Vector2B.False,
 			luminanceWeight: Config.Resample.Common.LuminanceWeight,
-			equalColorTolerance: Config.Resample.Common.EqualColorTolerance,
+			equalColorTolerance: (uint)Config.Resample.Common.EqualColorTolerance,
 			dominantDirectionThreshold: Config.Resample.xBRZ.DominantDirectionThreshold,
 			steepDirectionThreshold: Config.Resample.xBRZ.SteepDirectionThreshold,
 			centerDirectionBias: Config.Resample.xBRZ.CenterDirectionBias

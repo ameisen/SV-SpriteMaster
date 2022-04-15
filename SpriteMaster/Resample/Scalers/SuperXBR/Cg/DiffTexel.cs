@@ -1,4 +1,5 @@
-﻿namespace SpriteMaster.Resample.Scalers.SuperXBR.Cg;
+﻿#if !SHIPPING
+namespace SpriteMaster.Resample.Scalers.SuperXBR.Cg;
 
 ref struct DiffTexel {
 	internal readonly float YUV;
@@ -9,3 +10,4 @@ ref struct DiffTexel {
 		Alpha = alpha;
 	}
 }
+#endif

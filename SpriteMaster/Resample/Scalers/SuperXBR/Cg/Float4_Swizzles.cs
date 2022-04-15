@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿#if !SHIPPING
+using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Resample.Scalers.SuperXBR.Cg;
 
@@ -27,3 +28,4 @@ partial struct Float4 {
 	internal readonly Float2 WZ => (W, Z);
 	internal readonly Float2 WW => (W, W);
 }
+#endif

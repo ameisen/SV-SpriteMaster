@@ -29,9 +29,9 @@ static class SuspendedSpriteCache {
 			var goal = Config.SuspendedCache.MaxCacheSize * 0.75;
 			var multiplier = goal / totalCachedSize;
 			var percentageF = 1.0 - multiplier;
-			var percentageI = Math.Clamp((int)Math.Round(percentageF * 100.0), 1, 100);
+			var percentageI = Math.Clamp((percentageF * 100.0).RoundToInt(), 1, 100);
 
-			Debug.Trace($"Trimming (Size) SuspendedSpriteCache: {percentageI}%, from {totalCachedSize.AsDataSize()} to {((long)Math.Round(goal)).AsDataSize()}");
+			Debug.Trace($"Trimming (Size) SuspendedSpriteCache: {percentageI}%, from {totalCachedSize.AsDataSize()} to {goal.RoundToLong().AsDataSize()}");
 			Cache.Trim(percentageI);
 
 			var currentTotalCachedSize = Interlocked.Read(ref TotalCachedSize);
@@ -48,7 +48,7 @@ static class SuspendedSpriteCache {
 	}
 
 	private static void TrimCount() {
-		if (Config.SuspendedCache.MaxCacheCount <= 0 || Config.SuspendedCache.MaxCacheCount == long.MaxValue) {
+		if (Config.SuspendedCache.MaxCacheCount <= 0 || Config.SuspendedCache.MaxCacheCount == int.MaxValue) {
 			return;
 		}
 
@@ -59,9 +59,9 @@ static class SuspendedSpriteCache {
 			var goal = Config.SuspendedCache.MaxCacheCount * 0.75;
 			var multiplier = goal / totalCachedCount;
 			var percentageF = 1.0 - multiplier;
-			var percentageI = Math.Clamp((int)Math.Round(percentageF * 100.0) + percentageOffset, 1, 100);
+			var percentageI = Math.Clamp((percentageF * 100.0).RoundToInt() + percentageOffset, 1, 100);
 
-			Debug.Trace($"Trimming (Count) SuspendedSpriteCache: {percentageI}%, from {totalCachedCount} to {(long)Math.Round(goal)}");
+			Debug.Trace($"Trimming (Count) SuspendedSpriteCache: {percentageI}%, from {totalCachedCount} to {goal.RoundToLong()}");
 			Cache.Trim(percentageI);
 			var currentTotalCachedCount = Cache.Count;
 			if (currentTotalCachedCount == totalCachedCount) {

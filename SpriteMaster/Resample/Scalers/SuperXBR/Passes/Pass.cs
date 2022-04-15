@@ -1,4 +1,5 @@
-﻿using SpriteMaster.Resample.Scalers.SuperXBR.Cg;
+﻿#if !SHIPPING
+using SpriteMaster.Resample.Scalers.SuperXBR.Cg;
 using SpriteMaster.Types;
 using System;
 using System.Runtime.CompilerServices;
@@ -99,3 +100,4 @@ internal abstract class Pass {
 		internal readonly Float4 Sample(in Vector2I xy) => Sample(xy.X, xy.Y);
 	}
 }
+#endif

@@ -47,6 +47,11 @@ static class PTexture2D {
 			return;
 		}
 
+		if (texture.Format.IsBlock()) {
+			ManagedSpriteInstance.FullPurge(texture, animated: animated);
+			return;
+		}
+
 		int elementSize = 0;
 		var byteData = Cacheable(texture) ? GetByteArray(data, startIndex, elementCount, out elementSize) : null;
 		startIndex = 0;
@@ -124,6 +129,11 @@ static class PTexture2D {
 		if (__instance is (ManagedTexture2D or InternalTexture2D)) {
 			return true;
 		}
+
+		if (__instance.Format.IsBlock()) {
+			return true;
+		}
+
 		__instance.SetData(0, 0, null, data, 0, data.Length);
 		return false;
 	}
@@ -131,6 +141,10 @@ static class PTexture2D {
 	[Harmonize("SetData", Harmonize.Fixation.Prefix, PriorityLevel.Last, Harmonize.Generic.Struct)]
 	public static bool OnSetData<T>(Texture2D __instance, T[] data, int startIndex, int elementCount) where T : unmanaged {
 		if (__instance is (ManagedTexture2D or InternalTexture2D)) {
+			return true;
+		}
+
+		if (__instance.Format.IsBlock()) {
 			return true;
 		}
 
@@ -144,6 +158,10 @@ static class PTexture2D {
 			return true;
 		}
 
+		if (__instance.Format.IsBlock()) {
+			return true;
+		}
+
 		__instance.SetData(0, level, rect, data, startIndex, elementCount);
 		return false;
 	}
@@ -151,6 +169,10 @@ static class PTexture2D {
 	[Harmonize("SetData", Harmonize.Fixation.Prefix, PriorityLevel.Last, Harmonize.Generic.Struct)]
 	public static bool OnSetData<T>(Texture2D __instance, int level, int arraySlice, in XNA.Rectangle? rect, T[] data, int startIndex, int elementCount) where T : unmanaged {
 		if (__instance is (ManagedTexture2D or InternalTexture2D)) {
+			return true;
+		}
+
+		if (__instance.Format.IsBlock()) {
 			return true;
 		}
 
@@ -187,6 +209,10 @@ static class PTexture2D {
 	[Harmonize("GetData", Harmonize.Fixation.Prefix, PriorityLevel.Last, Harmonize.Generic.Struct)]
 	public static unsafe bool OnGetData<T>(Texture2D __instance, int level, int arraySlice, in XNA.Rectangle? rect, T[] data, int startIndex, int elementCount) where T : unmanaged {
 		if (!Config.IsEnabled || !Config.SMAPI.ApplyGetDataPatch) {
+			return true;
+		}
+
+		if (__instance.Format.IsBlock()) {
 			return true;
 		}
 

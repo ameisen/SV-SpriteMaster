@@ -120,7 +120,7 @@ sealed partial class Scaler {
 		else if (offsetD > 0.5) {
 			offsetD = Math.Pow(offsetD, 1.0 / 5.0);
 		}
-		return (int)Math.Round(offsetD * max);
+		return (offsetD * max).RoundToInt();
 	}
 
 	private static (int R, int G, int B, int A) BlendColor(int offset, int max, Color16 a, Color16 b) {

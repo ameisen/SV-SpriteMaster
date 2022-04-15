@@ -1,4 +1,5 @@
-﻿using SpriteMaster.Types;
+﻿#if !SHIPPING
+using SpriteMaster.Types;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Resample.Scalers.SuperXBR;
@@ -36,3 +37,4 @@ sealed class Config : Scalers.Config {
 		AntiRinging = antiRinging;
 	}
 }
+#endif

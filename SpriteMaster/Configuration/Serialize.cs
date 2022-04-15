@@ -1,10 +1,13 @@
 ﻿using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Tomlyn;
 using Tomlyn.Syntax;
@@ -65,9 +68,86 @@ static class Serialize {
 			Name = name;
 			Type = type;
 		}
+
+		internal ParentTraverseEnumerable ParentTraverser => new(this);
+
+		internal struct ParentTraverseEnumerable : IEnumerable<Category>, IEnumerable {
+			private readonly Category Current;
+			
+			internal ParentTraverseEnumerable(Category current) {
+				Current = current;
+			}
+
+			public ParentTraverseEnumerator GetEnumerator() => new(Current);
+
+			IEnumerator<Category> IEnumerable<Category>.GetEnumerator() => new ParentTraverseEnumerator(Current);
+
+			IEnumerator IEnumerable.GetEnumerator() => new ParentTraverseEnumerator(Current);
+		}
+
+		internal struct ParentTraverseEnumerator : IEnumerator<Category>, IEnumerator {
+			private readonly Category InitialValue;
+			private Category? CurrentValue = null;
+			private bool PastEnd = false;
+
+			internal ParentTraverseEnumerator(Category current) {
+				InitialValue = current;
+				CurrentValue = current;
+			}
+
+			public Category Current => CurrentValue!;
+
+			object System.Collections.IEnumerator.Current => CurrentValue!;
+
+			public void Dispose() {}
+
+			public bool MoveNext() {
+				if (PastEnd) {
+					return false;
+				}
+
+				if (CurrentValue is null) {
+					CurrentValue = InitialValue;
+				}
+				else {
+					CurrentValue = CurrentValue.Parent;
+				}
+
+				if (CurrentValue is null) {
+					PastEnd = true;
+					return false;
+				}
+				return true;
+			}
+
+			public void Reset() {
+				CurrentValue = InitialValue;
+				PastEnd = false;
+			}
+		}
 	}
 
 	internal static readonly Category Root;
+
+	private static bool HasValidFields(Type type) {
+		foreach (var field in type.GetFields(StaticFlags)) {
+			if (field is null || IsFieldIgnored(field)) {
+				continue;
+			}
+
+			if (field.IsInitOnly || field.IsLiteral) {
+				continue;
+			}
+
+			if (field.HasAttribute<CompilerGeneratedAttribute>()) {
+				continue;
+			}
+
+			return true;
+		}
+
+		return false;
+	}
 
 	static Serialize() {
 		Root = new(null, "", typeof(Config));
@@ -77,10 +157,27 @@ static class Serialize {
 				if (field is null || IsFieldIgnored(field)) {
 					continue;
 				}
+
+				if (field.IsInitOnly || field.IsLiteral) {
+					continue;
+				}
+
+				if (field.HasAttribute<CompilerGeneratedAttribute>()) {
+					continue;
+				}
+
 				category.Fields[field.Name.ToLowerInvariant()] = field;
 			}
 			foreach (var subType in category.Type.GetNestedTypes(StaticFlags)) {
 				if (subType is null || IsClassIgnored(subType) || subType.IsEnum) {
+					continue;
+				}
+
+				if (subType.HasAttribute<CompilerGeneratedAttribute>()) {
+					continue;
+				}
+
+				if (!HasValidFields(subType)) {
 					continue;
 				}
 
@@ -564,13 +661,13 @@ static class Serialize {
 		}
 	}
 
-	internal static bool Save(MemoryStream stream) {
+	internal static bool Save(MemoryStream stream, bool leaveOpen = false) {
 		try {
 			var Document = new DocumentSyntax();
 
 			SaveClass(0, typeof(Config), Document);
 
-			using var writer = new StreamWriter(stream);
+			using var writer = new StreamWriter(stream, leaveOpen: leaveOpen);
 			Document.WriteTo(writer);
 			writer.Flush();
 		}

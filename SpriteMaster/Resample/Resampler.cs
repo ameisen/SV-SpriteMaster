@@ -10,7 +10,6 @@ using SpriteMaster.Tasking;
 using SpriteMaster.Types;
 using SpriteMaster.Types.Fixed;
 using System;
-using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -18,16 +17,8 @@ using System.Text;
 namespace SpriteMaster.Resample;
 
 sealed class Resampler {
-	internal enum Scaler : int {
-		None = -1,
-		xBRZ = 0,
-		SuperXBR,
-		EPX,
-		Scale2 = EPX,
-		Bilinear
-	}
-
 	internal enum ResampleStatus {
+		Unknown = -1,
 		Success = 0,
 		Failure = 1,
 		DisabledGradient = 2,
@@ -39,25 +30,13 @@ sealed class Resampler {
 		reference.Meta().CachedRawData = null;
 	}
 
-	// https://stackoverflow.com/a/12996028
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static ulong HashULong(ulong x) {
-		if (x == 0) {
-			x = 0x9e3779b97f4a7c15UL; // ⌊2^64 / Φ⌋
-		}
-		x = (x ^ x >> 30) * 0xbf58476d1ce4e5b9UL;
-		x = (x ^ x >> 27) * 0x94d049bb133111ebUL;
-		x ^= x >> 31;
-		return x;
-	}
-
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ulong GetHash(SpriteInfo input, TextureType textureType) {
 		// Need to make Hashing.CombineHash work better.
 		ulong hash = input.Hash;
 
 		if (Config.Resample.EnableDynamicScale) {
-			hash = Hashing.Combine(hash, HashULong(input.ExpectedScale));
+			hash = Hashing.Combine(hash, Hashing.Rehash(input.ExpectedScale));
 		}
 
 		if (textureType == TextureType.Sprite) {
@@ -76,7 +55,7 @@ sealed class Resampler {
 		ulong hash = input.Hash.Value;
 
 		if (Config.Resample.EnableDynamicScale) {
-			hash = Hashing.Combine(hash, HashULong(input.ExpectedScale));
+			hash = Hashing.Combine(hash, Hashing.Rehash(input.ExpectedScale));
 		}
 
 		if (textureType == TextureType.Sprite) {
@@ -674,7 +653,7 @@ sealed class Resampler {
 			_ => throw new NotImplementedException("Unknown Image Type provided")
 		};
 
-		result = ResampleStatus.Success;
+		result = ResampleStatus.Unknown;
 
 		Span<byte> bitmapData;
 		try {

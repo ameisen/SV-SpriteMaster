@@ -1,4 +1,5 @@
-﻿using SpriteMaster.Resample.Scalers.SuperXBR.Cg;
+﻿#if !SHIPPING
+using SpriteMaster.Resample.Scalers.SuperXBR.Cg;
 using SpriteMaster.Types;
 using System;
 using System.Runtime.CompilerServices;
@@ -138,3 +139,4 @@ sealed class Pass2 : Pass {
 		}
 	}
 }
+#endif

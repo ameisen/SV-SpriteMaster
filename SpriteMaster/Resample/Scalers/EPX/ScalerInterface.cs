@@ -21,7 +21,7 @@ sealed partial class Scaler {
 			hasAlpha: hasAlpha,
 			luminanceWeight: SMConfig.Resample.Common.LuminanceWeight,
 			gammaCorrected: gammaCorrected,
-			equalColorTolerance: SMConfig.Resample.Common.EqualColorTolerance,
+			equalColorTolerance: (uint)SMConfig.Resample.Common.EqualColorTolerance,
 			useRedmean: SMConfig.Resample.UseRedmean
 		);
 	}

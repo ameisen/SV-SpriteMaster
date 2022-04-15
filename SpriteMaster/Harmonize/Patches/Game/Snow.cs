@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Configuration;
 using SpriteMaster.Core;
+using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using StardewValley;
 using StardewValley.Locations;
@@ -285,7 +286,7 @@ static class Snow {
 		int debrisToMake = Game1.random.Next(Config.Extras.Snow.MinimumDensity, Config.Extras.Snow.MaximumDensity);
 		int currentScreenArea = screenSize.Width * screenSize.Height;
 		double ratio = (double)currentScreenArea / ReferenceScreenArea;
-		debrisToMake = (int)Math.Round(debrisToMake * ratio);
+		debrisToMake = (debrisToMake * ratio).RoundToInt();
 		MappedWeatherDebris.Clear();
 		Game1.debrisWeather.Clear();
 		Game1.debrisWeather.Capacity = debrisToMake;

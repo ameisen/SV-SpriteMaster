@@ -3,7 +3,7 @@
 sealed class ScalerInfo : IScalerInfo {
 	internal static readonly ScalerInfo Instance = new();
 
-	public Resampler.Scaler Scaler => Resampler.Scaler.EPX;
+	public Resample.Scaler Scaler => Resample.Scaler.EPX;
 	public int MinScale => 1;
 	public int MaxScale => Config.MaxScale;
 	public XNA.Graphics.TextureFilter Filter => XNA.Graphics.TextureFilter.Point;

@@ -1,4 +1,5 @@
-﻿using Microsoft.Toolkit.HighPerformance;
+﻿#if !SHIPPING
+using Microsoft.Toolkit.HighPerformance;
 using SpriteMaster.Colors;
 using SpriteMaster.Extensions;
 using SpriteMaster.Resample.Scalers.SuperXBR.Cg;
@@ -38,3 +39,4 @@ sealed partial class Scaler {
 		}
 	}
 }
+#endif

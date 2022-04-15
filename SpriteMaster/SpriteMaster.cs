@@ -211,19 +211,19 @@ public sealed class SpriteMaster : Mod {
 
 		Configuration.Config.SetPath(Path.Combine(help.DirectoryPath, ConfigName));
 
-		using (var tempStream = new MemoryStream()) {
-			Serialize.Save(tempStream);
+		Config.DefaultConfig = new MemoryStream();
+		Serialize.Save(Config.DefaultConfig, leaveOpen: true);
 
-			if (!Config.IgnoreConfig) {
-				Serialize.Load(Configuration.Config.Path);
-			}
+		if (!Config.IgnoreConfig) {
+			Serialize.Load(Configuration.Config.Path);
+		}
 
-			if (IsVersionOutdated(Config.ConfigVersion)) {
-				Debug.Info($"config.toml is out of date ({Config.ConfigVersion} < {Config.ClearConfigBefore}), rewriting it.");
+		if (IsVersionOutdated(Config.ConfigVersion)) {
+			Debug.Info($"config.toml is out of date ({Config.ConfigVersion} < {Config.ClearConfigBefore}), rewriting it.");
 
-				Serialize.Load(tempStream, retain: true);
-				Config.ConfigVersion = Config.CurrentVersion;
-			}
+			Serialize.Load(Config.DefaultConfig, retain: true);
+			Config.DefaultConfig.Position = 0;
+			Config.ConfigVersion = Config.CurrentVersion;
 		}
 
 		static Config.TextureRef[] ProcessTextureRefs(List<string> textureRefStrings) {
@@ -284,6 +284,8 @@ public sealed class SpriteMaster : Mod {
 			};
 			Config.ShowIntroMessage = false;
 		}
+
+		help.Events.GameLoop.GameLaunched += (_, _) => GMCM.Initialize(help);
 
 		Serialize.Save(Configuration.Config.Path);
 

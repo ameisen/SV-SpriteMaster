@@ -46,6 +46,13 @@ static partial class ReflectionExt {
 		return attribute is not null;
 	}
 
+	/*
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static T[] GetCustomAttributes<T>(this MemberInfo member) where T : Attribute {
+		return (T[])member.GetCustomAttributes(typeof(T), inherit: false);
+	}
+	*/
+
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	[DynamicallyAccessedMembers(AllFields)]
 	internal static bool TryGetField(this Type type, string name, [NotNullWhen(true)] out FieldInfo? field, BindingFlags bindingAttr) {

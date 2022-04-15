@@ -1,4 +1,5 @@
-﻿using SpriteMaster.Types;
+﻿#if !SHIPPING
+using SpriteMaster.Types;
 using System.Numerics;
 using System.Runtime.InteropServices;
 
@@ -49,3 +50,4 @@ partial struct Float2 {
 
 	public static implicit operator Float2(in (float X, float Y) value) => new(value);
 }
+#endif

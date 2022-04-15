@@ -53,7 +53,7 @@ static class FileCache {
 		internal uint Scale = default;
 		internal uint UncompressedDataLength = default;
 		internal uint DataLength = default;
-		internal Resampler.Scaler Scaler = Resampler.Scaler.None;
+		internal Resample.Scaler Scaler = Resample.Scaler.None;
 		internal Vector2B Wrapped = default;
 
 		public CacheHeader() { }
@@ -175,7 +175,7 @@ static class FileCache {
 						return errorCode is (32 or 33);
 					}
 
-					Resampler.Scaler scaler;
+					Resample.Scaler scaler;
 
 					try {
 						long start_time = Config.FileCache.Profile ? DateTime.Now.Ticks : 0L;
@@ -291,7 +291,7 @@ static class FileCache {
 								UncompressedDataLength = (uint)data.Length,
 								DataLength = (uint)compressedData.Length,
 								DataHash = compressedData.Hash(),
-								Scaler = scalerInfo?.Scaler ?? Resampler.Scaler.None
+								Scaler = scalerInfo?.Scaler ?? Resample.Scaler.None
 							}.Write(writer);
 
 							writer.Write(compressedData);

@@ -21,7 +21,7 @@ sealed partial class Scaler {
 			hasAlpha: hasAlpha,
 			luminanceWeight: SMConfig.Resample.Common.LuminanceWeight,
 			gammaCorrected: gammaCorrected,
-			equalColorTolerance: SMConfig.Resample.Common.EqualColorTolerance,
+			equalColorTolerance: (uint)SMConfig.Resample.Common.EqualColorTolerance,
 			dominantDirectionThreshold: SMConfig.Resample.xBRZ.DominantDirectionThreshold,
 			steepDirectionThreshold: SMConfig.Resample.xBRZ.SteepDirectionThreshold,
 			centerDirectionBias: SMConfig.Resample.xBRZ.CenterDirectionBias,

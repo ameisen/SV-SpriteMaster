@@ -1,4 +1,5 @@
-﻿using SpriteMaster.Types;
+﻿#if !SHIPPING
+using SpriteMaster.Types;
 using System;
 
 namespace SpriteMaster.Resample.Scalers.SuperXBR;
@@ -23,3 +24,4 @@ sealed partial class Scaler {
 		);
 	}
 }
+#endif

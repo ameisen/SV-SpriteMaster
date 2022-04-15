@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -193,33 +194,33 @@ static class Command {
 	}
 
 	internal static void OnSetValue(FieldInfo field) {
-		var options = field.GetCustomAttribute<Attributes.Options>();
+		var options = field.GetCustomAttribute<Attributes.OptionsAttribute>();
 		if (options is null) {
 			return;
 		}
 
-		if (options.Flags.HasFlag(Attributes.Options.Flag.FlushTextureCache)) {
+		if (options.Flags.HasFlag(Attributes.OptionsAttribute.Flag.FlushTextureCache)) {
 			Harmonize.Patches.TextureCache.Flush(reset: true);
 		}
-		if (options.Flags.HasFlag(Attributes.Options.Flag.FlushSuspendedSpriteCache)) {
+		if (options.Flags.HasFlag(Attributes.OptionsAttribute.Flag.FlushSuspendedSpriteCache)) {
 			Caching.SuspendedSpriteCache.Purge();
 		}
-		if (options.Flags.HasFlag(Attributes.Options.Flag.FlushFileCache)) {
+		if (options.Flags.HasFlag(Attributes.OptionsAttribute.Flag.FlushFileCache)) {
 			Caching.FileCache.Purge(reset: true);
 		}
-		if (options.Flags.HasFlag(Attributes.Options.Flag.FlushResidentCache)) {
+		if (options.Flags.HasFlag(Attributes.OptionsAttribute.Flag.FlushResidentCache)) {
 			Caching.ResidentCache.Purge();
 		}
-		if (options.Flags.HasFlag(Attributes.Options.Flag.ResetDisplay)) {
+		if (options.Flags.HasFlag(Attributes.OptionsAttribute.Flag.ResetDisplay)) {
 			// TODO
 		}
-		if (options.Flags.HasFlag(Attributes.Options.Flag.GarbageCollect)) {
+		if (options.Flags.HasFlag(Attributes.OptionsAttribute.Flag.GarbageCollect)) {
 			Extensions.Garbage.Collect(compact: true, blocking: true, background: false);
 		}
-		if (options.Flags.HasFlag(Attributes.Options.Flag.FlushMetaData)) {
+		if (options.Flags.HasFlag(Attributes.OptionsAttribute.Flag.FlushMetaData)) {
 			Metadata.Metadata.Purge();
 		}
-		if (options.Flags.HasFlag(Attributes.Options.Flag.GarbageCollect)) {
+		if (options.Flags.HasFlag(Attributes.OptionsAttribute.Flag.GarbageCollect)) {
 			Extensions.Garbage.Collect(compact: true, blocking: true, background: false);
 		}
 	}
@@ -265,6 +266,15 @@ static class Command {
 		}
 
 		OnSetValue(field);
+	}
+
+	internal static void SetValue<T>(FieldInfo field, T value) {
+		field.SetValue(null, Convert.ChangeType(value, field.FieldType));
+		OnSetValue(field);
+	}
+
+	internal static T GetValue<T>(FieldInfo field) {
+		return (T)Convert.ChangeType(field.GetValue(null), typeof(T))!;
 	}
 
 	private static void Load(Queue<string> arguments) {
