@@ -87,20 +87,17 @@ public sealed class SpriteMaster : Mod {
 	private bool IsVersionOutdated(string configVersion) {
 		string referenceVersion = Config.ClearConfigBefore;
 
-		var configStrArray = configVersion.Split('.').BeList();
-		var referenceStrArray = referenceVersion.Split('.').BeList();
+		var configStrArray = configVersion.Split('.');
+		var referenceStrArray = referenceVersion.Split('.');
 
 		try {
-			while (configStrArray.Count > referenceStrArray.Count) {
-				referenceStrArray.Add("0");
-			}
-			while (referenceStrArray.Count > configStrArray.Count) {
-				configStrArray.Add("0");
-			}
-
-			for (int i = 0; i < configStrArray.Count; ++i) {
-				if (configStrArray[i].IsEmpty()) {
+			int maxLen = Math.Max(configStrArray.Length, referenceStrArray.Length);
+			for (int i = 0; i < maxLen; ++i) {
+				if (configStrArray.Length <= i || configStrArray[i].IsEmpty()) {
 					return true;
+				}
+				if (referenceStrArray.Length <= i || referenceStrArray[i].IsEmpty()) {
+					return false;
 				}
 
 				var configElement = int.Parse(configStrArray[i]);
