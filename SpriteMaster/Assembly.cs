@@ -20,9 +20,9 @@ using System.Security;
 [assembly: InternalsVisibleToAttribute("xBRZ")]
 [assembly: InternalsVisibleToAttribute("Hashing")]
 [assembly: SecurityRules(SecurityRuleSet.Level2, SkipVerificationInFullTrust = true)]
-[assembly: ChangeList("affaf54:0.13.1")]
+[assembly: ChangeList("685199c:0.13.1-21-g685199c")]
 [assembly: BuildComputerName("Palatinate")]
-[assembly: FullVersion("0.13.1.300")]
+[assembly: FullVersion("0.14.0.1-alpha.1")]
 // [assembly: SuppressUnmanagedCodeSecurity]
 
 [module: CompilationRelaxations(CompilationRelaxations.NoStringInterning)]
