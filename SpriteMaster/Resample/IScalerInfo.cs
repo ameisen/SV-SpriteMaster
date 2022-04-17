@@ -1,4 +1,6 @@
-﻿namespace SpriteMaster.Resample;
+﻿using SpriteMaster.Resample.Scalers;
+
+namespace SpriteMaster.Resample;
 
 interface IScalerInfo {
 	Resample.Scaler Scaler { get; }
@@ -8,4 +10,6 @@ interface IScalerInfo {
 	bool PremultiplyAlpha { get; }
 	bool GammaCorrect { get; }
 	bool BlockCompress { get; }
+
+	IScaler Interface { get; }
 }

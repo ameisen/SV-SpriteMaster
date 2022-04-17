@@ -30,39 +30,29 @@ interface IScaler {
 	internal static IScaler Default => new DefaultScaler.Scaler.ScalerInterface();
 
 	internal static IScalerInfo? GetScalerInfo(Resample.Scaler scaler) => scaler switch {
-		Resample.Scaler.xBRZ =>
-			Resample.Scalers.xBRZ.ScalerInfo.Instance,
+		Resample.Scaler.xBRZ => Resample.Scalers.xBRZ.ScalerInfo.Instance,
 #if !SHIPPING
-		Resample.Scaler.SuperXBR =>
-			Resample.Scalers.SuperXBR.ScalerInfo.Instance,
+		Resample.Scaler.SuperXBR => Resample.Scalers.SuperXBR.ScalerInfo.Instance,
 #endif
-		Resample.Scaler.EPX =>
-			Resample.Scalers.EPX.ScalerInfo.Instance,
+		Resample.Scaler.EPX =>Resample.Scalers.EPX.ScalerInfo.Instance,
 #if !SHIPPING
-		Resample.Scaler.Bilinear =>
-			throw new NotImplementedException("Bilinear scaling is not implemented"),
+		Resample.Scaler.Bilinear => throw new NotImplementedException("Bilinear scaling is not implemented"),
 #endif
 		Resample.Scaler.None => null,
-		_ =>
-			throw new InvalidOperationException($"Unknown Scaler Type: {SMConfig.Resample.Scaler}")
+		_ => throw new InvalidOperationException($"Unknown Scaler Type: {SMConfig.Resample.Scaler}")
 	};
 
 	internal static IScalerInfo? CurrentInfo => GetScalerInfo(SMConfig.Resample.Scaler);
 
 	internal static IScaler Current => SMConfig.Resample.Scaler switch {
-		Resample.Scaler.xBRZ =>
-			new Resample.Scalers.xBRZ.Scaler.ScalerInterface(),
+		Resample.Scaler.xBRZ => Resample.Scalers.xBRZ.Scaler.ScalerInterface.Instance,
 #if !SHIPPING
-		Resample.Scaler.SuperXBR =>
-			new Resample.Scalers.SuperXBR.Scaler.ScalerInterface(),
+		Resample.Scaler.SuperXBR => Resample.Scalers.SuperXBR.Scaler.ScalerInterface.Instance,
 #endif
-		Resample.Scaler.EPX =>
-			new Resample.Scalers.EPX.Scaler.ScalerInterface(),
+		Resample.Scaler.EPX => Resample.Scalers.EPX.Scaler.ScalerInterface.Instance,
 #if !SHIPPING
-		Resample.Scaler.Bilinear =>
-			throw new NotImplementedException("Bilinear scaling is not implemented"),
+		Resample.Scaler.Bilinear => throw new NotImplementedException("Bilinear scaling is not implemented"),
 #endif
-		_ =>
-			throw new InvalidOperationException($"Unknown Scaler Type: {SMConfig.Resample.Scaler}")
+		_ => throw new InvalidOperationException($"Unknown Scaler Type: {SMConfig.Resample.Scaler}")
 	};
 }

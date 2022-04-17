@@ -55,6 +55,7 @@ static class FileCache {
 		internal uint DataLength = default;
 		internal Resample.Scaler Scaler = Resample.Scaler.None;
 		internal Vector2B Wrapped = default;
+		internal bool Gradient = false;
 
 		public CacheHeader() { }
 
@@ -146,6 +147,7 @@ static class FileCache {
 		out PaddingQuad padding,
 		out Vector2I blockPadding,
 		out IScalerInfo? scalerInfo,
+		out bool gradient,
 		out Span<byte> data
 	) {
 		scale = 0;
@@ -155,6 +157,7 @@ static class FileCache {
 		padding = PaddingQuad.Zero;
 		blockPadding = Vector2I.Zero;
 		scalerInfo = null;
+		gradient = false;
 		data = null;
 
 		try {
@@ -191,6 +194,7 @@ static class FileCache {
 							padding = header.Padding;
 							blockPadding = header.BlockPadding;
 							scaler = header.Scaler;
+							gradient = header.Gradient;
 							var uncompressedDataLength = header.UncompressedDataLength;
 							var dataLength = header.DataLength;
 							var dataHash = header.DataHash;
@@ -247,6 +251,7 @@ static class FileCache {
 		PaddingQuad padding,
 		Vector2I blockPadding,
 		IScalerInfo? scalerInfo,
+		bool gradient,
 		ReadOnlySpan<byte> data
 	) {
 		if (!Config.FileCache.Enabled) {
@@ -291,7 +296,8 @@ static class FileCache {
 								UncompressedDataLength = (uint)data.Length,
 								DataLength = (uint)compressedData.Length,
 								DataHash = compressedData.Hash(),
-								Scaler = scalerInfo?.Scaler ?? Resample.Scaler.None
+								Scaler = scalerInfo?.Scaler ?? Resample.Scaler.None,
+								Gradient = gradient
 							}.Write(writer);
 
 							writer.Write(compressedData);

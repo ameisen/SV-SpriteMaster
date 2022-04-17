@@ -219,6 +219,10 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ManagedSpriteInstance? Fetch(Texture2D texture, in Bounds source, uint expectedScale) {
+		if (!Config.Resample.Enabled) {
+			return null;
+		}
+
 		if (!Validate(texture, clean: true)) {
 			return null;
 		}
@@ -277,6 +281,10 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ManagedSpriteInstance? FetchOrCreate(Texture2D texture, in Bounds source, uint expectedScale, bool sliced) {
+		if (!Config.Resample.Enabled) {
+			return null;
+		}
+
 		if (!Validate(texture, clean: true)) {
 			return null;
 		}

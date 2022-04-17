@@ -11,5 +11,7 @@ sealed class ScalerInfo : IScalerInfo {
 	public bool GammaCorrect => false;
 	public bool BlockCompress => false;
 
+	public IScaler Interface => EPX.Scaler.ScalerInterface.Instance;
+
 	private ScalerInfo() { }
 }

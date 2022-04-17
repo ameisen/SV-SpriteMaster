@@ -5,6 +5,8 @@ namespace SpriteMaster.Resample.Scalers.EPX;
 
 sealed partial class Scaler {
 	internal sealed class ScalerInterface : IScaler {
+		internal static readonly ScalerInterface Instance = new();
+
 		public IScalerInfo Info => ScalerInfo.Instance;
 
 		public uint MinScale => Scaler.MinScale;

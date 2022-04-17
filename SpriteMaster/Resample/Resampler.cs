@@ -91,6 +91,7 @@ sealed class Resampler {
 		out PaddingQuad padding,
 		out Vector2I blockPadding,
 		out IScalerInfo? scalerInfo,
+		out bool isGradient,
 		out ResampleStatus result
 	) {
 		if (input.ReferenceData is null) {
@@ -100,6 +101,7 @@ sealed class Resampler {
 		scalerInfo = null;
 		padding = PaddingQuad.Zero;
 		blockPadding = Vector2I.Zero;
+		isGradient = false;
 
 		string MakeDumpPath(in Analysis.LegacyResults? analysis = null, in PaddingQuad? padding = null, string? subPath = null, string[]? modifiers = null) {
 			var normalizedName = input.Reference.NormalizedName().Replace('\\', '.');
@@ -189,9 +191,6 @@ sealed class Resampler {
 			}
 		}
 
-		scale *= (uint)blockSize;
-		scale = Math.Min(scale, Resample.Scalers.IScaler.Current.MaxScale);
-
 		// TODO : handle inverted input.Bounds
 		var spriteRawData8 = Passes.ExtractSprite.Extract(
 			data: input.ReferenceData.AsSpan<Color8>(),
@@ -214,19 +213,6 @@ sealed class Resampler {
 
 		// At this point, rawData includes just the sprite's raw data.
 
-		// Adjust the scale value so that it is within the preferred dimensional limits
-		if (Config.Resample.Scale) {
-			var originalScale = scale;
-			scale = 2;
-			for (uint s = originalScale; s > 2U; --s) {
-				var newDimensions = spriteRawExtent * s;
-				if (newDimensions.X <= Config.PreferredMaxTextureDimension && newDimensions.Y <= Config.PreferredMaxTextureDimension) {
-					scale = s;
-					break;
-				}
-			}
-		}
-
 		var analysis = Passes.Analysis.AnalyzeLegacy(
 			reference: input.Reference,
 			data: spriteRawData8,
@@ -234,7 +220,7 @@ sealed class Resampler {
 			wrapped: input.Wrapped
 		);
 
-		bool isGradient = analysis.MaxChannelShades >= Config.Resample.Analysis.MinimumGradientShades && (analysis.GradientDiagonal.Any || analysis.GradientAxial.Any);
+		isGradient = analysis.MaxChannelShades >= Config.Resample.Analysis.MinimumGradientShades && (analysis.GradientDiagonal.Any || analysis.GradientAxial.Any);
 
 		if (isGradient) {
 			foreach (var blacklistPattern in Config.Resample.GradientBlacklistPatterns) {
@@ -311,11 +297,27 @@ sealed class Resampler {
 
 		Span<Color16> bitmapDataWide = spriteRawData;
 
-		scalerInfo = Resample.Scalers.IScaler.CurrentInfo;
+		scalerInfo = Resample.Scalers.IScaler.GetScalerInfo(isGradient ? input.ScalerGradient : input.Scaler);
 
-		if (Config.Resample.Scaler != Scaler.None) {
-			bool premultiplyAlpha = Config.Resample.PremultiplyAlpha && scalerInfo!.PremultiplyAlpha;
-			bool gammaCorrect = Config.Resample.AssumeGammaCorrected && scalerInfo!.GammaCorrect; // There is no reason to perform this pass with EPX, as EPX does not blend.
+		if (scalerInfo is not null) {
+			scale *= (uint)blockSize;
+			scale = Math.Min(scale, (uint)scalerInfo.MaxScale);
+
+			// Adjust the scale value so that it is within the preferred dimensional limits
+			if (Config.Resample.Scale) {
+				var originalScale = scale;
+				scale = 2;
+				for (uint s = originalScale; s > 2U; --s) {
+					var newDimensions = spriteRawExtent * s;
+					if (newDimensions.X <= Config.PreferredMaxTextureDimension && newDimensions.Y <= Config.PreferredMaxTextureDimension) {
+						scale = s;
+						break;
+					}
+				}
+			}
+
+			bool premultiplyAlpha = Config.Resample.PremultiplyAlpha && scalerInfo.PremultiplyAlpha;
+			bool gammaCorrect = Config.Resample.AssumeGammaCorrected && scalerInfo.GammaCorrect; // There is no reason to perform this pass with EPX, as EPX does not blend.
 
 			bool handlePadding = !directImage;
 
@@ -369,7 +371,7 @@ sealed class Resampler {
 					}
 				}
 
-				var scaler = Resample.Scalers.IScaler.Current;
+				var scaler = scalerInfo.Interface;
 
 				var scalerConfig = scaler.CreateConfig(
 					wrapped: doWrap,
@@ -408,6 +410,9 @@ sealed class Resampler {
 				throw;
 			}
 			//ColorSpace.ConvertLinearToSRGB(bitmapData, Texel.Ordering.ARGB);
+		}
+		{
+			scale = 1;
 		}
 
 		if (!padding.IsZero) {
@@ -671,11 +676,17 @@ sealed class Resampler {
 					padding: out spriteInstance.Padding,
 					blockPadding: out spriteInstance.BlockPadding,
 					scalerInfo: out spriteInstance.ScalerInfo,
+					gradient: out bool gradient,
 					data: out bitmapData
 				)) {
 					scale = fetchScale;
 				}
 				else {
+					bitmapData = null;
+				}
+
+				var referenceScaler = gradient ? input.ScalerGradient : input.Scaler;
+				if (spriteInstance.ScalerInfo?.Scaler != referenceScaler) {
 					bitmapData = null;
 				}
 			}
@@ -685,6 +696,8 @@ sealed class Resampler {
 			}
 
 			if (bitmapData.IsEmpty) {
+				bool isGradient = false;
+
 				try {
 					bitmapData = CreateNewTexture(
 						async: async,
@@ -698,6 +711,7 @@ sealed class Resampler {
 						padding: out spriteInstance.Padding,
 						blockPadding: out spriteInstance.BlockPadding,
 						scalerInfo: out spriteInstance.ScalerInfo,
+						isGradient: out isGradient,
 						result: out result
 					);
 
@@ -720,6 +734,7 @@ sealed class Resampler {
 						padding: spriteInstance.Padding,
 						blockPadding: spriteInstance.BlockPadding,
 						scalerInfo: spriteInstance.ScalerInfo,
+						gradient: isGradient,
 						data: bitmapData
 					);
 				}

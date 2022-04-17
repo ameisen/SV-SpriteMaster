@@ -24,6 +24,8 @@ sealed class SpriteInfo : IDisposable {
 	internal readonly uint ExpectedScale;
 	private readonly int RawOffset;
 	private readonly int RawStride;
+	internal readonly Resample.Scaler Scaler;
+	internal readonly Resample.Scaler ScalerGradient;
 	internal readonly XNA.Graphics.BlendState BlendState;
 	internal readonly bool BlendEnabled;
 	internal readonly bool IsWater;
@@ -160,6 +162,8 @@ sealed class SpriteInfo : IDisposable {
 		// For statistics and throttling
 		internal readonly bool WasCached;
 		internal readonly ulong? Hash;
+		internal readonly Resample.Scaler Scaler;
+		internal readonly Resample.Scaler ScalerGradient;
 
 		internal Initializer(Texture2D reference, in Bounds dimensions, uint expectedScale, TextureType textureType, bool animated) {
 			Reference = reference;
@@ -167,6 +171,8 @@ sealed class SpriteInfo : IDisposable {
 			SamplerState = DrawState.CurrentSamplerState;
 			ExpectedScale = expectedScale;
 			Bounds = dimensions;
+			Scaler = Config.Resample.Scaler;
+			ScalerGradient = Config.Resample.ScalerGradient;
 
 			TextureType = textureType;
 
@@ -248,6 +254,8 @@ sealed class SpriteInfo : IDisposable {
 		RawStride = (int)format.SizeBytes(ReferenceSize.Width);
 		RawOffset = (RawStride * Bounds.Top) + (int)format.SizeBytes(Bounds.Left);
 		ReferenceData = initializer.ReferenceData;
+		Scaler = initializer.Scaler;
+		ScalerGradient = initializer.ScalerGradient;
 
 		if (ReferenceData is null) {
 			throw new ArgumentNullException(nameof(initializer.ReferenceData));

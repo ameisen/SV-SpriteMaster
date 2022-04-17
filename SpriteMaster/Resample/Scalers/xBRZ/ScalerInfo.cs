@@ -11,5 +11,7 @@ sealed class ScalerInfo : IScalerInfo {
 	public bool GammaCorrect => true;
 	public bool BlockCompress => true;
 
+	public IScaler Interface => xBRZ.Scaler.ScalerInterface.Instance;
+
 	private ScalerInfo() { }
 }
