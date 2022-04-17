@@ -176,6 +176,49 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 					return false;
 				}
 			}
+
+			bool isText = texture.NormalizedName().StartsWith(@"Fonts\");
+			bool isBasicText = texture.Format == SurfaceFormat.Dxt3;
+			if (!Config.Resample.EnabledText) {
+				if (isText) {
+					if (!meta.TracePrinted) {
+						meta.TracePrinted = true;
+						Debug.Trace($"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Is Font (and text resampling is disabled)");
+					}
+					meta.Validation = false;
+					if (clean) {
+						PurgeInvalidated(texture);
+					}
+					return false;
+				}
+			}
+			if (!Config.Resample.EnabledBasicText) {
+				// The only BC2 texture that I've _ever_ seen is the internal font
+				if (isBasicText) {
+					if (!meta.TracePrinted) {
+						meta.TracePrinted = true;
+						Debug.Trace($"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Is Basic Font (and basic text resampling is disabled)");
+					}
+					meta.Validation = false;
+					if (clean) {
+						PurgeInvalidated(texture);
+					}
+					return false;
+				}
+			}
+			if (!Config.Resample.EnabledSprites) {
+				if (!isText && !isBasicText) {
+					if (!meta.TracePrinted) {
+						meta.TracePrinted = true;
+						Debug.Trace($"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Is Sprite (and sprite resampling is disabled)");
+					}
+					meta.Validation = false;
+					if (clean) {
+						PurgeInvalidated(texture);
+					}
+					return false;
+				}
+			}
 		}
 
 		if (!texture.Anonymous()) {

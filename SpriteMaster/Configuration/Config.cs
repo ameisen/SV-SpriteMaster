@@ -235,7 +235,17 @@ static class Config {
 
 	internal static class Resample {
 		[Attributes.Comment("Should resampling be enabled?")]
+		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
 		internal static bool Enabled = true;
+		[Attributes.Comment("Should resampling be enabled for normal sprites?")]
+		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
+		internal static bool EnabledSprites = true;
+		[Attributes.Comment("Should resampling be enabled for regular text?")]
+		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
+		internal static bool EnabledText = true;
+		[Attributes.Comment("Should resampling be enabled for 'basic' text?")]
+		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
+		internal static bool EnabledBasicText = true;
 		[Attributes.Comment("Should texture rescaling be enabled?")]
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
 		[Attributes.Advanced]

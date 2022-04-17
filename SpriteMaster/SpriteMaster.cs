@@ -106,6 +106,10 @@ public sealed class SpriteMaster : Mod {
 				var configElement = int.Parse(configStrArray[i]);
 				var referenceElement = int.Parse(referenceStrArray[i]);
 
+				if (configElement > referenceElement) {
+					return false;
+				}
+
 				if (configElement < referenceElement) {
 					return true;
 				}

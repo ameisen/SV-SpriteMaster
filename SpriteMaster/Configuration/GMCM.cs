@@ -63,9 +63,11 @@ static class GMCM {
 			return true;
 		}
 
-		if (!advanced && field.GetCustomAttribute<Attributes.AdvancedAttribute>() is not null) {
+		bool isAdvancedField = field.GetCustomAttribute<Attributes.AdvancedAttribute>() is not null;
+		if (advanced != isAdvancedField) {
 			return true;
 		}
+
 
 		if (!IsFieldRepresentable(field)) {
 			return true;
@@ -143,7 +145,7 @@ static class GMCM {
 		for (int i = 0; (prefixResult?.Order ?? 0) == 0 && i < Prefixes.Length; ++i) {
 			foreach (var p in Prefixes[i]) {
 				if (value.EndsWith(p, StringComparison.InvariantCultureIgnoreCase)) {
-					prefixResult = (i + 1, p);
+					prefixResult = (i, p);
 					break;
 				}
 			}
@@ -153,7 +155,7 @@ static class GMCM {
 			return long.Parse(value);
 		}
 
-		value = value.Substring(value.Length - prefixResult.Value.Prefix.Length);
+		value = value.Substring(0, value.Length - prefixResult.Value.Prefix.Length);
 
 		long resultValue;
 

@@ -269,12 +269,22 @@ static class Command {
 	}
 
 	internal static void SetValue<T>(FieldInfo field, T value) {
-		field.SetValue(null, Convert.ChangeType(value, field.FieldType));
+		if (field.FieldType.IsEnum) {
+			field.SetValue(null, (int)(object)value!);
+		}
+		else {
+			field.SetValue(null, Convert.ChangeType(value, field.FieldType));
+		}
 		OnSetValue(field);
 	}
 
 	internal static T GetValue<T>(FieldInfo field) {
-		return (T)Convert.ChangeType(field.GetValue(null), typeof(T))!;
+		if (field.FieldType.IsEnum) {
+			return (T)(object)field.GetValue(null)!;
+		}
+		else {
+			return (T)Convert.ChangeType(field.GetValue(null), typeof(T))!;
+		}
 	}
 
 	private static void Load(Queue<string> arguments) {
