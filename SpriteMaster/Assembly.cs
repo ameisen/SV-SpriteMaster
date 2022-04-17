@@ -13,8 +13,6 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Security;
 
-[assembly: CompilationRelaxations(CompilationRelaxations.NoStringInterning)]
-
 // https://stackoverflow.com/questions/24802222/performance-of-expression-trees#comment44537873_24802222
 [assembly: CLSCompliant(false)]
 [assembly: AllowPartiallyTrustedCallers]
