@@ -2,6 +2,7 @@
 using LinqFasterer;
 using SpriteMaster.Caching;
 using SpriteMaster.Configuration;
+using SpriteMaster.Configuration.GMCM;
 using SpriteMaster.Experimental;
 using SpriteMaster.Extensions;
 using SpriteMaster.Harmonize;
@@ -29,13 +30,14 @@ namespace SpriteMaster;
 public sealed class SpriteMaster : Mod {
 	internal static SpriteMaster Self { get; private set; } = default!;
 
-	internal MemoryMonitor MemoryMonitor;
-	internal bool IsGameLoaded { get; private set; } = false;
+	internal readonly MemoryMonitor MemoryMonitor;
 	internal static string? AssemblyPath { get; private set; }
 
-	internal static readonly string ChangeList = typeof(SpriteMaster).Assembly.GetCustomAttribute<ChangeListAttribute>()?.Value ?? "local";
-	internal static readonly string BuildComputerName = typeof(SpriteMaster).Assembly.GetCustomAttribute<BuildComputerNameAttribute>()?.Value ?? "unknown";
-	internal static readonly string FullVersion = typeof(SpriteMaster).Assembly.GetCustomAttribute<FullVersionAttribute>()?.Value ?? Config.CurrentVersion;
+	private static T? GetAssemblyAttribute<T>() where T : Attribute => typeof(SpriteMaster).Assembly.GetCustomAttribute<T>();
+
+	internal static readonly string ChangeList = GetAssemblyAttribute<ChangeListAttribute>()?.Value ?? "local";
+	internal static readonly string BuildComputerName = GetAssemblyAttribute<BuildComputerNameAttribute>()?.Value ?? "unknown";
+	internal static readonly string FullVersion = GetAssemblyAttribute<FullVersionAttribute>()?.Value ?? Config.CurrentVersion;
 
 	internal static void DumpAllStats() {
 		var currentProcess = Process.GetCurrentProcess();
@@ -64,8 +66,6 @@ public sealed class SpriteMaster : Mod {
 	}
 
 	private const string ConfigName = "config.toml";
-
-	private static volatile string CurrentSeason = "";
 
 	public SpriteMaster() {
 		Contracts.AssertNull(Self);
@@ -279,14 +279,21 @@ public sealed class SpriteMaster : Mod {
 		Config.Resample.BlacklistPatterns = ProcessTexturePatterns(Config.Resample.Blacklist);
 		Config.Resample.GradientBlacklistPatterns = ProcessTexturePatterns(Config.Resample.GradientBlacklist);
 
+		/*
 		if (Config.ShowIntroMessage && !Config.SkipIntro) {
 			help.Events.GameLoop.GameLaunched += (_, _) => {
 				Game1.drawLetterMessage("Welcome to SpriteMaster!\nSpriteMaster must resample sprites as it sees them and thus some lag will likely be apparent at the start of the game, upon entering new areas, and when new sprites are seen.\n\nPlease be patient and do not take this as an indication that your computer is incapable of running SpriteMaster.\n\nEnjoy!".Replace("\n", "^"));
 			};
 			Config.ShowIntroMessage = false;
 		}
+		*/
 
-		help.Events.GameLoop.GameLaunched += (_, _) => GMCM.Initialize(help);
+		if (Config.ShowIntroMessage && !Config.SkipIntro) {
+			help.Events.GameLoop.UpdateTicked += OnUpdateTicked;
+			Config.ShowIntroMessage = false;
+		}
+
+		help.Events.GameLoop.GameLaunched += (_, _) => Setup.Initialize(help);
 
 		Serialize.Save(Configuration.Config.Path);
 
@@ -419,6 +426,20 @@ public sealed class SpriteMaster : Mod {
 		internal const string ContentPatcherAnimations = "spacechase0.ContentPatcherAnimations";
 	}
 
+	private void OnUpdateTicked(object? sender, UpdateTickedEventArgs args) {
+		if (!Config.ShowIntroMessage) {
+			return;
+		}
+
+		if (Game1.ticks <= 1) {
+			return;
+		}
+
+		Configuration.GMCM.Setup.ForceOpen();
+
+		Helper.Events.GameLoop.UpdateTicked -= OnUpdateTicked;
+	}
+
 	private void OnWindowResized(WindowResizedEventArgs args) {
 		if (args.NewSize == args.OldSize) {
 			return;
@@ -536,8 +557,6 @@ public sealed class SpriteMaster : Mod {
 
 		ForceGarbageCollect();
 		ManagedSpriteInstance.ClearTimers();
-
-		IsGameLoaded = true;
 	}
 
 	// SMAPI/CP won't do this, so we do. Purge the cached textures for the previous season on a season change.
@@ -547,9 +566,9 @@ public sealed class SpriteMaster : Mod {
 		// Do a full GC at the start of each day
 		Garbage.Collect(compact: true, blocking: true, background: false);
 
-		var season = SDate.Now().Season;
-		if (!season.EqualsInvariantInsensitive(CurrentSeason)) {
-			CurrentSeason = season;
+		var season = Game1.currentSeason;
+		if (!season.EqualsInvariantInsensitive(GameState.CurrentSeason)) {
+			GameState.CurrentSeason = season;
 			SpriteMap.SeasonPurge(season.ToLowerInvariant());
 
 			// And again after purge
@@ -572,7 +591,7 @@ public sealed class SpriteMaster : Mod {
 
 	private static void OnButtonPressed(object? _, ButtonPressedEventArgs args) {
 		if (args.Button == Config.ToggleButton) {
-			Config.Enabled = !Config.Enabled;
+			Config.ToggledEnable = !Config.ToggledEnable;
 		}
 	}
 }

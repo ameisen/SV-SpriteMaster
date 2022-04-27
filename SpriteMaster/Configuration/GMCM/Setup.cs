@@ -1,16 +1,27 @@
 ﻿using GenericModConfigMenu;
+using SpriteMaster.Configuration.Preview;
 using SpriteMaster.Extensions;
+using SpriteMaster.Types;
 using StardewModdingAPI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using SMMetadata = SpriteMaster.Metadata.Metadata;
 
-namespace SpriteMaster.Configuration;
+namespace SpriteMaster.Configuration.GMCM;
 
-static class GMCM {
+static class Setup {
+	private const int PreviewHeight = 300;
+
 	private static volatile bool Initialized = false;
+
+	private static IGenericModConfigMenuApi? ConfigAPI = null;
+	private static readonly Dictionary<string, FieldInfo> FieldMap = new();
+	private static Preview.Override PreviewOverride = new();
+	private static bool IsMenuOpened = false;
+	private static Preview.Scene? PreviewScene = null;
 
 	internal static void Initialize(IModHelper help) {
 		if (Initialized) {
@@ -20,14 +31,21 @@ static class GMCM {
 
 		// https://github.com/spacechase0/StardewValleyMods/tree/develop/GenericModConfigMenu#for-c-mod-authors
 
-		var configMenu = help.ModRegistry.GetApi<IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu");
-		if (configMenu is null)
+		ConfigAPI = help.ModRegistry.GetApi<IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu");
+		if (ConfigAPI is null) {
+			Debug.Trace("Could not acquire GenericModConfigMenu interface");
 			return;
+		}
 
-		configMenu.Register(
+		ConfigAPI.Register(
 			mod: SpriteMaster.Self.ModManifest,
 			reset: Reset,
 			save: Save
+		);
+
+		ConfigAPI.OnFieldChanged(
+			SpriteMaster.Self.ModManifest,
+			OnValueChange
 		);
 
 		ProcessCategory(
@@ -35,7 +53,7 @@ static class GMCM {
 			category: Serialize.Root,
 			advanced: false,
 			manifest: SpriteMaster.Self.ModManifest,
-			config: configMenu
+			config: ConfigAPI
 		);
 
 		ProcessCategory(
@@ -43,27 +61,37 @@ static class GMCM {
 			category: Serialize.Root,
 			advanced: true,
 			manifest: SpriteMaster.Self.ModManifest,
-			config: configMenu
+			config: ConfigAPI
 		);
 	}
 
-	private static void Reset() {
-		if (Config.DefaultConfig is not null) {
-			Serialize.Load(Config.DefaultConfig, retain: true);
-			Config.DefaultConfig.Position = 0;
+	internal static void ForceOpen() {
+		if (ConfigAPI is null) {
+			return;
 		}
+
+		ConfigAPI.OpenModMenu(SpriteMaster.Self.ModManifest);
+	}
+
+	private static void Reset() {
+		if (Config.DefaultConfig is null) {
+			return;
+		}
+
+		Serialize.Load(Config.DefaultConfig, retain: true);
+		Config.DefaultConfig.Position = 0;
 	}
 
 	private static void Save() {
-		Serialize.Save(Configuration.Config.Path);
+		Serialize.Save(Config.Path);
 	}
 
 	private static bool Hidden(FieldInfo field, bool advanced) {
-		if (field.GetAttribute<Attributes.GMCMHiddenAttribute>(out var _)) {
+		if (field.HasAttribute<Attributes.GMCMHiddenAttribute>()) {
 			return true;
 		}
 
-		bool isAdvancedField = field.GetCustomAttribute<Attributes.AdvancedAttribute>() is not null;
+		bool isAdvancedField = field.HasAttribute<Attributes.AdvancedAttribute>();
 		if (advanced != isAdvancedField) {
 			return true;
 		}
@@ -81,11 +109,11 @@ static class GMCM {
 			return false;
 		}
 
-		if (type.GetAttribute<Attributes.GMCMHiddenAttribute>(out var _)) {
+		if (type.HasAttribute<Attributes.GMCMHiddenAttribute>()) {
 			return true;
 		}
 
-		if (!advanced && type.GetCustomAttribute<Attributes.AdvancedAttribute>() is not null) {
+		if (!advanced && type.HasAttribute<Attributes.AdvancedAttribute>()) {
 			return true;
 		}
 
@@ -117,7 +145,7 @@ static class GMCM {
 		// 1024^1 = (1024 << 0)
 		// 1024^2 = (1024 << 10)
 		// 1024^3 = (1024 << 20)
-		return checked(value << (10 * order));
+		return checked(value << 10 * order);
 	}
 
 	private static string FormatLong(long value) {
@@ -208,6 +236,23 @@ static class GMCM {
 		return result.ToString();
 	}
 
+	private static int ExtractCombinedEnum(Type enumType, string combinedName) {
+		int splitOffset = combinedName.IndexOf('/');
+		if (splitOffset != -1) {
+			combinedName = combinedName.Substring(0, splitOffset);
+		}
+		return (int)Enum.Parse(enumType, combinedName);
+	}
+
+	private static T ExtractCombinedEnum<T>(string combinedName) where T : struct, Enum {
+		int splitOffset = combinedName.IndexOf('/');
+		if (splitOffset != -1) {
+			combinedName = combinedName.Substring(0, splitOffset);
+		}
+		return Enum.Parse<T>(combinedName);
+	}
+
+
 	private static void ProcessField(FieldInfo field, bool advanced, IManifest manifest, IGenericModConfigMenuApi config) {
 		if (Hidden(field, advanced)) {
 			return;
@@ -216,24 +261,24 @@ static class GMCM {
 		var comments = field.GetCustomAttributes<Attributes.CommentAttribute>();
 		string? comment = null;
 		if (comments.Any()) {
-			comment = "";
-			foreach (var commentAttribute in comments) {
-				comment += commentAttribute.Message;
-				comment += '\n';
-			}
-			comment.Remove(comment.Length - 1);
+			comment = string.Join(
+				Environment.NewLine,
+				comments.Select(attr => attr.Message)
+			);
 		}
 
 		var fieldType = field.FieldType;
 		var fieldId = $"{field.ReflectedType?.FullName ?? "unknown"}.{field.Name}";
 		Func<string> fieldName = () => FormatName(field.Name);
-		Func<string>? tooltip = (comment is null) ? null : () => comment;
+		Func<string>? tooltip = comment is null ? null : () => comment;
+
+		FieldMap[fieldId] = field;
 
 		if (fieldType == typeof(bool)) {
 			config.AddBoolOption(
 				mod: manifest,
 				getValue: () => Command.GetValue<bool>(field),
-				setValue: value => Command.SetValue<bool>(field, value),
+				setValue: value => Command.SetValue(field, value),
 				name: fieldName,
 				tooltip: tooltip,
 				fieldId: fieldId
@@ -245,7 +290,7 @@ static class GMCM {
 			config.AddNumberOption(
 				mod: manifest,
 				getValue: () => Command.GetValue<int>(field),
-				setValue: value => Command.SetValue<int>(field, value),
+				setValue: value => Command.SetValue(field, value),
 				name: fieldName,
 				tooltip: tooltip,
 				min: limitAttribute?.GetMin<int>(fieldType),
@@ -261,7 +306,7 @@ static class GMCM {
 			config.AddNumberOption(
 				mod: manifest,
 				getValue: () => Command.GetValue<float>(field),
-				setValue: value => Command.SetValue<float>(field, value),
+				setValue: value => Command.SetValue(field, value),
 				name: fieldName,
 				tooltip: tooltip,
 				min: limitAttribute?.GetMin<float>(),
@@ -303,7 +348,7 @@ static class GMCM {
 			config.AddKeybind(
 				mod: manifest,
 				getValue: () => Command.GetValue<SButton>(field),
-				setValue: value => Command.SetValue<SButton>(field, value),
+				setValue: value => Command.SetValue(field, value),
 				name: fieldName,
 				tooltip: tooltip,
 				fieldId: fieldId
@@ -312,16 +357,18 @@ static class GMCM {
 		else if (fieldType.IsEnum) {
 			Dictionary<int, string> enumMap = new();
 			foreach (var enumPairs in EnumExt.Get(fieldType)) {
-				_ = enumMap.TryAdd((int)enumPairs.Value, enumPairs.Key);
+				if (!enumMap.TryAdd(enumPairs.Value, enumPairs.Key)) {
+					enumMap[enumPairs.Value] += $"/{enumPairs.Key}";
+				}
 			}
 
 			config.AddTextOption(
 				mod: manifest,
 				getValue: () => enumMap[Command.GetValue<int>(field)],
-				setValue: value => Command.SetValue<int>(field, (int)Enum.Parse(fieldType, value)),
+				setValue: value => Command.SetValue(field, ExtractCombinedEnum(fieldType, value)),
 				name: fieldName,
 				tooltip: tooltip,
-				allowedValues: Enum.GetNames(fieldType).ToArray(),
+				allowedValues: enumMap.Values.ToArray(),
 				formatAllowedValue: null,
 				fieldId: fieldId
 			);
@@ -332,7 +379,7 @@ static class GMCM {
 			config.AddTextOption(
 				mod: manifest,
 				getValue: () => FormatLong(Command.GetValue<long>(field)),
-				setValue: value => Command.SetValue<long>(
+				setValue: value => Command.SetValue(
 					field,
 					Math.Clamp(
 						ParseLong(value),
@@ -352,14 +399,52 @@ static class GMCM {
 		}
 	}
 
+	private static void OnValueChange(string fieldId, object value) {
+		switch (fieldId) {
+			case "SpriteMaster.Configuration.Config.Enabled":
+				PreviewOverride.Enabled = (bool)value;
+				break;
+			case "SpriteMaster.Configuration.Config+Resample.Enabled":
+				PreviewOverride.ResampleEnabled = (bool)value;
+				break;
+			case "SpriteMaster.Configuration.Config+Resample.Scaler":
+				PreviewOverride.Scaler = ExtractCombinedEnum<Resample.Scaler>((string)value);
+				break;
+			case "SpriteMaster.Configuration.Config+Resample.ScalerGradient":
+				PreviewOverride.ScalerGradient = ExtractCombinedEnum<Resample.Scaler>((string)value);
+				break;
+			case "SpriteMaster.Configuration.Config+Resample.EnabledSprites":
+				PreviewOverride.ResampleSprites = (bool)value;
+				SMMetadata.FlushValidations();
+				break;
+			case "SpriteMaster.Configuration.Config+Resample.EnabledText":
+				PreviewOverride.ResampleText = (bool)value;
+				SMMetadata.FlushValidations();
+				break;
+			case "SpriteMaster.Configuration.Config+Resample.EnabledBasicText":
+				PreviewOverride.ResampleBasicText = (bool)value;
+				SMMetadata.FlushValidations();
+				break;
+			default:
+				return;
+		}
+
+		foreach (var weakRef in SpriteMap.SpriteInstanceReferencesGet) {
+			if (!weakRef.IsDisposed && weakRef.IsPreview) {
+				weakRef.Dispose(disposeChildren: true);
+			}
+		}
+		// PreviewOverride
+	}
+
 	private static string? GetCategoryName(Serialize.Category category) {
-		if (string.IsNullOrEmpty(category.Name)) {
+		if (category.Name.IsBlank()) {
 			return null;
 		}
 
 		var names = new List<string>();
 		foreach (var currentCategory in category.ParentTraverser) {
-			if (!string.IsNullOrEmpty(currentCategory.Name)) {
+			if (!currentCategory.Name.IsBlank()) {
 				names.Add(currentCategory.Name);
 			}
 		}
@@ -389,8 +474,69 @@ static class GMCM {
 		return false;
 	}
 
-	private static void ProcessCategory(Serialize.Category? parent, Serialize.Category category, bool advanced, IManifest manifest, IGenericModConfigMenuApi config) {
-		if (parent is null) {
+	private static void OnClick(object? sender, StardewModdingAPI.Events.ButtonReleasedEventArgs args) {
+		if (args.Button != SButton.MouseLeft) {
+			return;
+		}
+
+		if (PreviewScene is null) {
+			return;
+		}
+
+		if (!IsMenuOpened) {
+			return;
+		}
+
+		var cursorPosition = (Vector2I)((Vector2F)args.Cursor.ScreenPixels);
+		if (!PreviewScene.Region.Contains(cursorPosition)) {
+			return;
+		}
+
+		PreviewScene = null;
+	}
+
+	private static void OnMenuOpen() {
+		SpriteMaster.Self.Helper.Events.Input.ButtonReleased += OnClick;
+
+		PreviewOverride = Override.FromConfig;
+	}
+
+	private static void OnMenuClose() {
+		SpriteMaster.Self.Helper.Events.Input.ButtonReleased -= OnClick;
+
+		// clear the preview scene
+		PreviewScene = null;
+
+		SMMetadata.FlushValidations();
+	}
+
+	private static void OnDrawPreview(XNA.Graphics.SpriteBatch batch, Vector2F offset) {
+		Bounds scissor = batch.GraphicsDevice.ScissorRectangle;
+
+		Bounds destination = new(
+			(0, offset.Y.RoundToInt()),
+			(scissor.Width, PreviewHeight)
+		);
+
+		destination.Offset.X += scissor.X;
+
+		if (PreviewScene is null) {
+			PreviewScene = new Preview.Scene1(destination);
+		}
+		else {
+			if (PreviewScene.Region != destination) {
+				PreviewScene.Resize(destination);
+			}
+		}
+
+		PreviewScene.Tick();
+		PreviewScene.Draw(batch, in PreviewOverride);
+	}
+
+	private static void ProcessCategory(Serialize.Category? parent, Serialize.Category category, bool advanced, IManifest manifest, IGenericModConfigMenuApi config, bool first = false) {
+		bool isRoot = parent is null;
+		
+		if (isRoot) {
 			if (advanced) {
 				config.AddPage(
 					mod: manifest,
@@ -405,16 +551,18 @@ static class GMCM {
 					text: () => "[ Advanced Settings ]",
 					tooltip: () => "Display Advanced Settings"
 				);
-				config.AddSectionTitle(mod: manifest, text: () => "");
+				//config.AddSectionTitle(mod: manifest, text: () => "");
 			}
 		}
 
 		if (category.Name.Length != 0) {
-			if (category.Type.GetAttribute<Attributes.CommentAttribute>(out var commentAttribute)) {
-				config.AddSectionTitle(manifest, () => GetCategoryName(category) ?? "", () => commentAttribute.Message);
-			}
-			else {
-				config.AddSectionTitle(manifest, () => GetCategoryName(category) ?? "");
+			if (string.IsNullOrEmpty(GetCategoryName(category)) && !first) {
+				if (category.Type.GetAttribute<Attributes.CommentAttribute>(out var commentAttribute)) {
+					config.AddSectionTitle(manifest, () => GetCategoryName(category) ?? "", () => commentAttribute.Message);
+				}
+				else {
+					config.AddSectionTitle(manifest, () => GetCategoryName(category) ?? "");
+				}
 			}
 		}
 
@@ -422,6 +570,30 @@ static class GMCM {
 			ProcessField(field, advanced, manifest, config);
 		}
 
+		if (isRoot) {
+			// Fancy special case!
+			config.AddComplexOption(
+				mod: manifest,
+				name: () => "Preview",
+				draw: (batch, offset) => OnDrawPreview(batch, offset),
+				tooltip: () => "Resampling Preview (click to change)",
+				height: () => PreviewHeight,
+				beforeMenuClosed: () => {
+					IsMenuOpened = false;
+					OnMenuClose();
+				},
+				beforeMenuOpened: () => {
+					if (IsMenuOpened) {
+						return;
+					}
+					IsMenuOpened = true;
+					OnMenuOpen();
+				},
+				fieldId: "resampling.preview"
+			);
+		}
+
+		first = true;
 		foreach (var child in category.Children.Values) {
 			if (Hidden(child.Type, advanced)) {
 				continue;
@@ -436,8 +608,11 @@ static class GMCM {
 				child,
 				advanced,
 				manifest,
-				config
+				config,
+				first
 			);
+
+			first = false;
 		}
 	}
 }

@@ -205,6 +205,12 @@ unsafe partial struct Vector2F : ILongHash, ICloneable {
 	readonly object ICloneable.Clone() => this;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
+	public static Vector2F operator +(Vector2F vector) => vector;
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	public static Vector2F operator -(Vector2F vector) => new(-vector.X, -vector.Y);
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static Vector2F operator +(Vector2F lhs, Vector2F rhs) => SystemVector2.Add(lhs, rhs);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -239,6 +245,12 @@ unsafe partial struct Vector2F : ILongHash, ICloneable {
 		lhs.X % rhs,
 		lhs.Y % rhs
 	);
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	public static Vector2F operator +(Vector2I lhs, Vector2F rhs) => SystemVector2.Add((Vector2F)lhs, rhs);
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	public static Vector2F operator -(Vector2I lhs, Vector2F rhs) => SystemVector2.Subtract((Vector2F)lhs, rhs);
 
 	internal readonly float LengthSquared => SystemVector2.Dot(NumericVector, NumericVector);
 	internal readonly float Length => MathF.Sqrt(LengthSquared);

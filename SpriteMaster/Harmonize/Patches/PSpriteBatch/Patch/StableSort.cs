@@ -88,7 +88,7 @@ static class StableSort {
 			return;
 		}
 
-		if (!Config.Enabled || !Config.Extras.StableSort) {
+		if (!Config.IsEnabled || !Config.Extras.StableSort) {
 			Array.Sort(array, index, length);
 			return;
 		}

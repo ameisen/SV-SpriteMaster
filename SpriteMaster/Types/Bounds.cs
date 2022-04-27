@@ -303,4 +303,10 @@ partial struct Bounds :
 			return true;
 		}
 	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal readonly Bounds OffsetBy(Vector2I offset) => new(
+		Offset + offset,
+		Extent
+	);
 }

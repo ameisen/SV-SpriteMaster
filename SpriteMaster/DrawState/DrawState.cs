@@ -110,7 +110,7 @@ static partial class DrawState {
 
 		Debug.Mode.Draw();
 
-		if (!Config.Enabled) {
+		if (!Config.IsEnabled) {
 			return;
 		}
 

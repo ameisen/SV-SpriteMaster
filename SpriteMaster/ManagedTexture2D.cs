@@ -79,7 +79,7 @@ sealed class ManagedTexture2D : InternalTexture2D {
 		}
 		Disposed = true;
 
-		if (Reference.TryGetTarget(out var reference)) {
+		if (Reference.TryGet(out var reference)) {
 			reference.Disposing -= OnParentDispose;
 		}
 

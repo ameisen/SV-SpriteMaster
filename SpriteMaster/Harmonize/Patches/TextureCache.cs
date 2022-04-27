@@ -39,7 +39,12 @@ static class TextureCache {
 	public static bool FromStreamPre(ref XTexture2D __result, GraphicsDevice graphicsDevice, Stream stream, ref bool __state) {
 		lock (Lock) {
 
-			if (!Config.Enabled || !Config.SMAPI.TextureCacheEnabled) {
+			if (!Config.IsUnconditionallyEnabled || !Config.SMAPI.TextureCacheEnabled) {
+				__state = false;
+				return true;
+			}
+
+			if (graphicsDevice is null) {
 				__state = false;
 				return true;
 			}
@@ -69,13 +74,9 @@ static class TextureCache {
 
 			using var watchdogScoped = WatchDog.WatchDog.ScopedWorkingState;
 
-			if (graphicsDevice is null || fileStream is null) {
-				return true;
-			}
-
 			var path = fileStream.Name;
 			if (TextureCacheTable.TryGetValue(path, out var textureRef)) {
-				if (textureRef?.TryGetTarget(out var texture) ?? false && texture is not null) {
+				if (textureRef.TryGet(out var texture)) {
 					if (texture.IsDisposed || texture.GraphicsDevice != graphicsDevice) {
 						TextureCacheTable.TryRemove(path, out var _);
 						TexturePaths.Remove(texture);
@@ -96,7 +97,7 @@ static class TextureCache {
 	[Harmonize(typeof(XTexture2D), "FromStream", Harmonize.Fixation.Postfix, PriorityLevel.Last, platform: Harmonize.Platform.MonoGame, instance: false)]
 	public static void FromStreamPost(ref XTexture2D __result, GraphicsDevice graphicsDevice, Stream stream, bool __state) {
 		lock (Lock) {
-			if (!Config.Enabled || !Config.SMAPI.TextureCacheEnabled) {
+			if (!Config.IsUnconditionallyEnabled || !Config.SMAPI.TextureCacheEnabled) {
 				return;
 			}
 
@@ -123,7 +124,7 @@ static class TextureCache {
 	[Harmonize(typeof(XTexture2D), "FromStream", Harmonize.Fixation.Finalizer, PriorityLevel.Last, platform: Harmonize.Platform.MonoGame, instance: false)]
 	public static void FromStreamFinal(ref XTexture2D __result, GraphicsDevice graphicsDevice, Stream stream, bool __state) {
 		lock (Lock) {
-			if (!Config.Enabled || !Config.SMAPI.TextureCacheEnabled) {
+			if (!Config.IsUnconditionallyEnabled || !Config.SMAPI.TextureCacheEnabled) {
 				return;
 			}
 
@@ -161,7 +162,7 @@ static class TextureCache {
 				previousTexture = original;
 				return result.MakeWeak();
 			});
-			if (previousTexture?.TryGetTarget(out var previousTextureTarget) ?? false && previousTextureTarget is not null) {
+			if (previousTexture.TryGet(out var previousTextureTarget)) {
 				PremultipliedTable.Remove(previousTextureTarget);
 			}
 			TexturePaths.AddOrUpdate(result, fileStream.Name);
@@ -179,7 +180,7 @@ static class TextureCache {
 	)]
 	public static bool PremultiplyTransparencyPre(ContentManager __instance, ref XTexture2D __result, XTexture2D texture) {
 		lock (Lock) {
-			if (!Config.Enabled || !Config.SMAPI.TextureCacheEnabled || !Config.SMAPI.PMATextureCacheEnabled) {
+			if (!Config.IsUnconditionallyEnabled || !Config.SMAPI.TextureCacheEnabled || !Config.SMAPI.PMATextureCacheEnabled) {
 				return true;
 			}
 
@@ -205,7 +206,7 @@ static class TextureCache {
 		lock (Lock) {
 			CurrentPremultiplyingTexture.Value = null!;
 
-			if (!Config.Enabled || !Config.SMAPI.TextureCacheEnabled || !Config.SMAPI.PMATextureCacheEnabled) {
+			if (!Config.IsUnconditionallyEnabled || !Config.SMAPI.TextureCacheEnabled || !Config.SMAPI.PMATextureCacheEnabled) {
 				return;
 			}
 
@@ -216,7 +217,7 @@ static class TextureCache {
 	internal static void Remove(XTexture2D texture) {
 		lock (Lock) {
 			// Prevent an annoying circular logic problem
-			if (CurrentPremultiplyingTexture.Value?.TryGetTarget(out var currentTexture) ?? false && currentTexture == texture) {
+			if (CurrentPremultiplyingTexture.Value.TryGet(out var currentTexture) && currentTexture == texture) {
 				return;
 			}
 

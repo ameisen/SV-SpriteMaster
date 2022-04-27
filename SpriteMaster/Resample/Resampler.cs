@@ -22,7 +22,8 @@ sealed class Resampler {
 		Success = 0,
 		Failure = 1,
 		DisabledGradient = 2,
-		DisabledSolid = 3
+		DisabledSolid = 3,
+		Disabled = 4,
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -242,8 +243,14 @@ sealed class Resampler {
 			}
 		}
 
-		if (!Config.Resample.Recolor.Enabled && !Config.Resample.Enabled || (isGradient && Config.Resample.ScalerGradient == Scaler.None)) {
-			result = ResampleStatus.DisabledGradient;
+		var scalerType = isGradient ? input.ScalerGradient : input.Scaler;
+
+		if (
+			!Config.Resample.Recolor.Enabled &&
+			!Config.Resample.IsEnabled ||
+			scalerType == Scaler.None
+		) {
+			result = isGradient ? ResampleStatus.DisabledGradient : ResampleStatus.Disabled;
 			size = default;
 			format = default;
 			return Span<byte>.Empty;
@@ -267,7 +274,7 @@ sealed class Resampler {
 			}
 		}
 
-		bool resamplingAllowed = Config.Resample.Enabled || Config.Resample.Scaler == Scaler.None;
+		bool resamplingAllowed = Config.Resample.IsEnabled || (Configuration.Preview.Override.Instance?.Scaler ?? Config.Resample.Scaler) == Scaler.None;
 
 		if (Config.Resample.EnableWrappedAddressing) {
 			wrapped = analysis.Wrapped;
@@ -297,7 +304,7 @@ sealed class Resampler {
 
 		Span<Color16> bitmapDataWide = spriteRawData;
 
-		scalerInfo = Resample.Scalers.IScaler.GetScalerInfo(isGradient ? input.ScalerGradient : input.Scaler);
+		scalerInfo = Resample.Scalers.IScaler.GetScalerInfo(scalerType);
 
 		if (scalerInfo is not null) {
 			scale *= (uint)blockSize;
@@ -309,7 +316,7 @@ sealed class Resampler {
 				scale = 2;
 				for (uint s = originalScale; s > 2U; --s) {
 					var newDimensions = spriteRawExtent * s;
-					if (newDimensions.X <= Config.PreferredMaxTextureDimension && newDimensions.Y <= Config.PreferredMaxTextureDimension) {
+					if (newDimensions.MaxOf <= Config.PreferredMaxTextureDimension) {
 						scale = s;
 						break;
 					}
@@ -715,7 +722,7 @@ sealed class Resampler {
 						result: out result
 					);
 
-					if (result is (ResampleStatus.DisabledGradient or ResampleStatus.DisabledSolid)) {
+					if (result is (ResampleStatus.DisabledGradient or ResampleStatus.DisabledSolid or ResampleStatus.Disabled)) {
 						return null;
 					}
 				}

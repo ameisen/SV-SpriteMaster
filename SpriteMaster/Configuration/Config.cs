@@ -81,9 +81,21 @@ static class Config {
 
 	[Attributes.Ignore]
 	internal static bool ForcedDisable = false;
+
+	[Attributes.Ignore]
+	internal static bool ToggledEnable = true;
+
 	[Attributes.Comment("Should SpriteMaster be enabled?")]
+	[Obsolete("Use IsEnabled")]
 	internal static bool Enabled = true;
-	internal static bool IsEnabled => !ForcedDisable && Enabled;
+
+	[Attributes.Ignore]
+#pragma warning disable CS0618 // Type or member is obsolete
+	internal static bool IsUnconditionallyEnabled => !ForcedDisable && (Preview.Override.Instance?.Enabled ?? Enabled);
+
+	internal static bool IsEnabled => ToggledEnable && IsUnconditionallyEnabled;
+#pragma warning restore CS0618 // Type or member is obsolete
+
 	[Attributes.Comment("Button to toggle SpriteMaster")]
 	internal static SButton ToggleButton = SButton.F11;
 
@@ -236,7 +248,14 @@ static class Config {
 	internal static class Resample {
 		[Attributes.Comment("Should resampling be enabled?")]
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
+		[Obsolete("Use IsEnabled")]
 		internal static bool Enabled = true;
+
+		[Attributes.Ignore]
+#pragma warning disable CS0618 // Type or member is obsolete
+		internal static bool IsEnabled => Preview.Override.Instance?.ResampleEnabled ?? Enabled;
+#pragma warning restore CS0618 // Type or member is obsolete
+
 		[Attributes.Comment("Should resampling be enabled for normal sprites?")]
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
 		internal static bool EnabledSprites = true;
@@ -246,10 +265,10 @@ static class Config {
 		[Attributes.Comment("Should resampling be enabled for 'basic' text?")]
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
 		internal static bool EnabledBasicText = true;
-		[Attributes.Comment("Should texture rescaling be enabled?")]
+		[Attributes.Comment("Should the texture be scale-adjusted if its scaled dimensions are outside preferred dimensional limits?")]
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
 		[Attributes.Advanced]
-		internal static bool Scale = Enabled;
+		internal static bool Scale = true;
 		[Attributes.Comment("What scaling algorithm should be used by default?")]
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
 		internal static Root.Resample.Scaler Scaler = Root.Resample.Scaler.xBRZ;

@@ -23,7 +23,7 @@ static class ThreadRun {
 	)]
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static bool Run() {
-		if (!Config.Enabled || !Config.Extras.OptimizeEngineTaskRunner) {
+		if (!Config.IsUnconditionallyEnabled || !Config.Extras.OptimizeEngineTaskRunner) {
 			return true;
 		}
 

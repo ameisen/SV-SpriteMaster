@@ -428,7 +428,7 @@ static partial class Debug {
 						font: font,
 						position: TextOffset + (0.0f, lineOffset),
 						color: Game1.textColor,
-						scale: 1
+						scale: 1.0f
 					);
 				}
 			}

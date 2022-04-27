@@ -12,7 +12,7 @@ static class PExit {
 		critical: false
 	)]
 	public static bool Exit() {
-		if (!Config.Enabled || !Config.Extras.FastQuit) {
+		if (!Config.IsUnconditionallyEnabled || !Config.Extras.FastQuit) {
 			return true;
 		}
 

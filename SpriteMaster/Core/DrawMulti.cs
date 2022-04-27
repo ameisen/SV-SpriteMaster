@@ -88,21 +88,7 @@ static partial class OnDrawImpl {
 
 			if (spriteInstance is null || resampledTexture is null) {
 				@this.Draw(texture, position, source, color, rotation, origin, scale, effects, layerDepth);
-				/*
-				RawDraw(
-					@this,
-					texture,
-					position,
-					source,
-					color,
-					rotation,
-					origin,
-					scale,
-					effects,
-					layerDepth
-				);
-				*/
-				return;
+				continue;
 			}
 
 			if (originalSourceRect.X < 0) {

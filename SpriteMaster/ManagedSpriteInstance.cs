@@ -179,7 +179,8 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 
 			bool isText = texture.NormalizedName().StartsWith(@"Fonts\");
 			bool isBasicText = texture.Format == SurfaceFormat.Dxt3;
-			if (!Config.Resample.EnabledText) {
+
+			if (!(Configuration.Preview.Override.Instance?.ResampleText ?? Config.Resample.EnabledText)) {
 				if (isText) {
 					if (!meta.TracePrinted) {
 						meta.TracePrinted = true;
@@ -192,7 +193,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 					return false;
 				}
 			}
-			if (!Config.Resample.EnabledBasicText) {
+			if (!(Configuration.Preview.Override.Instance?.ResampleBasicText ?? Config.Resample.EnabledBasicText)) {
 				// The only BC2 texture that I've _ever_ seen is the internal font
 				if (isBasicText) {
 					if (!meta.TracePrinted) {
@@ -206,7 +207,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 					return false;
 				}
 			}
-			if (!Config.Resample.EnabledSprites) {
+			if (!(Configuration.Preview.Override.Instance?.ResampleSprites ?? Config.Resample.EnabledSprites)) {
 				if (!isText && !isBasicText) {
 					if (!meta.TracePrinted) {
 						meta.TracePrinted = true;
@@ -262,7 +263,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ManagedSpriteInstance? Fetch(Texture2D texture, in Bounds source, uint expectedScale) {
-		if (!Config.Resample.Enabled) {
+		if (!Configuration.Config.IsEnabled || !Configuration.Config.Resample.IsEnabled) {
 			return null;
 		}
 
@@ -290,7 +291,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 
 		var spriteHash = ManagedSpriteInstance.GetHash(initializer, initializer.TextureType);
 		if (spriteHash.HasValue && SuspendedSpriteCache.TryFetch(spriteHash.Value, out var instance)) {
-			var spriteMapHash = SpriteMap.SpriteHash(initializer.Reference, initializer.Bounds, initializer.ExpectedScale);
+			var spriteMapHash = SpriteMap.SpriteHash(initializer.Reference, initializer.Bounds, initializer.ExpectedScale, initializer.IsPreview);
 			if (instance.Resurrect(initializer.Reference, spriteMapHash)) {
 				resurrected = instance;
 				return true;
@@ -311,7 +312,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 
 		var spriteHash = ManagedSpriteInstance.GetHash(info, info.TextureType);
 		if (SuspendedSpriteCache.TryFetch(spriteHash, out var instance)) {
-			var spriteMapHash = SpriteMap.SpriteHash(info.Reference, info.Bounds, info.ExpectedScale);
+			var spriteMapHash = SpriteMap.SpriteHash(info.Reference, info.Bounds, info.ExpectedScale, info.IsPreview);
 			if (instance.Resurrect(info.Reference, spriteMapHash)) {
 				resurrected = instance;
 				return true;
@@ -324,7 +325,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ManagedSpriteInstance? FetchOrCreate(Texture2D texture, in Bounds source, uint expectedScale, bool sliced) {
-		if (!Config.Resample.Enabled) {
+		if (!Configuration.Config.IsEnabled || !Configuration.Config.Resample.IsEnabled) {
 			return null;
 		}
 
@@ -520,6 +521,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 	internal volatile bool Invalidated = false;
 	internal volatile bool Suspended = false;
 	internal bool NoResample = false;
+	internal readonly bool IsPreview = false;
 
 	internal ulong LastReferencedFrame = DrawState.CurrentFrame;
 
@@ -571,7 +573,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 		lock (RecentAccessList) {
 			long totalPurge = 0;
 			while (purgeTotalBytes > 0 && RecentAccessList.Count > 0) {
-				if (RecentAccessList.Last?.Value.TryGetTarget(out var target) ?? false) {
+				if (RecentAccessList.Last?.Value.TryGet(out var target) ?? false) {
 					var textureSize = (long)target.MemorySize;
 					Debug.Trace($"Purging {target.NormalizedName()} ({textureSize.AsDataSize()})");
 					purgeTotalBytes -= textureSize;
@@ -598,7 +600,8 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 		SourceRectangle = sourceRectangle;
 		ExpectedScale = expectedScale;
 		ReferenceScale = expectedScale;
-		SpriteMapHash = SpriteMap.SpriteHash(source, sourceRectangle, expectedScale);
+		IsPreview = spriteInfo.IsPreview;
+		SpriteMapHash = SpriteMap.SpriteHash(source, sourceRectangle, expectedScale, spriteInfo.IsPreview);
 		Name = source.Anonymous() ? assetName.NormalizedName() : source.NormalizedName();
 		// TODO : I believe we need a lock here until when the texture is _fully created_, preventing new instantiations from starting of a texture
 		// already in-flight

@@ -21,7 +21,7 @@ class MasterSchedulePatch {
 	public static bool ParseMasterSchedulePre(StardewValley.NPC __instance, ref MasterSchedule? __result, string? rawData, ref bool __state) {
 		__state = false;
 
-		if (!Config.Enabled || !Config.Extras.FixMasterSchedule) {
+		if (!Config.IsUnconditionallyEnabled || !Config.Extras.FixMasterSchedule) {
 			return true;
 		}
 
@@ -58,7 +58,7 @@ class MasterSchedulePatch {
 		critical: false
 	)]
 	public static void ParseMasterSchedulePost(StardewValley.NPC __instance, string rawData, bool __state) {
-		if (!Config.Enabled || !Config.Extras.FixMasterSchedule) {
+		if (!Config.IsUnconditionallyEnabled || !Config.Extras.FixMasterSchedule) {
 			return;
 		}
 
@@ -86,7 +86,7 @@ class MasterSchedulePatch {
 		critical: false
 	)]
 	public static bool getSchedulePre(StardewValley.NPC __instance, ref MasterSchedule? __result, int dayOfMonth) {
-		if (!Config.Enabled || !Config.Extras.FixMasterSchedule) {
+		if (!Config.IsUnconditionallyEnabled || !Config.Extras.FixMasterSchedule) {
 			return true;
 		}
 

@@ -6,6 +6,7 @@ global using DrawingPoint = System.Drawing.Point;
 global using DrawingRectangle = System.Drawing.Rectangle;
 global using DrawingSize = System.Drawing.Size;
 global using half = System.Half;
+global using XRectangle = Microsoft.Xna.Framework.Rectangle;
 global using XTilePoint = xTile.Dimensions.Location;
 global using XTileRectangle = xTile.Dimensions.Rectangle;
 global using XTileSize = xTile.Dimensions.Size;
@@ -25,7 +26,6 @@ using System.Security;
 [assembly: FullVersion("0.14.0.1-alpha.1")]
 // [assembly: SuppressUnmanagedCodeSecurity]
 
-[module: CompilationRelaxations(CompilationRelaxations.NoStringInterning)]
 [module: CLSCompliant(false)]
 [module: SkipLocalsInit]
 

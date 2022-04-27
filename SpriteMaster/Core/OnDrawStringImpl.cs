@@ -54,7 +54,7 @@ static partial class OnDrawStringImpl {
 		SpriteEffects effects,
 		float layerDepth
 	) {
-		if (!Configuration.Config.Enabled || !Configuration.Config.Resample.Enabled) {
+		if (!Configuration.Config.IsEnabled || !Configuration.Config.Resample.IsEnabled) {
 			return Continue;
 		}
 
@@ -77,7 +77,7 @@ static partial class OnDrawStringImpl {
 		SpriteEffects effects,
 		float layerDepth
 	) {
-		if (!Configuration.Config.Enabled || !Configuration.Config.Resample.Enabled) {
+		if (!Configuration.Config.IsEnabled || !Configuration.Config.Resample.IsEnabled) {
 			return Continue;
 		}
 
@@ -136,6 +136,10 @@ static partial class OnDrawStringImpl {
 		SpriteEffects effects,
 		float layerDepth
 	) {
+		if (!(Configuration.Preview.Override.Instance?.ResampleBasicText ?? Configuration.Config.Resample.EnabledBasicText)) {
+			return true;
+		}
+
 		var flipAdjustment = Vector2F.Zero;
 		Vector2B flipped = (effects.HasFlag(SpriteEffects.FlipHorizontally), effects.HasFlag(SpriteEffects.FlipVertically));
 		

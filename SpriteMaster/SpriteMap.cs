@@ -19,7 +19,7 @@ static class SpriteMap {
 #if WITH_SPRITE_REFERENCE_SET
 	private static readonly WeakSet<ManagedSpriteInstance> SpriteInstanceReferences = new();
 
-	private static WeakSet<ManagedSpriteInstance> SpriteInstanceReferencesGet => SpriteInstanceReferences;
+	internal static WeakSet<ManagedSpriteInstance> SpriteInstanceReferencesGet => SpriteInstanceReferences;
 #else
 	private static WeakSet<ManagedSpriteInstance> SpriteInstanceReferencesGet => null!;
 #endif
@@ -31,8 +31,8 @@ static class SpriteMap {
 	private static void RemoveInternal(ManagedSpriteInstance instance) => SpriteInstanceReferencesGet.Remove(instance);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static ulong SpriteHash(Texture2D texture, in Bounds source, uint expectedScale) {
-		return Hashing.Combine(source.Hash(), expectedScale.GetSafeHash());
+	internal static ulong SpriteHash(Texture2D texture, in Bounds source, uint expectedScale, bool preview) {
+		return Hashing.Combine(source.Hash(), expectedScale.GetSafeHash(), preview.GetSafeHash());
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -106,7 +106,7 @@ static class SpriteMap {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool TryGet(Texture2D texture, in Bounds source, uint expectedScale, [NotNullWhen(true)] out ManagedSpriteInstance? result) {
-		var rectangleHash = SpriteHash(texture: texture, source: source, expectedScale: expectedScale);
+		var rectangleHash = SpriteHash(texture: texture, source: source, expectedScale: expectedScale, preview: Configuration.Preview.Override.Instance is not null);
 
 		var meta = texture.Meta();
 		var spriteTable = meta.GetSpriteInstanceTable();

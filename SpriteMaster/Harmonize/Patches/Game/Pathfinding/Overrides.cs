@@ -19,7 +19,7 @@ static partial class Pathfinding {
 	)]
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static bool GetLocationRoute(NPC __instance, ref List<string>? __result, string startingLocation, string endingLocation) {
-		if (!Config.Enabled || !Config.Extras.OptimizeWarpPoints) {
+		if (!Config.IsUnconditionallyEnabled || !Config.Extras.OptimizeWarpPoints) {
 			return true;
 		}
 
@@ -53,7 +53,7 @@ static partial class Pathfinding {
 	)]
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static bool PopulateRoutesFromLocationToLocationList() {
-		if (!Config.Enabled || !Config.Extras.OptimizeWarpPoints) {
+		if (!Config.IsUnconditionallyEnabled || !Config.Extras.OptimizeWarpPoints) {
 			return true;
 		}
 
@@ -94,7 +94,7 @@ static partial class Pathfinding {
 	)]
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static bool ExploreWarpPoints(ref bool __result, GameLocation l, List<string> route) {
-		if (!Config.Enabled || !Config.Extras.OptimizeWarpPoints) {
+		if (!Config.IsUnconditionallyEnabled || !Config.Extras.OptimizeWarpPoints) {
 			return true;
 		}
 

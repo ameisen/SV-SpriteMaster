@@ -25,5 +25,11 @@ static class Metadata {
 	internal static void Purge() {
 		Texture2DMetaTable.Clear();
 	}
+
+	internal static void FlushValidations() {
+		foreach (var p in Texture2DMetaTable) {
+			p.Value.Validation = null;
+		}
+	}
 }
 

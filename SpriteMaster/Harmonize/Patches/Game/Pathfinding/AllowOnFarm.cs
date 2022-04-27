@@ -49,7 +49,7 @@ static partial class Pathfinding {
 	)]
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static bool WarpCharacter(NPC? character, GameLocation? targetLocation, XNA.Vector2 position) {
-		if (!Config.Enabled || !Config.Extras.AllowNPCsOnFarm || !Config.Extras.OptimizeWarpPoints) {
+		if (!Config.IsUnconditionallyEnabled || !Config.Extras.AllowNPCsOnFarm || !Config.Extras.OptimizeWarpPoints) {
 			return true;
 		}
 

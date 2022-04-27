@@ -3,6 +3,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Configuration;
+using SpriteMaster.Configuration.Preview;
 using SpriteMaster.Core;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
@@ -17,7 +18,22 @@ static class Snow {
 	private static List<WeatherDebris>? LastDebrisWeather = null;
 	private static Dictionary<Bounds, List<SnowWeatherDebris>> MappedWeatherDebris = new();
 
-	private sealed class SnowWeatherDebris : StardewValley.WeatherDebris {
+	internal struct SnowState {
+		internal readonly List<WeatherDebris>? LastDebrisWeather { get; init; }
+		internal readonly Dictionary<Bounds, List<SnowWeatherDebris>> MappedWeatherDebris { get; init; }
+
+		internal static SnowState Backup() => new() {
+			LastDebrisWeather = Snow.LastDebrisWeather,
+			MappedWeatherDebris = Snow.MappedWeatherDebris
+		};
+
+		internal readonly void Restore() {
+			Snow.LastDebrisWeather = LastDebrisWeather;
+			Snow.MappedWeatherDebris = MappedWeatherDebris;
+		}
+	}
+
+	internal sealed class SnowWeatherDebris : StardewValley.WeatherDebris {
 		internal float Rotation;
 		internal readonly float RotationRate;
 		internal readonly float Scale;
@@ -37,7 +53,7 @@ static class Snow {
 
 	private static bool IsPuffersnow = false;
 
-	private static bool ShouldDrawSnow => Game1.IsSnowingHere() && Game1.currentLocation.isOutdoors.Value && Game1.currentLocation is not Desert;
+	private static bool ShouldDrawSnow => Game1.IsSnowingHere() && Game1.currentLocation.IsOutdoors && Game1.currentLocation is not Desert;
 
 	private static readonly Lazy<Texture2D> FishTexture = new(() => SpriteMaster.Self.Helper.Content.Load<Texture2D>(@"LooseSprites\AquariumFish", StardewModdingAPI.ContentSource.GameContent));
 
@@ -49,7 +65,7 @@ static class Snow {
 		critical: false
 	)]
 	public static bool DrawWeather(Game1 __instance, GameTime time, RenderTarget2D target_screen) {
-		if (!Config.Enabled || !Config.Extras.Snow.Enabled) {
+		if (!Config.IsEnabled || !Config.Extras.Snow.Enabled) {
 			if (ShouldDrawSnow) {
 				if (LastDebrisWeather is null || Game1.debrisWeather.Count != 0) {
 					LastDebrisWeather = Game1.debrisWeather;
@@ -81,8 +97,9 @@ static class Snow {
 
 		Game1.spriteBatch.End();
 		Game1.spriteBatch.Begin(
-			IsPuffersnow ? SpriteSortMode.Texture : SpriteSortMode.Deferred,
-			IsPuffersnow ? BlendState.AlphaBlend : BlendState.Additive, SamplerState.LinearClamp
+			sortMode: IsPuffersnow ? SpriteSortMode.Texture : SpriteSortMode.Deferred,
+			blendState: IsPuffersnow ? BlendState.AlphaBlend : BlendState.Additive,
+			samplerState: Config.Resample.IsEnabled ? SamplerState.LinearClamp : SamplerState.PointClamp
 		);
 
 		try {
@@ -195,7 +212,7 @@ static class Snow {
 		critical: false
 	)]
 	public static bool UpdateWeather(GameTime time) {
-		if (!Config.Enabled || !Config.Extras.Snow.Enabled) {
+		if (!Config.IsEnabled || !Config.Extras.Snow.Enabled) {
 			return true;
 		}
 
@@ -239,7 +256,7 @@ static class Snow {
 		critical: false
 	)]
 	public static bool UpdateRainDropPositionForPlayerMovement(int direction, bool overrideConstraints, float speed) {
-		if (!Config.Enabled || !Config.Extras.Snow.Enabled) {
+		if (!Config.IsEnabled || !Config.Extras.Snow.Enabled) {
 			return true;
 		}
 
@@ -266,7 +283,7 @@ static class Snow {
 		critical: false
 	)]
 	public static bool PopulateDebrisWeatherArray() {
-		if (!Config.Enabled || !Config.Extras.Snow.Enabled) {
+		if (!Config.IsEnabled || !Config.Extras.Snow.Enabled) {
 			return true;
 		}
 
@@ -279,7 +296,11 @@ static class Snow {
 		return false;
 	}
 
-	private static void PopulateWeather(Vector2I screenSize) {
+	internal static void PopulateWeather(Vector2I screenSize) {
+		if (!Config.IsEnabled || !Config.Extras.Snow.Enabled) {
+			return;
+		}
+
 		IsPuffersnow = Game1.random.NextDouble() < Config.Extras.Snow.PuffersnowChance;
 
 		Game1.isDebrisWeather = true;
@@ -317,14 +338,18 @@ static class Snow {
 			return ((SnowWeatherDebris)d1).Scale.CompareTo(((SnowWeatherDebris)d2).Scale);
 		});
 
-		foreach (var mappedList in MappedWeatherDebris) {
-			mappedList.Value.Sort((d1, d2) => d1.Scale.CompareTo(d2.Scale));
+		foreach (var mappedList in MappedWeatherDebris.Values) {
+			mappedList.Sort((d1, d2) => d1.Scale.CompareTo(d2.Scale));
 		}
 		LastDebrisWeather = Game1.debrisWeather;
 	}
 
 	internal static void OnWindowResized(Vector2I size) {
-		if (Config.Enabled && Config.Extras.Snow.Enabled && Game1.IsSnowingHere()) {
+		if (!Config.IsEnabled || !Config.Extras.Snow.Enabled) {
+			return;
+		}
+
+		if (Game1.IsSnowingHere()) {
 			PopulateDebrisWeatherArray();
 		}
 	}

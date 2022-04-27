@@ -24,6 +24,7 @@ sealed class SpriteInfo : IDisposable {
 	internal readonly uint ExpectedScale;
 	private readonly int RawOffset;
 	private readonly int RawStride;
+	internal readonly bool IsPreview;
 	internal readonly Resample.Scaler Scaler;
 	internal readonly Resample.Scaler ScalerGradient;
 	internal readonly XNA.Graphics.BlendState BlendState;
@@ -134,7 +135,9 @@ sealed class SpriteInfo : IDisposable {
 					ExpectedScale.GetLongHashCode(),
 					IsWater.GetLongHashCode(),
 					IsFont.GetLongHashCode(),
-					Reference.Format.GetLongHashCode()
+					Reference.Format.GetLongHashCode(),
+					Scaler.GetLongHashCode(),
+					ScalerGradient.GetLongHashCode()
 				);
 
 			}
@@ -161,6 +164,7 @@ sealed class SpriteInfo : IDisposable {
 		internal readonly TextureType TextureType;
 		// For statistics and throttling
 		internal readonly bool WasCached;
+		internal readonly bool IsPreview;
 		internal readonly ulong? Hash;
 		internal readonly Resample.Scaler Scaler;
 		internal readonly Resample.Scaler ScalerGradient;
@@ -171,8 +175,9 @@ sealed class SpriteInfo : IDisposable {
 			SamplerState = DrawState.CurrentSamplerState;
 			ExpectedScale = expectedScale;
 			Bounds = dimensions;
-			Scaler = Config.Resample.Scaler;
-			ScalerGradient = Config.Resample.ScalerGradient;
+			IsPreview = Configuration.Preview.Override.Instance is not null;
+			Scaler = Configuration.Preview.Override.Instance?.Scaler ?? Config.Resample.Scaler;
+			ScalerGradient = Configuration.Preview.Override.Instance?.ScalerGradient ?? Config.Resample.ScalerGradient;
 
 			TextureType = textureType;
 
@@ -237,7 +242,9 @@ sealed class SpriteInfo : IDisposable {
 				ExpectedScale.GetLongHashCode(),
 				isWater.GetLongHashCode(),
 				isFont.GetLongHashCode(),
-				Reference.Format.GetLongHashCode()
+				Reference.Format.GetLongHashCode(),
+				Scaler.GetLongHashCode(),
+				ScalerGradient.GetLongHashCode()
 			);
 			return result;
 		}
@@ -254,6 +261,7 @@ sealed class SpriteInfo : IDisposable {
 		RawStride = (int)format.SizeBytes(ReferenceSize.Width);
 		RawOffset = (RawStride * Bounds.Top) + (int)format.SizeBytes(Bounds.Left);
 		ReferenceData = initializer.ReferenceData;
+		IsPreview = initializer.IsPreview;
 		Scaler = initializer.Scaler;
 		ScalerGradient = initializer.ScalerGradient;
 
