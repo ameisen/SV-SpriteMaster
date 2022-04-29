@@ -1,28 +1,30 @@
 ﻿using Microsoft.Toolkit.HighPerformance;
-using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Types;
 using StardewValley;
-using StardewValley.Locations;
 using System;
-
-using SMHarmonize = SpriteMaster.Harmonize;
 
 namespace SpriteMaster.Configuration.Preview;
 
 abstract class Scene : IDisposable {
-	private static readonly Lazy<StardewValley.GameLocation> SceneLocation = new(() => new StardewValley.Locations.Beach(@"Maps\Beach", "SMSettingsLocation"));
+	internal static Scene? Current = null;
 
-	private static volatile int IsDrawing = 0;
-	private static volatile int IsUpdating = 0;
-	private static volatile PrecipitationType CurrentPrecipitation = PrecipitationType.None;
-	protected abstract PrecipitationType Precipitation { get; }
+	private struct CurrentScope : IDisposable {
+		private readonly Scene? PreviousScene;
 
-	protected enum PrecipitationType {
-		None = 0,
-		Rain,
-		Snow
+		internal CurrentScope(Scene scene) {
+			PreviousScene = Current;
+			Current = scene;
+		}
+
+		public void Dispose() {
+			Current = PreviousScene;
+		}
 	}
+
+	internal static readonly Lazy<StardewValley.GameLocation> SceneLocation = new(() => new StardewValley.Locations.Beach(@"Maps\Beach", "SMSettingsLocation"));
+
+	internal abstract PrecipitationType Precipitation { get; }
 
 	private bool IsWeatherStateSet = false;
 	private WeatherState InternalWeatherState;
@@ -37,56 +39,6 @@ abstract class Scene : IDisposable {
 
 			return ref InternalWeatherState;
 		}
-	}
-
-	[SMHarmonize.Harmonize(
-	typeof(Game1),
-	"IsSnowingHere",
-	SMHarmonize.Harmonize.Fixation.Prefix,
-	SMHarmonize.Harmonize.PriorityLevel.Last,
-	instance: false,
-	critical: false
-)]
-	public static bool IsSnowingHere(ref bool __result, GameLocation location) {
-		if (IsDrawing == 0 && IsUpdating == 0) {
-			return true;
-		}
-
-		if (CurrentPrecipitation != PrecipitationType.Snow) {
-			return true;
-		}
-
-		if (location == SceneLocation.Value || location is null) {
-			__result = true;
-			return false;
-		}
-
-		return true;
-	}
-
-	[SMHarmonize.Harmonize(
-		typeof(Game1),
-		"IsRainingHere",
-		SMHarmonize.Harmonize.Fixation.Prefix,
-		SMHarmonize.Harmonize.PriorityLevel.Last,
-		instance: false,
-		critical: false
-	)]
-	public static bool IsRainingHere(ref bool __result, GameLocation location) {
-		if (IsDrawing == 0 && IsUpdating == 0) {
-			return true;
-		}
-
-		if (CurrentPrecipitation != PrecipitationType.Rain) {
-			return true;
-		}
-
-		if (location == SceneLocation.Value || location is null) {
-			__result = true;
-			return false;
-		}
-
-		return true;
 	}
 
 	protected readonly ref struct TempValue<T> {
@@ -126,7 +78,7 @@ abstract class Scene : IDisposable {
 
 		batch.Draw(
 			texture: texture,
-			destinationRectangle: destination.OffsetBy(Region.Offset),
+			destinationRectangle: destination,
 			sourceRectangle: source,
 			color: color ?? XNA.Color.White,
 			rotation: rotation,
@@ -150,7 +102,7 @@ abstract class Scene : IDisposable {
 		var size = new Vector2I(source?.Width ?? texture.Width, source?.Height ?? texture.Height) << 2;
 		var offset = size >> 3;
 
-		var bounds = new Bounds(destination + Region.Offset, size);
+		var bounds = new Bounds(destination, size);
 
 		batch.Draw(
 			texture: texture,
@@ -191,9 +143,8 @@ abstract class Scene : IDisposable {
 	internal void Draw(XNA.Graphics.SpriteBatch batch, in Preview.Override overrideState) {
 		using var savedWeatherState = WeatherState.Backup();
 		CurrentWeatherState.Restore();
+		using var currentScope = new CurrentScope(this);
 
-		++IsDrawing;
-		CurrentPrecipitation = Precipitation;
 		var originalSpriteBatch = StardewValley.Game1.spriteBatch;
 		StardewValley.Game1.spriteBatch = batch;
 		try {
@@ -229,17 +180,17 @@ abstract class Scene : IDisposable {
 				batch.Begin(sortMode: SpriteSortMode.FrontToBack, rasterizerState: State, samplerState: originalSamplerState, depthStencilState: originalDepthStencilState);
 				try {
 					using var tempOverrideState = new TempValue<Preview.Override>(ref Preview.Override.Instance, overrideState);
+					batch.GraphicsDevice.Viewport = new(Region);
 					OnDraw(batch, overrideState);
 					batch.End();
 					if (true) { // precipitation
-						batch.GraphicsDevice.Viewport = new(Region);
 						batch.Begin(sortMode: SpriteSortMode.FrontToBack, rasterizerState: State, samplerState: originalSamplerState, depthStencilState: originalDepthStencilState);
 						StardewValley.Game1.game1.drawWeather(StardewValley.Game1.currentGameTime, null);
 						batch.End();
-						batch.GraphicsDevice.Viewport = originalViewport;
 					}
 					batch.Begin(sortMode: SpriteSortMode.FrontToBack, rasterizerState: State, samplerState: originalSamplerState, depthStencilState: originalDepthStencilState);
 					OnDrawOverlay(batch, overrideState);
+					batch.GraphicsDevice.Viewport = originalViewport;
 				}
 				finally {
 					batch.End();
@@ -252,8 +203,6 @@ abstract class Scene : IDisposable {
 			}
 		}
 		finally {
-			--IsDrawing;
-			CurrentPrecipitation = PrecipitationType.None;
 			StardewValley.Game1.spriteBatch = originalSpriteBatch;
 		}
 
@@ -265,39 +214,32 @@ abstract class Scene : IDisposable {
 	internal void Tick() {
 		using var savedWeatherState = WeatherState.Backup();
 		CurrentWeatherState.Restore();
+		using var currentScope = new CurrentScope(this);
 
-		++IsUpdating;
-		CurrentPrecipitation = Precipitation;
+		var originalLocation = StardewValley.Game1.currentLocation;
+		StardewValley.Game1.currentLocation = SceneLocation.Value;
 		try {
-			var originalLocation = StardewValley.Game1.currentLocation;
-			StardewValley.Game1.currentLocation = SceneLocation.Value;
-			try {
-				if (true) { // precipitation
-					var originalDeviceViewport = Game1.graphics.GraphicsDevice.Viewport;
-					var originalGameViewport = Game1.viewport;
-					var originalFadeToBlackAlpha = Game1.fadeToBlackAlpha;
-					try {
-						Game1.graphics.GraphicsDevice.Viewport = new(Region);
-						Game1.viewport = Region;
-						Game1.fadeToBlackAlpha = 0.0f;
-						StardewValley.Game1.updateWeather(StardewValley.Game1.currentGameTime);
-					}
-					finally {
-						Game1.graphics.GraphicsDevice.Viewport = originalDeviceViewport;
-						Game1.viewport = originalGameViewport;
-						Game1.fadeToBlackAlpha = originalFadeToBlackAlpha;
-					}
+			if (true) { // precipitation
+				var originalDeviceViewport = Game1.graphics.GraphicsDevice.Viewport;
+				var originalGameViewport = Game1.viewport;
+				var originalFadeToBlackAlpha = Game1.fadeToBlackAlpha;
+				try {
+					Game1.graphics.GraphicsDevice.Viewport = new(Region);
+					Game1.viewport = Region;
+					Game1.fadeToBlackAlpha = 0.0f;
+					StardewValley.Game1.updateWeather(StardewValley.Game1.currentGameTime);
 				}
+				finally {
+					Game1.graphics.GraphicsDevice.Viewport = originalDeviceViewport;
+					Game1.viewport = originalGameViewport;
+					Game1.fadeToBlackAlpha = originalFadeToBlackAlpha;
+				}
+			}
 
-				OnTick();
-			}
-			finally {
-				StardewValley.Game1.currentLocation = originalLocation;
-			}
+			OnTick();
 		}
 		finally {
-			CurrentPrecipitation = PrecipitationType.None;
-			--IsUpdating;
+			StardewValley.Game1.currentLocation = originalLocation;
 		}
 
 		CurrentWeatherState = WeatherState.Backup();
@@ -307,6 +249,7 @@ abstract class Scene : IDisposable {
 	internal void Resize(in Bounds newRegion) {
 		using var savedWeatherState = WeatherState.Backup();
 		CurrentWeatherState.Restore();
+		using var currentScope = new CurrentScope(this);
 
 		var oldSize = Size;
 		Region = newRegion;

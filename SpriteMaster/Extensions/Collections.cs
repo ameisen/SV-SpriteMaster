@@ -237,4 +237,21 @@ static class Collections {
 		return bag.ToArray().BeList();
 	}
 	#endregion
+
+	#region Clone / CopyTo
+	internal static T[] Clone<T>(this T[] array) => (T[])array.Clone();
+
+	internal static T[]? CopyTo<T>(this T[]? source, T[]? destination) {
+		if (source is null) {
+			return null;
+		}
+
+		if (destination is null || destination.Length != source.Length) {
+			destination = GC.AllocateUninitializedArray<T>(source.Length);
+		}
+
+		source.CopyTo(destination, 0);
+		return destination;
+	}
+	#endregion
 }

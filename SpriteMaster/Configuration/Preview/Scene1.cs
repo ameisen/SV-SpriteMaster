@@ -22,7 +22,7 @@ sealed class Scene1 : Scene {
 
 	private readonly string Season;
 
-	protected override PrecipitationType Precipitation => ScenePrecipitation;
+	internal override PrecipitationType Precipitation => ScenePrecipitation;
 	private readonly PrecipitationType ScenePrecipitation;
 
 	private static ref T GetRandomOf<T>(Random rand, T[] array) {
