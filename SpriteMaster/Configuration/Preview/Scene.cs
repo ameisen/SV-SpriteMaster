@@ -1,4 +1,5 @@
 ﻿using Microsoft.Toolkit.HighPerformance;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
@@ -220,7 +221,8 @@ abstract class Scene : IDisposable {
 			depthStencilState: drawState.DepthStencilState
 		);
 		try {
-			StardewValley.Game1.game1.drawWeather(StardewValley.Game1.currentGameTime, null);
+			Game1.snowPos = Vector2.Zero;
+			StardewValley.Game1.game1.drawWeather(Game1.currentGameTime, null);
 		}
 		finally {
 			batch.End();
@@ -229,7 +231,7 @@ abstract class Scene : IDisposable {
 
 	private void DrawOverlay(XNA.Graphics.SpriteBatch batch, in Preview.Override overrideState, in DrawState drawState) {
 		batch.Begin(
-			sortMode: SpriteSortMode.FrontToBack,
+			sortMode: SpriteSortMode.Deferred,
 			rasterizerState: State,
 			samplerState: drawState.SamplerState,
 			depthStencilState: drawState.DepthStencilState

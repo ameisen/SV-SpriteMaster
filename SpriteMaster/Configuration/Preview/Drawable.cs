@@ -10,6 +10,7 @@ readonly struct Drawable {
 	private readonly float Rotation;
 	private readonly int Offset;
 
+	internal readonly int Width => Source?.Width ?? Texture?.Width ?? AnimatedTexture?.Size.Width ?? 0;
 	internal readonly int Height => Source?.Height ?? Texture?.Height ?? AnimatedTexture?.Size.Height ?? 0;
 
 	private static float DegreesToRadians(int degrees) => (MathF.PI / 180.0f) * degrees;
@@ -69,14 +70,14 @@ readonly struct Drawable {
 
 	public static bool operator !=(in Drawable left, in Drawable right) => !(left == right);
 
-	public override bool Equals(object? obj) {
+	public override readonly bool Equals(object? obj) {
 		if (obj is Drawable drawable) {
 			return this == drawable;
 		}
 		return false;
 	}
 
-	public override int GetHashCode() => Hashing.Combine32(
+	public override readonly int GetHashCode() => Hashing.Combine32(
 		Texture?.GetHashCode(),
 		Source?.GetHashCode(),
 		AnimatedTexture?.GetHashCode(),
@@ -126,34 +127,63 @@ readonly struct Drawable {
 readonly struct DrawableInstance {
 	private readonly Drawable Drawable;
 	private readonly Vector2I Location;
-	private readonly int LayerDepth;
+	internal readonly int LayerDepth;
 
 	internal DrawableInstance(in Drawable drawable, Vector2I location) {
 		Drawable = drawable;
 		Location = location;
 
-		int height = 0;// (Drawable.Height / 2) / 16;
+		int height = (Drawable.Height / 2) / 16;
 
 		if (height != 0) {
-			//height *= 64;
-			//height++;
+			height *= 64;
+			height++;
 		}
 
 		LayerDepth = Location.Y + height;
 	}
 
-	internal void Tick() {
+	internal readonly void Tick() {
 		Drawable.Tick();
 	}
 
-	internal void Draw(Scene scene, XNA.Graphics.SpriteBatch batch) {
-		float layerDepth = (LayerDepth + scene.Region.Height) / (scene.Region.Height * 4.0f);
+	internal readonly void Draw(Scene scene, XNA.Graphics.SpriteBatch batch, int index) {
+		float layerDepth = (LayerDepth + scene.Region.Height + (index * 0.0001f)) / (scene.Region.Height * 4.0f);
 
 		Drawable.Draw(
 			scene: scene,
 			batch: batch,
 			location: Location,
 			layerDepth: layerDepth
+		);
+	}
+
+	internal readonly void Draw(Scene scene, XNA.Graphics.SpriteBatch batch, Vector2I offset, int index) {
+		float layerDepth = (LayerDepth + scene.Region.Height + offset.Y + (index * 0.0001f)) / (scene.Region.Height * 4.0f);
+
+		Drawable.Draw(
+			scene: scene,
+			batch: batch,
+			location: Location + offset,
+			layerDepth: layerDepth
+		);
+	}
+
+	internal readonly Vector2B IsOffscreenStart(Scene scene) {
+		Vector2I min = Location - (new Vector2I(Drawable.Width, Drawable.Height) * 4);
+
+		return new(
+			min.X < 0,
+			min.Y < 0
+		);
+	}
+
+	internal readonly Vector2B IsOffscreenEnd(Scene scene) {
+		Vector2I max = Location + (new Vector2I(Drawable.Width, Drawable.Height) * 4);
+
+		return new(
+			max.Width > scene.Region.Width,
+			max.Height > scene.Region.Height
 		);
 	}
 }

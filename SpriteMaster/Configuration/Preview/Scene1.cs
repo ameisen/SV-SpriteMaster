@@ -23,6 +23,8 @@ sealed class Scene1 : Scene {
 
 	private readonly string Season;
 
+	private Vector2I TileCount = default;
+
 	internal override PrecipitationType Precipitation => ScenePrecipitation;
 	private readonly PrecipitationType ScenePrecipitation;
 
@@ -291,9 +293,18 @@ sealed class Scene1 : Scene {
 	}
 
 	protected override void OnDraw(XNA.Graphics.SpriteBatch batch, in Preview.Override overrideState) {
-		for (int i = 0; i < Drawables.Length; ++i) {
-			Drawables[i].Tick();
-			Drawables[i].Draw(this, batch);
+		float lastLayerDepth = float.NaN;
+		int index = 0;
+		foreach (var drawable in Drawables) {
+			drawable.Tick();
+			if (drawable.LayerDepth == lastLayerDepth) {
+				++index;
+			}
+			else {
+				index = 0;
+				lastLayerDepth = drawable.LayerDepth;
+			}
+			drawable.Draw(this, batch, index);
 		}
 	}
 
@@ -304,7 +315,7 @@ sealed class Scene1 : Scene {
 				batch,
 				BasicTextFont,
 				ReferenceBasicText,
-				Region.Offset,
+				Vector2I.Zero,
 				XNA.Color.White
 			);
 		}
@@ -313,7 +324,7 @@ sealed class Scene1 : Scene {
 			// Draw sprite text
 			var textMeasure = UtilityTextFont.MeasureString(ReferenceUtilityText);
 
-			var offset = Region.Offset + Region.Extent;
+			var offset = Region.Extent;
 			offset -= (Vector2F)textMeasure;
 
 			Utility.drawTextWithShadow(
@@ -398,6 +409,17 @@ sealed class Scene1 : Scene {
 		tileCount = tileCount.Max((6, 6));
 		Vector2I mid = tileCount / 2;
 
+		int GetOffsetX(int x) => start.X + (x * spriteSize.X);
+		int GetOffsetY(int y) => start.Y + (y * spriteSize.Y);
+
+		if (GetOffsetX(tileCount.X - 1) - (spriteSize.X / 2) >= Size.Width) {
+			tileCount.X--;
+		}
+
+		if (GetOffsetY(tileCount.Y - 1) - (spriteSize.Y / 2) >= Size.Height) {
+			tileCount.Y--;
+		}
+
 		var tileArray = new List<Drawable>[tileCount.X, tileCount.Y];
 
 		static Vector2I Distance(Vector2I a, Vector2I b) => (a - b).Abs;
@@ -465,10 +487,10 @@ sealed class Scene1 : Scene {
 		var drawableInstances = new List<DrawableInstance>();
 
 		for (int y = 0; y < tileCount.Y; ++y) {
-			int yOffset = start.Y + (y * spriteSize.Y);
+			int yOffset = GetOffsetY(y);
 
 			for (int x = 0; x < tileCount.X; ++x) {
-				int xOffset = start.X + (x * spriteSize.X);
+				int xOffset = GetOffsetX(x);
 				Vector2I offset = (xOffset, yOffset);
 
 				var list = tileArray[x, y];
@@ -478,6 +500,8 @@ sealed class Scene1 : Scene {
 				}
 			}
 		}
+
+		TileCount = tileCount;
 
 		return drawableInstances.ToArray();
 	}

@@ -13,7 +13,7 @@ using SMMetadata = SpriteMaster.Metadata.Metadata;
 namespace SpriteMaster.Configuration.GMCM;
 
 static class Setup {
-	private const int PreviewHeight = 300;
+	private const int PreviewHeight = 400;
 
 	private static volatile bool Initialized = false;
 
@@ -21,6 +21,7 @@ static class Setup {
 	private static readonly Dictionary<string, FieldInfo> FieldMap = new();
 	private static Preview.Override PreviewOverride = new();
 	private static bool IsMenuOpened = false;
+	private static bool DisposeNextClick = false;
 	private static Preview.Scene? PreviewScene = null;
 
 	internal static void Initialize(IModHelper help) {
@@ -479,6 +480,11 @@ static class Setup {
 			return;
 		}
 
+		if (DisposeNextClick) {
+			DisposeNextClick = false;
+			return;
+		}
+
 		if (PreviewScene is null) {
 			return;
 		}
@@ -499,6 +505,8 @@ static class Setup {
 		SpriteMaster.Self.Helper.Events.Input.ButtonReleased += OnClick;
 
 		PreviewOverride = Override.FromConfig;
+
+		DisposeNextClick = true;
 	}
 
 	private static void OnMenuClose() {
@@ -508,6 +516,8 @@ static class Setup {
 		PreviewScene = null;
 
 		SMMetadata.FlushValidations();
+
+		DisposeNextClick = false;
 	}
 
 	private static void OnDrawPreview(XNA.Graphics.SpriteBatch batch, Vector2F offset) {
