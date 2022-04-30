@@ -309,4 +309,19 @@ partial struct Bounds :
 		Offset + offset,
 		Extent
 	);
+
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal readonly Bounds Expand(Vector2I size) {
+		int left = size.X / 2;
+		int right = size.X - left;
+
+		int top = size.Y / 2;
+		int bottom = size.Y - top;
+
+		return new(
+			Offset - (left, top),
+			Extent + (left + right, top + bottom)
+		);
+	}
 }

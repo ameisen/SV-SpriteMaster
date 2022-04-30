@@ -183,6 +183,64 @@ abstract class Scene : IDisposable {
 
 	protected abstract void OnDraw(XNA.Graphics.SpriteBatch batch, in Preview.Override overrideState);
 	protected abstract void OnDrawOverlay(XNA.Graphics.SpriteBatch batch, in Preview.Override overrideState);
+	
+	private readonly ref struct DrawState {
+		internal readonly Viewport Viewport { get; init; }
+		internal readonly SamplerState? SamplerState { get; init; }
+		internal readonly DepthStencilState? DepthStencilState { get; init; }
+		internal readonly XRectangle ScissorRectangle { get; init; }
+		internal readonly RasterizerState? RasterizerState { get; init; }
+	}
+
+	private void DrawBox(XNA.Graphics.SpriteBatch batch, in Preview.Override overrideState) {
+		using var tempBatch = new TempValue<XNA.Graphics.SpriteBatch>(ref StardewValley.Game1.spriteBatch, batch);
+		StardewValley.Game1.DrawBox(Region.X, Region.Y, Region.Width, Region.Height);
+	}
+
+	private void DrawFirst(XNA.Graphics.SpriteBatch batch, in Preview.Override overrideState, in DrawState drawState) {
+		batch.Begin(
+			sortMode: SpriteSortMode.FrontToBack,
+			rasterizerState: State,
+			samplerState: drawState.SamplerState,
+			depthStencilState: drawState.DepthStencilState
+		);
+		try {
+			OnDraw(batch, overrideState);
+		}
+		finally {
+			batch.End();
+		}
+	}
+
+	private void DrawPrecipitation(XNA.Graphics.SpriteBatch batch, in Preview.Override overrideState, in DrawState drawState) {
+		batch.Begin(
+			sortMode: SpriteSortMode.FrontToBack,
+			rasterizerState: State,
+			samplerState: drawState.SamplerState,
+			depthStencilState: drawState.DepthStencilState
+		);
+		try {
+			StardewValley.Game1.game1.drawWeather(StardewValley.Game1.currentGameTime, null);
+		}
+		finally {
+			batch.End();
+		}
+	}
+
+	private void DrawOverlay(XNA.Graphics.SpriteBatch batch, in Preview.Override overrideState, in DrawState drawState) {
+		batch.Begin(
+			sortMode: SpriteSortMode.FrontToBack,
+			rasterizerState: State,
+			samplerState: drawState.SamplerState,
+			depthStencilState: drawState.DepthStencilState
+		);
+		try {
+			OnDrawOverlay(batch, overrideState);
+		}
+		finally {
+			batch.End();
+		}
+	}
 
 	internal void Draw(XNA.Graphics.SpriteBatch batch, in Preview.Override overrideState) {
 		using var savedWeatherState = WeatherState.Backup();
@@ -191,69 +249,79 @@ abstract class Scene : IDisposable {
 
 		var originalSpriteBatch = StardewValley.Game1.spriteBatch;
 		StardewValley.Game1.spriteBatch = batch;
+
+		var originalLocation = StardewValley.Game1.currentLocation;
+		StardewValley.Game1.currentLocation = SceneLocation.Value;
+
 		try {
+			DrawBox(batch, overrideState);
 
-			var originalLocation = StardewValley.Game1.currentLocation;
-			StardewValley.Game1.currentLocation = SceneLocation.Value;
+			var originalDrawState = new DrawState {
+				Viewport = batch.GraphicsDevice.Viewport,
+				SamplerState = batch.GraphicsDevice.SamplerStates[0],
+				DepthStencilState = batch.GraphicsDevice.DepthStencilState,
+				ScissorRectangle = batch.GraphicsDevice.ScissorRectangle,
+				RasterizerState = batch.GraphicsDevice.RasterizerState
+			};
+
+			var cloneRasterizerState = originalDrawState.RasterizerState ?? RasterizerState.CullCounterClockwise;
+			State ??= new RasterizerState {
+				CullMode = cloneRasterizerState.CullMode,
+				DepthBias = cloneRasterizerState.DepthBias,
+				FillMode = cloneRasterizerState.FillMode,
+				MultiSampleAntiAlias = cloneRasterizerState.MultiSampleAntiAlias,
+				ScissorTestEnable = true,
+				SlopeScaleDepthBias = cloneRasterizerState.SlopeScaleDepthBias,
+				DepthClipEnable = cloneRasterizerState.DepthClipEnable,
+			};
+
+			batch.End();
 			try {
+				using var tempOverrideState = new TempValue<Preview.Override>(ref Preview.Override.Instance, overrideState);
 
-				{
-					using var tempBatch = new TempValue<XNA.Graphics.SpriteBatch>(ref StardewValley.Game1.spriteBatch, batch);
-					StardewValley.Game1.DrawBox(Region.X, Region.Y, Region.Width, Region.Height);
-				}
-
-				batch.End();
-				var originalViewport = batch.GraphicsDevice.Viewport;
-				var originalSamplerState = batch.GraphicsDevice.SamplerStates[0];
-				var originalDepthStencilState = batch.GraphicsDevice.DepthStencilState;
-
-				var originalRasterizerState = batch.GraphicsDevice.RasterizerState;
-				State ??= new RasterizerState {
-					CullMode = originalRasterizerState.CullMode,
-					DepthBias = originalRasterizerState.DepthBias,
-					FillMode = originalRasterizerState.FillMode,
-					MultiSampleAntiAlias = originalRasterizerState.MultiSampleAntiAlias,
-					ScissorTestEnable = true,
-					SlopeScaleDepthBias = originalRasterizerState.SlopeScaleDepthBias,
-					DepthClipEnable = originalRasterizerState.DepthClipEnable,
-				};
-
-				//batch.GraphicsDevice.Viewport = new(Region);
-				var originalScissor = batch.GraphicsDevice.ScissorRectangle;
 				batch.GraphicsDevice.ScissorRectangle = Region;
-				batch.Begin(sortMode: SpriteSortMode.FrontToBack, rasterizerState: State, samplerState: originalSamplerState, depthStencilState: originalDepthStencilState);
-				try {
-					using var tempOverrideState = new TempValue<Preview.Override>(ref Preview.Override.Instance, overrideState);
-					batch.GraphicsDevice.Viewport = new(Region);
-					OnDraw(batch, overrideState);
-					batch.End();
-					if (true) { // precipitation
-						batch.Begin(sortMode: SpriteSortMode.FrontToBack, rasterizerState: State, samplerState: originalSamplerState, depthStencilState: originalDepthStencilState);
-						StardewValley.Game1.game1.drawWeather(StardewValley.Game1.currentGameTime, null);
-						batch.End();
-					}
-					batch.Begin(sortMode: SpriteSortMode.FrontToBack, rasterizerState: State, samplerState: originalSamplerState, depthStencilState: originalDepthStencilState);
-					OnDrawOverlay(batch, overrideState);
-					batch.GraphicsDevice.Viewport = originalViewport;
-				}
-				finally {
-					batch.End();
-					batch.GraphicsDevice.ScissorRectangle = originalScissor;
-					batch.Begin(rasterizerState: originalRasterizerState, samplerState: originalSamplerState, depthStencilState: originalDepthStencilState);
-				}
+				batch.GraphicsDevice.Viewport = new(Region);
+
+				DrawFirst(batch, overrideState, originalDrawState);
+				DrawPrecipitation(batch, overrideState, originalDrawState);
+				DrawOverlay(batch, overrideState, originalDrawState);
 			}
 			finally {
-				StardewValley.Game1.currentLocation = originalLocation;
+				batch.GraphicsDevice.Viewport = originalDrawState.Viewport;
+				batch.GraphicsDevice.ScissorRectangle = originalDrawState.ScissorRectangle;
+				batch.Begin(
+					rasterizerState: originalDrawState.RasterizerState,
+					samplerState: originalDrawState.SamplerState,
+					depthStencilState: originalDrawState.DepthStencilState
+				);
 			}
 		}
 		finally {
 			StardewValley.Game1.spriteBatch = originalSpriteBatch;
+			StardewValley.Game1.currentLocation = originalLocation;
 		}
 
 		CurrentWeatherState = WeatherState.Backup();
 	}
 
 	protected abstract void OnTick();
+
+	private void TickPrecipitation() {
+		var originalDeviceViewport = Game1.graphics.GraphicsDevice.Viewport;
+		var originalGameViewport = Game1.viewport;
+		var originalFadeToBlackAlpha = Game1.fadeToBlackAlpha;
+		try {
+			Game1.graphics.GraphicsDevice.Viewport = new(Region);
+			Game1.viewport = Region;
+			Game1.fadeToBlackAlpha = 0.0f;
+			StardewValley.Game1.updateWeather(StardewValley.Game1.currentGameTime);
+		}
+		finally {
+			Game1.graphics.GraphicsDevice.Viewport = originalDeviceViewport;
+			Game1.viewport = originalGameViewport;
+			Game1.fadeToBlackAlpha = originalFadeToBlackAlpha;
+		}
+	}
 
 	internal void Tick() {
 		using var savedWeatherState = WeatherState.Backup();
@@ -263,23 +331,7 @@ abstract class Scene : IDisposable {
 		var originalLocation = StardewValley.Game1.currentLocation;
 		StardewValley.Game1.currentLocation = SceneLocation.Value;
 		try {
-			if (true) { // precipitation
-				var originalDeviceViewport = Game1.graphics.GraphicsDevice.Viewport;
-				var originalGameViewport = Game1.viewport;
-				var originalFadeToBlackAlpha = Game1.fadeToBlackAlpha;
-				try {
-					Game1.graphics.GraphicsDevice.Viewport = new(Region);
-					Game1.viewport = Region;
-					Game1.fadeToBlackAlpha = 0.0f;
-					StardewValley.Game1.updateWeather(StardewValley.Game1.currentGameTime);
-				}
-				finally {
-					Game1.graphics.GraphicsDevice.Viewport = originalDeviceViewport;
-					Game1.viewport = originalGameViewport;
-					Game1.fadeToBlackAlpha = originalFadeToBlackAlpha;
-				}
-			}
-
+			TickPrecipitation();
 			OnTick();
 		}
 		finally {
