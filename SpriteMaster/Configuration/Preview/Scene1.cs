@@ -1,4 +1,5 @@
-﻿using SpriteMaster.Types;
+﻿using SpriteMaster.Extensions;
+using SpriteMaster.Types;
 using StardewValley;
 using System;
 using System.Collections.Generic;
@@ -24,6 +25,8 @@ sealed class Scene1 : Scene {
 
 	internal override PrecipitationType Precipitation => ScenePrecipitation;
 	private readonly PrecipitationType ScenePrecipitation;
+
+	private static int RandomSeed => Guid.NewGuid().GetHashCode();
 
 	private static ref T GetRandomOf<T>(Random rand, T[] array) {
 		if (array.Length == 0) {
@@ -152,7 +155,7 @@ sealed class Scene1 : Scene {
 	};
 
 	private static AnimatedTexture GetCenterCharacter() {
-		var rand = new Random(Guid.NewGuid().GetHashCode());
+		var rand = new Random(RandomSeed);
 		var characters = CharacterPaths.OrderBy(_ => rand.Next());
 
 		foreach (var character in characters) {
@@ -181,7 +184,7 @@ sealed class Scene1 : Scene {
 	internal Scene1(in Bounds scissor) : base(in scissor) {
 		CenterCharacterTexture = GetCenterCharacter();
 
-		var rand = new Random(Guid.NewGuid().GetHashCode());
+		var rand = new Random(RandomSeed);
 
 		Season = Seasons[rand.Next(Seasons.Length)];
 
@@ -324,12 +327,10 @@ sealed class Scene1 : Scene {
 		}
 	}
 
-	private const int Seed = 0x13371337;
-
 	private DrawableInstance[] SetupScene(bool winter) {
 		var center = Size / 2;
 
-		var rand = new Random(Seed);
+		var rand = new Random(RandomSeed);
 
 		var plainGrass = winter ?
 			new Drawable[] {
@@ -399,6 +400,8 @@ sealed class Scene1 : Scene {
 
 		var tileArray = new List<Drawable>[tileCount.X, tileCount.Y];
 
+		static Vector2I Distance(Vector2I a, Vector2I b) => (a - b).Abs;
+
 		for (int y = 0; y < tileCount.Y; ++y) {
 			for (int x = 0; x < tileCount.X; ++x) {
 				var drawables = (tileArray[x, y] ??= new());
@@ -406,7 +409,8 @@ sealed class Scene1 : Scene {
 				var grassObject = GetRandomOf(rand, grassArray);
 				drawables.Add(grassObject);
 
-				if ((Math.Abs(x - mid.X) > 1 && Math.Abs(y - mid.Y) > 1) && rand.Next(100) < debrisChance) {
+				var distanceFromMid = Distance((x, y), mid);
+				if (distanceFromMid.MaxOf > 1 && rand.Next(100) < debrisChance) {
 					var debrisObject = GetRandomOf(rand, debrisArray);
 					drawables.Add(debrisObject);
 				}
@@ -416,33 +420,33 @@ sealed class Scene1 : Scene {
 		if (winter) {
 			tileArray[mid.X - 2, mid.Y - 2][0] = OutdoorTiles[3, 14];
 			tileArray[mid.X - 1, mid.Y - 2][0] = OutdoorTiles[1, 15];
-			tileArray[mid.X, mid.Y - 2][0] = OutdoorTiles[1, 15];
+			tileArray[mid.X + 0, mid.Y - 2][0] = OutdoorTiles[1, 15];
 			tileArray[mid.X + 1, mid.Y - 2][0] = OutdoorTiles[1, 15];
 			tileArray[mid.X + 2, mid.Y - 2][0] = OutdoorTiles[3, 16];
 		}
 
 		if (winter) tileArray[mid.X - 2, mid.Y - 1][0] = OutdoorTiles[2, 14];
 		tileArray[mid.X - 1, mid.Y - 1][0] = OutdoorTiles[0, 8];
-		tileArray[mid.X,		 mid.Y - 1][0] = OutdoorTiles[1, 8];
+		tileArray[mid.X + 0, mid.Y - 1][0] = OutdoorTiles[1, 8];
 		tileArray[mid.X + 1, mid.Y - 1][0] = OutdoorTiles[3, 8];
 		if (winter) tileArray[mid.X + 2, mid.Y - 1][0] = OutdoorTiles[0, 14];
 
-		if (winter) tileArray[mid.X - 2, mid.Y		][0] = OutdoorTiles[2, 14];
-		tileArray[mid.X - 1, mid.Y		][0] = OutdoorTiles[0, 9];
-		tileArray[mid.X,		 mid.Y		][0] = OutdoorTiles[6, 8];
-		tileArray[mid.X + 1, mid.Y		][0] = OutdoorTiles[3, 9];
-		if (winter) tileArray[mid.X + 2, mid.Y		][0] = OutdoorTiles[0, 14];
+		if (winter) tileArray[mid.X - 2, mid.Y + 0][0] = OutdoorTiles[2, 14];
+		tileArray[mid.X - 1, mid.Y + 0][0] = OutdoorTiles[0, 9];
+		tileArray[mid.X + 0, mid.Y + 0][0] = OutdoorTiles[6, 8];
+		tileArray[mid.X + 1, mid.Y + 0][0] = OutdoorTiles[3, 9];
+		if (winter) tileArray[mid.X + 2, mid.Y + 0][0] = OutdoorTiles[0, 14];
 
 		if (winter) tileArray[mid.X - 2, mid.Y + 1][0] = OutdoorTiles[2, 14];
 		tileArray[mid.X - 1, mid.Y + 1][0] = OutdoorTiles[0, 10];
-		tileArray[mid.X,		 mid.Y + 1][0] = OutdoorTiles[1, 10];
+		tileArray[mid.X + 0, mid.Y + 1][0] = OutdoorTiles[1, 10];
 		tileArray[mid.X + 1, mid.Y + 1][0] = OutdoorTiles[3, 10];
 		if (winter) tileArray[mid.X + 2, mid.Y + 1][0] = OutdoorTiles[0, 14];
 
 		if (winter) {
 			tileArray[mid.X - 2, mid.Y + 2][0] = OutdoorTiles[3, 15];
 			tileArray[mid.X - 1, mid.Y + 2][0] = OutdoorTiles[1, 13];
-			tileArray[mid.X, mid.Y + 2][0] = OutdoorTiles[1, 13];
+			tileArray[mid.X + 0, mid.Y + 2][0] = OutdoorTiles[1, 13];
 			tileArray[mid.X + 1, mid.Y + 2][0] = OutdoorTiles[1, 13];
 			tileArray[mid.X + 2, mid.Y + 2][0] = OutdoorTiles[3, 13];
 		}
@@ -453,15 +457,10 @@ sealed class Scene1 : Scene {
 		tileArray[mid.X, mid.Y].Add(new(shadowTexture));
 
 		// insert Character
-		if (CenterCharacterTexture.Size.Height == 16) {
-			tileArray[mid.X, mid.Y].Add(new(CenterCharacterTexture, offset: -32));
-		}
-		else {
-			tileArray[mid.X, mid.Y - 1].Add(CenterCharacterTexture);
-		}
+		tileArray[mid.X, mid.Y].Add(new(CenterCharacterTexture, offset: -32));
 
 		// insert Tree
-		tileArray[mid.X - 4, mid.Y].Add(TreeTexture[1, 0]);
+		tileArray[mid.X - 4, mid.Y + 2].Add(TreeTexture[1, 0]);
 
 		var drawableInstances = new List<DrawableInstance>();
 

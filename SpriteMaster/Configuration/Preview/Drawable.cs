@@ -84,11 +84,13 @@ readonly struct Drawable {
 	);
 
 	internal readonly void Draw(Scene scene, XNA.Graphics.SpriteBatch batch, Vector2I location, float layerDepth = 0.0f) {
+		/*
 		int spriteHeight = Height / 16;
 		if (spriteHeight > 1 && (spriteHeight & 1) == 1) {
 			// If the height is even, it needs to be offset.
 			location.Y -= 32;
 		}
+		*/
 		location.Y += Offset;
 
 		if (Texture is not null) {
@@ -130,11 +132,11 @@ readonly struct DrawableInstance {
 		Drawable = drawable;
 		Location = location;
 
-		int height = (Drawable.Height / 2) / 16;
+		int height = 0;// (Drawable.Height / 2) / 16;
 
 		if (height != 0) {
-			height *= 64;
-			height++;
+			//height *= 64;
+			//height++;
 		}
 
 		LayerDepth = Location.Y + height;

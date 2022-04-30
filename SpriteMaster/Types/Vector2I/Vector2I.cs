@@ -11,8 +11,7 @@ namespace SpriteMaster.Types;
 [StructLayout(LayoutKind.Explicit, Pack = Vector2I.Alignment, Size = Vector2I.ByteSize)]
 unsafe partial struct Vector2I :
 	CompositePrimitive<ulong>,
-	ILongHash,
-	ICloneable {
+	ILongHash {
 	internal const int ByteSize = sizeof(ulong);
 	internal const int Alignment = sizeof(ulong);
 
@@ -172,12 +171,6 @@ unsafe partial struct Vector2I :
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static implicit operator Bounds(Vector2I vec) => new(vec);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly Vector2I Clone() => this;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	readonly object ICloneable.Clone() => this;
 
 	public override readonly string ToString() => $"{{{X}, {Y}}}";
 	public readonly string ToString(IFormatProvider? provider) => $"{{{X.ToString(provider)}, {Y.ToString(provider)}}}";

@@ -1,5 +1,6 @@
 ﻿using Microsoft.Toolkit.HighPerformance;
 using Microsoft.Xna.Framework.Graphics;
+using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using StardewValley;
 using System;
@@ -8,6 +9,8 @@ namespace SpriteMaster.Configuration.Preview;
 
 abstract class Scene : IDisposable {
 	internal static Scene? Current = null;
+	protected const int TileSize = 16;
+	protected const int TileSizeRendered = TileSize * 4;
 
 	private struct CurrentScope : IDisposable {
 		private readonly Scene? PreviousScene;
@@ -64,6 +67,10 @@ abstract class Scene : IDisposable {
 		Region = region;
 	}
 
+	protected static Vector2I GetSizeInTiles(Vector2I size) => size / TileSize;
+
+	protected static Vector2I GetSizeInRenderedTiles(Vector2I size) => size / TileSizeRendered;
+
 	internal void DrawAt(
 		XNA.Graphics.SpriteBatch batch,
 		XTexture2D texture,
@@ -74,11 +81,29 @@ abstract class Scene : IDisposable {
 		SpriteEffects effects = SpriteEffects.None,
 		float layerDepth = 0.0f
 	) {
-		var offset = destination.Extent >> 3;
+		Vector2I shift = Vector2I.Zero;
+		if (destination.Extent.MaxOf > TileSizeRendered) {
+			var centroid = destination.Center;
+			var end = destination.Offset + destination.Extent;
+			var difference = end - centroid;
+			difference /= TileSizeRendered;
+			difference *= TileSizeRendered;
+
+			Vector2I hasValue = ((destination.Extent.X > TileSizeRendered).ToInt(), (destination.Extent.Y > TileSizeRendered).ToInt());
+			difference -= hasValue * (TileSizeRendered / 2);
+
+			var odd = (destination.Extent / TileSizeRendered) & 1;
+			odd &= hasValue;
+			difference -= odd * (TileSizeRendered / 2);
+
+			shift = -difference;
+		}
+
+		var offset = (destination.Extent >> 3);
 
 		batch.Draw(
 			texture: texture,
-			destinationRectangle: destination,
+			destinationRectangle: destination.OffsetBy(shift),
 			sourceRectangle: source,
 			color: color ?? XNA.Color.White,
 			rotation: rotation,
@@ -100,13 +125,32 @@ abstract class Scene : IDisposable {
 		float layerDepth = 0.0f
 	) {
 		var size = new Vector2I(source?.Width ?? texture.Width, source?.Height ?? texture.Height) << 2;
-		var offset = size >> 3;
+
+		Vector2I shift = Vector2I.Zero;
+		if (size.MaxOf > TileSizeRendered) {
+			var centroid = size / 2;
+			var end = size;
+			var difference = end - centroid;
+			difference /= TileSizeRendered;
+			difference *= TileSizeRendered;
+
+			Vector2I hasValue = ((size.X > TileSizeRendered).ToInt(), (size.Y > TileSizeRendered).ToInt());
+			difference -= hasValue * (TileSizeRendered / 2);
+
+			var odd = (size / TileSizeRendered) & 1;
+			odd &= hasValue;
+			difference -= odd * (TileSizeRendered / 2);
+
+			shift = -difference;
+		}
+
+		var offset = (size >> 3);
 
 		var bounds = new Bounds(destination, size);
 
 		batch.Draw(
 			texture: texture,
-			destinationRectangle: bounds,
+			destinationRectangle: bounds.OffsetBy(shift),
 			sourceRectangle: source,
 			color: color ?? XNA.Color.White,
 			rotation: 0.0f,

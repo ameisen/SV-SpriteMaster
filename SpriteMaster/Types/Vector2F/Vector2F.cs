@@ -9,7 +9,7 @@ namespace SpriteMaster.Types;
 
 [DebuggerDisplay("[{X}, {Y}]")]
 [StructLayout(LayoutKind.Explicit, Pack = sizeof(float) * 2, Size = sizeof(float) * 2)]
-unsafe partial struct Vector2F : ILongHash, ICloneable {
+unsafe partial struct Vector2F : ILongHash {
 
 	internal static readonly Vector2F Zero = (0.0f, 0.0f);
 	internal static readonly Vector2F One = (1.0f, 1.0f);
@@ -173,84 +173,6 @@ unsafe partial struct Vector2F : ILongHash, ICloneable {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static implicit operator Vector2F(XTileSize vec) => new(vec);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly Vector2F Min() => new(MathF.Min(X, Y));
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly Vector2F Max() => new(MathF.Max(X, Y));
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly Vector2F Min(Vector2F v) => SystemVector2.Min(this, v);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly Vector2F Max(Vector2F v) => SystemVector2.Max(this, v);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly Vector2F Clamp(Vector2F min, Vector2F max) => SystemVector2.Clamp(this, min, max);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly Vector2F Min(float v) => SystemVector2.Min(this, new SystemVector2(v));
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly Vector2F Max(float v) => SystemVector2.Max(this, new SystemVector2(v));
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly Vector2F Clamp(float min, float max) => SystemVector2.Clamp(this, new(min), new(max));
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly Vector2F Clone() => this;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	readonly object ICloneable.Clone() => this;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static Vector2F operator +(Vector2F vector) => vector;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static Vector2F operator -(Vector2F vector) => new(-vector.X, -vector.Y);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static Vector2F operator +(Vector2F lhs, Vector2F rhs) => SystemVector2.Add(lhs, rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static Vector2F operator -(Vector2F lhs, Vector2F rhs) => SystemVector2.Subtract(lhs, rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static Vector2F operator *(Vector2F lhs, Vector2F rhs) => SystemVector2.Multiply(lhs, rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static Vector2F operator /(Vector2F lhs, Vector2F rhs) => SystemVector2.Divide(lhs, rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static Vector2F operator %(Vector2F lhs, Vector2F rhs) => new(
-		lhs.X % rhs.X,
-		lhs.Y % rhs.Y
-	);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static Vector2F operator +(Vector2F lhs, float rhs) => SystemVector2.Add(lhs, new(rhs));
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static Vector2F operator -(Vector2F lhs, float rhs) => SystemVector2.Subtract(lhs, new(rhs));
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static Vector2F operator *(Vector2F lhs, float rhs) => SystemVector2.Multiply(lhs, rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static Vector2F operator /(Vector2F lhs, float rhs) => SystemVector2.Divide(lhs, rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static Vector2F operator %(Vector2F lhs, float rhs) => new(
-		lhs.X % rhs,
-		lhs.Y % rhs
-	);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static Vector2F operator +(Vector2I lhs, Vector2F rhs) => SystemVector2.Add((Vector2F)lhs, rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static Vector2F operator -(Vector2I lhs, Vector2F rhs) => SystemVector2.Subtract((Vector2F)lhs, rhs);
 
 	internal readonly float LengthSquared => SystemVector2.Dot(NumericVector, NumericVector);
 	internal readonly float Length => MathF.Sqrt(LengthSquared);
