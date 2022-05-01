@@ -49,7 +49,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="FastExpressionCompiler.LightExpression" Version="3.2.2" />
+		<PackageReference Include="FastExpressionCompiler.LightExpression" Version="3.3.0" />
 		<PackageReference Include="ILRepack" Version="2.1.0-beta1" GeneratePathProperty="true" ExcludeAssets="all" />
 		<PackageReference Include="LinqFasterer" Version="2.1.0" />
 		<PackageReference Include="Microsoft.Toolkit.HighPerformance" Version="7.1.2" />
@@ -59,7 +59,7 @@
 		<PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.0.1" />
 		<PackageReference Include="System.Runtime.Caching" Version="5.0.0" />
 		<PackageReference Include="TeximpNet" Version="1.4.3" />
-		<PackageReference Include="Tomlyn" Version="0.14.1" />
+		<PackageReference Include="Tomlyn" Version="0.14.2" />
 		<PackageReference Include="ZstdNet" Version="1.4.5" />
 	</ItemGroup>
 	
