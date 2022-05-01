@@ -166,4 +166,13 @@ static class Attributes {
 	[AttributeUsage(AttributeTargets.All, AllowMultiple = false, Inherited = true)]
 	internal sealed class GMCMHiddenAttribute : ConfigAttribute {
 	}
+
+	[AttributeUsage(AttributeTargets.All, AllowMultiple = false, Inherited = true)]
+	internal sealed class MenuNameAttribute : ConfigAttribute {
+		internal readonly string Name;
+
+		internal MenuNameAttribute(string name) {
+			Name = name;
+		}
+	}
 }

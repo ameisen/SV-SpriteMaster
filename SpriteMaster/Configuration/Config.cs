@@ -85,7 +85,8 @@ static class Config {
 	[Attributes.Ignore]
 	internal static bool ToggledEnable = true;
 
-	[Attributes.Comment("Should SpriteMaster be enabled?")]
+	[Attributes.Comment("Should SpriteMaster be enabled? Unsetting this will disable _all_ SpriteMaster functionality.")]
+	[Attributes.MenuName("Enable SpriteMaster")]
 	[Obsolete("Use IsEnabled")]
 	internal static bool Enabled = true;
 
@@ -248,6 +249,7 @@ static class Config {
 	internal static class Resample {
 		[Attributes.Comment("Should resampling be enabled?")]
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
+		[Attributes.MenuName("Enable Resampling")]
 		[Obsolete("Use IsEnabled")]
 		internal static bool Enabled = true;
 
@@ -665,15 +667,6 @@ static class Config {
 
 	[Attributes.Advanced]
 	internal static class SMAPI {
-		[Attributes.Comment("Should the experimental SMAPI texture cache patch be enabled?")]
-		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushTextureCache)]
-		internal static bool TextureCacheEnabled = true;
-		[Attributes.Comment("Should the PMA texture cache be enabled?")]
-		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushTextureCache)]
-		internal static bool PMATextureCacheEnabled = true;
-		[Attributes.Comment("Should the experimental SMAPI texture cache have high memory usage enabled?")]
-		[Attributes.Comment("Unrecommended: This results in the game's texture being retained (and thus loaded faster) but doesn't suspend the resampled sprite instances.")]
-		internal static bool TextureCacheHighMemoryEnabled = false;
 		[Attributes.Comment("Should the ApplyPatch method be patched?")]
 		internal static bool ApplyPatchEnabled = true;
 		[Attributes.Comment("Should ApplyPatch pin temporary memory?")]
@@ -729,6 +722,19 @@ static class Config {
 			[Attributes.Comment("Disable PyTK mitigation for SpriteMaster?")]
 			internal static bool DisablePyTKMitigation = true;
 		}
+	}
+
+	[Attributes.Advanced]
+	internal static class TextureCache {
+		[Attributes.Comment("Should the experimental SMAPI texture cache patch be enabled?")]
+		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushTextureCache)]
+		internal static bool Enabled = true;
+		[Attributes.Comment("Should the PMA texture cache be enabled?")]
+		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushTextureCache)]
+		internal static bool PMAEnabled = true;
+		[Attributes.Comment("Should the experimental SMAPI texture cache have high memory usage enabled?")]
+		[Attributes.Comment("Unrecommended: This results in the game's texture being retained (and thus loaded faster) but doesn't suspend the resampled sprite instances.")]
+		internal static bool HighMemoryEnabled = false;
 	}
 
 	[Attributes.Advanced]

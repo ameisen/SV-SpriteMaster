@@ -269,13 +269,14 @@ sealed class Texture2DMeta : IDisposable {
 				}
 				else if (!bounds.HasValue && data.Offset == 0 && data.Length == refSize) {
 					Debug.Trace($"{(hasCachedData ? "Overriding" : "Setting")} '{reference.NormalizedName(DrawingColor.LightYellow)}' Cache in Purge: {bounds.HasValue}, {data.Offset}, {data.Length}");
+					
 					CachedRawData = data.Data;
 				}
 				else if (!IsCompressed && (bounds.HasValue != (data.Offset != 0)) && CachedRawData is var currentData && currentData is not null) {
 					Debug.Trace($"{(hasCachedData ? "Updating" : "Setting")} '{reference.NormalizedName(DrawingColor.LightYellow)}' Cache in Purge: {bounds.HasValue}");
 
 					if (bounds.HasValue) {
-						var source = data.Data.AsSpan<uint>();
+						var source = data.Data.AsReadOnlySpan<uint>();
 						var dest = currentData.AsSpan<uint>();
 						int sourceOffset = 0;
 						for (int y = bounds.Value.Top; y < bounds.Value.Bottom; ++y) {
@@ -287,11 +288,9 @@ sealed class Texture2DMeta : IDisposable {
 						}
 					}
 					else {
-						var byteSpan = data.Data;
-						var untilOffset = Math.Min(currentData.Length - data.Offset, data.Length);
-						for (int i = 0; i < untilOffset; ++i) {
-							currentData[i + data.Offset] = byteSpan[i];
-						}
+						var source = data.Data;
+						var length = Math.Min(currentData.Length - data.Offset, data.Length);
+						Array.Copy(source, 0, currentData, data.Offset, length);
 					}
 					Hash = 0;
 					CachedRawData = currentData; // Force it to update the global cache.

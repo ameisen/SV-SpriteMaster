@@ -39,7 +39,7 @@ static class TextureCache {
 	public static bool FromStreamPre(ref XTexture2D __result, GraphicsDevice graphicsDevice, Stream stream, ref bool __state) {
 		lock (Lock) {
 
-			if (!Config.IsUnconditionallyEnabled || !Config.SMAPI.TextureCacheEnabled) {
+			if (!Config.IsUnconditionallyEnabled || !Config.TextureCache.Enabled) {
 				__state = false;
 				return true;
 			}
@@ -97,7 +97,7 @@ static class TextureCache {
 	[Harmonize(typeof(XTexture2D), "FromStream", Harmonize.Fixation.Postfix, PriorityLevel.Last, platform: Harmonize.Platform.MonoGame, instance: false)]
 	public static void FromStreamPost(ref XTexture2D __result, GraphicsDevice graphicsDevice, Stream stream, bool __state) {
 		lock (Lock) {
-			if (!Config.IsUnconditionallyEnabled || !Config.SMAPI.TextureCacheEnabled) {
+			if (!Config.IsUnconditionallyEnabled || !Config.TextureCache.Enabled) {
 				return;
 			}
 
@@ -124,7 +124,7 @@ static class TextureCache {
 	[Harmonize(typeof(XTexture2D), "FromStream", Harmonize.Fixation.Finalizer, PriorityLevel.Last, platform: Harmonize.Platform.MonoGame, instance: false)]
 	public static void FromStreamFinal(ref XTexture2D __result, GraphicsDevice graphicsDevice, Stream stream, bool __state) {
 		lock (Lock) {
-			if (!Config.IsUnconditionallyEnabled || !Config.SMAPI.TextureCacheEnabled) {
+			if (!Config.IsUnconditionallyEnabled || !Config.TextureCache.Enabled) {
 				return;
 			}
 
@@ -143,7 +143,7 @@ static class TextureCache {
 			}
 
 			var result = __result;
-			if (Config.SMAPI.TextureCacheHighMemoryEnabled) {
+			if (Config.TextureCache.HighMemoryEnabled) {
 				lock (TextureCacheDeque) {
 					int dequeIndex = TextureCacheDeque.IndexOf(result);
 					if (dequeIndex != -1) {
@@ -180,7 +180,7 @@ static class TextureCache {
 	)]
 	public static bool PremultiplyTransparencyPre(ContentManager __instance, ref XTexture2D __result, XTexture2D texture) {
 		lock (Lock) {
-			if (!Config.IsUnconditionallyEnabled || !Config.SMAPI.TextureCacheEnabled || !Config.SMAPI.PMATextureCacheEnabled) {
+			if (!Config.IsUnconditionallyEnabled || !Config.TextureCache.Enabled || !Config.TextureCache.PMAEnabled) {
 				return true;
 			}
 
@@ -206,7 +206,7 @@ static class TextureCache {
 		lock (Lock) {
 			CurrentPremultiplyingTexture.Value = null!;
 
-			if (!Config.IsUnconditionallyEnabled || !Config.SMAPI.TextureCacheEnabled || !Config.SMAPI.PMATextureCacheEnabled) {
+			if (!Config.IsUnconditionallyEnabled || !Config.TextureCache.Enabled || !Config.TextureCache.PMAEnabled) {
 				return;
 			}
 

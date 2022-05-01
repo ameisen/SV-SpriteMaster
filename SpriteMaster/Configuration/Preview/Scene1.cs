@@ -440,49 +440,49 @@ sealed class Scene1 : Scene {
 		}
 
 		if (winter) {
-			tileArray[mid.X - 2, mid.Y - 2][0] = OutdoorTiles[3, 14];
-			tileArray[mid.X - 1, mid.Y - 2][0] = OutdoorTiles[1, 15];
-			tileArray[mid.X + 0, mid.Y - 2][0] = OutdoorTiles[1, 15];
-			tileArray[mid.X + 1, mid.Y - 2][0] = OutdoorTiles[1, 15];
-			tileArray[mid.X + 2, mid.Y - 2][0] = OutdoorTiles[3, 16];
+			try { tileArray[mid.X - 2, mid.Y - 2][0] = OutdoorTiles[3, 14]; } catch (IndexOutOfRangeException) { }
+			try { tileArray[mid.X - 1, mid.Y - 2][0] = OutdoorTiles[1, 15];	} catch (IndexOutOfRangeException) { }
+			try { tileArray[mid.X + 0, mid.Y - 2][0] = OutdoorTiles[1, 15];	} catch (IndexOutOfRangeException) { }
+			try { tileArray[mid.X + 1, mid.Y - 2][0] = OutdoorTiles[1, 15];	} catch (IndexOutOfRangeException) { }
+			try { tileArray[mid.X + 2, mid.Y - 2][0] = OutdoorTiles[3, 16]; } catch (IndexOutOfRangeException) { }
 		}
 
-		if (winter) tileArray[mid.X - 2, mid.Y - 1][0] = OutdoorTiles[2, 14];
-		tileArray[mid.X - 1, mid.Y - 1][0] = OutdoorTiles[0, 8];
-		tileArray[mid.X + 0, mid.Y - 1][0] = OutdoorTiles[1, 8];
-		tileArray[mid.X + 1, mid.Y - 1][0] = OutdoorTiles[3, 8];
-		if (winter) tileArray[mid.X + 2, mid.Y - 1][0] = OutdoorTiles[0, 14];
+		try { if (winter) tileArray[mid.X - 2, mid.Y - 1][0] = OutdoorTiles[2, 14]; } catch (IndexOutOfRangeException) { }
+		try { tileArray[mid.X - 1, mid.Y - 1][0] = OutdoorTiles[0, 8]; } catch (IndexOutOfRangeException) { }
+		try { tileArray[mid.X + 0, mid.Y - 1][0] = OutdoorTiles[1, 8]; } catch (IndexOutOfRangeException) { }
+		try { tileArray[mid.X + 1, mid.Y - 1][0] = OutdoorTiles[3, 8]; } catch (IndexOutOfRangeException) { }
+		try { if (winter) tileArray[mid.X + 2, mid.Y - 1][0] = OutdoorTiles[0, 14]; } catch (IndexOutOfRangeException) { }
 
-		if (winter) tileArray[mid.X - 2, mid.Y + 0][0] = OutdoorTiles[2, 14];
-		tileArray[mid.X - 1, mid.Y + 0][0] = OutdoorTiles[0, 9];
-		tileArray[mid.X + 0, mid.Y + 0][0] = OutdoorTiles[6, 8];
-		tileArray[mid.X + 1, mid.Y + 0][0] = OutdoorTiles[3, 9];
-		if (winter) tileArray[mid.X + 2, mid.Y + 0][0] = OutdoorTiles[0, 14];
+		try { if (winter) tileArray[mid.X - 2, mid.Y + 0][0] = OutdoorTiles[2, 14]; } catch (IndexOutOfRangeException) { }
+		try { tileArray[mid.X - 1, mid.Y + 0][0] = OutdoorTiles[0, 9]; } catch (IndexOutOfRangeException) { }
+		try { tileArray[mid.X + 0, mid.Y + 0][0] = OutdoorTiles[6, 8]; } catch (IndexOutOfRangeException) { }
+		try { tileArray[mid.X + 1, mid.Y + 0][0] = OutdoorTiles[3, 9]; } catch (IndexOutOfRangeException) { }
+		try { if (winter) tileArray[mid.X + 2, mid.Y + 0][0] = OutdoorTiles[0, 14]; } catch (IndexOutOfRangeException) { }
 
-		if (winter) tileArray[mid.X - 2, mid.Y + 1][0] = OutdoorTiles[2, 14];
-		tileArray[mid.X - 1, mid.Y + 1][0] = OutdoorTiles[0, 10];
-		tileArray[mid.X + 0, mid.Y + 1][0] = OutdoorTiles[1, 10];
-		tileArray[mid.X + 1, mid.Y + 1][0] = OutdoorTiles[3, 10];
-		if (winter) tileArray[mid.X + 2, mid.Y + 1][0] = OutdoorTiles[0, 14];
+		try { if (winter) tileArray[mid.X - 2, mid.Y + 1][0] = OutdoorTiles[2, 14]; } catch (IndexOutOfRangeException) { }
+		try { tileArray[mid.X - 1, mid.Y + 1][0] = OutdoorTiles[0, 10]; } catch (IndexOutOfRangeException) { }
+		try { tileArray[mid.X + 0, mid.Y + 1][0] = OutdoorTiles[1, 10]; } catch (IndexOutOfRangeException) { }
+		try { tileArray[mid.X + 1, mid.Y + 1][0] = OutdoorTiles[3, 10]; } catch (IndexOutOfRangeException) { }
+		try { if (winter) tileArray[mid.X + 2, mid.Y + 1][0] = OutdoorTiles[0, 14]; } catch (IndexOutOfRangeException) { }
 
 		if (winter) {
-			tileArray[mid.X - 2, mid.Y + 2][0] = OutdoorTiles[3, 15];
-			tileArray[mid.X - 1, mid.Y + 2][0] = OutdoorTiles[1, 13];
-			tileArray[mid.X + 0, mid.Y + 2][0] = OutdoorTiles[1, 13];
-			tileArray[mid.X + 1, mid.Y + 2][0] = OutdoorTiles[1, 13];
-			tileArray[mid.X + 2, mid.Y + 2][0] = OutdoorTiles[3, 13];
+			try { tileArray[mid.X - 2, mid.Y + 2][0] = OutdoorTiles[3, 15]; } catch (IndexOutOfRangeException) { }
+			try { tileArray[mid.X - 1, mid.Y + 2][0] = OutdoorTiles[1, 13]; } catch (IndexOutOfRangeException) { }
+			try { tileArray[mid.X + 0, mid.Y + 2][0] = OutdoorTiles[1, 13]; } catch (IndexOutOfRangeException) { }
+			try { tileArray[mid.X + 1, mid.Y + 2][0] = OutdoorTiles[1, 13]; } catch (IndexOutOfRangeException) { }
+			try { tileArray[mid.X + 2, mid.Y + 2][0] = OutdoorTiles[3, 13]; } catch (IndexOutOfRangeException) { }
 		}
 
 		var shadowTexture = Game1.shadowTexture;
 
 		// insert Character's shadow
-		tileArray[mid.X, mid.Y].Add(new(shadowTexture));
+		try { tileArray[mid.X, mid.Y].Add(new(shadowTexture)); } catch (IndexOutOfRangeException) { }
 
 		// insert Character
-		tileArray[mid.X, mid.Y].Add(new(CenterCharacterTexture, offset: -32));
+		try { tileArray[mid.X, mid.Y].Add(new(CenterCharacterTexture, offset: -(Scene.TileSizeRendered / 2))); } catch (IndexOutOfRangeException) { }
 
 		// insert Tree
-		tileArray[mid.X - 4, mid.Y + 2].Add(TreeTexture[1, 0]);
+		try { tileArray[mid.X - 4, mid.Y + 2].Add(TreeTexture[1, 0]); } catch (IndexOutOfRangeException) { }
 
 		var drawableInstances = new List<DrawableInstance>();
 

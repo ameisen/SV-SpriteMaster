@@ -1,4 +1,5 @@
 ﻿using GenericModConfigMenu;
+using LinqFasterer;
 using SpriteMaster.Configuration.Preview;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
@@ -13,7 +14,9 @@ using SMMetadata = SpriteMaster.Metadata.Metadata;
 namespace SpriteMaster.Configuration.GMCM;
 
 static class Setup {
-	private const int PreviewHeight = 400;
+	private const int DefaultPreviewHeight = 400;
+	internal const bool LockPreview = false;
+	private static int PreviewHeight => Math.Min(DefaultPreviewHeight, DrawState.Device.ScissorRectangle.Height - 100);
 
 	private static volatile bool Initialized = false;
 
@@ -23,6 +26,8 @@ static class Setup {
 	private static bool IsMenuOpened = false;
 	private static bool DisposeNextClick = false;
 	private static Preview.Scene? PreviewScene = null;
+
+	private static readonly int RowHeight = 50;
 
 	internal static void Initialize(IModHelper help) {
 		if (Initialized) {
@@ -93,7 +98,7 @@ static class Setup {
 		}
 
 		bool isAdvancedField = field.HasAttribute<Attributes.AdvancedAttribute>();
-		if (advanced != isAdvancedField) {
+		if (!advanced && advanced != isAdvancedField) {
 			return true;
 		}
 
@@ -253,6 +258,10 @@ static class Setup {
 		return Enum.Parse<T>(combinedName);
 	}
 
+	private static string GetFieldName(FieldInfo field) {
+		var attribute = field.GetCustomAttribute<Attributes.MenuNameAttribute>();
+		return attribute?.Name ?? FormatName(field.Name);
+	}
 
 	private static void ProcessField(FieldInfo field, bool advanced, IManifest manifest, IGenericModConfigMenuApi config) {
 		if (Hidden(field, advanced)) {
@@ -270,7 +279,7 @@ static class Setup {
 
 		var fieldType = field.FieldType;
 		var fieldId = $"{field.ReflectedType?.FullName ?? "unknown"}.{field.Name}";
-		Func<string> fieldName = () => FormatName(field.Name);
+		Func<string> fieldName = () => GetFieldName(field);
 		Func<string>? tooltip = comment is null ? null : () => comment;
 
 		FieldMap[fieldId] = field;
@@ -443,7 +452,7 @@ static class Setup {
 			return null;
 		}
 
-		var names = new List<string>();
+		var names = new List<string> { category.Name };
 		foreach (var currentCategory in category.ParentTraverser) {
 			if (!currentCategory.Name.IsBlank()) {
 				names.Add(currentCategory.Name);
@@ -534,8 +543,13 @@ static class Setup {
 			PreviewScene = new Preview.Scene1(destination);
 		}
 		else {
-			if (PreviewScene.Region != destination) {
-				PreviewScene.Resize(destination);
+			if (PreviewScene.ReferenceRegion != destination) {
+				if (PreviewScene.ReferenceRegion.Extent != destination.Extent) {
+					PreviewScene.Resize(destination);
+				}
+				else {
+					PreviewScene.ChangeOffset(destination.Offset);
+				}
 			}
 		}
 
@@ -546,48 +560,41 @@ static class Setup {
 	private static void ProcessCategory(Serialize.Category? parent, Serialize.Category category, bool advanced, IManifest manifest, IGenericModConfigMenuApi config, bool first = false) {
 		bool isRoot = parent is null;
 		
-		if (isRoot) {
-			if (advanced) {
-				config.AddPage(
-					mod: manifest,
-					pageId: "advanced",
-					pageTitle: () => "Advanced Settings"
-				);
-			}
-			else {
-				config.AddPageLink(
-					mod: manifest,
-					pageId: "advanced",
-					text: () => "[ Advanced Settings ]",
-					tooltip: () => "Display Advanced Settings"
-				);
-				//config.AddSectionTitle(mod: manifest, text: () => "");
-			}
+		if (isRoot && advanced) {
+			config.AddPage(
+				mod: manifest,
+				pageId: "advanced",
+				pageTitle: () => "Advanced Settings"
+			);
 		}
 
 		if (category.Name.Length != 0) {
-			if (string.IsNullOrEmpty(GetCategoryName(category)) && !first) {
-				if (category.Type.GetAttribute<Attributes.CommentAttribute>(out var commentAttribute)) {
-					config.AddSectionTitle(manifest, () => GetCategoryName(category) ?? "", () => commentAttribute.Message);
-				}
-				else {
-					config.AddSectionTitle(manifest, () => GetCategoryName(category) ?? "");
+			var categoryName = GetCategoryName(category);
+			if (categoryName.IsBlank()) {
+				if (!first && (!isRoot || advanced)) {
+					config.AddSectionTitle(manifest, () => "");
 				}
 			}
-		}
-
-		foreach (var field in category.Fields.Values) {
-			ProcessField(field, advanced, manifest, config);
+			else {
+				if (category.Type.GetAttribute<Attributes.CommentAttribute>(out var commentAttribute)) {
+					config.AddSectionTitle(manifest, () => categoryName, () => commentAttribute.Message);
+				}
+				else {
+					config.AddSectionTitle(manifest, () => categoryName);
+				}
+			}
 		}
 
 		if (isRoot) {
 			// Fancy special case!
+			// TODO : we need to have the element's height change when the window is resized,
+			// not only when the menu is opened.
 			config.AddComplexOption(
 				mod: manifest,
-				name: () => "Preview",
+				name: () => "",
 				draw: (batch, offset) => OnDrawPreview(batch, offset),
 				tooltip: () => "Resampling Preview (click to change)",
-				height: () => PreviewHeight,
+				height: () => PreviewHeight - RowHeight,
 				beforeMenuClosed: () => {
 					IsMenuOpened = false;
 					OnMenuClose();
@@ -601,6 +608,21 @@ static class Setup {
 				},
 				fieldId: "resampling.preview"
 			);
+
+			if (!advanced) {
+				config.AddPageLink(
+					mod: manifest,
+					pageId: "advanced",
+					text: () => "[ Advanced Settings ]",
+					tooltip: () => "Display Advanced Settings"
+				);
+			}
+
+			config.AddSectionTitle(manifest, () => "");
+		}
+
+		foreach (var field in category.Fields.Values) {
+			ProcessField(field, advanced, manifest, config);
 		}
 
 		first = true;

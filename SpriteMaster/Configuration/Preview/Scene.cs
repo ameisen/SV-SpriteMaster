@@ -6,12 +6,15 @@ using SpriteMaster.Types;
 using StardewValley;
 using System;
 
+using SMDrawState = SpriteMaster.DrawState;
+
 namespace SpriteMaster.Configuration.Preview;
 
 abstract class Scene : IDisposable {
 	internal static Scene? Current = null;
 	protected const int TileSize = 16;
 	protected const int TileSizeRendered = TileSize * 4;
+	protected const int RegionVerticalOffset = -20;
 
 	private struct CurrentScope : IDisposable {
 		private readonly Scene? PreviousScene;
@@ -60,12 +63,26 @@ abstract class Scene : IDisposable {
 		}
 	}
 
-	internal Bounds Region { get; private set; }
+	internal Bounds ReferenceRegion { get; private set; }
+	internal Bounds Region {
+		get {
+			var offsetRegion = ReferenceRegion.OffsetBy((0, RegionVerticalOffset));
+
+			if (GMCM.Setup.LockPreview) {
+				var baseScissor = SMDrawState.Device.ScissorRectangle;
+				if (offsetRegion.Y < baseScissor.Y) {
+					offsetRegion.Y = baseScissor.Y;
+				}
+			}
+
+			return offsetRegion;
+		}
+	}
 	private RasterizerState? State = null;
 	protected Vector2I Size => Region.Extent;
 
 	protected Scene(in Bounds region) {
-		Region = region;
+		ReferenceRegion = region;
 	}
 
 	protected static Vector2I GetSizeInTiles(Vector2I size) => size / TileSize;
@@ -193,9 +210,20 @@ abstract class Scene : IDisposable {
 		internal readonly RasterizerState? RasterizerState { get; init; }
 	}
 
-	private void DrawBox(XNA.Graphics.SpriteBatch batch, in Preview.Override overrideState) {
-		using var tempBatch = new TempValue<XNA.Graphics.SpriteBatch>(ref StardewValley.Game1.spriteBatch, batch);
-		StardewValley.Game1.DrawBox(Region.X, Region.Y, Region.Width, Region.Height);
+	private void DrawBox(XNA.Graphics.SpriteBatch batch, in Preview.Override overrideState, in DrawState drawState) {
+		batch.Begin(
+			sortMode: SpriteSortMode.Deferred,
+			rasterizerState: State,
+			samplerState: drawState.SamplerState,
+			depthStencilState: drawState.DepthStencilState
+		);
+		try {
+			using var tempBatch = new TempValue<XNA.Graphics.SpriteBatch>(ref StardewValley.Game1.spriteBatch, batch);
+			StardewValley.Game1.DrawBox(Region.X, Region.Y, Region.Width, Region.Height);
+		}
+		finally {
+			batch.End();
+		}
 	}
 
 	private void DrawFirst(XNA.Graphics.SpriteBatch batch, in Preview.Override overrideState, in DrawState drawState) {
@@ -256,8 +284,6 @@ abstract class Scene : IDisposable {
 		StardewValley.Game1.currentLocation = SceneLocation.Value;
 
 		try {
-			DrawBox(batch, overrideState);
-
 			var originalDrawState = new DrawState {
 				Viewport = batch.GraphicsDevice.Viewport,
 				SamplerState = batch.GraphicsDevice.SamplerStates[0],
@@ -279,9 +305,12 @@ abstract class Scene : IDisposable {
 
 			batch.End();
 			try {
+				DrawBox(batch, overrideState, originalDrawState);
+
 				using var tempOverrideState = new TempValue<Preview.Override>(ref Preview.Override.Instance, overrideState);
 
-				batch.GraphicsDevice.ScissorRectangle = Region;
+				batch.GraphicsDevice.ScissorRectangle = Region.ClampTo(batch.GraphicsDevice.ScissorRectangle);
+
 				batch.GraphicsDevice.Viewport = new(Region);
 
 				DrawFirst(batch, overrideState, originalDrawState);
@@ -350,11 +379,15 @@ abstract class Scene : IDisposable {
 		using var currentScope = new CurrentScope(this);
 
 		var oldSize = Size;
-		Region = newRegion;
+		ReferenceRegion = newRegion;
 
 		OnResize(Size, oldSize);
 
 		CurrentWeatherState = WeatherState.Backup();
+	}
+
+	internal void ChangeOffset(in Vector2I offset) {
+		ReferenceRegion = new(offset, ReferenceRegion.Extent);
 	}
 
 	public abstract void Dispose();
