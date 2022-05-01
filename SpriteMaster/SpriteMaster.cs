@@ -28,15 +28,10 @@ namespace SpriteMaster;
 
 public sealed class SpriteMaster : Mod {
 	internal static SpriteMaster Self { get; private set; } = default!;
+	internal static Assembly Assembly => typeof(SpriteMaster).Assembly;
+	internal static string AssemblyPath => Self.Helper.DirectoryPath;
 
 	internal readonly MemoryMonitor MemoryMonitor;
-	internal static string? AssemblyPath { get; private set; }
-
-	private static T? GetAssemblyAttribute<T>() where T : Attribute => typeof(SpriteMaster).Assembly.GetCustomAttribute<T>();
-
-	internal static readonly string ChangeList = GetAssemblyAttribute<ChangeListAttribute>()?.Value ?? "local";
-	internal static readonly string BuildComputerName = GetAssemblyAttribute<BuildComputerNameAttribute>()?.Value ?? "unknown";
-	internal static readonly string FullVersion = GetAssemblyAttribute<FullVersionAttribute>()?.Value ?? Config.CurrentVersion;
 
 	internal static void DumpAllStats() {
 		var currentProcess = Process.GetCurrentProcess();
@@ -74,7 +69,7 @@ public sealed class SpriteMaster : Mod {
 
 		MemoryMonitor = new MemoryMonitor();
 
-		var assemblyPath = typeof(SpriteMaster).Assembly.Location;
+		var assemblyPath = Assembly.Location;
 		assemblyPath = Path.GetDirectoryName(assemblyPath);
 
 		// Compress our own directory
@@ -82,42 +77,6 @@ public sealed class SpriteMaster : Mod {
 			DirectoryExt.CompressDirectory(assemblyPath, force: true);
 		}
 	}
-
-	private bool IsVersionOutdated(string configVersion) {
-		string referenceVersion = Config.ClearConfigBefore;
-
-		var configStrArray = configVersion.Split('.');
-		var referenceStrArray = referenceVersion.Split('.');
-
-		try {
-			int maxLen = Math.Max(configStrArray.Length, referenceStrArray.Length);
-			for (int i = 0; i < maxLen; ++i) {
-				if (configStrArray.Length <= i || configStrArray[i].IsEmpty()) {
-					return true;
-				}
-				if (referenceStrArray.Length <= i || referenceStrArray[i].IsEmpty()) {
-					return false;
-				}
-
-				var configElement = int.Parse(configStrArray[i]);
-				var referenceElement = int.Parse(referenceStrArray[i]);
-
-				if (configElement > referenceElement) {
-					return false;
-				}
-
-				if (configElement < referenceElement) {
-					return true;
-				}
-			}
-		}
-		catch {
-			return true;
-		}
-		return false;
-	}
-
-	private static string GetVersionStringHeader() => $"SpriteMaster {FullVersion} build {Config.AssemblyVersionObj.Revision} ({Config.BuildConfiguration}, {ChangeList}, {BuildComputerName})";
 
 	private static void ConsoleTriggerGC() {
 		Self.MemoryMonitor.TriggerGC();
@@ -138,7 +97,7 @@ public sealed class SpriteMaster : Mod {
 	private static void ConsoleHelp(string? unknownCommand = null) {
 		var output = new StringBuilder();
 		output.AppendLine();
-		output.AppendLine(GetVersionStringHeader());
+		output.AppendLine(Versioning.StringHeader);
 		if (unknownCommand is not null) {
 			output.AppendLine($"Unknown Command: '{unknownCommand}'");
 		}
@@ -173,7 +132,7 @@ public sealed class SpriteMaster : Mod {
 	}
 
 	private void InitConsoleCommands() {
-		foreach (var type in typeof(SpriteMaster).Assembly.GetTypes()) {
+		foreach (var type in Assembly.GetTypes()) {
 			foreach (var method in type.GetMethods(BindingFlags.Static | BindingFlags.Public)) {
 				var command = method.GetCustomAttribute<CommandAttribute>();
 				if (command is not null) {
@@ -203,9 +162,7 @@ public sealed class SpriteMaster : Mod {
 	}
 
 	public override void Entry(IModHelper help) {
-		Debug.Message(GetVersionStringHeader());
-
-		AssemblyPath = help.DirectoryPath;
+		Debug.Message(Versioning.StringHeader);
 
 		ConfigureHarmony();
 
@@ -218,7 +175,7 @@ public sealed class SpriteMaster : Mod {
 			Serialize.Load(Configuration.Config.Path);
 		}
 
-		if (IsVersionOutdated(Config.ConfigVersion)) {
+		if (Versioning.IsOutdated(Config.ConfigVersion)) {
 			Debug.Info($"config.toml is out of date ({Config.ConfigVersion} < {Config.ClearConfigBefore}), rewriting it.");
 
 			Serialize.Load(Config.DefaultConfig, retain: true);

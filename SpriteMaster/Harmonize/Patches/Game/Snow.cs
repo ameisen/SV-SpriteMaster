@@ -55,7 +55,7 @@ static class Snow {
 
 	private static bool ShouldDrawSnow => Game1.IsSnowingHere() && Game1.currentLocation.IsOutdoors && Game1.currentLocation is not Desert;
 
-	private static readonly Lazy<Texture2D> FishTexture = new(() => SpriteMaster.Self.Helper.Content.Load<Texture2D>(@"LooseSprites\AquariumFish", StardewModdingAPI.ContentSource.GameContent));
+	private static readonly Lazy<Texture2D> FishTexture = new(() => SpriteMaster.Self.Helper.GameContent.Load<Texture2D>(@"LooseSprites\AquariumFish"));
 
 	public readonly record struct DrawWeatherState(bool Overridden, PrecipitationType? PreviousOverride);
 

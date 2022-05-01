@@ -36,11 +36,11 @@ static class Config {
 	internal const bool SkipIntro = IgnoreConfig;
 
 	[Attributes.Ignore]
-	internal static readonly string CurrentVersion = typeof(SMConfig).Assembly.GetCustomAttribute<FullVersionAttribute>()?.Value?.Split('-', 2)?.ElementAtOrDefaultF(0) ??
+	internal static readonly string CurrentVersion = SpriteMaster.Assembly.GetCustomAttribute<FullVersionAttribute>()?.Value?.Split('-', 2)?.ElementAtOrDefaultF(0) ??
 		throw new BadImageFormatException($"Could not extract version from assembly {typeof(SMConfig).Assembly.FullName ?? typeof(SMConfig).Assembly.ToString()}");
 
 	[Attributes.Ignore]
-	internal static readonly Version AssemblyVersionObj = typeof(SMConfig).Assembly.GetName().Version ??
+	internal static readonly Version AssemblyVersionObj = SpriteMaster.Assembly.GetName().Version ??
 		throw new BadImageFormatException($"Could not extract version from assembly {typeof(SMConfig).Assembly.FullName ?? typeof(SMConfig).Assembly.ToString()}");
 	[Attributes.Ignore]
 	internal static readonly string AssemblyVersion = AssemblyVersionObj.ToString();
