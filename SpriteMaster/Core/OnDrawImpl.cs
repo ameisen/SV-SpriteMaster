@@ -214,6 +214,7 @@ static partial class OnDrawImpl {
 
 	internal static uint EstimateScale(Vector2F scale, float scaleFactor) {
 		float factoredScale = scale.MaxOf * scaleFactor;
+		factoredScale += 0.5f;
 		factoredScale = factoredScale.Clamp(2.0f, Config.Resample.MaxScale);
 		uint factoredScaleN = (uint)factoredScale.NextInt();
 		return Resample.Scalers.IScaler.Current.ClampScale(factoredScaleN);

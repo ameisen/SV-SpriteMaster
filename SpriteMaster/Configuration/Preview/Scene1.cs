@@ -261,7 +261,7 @@ sealed class Scene1 : Scene {
 	private XNA.Graphics.SpriteFont UtilityTextFont => StardewValley.Game1.smallFont;
 
 	private static readonly Vector2I[] ShadowedStringOffsets = { (-1, -1), (1, -1), (-1, 1), (1, 1) };
-	private void DrawStringShadowed(
+	private void DrawStringStroked(
 		XNA.Graphics.SpriteBatch batch,
 		XNA.Graphics.SpriteFont font,
 		string text,
@@ -311,7 +311,7 @@ sealed class Scene1 : Scene {
 	protected override void OnDrawOverlay(XNA.Graphics.SpriteBatch batch, in Preview.Override overrideState) {
 		{
 			// Draw basic text
-			DrawStringShadowed(
+			DrawStringStroked(
 				batch,
 				BasicTextFont,
 				ReferenceBasicText,

@@ -217,7 +217,14 @@ static class Config {
 	[Attributes.Advanced]
 	internal static class DrawState {
 		[Attributes.Comment("Enable linear sampling for sprites")]
+		[Obsolete("Use IsSetLinear")]
 		internal static bool SetLinear = true;
+
+		[Attributes.Ignore]
+#pragma warning disable CS0618 // Type or member is obsolete
+		internal static bool IsSetLinear => Preview.Override.Instance?.SetLinear ?? SetLinear;
+#pragma warning restore CS0618 // Type or member is obsolete
+
 		[Attributes.Comment("How many MSAA samples should be used?")]
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.ResetDisplay | Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
 		[Attributes.LimitsInt(1, 16)]
@@ -618,10 +625,10 @@ static class Config {
 		[Attributes.Comment("What is the threshold percentage of alpha values to be used to determine if it is a wrapping edge?")]
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
 		[Attributes.LimitsReal(0.0, 1.0)]
-		internal static float edgeThreshold = 0.2f;
+		internal static float EdgeThreshold = 0.2f;
 		[Attributes.Comment("What is the minimum alpha value assumed to be opaque?")]
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
-		internal static byte alphaThreshold = 1;
+		internal static byte AlphaThreshold = 1;
 	}
 
 	[Attributes.Advanced]
@@ -681,6 +688,8 @@ static class Config {
 		internal static bool FastQuit = false;
 		[Attributes.Comment("Should line drawing be smoothed?")]
 		internal static bool SmoothLines = true;
+		[Attributes.Comment("Should shadowed text be stroked instead?")]
+		internal static bool StrokeShadowedText = false;
 		[Attributes.Comment("Should Harmony patches have inlining re-enabled?")]
 		internal static bool HarmonyInlining = false;
 		[Attributes.Comment("Should the game's 'parseMasterSchedule' method be fixed and optimized?")]
@@ -719,7 +728,8 @@ static class Config {
 		internal static class ModPatches {
 			[Attributes.Comment("Patch CustomNPCFixes in order to improve load times?")]
 			internal static bool PatchCustomNPCFixes = false;
-			[Attributes.Comment("Disable PyTK mitigation for SpriteMaster?")]
+			[Attributes.Comment("Disable unnecessary PyTK mitigation for SpriteMaster?")]
+			[Attributes.MenuName("Disable PyTK Mitigation")]
 			internal static bool DisablePyTKMitigation = true;
 		}
 	}

@@ -60,7 +60,7 @@ static class Analysis {
 			bounds.Height = Math.Abs(bounds.Height);
 		}
 
-		float edgeThreshold = Config.WrapDetection.edgeThreshold;
+		float edgeThreshold = Config.WrapDetection.EdgeThreshold;
 
 		if (strict) {
 			var ratio = (float)bounds.Extent.MaxOf / (float)bounds.Extent.MinOf;
@@ -92,7 +92,7 @@ static class Analysis {
 			}
 			//meanAlphaF /= numSamples;
 			//meanAlphaF *= (double)Config.WrapDetection.alphaThreshold / ColorConstant.ScalarFactor;
-			byte alphaThreshold = Config.WrapDetection.alphaThreshold; //(byte)Math.Min(meanAlphaF.RoundToInt(), byte.MaxValue);
+			byte alphaThreshold = Config.WrapDetection.AlphaThreshold; //(byte)Math.Min(meanAlphaF.RoundToInt(), byte.MaxValue);
 
 			// Count the fragments that are not alphad out completely on the edges.
 			// Both edges must meet the threshold.

@@ -211,7 +211,7 @@ static class Command {
 			Caching.ResidentCache.Purge();
 		}
 		if (options.Flags.HasFlag(Attributes.OptionsAttribute.Flag.ResetDisplay)) {
-			// TODO
+			StardewValley.Game1.graphics.ApplyChanges();
 		}
 		if (options.Flags.HasFlag(Attributes.OptionsAttribute.Flag.GarbageCollect)) {
 			Extensions.Garbage.Collect(compact: true, blocking: true, background: false);

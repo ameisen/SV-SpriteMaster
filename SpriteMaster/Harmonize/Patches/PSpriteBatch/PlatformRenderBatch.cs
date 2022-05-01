@@ -66,7 +66,7 @@ static class PlatformRenderBatch {
 	}
 
 	private static SamplerState GetNewSamplerState(Texture texture, SamplerState reference) {
-		if (!Config.DrawState.SetLinear) {
+		if (!Config.DrawState.IsSetLinear) {
 			return reference;
 		}
 

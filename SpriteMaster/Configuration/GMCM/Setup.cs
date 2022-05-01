@@ -92,13 +92,39 @@ static class Setup {
 		Serialize.Save(Config.Path);
 	}
 
+	private static bool IsAdvanced(Type type) {
+		bool isAdvancedField = type.HasAttribute<Attributes.AdvancedAttribute>();
+		if (isAdvancedField) {
+			return true;
+		}
+
+		if (type.DeclaringType is null) {
+			return false;
+		}
+
+		return IsAdvanced(type.DeclaringType);
+	}
+
+	private static bool IsAdvanced(FieldInfo field) {
+		bool isAdvancedField = field.HasAttribute<Attributes.AdvancedAttribute>();
+		if (isAdvancedField) {
+			return true;
+		}
+
+		if (field.DeclaringType is null) {
+			return false;
+		}
+
+		return IsAdvanced(field.DeclaringType);
+	}
+
 	private static bool Hidden(FieldInfo field, bool advanced) {
 		if (field.HasAttribute<Attributes.GMCMHiddenAttribute>()) {
 			return true;
 		}
 
-		bool isAdvancedField = field.HasAttribute<Attributes.AdvancedAttribute>();
-		if (!advanced && advanced != isAdvancedField) {
+		bool isAdvancedField = IsAdvanced(field);
+		if (advanced != isAdvancedField) {
 			return true;
 		}
 
@@ -414,6 +440,9 @@ static class Setup {
 			case "SpriteMaster.Configuration.Config.Enabled":
 				PreviewOverride.Enabled = (bool)value;
 				break;
+			case "SpriteMaster.Configuration.Config+DrawState.SetLinear":
+				PreviewOverride.SetLinear = (bool)value;
+				break;
 			case "SpriteMaster.Configuration.Config+Resample.Enabled":
 				PreviewOverride.ResampleEnabled = (bool)value;
 				break;
@@ -606,6 +635,9 @@ static class Setup {
 					IsMenuOpened = true;
 					OnMenuOpen();
 				},
+				afterReset: () => { },
+				beforeSave: () => { },
+				afterSave: () => { },
 				fieldId: "resampling.preview"
 			);
 

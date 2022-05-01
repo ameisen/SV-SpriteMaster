@@ -39,6 +39,7 @@ static class Attributes {
 			FlushAllCaches = FlushTextureCache | FlushAllInternalCaches,
 			GarbageCollect = 1 << 5,
 			ResetDisplay = 1 << 6,
+			RequireRestart = 1 << 7
 		}
 
 		internal readonly Flag Flags = Flag.None;
