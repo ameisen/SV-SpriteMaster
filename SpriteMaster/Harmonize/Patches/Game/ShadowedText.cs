@@ -3,7 +3,6 @@ using SpriteMaster.Configuration;
 using SpriteMaster.Types;
 using StardewValley;
 using System;
-using System.Diagnostics;
 using System.Text;
 
 namespace SpriteMaster.Harmonize.Patches.Game;

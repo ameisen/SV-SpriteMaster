@@ -1,13 +1,7 @@
 ﻿// #define SUPPORT_DIFFERENT_FRAMEWORKS
 
-using LinqFasterer;
-using SpriteMaster.Types;
 using System;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
-using System.Text.RegularExpressions;
 
 namespace SpriteMaster;
 

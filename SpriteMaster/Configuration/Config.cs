@@ -2,7 +2,6 @@
 using LinqFasterer;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
-using SpriteMaster.Resample;
 using SpriteMaster.Types;
 using StardewModdingAPI;
 using System;

@@ -12,7 +12,6 @@ using SpriteMaster.Types;
 using StardewModdingAPI;
 using StardewModdingAPI.Enums;
 using StardewModdingAPI.Events;
-using StardewModdingAPI.Utilities;
 using StardewValley;
 using System;
 using System.Collections.Generic;

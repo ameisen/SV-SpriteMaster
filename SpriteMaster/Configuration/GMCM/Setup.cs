@@ -1,5 +1,4 @@
 ﻿using GenericModConfigMenu;
-using LinqFasterer;
 using SpriteMaster.Configuration.Preview;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
