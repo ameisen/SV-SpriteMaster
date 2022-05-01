@@ -91,7 +91,8 @@ static class Snow {
 		Game1.spriteBatch.Begin(
 			sortMode: IsPuffersnow ? SpriteSortMode.Texture : SpriteSortMode.Deferred,
 			blendState: IsPuffersnow ? BlendState.AlphaBlend : BlendState.Additive,
-			samplerState: Config.Resample.IsEnabled ? SamplerState.LinearClamp : SamplerState.PointClamp
+			samplerState: Config.Resample.IsEnabled ? SamplerState.LinearClamp : SamplerState.PointClamp,
+			rasterizerState: Game1.spriteBatch.GraphicsDevice.RasterizerState
 		);
 
 		try {

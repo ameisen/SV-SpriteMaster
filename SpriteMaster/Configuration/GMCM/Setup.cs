@@ -26,7 +26,7 @@ static class Setup {
 	private static bool DisposeNextClick = false;
 	private static Preview.Scene? PreviewScene = null;
 
-	private static readonly int RowHeight = 50;
+	private static readonly int RowHeight = 0;
 
 	internal static void Initialize(IModHelper help) {
 		if (Initialized) {
