@@ -28,7 +28,7 @@ static class Setup {
 
 	private static readonly int RowHeight = 0;
 
-	internal static void Initialize(IModHelper help) {
+	internal static void Initialize() {
 		if (Initialized) {
 			throw new Exception("GMCM already initialized");
 		}
@@ -36,7 +36,7 @@ static class Setup {
 
 		// https://github.com/spacechase0/StardewValleyMods/tree/develop/GenericModConfigMenu#for-c-mod-authors
 
-		ConfigAPI = help.ModRegistry.GetApi<IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu");
+		ConfigAPI = SpriteMaster.Self.Helper.ModRegistry.GetApi<IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu");
 		if (ConfigAPI is null) {
 			Debug.Trace("Could not acquire GenericModConfigMenu interface");
 			return;

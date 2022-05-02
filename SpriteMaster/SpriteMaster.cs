@@ -2,7 +2,6 @@
 using LinqFasterer;
 using SpriteMaster.Caching;
 using SpriteMaster.Configuration;
-using SpriteMaster.Configuration.GMCM;
 using SpriteMaster.Experimental;
 using SpriteMaster.Extensions;
 using SpriteMaster.Harmonize;
@@ -15,9 +14,7 @@ using StardewModdingAPI.Events;
 using StardewValley;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -30,36 +27,9 @@ public sealed class SpriteMaster : Mod {
 	internal static SpriteMaster Self { get; private set; } = default!;
 	internal static Assembly Assembly => typeof(SpriteMaster).Assembly;
 	internal static string AssemblyPath => Self.Helper.DirectoryPath;
+	private const string ConfigName = "config.toml";
 
 	internal readonly MemoryMonitor MemoryMonitor;
-
-	internal static void DumpAllStats() {
-		var currentProcess = Process.GetCurrentProcess();
-		var workingSet = currentProcess.WorkingSet64;
-		var virtualMem = currentProcess.VirtualMemorySize64;
-		var gcAllocated = GC.GetTotalMemory(false);
-
-		var lines = new List<string> {
-			"SpriteMaster Stats Dump:",
-			"\tVM:",
-			$"\t\tProcess Working Set    : {workingSet.AsDataSize()}",
-			$"\t\tProcess Virtual Memory : {virtualMem.AsDataSize()}:",
-			$"\t\tGC Allocated Memory    : {gcAllocated.AsDataSize()}:",
-			"",
-		};
-
-		lines.Add("\tSuspended Sprite Cache Stats:");
-		lines.AddRange(SuspendedSpriteCache.DumpStats().SelectF(s => $"\t{s}"));
-		lines.Add("");
-
-		ManagedTexture2D.DumpStats(lines);
-
-		foreach (var line in lines) {
-			Debug.Info(line);
-		}
-	}
-
-	private const string ConfigName = "config.toml";
 
 	public SpriteMaster() {
 		Contracts.AssertNull(Self);
@@ -78,95 +48,8 @@ public sealed class SpriteMaster : Mod {
 		}
 	}
 
-	private static void ConsoleTriggerGC() {
-		Self.MemoryMonitor.TriggerGC();
-	}
-
-	private static void ConsoleTriggerPurge() {
-		Self.MemoryMonitor.TriggerPurge();
-	}
-
-	private static readonly Dictionary<string, (Action<string, Queue<string>> Action, string Description)> ConsoleCommandMap = new() {
-		{ "help", ((_, _) => ConsoleHelp(null), "Prints this command guide") },
-		{ "all-stats", ((_, _) => DumpAllStats(), "Dump Statistics") },
-		{ "memory", ((_, _) => Debug.DumpMemory(), "Dump Memory") },
-		{ "gc", ((_, _) => ConsoleTriggerGC(), "Trigger full GC") },
-		{ "purge", ((_, _) => ConsoleTriggerPurge(), "Trigger Purge") }
-	};
-
-	private static void ConsoleHelp(string? unknownCommand = null) {
-		var output = new StringBuilder();
-		output.AppendLine();
-		output.AppendLine(Versioning.StringHeader);
-		if (unknownCommand is not null) {
-			output.AppendLine($"Unknown Command: '{unknownCommand}'");
-		}
-		output.AppendLine("Help Command Guide");
-		output.AppendLine();
-
-		int maxKeyLength = ConsoleCommandMap.Keys.Max(k => k.Length);
-
-		foreach (var kv in ConsoleCommandMap) {
-			output.AppendLine($"{kv.Key.PadRight(maxKeyLength)} : {kv.Value.Description}");
-		}
-
-		Debug.Message(output.ToString());
-	}
-
-	private void ConsoleCommand(string command, string[] arguments) {
-		var argumentQueue = new Queue<string>(arguments);
-
-		if (argumentQueue.Count == 0) {
-			ConsoleHelp();
-			return;
-		}
-
-		var subCommand = argumentQueue.Dequeue().ToLowerInvariant();
-		if (ConsoleCommandMap.TryGetValue(subCommand, out var commandPair)) {
-			commandPair.Action(subCommand, argumentQueue);
-		}
-		else {
-			ConsoleHelp(subCommand);
-			return;
-		}
-	}
-
-	private void InitConsoleCommands() {
-		foreach (var type in Assembly.GetTypes()) {
-			foreach (var method in type.GetMethods(BindingFlags.Static | BindingFlags.Public)) {
-				var command = method.GetCustomAttribute<CommandAttribute>();
-				if (command is not null) {
-					var parameters = method.GetParameters();
-					if (parameters.Length != 2) {
-						Debug.Error($"Console command '{command.Name}' for method '{method.GetFullName()}' does not have the expected number of parameters");
-						continue;
-					}
-					if (parameters[0].ParameterType != typeof(string)) {
-						Debug.Error($"Console command '{command.Name}' for method '{method.GetFullName()}' : parameter 0 type {parameters[0].ParameterType} is not {typeof(string)}");
-						continue;
-					}
-					if (parameters[1].ParameterType != typeof(Queue<string>)) {
-						Debug.Error($"Console command '{command.Name}' for method '{method.GetFullName()}' : parameter 1 type {parameters[1].ParameterType} is not {typeof(Queue<string>)}");
-						continue;
-					}
-
-					if (ConsoleCommandMap.ContainsKey(command.Name)) {
-						Debug.Error($"Console command is already registered: '{command.Name}'");
-						continue;
-					}
-
-					ConsoleCommandMap.Add(command.Name, (method.CreateDelegate<Action<string, Queue<string>>>(), command.Description));
-				}
-			}
-		}
-	}
-
-	public override void Entry(IModHelper help) {
-		Debug.Message(Versioning.StringHeader);
-
-		ConfigureHarmony();
-
-		Configuration.Config.SetPath(Path.Combine(help.DirectoryPath, ConfigName));
+	private void InitializeConfig() {
+		Configuration.Config.SetPath(Path.Combine(Helper.DirectoryPath, ConfigName));
 
 		Config.DefaultConfig = new MemoryStream();
 		Serialize.Save(Config.DefaultConfig, leaveOpen: true);
@@ -234,62 +117,41 @@ public sealed class SpriteMaster : Mod {
 
 		Config.Resample.BlacklistPatterns = ProcessTexturePatterns(Config.Resample.Blacklist);
 		Config.Resample.GradientBlacklistPatterns = ProcessTexturePatterns(Config.Resample.GradientBlacklist);
+	}
 
-		/*
-		if (Config.ShowIntroMessage && !Config.SkipIntro) {
-			help.Events.GameLoop.GameLaunched += (_, _) => {
-				Game1.drawLetterMessage("Welcome to SpriteMaster!\nSpriteMaster must resample sprites as it sees them and thus some lag will likely be apparent at the start of the game, upon entering new areas, and when new sprites are seen.\n\nPlease be patient and do not take this as an indication that your computer is incapable of running SpriteMaster.\n\nEnjoy!".Replace("\n", "^"));
-			};
-			Config.ShowIntroMessage = false;
-		}
-		*/
-
-		if (Config.ShowIntroMessage && !Config.SkipIntro) {
-			help.Events.GameLoop.UpdateTicked += OnUpdateTicked;
-			Config.ShowIntroMessage = false;
-		}
-
-		help.Events.GameLoop.GameLaunched += (_, _) => Setup.Initialize(help);
-
-		Serialize.Save(Configuration.Config.Path);
-
-		help.Events.Input.ButtonPressed += OnButtonPressed;
-
+	private bool TryAddConsoleCommand(string name, string documentation, Action<string, string[]> callback) {
 		try {
-			help.ConsoleCommands.Add("spritemaster", "SpriteMaster Commands", ConsoleCommand);
+			Helper.ConsoleCommands.Add(name, documentation, callback);
+			return true;
 		}
-		catch (Exception ex) {
+		catch (Exception ex)
+		{
 			Debug.Warning("Could not register 'spritemaster' for console commands", ex);
+			return false;
 		}
-		try {
-			// Try to add 'sm' as a shortcut for my own sanity.
-			help.ConsoleCommands.Add("sm", "SpriteMaster Commands", ConsoleCommand);
-		}
-		catch (Exception ex) {
-			Debug.Warning("Could not register 'sm' for console commands", ex);
-		}
+	}
 
-		InitConsoleCommands();
+	private void InitializeEvents() {
+		var gameLoop = Helper.Events.GameLoop;
 
-		help.Events.GameLoop.DayStarted += OnDayStarted;
+		Helper.Events.Input.ButtonPressed += OnButtonPressed;
+
+		gameLoop.DayStarted += OnDayStarted;
 		// GC after major events
-		help.Events.GameLoop.SaveLoaded += (_, _) => {
+		gameLoop.SaveLoaded += (_, _) => {
 			ForceGarbageCollect();
 			Garbage.EnterInteractive();
 		};
-		help.Events.GameLoop.DayEnding += (_, _) => ForceGarbageCollect();
-		help.Events.GameLoop.ReturnedToTitle += (_, _) => OnTitle();
-		help.Events.GameLoop.SaveCreated += (_, _) => ForceGarbageCollect();
-		help.Events.GameLoop.GameLaunched += (_, _) => OnGameLaunched();
-		help.Events.GameLoop.SaveCreating += (_, _) => OnSaveStart();
-		help.Events.GameLoop.Saving += (_, _) => OnSaveStart();
-		help.Events.GameLoop.SaveCreated += (_, _) => OnSaveFinish();
-		help.Events.GameLoop.Saved += (_, _) => OnSaveFinish();
-		help.Events.Display.WindowResized += (_, args) => OnWindowResized(args);
-		help.Events.Player.Warped += (_, _) => {
-			ForceGarbageCollectConcurrent();
-		};
-		help.Events.Specialized.LoadStageChanged += (_, args) => {
+		gameLoop.DayEnding += (_, _) => ForceGarbageCollect();
+		gameLoop.ReturnedToTitle += (_, _) => OnTitle();
+		gameLoop.GameLaunched += (_, _) => OnGameLaunched();
+		gameLoop.SaveCreating += (_, _) => OnSaveStart();
+		gameLoop.Saving += (_, _) => OnSaveStart();
+		gameLoop.SaveCreated += (_, _) => OnSaveFinish();
+		gameLoop.Saved += (_, _) => OnSaveFinish();
+		Helper.Events.Display.WindowResized += (_, args) => OnWindowResized(args);
+		Helper.Events.Player.Warped += (_, _) => ForceGarbageCollectConcurrent();
+		Helper.Events.Specialized.LoadStageChanged += (_, args) => {
 			switch (args.NewStage) {
 				case LoadStage.SaveLoadedBasicInfo:
 				case LoadStage.SaveLoadedLocations:
@@ -299,7 +161,28 @@ public sealed class SpriteMaster : Mod {
 					break;
 			}
 		};
-		help.Events.Display.MenuChanged += OnMenuChanged;
+		Helper.Events.Display.MenuChanged += OnMenuChanged;
+	}
+
+	public override void Entry(IModHelper help) {
+		Debug.Message(Versioning.StringHeader);
+
+		ConfigureHarmony();
+
+		InitializeConfig();
+
+		if (Config.ShowIntroMessage && !Config.SkipIntro) {
+			Helper.Events.GameLoop.UpdateTicked += OnUpdateTicked;
+			Config.ShowIntroMessage = false;
+		}
+
+		Serialize.Save(Configuration.Config.Path);
+
+		TryAddConsoleCommand("spritemaster", "SpriteMaster Commands", ConsoleSupport.Invoke);
+		// Try to add 'sm' as a shortcut for my own sanity.
+		TryAddConsoleCommand("sm", "SpriteMaster Commands", ConsoleSupport.Invoke);
+
+		InitializeEvents();
 
 		MemoryMonitor.Start();
 
@@ -307,6 +190,7 @@ public sealed class SpriteMaster : Mod {
 			if (target is null) {
 				return;
 			}
+
 			target.Meta().IsSystemRenderTarget = true;
 		}
 
@@ -316,61 +200,6 @@ public sealed class SpriteMaster : Mod {
 
 		// TODO : Iterate deeply with reflection over 'StardewValley' namespace to find any Texture2D objects sitting around
 
-		// Tell SMAPI to flush all assets loaded so that SM can precache already-loaded assets
-		//bool invalidated = help.Content.InvalidateCache<XNA.Graphics.Texture>();
-
-		/*
-		var light = Game1.cauldronLight;
-		//Game1
-		//FarmerRenderer
-		//MovieTheater
-		//CraftingRecipe
-		//Flooring
-		//HoeDirt
-		//Furniture
-		//Tool
-		//FruitTree
-		//Bush
-		//titleMenu
-		try {
-			var texturesToCache = new List<XNA.Graphics.Texture2D>();
-			var resourcesLockField = typeof(XNA.Graphics.GraphicsDevice).GetField("_resourcesLock", BindingFlags.NonPublic | BindingFlags.Instance);
-			var resourcesField = typeof(XNA.Graphics.GraphicsDevice).GetField("_resources", BindingFlags.NonPublic | BindingFlags.Instance);
-			var resourcesLock = resourcesLockField.GetValue(DrawState.Device);
-			var resources = resourcesField.GetValue<IEnumerable<WeakReference>>(DrawState.Device);
-
-			lock (resourcesLock) {
-				foreach (var resource in resources) {
-					if (resource.Target is XNA.Graphics.Texture2D texture) {
-						texturesToCache.Add(texture);
-					}
-				}
-			}
-
-			texturesToCache = texturesToCache;
-		}
-		catch { }
-
-		try {
-			var texturesToCache = new List<XNA.Graphics.Texture2D>();
-			var assetsField = typeof(XNA.Content.ContentManager).GetField("disposableAssets", BindingFlags.NonPublic | BindingFlags.Instance);
-			var cmField = typeof(XNA.Content.ContentManager).GetField("ContentManagers", BindingFlags.NonPublic | BindingFlags.Static);
-			var contentManagers = cmField.GetValue<IEnumerable<WeakReference>>(null);
-			foreach (var weakRef in contentManagers) {
-				if (weakRef.Target is XNA.Content.ContentManager cm) {
-					var assets = assetsField.GetValue<IEnumerable<IDisposable>>(cm);
-					foreach (var asset in assets) {
-						if (asset is XNA.Graphics.Texture2D texture) {
-							texturesToCache.Add(texture);
-						}
-					}
-				}
-			}
-
-			texturesToCache = texturesToCache;
-		}
-		catch { }
-		*/
 		System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(FileCache).TypeHandle);
 		WatchDog.WatchDog.Initialize();
 		ClickCrash.Initialize();
@@ -412,6 +241,7 @@ public sealed class SpriteMaster : Mod {
 	}
 
 	private void OnSaveFinish() {
+		ForceGarbageCollect();
 		Garbage.EnterInteractive();
 	}
 
@@ -503,7 +333,8 @@ public sealed class SpriteMaster : Mod {
 		var waiters = new WaitWrapper[] {
 			new(Task.Run(CheckMods)),
 			new(Task.Run(Inlining.Reenable)),
-			new(FileCache.Initialized)
+			new(FileCache.Initialized),
+			new(Task.Run(Configuration.GMCM.Setup.Initialize))
 		};
 
 		foreach (var waiter in waiters) {
