@@ -48,7 +48,7 @@ static partial class Pathfinding {
 		critical: false
 	)]
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool WarpCharacter(NPC? character, GameLocation? targetLocation, XNA.Vector2 position) {
+	public static bool WarpCharacter(NPC? character, GameLocation? targetLocation, XVector2 position) {
 		if (!Config.IsUnconditionallyEnabled || !Config.Extras.AllowNPCsOnFarm || !Config.Extras.OptimizeWarpPoints) {
 			return true;
 		}
@@ -153,8 +153,8 @@ static partial class Pathfinding {
 					break;
 				case "Trailer" when Game1.MasterPlayer.mailReceived.Contains("pamHouseUpgrade"):
 					targetLocation = Game1.getLocationFromName("Trailer_Big");
-					if (position == new XNA.Vector2(12f, 9f)) {
-						position = new XNA.Vector2(13f, 24f);
+					if (position == new XVector2(12f, 9f)) {
+						position = new XVector2(13f, 24f);
 					}
 					break;
 			}
@@ -212,7 +212,7 @@ static partial class Pathfinding {
 		critical: false
 	)]
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool CharacterDestroyObjectWithinRectangle(GameLocation __instance, ref bool __result, XNA.Rectangle rect, bool showDestroyedObject) {
+	public static bool CharacterDestroyObjectWithinRectangle(GameLocation __instance, ref bool __result, XRectangle rect, bool showDestroyedObject) {
 		if (__instance.IsFarm || __instance.IsGreenhouse) {
 			__result = false;
 			return false;

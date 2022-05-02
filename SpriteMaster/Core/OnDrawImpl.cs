@@ -16,13 +16,13 @@ static partial class OnDrawImpl {
 	// Takes the arguments, and checks to see if the texture is padded. If it is, it is forwarded to the correct draw call, avoiding
 	// intervening mods altering the arguments first.
 	internal static bool OnDrawFirst(
-		this SpriteBatch @this,
-		ref Texture2D texture,
-		ref XNA.Rectangle destination,
-		ref XNA.Rectangle? source,
-		XNA.Color color,
+		this XSpriteBatch @this,
+		ref XTexture2D texture,
+		ref XRectangle destination,
+		ref XRectangle? source,
+		XColor color,
 		float rotation,
-		ref XNA.Vector2 origin,
+		ref XVector2 origin,
 		ref SpriteEffects effects,
 		float layerDepth,
 		ref ManagedTexture2D __state
@@ -33,7 +33,7 @@ static partial class OnDrawImpl {
 		if (destination.Width < 0 || destination.Height < 0) {
 			Debug.Trace("destination invert");
 		}
-		if (source is XNA.Rectangle sourceRect && (sourceRect.Width < 0 || sourceRect.Height < 0)) {
+		if (source is XRectangle sourceRect && (sourceRect.Width < 0 || sourceRect.Height < 0)) {
 			Debug.Trace("source invert");
 		}
 		*/
@@ -112,13 +112,13 @@ static partial class OnDrawImpl {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool OnDraw(
-		this SpriteBatch @this,
-		ref Texture2D texture,
-		ref XNA.Rectangle destination,
-		ref XNA.Rectangle? source,
-		ref XNA.Color color,
+		this XSpriteBatch @this,
+		ref XTexture2D texture,
+		ref XRectangle destination,
+		ref XRectangle? source,
+		ref XColor color,
 		float rotation,
-		ref XNA.Vector2 origin,
+		ref XVector2 origin,
 		ref SpriteEffects effects,
 		ref float layerDepth,
 		ref ManagedTexture2D __state
@@ -202,7 +202,7 @@ static partial class OnDrawImpl {
 			effects: effects,
 			layerDepth: layerDepth
 		)) {
-			color = XNA.Color.Red;
+			color = XColor.Red;
 		}
 
 		source = sourceRectangle;
@@ -221,14 +221,14 @@ static partial class OnDrawImpl {
 	}
 
 	internal static bool OnDraw(
-		this SpriteBatch @this,
-		ref Texture2D texture,
-		ref XNA.Vector2 position,
-		ref XNA.Rectangle? source,
-		ref XNA.Color color,
+		this XSpriteBatch @this,
+		ref XTexture2D texture,
+		ref XVector2 position,
+		ref XRectangle? source,
+		ref XColor color,
 		float rotation,
-		ref XNA.Vector2 origin,
-		ref XNA.Vector2 scale,
+		ref XVector2 origin,
+		ref XVector2 scale,
 		SpriteEffects effects,
 		ref float layerDepth
 	) {
@@ -339,7 +339,7 @@ static partial class OnDrawImpl {
 			effects: effects,
 			layerDepth: layerDepth
 		)) {
-			color = XNA.Color.Red;
+			color = XColor.Red;
 		}
 
 		texture = resampledTexture;

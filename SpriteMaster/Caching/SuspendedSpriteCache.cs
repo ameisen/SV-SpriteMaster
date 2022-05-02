@@ -99,7 +99,7 @@ static class SuspendedSpriteCache {
 		var key = instance.Hash.ToString64();
 		Cache.Set(key, instance);
 		Interlocked.Add(ref TotalCachedSize, instance.MemorySize);
-		Debug.Trace($"SuspendedSpriteCache Size: {Cache.Count.ToString(System.Drawing.Color.LightCoral)}");
+		Debug.Trace($"SuspendedSpriteCache Size: {Cache.Count.ToString(DrawingColor.LightCoral)}");
 
 		if (Interlocked.Read(ref TotalCachedSize) > Config.SuspendedCache.MaxCacheSize) {
 			TrimEvent.Set();

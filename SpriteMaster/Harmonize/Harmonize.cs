@@ -3,6 +3,8 @@ using LinqFasterer;
 using Microsoft.Xna.Framework;
 using Pastel;
 using SpriteMaster.Extensions;
+using SpriteMaster.Types;
+using SpriteMaster.Types.Fixed;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -55,7 +57,7 @@ static class Harmonize {
 	}
 
 	internal static readonly Type[] StructTypes = new[] {
-		typeof(Color),
+		typeof(XColor),
 		typeof(char),
 		typeof(byte),
 		typeof(sbyte),
@@ -67,10 +69,14 @@ static class Harmonize {
 		typeof(ulong),
 		typeof(float),
 		typeof(double),
-		typeof(Vector2),
+		typeof(XVector2),
 		typeof(Vector3),
 		typeof(Vector4),
-		typeof(System.Drawing.Color)
+		typeof(DrawingColor),
+		typeof(Color8),
+		typeof(Color16),
+		typeof(Fixed8),
+		typeof(Fixed16)
 	};
 
 	private static string GetMethodName(MethodInfo method, HarmonizeAttribute attribute) => attribute.Name ?? method.Name.Split('`', 2)[0];
@@ -84,6 +90,11 @@ static class Harmonize {
 
 			if (method is null) {
 				throw new ArgumentNullException(nameof(method));
+			}
+
+			if (attribute.ForMod is not null && SpriteMaster.Self.Helper.ModRegistry.Get(attribute.ForMod) is null) {
+				Debug.Trace($"Skipping Method Patch {GetFullMethodName(type, method, attribute)} ({method.GetFullName()}): mod '{attribute.ForMod}' not loaded");
+				return;
 			}
 
 			string methodName = GetMethodName(method, attribute);

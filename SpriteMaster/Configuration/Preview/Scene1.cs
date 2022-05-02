@@ -7,7 +7,7 @@ using System.Linq;
 namespace SpriteMaster.Configuration.Preview;
 
 sealed class Scene1 : Scene {
-	//private static readonly Lazy<Texture2D> FishTexture = new(() => StardewValley.Game1.content.Load<Texture2D>(@"Maps\springobjects"));
+	//private static readonly Lazy<XTexture2D> FishTexture = new(() => StardewValley.Game1.content.Load<XTexture2D>(@"Maps\springobjects"));
 	private readonly AnimatedTexture CenterCharacterTexture;
 
 	private readonly SpriteSheet OutdoorTiles;
@@ -255,19 +255,19 @@ sealed class Scene1 : Scene {
 	}
 
 	private const string ReferenceBasicText = "Llanfairpwllgwyngyllgogerychwyrndrobwllllantysiliogogogoch";
-	private XNA.Graphics.SpriteFont BasicTextFont => StardewValley.Game1.dialogueFont;
+	private XGraphics.SpriteFont BasicTextFont => StardewValley.Game1.dialogueFont;
 	private const string ReferenceUtilityText = "It was the best of times, it was the blurst of times.";
-	private XNA.Graphics.SpriteFont UtilityTextFont => StardewValley.Game1.smallFont;
+	private XGraphics.SpriteFont UtilityTextFont => StardewValley.Game1.smallFont;
 
 	private static readonly Vector2I[] ShadowedStringOffsets = { (-1, -1), (1, -1), (-1, 1), (1, 1) };
 	private void DrawStringStroked(
-		XNA.Graphics.SpriteBatch batch,
-		XNA.Graphics.SpriteFont font,
+		XSpriteBatch batch,
+		XGraphics.SpriteFont font,
 		string text,
 		Vector2I position,
-		XNA.Color color
+		XColor color
 	) {
-		var shadowColor = new XNA.Color(
+		var shadowColor = new XColor(
 			~color.R,
 			~color.G,
 			~color.B,
@@ -291,7 +291,7 @@ sealed class Scene1 : Scene {
 		);
 	}
 
-	protected override void OnDraw(XNA.Graphics.SpriteBatch batch, in Preview.Override overrideState) {
+	protected override void OnDraw(XSpriteBatch batch, in Preview.Override overrideState) {
 		float lastLayerDepth = float.NaN;
 		int index = 0;
 		foreach (var drawable in Drawables) {
@@ -307,7 +307,7 @@ sealed class Scene1 : Scene {
 		}
 	}
 
-	protected override void OnDrawOverlay(XNA.Graphics.SpriteBatch batch, in Preview.Override overrideState) {
+	protected override void OnDrawOverlay(XSpriteBatch batch, in Preview.Override overrideState) {
 		{
 			// Draw basic text
 			DrawStringStroked(
@@ -315,7 +315,7 @@ sealed class Scene1 : Scene {
 				BasicTextFont,
 				ReferenceBasicText,
 				Vector2I.Zero,
-				XNA.Color.White
+				XColor.White
 			);
 		}
 
@@ -331,7 +331,7 @@ sealed class Scene1 : Scene {
 				text: ReferenceUtilityText,
 				font: UtilityTextFont,
 				position: offset,
-				color: XNA.Color.White, //Game1.textColor,
+				color: XColor.White, //Game1.textColor,
 				scale: 1.0f
 			);
 		}

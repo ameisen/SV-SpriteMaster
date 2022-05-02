@@ -84,7 +84,7 @@ readonly struct Drawable {
 		Rotation.GetHashCode()
 	);
 
-	internal readonly void Draw(Scene scene, XNA.Graphics.SpriteBatch batch, Vector2I location, float layerDepth = 0.0f) {
+	internal readonly void Draw(Scene scene, XSpriteBatch batch, Vector2I location, float layerDepth = 0.0f) {
 		/*
 		int spriteHeight = Height / 16;
 		if (spriteHeight > 1 && (spriteHeight & 1) == 1) {
@@ -147,7 +147,7 @@ readonly struct DrawableInstance {
 		Drawable.Tick();
 	}
 
-	internal readonly void Draw(Scene scene, XNA.Graphics.SpriteBatch batch, int index) {
+	internal readonly void Draw(Scene scene, XSpriteBatch batch, int index) {
 		float layerDepth = (LayerDepth + scene.Region.Height + (index * 0.0001f)) / (scene.Region.Height * 4.0f);
 
 		Drawable.Draw(
@@ -158,7 +158,7 @@ readonly struct DrawableInstance {
 		);
 	}
 
-	internal readonly void Draw(Scene scene, XNA.Graphics.SpriteBatch batch, Vector2I offset, int index) {
+	internal readonly void Draw(Scene scene, XSpriteBatch batch, Vector2I offset, int index) {
 		float layerDepth = (LayerDepth + scene.Region.Height + offset.Y + (index * 0.0001f)) / (scene.Region.Height * 4.0f);
 
 		Drawable.Draw(

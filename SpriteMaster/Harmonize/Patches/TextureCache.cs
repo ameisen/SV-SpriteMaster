@@ -82,7 +82,7 @@ static class TextureCache {
 						TexturePaths.Remove(texture);
 					}
 					else {
-						Debug.Trace($"Found Texture2D for '{path}' in cache!".Pastel(System.Drawing.Color.LightCyan));
+						Debug.Trace($"Found XTexture2D for '{path}' in cache!".Pastel(DrawingColor.LightCyan));
 						__result = texture;
 						__state = false;
 						return false;
@@ -157,7 +157,7 @@ static class TextureCache {
 					TextureCacheDeque.AddToFront(result);
 				}
 			}
-			WeakReference<Texture2D>? previousTexture = null;
+			WeakReference<XTexture2D>? previousTexture = null;
 			TextureCacheTable.AddOrUpdate(fileStream.Name, result.MakeWeak(), (name, original) => {
 				previousTexture = original;
 				return result.MakeWeak();

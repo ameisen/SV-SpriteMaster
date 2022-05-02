@@ -10,7 +10,7 @@ namespace SpriteMaster.GL;
 
 static class GLTexture {
 	private static readonly Type TextureType = typeof(Texture);
-	private static readonly Type Texture2DType = typeof(Texture2D);
+	private static readonly Type Texture2DType = typeof(XTexture2D);
 	private static readonly Type? SurfaceTypeType = Texture2DType.GetNestedType("SurfaceType", BindingFlags.NonPublic);
 	private static readonly Enum? SwapChainRenderTarget = SurfaceTypeType is null ? null : System.Enum.Parse(SurfaceTypeType, "SwapChainRenderTarget") as Enum;
 
@@ -34,7 +34,7 @@ static class GLTexture {
 			null
 		);
 
-	private static Func<GraphicsDevice, int, int, SurfaceFormat, Enum, Texture2D>? CreateInstance = null;
+	private static Func<GraphicsDevice, int, int, SurfaceFormat, Enum, XTexture2D>? CreateInstance = null;
 
 	static GLTexture() {
 		if (Texture2DConstructor is null || SurfaceTypeType is null) {
@@ -58,7 +58,7 @@ static class GLTexture {
 			ilGen.Emit(OpCodes.Ldc_I4_0);   // arraySize
 			ilGen.Emit(OpCodes.Newobj, Texture2DConstructor);
 			ilGen.Emit(OpCodes.Ret);
-			CreateInstance = dynMethod.CreateDelegate<Func<GraphicsDevice, int, int, SurfaceFormat, Enum, Texture2D>>();
+			CreateInstance = dynMethod.CreateDelegate<Func<GraphicsDevice, int, int, SurfaceFormat, Enum, XTexture2D>>();
 		}
 		catch (Exception) {
 			throw;
@@ -73,7 +73,7 @@ static class GLTexture {
 			var p5 = Expression.Parameter(typeof(Enum));
 			var p6 = Expression.Constant(false);
 			var p7 = Expression.Constant(0);
-			CreateInstance = Expression.Lambda<Func<GraphicsDevice, int, int, SurfaceFormat, Enum, Texture2D>>(
+			CreateInstance = Expression.Lambda<Func<GraphicsDevice, int, int, SurfaceFormat, Enum, XTexture2D>>(
 				Expression.New(
 					Texture2DConstructor,
 					p0, // graphicsDevice
@@ -104,12 +104,12 @@ static class GLTexture {
 		// L_000e: ret
 	}
 
-	internal static Texture2D? CreateTexture2D(Vector2I size, bool mipmap, SurfaceFormat format) {
+	internal static XTexture2D? CreateTexture2D(Vector2I size, bool mipmap, SurfaceFormat format) {
 		if (CreateInstance is null || SwapChainRenderTarget is null) {
 			return null;
 		}
 
-		var newNewObj = Activator.CreateInstance(typeof(Texture2D), BindingFlags.NonPublic | BindingFlags.Instance, null, new object[] { DrawState.Device, size.Width, size.Height, false, SurfaceFormat.Dxt5, SwapChainRenderTarget, false, 0 }, null) as Texture2D;
+		var newNewObj = Activator.CreateInstance(typeof(XTexture2D), BindingFlags.NonPublic | BindingFlags.Instance, null, new object[] { DrawState.Device, size.Width, size.Height, false, SurfaceFormat.Dxt5, SwapChainRenderTarget, false, 0 }, null) as XTexture2D;
 
 		var newObj = CreateInstance(DrawState.Device, size.Width, size.Height, SurfaceFormat.Dxt5, SwapChainRenderTarget);
 		return newObj;

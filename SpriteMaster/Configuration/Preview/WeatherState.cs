@@ -10,7 +10,7 @@ struct WeatherState : IDisposable {
 	// SDV
 	internal readonly List<WeatherDebris>? DebrisWeather { get; init; }
 	internal readonly RainDrop[]? RainDrops { get; init; }
-	internal readonly XNA.Vector2 SnowPos { get; init; }
+	internal readonly XVector2 SnowPos { get; init; }
 	internal readonly float GlobalWind { get; init; }
 	internal readonly float WindGust { get; init; }
 	internal readonly bool IsDebrisWeather { get; init; }

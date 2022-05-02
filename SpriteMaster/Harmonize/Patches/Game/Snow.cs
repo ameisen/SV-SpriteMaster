@@ -38,7 +38,7 @@ static class Snow {
 		internal readonly float RotationRate;
 		internal readonly float Scale;
 
-		internal SnowWeatherDebris(Vector2 position, int which, float rotationVelocity, float dx, float dy, float rotation, float rotationRate, float scale) :
+		internal SnowWeatherDebris(XVector2 position, int which, float rotationVelocity, float dx, float dy, float rotation, float rotationRate, float scale) :
 			base(position, which, rotationVelocity, dx, dy) {
 			Rotation = rotation;
 			RotationRate = rotationRate;
@@ -55,7 +55,7 @@ static class Snow {
 
 	private static bool ShouldDrawSnow => Game1.IsSnowingHere() && Game1.currentLocation.IsOutdoors && Game1.currentLocation is not Desert;
 
-	private static readonly Lazy<Texture2D> FishTexture = new(() => SpriteMaster.Self.Helper.GameContent.Load<Texture2D>(@"LooseSprites\AquariumFish"));
+	private static readonly Lazy<XTexture2D> FishTexture = new(() => SpriteMaster.Self.Helper.GameContent.Load<XTexture2D>(@"LooseSprites\AquariumFish"));
 
 	public readonly record struct DrawWeatherState(bool Overridden, PrecipitationType? PreviousOverride);
 
@@ -97,11 +97,11 @@ static class Snow {
 
 		try {
 			if (__instance.takingMapScreenshot) {
-				Texture2D drawTexture = IsPuffersnow ? FishTexture.Value : Game1.mouseCursors;
+				XTexture2D drawTexture = IsPuffersnow ? FishTexture.Value : Game1.mouseCursors;
 
 				foreach (var _item in AllWeatherDebris) {
 					var item = (SnowWeatherDebris)_item;
-					var position = new Vector2(
+					var position = new XVector2(
 						Game1.random.Next(Game1.viewport.Width - item.sourceRect.Width * 3),
 						Game1.random.Next(Game1.viewport.Height - item.sourceRect.Height * 3)
 					);
@@ -110,9 +110,9 @@ static class Snow {
 						texture: drawTexture,
 						position: position,
 						sourceRectangle: IsPuffersnow ? new(0, 0, 24, 24) : item.sourceRect,
-						color: Color.White,
+						color: XColor.White,
 						rotation: item.Rotation,
-						origin: Vector2.Zero,
+						origin: XVector2.Zero,
 						scale: item.Scale,
 						effects: SpriteEffects.None,
 						layerDepth: 1E-06f
@@ -121,7 +121,7 @@ static class Snow {
 			}
 			else if (Game1.viewport.X > -Game1.viewport.Width) {
 				if (IsPuffersnow) {
-					Texture2D drawTexture = FishTexture.Value;
+					XTexture2D drawTexture = FishTexture.Value;
 
 					foreach (var mappedListPair in MappedWeatherDebris) {
 						var source = mappedListPair.Key;
@@ -131,9 +131,9 @@ static class Snow {
 								texture: drawTexture,
 								position: item.position,
 								sourceRectangle: new(0, 0, 24, 24),
-								color: Color.White,
+								color: XColor.White,
 								rotation: item.Rotation,
-								origin: Vector2.Zero,
+								origin: XVector2.Zero,
 								scale: item.Scale,
 								effects: SpriteEffects.None,
 								layerDepth: 1E-06f
@@ -142,7 +142,7 @@ static class Snow {
 					}
 				}
 				else {
-					Texture2D drawTexture = Game1.mouseCursors;
+					XTexture2D drawTexture = Game1.mouseCursors;
 
 					foreach (var mappedListPair in MappedWeatherDebris) {
 						var source = mappedListPair.Key;
@@ -154,9 +154,9 @@ static class Snow {
 								texture: drawTexture,
 								position: item.position,
 								sourceRectangle: source, 
-								color: Color.White,
+								color: XColor.White,
 								rotation: item.Rotation,
-								origin: Vector2.Zero,
+								origin: XVector2.Zero,
 								scale: item.Scale,
 								effects: SpriteEffects.None,
 								layerDepth: 1E-06f
@@ -175,8 +175,8 @@ static class Snow {
 						Game1.spriteBatch.DrawMulti(
 							texture: drawTexture,
 							source: source,
-							color: Color.White,
-							origin: Vector2.Zero,
+							color: XColor.White,
+							origin: XVector2.Zero,
 							effects: SpriteEffects.None,
 							layerDepth: 1E-06F,
 							instances: instances
@@ -342,7 +342,7 @@ static class Snow {
 		AllWeatherDebris.Clear();
 		for (int i = 0; i < debrisToMake; i++) {
 			var debris = new SnowWeatherDebris(
-				position: new Vector2(Game1.random.Next(0, screenSize.Width), Game1.random.Next(0, screenSize.Height)),
+				position: new XVector2(Game1.random.Next(0, screenSize.Width), Game1.random.Next(0, screenSize.Height)),
 				which: 3,
 				rotationVelocity: 0.0f,
 				dx: Game1.random.Next(-10, 0) / 50f,

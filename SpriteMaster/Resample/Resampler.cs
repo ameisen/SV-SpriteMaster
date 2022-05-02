@@ -1,6 +1,5 @@
 ﻿using LinqFasterer;
 using Microsoft.Toolkit.HighPerformance;
-using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Caching;
 using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
@@ -27,7 +26,7 @@ sealed class Resampler {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static void PurgeHash(Texture2D reference) {
+	internal static void PurgeHash(XTexture2D reference) {
 		reference.Meta().CachedRawData = null;
 	}
 
@@ -65,7 +64,7 @@ sealed class Resampler {
 		return hash;
 	}
 
-	private static readonly WeakSet<Texture2D> GarbageMarkSet = Config.Garbage.CollectAccountUnownedTextures ? new() : null!;
+	private static readonly WeakSet<XTexture2D> GarbageMarkSet = Config.Garbage.CollectAccountUnownedTextures ? new() : null!;
 
 	private const int WaterBlock = 4;
 	private const int FontBlock = 1;
@@ -618,7 +617,7 @@ sealed class Resampler {
 					if (result is (ResampleStatus.DisabledGradient or ResampleStatus.DisabledSolid)) {
 						Debug.Trace($"Skipping resample of {spriteInstance.Name} {input.Bounds}: NoResample");
 						spriteInstance.NoResample = true;
-						if (input.Reference is Texture2D texture) {
+						if (input.Reference is XTexture2D texture) {
 							texture.Meta().AddNoResample(input.Bounds);
 						}
 
@@ -641,9 +640,9 @@ sealed class Resampler {
 		return null;
 	}
 
-	internal static readonly Action<Texture2D, int, byte[], int, int>? PlatformSetData = typeof(Texture2D).GetMethods(
+	internal static readonly Action<XTexture2D, int, byte[], int, int>? PlatformSetData = typeof(XTexture2D).GetMethods(
 		BindingFlags.Instance | BindingFlags.NonPublic
-	).SingleF(m => m.Name == "PlatformSetData" && m.GetParameters().Length == 4)?.MakeGenericMethod(new Type[] { typeof(byte) })?.CreateDelegate<Action<Texture2D, int, byte[], int, int>>();
+	).SingleF(m => m.Name == "PlatformSetData" && m.GetParameters().Length == 4)?.MakeGenericMethod(new Type[] { typeof(byte) })?.CreateDelegate<Action<XTexture2D, int, byte[], int, int>>();
 
 	private static ManagedTexture2D? UpscaleInternal(ManagedSpriteInstance spriteInstance, ref uint scale, SpriteInfo input, ulong hash, ref Vector2B wrapped, bool async, out ResampleStatus result) {
 		var spriteFormat = TextureFormat.Color;
@@ -652,7 +651,7 @@ sealed class Resampler {
 			Garbage.Mark(input.Reference);
 			// TODO : this won't be hit if the object is finalized without disposal
 			input.Reference.Disposing += (obj, _) => {
-				Garbage.Unmark((Texture2D)obj!);
+				Garbage.Unmark((XTexture2D)obj!);
 			};
 		}
 

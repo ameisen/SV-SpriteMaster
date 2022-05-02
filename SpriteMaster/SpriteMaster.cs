@@ -186,7 +186,7 @@ public sealed class SpriteMaster : Mod {
 
 		MemoryMonitor.Start();
 
-		static void SetSystemTarget(XNA.Graphics.RenderTarget2D? target) {
+		static void SetSystemTarget(XGraphics.RenderTarget2D? target) {
 			if (target is null) {
 				return;
 			}
@@ -198,7 +198,7 @@ public sealed class SpriteMaster : Mod {
 		SetSystemTarget(Game1.game1.screen);
 		SetSystemTarget(Game1.game1.uiScreen);
 
-		// TODO : Iterate deeply with reflection over 'StardewValley' namespace to find any Texture2D objects sitting around
+		// TODO : Iterate deeply with reflection over 'StardewValley' namespace to find any XTexture2D objects sitting around
 
 		System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(FileCache).TypeHandle);
 		WatchDog.WatchDog.Initialize();

@@ -17,7 +17,7 @@ sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
 	internal static readonly SynchronizedTaskScheduler Instance = new();
 	internal static readonly TaskFactory TaskFactory = new(Instance);
 
-	internal static readonly Func<bool>? IsUIThread = typeof(XNA.Graphics.Texture2D).Assembly.GetType(
+	internal static readonly Func<bool>? IsUIThread = typeof(XTexture2D).Assembly.GetType(
 		"Microsoft.Xna.Framework.Threading"
 	)?.GetMethod(
 		"IsOnUIThread",

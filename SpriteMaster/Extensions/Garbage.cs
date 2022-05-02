@@ -107,7 +107,7 @@ static class Garbage {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static void Mark(Texture2D texture) {
+	internal static void Mark(XTexture2D texture) {
 		Contracts.AssertNotNull(texture);
 		Mark(texture.SizeBytes());
 	}
@@ -119,7 +119,7 @@ static class Garbage {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static void Unmark(Texture2D texture) {
+	internal static void Unmark(XTexture2D texture) {
 		Contracts.AssertNotNull(texture);
 		Unmark(texture.SizeBytes());
 	}

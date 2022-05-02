@@ -1,19 +1,18 @@
-﻿using Microsoft.Xna.Framework.Graphics;
-using System;
+﻿using System;
 
 namespace SpriteMaster.Configuration.Preview;
 
 abstract class MetaTexture : IDisposable {
-	internal readonly Texture2D Texture;
+	internal readonly XTexture2D Texture;
 
-	protected MetaTexture(Texture2D? texture) {
+	protected MetaTexture(XTexture2D? texture) {
 		if (texture is null) {
 			throw new NullReferenceException(nameof(texture));
 		}
 		Texture = texture;
 	}
 
-	protected MetaTexture(string textureName) : this(StardewValley.Game1.content.Load<Texture2D>(textureName)) { }
+	protected MetaTexture(string textureName) : this(StardewValley.Game1.content.Load<XTexture2D>(textureName)) { }
 
 	~MetaTexture() {
 		Dispose(false);

@@ -1,5 +1,4 @@
 ﻿using LinqFasterer;
-using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
 using System;
@@ -18,7 +17,7 @@ static partial class Debug {
 
 		var dumpBuilder = new StringBuilder();
 
-		var duplicates = new Dictionary<string, List<Texture2D>>();
+		var duplicates = new Dictionary<string, List<XTexture2D>>();
 		bool haveDuplicates = false;
 
 		var textureDump = SpriteMap.GetDump();
@@ -69,7 +68,7 @@ static partial class Debug {
 
 			if (!referenceTexture.Anonymous() && !referenceTexture.IsDisposed) {
 				if (!duplicates.TryGetValue(referenceTexture.NormalizedName(), out var duplicateList)) {
-					duplicateList = new List<Texture2D>();
+					duplicateList = new List<XTexture2D>();
 					duplicates.Add(referenceTexture.NormalizedName(), duplicateList);
 				}
 				duplicateList.Add(referenceTexture);

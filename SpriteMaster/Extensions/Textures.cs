@@ -13,13 +13,13 @@ namespace SpriteMaster.Extensions;
 
 static class Textures {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static int Area(this Texture2D texture) => texture.Width * texture.Height;
+	internal static int Area(this XTexture2D texture) => texture.Width * texture.Height;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static Vector2I Extent(this Texture2D texture) => new(texture.Width, texture.Height);
+	internal static Vector2I Extent(this XTexture2D texture) => new(texture.Width, texture.Height);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static Bounds Bounds(this Texture2D texture) => new(texture);
+	internal static Bounds Bounds(this XTexture2D texture) => new(texture);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static long SizeBytes(this SurfaceFormat format, int texels) {
@@ -88,13 +88,13 @@ static class Textures {
 	};
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static long SizeBytes(this Texture2D texture) => texture.Format.SizeBytes(texture.Area());
+	internal static long SizeBytes(this XTexture2D texture) => texture.Format.SizeBytes(texture.Area());
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static long SizeBytes(this ManagedTexture2D texture) => (long)texture.Area() * 4;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static bool Anonymous(this Texture2D texture) => texture.Name.IsWhiteBlank();
+	internal static bool Anonymous(this XTexture2D texture) => texture.Name.IsWhiteBlank();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool Anonymous(this ManagedSpriteInstance texture) => texture.Name.IsWhiteBlank();
@@ -165,11 +165,11 @@ static class Textures {
 	internal static string? NormalizedNameOrNull(this Texture texture) => texture.Name.NormalizedNameOrNull();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static string NormalizedName(this Texture2D texture) => texture.Name.NormalizedName();
+	internal static string NormalizedName(this XTexture2D texture) => texture.Name.NormalizedName();
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static string NormalizedName(this Texture2D texture, in DrawingColor color) => texture.Name.NormalizedName(in color);
+	internal static string NormalizedName(this XTexture2D texture, in DrawingColor color) => texture.Name.NormalizedName(in color);
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static string? NormalizedNameOrNull(this Texture2D texture) => texture.Name.NormalizedNameOrNull();
+	internal static string? NormalizedNameOrNull(this XTexture2D texture) => texture.Name.NormalizedNameOrNull();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static string NormalizedName(this ManagedTexture2D texture) => texture.Name;

@@ -17,23 +17,23 @@ static partial class OnDrawImpl {
 		internal uint ExpectedScale;
 	}
 
-	[Harmonize(typeof(SpriteBatch), "Draw", fixation: Fixation.Reverse)]
-	public static void RawDraw(SpriteBatch __instance, Texture2D texture, XNA.Vector2 position, XNA.Rectangle? sourceRectangle, XNA.Color color, float rotation, XNA.Vector2 origin, float scale, SpriteEffects effects, float layerDepth) {
+	[Harmonize(typeof(XSpriteBatch), "Draw", fixation: Fixation.Reverse)]
+	public static void RawDraw(XSpriteBatch __instance, XTexture2D texture, XVector2 position, XRectangle? sourceRectangle, XColor color, float rotation, XVector2 origin, float scale, SpriteEffects effects, float layerDepth) {
 		throw new NotImplementedException($"{nameof(RawDraw)} is a reverse patch");
 	}
 
-	[Harmonize(typeof(SpriteBatch), "Draw", fixation: Fixation.Reverse)]
-	public static void RawDraw(SpriteBatch __instance, Texture2D texture, XNA.Vector2 position, XNA.Rectangle? sourceRectangle, XNA.Color color, float rotation, XNA.Vector2 origin, XNA.Vector2 scale, SpriteEffects effects, float layerDepth) {
+	[Harmonize(typeof(XSpriteBatch), "Draw", fixation: Fixation.Reverse)]
+	public static void RawDraw(XSpriteBatch __instance, XTexture2D texture, XVector2 position, XRectangle? sourceRectangle, XColor color, float rotation, XVector2 origin, XVector2 scale, SpriteEffects effects, float layerDepth) {
 		throw new NotImplementedException($"{nameof(RawDraw)} is a reverse patch");
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void DrawMulti(
-		this SpriteBatch @this,
-		Texture2D texture,
+		this XSpriteBatch @this,
+		XTexture2D texture,
 		in Bounds source,
-		XNA.Color color,
-		XNA.Vector2 origin,
+		XColor color,
+		XVector2 origin,
 		SpriteEffects effects,
 		float layerDepth,
 		Span<DrawInstance> instances
@@ -66,7 +66,7 @@ static partial class OnDrawImpl {
 
 		uint fetchedScale = uint.MaxValue;
 		foreach (var instance in instances) {
-			XNA.Vector2 position = instance.Position;
+			XVector2 position = instance.Position;
 			float scale = instance.Scale;
 			float rotation = instance.Rotation;
 
@@ -145,7 +145,7 @@ static partial class OnDrawImpl {
 				effects: effects,
 				layerDepth: layerDepth
 			)) {
-				color = XNA.Color.Red;
+				color = XColor.Red;
 			}
 
 			RawDraw(

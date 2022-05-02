@@ -1,5 +1,4 @@
-﻿using Microsoft.Xna.Framework;
-
+﻿
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -30,31 +29,31 @@ static class Range {
 	internal static double Clamp(this double value, double min, double max) => (value < min) ? min : (value > max) ? max : value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static Vector2 Clamp(this Vector2 value, float min, float max) => new(value.X.Clamp(min, max), value.Y.Clamp(min, max));
+	internal static XVector2 Clamp(this XVector2 value, float min, float max) => new(value.X.Clamp(min, max), value.Y.Clamp(min, max));
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static Vector2 Clamp(this Vector2 value, double min, double max) => value.Clamp((float)min, (float)max);
+	internal static XVector2 Clamp(this XVector2 value, double min, double max) => value.Clamp((float)min, (float)max);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static Vector2 Clamp(this Vector2 value, Vector2 min, Vector2 max) => new(value.X.Clamp(min.X, max.X), value.Y.Clamp(min.Y, max.Y));
+	internal static XVector2 Clamp(this XVector2 value, XVector2 min, XVector2 max) => new(value.X.Clamp(min.X, max.X), value.Y.Clamp(min.Y, max.Y));
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static Vector2 Min(this Vector2 value, float min) => new(MathF.Min(value.X, min), MathF.Min(value.Y, min));
+	internal static XVector2 Min(this XVector2 value, float min) => new(MathF.Min(value.X, min), MathF.Min(value.Y, min));
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static Vector2 Min(this Vector2 value, double min) => new(MathF.Min(value.X, (float)min), MathF.Min(value.Y, (float)min));
+	internal static XVector2 Min(this XVector2 value, double min) => new(MathF.Min(value.X, (float)min), MathF.Min(value.Y, (float)min));
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static Vector2 Min(this Vector2 value, Vector2 min) => new(MathF.Min(value.X, min.X), MathF.Min(value.Y, min.Y));
+	internal static XVector2 Min(this XVector2 value, XVector2 min) => new(MathF.Min(value.X, min.X), MathF.Min(value.Y, min.Y));
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static Vector2 Max(this Vector2 value, float max) => new(MathF.Max(value.X, max), MathF.Max(value.Y, max));
+	internal static XVector2 Max(this XVector2 value, float max) => new(MathF.Max(value.X, max), MathF.Max(value.Y, max));
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static Vector2 Max(this Vector2 value, double max) => new(MathF.Max(value.X, (float)max), MathF.Max(value.Y, (float)max));
+	internal static XVector2 Max(this XVector2 value, double max) => new(MathF.Max(value.X, (float)max), MathF.Max(value.Y, (float)max));
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static Vector2 Max(this Vector2 value, Vector2 max) => new(MathF.Max(value.X, max.X), MathF.Max(value.Y, max.Y));
+	internal static XVector2 Max(this XVector2 value, XVector2 max) => new(MathF.Max(value.X, max.X), MathF.Max(value.Y, max.Y));
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool WithinInclusive<T>(this T value, T min, T max) where T : IComparable, IComparable<T> => (value.CompareTo(min) >= 0 && value.CompareTo(max) <= 0);

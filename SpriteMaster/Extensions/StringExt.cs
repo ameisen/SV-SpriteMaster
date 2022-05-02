@@ -14,7 +14,7 @@ static class StringExt {
 	internal static string? Intern(this string? str) => str is null ? null : string.Intern(str);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static string ToString<T>(this T? obj, in System.Drawing.Color color) => (obj?.ToString() ?? "[null]").Pastel(color);
+	internal static string ToString<T>(this T? obj, in DrawingColor color) => (obj?.ToString() ?? "[null]").Pastel(color);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool IsEmpty(this string str) => str.Length == 0;

@@ -1,5 +1,4 @@
-﻿using Microsoft.Xna.Framework.Graphics;
-using SpriteMaster.Configuration;
+﻿using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
 using SpriteMaster.Types;
@@ -11,12 +10,12 @@ namespace SpriteMaster.Core;
 
 static partial class OnDrawImpl {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static bool GetIsSliced(in Bounds bounds, Texture2D reference, [NotNullWhen(true)] out Config.TextureRef? result) {
+	private static bool GetIsSliced(in Bounds bounds, XTexture2D reference, [NotNullWhen(true)] out Config.TextureRef? result) {
 		return reference.Meta().CheckSliced(in bounds, out result);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static bool Cleanup(this ref Bounds sourceBounds, Texture2D reference) {
+	private static bool Cleanup(this ref Bounds sourceBounds, XTexture2D reference) {
 		if (Config.ClampInvalidBounds && !sourceBounds.ClampToChecked(reference.Extent(), out var clampedBounds)) {
 			//Debug.Warning($"Draw.Cleanup: '{reference.SafeName()}' bounds '{sourceBounds}' are not contained in reference bounds '{(Bounds)reference.Bounds}' - clamped ({(sourceBounds.Degenerate ? "degenerate" : "")})");
 			sourceBounds = clampedBounds;
@@ -28,7 +27,7 @@ static partial class OnDrawImpl {
 
 	// Odds are high that we will run into the same textures/sprites being drawn one after another.
 	// Thus, if we cache the last one, we will more-often-than-not likely be able to avoid a lot of work.
-	private static (Texture2D? Reference, uint ExpectedScale, Bounds? Source, Bounds UpdatedSource) LastDrawParams = new(null, 0, null, new());
+	private static (XTexture2D? Reference, uint ExpectedScale, Bounds? Source, Bounds UpdatedSource) LastDrawParams = new(null, 0, null, new());
 	private static ManagedSpriteInstance? LastDrawSpriteInstance = null;
 
 	internal static void ResetLastDrawCache() {
@@ -38,7 +37,7 @@ static partial class OnDrawImpl {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static bool FetchScaledTexture(
-		this Texture2D reference,
+		this XTexture2D reference,
 		uint expectedScale,
 		ref Bounds source,
 		[NotNullWhen(true)] out ManagedSpriteInstance? spriteInstance,
@@ -75,7 +74,7 @@ static partial class OnDrawImpl {
 	}
 
 	private static ManagedSpriteInstance? FetchScaledTexture(
-		this Texture2D reference,
+		this XTexture2D reference,
 		uint expectedScale,
 		ref Bounds source,
 		bool create = false
@@ -142,7 +141,7 @@ static partial class OnDrawImpl {
 	private static bool Validate(this ManagedTexture2D texture) => !texture.IsDisposed;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static void GetDrawParameters(Texture2D texture, in XNA.Rectangle? source, out Bounds bounds, out float scaleFactor) {
+	private static void GetDrawParameters(XTexture2D texture, in XRectangle? source, out Bounds bounds, out float scaleFactor) {
 		if (texture is not InternalTexture2D) {
 			texture.Meta().UpdateLastAccess();
 		}

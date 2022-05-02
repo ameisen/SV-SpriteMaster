@@ -1,6 +1,5 @@
 ﻿using LinqFasterer;
 using Microsoft.Toolkit.HighPerformance;
-using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
@@ -37,10 +36,10 @@ static class PTexture2D {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static bool Cacheable(Texture2D texture) => texture.LevelCount <= 1;
+	private static bool Cacheable(XTexture2D texture) => texture.LevelCount <= 1;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static void SetDataPurge<T>(Texture2D texture, in XNA.Rectangle? rect, T[] data, int startIndex, int elementCount, bool animated) where T : struct {
+	private static void SetDataPurge<T>(XTexture2D texture, in XRectangle? rect, T[] data, int startIndex, int elementCount, bool animated) where T : struct {
 		TextureCache.Remove(texture);
 
 		if (!ManagedSpriteInstance.Validate(texture, clean: true)) {
@@ -86,7 +85,7 @@ static class PTexture2D {
 
 	#region SetData
 
-	private static bool CheckDataChange<T>(Texture2D instance, int level, int arraySlice, in XNA.Rectangle? inRect, T[] data, int startIndex, int elementCount) where T : unmanaged {
+	private static bool CheckDataChange<T>(XTexture2D instance, int level, int arraySlice, in XRectangle? inRect, T[] data, int startIndex, int elementCount) where T : unmanaged {
 		Bounds rect = inRect ?? instance.Bounds;
 
 		if (instance.TryMeta(out var meta) && meta.CachedData is byte[] cachedData) {
@@ -125,7 +124,7 @@ static class PTexture2D {
 	}
 
 	[Harmonize("SetData", Harmonize.Fixation.Prefix, PriorityLevel.Last, Harmonize.Generic.Struct)]
-	public static bool OnSetData<T>(Texture2D __instance, T[] data) where T : unmanaged {
+	public static bool OnSetData<T>(XTexture2D __instance, T[] data) where T : unmanaged {
 		if (__instance is (ManagedTexture2D or InternalTexture2D)) {
 			return true;
 		}
@@ -139,7 +138,7 @@ static class PTexture2D {
 	}
 
 	[Harmonize("SetData", Harmonize.Fixation.Prefix, PriorityLevel.Last, Harmonize.Generic.Struct)]
-	public static bool OnSetData<T>(Texture2D __instance, T[] data, int startIndex, int elementCount) where T : unmanaged {
+	public static bool OnSetData<T>(XTexture2D __instance, T[] data, int startIndex, int elementCount) where T : unmanaged {
 		if (__instance is (ManagedTexture2D or InternalTexture2D)) {
 			return true;
 		}
@@ -153,7 +152,7 @@ static class PTexture2D {
 	}
 
 	[Harmonize("SetData", Harmonize.Fixation.Prefix, PriorityLevel.Last, Harmonize.Generic.Struct)]
-	public static bool OnSetData<T>(Texture2D __instance, int level, in XNA.Rectangle? rect, T[] data, int startIndex, int elementCount) where T : unmanaged {
+	public static bool OnSetData<T>(XTexture2D __instance, int level, in XRectangle? rect, T[] data, int startIndex, int elementCount) where T : unmanaged {
 		if (__instance is (ManagedTexture2D or InternalTexture2D)) {
 			return true;
 		}
@@ -167,7 +166,7 @@ static class PTexture2D {
 	}
 
 	[Harmonize("SetData", Harmonize.Fixation.Prefix, PriorityLevel.Last, Harmonize.Generic.Struct)]
-	public static bool OnSetData<T>(Texture2D __instance, int level, int arraySlice, in XNA.Rectangle? rect, T[] data, int startIndex, int elementCount) where T : unmanaged {
+	public static bool OnSetData<T>(XTexture2D __instance, int level, int arraySlice, in XRectangle? rect, T[] data, int startIndex, int elementCount) where T : unmanaged {
 		if (__instance is (ManagedTexture2D or InternalTexture2D)) {
 			return true;
 		}
@@ -192,22 +191,22 @@ static class PTexture2D {
 	}
 
 	[Harmonize("GetData", Harmonize.Fixation.Prefix, PriorityLevel.Last, Harmonize.Generic.Struct)]
-	public static bool OnGetData<T>(Texture2D __instance, T[] data) where T : unmanaged {
+	public static bool OnGetData<T>(XTexture2D __instance, T[] data) where T : unmanaged {
 		return OnGetData<T>(__instance, 0, null, data, 0, data.Length);
 	}
 
 	[Harmonize("GetData", Harmonize.Fixation.Prefix, PriorityLevel.Last, Harmonize.Generic.Struct)]
-	public static bool OnGetData<T>(Texture2D __instance, T[] data, int startIndex, int elementCount) where T : unmanaged {
+	public static bool OnGetData<T>(XTexture2D __instance, T[] data, int startIndex, int elementCount) where T : unmanaged {
 		return OnGetData<T>(__instance, 0, null, data, startIndex, elementCount);
 	}
 
 	[Harmonize("GetData", Harmonize.Fixation.Prefix, PriorityLevel.Last, Harmonize.Generic.Struct)]
-	public static bool OnGetData<T>(Texture2D __instance, int level, in XNA.Rectangle? rect, T[] data, int startIndex, int elementCount) where T : unmanaged {
+	public static bool OnGetData<T>(XTexture2D __instance, int level, in XRectangle? rect, T[] data, int startIndex, int elementCount) where T : unmanaged {
 		return OnGetData<T>(__instance, level, 0, rect, data, startIndex, elementCount);
 	}
 
 	[Harmonize("GetData", Harmonize.Fixation.Prefix, PriorityLevel.Last, Harmonize.Generic.Struct)]
-	public static unsafe bool OnGetData<T>(Texture2D __instance, int level, int arraySlice, in XNA.Rectangle? rect, T[] data, int startIndex, int elementCount) where T : unmanaged {
+	public static unsafe bool OnGetData<T>(XTexture2D __instance, int level, int arraySlice, in XRectangle? rect, T[] data, int startIndex, int elementCount) where T : unmanaged {
 		if (!Config.IsEnabled || !Config.SMAPI.ApplyGetDataPatch) {
 			return true;
 		}
@@ -271,13 +270,13 @@ static class PTexture2D {
 
 	/*
 	[Harmonize("SetData", Harmonize.Fixation.Reverse, PriorityLevel.Last, Harmonize.Generic.Struct)]
-	public static void OnSetDataOriginal<T>(Texture2D __instance, int level, int arraySlice, in XNA.Rectangle? rect, T[] data, int startIndex, int elementCount) where T : struct {
+	public static void OnSetDataOriginal<T>(XTexture2D __instance, int level, int arraySlice, in XRectangle? rect, T[] data, int startIndex, int elementCount) where T : struct {
 		throw new NotImplementedException("Reverse Patch");
 	}*/
 
 	/*
 	[Harmonize("SetData", Harmonize.Fixation.Postfix, PriorityLevel.Last, Harmonize.Generic.Struct)]
-	public static void OnSetDataPost<T>(Texture2D __instance, int level, int arraySlice, in XNA.Rectangle? rect, T[] data, int startIndex, int elementCount) where T : unmanaged {
+	public static void OnSetDataPost<T>(XTexture2D __instance, int level, int arraySlice, in XRectangle? rect, T[] data, int startIndex, int elementCount) where T : unmanaged {
 		if (__instance is (ManagedTexture2D or InternalTexture2D)) {
 			return;
 		}
@@ -303,7 +302,7 @@ static class PTexture2D {
 
 	//private void PlatformSetData<T>(int level, T[] data, int startIndex, int elementCount) where T : struct
 
-	//private void PlatformSetData<T>(int level, int arraySlice, Rectangle rect, T[] data, int startIndex, int elementCount) where T : struct
+	//private void PlatformSetData<T>(int level, int arraySlice, XRectangle rect, T[] data, int startIndex, int elementCount) where T : struct
 
 
 	private static readonly Assembly? CPAAssembly = AppDomain.CurrentDomain.GetAssemblies().SingleOrDefaultF(assembly => assembly.GetName().Name == "ContentPatcherAnimations");
@@ -323,7 +322,7 @@ static class PTexture2D {
 	}
 
 	[Harmonize("PlatformSetData", Harmonize.Fixation.Postfix, PriorityLevel.Average, Harmonize.Generic.Struct, platform: Harmonize.Platform.MonoGame)]
-	public static void OnPlatformSetDataPost<T>(Texture2D __instance, int level, T[] data, int startIndex, int elementCount) where T : unmanaged {
+	public static void OnPlatformSetDataPost<T>(XTexture2D __instance, int level, T[] data, int startIndex, int elementCount) where T : unmanaged {
 		if (__instance is (ManagedTexture2D or InternalTexture2D)) {
 			return;
 		}
@@ -339,7 +338,7 @@ static class PTexture2D {
 	}
 
 	[Harmonize("PlatformSetData", Harmonize.Fixation.Postfix, PriorityLevel.Average, Harmonize.Generic.Struct, platform: Harmonize.Platform.MonoGame)]
-	public static void OnPlatformSetDataPost<T>(Texture2D __instance, int level, int arraySlice, XNA.Rectangle rect, T[] data, int startIndex, int elementCount) where T : unmanaged {
+	public static void OnPlatformSetDataPost<T>(XTexture2D __instance, int level, int arraySlice, XRectangle rect, T[] data, int startIndex, int elementCount) where T : unmanaged {
 		if (__instance is (ManagedTexture2D or InternalTexture2D)) {
 			return;
 		}

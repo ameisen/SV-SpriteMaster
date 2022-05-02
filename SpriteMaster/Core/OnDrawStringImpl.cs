@@ -41,14 +41,14 @@ static partial class OnDrawStringImpl {
 	}
 
 	internal static bool DrawString(
-		SpriteBatch __instance,
+		XSpriteBatch __instance,
 		SpriteFont spriteFont,
 		string text,
-		XNA.Vector2 position,
-		XNA.Color color,
+		XVector2 position,
+		XColor color,
 		float rotation,
-		XNA.Vector2 origin,
-		XNA.Vector2 scale,
+		XVector2 origin,
+		XVector2 scale,
 		SpriteEffects effects,
 		float layerDepth
 	) {
@@ -64,14 +64,14 @@ static partial class OnDrawStringImpl {
 	}
 
 	internal static bool DrawString(
-		SpriteBatch __instance,
+		XSpriteBatch __instance,
 		SpriteFont spriteFont,
 		StringBuilder text,
-		XNA.Vector2 position,
-		XNA.Color color,
+		XVector2 position,
+		XColor color,
 		float rotation,
-		XNA.Vector2 origin,
-		XNA.Vector2 scale,
+		XVector2 origin,
+		XVector2 scale,
 		SpriteEffects effects,
 		float layerDepth
 	) {
@@ -123,14 +123,14 @@ static partial class OnDrawStringImpl {
 	// internal float TexelHeight { get; private set; }
 
 	internal static bool DrawString(
-		SpriteBatch __instance,
+		XSpriteBatch __instance,
 		SpriteFont spriteFont,
 		in CharSource text,
-		XNA.Vector2 position,
-		XNA.Color color,
+		XVector2 position,
+		XColor color,
 		float rotation,
-		XNA.Vector2 origin,
-		XNA.Vector2 scale,
+		XVector2 origin,
+		XVector2 scale,
 		SpriteEffects effects,
 		float layerDepth
 	) {
@@ -226,8 +226,8 @@ static partial class OnDrawStringImpl {
 
 			if (transform.HasValue) {
 				var matrixTemp = transform.Value;
-				XNA.Vector2 posTemp = pos;
-				XNA.Vector2.Transform(ref posTemp, ref matrixTemp, out posTemp);
+				XVector2 posTemp = pos;
+				XVector2.Transform(ref posTemp, ref matrixTemp, out posTemp);
 				pos = posTemp;
 			}
 			else {

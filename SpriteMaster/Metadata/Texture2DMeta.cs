@@ -171,14 +171,14 @@ sealed class Texture2DMeta : IDisposable {
 	internal long Revision { get; private set; } = 0;
 	internal readonly SurfaceFormat Format;
 	internal readonly Vector2I Size;
-	internal readonly WeakReference<Texture2D> Owner;
+	internal readonly WeakReference<XTexture2D> Owner;
 
 	internal InterlockedULong LastAccessFrame { get; private set; } = (ulong)DrawState.CurrentFrame;
 	internal InterlockedULong Hash { get; private set; } = 0;
 
 	internal void IncrementRevision() => ++Revision;
 
-	internal Texture2DMeta(Texture2D texture) {
+	internal Texture2DMeta(XTexture2D texture) {
 		Owner = texture.MakeWeak();
 		UniqueIDString = MetaID.ToString64();
 		IsCompressed = texture.Format.IsCompressed();
@@ -217,7 +217,7 @@ sealed class Texture2DMeta : IDisposable {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal void Purge(Texture2D reference, in Bounds? bounds, in DataRef<byte> data, bool animated) {
+	internal void Purge(XTexture2D reference, in Bounds? bounds, in DataRef<byte> data, bool animated) {
 		using (Lock.Write) {
 			bool hasCachedData = CachedRawData is not null;
 

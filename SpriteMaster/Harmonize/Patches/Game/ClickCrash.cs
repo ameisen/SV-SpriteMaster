@@ -24,13 +24,13 @@ static class ClickCrash {
 			var platformGetter = typeof(XNA.Game).GetFieldGetter<object, object>("Platform") ?? throw new NullReferenceException("PlatformGetter");
 			var platform = platformGetter(StardewValley.GameRunner.instance) ?? throw new NullReferenceException("Platform");
 			var sdlGamePlatformType =
-				typeof(XNA.Color).Assembly.
+				typeof(XColor).Assembly.
 				GetType("Microsoft.Xna.Framework.SdlGamePlatform");
 			var sdlLoopMethodInfo =
 				sdlGamePlatformType?.
 				GetMethod("SdlRunLoop", BindingFlags.Instance | AllMethods);
 			SdlLoopMethod = sdlLoopMethodInfo?.CreateDelegate<Action>(platform) ?? throw new NullReferenceException(nameof(SdlLoopMethod));
-			var isOnUIThreadMethodInfo = typeof(XNA.Color).Assembly.
+			var isOnUIThreadMethodInfo = typeof(XColor).Assembly.
 				GetType("Microsoft.Xna.Framework.Threading")?.
 				GetMethod("IsOnUIThread", BindingFlags.Static | AllMethods);
 			IsOnUIThread = isOnUIThreadMethodInfo?.CreateDelegate<Func<bool>>() ?? throw new NullReferenceException(nameof(IsOnUIThread));
@@ -45,11 +45,10 @@ static class ClickCrash {
 	[MethodImpl(Runtime.MethodImpl.RunOnce)]
 	internal static void Initialize() {
 		// Does nothing, just basically sets up the static constructor;
-		//FishTexture = SpriteMaster.Self.Helper.Content.Load<Texture2D>("LooseSprites\\AquariumFish", StardewModdingAPI.ContentSource.GameContent);
 	}
 
 	[Harmonize(
-		typeof(XNA.Color),
+		typeof(XColor),
 		"Microsoft.Xna.Framework.SdlGamePlatform",
 		"SdlRunLoop",
 		Harmonize.Fixation.Postfix,

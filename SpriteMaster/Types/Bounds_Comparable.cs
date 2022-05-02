@@ -10,8 +10,8 @@ partial struct Bounds :
 	IComparable<Bounds?>,
 	IComparable<DrawingRectangle>,
 	IComparable<DrawingRectangle?>,
-	IComparable<XNA.Rectangle>,
-	IComparable<XNA.Rectangle?>,
+	IComparable<XRectangle>,
+	IComparable<XRectangle?>,
 	IComparable<XTileRectangle>,
 	IComparable<XTileRectangle?> {
 
@@ -19,7 +19,7 @@ partial struct Bounds :
 	public readonly int CompareTo(object? other) => other switch {
 		Bounds bounds => CompareTo(bounds),
 		DrawingRectangle rect => CompareTo((Bounds)rect),
-		XNA.Rectangle rect => CompareTo((Bounds)rect),
+		XRectangle rect => CompareTo((Bounds)rect),
 		XTileRectangle rect => CompareTo((Bounds)rect),
 		_ => throw new ArgumentException(Exceptions.BuildArgumentException(nameof(other), other))
 	};
@@ -49,16 +49,16 @@ partial struct Bounds :
 	internal readonly int CompareTo(in DrawingRectangle? other) => other.HasValue ? CompareTo((Bounds)other.Value) : CompareTo((object?)null);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly int CompareTo(XNA.Rectangle other) => CompareTo((Bounds)other);
+	public readonly int CompareTo(XRectangle other) => CompareTo((Bounds)other);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly int CompareTo(XNA.Rectangle? other) => other.HasValue ? CompareTo((Bounds)other.Value) : CompareTo((object?)null);
+	public readonly int CompareTo(XRectangle? other) => other.HasValue ? CompareTo((Bounds)other.Value) : CompareTo((object?)null);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly int CompareTo(in XNA.Rectangle other) => CompareTo((Bounds)other);
+	internal readonly int CompareTo(in XRectangle other) => CompareTo((Bounds)other);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly int CompareTo(in XNA.Rectangle? other) => other.HasValue ? CompareTo((Bounds)other.Value) : CompareTo((object?)null);
+	internal readonly int CompareTo(in XRectangle? other) => other.HasValue ? CompareTo((Bounds)other.Value) : CompareTo((object?)null);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public readonly int CompareTo(XTileRectangle other) => CompareTo((Bounds)other);

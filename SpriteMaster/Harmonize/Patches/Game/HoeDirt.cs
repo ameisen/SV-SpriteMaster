@@ -2,8 +2,8 @@
 
 static class HoeDirt {
 #if false
-	private static SpriteBatch DirtBatch = new(DrawState.Device);
-	private static SpriteBatch FertBatch = new(DrawState.Device);
+	private static XSpriteBatch DirtBatch = new(DrawState.Device);
+	private static XSpriteBatch FertBatch = new(DrawState.Device);
 
 	[Harmonize(
 		typeof(StardewValley.GameLocation),
@@ -12,7 +12,7 @@ static class HoeDirt {
 		Harmonize.PriorityLevel.Last,
 		critical: false
 	)]
-	public static bool DrawAboveFrontLayerPre(StardewValley.GameLocation __instance, SpriteBatch b) {
+	public static bool DrawAboveFrontLayerPre(StardewValley.GameLocation __instance, XSpriteBatch b) {
 		if (Game1.isFestival()) {
 			return true;
 		}
@@ -27,7 +27,7 @@ static class HoeDirt {
 			);
 			for (int y = Game1.viewport.Y / 64 - 1; y < MaxTile.Y; ++y) {
 				for (int x = Game1.viewport.X / 64 - 1; x < MaxTile.X; ++x) {
-					XNA.Vector2 tile = new(x, y);
+					XVector2 tile = new(x, y);
 					if (__instance.terrainFeatures.TryGetValue(tile, out var feat) && feat is not Flooring) {
 						if (feat is StardewValley.TerrainFeatures.HoeDirt dirtFeat) {
 							dirtFeat.DrawOptimized(DirtBatch, FertBatch, b, tile);
@@ -65,7 +65,7 @@ static class HoeDirt {
 		Harmonize.PriorityLevel.Last,
 		critical: false
 	)]
-	public static void DrawAboveFrontLayerPre(StardewValley.GameLocation __instance, SpriteBatch b, ref bool __state) {
+	public static void DrawAboveFrontLayerPre(StardewValley.GameLocation __instance, XSpriteBatch b, ref bool __state) {
 		DirtBatch.Begin(SpriteSortMode.Texture, BlendState.AlphaBlend, SamplerState.PointClamp);
 		FertBatch.Begin(SpriteSortMode.Texture, BlendState.AlphaBlend, SamplerState.PointClamp);
 
@@ -79,7 +79,7 @@ static class HoeDirt {
 		Harmonize.PriorityLevel.Last,
 		critical: false
 	)]
-	public static void DrawAboveFrontLayerFinally (StardewValley.GameLocation __instance, SpriteBatch b, bool __state) {
+	public static void DrawAboveFrontLayerFinally (StardewValley.GameLocation __instance, XSpriteBatch b, bool __state) {
 		if (!__state) {
 			return;
 		}
@@ -95,7 +95,7 @@ static class HoeDirt {
 		Harmonize.PriorityLevel.Last,
 		critical: false
 	)]
-	public static void DrawOptimized(StardewValley.TerrainFeatures.HoeDirt __instance, ref SpriteBatch dirt_batch, ref SpriteBatch fert_batch, SpriteBatch crop_batch, XNA.Vector2 tileLocation) {
+	public static void DrawOptimized(StardewValley.TerrainFeatures.HoeDirt __instance, ref XSpriteBatch dirt_batch, ref XSpriteBatch fert_batch, XSpriteBatch crop_batch, XVector2 tileLocation) {
 		dirt_batch = DirtBatch;
 		fert_batch = FertBatch;
 	}
@@ -104,11 +104,11 @@ static class HoeDirt {
 	internal static void OnNewGraphicsDevice(GraphicsDevice device) {
 		if (device != DirtBatch?.GraphicsDevice) {
 			DirtBatch?.Dispose();
-			DirtBatch = new SpriteBatch(device);
+			DirtBatch = new XSpriteBatch(device);
 		}
 		if (device != FertBatch?.GraphicsDevice) {
 			FertBatch?.Dispose();
-			FertBatch = new SpriteBatch(device);
+			FertBatch = new XSpriteBatch(device);
 		}
 	}
 #endif

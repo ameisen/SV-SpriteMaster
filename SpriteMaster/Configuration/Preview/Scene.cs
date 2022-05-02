@@ -1,5 +1,4 @@
 ﻿using Microsoft.Toolkit.HighPerformance;
-using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
@@ -90,7 +89,7 @@ abstract class Scene : IDisposable {
 	protected static Vector2I GetSizeInRenderedTiles(Vector2I size) => size / TileSizeRendered;
 
 	internal void DrawAt(
-		XNA.Graphics.SpriteBatch batch,
+		XSpriteBatch batch,
 		XTexture2D texture,
 		in Bounds destination,
 		in Bounds? source = null,
@@ -123,7 +122,7 @@ abstract class Scene : IDisposable {
 			texture: texture,
 			destinationRectangle: destination.OffsetBy(shift),
 			sourceRectangle: source,
-			color: color ?? XNA.Color.White,
+			color: color ?? XColor.White,
 			rotation: rotation,
 			origin: offset,
 			effects: effects,
@@ -132,7 +131,7 @@ abstract class Scene : IDisposable {
 	}
 
 	internal void DrawAt(
-		XNA.Graphics.SpriteBatch batch,
+		XSpriteBatch batch,
 		XTexture2D texture,
 		Vector2I destination,
 		in Bounds? source = null,
@@ -170,7 +169,7 @@ abstract class Scene : IDisposable {
 			texture: texture,
 			destinationRectangle: bounds.OffsetBy(shift),
 			sourceRectangle: source,
-			color: color ?? XNA.Color.White,
+			color: color ?? XColor.White,
 			rotation: 0.0f,
 			origin: offset,
 			effects: effects,
@@ -179,7 +178,7 @@ abstract class Scene : IDisposable {
 	}
 
 	internal void DrawAt(
-		XNA.Graphics.SpriteBatch batch,
+		XSpriteBatch batch,
 		AnimatedTexture texture,
 		Vector2I destination,
 		Color8? color = null,
@@ -199,8 +198,8 @@ abstract class Scene : IDisposable {
 		);
 	}
 
-	protected abstract void OnDraw(XNA.Graphics.SpriteBatch batch, in Preview.Override overrideState);
-	protected abstract void OnDrawOverlay(XNA.Graphics.SpriteBatch batch, in Preview.Override overrideState);
+	protected abstract void OnDraw(XSpriteBatch batch, in Preview.Override overrideState);
+	protected abstract void OnDrawOverlay(XSpriteBatch batch, in Preview.Override overrideState);
 	
 	private readonly ref struct DrawState {
 		internal readonly Viewport Viewport { get; init; }
@@ -210,7 +209,7 @@ abstract class Scene : IDisposable {
 		internal readonly RasterizerState? RasterizerState { get; init; }
 	}
 
-	private void DrawBox(XNA.Graphics.SpriteBatch batch, in Preview.Override overrideState, in DrawState drawState) {
+	private void DrawBox(XSpriteBatch batch, in Preview.Override overrideState, in DrawState drawState) {
 		batch.Begin(
 			sortMode: SpriteSortMode.Deferred,
 			rasterizerState: State,
@@ -218,7 +217,7 @@ abstract class Scene : IDisposable {
 			depthStencilState: drawState.DepthStencilState
 		);
 		try {
-			using var tempBatch = new TempValue<XNA.Graphics.SpriteBatch>(ref StardewValley.Game1.spriteBatch, batch);
+			using var tempBatch = new TempValue<XSpriteBatch>(ref StardewValley.Game1.spriteBatch, batch);
 			StardewValley.Game1.DrawBox(Region.X, Region.Y, Region.Width, Region.Height);
 		}
 		finally {
@@ -226,7 +225,7 @@ abstract class Scene : IDisposable {
 		}
 	}
 
-	private void DrawFirst(XNA.Graphics.SpriteBatch batch, in Preview.Override overrideState, in DrawState drawState) {
+	private void DrawFirst(XSpriteBatch batch, in Preview.Override overrideState, in DrawState drawState) {
 		batch.Begin(
 			sortMode: SpriteSortMode.FrontToBack,
 			rasterizerState: State,
@@ -241,7 +240,7 @@ abstract class Scene : IDisposable {
 		}
 	}
 
-	private void DrawPrecipitation(XNA.Graphics.SpriteBatch batch, in Preview.Override overrideState, in DrawState drawState) {
+	private void DrawPrecipitation(XSpriteBatch batch, in Preview.Override overrideState, in DrawState drawState) {
 		batch.Begin(
 			sortMode: SpriteSortMode.FrontToBack,
 			rasterizerState: State,
@@ -249,7 +248,7 @@ abstract class Scene : IDisposable {
 			depthStencilState: drawState.DepthStencilState
 		);
 		try {
-			Game1.snowPos = Vector2.Zero;
+			Game1.snowPos = XVector2.Zero;
 			StardewValley.Game1.game1.drawWeather(Game1.currentGameTime, null);
 		}
 		finally {
@@ -257,7 +256,7 @@ abstract class Scene : IDisposable {
 		}
 	}
 
-	private void DrawOverlay(XNA.Graphics.SpriteBatch batch, in Preview.Override overrideState, in DrawState drawState) {
+	private void DrawOverlay(XSpriteBatch batch, in Preview.Override overrideState, in DrawState drawState) {
 		batch.Begin(
 			sortMode: SpriteSortMode.Deferred,
 			rasterizerState: State,
@@ -272,7 +271,7 @@ abstract class Scene : IDisposable {
 		}
 	}
 
-	internal void Draw(XNA.Graphics.SpriteBatch batch, in Preview.Override overrideState) {
+	internal void Draw(XSpriteBatch batch, in Preview.Override overrideState) {
 		using var savedWeatherState = WeatherState.Backup();
 		CurrentWeatherState.Restore();
 		using var currentScope = new CurrentScope(this);

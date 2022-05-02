@@ -1,6 +1,10 @@
 global using XNA = Microsoft.Xna.Framework;
+global using XColor = Microsoft.Xna.Framework.Color;
+global using XGraphics = Microsoft.Xna.Framework.Graphics;
+global using XSpriteBatch = Microsoft.Xna.Framework.Graphics.SpriteBatch;
 global using XTexture2D = Microsoft.Xna.Framework.Graphics.Texture2D;
 global using XRectangle = Microsoft.Xna.Framework.Rectangle;
+global using XVector2 = Microsoft.Xna.Framework.Vector2;
 global using DefaultScaler = SpriteMaster.Resample.Scalers.xBRZ;
 global using DrawingColor = System.Drawing.Color;
 global using DrawingPoint = System.Drawing.Point;

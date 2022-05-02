@@ -1,5 +1,4 @@
-﻿using Microsoft.Xna.Framework.Graphics;
-using SpriteMaster.Configuration;
+﻿using SpriteMaster.Configuration;
 using StardewModdingAPI;
 using System;
 using System.Reflection;
@@ -21,7 +20,7 @@ static class PAssetDataForImage {
 		Harmonize.PriorityLevel.Last,
 		critical: false
 	)]
-	public static unsafe bool PatchImage(IAssetDataForImage __instance, Texture2D source, XNA.Rectangle? sourceArea, XNA.Rectangle? targetArea, PatchMode patchMode) {
+	public static unsafe bool PatchImage(IAssetDataForImage __instance, XTexture2D source, XRectangle? sourceArea, XRectangle? targetArea, PatchMode patchMode) {
 		if (!Config.SMAPI.ApplyPatchEnabled) {
 			return true;
 		}
@@ -30,7 +29,7 @@ static class PAssetDataForImage {
 		if (source is null) {
 			throw new ArgumentNullException(nameof(source), "Can't patch from a null source texture.");
 		}
-		Texture2D target = __instance.Data;
+		XTexture2D target = __instance.Data;
 
 		// get areas
 		sourceArea ??= new(0, 0, source.Width, source.Height);
@@ -46,13 +45,13 @@ static class PAssetDataForImage {
 
 		// get source data
 		int pixelCount = sourceArea.Value.Width * sourceArea.Value.Height;
-		var sourceData = GC.AllocateUninitializedArray<XNA.Color>(pixelCount);
+		var sourceData = GC.AllocateUninitializedArray<XColor>(pixelCount);
 		source.GetData(0, sourceArea, sourceData, 0, pixelCount);
 
 		// merge data in overlay mode
 		if (patchMode == PatchMode.Overlay) {
 			// get target data
-			var targetData = GC.AllocateUninitializedArray<XNA.Color>(pixelCount);
+			var targetData = GC.AllocateUninitializedArray<XColor>(pixelCount);
 			target.GetData(0, targetArea, targetData, 0, pixelCount);
 
 			// merge pixels
@@ -75,7 +74,7 @@ static class PAssetDataForImage {
 				// premultiplied by the content pipeline. The formula is derived from
 				// https://shawnhargreaves.com/blog/premultiplied-alpha.html.
 				float alphaBelow = 1 - (above.A / 255f);
-				sourceData[i] = new XNA.Color(
+				sourceData[i] = new XColor(
 						(int)(above.R + (below.R * alphaBelow)), // r
 						(int)(above.G + (below.G * alphaBelow)), // g
 						(int)(above.B + (below.B * alphaBelow)), // b

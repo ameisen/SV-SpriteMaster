@@ -104,7 +104,7 @@ unsafe partial struct Vector2I :
 	internal static Vector2I From(int Value) => new(Value);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Vector2I(in XNA.Vector2 Vector, bool Round = true) : this(Round ? Vector.NearestInt() : Vector.TruncateInt()) { }
+	internal Vector2I(in XVector2 Vector, bool Round = true) : this(Round ? Vector.NearestInt() : Vector.TruncateInt()) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal Vector2I(in Vector2F Vector, bool Round = true) : this(Round ? Vector.NearestInt() : Vector.TruncateInt()) { }
@@ -128,7 +128,7 @@ unsafe partial struct Vector2I :
 	internal Vector2I(XTileSize v) : this(v.Width, v.Height) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Vector2I(Microsoft.Xna.Framework.Graphics.Texture2D tex) : this(tex.Width, tex.Height) { }
+	internal Vector2I(XTexture2D tex) : this(tex.Width, tex.Height) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static implicit operator Vector2I(in (int X, int Y) vec) => new(vec.X, vec.Y);
@@ -152,7 +152,7 @@ unsafe partial struct Vector2I :
 	public static implicit operator XTileSize(Vector2I vec) => new(vec.X, vec.Y);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static implicit operator XNA.Vector2(Vector2I vec) => new(vec.X, vec.Y);
+	public static implicit operator XVector2(Vector2I vec) => new(vec.X, vec.Y);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static implicit operator Vector2I(DrawingPoint vec) => new(vec);

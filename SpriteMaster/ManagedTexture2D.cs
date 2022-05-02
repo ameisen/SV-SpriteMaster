@@ -14,7 +14,7 @@ sealed class ManagedTexture2D : InternalTexture2D {
 	private static volatile uint TotalManagedTextures = 0;
 	private const bool UseMips = false;
 
-	internal readonly WeakReference<Texture2D> Reference;
+	internal readonly WeakReference<XTexture2D> Reference;
 	internal readonly ManagedSpriteInstance SpriteInstance;
 	internal readonly Vector2I Dimensions;
 	private volatile bool Disposed = false;
@@ -30,7 +30,7 @@ sealed class ManagedTexture2D : InternalTexture2D {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal ManagedTexture2D(
 		ManagedSpriteInstance instance,
-		Texture2D reference,
+		XTexture2D reference,
 		Vector2I dimensions,
 		SurfaceFormat format,
 		string? name = null
@@ -58,10 +58,10 @@ sealed class ManagedTexture2D : InternalTexture2D {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private void OnParentDispose(object? resource, EventArgs args) => OnParentDispose(resource as Texture2D);
+	private void OnParentDispose(object? resource, EventArgs args) => OnParentDispose(resource as XTexture2D);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private void OnParentDispose(Texture2D? referenceTexture) {
+	private void OnParentDispose(XTexture2D? referenceTexture) {
 		if (!IsDisposed) {
 			Debug.Trace($"Disposing ManagedTexture2D '{Name}'");
 			Dispose();

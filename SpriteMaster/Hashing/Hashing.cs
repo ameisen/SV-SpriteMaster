@@ -137,7 +137,7 @@ static partial class Hashing {
 		((ulong)rectangle.Height & 0xFFFF) << 48;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static ulong Hash(this in XNA.Rectangle rectangle) =>
+	internal static ulong Hash(this in XRectangle rectangle) =>
 		(ulong)rectangle.X & 0xFFFF |
 		((ulong)rectangle.Y & 0xFFFF) << 16 |
 		((ulong)rectangle.Width & 0xFFFF) << 32 |

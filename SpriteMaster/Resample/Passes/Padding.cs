@@ -1,5 +1,4 @@
 ﻿using LinqFasterer;
-using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
@@ -249,7 +248,7 @@ static class Padding {
 		return paddedData;
 	}
 
-	internal static bool IsBlacklisted(in Bounds bounds, Texture2D reference) {
+	internal static bool IsBlacklisted(in Bounds bounds, XTexture2D reference) {
 		var normalizedName = reference.NormalizedName();
 
 		foreach (var blacklistedRef in Config.Resample.Padding.BlackListS) {

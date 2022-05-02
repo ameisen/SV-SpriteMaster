@@ -190,7 +190,7 @@ static partial class DrawState {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void OnBegin(
-		SpriteBatch @this,
+		XSpriteBatch @this,
 		SpriteSortMode sortMode,
 		BlendState blendState,
 		SamplerState samplerState,

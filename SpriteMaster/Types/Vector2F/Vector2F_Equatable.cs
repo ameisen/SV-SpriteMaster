@@ -6,12 +6,12 @@ namespace SpriteMaster.Types;
 partial struct Vector2F :
 	IEquatable<Vector2F>,
 	IEquatable<(float, float)>,
-	IEquatable<XNA.Vector2> {
+	IEquatable<XVector2> {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public readonly override bool Equals(object? other) => other switch {
 		Vector2F vec => Equals(vec),
 		Vector2I vec => Equals(vec),
-		XNA.Vector2 vec => Equals(vec),
+		XVector2 vec => Equals(vec),
 		Tuple<float, float> vector => Equals(new Vector2F(vector.Item1, vector.Item2)),
 		ValueTuple<float, float> vector => Equals(vector),
 		_ => false,
@@ -30,7 +30,7 @@ partial struct Vector2F :
 	public readonly bool Equals(Vector2I other) => this == (Vector2F)other;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly bool Equals(XNA.Vector2 other) => this == (Vector2F)other;
+	public readonly bool Equals(XVector2 other) => this == (Vector2F)other;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static bool operator ==(Vector2F lhs, Vector2F rhs) => lhs.NumericVector == rhs.NumericVector;
@@ -63,14 +63,14 @@ partial struct Vector2F :
 	public static bool operator !=(Vector2I lhs, Vector2F rhs) => !(rhs == lhs);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(Vector2F lhs, XNA.Vector2 rhs) => lhs.Equals(rhs);
+	public static bool operator ==(Vector2F lhs, XVector2 rhs) => lhs.Equals(rhs);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(Vector2F lhs, XNA.Vector2 rhs) => !(lhs == rhs);
+	public static bool operator !=(Vector2F lhs, XVector2 rhs) => !(lhs == rhs);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(XNA.Vector2 lhs, Vector2F rhs) => rhs.Equals(lhs);
+	public static bool operator ==(XVector2 lhs, Vector2F rhs) => rhs.Equals(lhs);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(XNA.Vector2 lhs, Vector2F rhs) => !(rhs == lhs);
+	public static bool operator !=(XVector2 lhs, Vector2F rhs) => !(rhs == lhs);
 }

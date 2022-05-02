@@ -187,13 +187,13 @@ partial struct Bounds :
 	internal Bounds(in DrawingRectangle rect) : this(rect.X, rect.Y, rect.Width, rect.Height) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Bounds(in XNA.Rectangle rect) : this(rect.X, rect.Y, rect.Width, rect.Height) { }
+	internal Bounds(in XRectangle rect) : this(rect.X, rect.Y, rect.Width, rect.Height) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal Bounds(in XTileRectangle rect) : this(rect.X, rect.Y, rect.Width, rect.Height) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Bounds(Microsoft.Xna.Framework.Graphics.Texture2D tex) : this(tex.Width, tex.Height) { }
+	internal Bounds(XTexture2D tex) : this(tex.Width, tex.Height) { }
 
 	//[MethodImpl(Runtime.MethodImpl.Hot)]
 	//internal Bounds(System.Drawing.Bitmap bmp) : this(bmp.Width, bmp.Height) { }
@@ -234,7 +234,7 @@ partial struct Bounds :
 	public static implicit operator DrawingRectangle(in Bounds bounds) => new(bounds.X, bounds.Y, bounds.InvertedWidth, bounds.InvertedHeight);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static implicit operator XNA.Rectangle(in Bounds bounds) => new(bounds.X, bounds.Y, bounds.InvertedWidth, bounds.InvertedHeight);
+	public static implicit operator XRectangle(in Bounds bounds) => new(bounds.X, bounds.Y, bounds.InvertedWidth, bounds.InvertedHeight);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static implicit operator XTileRectangle(in Bounds bounds) => new(bounds.X, bounds.Y, bounds.InvertedWidth, bounds.InvertedHeight);
@@ -243,7 +243,7 @@ partial struct Bounds :
 	public static implicit operator Bounds(in DrawingRectangle rect) => new(rect);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static implicit operator Bounds(in XNA.Rectangle rect) => new(rect);
+	public static implicit operator Bounds(in XRectangle rect) => new(rect);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static implicit operator Bounds(in XTileRectangle rect) => new(rect);

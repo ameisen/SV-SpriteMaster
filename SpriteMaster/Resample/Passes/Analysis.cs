@@ -1,5 +1,4 @@
-﻿using Microsoft.Xna.Framework.Graphics;
-using SpriteMaster.Colors;
+﻿using SpriteMaster.Colors;
 using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
@@ -255,7 +254,7 @@ static class Analysis {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static unsafe LegacyResults AnalyzeLegacy(Texture2D? reference, ReadOnlySpan<Color8> data, in Bounds bounds, Vector2B wrapped) {
+	internal static unsafe LegacyResults AnalyzeLegacy(XTexture2D? reference, ReadOnlySpan<Color8> data, in Bounds bounds, Vector2B wrapped) {
 		return AnalyzeLegacy(
 			data: data,
 			bounds: bounds,

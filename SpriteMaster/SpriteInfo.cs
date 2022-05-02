@@ -16,7 +16,7 @@ namespace SpriteMaster;
 /// <para>Warning: <seealso cref="SpriteInfo">SpriteInfo</seealso> holds a reference to the reference texture's data in its <seealso cref="SpriteInfo._ReferenceData">ReferenceData field</seealso>.</para>
 /// </summary>
 sealed class SpriteInfo : IDisposable {
-	internal readonly Texture2D Reference;
+	internal readonly XTexture2D Reference;
 	internal readonly Bounds Bounds;
 	internal Vector2I ReferenceSize => Reference.Extent();
 	internal readonly Vector2B Wrapped;
@@ -27,7 +27,7 @@ sealed class SpriteInfo : IDisposable {
 	internal readonly bool IsPreview;
 	internal readonly Resample.Scaler Scaler;
 	internal readonly Resample.Scaler ScalerGradient;
-	internal readonly XNA.Graphics.BlendState BlendState;
+	internal readonly XGraphics.BlendState BlendState;
 	internal readonly bool BlendEnabled;
 	internal readonly bool IsWater;
 	internal readonly bool IsFont;
@@ -74,7 +74,7 @@ sealed class SpriteInfo : IDisposable {
 		}
 	}
 
-	private static ulong? GetDataHash(byte[] data, Texture2D reference, in Bounds bounds, int rawOffset, int rawStride) {
+	private static ulong? GetDataHash(byte[] data, XTexture2D reference, in Bounds bounds, int rawOffset, int rawStride) {
 		var meta = reference.Meta();
 
 		if (meta.TryGetSpriteHash(in bounds, out ulong hash)) {
@@ -149,15 +149,15 @@ sealed class SpriteInfo : IDisposable {
 	// Attempt to update the bytedata cache for the reference texture, or purge if it that makes more sense or if updating
 	// is not plausible.
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static void Purge(Texture2D reference, in Bounds? bounds, in DataRef<byte> data, bool animated) => reference.Meta().Purge(reference, bounds, data, animated: animated);
+	internal static void Purge(XTexture2D reference, in Bounds? bounds, in DataRef<byte> data, bool animated) => reference.Meta().Purge(reference, bounds, data, animated: animated);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static bool IsCached(Texture2D reference) => reference.Meta().CachedDataNonBlocking is not null;
+	internal static bool IsCached(XTexture2D reference) => reference.Meta().CachedDataNonBlocking is not null;
 
 	internal ref struct Initializer {
 		internal readonly byte[]? ReferenceData;
 		internal readonly Bounds Bounds;
-		internal readonly Texture2D Reference;
+		internal readonly XTexture2D Reference;
 		internal readonly BlendState BlendState;
 		internal readonly SamplerState SamplerState;
 		internal readonly uint ExpectedScale;
@@ -169,7 +169,7 @@ sealed class SpriteInfo : IDisposable {
 		internal readonly Resample.Scaler Scaler;
 		internal readonly Resample.Scaler ScalerGradient;
 
-		internal Initializer(Texture2D reference, in Bounds dimensions, uint expectedScale, TextureType textureType, bool animated) {
+		internal Initializer(XTexture2D reference, in Bounds dimensions, uint expectedScale, TextureType textureType, bool animated) {
 			Reference = reference;
 			BlendState = DrawState.CurrentBlendState;
 			SamplerState = DrawState.CurrentSamplerState;

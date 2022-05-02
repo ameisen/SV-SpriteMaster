@@ -89,8 +89,8 @@ partial struct Color8 : IEquatable<Color8>, IEquatable<uint>, ILongHash {
 	public static explicit operator uint(Color8 value) => value.Packed;
 	public static explicit operator Color8(uint value) => new(value);
 
-	public static implicit operator XNA.Color(Color8 value) => new(value.Packed);
-	public static implicit operator Color8(XNA.Color value) => new(value.PackedValue);
+	public static implicit operator XColor(Color8 value) => new(value.Packed);
+	public static implicit operator Color8(XColor value) => new(value.PackedValue);
 
 	public override readonly bool Equals(object? obj) {
 		if (obj is Color8 color) {

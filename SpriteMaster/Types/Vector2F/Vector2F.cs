@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-using SystemVector2 = System.Numerics.Vector2;
+using NumericsVector2 = System.Numerics.Vector2;
 
 namespace SpriteMaster.Types;
 
@@ -17,7 +17,7 @@ unsafe partial struct Vector2F : ILongHash {
 	internal static readonly Vector2F Empty = Zero;
 
 	[FieldOffset(0)]
-	private SystemVector2 NumericVector;
+	private NumericsVector2 NumericVector;
 
 	[FieldOffset(0)]
 	private fixed float Value[2];
@@ -67,7 +67,7 @@ unsafe partial struct Vector2F : ILongHash {
 
 	internal readonly float Area => X * Y;
 
-	internal readonly bool IsEmpty => NumericVector.Equals(SystemVector2.Zero);
+	internal readonly bool IsEmpty => NumericVector.Equals(NumericsVector2.Zero);
 	internal readonly bool IsZero => IsEmpty;
 	internal readonly float MinOf => MathF.Min(X, Y);
 	internal readonly float MaxOf => MathF.Max(X, Y);
@@ -91,7 +91,7 @@ unsafe partial struct Vector2F : ILongHash {
 	internal static Vector2F From(float value) => new(value);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Vector2F(in XNA.Vector2 Vector) : this(Vector.X, Vector.Y) { }
+	internal Vector2F(in XVector2 Vector) : this(Vector.X, Vector.Y) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal Vector2F(Vector2F vec) : this(vec.NumericVector) { }
@@ -100,7 +100,7 @@ unsafe partial struct Vector2F : ILongHash {
 	internal Vector2F(Vector2I v) : this(v.X, v.Y) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Vector2F(SystemVector2 v) => NumericVector = v;
+	internal Vector2F(NumericsVector2 v) => NumericVector = v;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal Vector2F(DrawingPoint v) : this(v.X, v.Y) { }
@@ -133,7 +133,7 @@ unsafe partial struct Vector2F : ILongHash {
 	internal void Set(Vector2I vec) => Set(vec.X, vec.Y);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal void Set(XNA.Vector2 vec) => Set(vec.X, vec.Y);
+	internal void Set(XVector2 vec) => Set(vec.X, vec.Y);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static implicit operator Vector2F(in (float X, float Y) vec) => new(vec.X, vec.Y);
@@ -145,19 +145,19 @@ unsafe partial struct Vector2F : ILongHash {
 	public static implicit operator Vector2I(Vector2F vec) => new((int)vec.X, (int)vec.Y);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static implicit operator XNA.Vector2(Vector2F vec) => new(vec.X, vec.Y);
+	public static implicit operator XVector2(Vector2F vec) => new(vec.X, vec.Y);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static implicit operator Vector2F(Vector2I vec) => new(vec);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static implicit operator Vector2F(XNA.Vector2 vec) => new(vec);
+	public static implicit operator Vector2F(XVector2 vec) => new(vec);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static implicit operator Vector2F(SystemVector2 vec) => new(vec);
+	public static implicit operator Vector2F(NumericsVector2 vec) => new(vec);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static implicit operator SystemVector2(Vector2F vec) => vec.NumericVector;
+	public static implicit operator NumericsVector2(Vector2F vec) => vec.NumericVector;
 	  
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static implicit operator Vector2F(DrawingPoint vec) => new(vec);
@@ -174,10 +174,10 @@ unsafe partial struct Vector2F : ILongHash {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static implicit operator Vector2F(XTileSize vec) => new(vec);
 
-	internal readonly float LengthSquared => SystemVector2.Dot(NumericVector, NumericVector);
+	internal readonly float LengthSquared => NumericsVector2.Dot(NumericVector, NumericVector);
 	internal readonly float Length => MathF.Sqrt(LengthSquared);
 
-	internal readonly Vector2F Normalized => SystemVector2.Normalize(NumericVector);
+	internal readonly Vector2F Normalized => NumericsVector2.Normalize(NumericVector);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public override readonly string ToString() => $"{{{X}, {Y}}}";

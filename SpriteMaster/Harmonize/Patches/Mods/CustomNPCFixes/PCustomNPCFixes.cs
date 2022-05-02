@@ -16,7 +16,8 @@ static class PCustomNPCFixes {
 		"FixSchedules",
 		fixation: Harmonize.Fixation.Prefix,
 		priority: Harmonize.PriorityLevel.Last,
-		critical: false
+		critical: false,
+		forMod: "spacechase0.CustomNPCFixes"
 	)]
 	public static bool FixSchedules(StardewModdingAPI.Mod __instance) {
 		if (!Config.IsEnabled || !Config.Extras.ModPatches.PatchCustomNPCFixes) {

@@ -557,7 +557,7 @@ static class Setup {
 		DisposeNextClick = false;
 	}
 
-	private static void OnDrawPreview(XNA.Graphics.SpriteBatch batch, Vector2F offset) {
+	private static void OnDrawPreview(XSpriteBatch batch, Vector2F offset) {
 		Bounds scissor = batch.GraphicsDevice.ScissorRectangle;
 
 		Bounds destination = new(

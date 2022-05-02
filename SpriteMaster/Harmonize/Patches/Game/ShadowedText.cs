@@ -23,11 +23,11 @@ static class ShadowedText {
 		critical: false
 	)]
 	public static bool DrawTextWithShadow(
-		SpriteBatch b,
+		XSpriteBatch b,
 		StringBuilder text,
 		SpriteFont font,
-		XNA.Vector2 position,
-		XNA.Color color,
+		XVector2 position,
+		XColor color,
 		float scale = 1f,
 		float layerDepth = -1f,
 		int horizontalShadowOffset = -1,
@@ -62,7 +62,7 @@ static class ShadowedText {
 			font,
 			position,
 			color,
-			new XNA.Color(221, 148, 84) * shadowIntensity,
+			new XColor(221, 148, 84) * shadowIntensity,
 			scale,
 			layerDepth,
 			(horizontalShadowOffset, verticalShadowOffset),
@@ -81,11 +81,11 @@ static class ShadowedText {
 		critical: false
 	)]
 	public static bool DrawTextWithShadow(
-		SpriteBatch b,
+		XSpriteBatch b,
 		string text,
 		SpriteFont font,
-		XNA.Vector2 position,
-		XNA.Color color,
+		XVector2 position,
+		XColor color,
 		float scale = 1f,
 		float layerDepth = -1f,
 		int horizontalShadowOffset = -1,
@@ -118,7 +118,7 @@ static class ShadowedText {
 			font,
 			position,
 			color,
-			new XNA.Color(221, 148, 84) * shadowIntensity,
+			new XColor(221, 148, 84) * shadowIntensity,
 			scale,
 			layerDepth,
 			(horizontalShadowOffset, verticalShadowOffset),
@@ -137,12 +137,12 @@ static class ShadowedText {
 		critical: false
 	)]
 	public static bool DrawTextWithColoredShadow(
-		SpriteBatch b,
+		XSpriteBatch b,
 		string text,
 		SpriteFont font,
-		XNA.Vector2 position,
-		XNA.Color color,
-		XNA.Color shadowColor,
+		XVector2 position,
+		XColor color,
+		XColor shadowColor,
 		float scale = 1f,
 		float layerDepth = -1f,
 		int horizontalShadowOffset = -1,
@@ -185,12 +185,12 @@ static class ShadowedText {
 	private static readonly Vector2F[] ShadowedStringOffsets = { (-1, -1), (1, -1), (-1, 1), (1, 1) };
 
 	private static void DrawStrokedText(
-		SpriteBatch b,
+		XSpriteBatch b,
 		string text,
 		SpriteFont font,
 		Vector2F position,
-		XNA.Color color,
-		XNA.Color shadowColor,
+		XColor color,
+		XColor shadowColor,
 		float scale,
 		float layerDepth,
 		Vector2I shadowOffset,
@@ -203,7 +203,7 @@ static class ShadowedText {
 				position + offset,
 				shadowColor,
 				0f,
-				XNA.Vector2.Zero,
+				XVector2.Zero,
 				scale,
 				SpriteEffects.None,
 				layerDepth
@@ -216,7 +216,7 @@ static class ShadowedText {
 			position,
 			color,
 			0f,
-			XNA.Vector2.Zero,
+			XVector2.Zero,
 			scale,
 			SpriteEffects.None,
 			layerDepth

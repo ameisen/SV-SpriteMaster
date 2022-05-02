@@ -15,6 +15,7 @@ class HarmonizeAttribute : Attribute {
 	internal readonly bool Instance;
 	internal readonly Platform ForPlatform;
 	internal readonly bool Critical;
+	internal readonly string? ForMod;
 
 	internal static bool CheckPlatform(Platform platform) => platform switch {
 		Platform.All => true,
@@ -29,7 +30,12 @@ class HarmonizeAttribute : Attribute {
 
 	internal bool CheckPlatform() => CheckPlatform(ForPlatform);
 
-	private static Assembly? GetAssembly(string name, bool critical) {
+	private static Assembly? GetAssembly(string name, bool critical, string? forMod) {
+		// If it's a mod patch, and the mod doesn't exist, don't bother searching for the assembly
+		if (forMod is not null && SpriteMaster.Self.Helper.ModRegistry.Get(forMod) is null) {
+			return null;
+		}
+		
 		if (Runtime.IsMonoGame && name.StartsWith("Microsoft.Xna.Framework")) {
 			name = "MonoGame.Framework";
 		}
@@ -72,7 +78,8 @@ class HarmonizeAttribute : Attribute {
 		Generic generic = Generic.None,
 		bool instance = true,
 		bool critical = true,
-		Platform platform = Platform.All
+		Platform platform = Platform.All,
+		string? forMod = null
 	) {
 		Type = type;
 		Name = method;
@@ -82,6 +89,7 @@ class HarmonizeAttribute : Attribute {
 		Instance = instance;
 		ForPlatform = platform;
 		Critical = critical;
+		ForMod = forMod;
 	}
 
 	internal HarmonizeAttribute(
@@ -93,17 +101,19 @@ class HarmonizeAttribute : Attribute {
 		Generic generic = Generic.None,
 		bool instance = true,
 		bool critical = true,
-		Platform platform = Platform.All
+		Platform platform = Platform.All,
+		string? forMod = null
 	) :
 		this(
-			type: CheckPlatform(platform) ? GetAssembly(assembly, critical: critical)?.GetType(type, true) : null,
+			type: CheckPlatform(platform) ? GetAssembly(assembly, critical: critical, forMod: forMod)?.GetType(type, true) : null,
 			method: method,
 			fixation: fixation,
 			priority: priority,
 			generic: generic,
 			instance: instance,
 			critical: critical,
-			platform: platform
+			platform: platform,
+			forMod: forMod
 		) { }
 
 	internal HarmonizeAttribute(
@@ -115,7 +125,8 @@ class HarmonizeAttribute : Attribute {
 		Generic generic = Generic.None,
 		bool instance = true,
 		bool critical = true,
-		Platform platform = Platform.All
+		Platform platform = Platform.All,
+		string? forMod = null
 	) :
 		this(
 			type: CheckPlatform(platform) ? parent.Assembly.GetType(type, true) : null,
@@ -125,7 +136,8 @@ class HarmonizeAttribute : Attribute {
 			generic: generic,
 			instance: instance,
 			critical: critical,
-			platform: platform
+			platform: platform,
+			forMod: forMod
 		) { }
 
 	internal HarmonizeAttribute(
@@ -137,7 +149,8 @@ class HarmonizeAttribute : Attribute {
 		Generic generic = Generic.None,
 		bool instance = true,
 		bool critical = true,
-		Platform platform = Platform.All
+		Platform platform = Platform.All,
+		string? forMod = null
 	) :
 		this(
 			type: CheckPlatform(platform) ? ResolveType(parent.Assembly, type) : null,
@@ -147,7 +160,8 @@ class HarmonizeAttribute : Attribute {
 			generic: generic,
 			instance: instance,
 			critical: critical,
-			platform: platform
+			platform: platform,
+			forMod: forMod
 		) { }
 
 	internal HarmonizeAttribute(
@@ -159,17 +173,19 @@ class HarmonizeAttribute : Attribute {
 		Generic generic = Generic.None,
 		bool instance = true,
 		bool critical = true,
-		Platform platform = Platform.All
+		Platform platform = Platform.All,
+		string? forMod = null
 	) :
 		this(
-			type: CheckPlatform(platform) ? ResolveType(GetAssembly(assembly, critical: critical), type) : null,
+			type: CheckPlatform(platform) ? ResolveType(GetAssembly(assembly, critical: critical, forMod: forMod), type) : null,
 			method: method,
 			fixation: fixation,
 			priority: priority,
 			generic: generic,
 			instance: instance,
 			critical: critical,
-			platform: platform
+			platform: platform,
+			forMod: forMod
 		) { }
 
 	internal HarmonizeAttribute(
@@ -179,7 +195,8 @@ class HarmonizeAttribute : Attribute {
 		Generic generic = Generic.None,
 		bool instance = true,
 		bool critical = true,
-		Platform platform = Platform.All
+		Platform platform = Platform.All,
+		string? forMod = null
 	) :
 		this(
 			type: null,
@@ -189,7 +206,8 @@ class HarmonizeAttribute : Attribute {
 			generic: generic,
 			instance: instance,
 			critical: critical,
-			platform: platform
+			platform: platform,
+			forMod: forMod
 		) { }
 
 	internal HarmonizeAttribute(
@@ -198,7 +216,8 @@ class HarmonizeAttribute : Attribute {
 		Generic generic = Generic.None,
 		bool instance = true,
 		bool critical = true,
-		Platform platform = Platform.All
+		Platform platform = Platform.All,
+		string? forMod = null
 	) :
 		this(
 			type: null,
@@ -208,6 +227,7 @@ class HarmonizeAttribute : Attribute {
 			generic: generic,
 			instance: instance,
 			critical: critical,
-			platform: platform
+			platform: platform,
+			forMod: forMod
 		) { }
 }
