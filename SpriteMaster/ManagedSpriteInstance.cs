@@ -259,7 +259,7 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 		}
 
 		if (SpriteMap.TryGetReady(texture, source, expectedScale, out var scaleTexture)) {
-			if (scaleTexture?.NoResample ?? false) {
+			if (scaleTexture.NoResample) {
 				return null;
 			}
 
@@ -431,7 +431,7 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 			var textureMeta = texture.Meta();
 			var currentRevision = textureMeta.Revision;
 			if (textureMeta.InFlightTasks.TryGetValue(source, out var inFlightTask)) {
-				doDispatch = inFlightTask.Revision != currentRevision || inFlightTask.ResampleTask is null || inFlightTask.ResampleTask.Status != System.Threading.Tasks.TaskStatus.WaitingToRun;
+				doDispatch = inFlightTask.Revision != currentRevision || inFlightTask.ResampleTask.Status != TaskStatus.WaitingToRun;
 			}
 
 			Task<ManagedSpriteInstance?> resampleTask;
@@ -461,9 +461,9 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 			watch.Stop();
 			var duration = watch.Elapsed;
 			var averager = GetTimer(cached: spriteInfoInitializer.WasCached, async: useAsync);
+#if DEBUG
 			TimeSpanSamples++;
 			MeanTimeSpan += duration;
-#if DEBUG
 			var remainingTimeStr = GetRemainingTime();
 			if (!string.IsNullOrEmpty(remainingTimeStr)) {
 				remainingTimeStr = $"({remainingTimeStr} was remaining)";
