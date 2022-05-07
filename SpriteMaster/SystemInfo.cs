@@ -6,7 +6,7 @@ using System.Text;
 
 namespace SpriteMaster;
 
-static class SystemInfo {
+internal static class SystemInfo {
 	internal static void Dump(GraphicsDeviceManager gdm, GraphicsDevice device) {
 		var dumpBuilder = new StringBuilder();
 
@@ -17,25 +17,31 @@ static class SystemInfo {
 			dumpBuilder.AppendLine($"\tNumber of Cores: {Environment.ProcessorCount}");
 			dumpBuilder.AppendLine($"\tOS Version: {Environment.OSVersion}");
 		}
-		catch { }
+		catch {
+			// ignored
+		}
 
 		try {
 			var memoryInfo = GC.GetGCMemoryInfo();
 			dumpBuilder.AppendLine($"\tTotal Committed Memory: {memoryInfo.TotalCommittedBytes.AsDataSize()}");
 			dumpBuilder.AppendLine($"\tTotal Available Memory: {memoryInfo.TotalAvailableMemoryBytes.AsDataSize()}");
 		}
-		catch { }
+		catch {
+			// ignored
+		}
 
 		try {
-			if (!(device?.IsDisposed).GetValueOrDefault(false)) {
-				var adapter = device?.Adapter;
+			if (!device.IsDisposed) {
+				var adapter = device.Adapter;
 				if (adapter is not null) {
 					dumpBuilder.AppendLine($"\tGraphics Adapter: {adapter}");
 					dumpBuilder.AppendLine($"\tGraphics Adapter Description: {adapter.Description}");
 				}
 			}
 		}
-		catch { }
+		catch {
+			// ignored
+		}
 
 		Debug.Message(dumpBuilder.ToString());
 	}

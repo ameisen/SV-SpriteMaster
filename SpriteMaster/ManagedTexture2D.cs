@@ -9,7 +9,7 @@ using System.Threading;
 
 namespace SpriteMaster;
 
-sealed class ManagedTexture2D : InternalTexture2D {
+internal sealed class ManagedTexture2D : InternalTexture2D {
 	private static ulong TotalAllocatedSize = 0L;
 	private static volatile uint TotalManagedTextures = 0;
 	private const bool UseMips = false;
@@ -71,7 +71,7 @@ sealed class ManagedTexture2D : InternalTexture2D {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	protected sealed override void Dispose(bool disposing) {
+	protected override void Dispose(bool disposing) {
 		base.Dispose(disposing);
 
 		if (Disposed) {

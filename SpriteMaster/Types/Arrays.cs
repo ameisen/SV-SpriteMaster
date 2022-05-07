@@ -6,10 +6,10 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Types;
 
-static class Arrays {
+internal static class Arrays {
 	private static class EmptyArrayStatic<T> {
 		[ImmutableObject(true)]
-		internal static readonly T[] Value = new T[0];
+		internal static readonly T[] Value = Array.Empty<T>();
 	}
 
 	[Pure, MethodImpl(Runtime.MethodImpl.Hot)]
@@ -23,9 +23,10 @@ static class Arrays {
 	internal static T[] Of<T>(params T[] values) => values;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static MemoryStream Stream(this byte[] data) => new MemoryStream(data, 0, data.Length, true, true);
+	internal static MemoryStream Stream(this byte[] data) => new(data, 0, data.Length, true, true);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
+	// ReSharper disable once MethodOverloadWithOptionalParameter
 	internal static MemoryStream Stream(this byte[] data, int offset = 0, int length = -1, FileAccess access = FileAccess.ReadWrite) {
 		if (length == -1) {
 			length = data.Length - offset;
@@ -54,8 +55,8 @@ internal static class Arrays<T> {
 	internal static readonly T[] Empty = Arrays.Empty<T>();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static T[] Singleton(T value) => Arrays.Singleton<T>(value);
+	internal static T[] Singleton(T value) => Arrays.Singleton(value);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static T[] Of(params T[] values) => Arrays.Of<T>(values);
+	internal static T[] Of(params T[] values) => Arrays.Of(values);
 }

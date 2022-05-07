@@ -45,6 +45,7 @@
 		<IgnoreModFilePatterns>$(IgnoreModFilePatterns), Microsoft\.Win32\..*$</IgnoreModFilePatterns>
 		<IgnoreModFilePatterns>$(IgnoreModFilePatterns), .*32.*</IgnoreModFilePatterns>
 		<IgnoreModFilePatterns>$(IgnoreModFilePatterns), .*/x86/.*</IgnoreModFilePatterns>
+		<IgnoreModFilePatterns>$(IgnoreModFilePatterns), JetBrains.Annotations.dll</IgnoreModFilePatterns>
 	</PropertyGroup>
 	
   <ItemGroup>

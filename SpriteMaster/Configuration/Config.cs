@@ -35,16 +35,6 @@ static class Config {
 #endif
 	internal const bool SkipIntro = IgnoreConfig;
 
-	[Attributes.Ignore]
-	internal static readonly string CurrentVersion = SpriteMaster.Assembly.GetCustomAttribute<FullVersionAttribute>()?.Value?.Split('-', 2)?.ElementAtOrDefaultF(0) ??
-		throw new BadImageFormatException($"Could not extract version from assembly {typeof(SMConfig).Assembly.FullName ?? typeof(SMConfig).Assembly.ToString()}");
-
-	[Attributes.Ignore]
-	internal static readonly Version AssemblyVersionObj = SpriteMaster.Assembly.GetName().Version ??
-		throw new BadImageFormatException($"Could not extract version from assembly {typeof(SMConfig).Assembly.FullName ?? typeof(SMConfig).Assembly.ToString()}");
-	[Attributes.Ignore]
-	internal static readonly string AssemblyVersion = AssemblyVersionObj.ToString();
-
 	private enum BuildType {
 		Alpha,
 		Beta,
@@ -109,7 +99,6 @@ static class Config {
 	[Attributes.Advanced]
 	internal static int PreferredMaxTextureDimension = 16384;
 	internal const bool ClampInvalidBounds = true;
-	internal const bool IgnoreUnknownTextures = false;
 
 	[Attributes.Retain]
 	[Attributes.GMCMHidden]

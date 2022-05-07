@@ -14,7 +14,7 @@ namespace SpriteMaster;
 
 // TODO : This class, and Texture2DMeta, have a _lot_ of inter-play and it makes it very confusing.
 // This needs to be cleaned up badly.
-static class SpriteMap {
+internal static class SpriteMap {
 #if WITH_SPRITE_REFERENCE_SET
 	private static readonly WeakSet<ManagedSpriteInstance> SpriteInstanceReferences = new();
 
@@ -118,7 +118,7 @@ static class SpriteMap {
 					var removeList = new List<ulong>();
 					using (meta.Lock.Write) {
 						foreach (var skv in spriteTable) {
-							if (skv.Value?.Texture?.IsDisposed ?? false) {
+							if (skv.Value.Texture?.IsDisposed ?? false) {
 								removeList.Add(skv.Key);
 							}
 						}
@@ -179,26 +179,17 @@ static class SpriteMap {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void Remove(in ManagedSpriteInstance.CleanupData instanceData, XTexture2D texture) {
-		try {
-			var meta = texture.Meta();
-			var spriteTable = meta.GetSpriteInstanceTable();
+		var meta = texture.Meta();
+		var spriteTable = meta.GetSpriteInstanceTable();
 
-			ManagedSpriteInstance? instance = null;
-			using (meta.Lock.Write) {
-				if (spriteTable.TryGetValue(instanceData.MapHash, out var currentValue) && currentValue is null) {
-					meta.RemoveFromSpriteInstanceTable(instanceData.MapHash, dispose: false, out instance);
-				}
+		ManagedSpriteInstance? instance = null;
+		using (meta.Lock.Write) {
+			if (spriteTable.TryGetValue(instanceData.MapHash, out _)) {
+				meta.RemoveFromSpriteInstanceTable(instanceData.MapHash, dispose: false, out instance);
 			}
-
-			instance?.Suspend();
 		}
-		finally {
-			//if (spriteInstance.Texture is not null && !spriteInstance.Texture.IsDisposed) {
-			//	Debug.Trace($"Disposing Active HD Texture: {spriteInstance.SafeName()}");
 
-			//spriteInstance.Texture.Dispose();
-			//}
-		}
+		instance?.Suspend();
 	}
 
 	// TODO : CP-A support - we hit here repeatedly for animated textures.
@@ -266,7 +257,9 @@ static class SpriteMap {
 				}
 			}
 		}
-		catch { }
+		catch {
+			// ignored
+		}
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -294,7 +287,9 @@ static class SpriteMap {
 				}
 			}
 		}
-		catch { }
+		catch {
+			// ignored
+		}
 	}
 
 	private static readonly string[] Seasons = new[] {
@@ -312,32 +307,38 @@ static class SpriteMap {
 
 		try {
 			foreach (var spriteInstance in SpriteInstanceReferences) {
-				if (spriteInstance is null || spriteInstance.Anonymous()) {
+				if (spriteInstance?.Anonymous() != false) {
 					continue;
 				}
 
 				var textureName = spriteInstance.NormalizedName().ToLowerInvariant();
-				if (!textureName.Contains(season) && Seasons.AnyF(s => textureName.Contains(s))) {
-					if (spriteInstance.Reference.TryGetTarget(out var reference)) {
-						spriteInstance.Dispose();
-					}
+				if (textureName.Contains(season) || !Seasons.AnyF(s => textureName.Contains(s))) {
+					continue;
+				}
+
+				if (spriteInstance.Reference.TryGetTarget(out _)) {
+					spriteInstance.Dispose();
 				}
 			}
 		}
-		catch { }
+		catch {
+			// ignored
+		}
 	}
 
 	internal static Dictionary<XTexture2D, List<ManagedSpriteInstance>> GetDump() {
 		var result = new Dictionary<XTexture2D, List<ManagedSpriteInstance>>();
 
 		foreach (var spriteInstance in SpriteInstanceReferences) {
-			if (spriteInstance?.Reference.TryGetTarget(out var referenceTexture) ?? false) {
-				if (!result.TryGetValue(referenceTexture, out var resultList)) {
-					resultList = new List<ManagedSpriteInstance>();
-					result.Add(referenceTexture, resultList);
-				}
-				resultList.Add(spriteInstance);
+			if (!(spriteInstance?.Reference.TryGetTarget(out var referenceTexture) ?? false)) {
+				continue;
 			}
+
+			if (!result.TryGetValue(referenceTexture, out var resultList)) {
+				resultList = new List<ManagedSpriteInstance>();
+				result.Add(referenceTexture, resultList);
+			}
+			resultList.Add(spriteInstance);
 		}
 
 		return result;

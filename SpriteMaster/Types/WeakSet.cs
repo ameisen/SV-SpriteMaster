@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -7,11 +6,7 @@ using System.Security;
 
 namespace SpriteMaster.Types;
 
-sealed class WeakSet<T> :
-	IEnumerable<T>,
-	IEnumerable,
-	ICollection<T>,
-	IReadOnlyCollection<T>,
+internal sealed class WeakSet<T> :
 	ISet<T>,
 	IReadOnlySet<T>
 	where T : class {
@@ -152,18 +147,20 @@ sealed class WeakSet<T> :
 
 	public void IntersectWith(IEnumerable<T> other) {
 		var otherSet = other as ISet<T> ?? other.ToHashSet();
-		AddRange(other);
+		AddRange(otherSet);
 		var current = Items;
-		var currentCount = current.Count();
+		var enumerable = current as T[] ?? current.ToArray();
 
-		if (currentCount > otherSet.Count) {
-			var removeList = new List<T>(currentCount - otherSet.Count);
-			foreach (var item in current) {
-				if (!otherSet.Contains(item)) {
-					removeList.Add(item);
-				}
-			}
-			RemoveRange(removeList);
+		if (enumerable.Length <= otherSet.Count) {
+			return;
 		}
+
+		var removeList = new List<T>(enumerable.Length - otherSet.Count);
+		foreach (var item in enumerable) {
+			if (!otherSet.Contains(item)) {
+				removeList.Add(item);
+			}
+		}
+		RemoveRange(removeList);
 	}
 }

@@ -3,13 +3,12 @@ using System;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster;
-sealed class TexelTimer {
+
+internal sealed class TexelTimer {
 	private long TotalDuration = 0;
-	private long TotalTexels;
+	private long TotalTexels = 0;
 
 	private double DurationPerTexel => (TotalTexels == 0) ? 0.0 : (double)TotalDuration / TotalTexels;
-
-	private const int MaxDurationCounts = 50;
 
 	internal void Reset() {
 		TotalDuration = 0;

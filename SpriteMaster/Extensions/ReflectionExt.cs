@@ -18,10 +18,10 @@ static partial class ReflectionExt {
 	internal static MemberInfo? GetPropertyOrField(this Type type, string name, BindingFlags bindingAttr) {
 		// TODO : GetMembers might be better?
 		// TODO : Or we should cache everything?
-		if (type.GetField(name, bindingAttr) is FieldInfo field) {
+		if (type.GetField(name, bindingAttr) is { } field) {
 			return field;
 		}
-		if (type.GetProperty(name, bindingAttr) is PropertyInfo property) {
+		if (type.GetProperty(name, bindingAttr) is { } property) {
 			return property;
 		}
 		return null;
@@ -62,7 +62,8 @@ static partial class ReflectionExt {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	[DynamicallyAccessedMembers(AllFields)]
-	internal static bool TryGetField(this Type type, string name, [NotNullWhen(true)] out FieldInfo? field) => type.TryGetField(name, out field, AllNonFlatBinding);
+	internal static bool TryGetField(this Type type, string name, [NotNullWhen(true)] out FieldInfo? field) =>
+		type.TryGetField(name, out field, AllNonFlatBinding);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	[DynamicallyAccessedMembers(AllProperties)]
@@ -73,7 +74,8 @@ static partial class ReflectionExt {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	[DynamicallyAccessedMembers(AllProperties)]
-	internal static bool TryGetProperty(this Type type, string name, [NotNullWhen(true)] out PropertyInfo? property) => type.TryGetProperty(name, out property, AllNonFlatBinding);
+	internal static bool TryGetProperty(this Type type, string name, [NotNullWhen(true)] out PropertyInfo? property) =>
+		type.TryGetProperty(name, out property, AllNonFlatBinding);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	[DynamicallyAccessedMembers(AllMethods)]
@@ -84,18 +86,33 @@ static partial class ReflectionExt {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	[DynamicallyAccessedMembers(AllMethods)]
-	internal static bool TryGetMethod(this Type type, string name, [NotNullWhen(true)] out MethodInfo? method) => type.TryGetMethod(name, out method, AllNonFlatBinding);
+	internal static bool TryGetMethod(this Type type, string name, [NotNullWhen(true)] out MethodInfo? method) =>
+		type.TryGetMethod(name, out method, AllNonFlatBinding);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	[DynamicallyAccessedMembers(AllFields)]
-	internal static object? GetField(this object obj, string name) => obj?.GetType().GetField(
+	internal static object? GetField(this object? obj, string name) => obj?.GetType().GetField(
+		name,
+		AllInstanceBinding | BindingFlags.FlattenHierarchy
+	)?.GetValue(obj);
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[DynamicallyAccessedMembers(AllFields)]
+	internal static T? GetField<T>(this object? obj, string name) => (T?)obj?.GetType().GetField(
 		name,
 		AllInstanceBinding | BindingFlags.FlattenHierarchy
 	)?.GetValue(obj);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	[DynamicallyAccessedMembers(AllProperties)]
-	internal static object? GetProperty(this object obj, string name) => obj?.GetType().GetProperty(
+	internal static object? GetProperty(this object? obj, string name) => obj?.GetType().GetProperty(
+		name,
+		AllInstanceBinding | BindingFlags.FlattenHierarchy
+	)?.GetValue(obj);
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[DynamicallyAccessedMembers(AllProperties)]
+	internal static T? GetProperty<T>(this object? obj, string name) => (T?)obj?.GetType().GetProperty(
 		name,
 		AllInstanceBinding | BindingFlags.FlattenHierarchy
 	)?.GetValue(obj);

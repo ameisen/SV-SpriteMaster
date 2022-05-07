@@ -1,12 +1,14 @@
-﻿using LinqFasterer;
+﻿using JetBrains.Annotations;
+using LinqFasterer;
 using System;
 using System.Reflection;
 using static SpriteMaster.Harmonize.Harmonize;
 
 namespace SpriteMaster.Harmonize;
 
+[MeansImplicitUse(ImplicitUseTargetFlags.WithMembers)]
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-class HarmonizeAttribute : Attribute {
+internal class HarmonizeAttribute : Attribute {
 	internal readonly Type? Type;
 	internal readonly string? Name;
 	internal readonly int PatchPriority;
@@ -52,23 +54,27 @@ class HarmonizeAttribute : Attribute {
 		return null;
 	}
 
-	private static Type? ResolveType(Assembly assembly, Type? parent, string[] type, int offset = 0) {
-		if (parent is null) {
-			return null;
-		}
+	private static Type? ResolveType(Type? parent, string[] type, int offset = 0) {
+		while (true) {
+			if (parent is null) {
+				return null;
+			}
 
-		var foundType = parent.GetNestedType(type[offset], BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-		if (foundType is null) {
-			return parent;
+			var foundType = parent.GetNestedType(type[offset], BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+			if (foundType is null) {
+				return parent;
+			}
+
+			offset += 1;
+			if (offset >= type.Length) {
+				return foundType;
+			}
+			parent = foundType;
 		}
-		offset += 1;
-		if (offset >= type.Length)
-			return foundType;
-		else
-			return ResolveType(assembly, foundType, type, offset);
 	}
 
-	private static Type? ResolveType(Assembly? assembly, string[] type, int offset = 0) => assembly is null ? null : ResolveType(assembly, assembly.GetType(type[0], true), type, offset + 1);
+	private static Type? ResolveType(Assembly? assembly, string[] type, int offset = 0) =>
+		assembly is null ? null : ResolveType(assembly.GetType(type[0], true), type, offset + 1);
 
 	internal HarmonizeAttribute(
 		Type? type,

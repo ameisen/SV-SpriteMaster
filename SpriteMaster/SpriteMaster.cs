@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using JetBrains.Annotations;
 using LinqFasterer;
 using SpriteMaster.Caching;
 using SpriteMaster.Configuration;
@@ -31,8 +32,9 @@ public sealed class SpriteMaster : Mod {
 
 	internal readonly MemoryMonitor MemoryMonitor;
 
+	[UsedImplicitly]
 	public SpriteMaster() {
-		Contracts.AssertNull(Self);
+		Self.AssertNull();
 		Self = this;
 
 		Garbage.EnterNonInteractive();
@@ -49,13 +51,13 @@ public sealed class SpriteMaster : Mod {
 	}
 
 	private void InitializeConfig() {
-		Configuration.Config.SetPath(Path.Combine(Helper.DirectoryPath, ConfigName));
+		Config.SetPath(Path.Combine(Helper.DirectoryPath, ConfigName));
 
 		Config.DefaultConfig = new MemoryStream();
 		Serialize.Save(Config.DefaultConfig, leaveOpen: true);
 
 		if (!Config.IgnoreConfig) {
-			Serialize.Load(Configuration.Config.Path);
+			Serialize.Load(Config.Path);
 		}
 
 		if (Versioning.IsOutdated(Config.ConfigVersion)) {
@@ -63,7 +65,7 @@ public sealed class SpriteMaster : Mod {
 
 			Serialize.Load(Config.DefaultConfig, retain: true);
 			Config.DefaultConfig.Position = 0;
-			Config.ConfigVersion = Config.CurrentVersion;
+			Config.ConfigVersion = Versioning.CurrentVersion;
 		}
 
 		static Config.TextureRef[] ProcessTextureRefs(List<string> textureRefStrings) {
@@ -90,7 +92,7 @@ public sealed class SpriteMaster : Mod {
 						Debug.Error($"Invalid SlicedTexture Bounds: '{elements[1]}'");
 					}
 				}
-				result[i] = new(string.Intern(texture), bounds);
+				result[i] = new Config.TextureRef(string.Intern(texture), bounds);
 			}
 			return result;
 		}
@@ -103,13 +105,10 @@ public sealed class SpriteMaster : Mod {
 			var result = new Regex[texturePatternStrings.Count];
 			for (int i = 0; i < texturePatternStrings.Count; ++i) {
 				var pattern = texturePatternStrings[i];
-				if (!pattern.StartsWith('@')) {
-					pattern = $"^{Regex.Escape(pattern)}.*";
-				}
-				else {
-					pattern = pattern.Substring(1);
-				}
-				result[i] = new(pattern, RegexOptions.Compiled);
+				pattern = pattern.StartsWith('@') ?
+					pattern[1..] :
+					$"^{Regex.Escape(pattern)}.*";
+				result[i] = new Regex(pattern, RegexOptions.Compiled);
 			}
 			return result;
 		}
@@ -176,7 +175,7 @@ public sealed class SpriteMaster : Mod {
 			Config.ShowIntroMessage = false;
 		}
 
-		Serialize.Save(Configuration.Config.Path);
+		Serialize.Save(Config.Path);
 
 		TryAddConsoleCommand("spritemaster", "SpriteMaster Commands", ConsoleSupport.Invoke);
 		// Try to add 'sm' as a shortcut for my own sanity.
@@ -200,12 +199,12 @@ public sealed class SpriteMaster : Mod {
 
 		// TODO : Iterate deeply with reflection over 'StardewValley' namespace to find any XTexture2D objects sitting around
 
-		System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(FileCache).TypeHandle);
+		RuntimeHelpers.RunClassConstructor(typeof(FileCache).TypeHandle);
 		WatchDog.WatchDog.Initialize();
 		ClickCrash.Initialize();
 	}
 
-	private static class ModUID {
+	private static class ModUid {
 		internal const string DynamicGameAssets = "spacechase0.DynamicGameAssets";
 		internal const string ContentPatcher = "Pathoschild.ContentPatcher";
 		internal const string ContentPatcherAnimations = "spacechase0.ContentPatcherAnimations";
@@ -256,8 +255,8 @@ public sealed class SpriteMaster : Mod {
 
 	private const string UnderTestingMessage = "which is still in testing under SpriteMaster - results may vary";
 	private static readonly (string UID, string Name, string Message)[] WarnFrameworks = new (string UID, string Name, string Message)[] {
-		(ModUID.ContentPatcherAnimations, "Content Patcher Animations", UnderTestingMessage),
-		(ModUID.DynamicGameAssets, "Dynamic Game Assets", UnderTestingMessage),
+		(ModUid.ContentPatcherAnimations, "Content Patcher Animations", UnderTestingMessage),
+		(ModUid.DynamicGameAssets, "Dynamic Game Assets", UnderTestingMessage),
 	};
 
 	[MethodImpl(Runtime.MethodImpl.RunOnce)]
@@ -265,24 +264,22 @@ public sealed class SpriteMaster : Mod {
 		var frameworkedMods = new Dictionary<string, List<IModInfo>>();
 
 		foreach (var mod in Helper.ModRegistry.GetAll()) {
-			if (mod is null) {
-				continue;
-			}
 			var manifest = mod.Manifest;
 
-			if (manifest is null) {
-				continue;
-			}
-
 			foreach (var framework in WarnFrameworks) {
-				if (manifest.Dependencies.AnyF(d => d.UniqueID == framework.UID) || manifest.ContentPackFor?.UniqueID == framework.UID) {
-					if (!frameworkedMods.TryGetValue(framework.UID, out var list)) {
-						list = new();
-						frameworkedMods.Add(framework.UID, list);
-					}
-					list.Add(mod);
-					break;
+				if (
+					!manifest.Dependencies.AnyF(d => d.UniqueID == framework.UID) &&
+					manifest.ContentPackFor?.UniqueID != framework.UID
+				) {
+					continue;
 				}
+
+				if (!frameworkedMods.TryGetValue(framework.UID, out var list)) {
+					list = new List<IModInfo>();
+					frameworkedMods.Add(framework.UID, list);
+				}
+				list.Add(mod);
+				break;
 			}
 		}
 
@@ -348,7 +345,7 @@ public sealed class SpriteMaster : Mod {
 
 	// SMAPI/CP won't do this, so we do. Purge the cached textures for the previous season on a season change.
 	private static void OnDayStarted(object? _, DayStartedEventArgs _1) {
-		Harmonize.Patches.Game.Snow.PopulateDebrisWeatherArray();
+		Snow.PopulateDebrisWeatherArray();
 
 		// Do a full GC at the start of each day
 		Garbage.Collect(compact: true, blocking: true, background: false);

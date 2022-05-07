@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Colors;
 
-readonly struct ColorSpace {
+internal readonly struct ColorSpace {
 	internal readonly struct Double3 {
 		internal readonly double R;
 		internal readonly double G;
@@ -136,6 +136,7 @@ readonly struct ColorSpace {
 	[MethodImpl(Runtime.MethodImpl.RunOnce)]
 	internal ColorSpace(double r, double g, double b, CurveDelegateDouble linearize, CurveDelegateDouble delinearize) {
 		// Correct for precision error, just in case.
+		// ReSharper disable once CompareOfFloatsByEqualityOperator
 		if ((r + g + b) != 1.0) {
 			// Recalculate from the smallest two values, hoping to retain precision? My logic might be backwards.
 			if (r >= g && r >= b) {
@@ -159,22 +160,24 @@ readonly struct ColorSpace {
 		(LinearizeTable16, DelinearizeTable16) = InitializeTable<ushort>(LinearizeScalar, DelinearizeScalar, ushort.MaxValue + 1);
 	}
 
+#if false
 	// https://www.itu.int/dms_pubrec/itu-r/rec/bt/R-REC-BT.2020-2-201510-I!!PDF-E.pdf
-	//internal static readonly Lazy<ColorSpace> BT_2020 = new(() => new(r: 0.2627, g: 0.6780, b: 0.0593));
+	internal static readonly Lazy<ColorSpace> BT_2020 = new(() => new(r: 0.2627, g: 0.6780, b: 0.0593));
 
 	// https://www.itu.int/dms_pubrec/itu-r/rec/bt/R-REC-BT.2100-2-201807-I!!PDF-E.pdf
-	//internal static readonly Lazy<ColorSpace> BT_2100 = BT_2020; // Same Coefficients as BT.2020
+	internal static readonly Lazy<ColorSpace> BT_2100 = BT_2020; // Same Coefficients as BT.2020
 
 	// https://www.itu.int/dms_pubrec/itu-r/rec/bt/R-REC-BT.709-6-201506-I!!PDF-E.pdf
-	//internal static readonly Lazy<ColorSpace> BT_709 = new(() => new(r: 0.2126, g: 0.7152, b: 0.0722));
+	internal static readonly Lazy<ColorSpace> BT_709 = new(() => new(r: 0.2126, g: 0.7152, b: 0.0722));
 
-	//internal static readonly Lazy<ColorSpace> BT_709_Precise = new(() => new(r: 0.212655, g: 0.715158, b: 0.072187));
+	internal static readonly Lazy<ColorSpace> BT_709_Precise = new(() => new(r: 0.212655, g: 0.715158, b: 0.072187));
 
 	// https://www.itu.int/dms_pubrec/itu-r/rec/bt/R-REC-BT.601-7-201103-I!!PDF-E.pdf
-	//internal static readonly Lazy<ColorSpace> BT_601 = new(() => new(r: 0.299, g: 0.587, b: 0.114));
+	internal static readonly Lazy<ColorSpace> BT_601 = new(() => new(r: 0.299, g: 0.587, b: 0.114));
 
 	// https://www5.in.tum.de/lehre/vorlesungen/graphik/info/csc/COL_33.htm
-	//internal static readonly Lazy<ColorSpace> SMPTE_240M = new(() => new(r: 0.2122, g: 0.7013, b: 0.0865));
+	internal static readonly Lazy<ColorSpace> SMPTE_240M = new(() => new(r: 0.2122, g: 0.7013, b: 0.0865));
+#endif
 
 	// https://www.sis.se/api/document/preview/562720/
 	internal static readonly ColorSpace sRGB = new(

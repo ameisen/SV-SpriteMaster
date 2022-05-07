@@ -135,7 +135,7 @@ sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
 								break;
 							}
 
-							DrawState.PushedUpdateThisFrame = true;
+							DrawState.IsUpdatedThisFrame = true;
 							var start = watch.Elapsed;
 							InvokeTask(task);
 							var duration = watch.Elapsed - start;

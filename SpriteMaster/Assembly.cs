@@ -17,15 +17,16 @@ global using XTileSize = xTile.Dimensions.Size;
 using System;
 using System.Runtime.CompilerServices;
 using System.Security;
+// ReSharper disable StringLiteralTypo
 
 // https://stackoverflow.com/questions/24802222/performance-of-expression-trees#comment44537873_24802222
 [assembly: CLSCompliant(false)]
 [assembly: AllowPartiallyTrustedCallers]
 [assembly: SecurityTransparent]
-[assembly: InternalsVisibleToAttribute("xBRZ")]
-[assembly: InternalsVisibleToAttribute("Hashing")]
+[assembly: InternalsVisibleTo("xBRZ")]
+[assembly: InternalsVisibleTo("Hashing")]
 [assembly: SecurityRules(SecurityRuleSet.Level2, SkipVerificationInFullTrust = true)]
-[assembly: ChangeList("dccf0d4:0.14.0")]
+[assembly: ChangeList("cacc4e2:0.14.0-1-gcacc4e2")]
 [assembly: BuildComputerName("Palatinate")]
 [assembly: FullVersion("0.14.0.300")]
 // [assembly: SuppressUnmanagedCodeSecurity]
@@ -33,20 +34,20 @@ using System.Security;
 [module: CLSCompliant(false)]
 [module: SkipLocalsInit]
 
-[AttributeUsage(validOn: AttributeTargets.Assembly, AllowMultiple = false, Inherited = true)]
-sealed class ChangeListAttribute : Attribute {
+[AttributeUsage(validOn: AttributeTargets.Assembly)]
+internal sealed class ChangeListAttribute : Attribute {
 	internal readonly string Value;
 	internal ChangeListAttribute(string value) => Value = value;
 }
 
-[AttributeUsage(validOn: AttributeTargets.Assembly, AllowMultiple = false, Inherited = true)]
-sealed class BuildComputerNameAttribute : Attribute {
+[AttributeUsage(validOn: AttributeTargets.Assembly)]
+internal sealed class BuildComputerNameAttribute : Attribute {
 	internal readonly string Value;
 	internal BuildComputerNameAttribute(string value) => Value = value;
 }
 
-[AttributeUsage(validOn: AttributeTargets.Assembly, AllowMultiple = false, Inherited = true)]
-sealed class FullVersionAttribute : Attribute {
+[AttributeUsage(validOn: AttributeTargets.Assembly)]
+internal sealed class FullVersionAttribute : Attribute {
 	internal readonly string Value;
 	internal FullVersionAttribute(string value) => Value = value;
 }

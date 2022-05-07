@@ -13,9 +13,9 @@ namespace SpriteMaster;
 
 /// <summary>
 /// A wrapper during the resampling process that encapsulates the properties of the sprite itself
-/// <para>Warning: <seealso cref="SpriteInfo">SpriteInfo</seealso> holds a reference to the reference texture's data in its <seealso cref="SpriteInfo._ReferenceData">ReferenceData field</seealso>.</para>
+/// <para>Warning: <seealso cref="SpriteInfo">SpriteInfo</seealso> holds a reference to the reference texture's data in its <seealso cref="ReferenceDataInternal">ReferenceData field</seealso>.</para>
 /// </summary>
-sealed class SpriteInfo : IDisposable {
+internal sealed class SpriteInfo : IDisposable {
 	internal readonly XTexture2D Reference;
 	internal readonly Bounds Bounds;
 	internal Vector2I ReferenceSize => Reference.Extent();
@@ -27,11 +27,11 @@ sealed class SpriteInfo : IDisposable {
 	internal readonly bool IsPreview;
 	internal readonly Resample.Scaler Scaler;
 	internal readonly Resample.Scaler ScalerGradient;
-	internal readonly XGraphics.BlendState BlendState;
+	internal readonly BlendState BlendState;
 	internal readonly bool BlendEnabled;
 	internal readonly bool IsWater;
 	internal readonly bool IsFont;
-	private volatile bool _Broken = false;
+	private volatile bool Broken = false;
 
 	public override string ToString() => $"SpriteInfo[Name: '{Reference.Name}', ReferenceSize: {ReferenceSize}, Size: {Bounds}]";
 
@@ -42,33 +42,33 @@ sealed class SpriteInfo : IDisposable {
 				return _SpriteDataHash;
 			}
 
-			if (_ReferenceData is null) {
+			if (ReferenceDataInternal is null) {
 				return null;
 			}
 
-			var result = GetDataHash(_ReferenceData, Reference, Bounds, RawOffset, RawStride);
+			var result = GetDataHash(ReferenceDataInternal, Reference, Bounds, RawOffset, RawStride);
 			if (result.HasValue) {
 				_SpriteDataHash = result.Value;
 				return result;
 			}
 
-			_Broken = true;
-			_ReferenceData = null;
+			Broken = true;
+			ReferenceDataInternal = null;
 			return null;
 		}
 	}
-	private byte[]? _ReferenceData = null;
+	private byte[]? ReferenceDataInternal = null;
 	internal byte[]? ReferenceData {
-		get => _ReferenceData;
+		get => ReferenceDataInternal;
 		private set {
-			if (_Broken) {
+			if (Broken) {
 				return;
 			}
-			if (_ReferenceData == value) {
+			if (ReferenceDataInternal == value) {
 				return;
 			}
-			_ReferenceData = value;
-			if (_ReferenceData is null) {
+			ReferenceDataInternal = value;
+			if (ReferenceDataInternal is null) {
 				_SpriteDataHash = null;
 			}
 		}
@@ -101,8 +101,6 @@ sealed class SpriteInfo : IDisposable {
 			return hash;
 		}
 		catch (ArgumentOutOfRangeException) {
-			float realFormatSize = (float)reference.Format.SizeBytes(4) / 4.0f;
-
 			var errorBuilder = new StringBuilder();
 			errorBuilder.AppendLine("SpriteInfo.ReferenceData: arguments out of range");
 			errorBuilder.AppendLine($"Reference: {reference.NormalizedName()}");
@@ -122,8 +120,8 @@ sealed class SpriteInfo : IDisposable {
 	internal ulong Hash {
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		get {
-			if (_ReferenceData is null) {
-				throw new NullReferenceException(nameof(_ReferenceData));
+			if (ReferenceDataInternal is null) {
+				throw new NullReferenceException(nameof(ReferenceDataInternal));
 			}
 
 			ulong hash = _Hash;

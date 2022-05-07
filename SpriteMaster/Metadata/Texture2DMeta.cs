@@ -173,7 +173,7 @@ sealed class Texture2DMeta : IDisposable {
 	internal readonly Vector2I Size;
 	internal readonly WeakReference<XTexture2D> Owner;
 
-	internal InterlockedULong LastAccessFrame { get; private set; } = (ulong)DrawState.CurrentFrame;
+	internal InterlockedULong LastAccessFrame { get; private set; } = DrawState.CurrentFrame;
 	internal InterlockedULong Hash { get; private set; } = 0;
 
 	internal void IncrementRevision() => ++Revision;
