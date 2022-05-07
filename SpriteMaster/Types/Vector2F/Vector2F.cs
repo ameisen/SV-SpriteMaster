@@ -9,7 +9,7 @@ namespace SpriteMaster.Types;
 
 [DebuggerDisplay("[{X}, {Y}]")]
 [StructLayout(LayoutKind.Explicit, Pack = sizeof(float) * 2, Size = sizeof(float) * 2)]
-internal unsafe partial struct Vector2F : ILongHash {
+internal partial struct Vector2F : ILongHash {
 
 	internal static readonly Vector2F Zero = (0.0f, 0.0f);
 	internal static readonly Vector2F One = (1.0f, 1.0f);
@@ -18,9 +18,6 @@ internal unsafe partial struct Vector2F : ILongHash {
 
 	[FieldOffset(0)]
 	private NumericsVector2 NumericVector;
-
-	[FieldOffset(0)]
-	private fixed float Value[2];
 
 	internal float X {
 		[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -48,23 +45,6 @@ internal unsafe partial struct Vector2F : ILongHash {
 		set => Y = value;
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot), DebuggerStepThrough, DebuggerHidden()]
-	private static int CheckIndex(int index) {
-#if DEBUG
-		if (index < 0 || index >= 2) {
-			throw new IndexOutOfRangeException(nameof(index));
-		}
-#endif
-		return index;
-	}
-
-	internal float this[int index] {
-		[MethodImpl(Runtime.MethodImpl.Hot)]
-		readonly get => Value[CheckIndex(index)];
-		[MethodImpl(Runtime.MethodImpl.Hot)]
-		set => Value[CheckIndex(index)] = value;
-	}
-
 	internal readonly float Area => X * Y;
 
 	internal readonly bool IsEmpty => NumericVector.Equals(NumericsVector2.Zero);
@@ -73,10 +53,10 @@ internal unsafe partial struct Vector2F : ILongHash {
 	internal readonly float MaxOf => MathF.Max(X, Y);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Vector2F(float X, float Y) => NumericVector = new(X, Y);
+	internal Vector2F(float x, float y) => NumericVector = new(x, y);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static Vector2F From(float X, float Y) => new(X, Y);
+	internal static Vector2F From(float x, float y) => new(x, y);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal Vector2F(in (float X, float Y) vec) : this(vec.X, vec.Y) { }
@@ -91,7 +71,7 @@ internal unsafe partial struct Vector2F : ILongHash {
 	internal static Vector2F From(float value) => new(value);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Vector2F(in XVector2 Vector) : this(Vector.X, Vector.Y) { }
+	internal Vector2F(in XVector2 vector) : this(vector.X, vector.Y) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal Vector2F(Vector2F vec) : this(vec.NumericVector) { }

@@ -8,8 +8,8 @@ namespace SpriteMaster.Types;
 
 [CLSCompliant(false)]
 [DebuggerDisplay("[{X}, {Y}}")]
-[StructLayout(LayoutKind.Explicit, Pack = Alignment, Size = ByteSize)]
-internal unsafe partial struct Vector2I :
+[StructLayout(LayoutKind.Sequential, Pack = Alignment, Size = ByteSize)]
+internal partial struct Vector2I :
 	ILongHash {
 	internal const int ByteSize = sizeof(ulong);
 	internal const int Alignment = sizeof(ulong);
@@ -22,16 +22,23 @@ internal unsafe partial struct Vector2I :
 	internal static readonly Vector2I MinusOne = (-1, -1);
 	internal static readonly Vector2I Empty = Zero;
 
-	[FieldOffset(0)]
-	private fixed int Value[2];
-
-	[FieldOffset(0)]
 	internal ulong Packed;
 
-	[FieldOffset(0)]
-	internal int X;
-	[FieldOffset(sizeof(int))]
-	internal int Y;
+	[StructLayout(LayoutKind.Sequential, Pack = Alignment, Size = ByteSize)]
+	private struct PackedInt {
+		internal int X;
+		internal int Y;
+	}
+
+	internal int X {
+		readonly get => Unsafe.As<ulong, PackedInt>(ref Unsafe.AsRef(in Packed)).X;
+		set => Unsafe.As<ulong, PackedInt>(ref Packed).X = value;
+	}
+
+	internal int Y {
+		readonly get => Unsafe.As<ulong, PackedInt>(ref Unsafe.AsRef(in Packed)).Y;
+		set => Unsafe.As<ulong, PackedInt>(ref Packed).Y = value;
+	}
 
 	internal int Width {
 		[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -44,23 +51,6 @@ internal unsafe partial struct Vector2I :
 		readonly get => Y;
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		set => Y = value;
-	}
-
-	[MethodImpl(Runtime.MethodImpl.Hot), DebuggerStepThrough, DebuggerHidden()]
-	private static int CheckIndex(int index) {
-#if DEBUG
-		if (index < 0 || index >= 2) {
-			throw new IndexOutOfRangeException(nameof(index));
-		}
-#endif
-		return index;
-	}
-
-	internal int this[int index] {
-		[MethodImpl(Runtime.MethodImpl.Hot)]
-		readonly get => Value[CheckIndex(index)];
-		[MethodImpl(Runtime.MethodImpl.Hot)]
-		set => Value[CheckIndex(index)] = value;
 	}
 
 	internal readonly int Area => X * Y;
@@ -76,15 +66,15 @@ internal unsafe partial struct Vector2I :
 	internal readonly float Length => MathF.Sqrt(LengthSquared);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Vector2I(ulong packed) : this() => this.Packed = packed;
+	internal Vector2I(ulong packed) : this() => Packed = packed;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static Vector2I From(ulong packed) => new(packed: packed);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal Vector2I(int x, int y) : this() {
-		this.X = x;
-		this.Y = y;
+		X = x;
+		Y = y;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]

@@ -101,7 +101,7 @@ internal abstract class Scene : IDisposable {
 		Vector2I shift = Vector2I.Zero;
 		if (destination.Extent.MaxOf > TileSizeRendered) {
 			var centroid = destination.Center;
-			var end = destination.Offset + destination.Extent;
+			var end = destination.End;
 			var difference = end - centroid;
 			difference /= TileSizeRendered;
 			difference *= TileSizeRendered;

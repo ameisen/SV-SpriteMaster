@@ -23,16 +23,16 @@ internal partial struct Bounds :
 	};
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly bool Equals(Bounds other) => Offset == other.Offset && Extent == other.Extent;
+	public readonly bool Equals(Bounds other) => (Offset == other.Offset) & (Extent == other.Extent);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly bool Equals(Bounds? other) => other.HasValue && Offset == other.Value.Offset && Extent == other.Value.Extent;
+	public readonly bool Equals(Bounds? other) => other.HasValue && ((Offset == other.Value.Offset) & (Extent == other.Value.Extent));
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly bool Equals(in Bounds other) => Offset == other.Offset && Extent == other.Extent;
+	internal readonly bool Equals(in Bounds other) => (Offset == other.Offset) & (Extent == other.Extent);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly bool Equals(in Bounds? other) => other.HasValue && Offset == other.Value.Offset && Extent == other.Value.Extent;
+	internal readonly bool Equals(in Bounds? other) => other.HasValue && ((Offset == other.Value.Offset) & (Extent == other.Value.Extent));
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public readonly bool Equals(DrawingRectangle other) => Equals((Bounds)other);
