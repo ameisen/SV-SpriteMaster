@@ -180,5 +180,5 @@ internal unsafe partial struct Vector2I :
 	public readonly override int GetHashCode() => (int)Hashing.Combine(X.GetHashCode(), Y.GetHashCode());
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	ulong ILongHash.GetLongHashCode() => ((uint)X.GetHashCode() << 32) | (uint)Y.GetHashCode();
+	ulong ILongHash.GetLongHashCode() => ((ulong)X.GetHashCode() << 32) | (uint)Y.GetHashCode();
 }

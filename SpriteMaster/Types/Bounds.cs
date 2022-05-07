@@ -257,7 +257,7 @@ internal partial struct Bounds :
 	public readonly override int GetHashCode() => (int)Hashing.Combine(Offset.GetHashCode(), Extent.GetHashCode());
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	ulong ILongHash.GetLongHashCode() => ((uint)Offset.GetHashCode() << 32) | (uint)Extent.GetHashCode();
+	ulong ILongHash.GetLongHashCode() => ((ulong)Offset.GetHashCode() << 32) | (uint)Extent.GetHashCode();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal readonly Bounds ClampTo(in Bounds clamp) {
