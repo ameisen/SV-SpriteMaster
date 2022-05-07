@@ -12,7 +12,7 @@ internal static class GLTexture {
 	private static readonly Type TextureType = typeof(Texture);
 	private static readonly Type Texture2DType = typeof(XTexture2D);
 	private static readonly Type? SurfaceTypeType = Texture2DType.GetNestedType("SurfaceType", BindingFlags.NonPublic);
-	private static readonly Enum? SwapChainRenderTarget = SurfaceTypeType is null ? null : System.Enum.Parse(SurfaceTypeType, "SwapChainRenderTarget") as Enum;
+	private static readonly Enum? SwapChainRenderTarget = SurfaceTypeType is null ? null : Enum.Parse(SurfaceTypeType, "SwapChainRenderTarget") as Enum;
 
 	private static readonly Func<Texture, int>? GetGLTexture = TextureType.GetFieldGetter<Texture, int>("glTexture");
 	private static readonly Action<Texture, int>? SetGLTexture = TextureType.GetFieldSetter<Texture, int>("glTexture");

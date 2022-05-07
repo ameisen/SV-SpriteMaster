@@ -98,9 +98,9 @@ internal struct Color16 : IEquatable<Color16>, IEquatable<ulong>, ILongHash {
 	internal readonly bool Equals(Color16 other) => this == other;
 	internal readonly bool Equals(ulong other) => this == (Color16)other;
 
-	readonly bool IEquatable<Color16>.Equals(Color16 other) => this.Equals(other);
+	readonly bool IEquatable<Color16>.Equals(Color16 other) => Equals(other);
 
-	readonly bool IEquatable<ulong>.Equals(ulong other) => this.Equals(other);
+	readonly bool IEquatable<ulong>.Equals(ulong other) => Equals(other);
 
 	public static bool operator ==(Color16 lhs, Color16 rhs) => lhs.Packed == rhs.Packed;
 	public static bool operator !=(Color16 lhs, Color16 rhs) => lhs.Packed != rhs.Packed;

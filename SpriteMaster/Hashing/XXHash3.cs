@@ -52,10 +52,10 @@ internal partial class Hashing {
 			}
 		}
 
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(MethodImpl.Hot)]
 		internal static ulong Hash64(ReadOnlySpan<byte> data) => Hash64(data, data.Length);
 
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(MethodImpl.Hot)]
 		internal static ulong Hash64(ReadOnlySpan<byte> data, int length) {
 			if (length <= 16) {
 				return xxh3_0to16_64(data, length, SSH3_SECRET);
@@ -71,14 +71,14 @@ internal partial class Hashing {
 			}
 		}
 
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(MethodImpl.Hot)]
 		private static ulong xxh3_0to16_64(ReadOnlySpan<byte> data, int length, byte* secret) {
 			if (length > 8) return xxh3_len_9to16_64(data, length, secret);
 			else if (length >= 4) return xxh3_len_4to8_64(data, length, secret);
 			else if (length > 0) return xxh3_len_1to3_64(data, length, secret);
 			else return xxh3_avalanche(read_le64(secret + (56)) ^ read_le64(secret + (64)));
 
-			[MethodImpl(Runtime.MethodImpl.Hot)]
+			[MethodImpl(MethodImpl.Hot)]
 			static ulong xxh3_len_9to16_64(ReadOnlySpan<byte> data, int length, byte* secret) {
 				ulong bitflip1 = (read_le64(secret + (24)) ^ read_le64(secret + (32)));
 				ulong bitflip2 = (read_le64(secret + (40)) ^ read_le64(secret + (48)));
@@ -89,7 +89,7 @@ internal partial class Hashing {
 				return xxh3_avalanche(acc);
 			}
 
-			[MethodImpl(Runtime.MethodImpl.Hot)]
+			[MethodImpl(MethodImpl.Hot)]
 			static ulong xxh3_len_4to8_64(ReadOnlySpan<byte> data, int length, byte* secret) {
 				uint input1 = read_le32(data);
 				uint input2 = read_le32(data[(length - 4)..]);
@@ -100,7 +100,7 @@ internal partial class Hashing {
 				return xxh3_rrmxmx(keyed, (ulong)length);
 			}
 
-			[MethodImpl(Runtime.MethodImpl.Hot)]
+			[MethodImpl(MethodImpl.Hot)]
 			static ulong xxh3_len_1to3_64(ReadOnlySpan<byte> data, int length, byte* secret) {
 				byte c1 = data[0];
 				byte c2 = data[length >> 1];
@@ -113,7 +113,7 @@ internal partial class Hashing {
 			}
 		}
 
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(MethodImpl.Hot)]
 		private static ulong xxh3_17to128_64(ReadOnlySpan<byte> data, int length, byte* secret) {
 			ulong acc = (ulong)length * XXH_PRIME64_1;
 
@@ -138,7 +138,7 @@ internal partial class Hashing {
 			return xxh3_avalanche(acc);
 		}
 
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(MethodImpl.Hot)]
 		private static ulong xxh3_129to240_64(ReadOnlySpan<byte> data, int length, byte* secret) {
 			ulong acc = (ulong)length * XXH_PRIME64_1;
 
@@ -158,7 +158,7 @@ internal partial class Hashing {
 			return xxh3_avalanche(acc);
 		}
 
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(MethodImpl.Hot)]
 		private static unsafe ulong xxh3_hashLong_64(ReadOnlySpan<byte> data, int length, byte* secret) {
 			int secretLength = XXH3_SECRET_ARRAY.Length;
 
@@ -265,7 +265,7 @@ internal partial class Hashing {
 			}
 		}
 
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(MethodImpl.Hot)]
 		private static void xxh3_accumulate_512_sse2(Span<ulong> acc, ReadOnlySpan<byte> data, byte* secret) {
 			//Span<Vector128<uint>> xacc = MemoryMarshal.Cast<ulong, Vector128<uint>>(acc);
 			//ReadOnlySpan<Vector128<uint>> xdata = MemoryMarshal.Cast<byte, Vector128<uint>>(data);
@@ -287,7 +287,7 @@ internal partial class Hashing {
 			//}
 		}
 
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(MethodImpl.Hot)]
 		private static void xxh3_accumulate_512_avx2(Span<ulong> acc, ReadOnlySpan<byte> data, byte* secret) {
 
 		}
@@ -306,12 +306,12 @@ internal partial class Hashing {
 			}
 		}
 
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(MethodImpl.Hot)]
 		private static void xxh3_scramble_acc_sse2(Span<ulong> acc, byte* secret) {
 
 		}
 
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(MethodImpl.Hot)]
 		private static void xxh3_scramble_acc_avx2(Span<ulong> acc, byte* secret) {
 		}
 
@@ -326,7 +326,7 @@ internal partial class Hashing {
 				return low ^ high;
 			}
 			else {
-				ulong high = System.Math.BigMul(lhs, rhs, out ulong low);
+				ulong high = Math.BigMul(lhs, rhs, out ulong low);
 				return low ^ high;
 			}
 		}

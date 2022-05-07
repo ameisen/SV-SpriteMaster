@@ -18,8 +18,8 @@ internal readonly struct TextureFormat {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal TextureFormat(SurfaceFormat surfaceFormat, CompressionFormat compressionFormat) {
-		this.SurfaceFormat = surfaceFormat;
-		this.CompressionFormat = compressionFormat;
+		SurfaceFormat = surfaceFormat;
+		CompressionFormat = compressionFormat;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]

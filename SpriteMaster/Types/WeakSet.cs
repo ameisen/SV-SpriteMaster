@@ -123,7 +123,7 @@ internal sealed class WeakSet<T> :
 	public IEnumerator<T> GetEnumerator() => Items.GetEnumerator();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => this.GetEnumerator();
+	System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
 
 	bool ISet<T>.Add(T item) => Add(item);
 

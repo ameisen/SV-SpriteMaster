@@ -277,7 +277,7 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 			return false;
 		}
 
-		var spriteHash = ManagedSpriteInstance.GetHash(initializer, initializer.TextureType);
+		var spriteHash = GetHash(initializer, initializer.TextureType);
 		if (spriteHash.HasValue && SuspendedSpriteCache.TryFetch(spriteHash.Value, out var instance)) {
 			var spriteMapHash = SpriteMap.SpriteHash(initializer.Reference, initializer.Bounds, initializer.ExpectedScale, initializer.IsPreview);
 			if (instance.Resurrect(initializer.Reference, spriteMapHash)) {
@@ -298,7 +298,7 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 			return false;
 		}
 
-		var spriteHash = ManagedSpriteInstance.GetHash(info, info.TextureType);
+		var spriteHash = GetHash(info, info.TextureType);
 		if (SuspendedSpriteCache.TryFetch(spriteHash, out var instance)) {
 			var spriteMapHash = SpriteMap.SpriteHash(info.Reference, info.Bounds, info.ExpectedScale, info.IsPreview);
 			if (instance.Resurrect(info.Reference, spriteMapHash)) {
@@ -680,7 +680,7 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 #endif
 		}
 
-		this.Scale = (Vector2F)texture.Dimensions / (Vector2F)OriginalSize;
+		Scale = (Vector2F)texture.Dimensions / (Vector2F)OriginalSize;
 
 		Thread.MemoryBarrier();
 		IsReadyInternal = true;
@@ -696,7 +696,7 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 			return;
 		}
 
-		this.LastReferencedFrame = DrawState.CurrentFrame;
+		LastReferencedFrame = DrawState.CurrentFrame;
 
 		lock (RecentAccessList) {
 			if (RecentAccessNode is not null) {

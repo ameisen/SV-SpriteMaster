@@ -108,7 +108,7 @@ internal struct Vector2B :
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Vector2B(byte packed) => this.Packed = packed;
+	internal Vector2B(byte packed) => Packed = packed;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static Vector2B From(byte packed) => new(packed: packed);
@@ -192,7 +192,7 @@ internal struct Vector2B :
 	public readonly bool Equals(Vector2B other) => Packed == other.Packed;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly bool Equals((bool, bool) other) => this.Equals((Vector2B)other);
+	public readonly bool Equals((bool, bool) other) => Equals((Vector2B)other);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public readonly bool Equals(bool other) => Packed == (other ? OneByte : ZeroByte);

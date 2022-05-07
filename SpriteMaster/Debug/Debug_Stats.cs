@@ -30,7 +30,7 @@ internal partial class Debug {
 		ManagedTexture2D.DumpStats(lines);
 
 		foreach (var line in lines) {
-			Debug.Info(line);
+			Info(line);
 		}
 	}
 }

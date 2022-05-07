@@ -402,11 +402,11 @@ internal sealed class Resampler {
 				}
 
 				if (premultiplyAlpha) {
-					Passes.PremultipliedAlpha.Apply(bitmapDataWide, scaledSize);
+					PremultipliedAlpha.Apply(bitmapDataWide, scaledSize);
 				}
 
 				if (gammaCorrect && currentGammaState == GammaState.Linear) {
-					Passes.GammaCorrection.Delinearize(bitmapDataWide, scaledSize);
+					GammaCorrection.Delinearize(bitmapDataWide, scaledSize);
 					currentGammaState = GammaState.Gamma;
 				}
 			}

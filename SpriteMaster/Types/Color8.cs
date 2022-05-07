@@ -113,9 +113,9 @@ internal partial struct Color8 : IEquatable<Color8>, IEquatable<uint>, ILongHash
 		return diffR <= threshold && diffG <= threshold && diffB <= threshold && diffA <= threshold;
 	}
 
-	readonly bool IEquatable<Color8>.Equals(Color8 other) => this.Equals(other);
+	readonly bool IEquatable<Color8>.Equals(Color8 other) => Equals(other);
 
-	readonly bool IEquatable<uint>.Equals(uint other) => this.Equals(other);
+	readonly bool IEquatable<uint>.Equals(uint other) => Equals(other);
 
 	public static bool operator ==(Color8 lhs, Color8 rhs) => lhs.Packed == rhs.Packed;
 	public static bool operator !=(Color8 lhs, Color8 rhs) => lhs.Packed != rhs.Packed;

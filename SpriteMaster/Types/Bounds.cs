@@ -35,7 +35,7 @@ internal partial struct Bounds :
 			}
 		}
 	}
-	internal readonly Vector2F ExtentF => new Vector2F(Extent);
+	internal readonly Vector2F ExtentF => new(Extent);
 	internal Vector2B Invert;
 
 	internal void ForceSetExtent(in Vector2I extent) => ExtentReal = extent;
@@ -265,7 +265,7 @@ internal partial struct Bounds :
 
 		// Validate that the bounds even overlap at all
 		if (source.Left >= clamp.Right || source.Right <= clamp.Left || source.Top >= clamp.Bottom || source.Bottom <= clamp.Top) {
-			return Bounds.Empty;
+			return Empty;
 		}
 
 		int leftDiff = clamp.Left - source.Left;
@@ -295,7 +295,7 @@ internal partial struct Bounds :
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal readonly bool ClampToChecked(in Bounds clamp, out Bounds clamped) {
-		Bounds result = this.ClampTo(clamp);
+		Bounds result = ClampTo(clamp);
 		if (result != this) {
 			clamped = result;
 			return false;

@@ -104,7 +104,7 @@ internal static partial class Debug {
 					continue;
 				}
 
-				bool last = object.ReferenceEquals(list.Value.LastF(), sprite);
+				bool last = ReferenceEquals(list.Value.LastF(), sprite);
 				var spriteDisposed = sprite.Texture.IsDisposed;
 				dumpBuilder.AppendLine($"│ {(last ? '└' : '├')} sprite: {sprite.OriginalSourceRectangle} :: {sprite.MemorySize.AsDataSize()} {DisposedString(spriteDisposed)}");
 				totalSize += spriteDisposed ? 0 : sprite.MemorySize;
