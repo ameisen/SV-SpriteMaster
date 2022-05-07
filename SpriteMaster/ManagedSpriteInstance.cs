@@ -7,7 +7,6 @@ using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
 using SpriteMaster.Resample;
 using SpriteMaster.Types;
-using SpriteMaster.Types.Volatile;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -244,8 +243,10 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 		return GetTimer(isTextureCached, async);
 	}
 
+#if DEBUG
 	private static TimeSpan MeanTimeSpan = TimeSpan.Zero;
 	private static int TimeSpanSamples = 0;
+#endif
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ManagedSpriteInstance? Fetch(XTexture2D texture, in Bounds source, uint expectedScale) {
@@ -516,7 +517,13 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 	/// Should only be <seealso langword="null"/> after the instance is <seealso cref="ManagedSpriteInstance.Dispose">disposed</seealso>
 	/// </summary>
 	internal WeakInstanceListNode? RecentAccessNode = null;
-	internal VolatileBool IsDisposed { get; private set; } = false;
+
+	private volatile bool IsDisposedInternal = false;
+
+	internal bool IsDisposed {
+		get => IsDisposedInternal;
+		private set => IsDisposedInternal = value;
+	}
 
 	internal static long TotalMemoryUsage = 0U;
 
