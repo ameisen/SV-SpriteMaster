@@ -3,9 +3,9 @@ using System.Runtime.InteropServices;
 
 namespace SpriteMaster.Types;
 
-[DebuggerDisplay("[{bytes[0]}, {bytes[1]}, {bytes[2]}, {bytes[3]}]")]
-[DebuggerDisplay("[{shorts[0]}, {shorts[1]}]")]
-[DebuggerDisplay("{packed}")]
+[DebuggerDisplay("[{Bytes[0]}, {Bytes[1]}, {Bytes[2]}, {Bytes[3]}]")]
+[DebuggerDisplay("[{Shorts[0]}, {Shorts[1]}]")]
+[DebuggerDisplay("{Packed}")]
 [StructLayout(LayoutKind.Explicit, Pack = sizeof(uint), Size = sizeof(uint))]
 internal unsafe struct PackedUInt {
 	[FieldOffset(0)]
@@ -19,8 +19,8 @@ internal unsafe struct PackedUInt {
 
 	internal PackedUInt(byte b0, byte b1, byte b2, byte b3) : this() {
 		Bytes[0] = b0;
-		Bytes[1] = b2;
-		Bytes[2] = b3;
+		Bytes[1] = b1;
+		Bytes[2] = b2;
 		Bytes[3] = b3;
 	}
 
