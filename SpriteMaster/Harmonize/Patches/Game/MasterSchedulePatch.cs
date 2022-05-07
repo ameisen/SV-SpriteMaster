@@ -7,7 +7,7 @@ namespace SpriteMaster.Harmonize.Patches.Game;
 
 using MasterSchedule = Dictionary<int, SchedulePathDescription>;
 
-class MasterSchedulePatch {
+internal class MasterSchedulePatch {
 	private static readonly ThreadLocal<HashSet<string?>> MasterScheduleSet = new();
 	private static readonly ThreadLocal<int> MasterScheduleDepth = new();
 

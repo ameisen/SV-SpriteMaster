@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 namespace SpriteMaster.Types;
 
 [StructLayout(LayoutKind.Sequential, Pack = Vector2I.Alignment)]
-partial struct Bounds :
+internal partial struct Bounds :
 	ILongHash,
 	ICloneable {
 	internal static readonly Bounds Empty = new(0, 0, 0, 0);

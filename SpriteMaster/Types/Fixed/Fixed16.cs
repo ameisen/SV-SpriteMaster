@@ -10,7 +10,7 @@ namespace SpriteMaster.Types.Fixed;
 
 [DebuggerDisplay("{InternalValue}")]
 [StructLayout(LayoutKind.Explicit, Pack = sizeof(ushort), Size = sizeof(ushort))]
-struct Fixed16 : IEquatable<Fixed16>, IEquatable<ushort>, ILongHash {
+internal struct Fixed16 : IEquatable<Fixed16>, IEquatable<ushort>, ILongHash {
 	internal static readonly Fixed16 Zero = new((ushort)0);
 	internal static readonly Fixed16 Max = new(ushort.MaxValue);
 

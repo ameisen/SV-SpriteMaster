@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Extensions;
 
-static partial class ReflectionExt {
+internal static partial class ReflectionExt {
 	private const BindingFlags DefaultLookup = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public;
 	private const BindingFlags AllInstanceBinding = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 	private const BindingFlags AllNonFlatBinding = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;

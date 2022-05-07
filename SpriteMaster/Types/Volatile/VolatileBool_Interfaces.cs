@@ -3,7 +3,7 @@ using System;
 
 namespace SpriteMaster.Types.Volatile;
 
-partial struct VolatileBool :
+internal partial struct VolatileBool :
 	IComparable,
 	IComparable<VolatileBool?>,
 	IComparable<VolatileBool>,

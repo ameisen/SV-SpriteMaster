@@ -1,6 +1,6 @@
 ﻿namespace SpriteMaster.Colors;
 
-static class ColorConstant {
+internal static class ColorConstant {
 	internal static class Shift {
 		internal const int Alpha = 24;
 		internal const int Red = 0;

@@ -4,7 +4,7 @@ using System.Diagnostics;
 namespace SpriteMaster.Types.DebugViews;
 
 // https://github.com/dotnet/runtime/blob/4019e83878a81465f6e42e8502b53bc5d1752f81/src/libraries/System.Private.CoreLib/src/System/Collections/Generic/ICollectionDebugView.cs
-sealed class ICollectionDebugView<T> {
+internal sealed class ICollectionDebugView<T> {
 	private readonly ICollection<T> Collection;
 
 	internal ICollectionDebugView(ICollection<T> collection!!) => Collection = collection;

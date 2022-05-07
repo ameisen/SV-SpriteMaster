@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Metadata;
 
-static class Metadata {
+internal static class Metadata {
 	private static readonly ConditionalWeakTable<XTexture2D, Texture2DMeta> Texture2DMetaTable = new();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]

@@ -1,6 +1,6 @@
 ﻿namespace SpriteMaster.Resample.Scalers.xBRZ;
 
-sealed class ScalerInfo : IScalerInfo {
+internal sealed class ScalerInfo : IScalerInfo {
 	internal static readonly ScalerInfo Instance = new();
 
 	public Resample.Scaler Scaler => Resample.Scaler.xBRZ;

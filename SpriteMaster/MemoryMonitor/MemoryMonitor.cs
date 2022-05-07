@@ -7,7 +7,7 @@ using System.Threading;
 
 namespace SpriteMaster;
 
-class MemoryMonitor {
+internal class MemoryMonitor {
 	private readonly Thread MemoryPressureThread;
 	private readonly Thread GarbageCollectThread;
 	private readonly object CollectLock = new();

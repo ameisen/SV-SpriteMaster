@@ -5,7 +5,7 @@ using System.Reflection;
 
 namespace SpriteMaster.Harmonize.Patches.SMAPI;
 
-static class PAssetDataForImage {
+internal static class PAssetDataForImage {
 	private const int MaxStackSize = 256;
 
 	private static readonly Assembly? ReferenceAssembly = typeof(StardewModdingAPI.Framework.ModLoading.RewriteFacades.AccessToolsFacade)?.Assembly;

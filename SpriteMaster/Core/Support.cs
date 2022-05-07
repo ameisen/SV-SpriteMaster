@@ -8,7 +8,7 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Core;
 
-static partial class OnDrawImpl {
+internal static partial class OnDrawImpl {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static bool GetIsSliced(in Bounds bounds, XTexture2D reference, [NotNullWhen(true)] out Config.TextureRef? result) {
 		return reference.Meta().CheckSliced(in bounds, out result);

@@ -7,7 +7,7 @@ namespace SpriteMaster.Types;
 [DebuggerDisplay("[{shorts[0]}, {shorts[1]}]")]
 [DebuggerDisplay("{packed}")]
 [StructLayout(LayoutKind.Explicit, Pack = sizeof(uint), Size = sizeof(uint))]
-unsafe struct PackedUInt {
+internal unsafe struct PackedUInt {
 	[FieldOffset(0)]
 	internal fixed byte Bytes[4];
 

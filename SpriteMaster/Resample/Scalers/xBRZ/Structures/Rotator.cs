@@ -5,7 +5,7 @@ using static SpriteMaster.Extensions.Collections;
 
 namespace SpriteMaster.Resample.Scalers.xBRZ.Structures;
 
-static class Rotator {
+internal static class Rotator {
 	internal const int MaxRotations = 4; // Number of 90 degree rotations
 	internal const int MaxPositions = 9;
 

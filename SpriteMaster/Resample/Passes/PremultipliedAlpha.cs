@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Resample.Passes;
 
-static class PremultipliedAlpha {
+internal static class PremultipliedAlpha {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void Apply(Span<Color16> data, in Vector2I size) {
 		foreach (ref Color16 color in data) {

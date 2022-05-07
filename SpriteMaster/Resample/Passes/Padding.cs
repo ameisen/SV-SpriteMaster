@@ -6,7 +6,7 @@ using System;
 
 namespace SpriteMaster.Resample.Passes;
 
-static class Padding {
+internal static class Padding {
 	private static readonly Color16 padConstant = Color16.Zero;
 
 	private record struct PaddingParameters(Vector2I PaddedSize, int ExpectedPadding, Vector2B HasPaddingX, Vector2B HasPaddingY, Vector2B SolidEdgeX, Vector2B SolidEdgeY);

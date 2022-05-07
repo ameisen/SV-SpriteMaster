@@ -7,7 +7,7 @@ using static SpriteMaster.Runtime;
 
 namespace SpriteMaster.Extensions;
 
-static class Collections {
+internal static class Collections {
 	#region IsBlank
 	[MethodImpl(MethodImpl.Hot)]
 	internal static bool IsBlank<T>(this IEnumerable<T>? enumerable) => enumerable is null || !enumerable.Any();

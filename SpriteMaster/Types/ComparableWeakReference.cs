@@ -9,7 +9,7 @@ using System.Security;
 namespace SpriteMaster.Types;
 
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members")]
-sealed class ComparableWeakReference<T> :
+internal sealed class ComparableWeakReference<T> :
 	ISerializable,
 	ILongHash,
 	IEquatable<WeakReference<T>>,

@@ -16,7 +16,7 @@ using static SpriteMaster.Harmonize.Harmonize;
 
 namespace SpriteMaster.Harmonize.Patches;
 
-static class TextureCache {
+internal static class TextureCache {
 	private const int MaxDequeItems = 20;
 	private static readonly Deque<XTexture2D> TextureCacheDeque = new(MaxDequeItems);
 	private static readonly ConcurrentDictionary<string, WeakReference<XTexture2D>> TextureCacheTable = new();

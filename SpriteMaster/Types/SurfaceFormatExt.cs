@@ -2,7 +2,8 @@
 using System;
 
 namespace SpriteMaster.Types;
-static class SurfaceFormatExt {
+
+internal static class SurfaceFormatExt {
 	internal static bool HasSurfaceFormat(string name) {
 		var EnumType = typeof(SurfaceFormat);
 		var Enums = EnumType.GetFields();

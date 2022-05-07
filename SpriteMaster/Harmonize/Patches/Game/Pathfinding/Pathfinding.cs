@@ -15,7 +15,7 @@ namespace SpriteMaster.Harmonize.Patches.Game.Pathfinding;
 
 using DoorPair = KeyValuePair<XNA.Point, string>;
 
-static partial class Pathfinding {
+internal static partial class Pathfinding {
 	private static readonly Action<List<List<string>>>? RoutesFromLocationToLocationSet = typeof(NPC).GetFieldSetter<List<List<string>>>("routesFromLocationToLocation");
 	private static readonly Dictionary<string, Dictionary<string, List<string>>> FasterRouteMap = new();
 

@@ -2,7 +2,7 @@
 
 namespace SpriteMaster.Configuration.Preview;
 
-abstract class MetaTexture : IDisposable {
+internal abstract class MetaTexture : IDisposable {
 	internal readonly XTexture2D Texture;
 
 	protected MetaTexture(XTexture2D? texture) {

@@ -1,4 +1,4 @@
 ﻿namespace SpriteMaster.Types;
 
-unsafe interface CompositePrimitive<T> where T : unmanaged {
+internal unsafe interface CompositePrimitive<T> where T : unmanaged {
 }

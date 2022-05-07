@@ -11,7 +11,7 @@ using static SpriteMaster.Colors.ColorHelpers;
 namespace SpriteMaster.Resample;
 
 // Temporary code lifted from the PPSSPP project, deposterize.h
-static class Deposterize {
+internal static class Deposterize {
 	private static readonly ColorSpace CurrentColorSpace = ColorSpace.sRGB_Precise;
 
 	private class DeposterizeContext<T> where T : unmanaged {

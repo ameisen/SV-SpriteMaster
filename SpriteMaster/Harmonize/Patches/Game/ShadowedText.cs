@@ -7,7 +7,7 @@ using System.Text;
 
 namespace SpriteMaster.Harmonize.Patches.Game;
 
-static class ShadowedText {
+internal static class ShadowedText {
 	private static bool LongWords => Game1.content.GetCurrentLanguage() switch {
 		LocalizedContentManager.LanguageCode.ru => true,
 		LocalizedContentManager.LanguageCode.de => true,

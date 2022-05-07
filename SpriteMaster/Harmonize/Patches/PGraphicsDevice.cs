@@ -6,7 +6,7 @@ namespace SpriteMaster.Harmonize.Patches;
 
 [SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
 [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Harmony")]
-static class PGraphicsDevice {
+internal static class PGraphicsDevice {
 	#region Present
 
 	//[Harmonize("Present", fixation: Harmonize.Fixation.Postfix, priority: PriorityLevel.Last, critical: false)]

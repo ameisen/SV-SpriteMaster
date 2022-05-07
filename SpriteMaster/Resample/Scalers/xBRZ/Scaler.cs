@@ -13,7 +13,7 @@ namespace SpriteMaster.Resample.Scalers.xBRZ;
 
 using PreprocessType = Byte;
 
-sealed partial class Scaler {
+internal sealed partial class Scaler {
 	private const uint MinScale = 2;
 	private const uint MaxScale = Config.MaxScale;
 

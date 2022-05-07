@@ -2,7 +2,7 @@
 
 namespace SpriteMaster.Types;
 
-partial struct Vector2I {
+internal partial struct Vector2I {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static Vector2I operator -(Vector2I value) => new(
 		-value.X,

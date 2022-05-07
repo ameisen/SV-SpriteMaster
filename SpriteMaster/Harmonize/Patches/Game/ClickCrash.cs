@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace SpriteMaster.Harmonize.Patches.Game;
 
-static class ClickCrash {
+internal static class ClickCrash {
 	private const BindingFlags AllMethods = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.FlattenHierarchy;
 
 	private static bool HasWindow => StardewValley.Game1.game1.Window is not null;

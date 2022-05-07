@@ -6,7 +6,7 @@ namespace SpriteMaster.Resample.Scalers.xBRZ.Blend;
 
 using PreprocessType = Byte;
 
-static class BlendInfo {
+internal static class BlendInfo {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static BlendType GetTopR(this PreprocessType b) => ((PreprocessType)(b >> 2) & 0x3).BlendType();
 	[MethodImpl(Runtime.MethodImpl.Hot)]

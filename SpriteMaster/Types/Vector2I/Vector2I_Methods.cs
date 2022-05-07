@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Types;
 
-partial struct Vector2I {
+internal partial struct Vector2I {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal readonly Vector2I Min() => new(Math.Min(X, Y));
 

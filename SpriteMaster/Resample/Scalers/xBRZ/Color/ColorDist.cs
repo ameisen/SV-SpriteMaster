@@ -5,7 +5,7 @@ using static SpriteMaster.Colors.ColorHelpers;
 
 namespace SpriteMaster.Resample.Scalers.xBRZ.Color;
 
-class ColorDist {
+internal class ColorDist {
 	protected readonly Config Configuration;
 	private readonly YccConfig YccConfiguration;
 

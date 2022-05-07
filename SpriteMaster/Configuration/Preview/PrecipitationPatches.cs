@@ -4,7 +4,7 @@ using SMHarmonize = SpriteMaster.Harmonize;
 
 namespace SpriteMaster.Configuration.Preview;
 
-static class PrecipitationPatches {
+internal static class PrecipitationPatches {
 	private static PrecipitationType Precipitation => PrecipitationOverride ?? Scene.Current?.Precipitation ?? PrecipitationType.None;
 	internal static PrecipitationType? PrecipitationOverride = null;
 

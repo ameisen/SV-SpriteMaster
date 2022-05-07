@@ -7,7 +7,7 @@ using System.Diagnostics;
 
 namespace SpriteMaster;
 
-partial class Debug {
+internal partial class Debug {
 	internal static void DumpAllStats() {
 		var currentProcess = Process.GetCurrentProcess();
 		var workingSet = currentProcess.WorkingSet64;

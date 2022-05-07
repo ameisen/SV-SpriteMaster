@@ -14,7 +14,7 @@ using System.Collections.Generic;
 
 namespace SpriteMaster.Harmonize.Patches.Game;
 
-static class Snow {
+internal static class Snow {
 	private static Dictionary<Bounds, List<SnowWeatherDebris>> MappedWeatherDebris = new();
 	private static List<WeatherDebris> AllWeatherDebris = new();
 

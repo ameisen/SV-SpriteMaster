@@ -10,7 +10,7 @@ using static SpriteMaster.Runtime;
 
 namespace SpriteMaster;
 
-static partial class Debug {
+internal static partial class Debug {
 	[MethodImpl(MethodImpl.IgnoreOptimization)]
 	internal static void DumpMemory() {
 		static string DisposedString(bool disposed) => disposed ? "[DISPOSED]" : string.Empty;

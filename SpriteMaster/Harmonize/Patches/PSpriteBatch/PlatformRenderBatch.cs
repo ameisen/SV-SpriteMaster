@@ -13,7 +13,7 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch;
 
 [SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
 [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Harmony")]
-static class PlatformRenderBatch {
+internal static class PlatformRenderBatch {
 	private static SamplerState GetSamplerState(TextureAddressMode addressMode, TextureFilter filter) {
 		switch (addressMode) {
 			case TextureAddressMode.Wrap:

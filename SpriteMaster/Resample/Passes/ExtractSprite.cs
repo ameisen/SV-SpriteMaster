@@ -4,7 +4,7 @@ using System;
 
 namespace SpriteMaster.Resample.Passes;
 
-static class ExtractSprite {
+internal static class ExtractSprite {
 	internal static Span<Color8> Extract(ReadOnlySpan<Color8> data, in Bounds textureBounds, in Bounds spriteBounds, int stride, int block, out Vector2I newExtent) {
 		//if ((bounds.Width % block) != 0 || (bounds.Height % block) != 0) {
 		//	throw new ArgumentOutOfRangeException($"Bounds {bounds} are not multiples of block {block}");

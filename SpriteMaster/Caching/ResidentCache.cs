@@ -9,7 +9,7 @@ namespace SpriteMaster.Caching;
 /// Used to cache original texture data so it doesn't need to perform blocking fetches as often
 /// </summary>
 [SuppressUnmanagedCodeSecurity]
-static class ResidentCache {
+internal static class ResidentCache {
 	internal static bool Enabled => Config.MemoryCache.Enabled;
 
 	private static readonly SharedLock CacheLock = new();

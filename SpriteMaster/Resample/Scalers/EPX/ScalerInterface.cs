@@ -3,7 +3,7 @@ using System;
 
 namespace SpriteMaster.Resample.Scalers.EPX;
 
-sealed partial class Scaler {
+internal sealed partial class Scaler {
 	internal sealed class ScalerInterface : IScaler {
 		internal static readonly ScalerInterface Instance = new();
 

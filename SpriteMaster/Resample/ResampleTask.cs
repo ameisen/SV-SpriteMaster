@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace SpriteMaster.Resample;
 
-static class ResampleTask {
+internal static class ResampleTask {
 	private static readonly TaskFactory<ManagedSpriteInstance?> Factory = new(ThreadedTaskScheduler.Instance);
 
 	private static ManagedSpriteInstance? Resample(object? parametersObj) => ResampleFunction((TaskParameters)parametersObj!);

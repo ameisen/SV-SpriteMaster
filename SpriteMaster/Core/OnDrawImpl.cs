@@ -9,7 +9,7 @@ namespace SpriteMaster.Core;
 
 [SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
 [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Harmony")]
-static partial class OnDrawImpl {
+internal static partial class OnDrawImpl {
 	private const bool Continue = true;
 	private const bool Stop = false;
 

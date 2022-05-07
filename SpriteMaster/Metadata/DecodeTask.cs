@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace SpriteMaster.Resample;
 
-static class DecodeTask {
+internal static class DecodeTask {
 	private static readonly TaskFactory Factory = new(ThreadedTaskScheduler.Instance);
 
 	private static void Decode(object? metadata) => DecodeFunction(metadata! as Texture2DMeta);

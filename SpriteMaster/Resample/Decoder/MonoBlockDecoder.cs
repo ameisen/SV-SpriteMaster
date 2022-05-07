@@ -6,7 +6,7 @@ using System.Reflection;
 
 namespace SpriteMaster.Resample.Decoder;
 
-static class MonoBlockDecoder {
+internal static class MonoBlockDecoder {
 	private static readonly Type? DxtUtil = typeof(XTexture2D).Assembly.GetType("Microsoft.Xna.Framework.Graphics.DxtUtil");
 
 	internal delegate byte[] DecompressDelegateArray(byte[] data, int width, int height);

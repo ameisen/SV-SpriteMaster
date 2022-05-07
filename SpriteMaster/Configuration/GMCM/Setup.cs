@@ -12,7 +12,7 @@ using SMMetadata = SpriteMaster.Metadata.Metadata;
 
 namespace SpriteMaster.Configuration.GMCM;
 
-static class Setup {
+internal static class Setup {
 	private const int DefaultPreviewHeight = 400;
 	internal const bool LockPreview = false;
 	private static int PreviewHeight => Math.Min(DefaultPreviewHeight, DrawState.Device.ScissorRectangle.Height - 100);

@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Types;
 
-partial struct Vector2F :
+internal partial struct Vector2F :
 	IEquatable<Vector2F>,
 	IEquatable<(float, float)>,
 	IEquatable<XVector2> {

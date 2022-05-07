@@ -3,7 +3,7 @@ using System;
 
 namespace SpriteMaster.Resample.Scalers.xBRZ;
 
-sealed partial class Scaler {
+internal sealed partial class Scaler {
 	internal sealed class ScalerInterface : IScaler {
 		internal static readonly ScalerInterface Instance = new();
 

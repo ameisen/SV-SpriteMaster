@@ -7,7 +7,7 @@ using System.Text;
 
 namespace SpriteMaster;
 
-static partial class Debug {
+internal static partial class Debug {
 	static internal class Mode {
 		[Flags]
 		internal enum DebugModeFlags {

@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Metadata;
 
-static class ReportOnceValidations {
+internal static class ReportOnceValidations {
 	[Conditional("DEBUG"), MethodImpl(Runtime.MethodImpl.Hot)]
 	private static void DebugValidate(in Bounds sourceBounds, XTexture2D referenceTexture) {
 		Bounds referenceBounds = referenceTexture.Bounds;

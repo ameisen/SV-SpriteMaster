@@ -8,7 +8,7 @@ using System.Text;
 
 namespace SpriteMaster;
 
-static partial class DrawState {
+internal static partial class DrawState {
 
 	private static readonly Func<SamplerState, SamplerState> SamplerStateClone =
 		typeof(SamplerState).GetMethod("Clone", BindingFlags.Instance | BindingFlags.NonPublic)?.CreateDelegate<Func<SamplerState, SamplerState>>() ?? throw new NullReferenceException(nameof(SamplerStateClone));

@@ -8,7 +8,7 @@ using static SpriteMaster.Harmonize.Harmonize;
 
 namespace SpriteMaster.Core;
 
-static partial class OnDrawImpl {
+internal static partial class OnDrawImpl {
 
 	internal struct DrawInstance {
 		internal readonly Vector2F Position { get; init; }

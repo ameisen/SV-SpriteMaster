@@ -8,7 +8,7 @@ namespace SpriteMaster.Types;
 
 [DebuggerDisplay("[{X}, {Y}]")]
 [StructLayout(LayoutKind.Sequential, Pack = sizeof(byte), Size = sizeof(byte))]
-struct Vector2B :
+internal struct Vector2B :
 	ICloneable,
 	IComparable,
 	IComparable<Vector2B>,

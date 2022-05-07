@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Resample.Passes;
 
-static class Analysis {
+internal static class Analysis {
 	internal readonly struct LegacyResults {
 		internal readonly Vector2B Wrapped;
 		internal readonly Vector2B RepeatX;

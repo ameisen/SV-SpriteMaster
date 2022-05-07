@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 namespace SpriteMaster.Resample.Scalers.xBRZ.Structures;
 
 [ImmutableObject(true)]
-unsafe ref struct Kernel3x3 {
+internal unsafe ref struct Kernel3x3 {
 	private fixed ulong Data[3 * 3];
 
 	internal readonly Color16 this[int index] => (Color16)Data[index];

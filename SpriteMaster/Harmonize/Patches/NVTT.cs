@@ -11,7 +11,7 @@ namespace SpriteMaster.Harmonize.Patches;
 [SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
 [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Harmony")]
 [SuppressUnmanagedCodeSecurity]
-static class NVTT {
+internal static class NVTT {
 
 	//[DllImport("__Internal")]
 	//private static extern IntPtr dlerror (String fileName, int flags);

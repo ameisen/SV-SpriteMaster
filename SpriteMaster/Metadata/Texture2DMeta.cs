@@ -17,7 +17,7 @@ using SpriteDictionary = System.Collections.Generic.Dictionary<ulong, SpriteMast
 namespace SpriteMaster.Metadata;
 
 // TODO : This needs a Finalize thread dispatcher, and needs to remove cached data for it from the ResidentCache.
-sealed class Texture2DMeta : IDisposable {
+internal sealed class Texture2DMeta : IDisposable {
 	private static readonly ConcurrentDictionary<ulong, SpriteDictionary> SpriteDictionaries = new();
 	private readonly SpriteDictionary SpriteInstanceTable;
 

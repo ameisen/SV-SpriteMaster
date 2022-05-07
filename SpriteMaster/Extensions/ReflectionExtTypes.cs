@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 
 namespace SpriteMaster.Extensions;
 
-static partial class ReflectionExt {
+internal static partial class ReflectionExt {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static int TypeSize<T>(this T obj) where T : struct => Marshal.SizeOf((typeof(T) is Type) ? typeof(T) : obj.GetType());
 

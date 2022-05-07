@@ -8,7 +8,7 @@ namespace SpriteMaster.Types;
 [CLSCompliant(false)]
 [DebuggerDisplay("[{Min} <-> {Max}}")]
 [StructLayout(LayoutKind.Explicit, Pack = Vector2I.Alignment, Size = Vector2I.ByteSize)]
-struct ExtentI : IEquatable<ExtentI>, ILongHash {
+internal struct ExtentI : IEquatable<ExtentI>, ILongHash {
 	[FieldOffset(0)]
 	private Vector2I Value;
 

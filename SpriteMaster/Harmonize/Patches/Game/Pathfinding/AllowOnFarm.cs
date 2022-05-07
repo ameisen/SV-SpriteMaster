@@ -10,7 +10,7 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Harmonize.Patches.Game.Pathfinding;
 
-static partial class Pathfinding {
+internal static partial class Pathfinding {
 	private static readonly Func<NPC, int>? GetDefaultFacingDirection = typeof(NPC).GetFieldGetter<NPC, int>("defaultFacingDirection");
 	private static readonly Func<NPC?, string?, int, int, string?, int, int, int, string?, string?, SchedulePathDescription>? PathfindToNextScheduleLocation =
 		typeof(NPC).GetMethod("pathfindToNextScheduleLocation", BindingFlags.Instance | BindingFlags.NonPublic)?.

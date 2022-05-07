@@ -6,7 +6,7 @@ using static SpriteMaster.Colors.ColorHelpers;
 
 namespace SpriteMaster.Resample.Scalers.EPX;
 
-sealed partial class Scaler {
+internal sealed partial class Scaler {
 	private const uint MinScale = 3;
 	private const uint MaxScale = Config.MaxScale;
 
@@ -116,7 +116,7 @@ sealed partial class Scaler {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	static Color16 GetPixel(ReadOnlySpan<Color16> src, int stride, int offset) {
+	private static Color16 GetPixel(ReadOnlySpan<Color16> src, int stride, int offset) {
 		// We can try embedded a distance calculation as well. Perhaps instead of a negative stride/offset, we provide a 
 		// negative distance from the edge and just recalculate the stride/offset in that case.
 		// We can scale the alpha reduction by the distance to hopefully correct the edges.
@@ -140,7 +140,7 @@ sealed partial class Scaler {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	static void SetPixel(Span<Color16> dst, int stride, int offset, in Color16 color) {
+	private static void SetPixel(Span<Color16> dst, int stride, int offset, in Color16 color) {
 		// We can try embedded a distance calculation as well. Perhaps instead of a negative stride/offset, we provide a 
 		// negative distance from the edge and just recalculate the stride/offset in that case.
 		// We can scale the alpha reduction by the distance to hopefully correct the edges.
@@ -162,7 +162,7 @@ sealed partial class Scaler {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	bool ColorEq(in Color16 a, in Color16 b) {
+	private bool ColorEq(in Color16 a, in Color16 b) {
 		return a == b;
 		/*
 		return Resample.Scalers.Common.ColorDistance(

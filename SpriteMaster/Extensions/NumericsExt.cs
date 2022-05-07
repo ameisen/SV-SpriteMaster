@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Extensions;
 
-static class NumericsExt {
+internal static class NumericsExt {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static long KiB(this long value) => value * 1024L;
 	[MethodImpl(Runtime.MethodImpl.Hot)]

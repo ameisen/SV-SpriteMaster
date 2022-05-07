@@ -6,7 +6,7 @@ using System.IO;
 
 namespace SpriteMaster.Resample.Decoder;
 
-static class GraphicsBlockDecoder {
+internal static class GraphicsBlockDecoder {
 	internal static Span<byte> Decode(ReadOnlySpan<byte> data, Vector2I size, SurfaceFormat format) {
 		using (var tempTexture = new DecodingTexture2D(DrawState.Device, size.Width, size.Height, false, format) { Name = "Decode Texture" }) {
 			tempTexture.SetData(data.ToArray());

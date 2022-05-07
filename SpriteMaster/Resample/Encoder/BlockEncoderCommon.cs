@@ -3,7 +3,7 @@ using TeximpNet.Compression;
 
 namespace SpriteMaster.Resample.Encoder;
 
-static class BlockEncoderCommon {
+internal static class BlockEncoderCommon {
 	internal static TextureFormat GetBestTextureFormat(bool hasAlpha, bool isPunchthroughAlpha, bool isMasky) =>
 		(!hasAlpha) ?
 			TextureFormat.WithNoAlpha :

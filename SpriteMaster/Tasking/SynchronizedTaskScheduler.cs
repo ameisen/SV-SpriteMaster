@@ -13,7 +13,7 @@ namespace SpriteMaster.Tasking;
 
 [DebuggerTypeProxy(typeof(SynchronizedTaskSchedulerDebugView))]
 [DebuggerDisplay("Id={Id}, ScheduledTasks = {DebugTaskCount}")]
-sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
+internal sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
 	internal static readonly SynchronizedTaskScheduler Instance = new();
 	internal static readonly TaskFactory TaskFactory = new(Instance);
 

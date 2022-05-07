@@ -9,7 +9,8 @@ using System.Text;
 using static SpriteMaster.Runtime;
 
 namespace SpriteMaster;
-static partial class Debug {
+
+internal static partial class Debug {
 	private static readonly string ModuleName = typeof(Debug).Namespace!;
 
 	private static class Color {

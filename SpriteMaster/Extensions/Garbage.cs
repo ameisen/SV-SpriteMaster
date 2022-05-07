@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Extensions;
 
-static class Garbage {
+internal static class Garbage {
 	private delegate void CompactingCollectDelegate(int generation, GCCollectionMode mode, bool blocking, bool compacting);
 	internal static volatile bool ManualCollection = false;
 

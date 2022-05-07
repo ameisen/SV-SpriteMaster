@@ -7,7 +7,7 @@ using static SpriteMaster.Runtime;
 namespace SpriteMaster.Compressors;
 // TODO : Implement a continual training dictionary so each stream doesn't require its own dictionary for in-memory compression.
 //[HarmonizeFinalizeCatcher<ZstdNet.Compressor, DllNotFoundException>(critical: false)]
-static class Zstd {
+internal static class Zstd {
 	private sealed class Compressor : IDisposable {
 		private readonly ZstdNet.Compressor Delegator;
 

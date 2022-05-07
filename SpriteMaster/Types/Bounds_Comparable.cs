@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Types;
 
-partial struct Bounds :
+internal partial struct Bounds :
 	IComparable,
 	IComparable<Bounds>,
 	IComparable<Bounds?>,

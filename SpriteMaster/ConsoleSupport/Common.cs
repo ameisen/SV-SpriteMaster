@@ -5,7 +5,7 @@ using System.Reflection;
 
 namespace SpriteMaster;
 
-static partial class ConsoleSupport {
+internal static partial class ConsoleSupport {
 	private static readonly Dictionary<string, (Action<string, Queue<string>> Action, string Description)> CommandMap = new() {
 		{ "help", ((_, _) => InvokeHelp(null), "Prints this command guide") },
 		{ "all-stats", ((_, _) => Debug.DumpAllStats(), "Dump Statistics") },

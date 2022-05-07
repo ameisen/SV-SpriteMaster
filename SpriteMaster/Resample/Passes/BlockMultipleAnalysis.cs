@@ -4,7 +4,7 @@ using System;
 
 namespace SpriteMaster.Resample.Passes;
 
-static class BlockMultipleAnalysis {
+internal static class BlockMultipleAnalysis {
 	private static bool BlockTest(ReadOnlySpan<Color8> data, in Bounds textureBounds, in Bounds spriteBounds, int stride, int block) {
 		// If it doesn't align to the bounds, then we cannot analyze this multiple.
 		if ((spriteBounds.Extent % block) != Vector2I.Zero) {

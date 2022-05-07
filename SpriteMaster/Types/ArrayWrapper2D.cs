@@ -2,7 +2,7 @@
 
 namespace SpriteMaster.Types;
 
-readonly struct ArrayWrapper2D<T> {
+internal readonly struct ArrayWrapper2D<T> {
 	internal readonly T[] Data;
 	internal readonly uint Width;
 	internal readonly uint Height;

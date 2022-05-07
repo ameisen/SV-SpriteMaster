@@ -7,7 +7,7 @@ namespace SpriteMaster.Extensions;
 
 using ManagementObject = IDisposable;
 
-static class DirectoryExt {
+internal static class DirectoryExt {
 	private static MethodInfo? ManagementInvokeMethod = null;
 	private static Type? ManagementObjectType = null;
 

@@ -4,7 +4,7 @@ using System.Threading;
 
 namespace SpriteMaster.Types;
 
-sealed class ManualCondition : IDisposable {
+internal sealed class ManualCondition : IDisposable {
 	private volatile int State = 0;
 	private ManualResetEvent Event = new(false);
 

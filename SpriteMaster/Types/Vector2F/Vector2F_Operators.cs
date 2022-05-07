@@ -4,7 +4,7 @@ using NumericsVector2 = System.Numerics.Vector2;
 
 namespace SpriteMaster.Types;
 
-partial struct Vector2F {
+internal partial struct Vector2F {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static Vector2F operator +(Vector2F vector) => vector;
 

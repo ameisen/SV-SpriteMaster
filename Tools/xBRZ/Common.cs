@@ -4,7 +4,7 @@ using System.Drawing.Imaging;
 
 namespace xBRZ;
 
-static class Common {
+internal static class Common {
 	internal static readonly SpriteMaster.Colors.ColorSpace ColorSpace = SpriteMaster.Colors.ColorSpace.sRGB_Precise;
 
 	internal static unsafe Span<Color8> ReadFile(Uri path, out Vector2I size) {

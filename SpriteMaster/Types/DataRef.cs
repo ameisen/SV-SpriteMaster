@@ -2,7 +2,8 @@
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Types;
-readonly ref struct DataRef<T> where T : struct {
+
+internal readonly ref struct DataRef<T> where T : struct {
 	private readonly T[]? Data_;
 	internal readonly int Offset;
 	internal readonly int Length;

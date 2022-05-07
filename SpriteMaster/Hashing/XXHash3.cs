@@ -7,7 +7,7 @@ using static SpriteMaster.Runtime;
 
 namespace SpriteMaster;
 
-partial class Hashing {
+internal partial class Hashing {
 
 	// https://github.com/Crauzer/XXHash3.NET/tree/main/XXHash3.NET
 	internal static unsafe class XXHash3 {

@@ -16,7 +16,7 @@ using Root = SpriteMaster;
 
 namespace SpriteMaster.Configuration;
 
-static class Config {
+internal static class Config {
 	internal static readonly string ModuleName = typeof(SMConfig).Namespace?.Split('.')?.ElementAtOrDefaultF(0) ?? "SpriteMaster";
 
 	[Attributes.Ignore]

@@ -8,7 +8,7 @@ using System.Reflection.Emit;
 
 namespace SpriteMaster.GL;
 
-static class GLTexture {
+internal static class GLTexture {
 	private static readonly Type TextureType = typeof(Texture);
 	private static readonly Type Texture2DType = typeof(XTexture2D);
 	private static readonly Type? SurfaceTypeType = Texture2DType.GetNestedType("SurfaceType", BindingFlags.NonPublic);

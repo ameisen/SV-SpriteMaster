@@ -16,7 +16,7 @@ namespace SpriteMaster.Harmonize.Patches;
 
 [SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
 [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Harmony")]
-static class PTexture2D {
+internal static class PTexture2D {
 	#region Cache Handlers
 
 	// https://benbowen.blog/post/fun_with_makeref/

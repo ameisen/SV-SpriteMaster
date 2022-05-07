@@ -8,7 +8,7 @@ using static SpriteMaster.Runtime;
 
 namespace SpriteMaster;
 
-static partial class Debug {
+internal static partial class Debug {
 	[DebuggerStepThrough, DebuggerHidden()]
 	internal static bool CheckLogLevel(LogLevel logLevel) => Config.Debug.Logging.LogLevel <= logLevel;
 

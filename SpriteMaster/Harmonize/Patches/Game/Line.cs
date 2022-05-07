@@ -6,7 +6,7 @@ using System;
 
 namespace SpriteMaster.Harmonize.Patches.Game;
 
-static class Line {
+internal static class Line {
 	internal static readonly Lazy<InternalTexture2D> LineTexture = new(() => {
 		var data = new Color8[] { new(0, 0, 0, 0), new(255, 255, 255, 255), new(0, 0, 0, 0) };
 		var texture = new InternalTexture2D(DrawState.Device, 1, 3, false, SurfaceFormat.Color, 1);

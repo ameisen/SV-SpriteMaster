@@ -9,7 +9,7 @@ using SMDrawState = SpriteMaster.DrawState;
 
 namespace SpriteMaster.Configuration.Preview;
 
-abstract class Scene : IDisposable {
+internal abstract class Scene : IDisposable {
 	internal static Scene? Current = null;
 	protected const int TileSize = 16;
 	protected const int TileSizeRendered = TileSize * 4;

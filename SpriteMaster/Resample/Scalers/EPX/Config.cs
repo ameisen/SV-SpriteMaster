@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 // TODO : Handle X or Y-only scaling, since the game has a lot of 1xY and Xx1 sprites - 1D textures.
 namespace SpriteMaster.Resample.Scalers.EPX;
 
-sealed class Config : Resample.Scalers.Config {
+internal sealed class Config : Resample.Scalers.Config {
 	internal const int MaxScale = 3;
 
 	internal readonly double LuminanceWeight;

@@ -7,7 +7,7 @@ using System.Text;
 
 namespace SpriteMaster.Core;
 
-static partial class OnDrawStringImpl {
+internal static partial class OnDrawStringImpl {
 	private const bool Continue = true;
 	private const bool Stop = false;
 

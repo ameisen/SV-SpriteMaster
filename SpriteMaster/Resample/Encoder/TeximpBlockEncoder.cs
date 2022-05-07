@@ -9,7 +9,7 @@ using TeximpNet.DDS;
 
 namespace SpriteMaster.Resample.Encoder;
 
-static class TeximpBlockEncoder {
+internal static class TeximpBlockEncoder {
 	// We set this to false if block compression fails, as we assume that for whatever reason nvtt does not work on that system.
 	private static volatile bool BlockCompressionFunctional = true;
 

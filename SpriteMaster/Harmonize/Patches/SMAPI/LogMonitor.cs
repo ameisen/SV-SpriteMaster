@@ -8,7 +8,7 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Harmonize.Patches.SMAPI;
 
-static class LogMonitor {
+internal static class LogMonitor {
 #if !SHIPPING
 	private static readonly HashSet<string> SilencedMods = new();
 

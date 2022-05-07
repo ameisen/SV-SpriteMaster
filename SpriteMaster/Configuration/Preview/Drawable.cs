@@ -3,7 +3,7 @@ using System;
 
 namespace SpriteMaster.Configuration.Preview;
 
-readonly struct Drawable {
+internal readonly struct Drawable {
 	private readonly XTexture2D? Texture = null;
 	private readonly Bounds? Source = null;
 	private readonly AnimatedTexture? AnimatedTexture = null;
@@ -124,7 +124,7 @@ readonly struct Drawable {
 	);
 }
 
-readonly struct DrawableInstance {
+internal readonly struct DrawableInstance {
 	private readonly Drawable Drawable;
 	private readonly Vector2I Location;
 	internal readonly int LayerDepth;

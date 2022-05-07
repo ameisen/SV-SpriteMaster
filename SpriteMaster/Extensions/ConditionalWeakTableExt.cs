@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Extensions;
 
-static class ConditionalWeakTableExt {
+internal static class ConditionalWeakTableExt {
 	internal static IEnumerable<KeyValuePair<TKey, TValue>> AsEnumerable<TKey, TValue>(this ConditionalWeakTable<TKey, TValue> table) where TKey : class where TValue : class =>
 		(IEnumerable<KeyValuePair<TKey, TValue>>)table;
 

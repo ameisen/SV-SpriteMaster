@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Extensions;
 
-static partial class Integer {
+internal static partial class Integer {
 	[DebuggerStepThrough, DebuggerHidden()]
 	[Conditional("DEBUG")]
 	[MethodImpl(Runtime.MethodImpl.Hot)]

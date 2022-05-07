@@ -10,7 +10,7 @@ using System.Text;
 
 namespace SpriteMaster;
 
-static partial class Hashing {
+internal static partial class Hashing {
 	internal const ulong Default = 0x9e3779b97f4a7c15UL;
 	internal const int Default32 = unchecked((int)Default);
 	internal const ulong Null = ~Default;

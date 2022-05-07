@@ -8,7 +8,7 @@ using IOC = System.IO.Compression;
 namespace SpriteMaster.Compressors;
 
 //[HarmonizeFinalizeCatcher<IOC.DeflateStream, DllNotFoundException>(critical: false)]
-static class SystemIO {
+internal static class SystemIO {
 
 	private static bool? IsSupported_ = null;
 	internal static bool IsSupported {

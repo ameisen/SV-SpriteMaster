@@ -5,7 +5,7 @@ using System.Threading;
 
 namespace SpriteMaster.Types;
 
-sealed class DoubleBuffer<T> {
+internal sealed class DoubleBuffer<T> {
 	internal const uint BufferCount = 2;
 	internal const int StartingIndex = 0;
 

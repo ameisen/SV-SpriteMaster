@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster;
 
-static partial class Hashing {
+internal static partial class Hashing {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ulong HashXX3(this byte[] data) => XXHash3.Hash64(data);
 

@@ -3,7 +3,7 @@ using System;
 
 namespace SpriteMaster.Configuration.Preview;
 
-class AnimatedTexture : MetaTexture {
+internal class AnimatedTexture : MetaTexture {
 	internal readonly Vector2I Size;
 	private readonly Vector2I[] SpriteOffsets;
 	private readonly int TicksPerFrame;
@@ -83,7 +83,7 @@ class AnimatedTexture : MetaTexture {
 	}
 }
 
-class UniformAnimatedTexture : AnimatedTexture {
+internal class UniformAnimatedTexture : AnimatedTexture {
 	internal UniformAnimatedTexture(
 		string textureName,
 		Vector2I spriteSize,
@@ -119,7 +119,7 @@ class UniformAnimatedTexture : AnimatedTexture {
 	}
 }
 
-class UniformExplicitAnimatedTexture : UniformAnimatedTexture {
+internal class UniformExplicitAnimatedTexture : UniformAnimatedTexture {
 	internal UniformExplicitAnimatedTexture(
 		string textureName,
 		Vector2I spriteSize,

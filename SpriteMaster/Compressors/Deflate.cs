@@ -8,7 +8,7 @@ using System.Runtime.CompilerServices;
 namespace SpriteMaster.Compressors;
 
 //[HarmonizeFinalizeCatcher<ZlibStream, DllNotFoundException>(critical: false)]
-static class Deflate {
+internal static class Deflate {
 	private static readonly Action<ZlibStream, CompressionStrategy>? SetStrategy = typeof(ZlibStream).GetFieldSetter<ZlibStream, CompressionStrategy>("Strategy");
 
 	private static bool? IsSupported_ = null;

@@ -4,7 +4,7 @@ using System.Reflection;
 
 namespace SpriteMaster.Extensions;
 
-static partial class ReflectionExt {
+internal static partial class ReflectionExt {
 	private const BindingFlags InstanceFlags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.FlattenHierarchy;
 	private const BindingFlags StaticFlags = BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.FlattenHierarchy;
 

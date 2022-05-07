@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Resample.Scalers.xBRZ.Color;
 
-sealed class ColorEq : ColorDist {
+internal sealed class ColorEq : ColorDist {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal ColorEq(Config configuration) : base(configuration) { }
 

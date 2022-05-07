@@ -13,7 +13,7 @@ using Tomlyn.Syntax;
 
 namespace SpriteMaster.Configuration;
 
-static class Serialize {
+internal static class Serialize {
 	private const BindingFlags StaticFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static;
 
 	private const int MaxEnumCommentLength = 80;

@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Extensions;
 
-static class ETimeSpan {
+internal static class ETimeSpan {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static TimeSpan Multiply(this in TimeSpan timespan, int multiplier) => new(timespan.Ticks * multiplier);
 

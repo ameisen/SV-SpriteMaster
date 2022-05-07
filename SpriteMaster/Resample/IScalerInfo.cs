@@ -2,7 +2,7 @@
 
 namespace SpriteMaster.Resample;
 
-interface IScalerInfo {
+internal interface IScalerInfo {
 	Resample.Scaler Scaler { get; }
 	int MinScale { get; }
 	int MaxScale { get; }

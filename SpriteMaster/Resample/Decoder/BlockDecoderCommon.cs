@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 
 namespace SpriteMaster.Resample.Decoder;
 
-static class BlockDecoderCommon {
+internal static class BlockDecoderCommon {
 	[DebuggerDisplay("[{X}, {Y}}")]
 	[StructLayout(LayoutKind.Sequential, Pack = sizeof(ulong), Size = sizeof(ulong))]
 	internal ref struct Vector2U {

@@ -2,7 +2,7 @@
 
 namespace SpriteMaster.Configuration;
 
-static class Attributes {
+internal static class Attributes {
 	internal abstract class ConfigAttribute : Attribute { };
 
 	[AttributeUsage(AttributeTargets.All, AllowMultiple = true)]

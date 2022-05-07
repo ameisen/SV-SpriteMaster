@@ -12,7 +12,7 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Harmonize.Patches.PSpriteBatch.Patch;
 
-static class StableSort {
+internal static class StableSort {
 	private static readonly Type? SpriteBatchItemType = typeof(XSpriteBatch).Assembly.GetType("Microsoft.Xna.Framework.Graphics.SpriteBatchItem");
 	private static readonly Func<object?, float>? GetSortKeyImpl = SpriteBatchItemType?.GetFieldGetter<object?, float>("SortKey");
 

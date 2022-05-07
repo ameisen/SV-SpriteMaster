@@ -2,7 +2,7 @@
 
 namespace SpriteMaster.Numeric;
 
-static class Float {
+internal static class Float {
 	internal static class Half {
 		internal const uint Bits = 16;
 		internal const uint ExponentBits = 5;

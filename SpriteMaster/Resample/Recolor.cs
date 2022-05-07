@@ -3,7 +3,7 @@ using System;
 
 namespace SpriteMaster.Resample;
 
-static class Recolor {
+internal static class Recolor {
 	internal static Span<T> Enhance<T>(Span<T> data, Vector2I size) where T : unmanaged {
 		return data;
 

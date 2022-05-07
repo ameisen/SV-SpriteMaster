@@ -16,7 +16,7 @@ using System.Threading.Tasks;
 namespace SpriteMaster.Caching;
 
 [SuppressUnmanagedCodeSecurity]
-static class FileCache {
+internal static class FileCache {
 	private const string TextureCacheName = "TextureCache";
 	private const string JunctionCacheName = $"{TextureCacheName}_Current";
 	private static readonly Version AssemblyVersion = typeof(Resampler).Assembly.GetName().Version!;
@@ -87,7 +87,7 @@ static class FileCache {
 		}
 	}
 
-	enum SaveState {
+	private enum SaveState {
 		Saving = 0,
 		Saved = 1
 	}
@@ -355,13 +355,13 @@ static class FileCache {
 		}
 	}
 
-	enum LinkType : int {
+	private enum LinkType : int {
 		File = 0,
 		Directory = 1
 	}
 
 	[DllImport("kernel32.dll")]
-	static extern bool CreateSymbolicLink(string Link, string Target, LinkType Type);
+	private static extern bool CreateSymbolicLink(string Link, string Target, LinkType Type);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static bool IsSymbolic(string path) => new FileInfo(path).Attributes.HasFlag(FileAttributes.ReparsePoint);

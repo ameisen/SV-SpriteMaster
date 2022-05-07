@@ -5,7 +5,7 @@ using System.Threading;
 
 namespace SpriteMaster.Types;
 
-sealed class ConcurrentConsumer<T> {
+internal sealed class ConcurrentConsumer<T> {
 	internal delegate void CallbackDelegate(in T item);
 
 	private readonly Thread ConsumerThread;

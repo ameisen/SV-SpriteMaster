@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace SpriteMaster.Harmonize.Patches.Game.Pathfinding;
 
-static partial class Pathfinding {
+internal static partial class Pathfinding {
 	[Harmonize(
 		typeof(NPC),
 		"getLocationRoute",

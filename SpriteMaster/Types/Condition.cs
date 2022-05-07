@@ -4,7 +4,7 @@ using System.Threading;
 
 namespace SpriteMaster.Types;
 
-sealed class Condition : IDisposable {
+internal sealed class Condition : IDisposable {
 	private volatile int State = 0;
 	private AutoResetEvent Event = new(false);
 

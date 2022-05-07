@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Types;
 
-partial struct Vector2F :
+internal partial struct Vector2F :
 	IComparable,
 	IComparable<Vector2F>,
 	IComparable<(float, float)>,

@@ -1,6 +1,6 @@
 ﻿namespace SpriteMaster.Resample.Scalers.EPX;
 
-sealed class ScalerInfo : IScalerInfo {
+internal sealed class ScalerInfo : IScalerInfo {
 	internal static readonly ScalerInfo Instance = new();
 
 	public Resample.Scaler Scaler => Resample.Scaler.EPX;

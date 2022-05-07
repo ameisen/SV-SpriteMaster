@@ -3,7 +3,7 @@ using System.Text;
 
 namespace SpriteMaster;
 
-static partial class ConsoleSupport {
+internal static partial class ConsoleSupport {
 	private static void InvokeHelp(string? unknownCommand = null) {
 		var output = new StringBuilder();
 		output.AppendLine();

@@ -10,7 +10,7 @@ using System.Threading;
 namespace SpriteMaster.Caching;
 
 [SMAPIConsole.Stats("suspended-sprite-cache")]
-static class SuspendedSpriteCache {
+internal static class SuspendedSpriteCache {
 	private static long TotalCachedSize = 0L;
 	private static readonly TypedMemoryCache<ManagedSpriteInstance> Cache = new("SuspendedSpriteCache", OnEntryRemoved);
 	private static readonly Condition TrimEvent = new();

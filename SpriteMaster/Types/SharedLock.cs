@@ -7,7 +7,7 @@ namespace SpriteMaster;
 
 using LockType = ReaderWriterLockSlim;
 
-sealed class SharedLock : CriticalFinalizerObject, IDisposable {
+internal sealed class SharedLock : CriticalFinalizerObject, IDisposable {
 	private LockType? Lock;
 
 	internal ref struct ReadCookie {

@@ -10,7 +10,7 @@ namespace SpriteMaster.Types.Fixed;
 
 [DebuggerDisplay("{InternalValue}")]
 [StructLayout(LayoutKind.Explicit, Pack = sizeof(byte), Size = sizeof(byte))]
-struct Fixed8 : IEquatable<Fixed8>, IEquatable<byte>, ILongHash {
+internal struct Fixed8 : IEquatable<Fixed8>, IEquatable<byte>, ILongHash {
 	internal static readonly Fixed8 Zero = new(0);
 	internal static readonly Fixed8 Max = new(byte.MaxValue);
 

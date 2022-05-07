@@ -8,7 +8,7 @@ namespace SpriteMaster.Types.Interlocking;
 
 [DebuggerDisplay("{Value}")]
 [StructLayout(LayoutKind.Sequential, Pack = sizeof(ulong), Size = sizeof(ulong))]
-struct InterlockedULong :
+internal struct InterlockedULong :
 	IComparable,
 	IComparable<ulong>,
 	IComparable<InterlockedULong>,

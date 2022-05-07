@@ -5,7 +5,7 @@ using static SpriteMaster.Runtime;
 
 namespace SpriteMaster.Extensions;
 
-static class Compression {
+internal static class Compression {
 	internal enum Algorithm {
 		None = 0,
 		Compress,

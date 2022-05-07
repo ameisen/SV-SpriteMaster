@@ -15,7 +15,7 @@ using System.Text;
 
 namespace SpriteMaster.Resample;
 
-sealed class Resampler {
+internal sealed class Resampler {
 	internal enum ResampleStatus {
 		Unknown = -1,
 		Success = 0,

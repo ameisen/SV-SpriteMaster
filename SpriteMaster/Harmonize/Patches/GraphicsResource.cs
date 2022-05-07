@@ -1,6 +1,6 @@
 ﻿namespace SpriteMaster.Harmonize.Patches;
 
-static class GraphicsResource {
+internal static class GraphicsResource {
 	/*
 	[Harmonize("~GraphicsResource", Harmonize.Fixation.Prefix, PriorityLevel.First)]
 	private static void Finalize(XGraphics.GraphicsResource __instance) {

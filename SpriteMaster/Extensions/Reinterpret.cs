@@ -1,6 +1,6 @@
 ﻿namespace SpriteMaster.Extensions;
 
-static class Reinterpret {
+internal static class Reinterpret {
 	internal static unsafe U ReinterpretAs<T, U>(this T value) where T : unmanaged where U : unmanaged {
 		Contracts.AssertLessEqual(sizeof(U), sizeof(T));
 		return *(U*)&value;

@@ -5,7 +5,7 @@ using NumericsVector2 = System.Numerics.Vector2;
 
 namespace SpriteMaster.Types;
 
-partial struct Vector2F {
+internal partial struct Vector2F {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal readonly Vector2F Min() => new(MathF.Min(X, Y));
 

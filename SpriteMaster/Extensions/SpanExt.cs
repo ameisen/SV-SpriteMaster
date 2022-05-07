@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 
 namespace SpriteMaster.Extensions;
 
-static class SpanExt {
+internal static class SpanExt {
 	internal static Span<T> MakeUninitialized<T>(int count, bool pinned = false) where T : struct => GC.AllocateUninitializedArray<T>(count, pinned: pinned);
 
 	internal static Span<T> MakePinned<T>(int count) where T : struct => MakeUninitialized<T>(count, pinned: true);

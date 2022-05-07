@@ -3,7 +3,7 @@ using System;
 
 namespace SpriteMaster.Resample.Scalers;
 
-interface IScaler {
+internal interface IScaler {
 	Config CreateConfig(
 		Vector2B wrapped,
 		bool hasAlpha,

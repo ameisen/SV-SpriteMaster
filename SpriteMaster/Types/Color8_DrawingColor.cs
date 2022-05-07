@@ -2,7 +2,7 @@
 
 namespace SpriteMaster.Types;
 
-partial struct Color8 : IEquatable<DrawingColor> {
+internal partial struct Color8 : IEquatable<DrawingColor> {
 	// ToArgb
 
 	public static implicit operator DrawingColor(in Color8 value) => DrawingColor.FromArgb((int)value.ARGB);

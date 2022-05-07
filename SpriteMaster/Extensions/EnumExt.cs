@@ -6,7 +6,7 @@ namespace SpriteMaster.Extensions;
 /// <summary>
 /// Enumerator Extensions
 /// </summary>
-static class EnumExt {
+internal static class EnumExt {
 	/// <summary>
 	/// Return an array name and value pairs representing the enum
 	/// </summary>

@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Extensions;
 
-static partial class Integer {
+internal static partial class Integer {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static string ToString16(this int value) => Convert.ToString(value, 16);
 

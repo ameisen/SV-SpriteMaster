@@ -3,7 +3,7 @@ using System;
 
 namespace SpriteMaster.Extensions;
 
-static class MathExt {
+internal static class MathExt {
 	#region Min
 	internal static Fixed8 Min(this Fixed8 a, Fixed8 b) => Math.Min(a.Value, b.Value);
 	internal static Fixed16 Min(this Fixed16 a, Fixed16 b) => Math.Min(a.Value, b.Value);

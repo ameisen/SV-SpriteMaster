@@ -3,7 +3,7 @@
 namespace SpriteMaster.Types.Volatile;
 
 [StructLayout(LayoutKind.Sequential, Pack = sizeof(bool), Size = sizeof(bool))]
-partial struct VolatileBool : ILongHash {
+internal partial struct VolatileBool : ILongHash {
 	private volatile bool _Value = default;
 
 	internal bool Value {

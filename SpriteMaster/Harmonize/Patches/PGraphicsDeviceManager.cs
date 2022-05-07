@@ -15,7 +15,7 @@ namespace SpriteMaster.Harmonize.Patches;
 
 [SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
 [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Harmony")]
-static class PGraphicsDeviceManager {
+internal static class PGraphicsDeviceManager {
 	private struct DeviceState {
 		internal Vector2I Size = new(int.MinValue);
 		internal bool Initialized = false;

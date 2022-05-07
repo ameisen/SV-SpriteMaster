@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Extensions;
 
-static class Floating {
+internal static class Floating {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static int NearestInt(this float v) => (int)MathF.Round(v);
 

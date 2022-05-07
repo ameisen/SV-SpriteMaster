@@ -7,7 +7,7 @@ using static SpriteMaster.Resample.Decoder.BlockDecoderCommon;
 
 namespace SpriteMaster.Resample.Decoder;
 
-static class InternalBlockDecoder {
+internal static class InternalBlockDecoder {
 	// https://www.khronos.org/opengl/wiki/S3_Texture_Compression
 	[StructLayout(LayoutKind.Explicit, Pack = 1, Size = 8)]
 	private unsafe struct ColorBlock {

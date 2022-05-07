@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Extensions;
 
-static class StringExt {
+internal static class StringExt {
 	#region General
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	[return: NotNullIfNotNull("str")]

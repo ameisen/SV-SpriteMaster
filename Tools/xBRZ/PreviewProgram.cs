@@ -4,7 +4,7 @@ using System.Drawing.Imaging;
 
 namespace xBRZ;
 
-static class PreviewProgram {
+internal static class PreviewProgram {
 	private static Color16[]? SpriteData = null;
 	private static Vector2I SpriteSize;
 

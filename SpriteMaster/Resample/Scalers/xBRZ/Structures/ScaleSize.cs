@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Resample.Scalers.xBRZ.Scalers;
 
-static class ScaleSize {
+internal static class ScaleSize {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static Structures.IScaler ToIScaler(this uint scaleSize, Config config) => scaleSize switch {
 		2U => new Scaler2X(config),

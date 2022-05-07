@@ -11,7 +11,7 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Extensions;
 
-static class Textures {
+internal static class Textures {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static int Area(this XTexture2D texture) => texture.Width * texture.Height;
 

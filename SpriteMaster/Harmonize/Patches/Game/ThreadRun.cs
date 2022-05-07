@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Harmonize.Patches.Game;
 
-static class ThreadRun {
+internal static class ThreadRun {
 	private static readonly Func<List<Action>> ThreadingActionsGet = typeof(XColor).Assembly.
 	GetType("Microsoft.Xna.Framework.Threading")?.
 	GetFieldGetter<List<Action>>("actions") ??

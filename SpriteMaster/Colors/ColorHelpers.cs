@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Colors;
 
-static class ColorHelpers {
+internal static class ColorHelpers {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static double ValueToScalar(this byte value) => value / 255.0;
 	[MethodImpl(Runtime.MethodImpl.Hot)]

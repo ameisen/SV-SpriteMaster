@@ -5,7 +5,7 @@ using System;
 
 namespace SpriteMaster.Resample;
 
-static class TextureDecode {
+internal static class TextureDecode {
 	private static class Internal {
 		internal static Span<byte> Decode(XTexture2D texture, ReadOnlySpan<byte> data) => Decoder.InternalBlockDecoder.Decode(data, texture.Extent(), texture.Format);
 	}

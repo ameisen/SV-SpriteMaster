@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Extensions;
 
-static partial class Integer {
+internal static partial class Integer {
 	// Unsigned Conversions
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]

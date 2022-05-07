@@ -9,7 +9,7 @@ namespace SpriteMaster.Types;
 [CLSCompliant(false)]
 [DebuggerDisplay("[{X}, {Y}}")]
 [StructLayout(LayoutKind.Explicit, Pack = Vector2I.Alignment, Size = Vector2I.ByteSize)]
-unsafe partial struct Vector2I :
+internal unsafe partial struct Vector2I :
 	CompositePrimitive<ulong>,
 	ILongHash {
 	internal const int ByteSize = sizeof(ulong);

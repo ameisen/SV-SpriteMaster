@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace SpriteMaster.Configuration.Preview;
 
-sealed class Scene1 : Scene {
+internal sealed class Scene1 : Scene {
 	//private static readonly Lazy<XTexture2D> FishTexture = new(() => StardewValley.Game1.content.Load<XTexture2D>(@"Maps\springobjects"));
 	private readonly AnimatedTexture CenterCharacterTexture;
 

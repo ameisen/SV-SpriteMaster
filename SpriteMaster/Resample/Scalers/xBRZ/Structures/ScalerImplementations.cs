@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Resample.Scalers.xBRZ.Structures;
 
-abstract class IScaler {
+internal abstract class IScaler {
 	internal readonly int Scale;
 	internal readonly Config Configuration;
 
@@ -62,7 +62,7 @@ abstract class IScaler {
 	}
 }
 
-sealed class Scaler2X : IScaler {
+internal sealed class Scaler2X : IScaler {
 	internal new const int Scale = 2;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -99,7 +99,7 @@ sealed class Scaler2X : IScaler {
 	}
 }
 
-sealed class Scaler3X : IScaler {
+internal sealed class Scaler3X : IScaler {
 	internal new const int Scale = 3;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -148,7 +148,7 @@ sealed class Scaler3X : IScaler {
 	}
 }
 
-sealed class Scaler4X : IScaler {
+internal sealed class Scaler4X : IScaler {
 	internal new const int Scale = 4;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -202,7 +202,7 @@ sealed class Scaler4X : IScaler {
 	}
 }
 
-sealed class Scaler5X : IScaler {
+internal sealed class Scaler5X : IScaler {
 	internal new const int Scale = 5;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -273,7 +273,7 @@ sealed class Scaler5X : IScaler {
 	}
 }
 
-sealed class Scaler6X : IScaler {
+internal sealed class Scaler6X : IScaler {
 	internal new const int Scale = 6;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]

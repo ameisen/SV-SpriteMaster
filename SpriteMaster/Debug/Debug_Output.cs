@@ -5,7 +5,7 @@ using System.Diagnostics;
 
 namespace SpriteMaster;
 
-static partial class Debug {
+internal static partial class Debug {
 	[DebuggerStepThrough, DebuggerHidden()]
 	private static ConsoleColor GetColor(this LogLevel @this) {
 		return @this switch {

@@ -6,7 +6,7 @@ using static SpriteMaster.Harmonize.Patches.Game.Snow;
 
 namespace SpriteMaster.Configuration.Preview;
 
-struct WeatherState : IDisposable {
+internal struct WeatherState : IDisposable {
 	// SDV
 	internal readonly List<WeatherDebris>? DebrisWeather { get; init; }
 	internal readonly RainDrop[]? RainDrops { get; init; }

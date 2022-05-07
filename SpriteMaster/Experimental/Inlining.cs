@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace SpriteMaster.Experimental;
 
-static class Inlining {
+internal static class Inlining {
 	// https://github.com/MonoMod/MonoMod.Common/blob/7d799091ba6e740988b82fe233cb3fa00ef32611/RuntimeDetour/Platforms/Runtime/DetourRuntimeNETCore30Platform.cs
 	private static unsafe void EnableInlining(MethodBase method) {
 		RuntimeMethodHandle handle = method.MethodHandle;

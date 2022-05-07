@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Extensions;
 
-static class Common {
+internal static class Common {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void ConditionalSet<T>(this ref T obj, bool conditional, in T value) where T : struct {
 		if (conditional) {

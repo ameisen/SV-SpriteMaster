@@ -1,7 +1,8 @@
 ﻿using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Types;
-static class LongHash {
+
+internal static class LongHash {
 	internal const ulong Null = Hashing.Null;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]

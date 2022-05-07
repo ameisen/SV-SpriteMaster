@@ -4,7 +4,7 @@ using static SpriteMaster.Colors.ColorHelpers;
 
 namespace SpriteMaster.Resample.Scalers;
 
-static class Common {
+internal static class Common {
 	internal static uint ColorDistance(
 		bool useRedmean,
 		bool gammaCorrected,

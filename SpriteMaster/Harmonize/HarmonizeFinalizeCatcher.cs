@@ -4,7 +4,7 @@ using static SpriteMaster.Harmonize.Harmonize;
 
 namespace SpriteMaster.Harmonize;
 
-abstract class HarmonizeFinalizeCatcherFixedAttribute : HarmonizeAttribute {
+internal abstract class HarmonizeFinalizeCatcherFixedAttribute : HarmonizeAttribute {
 	internal readonly Type Exception;
 	internal readonly MethodInfo? MethodInfo;
 
@@ -23,7 +23,7 @@ abstract class HarmonizeFinalizeCatcherFixedAttribute : HarmonizeAttribute {
 }
 
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = true)]
-sealed class HarmonizeFinalizeCatcherAttribute<T, E> : HarmonizeFinalizeCatcherFixedAttribute where E : Exception {
+internal sealed class HarmonizeFinalizeCatcherAttribute<T, E> : HarmonizeFinalizeCatcherFixedAttribute where E : Exception {
 	internal static readonly new Type Type = typeof(T);
 	internal static readonly new Type Exception = typeof(E);
 

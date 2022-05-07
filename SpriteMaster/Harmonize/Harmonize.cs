@@ -12,7 +12,7 @@ using System.Reflection;
 
 namespace SpriteMaster.Harmonize;
 
-static class Harmonize {
+internal static class Harmonize {
 	private const BindingFlags InstanceFlags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
 	private const BindingFlags StaticFlags = BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public;
 

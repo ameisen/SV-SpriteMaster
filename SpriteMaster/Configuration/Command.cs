@@ -6,7 +6,7 @@ using System.Text;
 
 namespace SpriteMaster.Configuration;
 
-static class Command {
+internal static class Command {
 	private static Serialize.Category Root => Serialize.Root;
 
 	[CommandAttribute("config", "Config Commands")]
