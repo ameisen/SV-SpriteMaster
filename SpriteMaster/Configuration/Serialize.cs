@@ -70,7 +70,7 @@ internal static class Serialize {
 
 		internal ParentTraverseEnumerable ParentTraverser => new(this);
 
-		internal struct ParentTraverseEnumerable : IEnumerable<Category>, IEnumerable {
+		internal readonly struct ParentTraverseEnumerable : IEnumerable<Category> {
 			private readonly Category Current;
 			
 			internal ParentTraverseEnumerable(Category current) {
@@ -84,7 +84,7 @@ internal static class Serialize {
 			IEnumerator IEnumerable.GetEnumerator() => new ParentTraverseEnumerator(Current);
 		}
 
-		internal struct ParentTraverseEnumerator : IEnumerator<Category>, IEnumerator {
+		internal struct ParentTraverseEnumerator : IEnumerator<Category> {
 			private readonly Category InitialValue;
 			private Category? CurrentValue = null;
 			private bool PastEnd = false;
@@ -96,7 +96,7 @@ internal static class Serialize {
 
 			public Category Current => CurrentValue!;
 
-			object System.Collections.IEnumerator.Current => CurrentValue!;
+			object IEnumerator.Current => CurrentValue!;
 
 			public void Dispose() {}
 
@@ -260,31 +260,31 @@ internal static class Serialize {
 
 							object? fieldValue = field.GetValue(null);
 							switch (fieldValue) {
-								case string v:
+								case string _:
 									field.SetValue(null, ((StringValueSyntax?)value.Value)?.Value?.Trim()?.Intern());
 									break;
-								case sbyte v:
+								case sbyte _:
 									field.SetValue(null, (sbyte?)((IntegerValueSyntax?)value.Value)?.Value);
 									break;
-								case byte v:
+								case byte _:
 									field.SetValue(null, (byte?)((IntegerValueSyntax?)value.Value)?.Value);
 									break;
-								case short v:
+								case short _:
 									field.SetValue(null, (short?)((IntegerValueSyntax?)value.Value)?.Value);
 									break;
-								case ushort v:
+								case ushort _:
 									field.SetValue(null, (ushort?)((IntegerValueSyntax?)value.Value)?.Value);
 									break;
-								case int v:
+								case int _:
 									field.SetValue(null, (int?)((IntegerValueSyntax?)value.Value)?.Value);
 									break;
-								case uint v:
+								case uint _:
 									field.SetValue(null, (uint?)((IntegerValueSyntax?)value.Value)?.Value);
 									break;
-								case ulong v:
+								case ulong _:
 									field.SetValue(null, (ulong?)((IntegerValueSyntax?)value.Value)?.Value);
 									break;
-								case float v: {
+								case float _: {
 										if (value.Value is IntegerValueSyntax ivalue) {
 											field.SetValue(null, (float)ivalue.Value);
 										}
@@ -293,7 +293,7 @@ internal static class Serialize {
 										}
 									}
 									break;
-								case double v: {
+								case double _: {
 										if (value.Value is IntegerValueSyntax ivalue) {
 											field.SetValue(null, (double)ivalue.Value);
 										}
@@ -302,7 +302,7 @@ internal static class Serialize {
 										}
 									}
 									break;
-								case bool v:
+								case bool _:
 									field.SetValue(null, ((BooleanValueSyntax?)value.Value)?.Value);
 									break;
 								default:
@@ -390,7 +390,7 @@ internal static class Serialize {
 												field.SetValue(null, list);
 											}
 											break;
-										case Enum enumValue: {
+										case Enum _: {
 												var enumNames = fieldValue.GetType().GetEnumNames();
 												var values = fieldValue.GetType().GetEnumValues();
 

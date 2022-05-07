@@ -17,7 +17,7 @@ internal static partial class OnDrawImpl {
 	// intervening mods altering the arguments first.
 	internal static bool OnDrawFirst(
 		this XSpriteBatch @this,
-		ref XTexture2D texture,
+		ref XTexture2D? texture,
 		ref XRectangle destination,
 		ref XRectangle? source,
 		XColor color,
@@ -25,8 +25,12 @@ internal static partial class OnDrawImpl {
 		ref XVector2 origin,
 		ref SpriteEffects effects,
 		float layerDepth,
-		ref ManagedTexture2D __state
+		ref ManagedTexture2D? __state
 	) {
+		if (texture is null) {
+			return false;
+		}
+
 		using var watchdogScoped = WatchDog.WatchDog.ScopedWorkingState;
 
 		/*
@@ -113,7 +117,7 @@ internal static partial class OnDrawImpl {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool OnDraw(
 		this XSpriteBatch @this,
-		ref XTexture2D texture,
+		ref XTexture2D? texture,
 		ref XRectangle destination,
 		ref XRectangle? source,
 		ref XColor color,
@@ -121,8 +125,12 @@ internal static partial class OnDrawImpl {
 		ref XVector2 origin,
 		ref SpriteEffects effects,
 		ref float layerDepth,
-		ref ManagedTexture2D __state
+		ref ManagedTexture2D? __state
 	) {
+		if (texture is null) {
+			return false;
+		}
+
 		Bounds sourceRectangle;
 		ManagedSpriteInstance? spriteInstance;
 		ManagedTexture2D resampledTexture;
@@ -222,7 +230,7 @@ internal static partial class OnDrawImpl {
 
 	internal static bool OnDraw(
 		this XSpriteBatch @this,
-		ref XTexture2D texture,
+		ref XTexture2D? texture,
 		ref XVector2 position,
 		ref XRectangle? source,
 		ref XColor color,
@@ -232,6 +240,10 @@ internal static partial class OnDrawImpl {
 		SpriteEffects effects,
 		ref float layerDepth
 	) {
+		if (texture is null) {
+			return false;
+		}
+
 		GetDrawParameters(
 			texture: texture,
 			source: source,
@@ -243,8 +255,8 @@ internal static partial class OnDrawImpl {
 
 		ManagedSpriteInstance? spriteInstance;
 		ManagedTexture2D? resampledTexture;
-		if (texture is ManagedTexture2D) {
-			resampledTexture = (ManagedTexture2D)texture;
+		if (texture is ManagedTexture2D texture2D) {
+			resampledTexture = texture2D;
 			spriteInstance = resampledTexture.SpriteInstance;
 			sourceRectangle = resampledTexture.Dimensions;
 		}

@@ -163,10 +163,6 @@ internal static class Harmonize {
 
 	private static void ApplyPatches(Harmony @this, Type type, MethodInfo method, IEnumerable<HarmonizeAttribute> attributes) {
 		try {
-			if (attributes.IsBlank()) {
-				return;
-			}
-
 			foreach (var attribute in attributes) {
 				ApplyPatch(@this, type, method, attribute);
 			}
@@ -177,7 +173,7 @@ internal static class Harmonize {
 	}
 
 	internal static void ApplyPatches(this Harmony @this) {
-		Contracts.AssertNotNull(@this);
+		@this.AssertNotNull();
 		Debug.Trace("Applying Patches");
 		var assembly = typeof(Harmonize).Assembly;
 		foreach (var type in assembly.GetTypes()) {
@@ -394,7 +390,10 @@ internal static class Harmonize {
 				return priorityAttribute.info.priority;
 			}
 		}
-		catch { }
+		catch {
+			// ignored
+		}
+
 		return defaultPriority;
 	}
 

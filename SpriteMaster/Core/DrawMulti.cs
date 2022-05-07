@@ -103,9 +103,8 @@ internal static partial class OnDrawImpl {
 			var adjustedOrigin = (Vector2F)origin;
 
 			if (spriteInstance.TexType == TextureType.SlicedImage) {
-				sourceRectangle = source;
 				sourceRectangle = new Bounds(
-					(Vector2I)source.Location - spriteInstance.OriginalSourceRectangle.Offset,
+					source.Location - spriteInstance.OriginalSourceRectangle.Offset,
 					source.Size
 				);
 				sourceRectangle.Offset = (sourceRectangle.OffsetF * spriteInstance.Scale).NearestInt();

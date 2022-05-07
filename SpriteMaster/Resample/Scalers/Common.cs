@@ -14,17 +14,13 @@ internal static class Common {
 		in YccConfig yccConfig
 	) {
 		if (useRedmean) {
-			return ColorHelpers.RedmeanDifference(
-				pix1,
-				pix2,
+			return pix1.RedmeanDifference(pix2,
 				linear: !gammaCorrected,
 				alpha: hasAlpha
 			);
 		}
 		else {
-			return ColorHelpers.YccDifference(
-				pix1,
-				pix2,
+			return pix1.YccDifference(pix2,
 				config: yccConfig,
 				linear: !gammaCorrected,
 				alpha: hasAlpha

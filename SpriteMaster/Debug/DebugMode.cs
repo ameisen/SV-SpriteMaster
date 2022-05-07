@@ -1,14 +1,16 @@
-﻿using SpriteMaster.Extensions;
+﻿using JetBrains.Annotations;
+using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using StardewValley;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 
 namespace SpriteMaster;
 
 internal static partial class Debug {
-	static internal class Mode {
+	internal static class Mode {
 		[Flags]
 		internal enum DebugModeFlags {
 			None = 0,
@@ -27,22 +29,23 @@ internal static partial class Debug {
 
 		private static Vector2I CurrentCursorPosition {
 			get {
-				var mouseRaw = (Vector2I)StardewValley.Game1.getMousePositionRaw();
+				var mouseRaw = (Vector2I)Game1.getMousePositionRaw();
 
 				if (Game1.uiMode) {
-					var screenRatio = (Vector2F)(Vector2I)StardewValley.Game1.uiViewport.Size / (Vector2F)(Vector2I)StardewValley.Game1.viewport.Size;
+					var screenRatio = (Vector2F)(Vector2I)Game1.uiViewport.Size / (Vector2F)(Vector2I)Game1.viewport.Size;
 					return ((Vector2F)mouseRaw * screenRatio).NearestInt();
 				}
 				else {
-					return StardewValley.Game1.getMousePositionRaw();
+					return Game1.getMousePositionRaw();
 				}
 			}
 		}
 
-		[CommandAttribute("debug", "Debug Commands")]
+		[Command("debug", "Debug Commands")]
+		[UsedImplicitly]
 		public static void OnConsoleCommand(string command, Queue<string> arguments) {
 			if (arguments.Count == 0) {
-				Debug.Error("No arguments passed for 'debug' command");
+				Error("No arguments passed for 'debug' command");
 				return;
 			}
 
@@ -52,7 +55,7 @@ internal static partial class Debug {
 					ProcessModeCommand(arguments);
 					break;
 				default:
-					Debug.Error($"Unknown 'debug' command: '{subCommand}'");
+					Error($"Unknown 'debug' command: '{subCommand}'");
 					break;
 			}
 		}
@@ -60,7 +63,7 @@ internal static partial class Debug {
 		private static void ProcessModeCommand(Queue<string> arguments) {
 			if (arguments.Count == 0) {
 				if (CurrentMode == DebugModeFlags.None) {
-					Debug.Info("No Debug Modes are set");
+					Info("No Debug Modes are set");
 					return;
 				}
 
@@ -73,7 +76,7 @@ internal static partial class Debug {
 					}
 				}
 
-				Debug.Info($"Current Debug Modes: {string.Join(", ", modes)}");
+				Info($"Current Debug Modes: {string.Join(", ", modes)}");
 				return;
 			}
 
@@ -95,13 +98,13 @@ internal static partial class Debug {
 				case "none":
 					if (enable) {
 						CurrentMode = DebugModeFlags.None;
-						Debug.Info($"Debug Mode set to '{DebugModeFlags.None}'");
+						Info($"Debug Mode set to '{DebugModeFlags.None}'");
 					}
 					else {
 						foreach (var value in Enum.GetValues<DebugModeFlags>()) {
 							CurrentMode |= value;
 						}
-						Debug.Info($"All Debug Mode flags enabled");
+						Info($"All Debug Mode flags enabled");
 					}
 					break;
 				default:
@@ -111,27 +114,27 @@ internal static partial class Debug {
 
 							if (enable) {
 								if (CurrentMode.HasFlag(value)) {
-									Debug.Warning($"Debug Mode flag is already set: '{flag}'");
+									Warning($"Debug Mode flag is already set: '{flag}'");
 								}
 								else {
 									CurrentMode |= value;
-									Debug.Info($"Debug Mode flag set: '{flag}'");
+									Info($"Debug Mode flag set: '{flag}'");
 								}
 							}
 							else {
 								if (!CurrentMode.HasFlag(value)) {
-									Debug.Warning($"Debug Mode flag is not set: '{flag}'");
+									Warning($"Debug Mode flag is not set: '{flag}'");
 								}
 								else {
 									CurrentMode &= ~value;
-									Debug.Info($"Debug Mode flag unset: '{flag}'");
+									Info($"Debug Mode flag unset: '{flag}'");
 								}
 							}
 
 							return;
 						}
 					}
-					Debug.Error($"Unknown debug mode: '{mode}'");
+					Error($"Unknown debug mode: '{mode}'");
 					break;
 			}
 		}
@@ -337,8 +340,8 @@ internal static partial class Debug {
 				if (draw.Rotation != 0.0f) {
 					properties.Add(("rot", draw.Rotation.ToString("n2")));
 				}
-				properties.Add(("scale", draw.Scale.ToString()));
-				properties.Add(("depth", draw.LayerDepth.ToString()));
+				properties.Add(("scale", draw.Scale.ToString(CultureInfo.CurrentCulture)));
+				properties.Add(("depth", draw.LayerDepth.ToString(CultureInfo.CurrentCulture)));
 				if (draw.Effects != XGraphics.SpriteEffects.None) {
 					properties.Add(("effects", ""));
 					foreach (var enumName in Enum.GetNames<XGraphics.SpriteEffects>()) {

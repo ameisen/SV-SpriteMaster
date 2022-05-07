@@ -15,11 +15,11 @@ internal static class InternalBlockDecoder {
 
 		// Color should appear as BGR, 565.
 		[StructLayout(LayoutKind.Explicit, Pack = 1, Size = 2)]
-		private unsafe readonly struct Color565 {
+		private readonly struct Color565 {
 			[FieldOffset(0)]
 			internal readonly ushort Packed;
 
-			internal readonly uint PackedInt => Packed;
+			private uint PackedInt => Packed;
 
 			internal Color565(ushort packed) {
 				Packed = packed;
@@ -55,16 +55,16 @@ internal static class InternalBlockDecoder {
 				R = G + (int)BitSize.G
 			}
 
-			private readonly uint PackedB => PackedInt >> (int)Offset.B & (uint)Mask.B;
-			private readonly uint PackedG => PackedInt >> (int)Offset.G & (uint)Mask.G;
-			private readonly uint PackedR => PackedInt >> (int)Offset.R & (uint)Mask.R;
+			private uint PackedB => PackedInt >> (int)Offset.B & (uint)Mask.B;
+			private uint PackedG => PackedInt >> (int)Offset.G & (uint)Mask.G;
+			private uint PackedR => PackedInt >> (int)Offset.R & (uint)Mask.R;
 
-			internal readonly byte B => (byte)((uint)Multiplier.B * PackedB & 0xFF);
-			internal readonly byte G => (byte)((uint)Multiplier.G * PackedG & 0xFF);
-			internal readonly byte R => (byte)((uint)Multiplier.R * PackedR & 0xFF);
+			internal byte B => (byte)((uint)Multiplier.B * PackedB & 0xFF);
+			internal byte G => (byte)((uint)Multiplier.G * PackedG & 0xFF);
+			internal byte R => (byte)((uint)Multiplier.R * PackedR & 0xFF);
 
 			// https://stackoverflow.com/a/2442609
-			internal readonly uint AsPacked =>
+			internal uint AsPacked =>
 				(uint)B << 16 |
 				(uint)G << 8 |
 				R;
@@ -190,7 +190,6 @@ internal static class InternalBlockDecoder {
 
 					return outData;
 				}
-				break;
 			case SurfaceFormat.Dxt3: {
 					var blocks = data.Cast<ColorBlockDxt3>();
 					var outData = SpanExt.MakePinned<byte>((int)uSize.Area * sizeof(uint));
@@ -216,7 +215,6 @@ internal static class InternalBlockDecoder {
 
 					return outData;
 				}
-				break;
 			default:
 				throw new ArgumentOutOfRangeException(nameof(format));
 		}

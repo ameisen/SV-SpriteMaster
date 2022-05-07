@@ -254,7 +254,7 @@ internal partial struct Bounds :
 	public override readonly string ToString() => $"[[{X}, {Y}] [{InvertedWidth}, {InvertedHeight}]]";
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly override int GetHashCode() => (int)Hashing.Combine(Offset.GetHashCode(), Extent.GetHashCode());
+	public override readonly int GetHashCode() => Hashing.Combine(Offset.GetHashCode(), Extent.GetHashCode());
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	ulong ILongHash.GetLongHashCode() => ((ulong)Offset.GetHashCode() << 32) | (uint)Extent.GetHashCode();

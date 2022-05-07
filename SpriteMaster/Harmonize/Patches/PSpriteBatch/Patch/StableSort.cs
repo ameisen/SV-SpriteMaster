@@ -44,7 +44,7 @@ internal static class StableSort {
 				KeyList[i] = new(Key: GetSortKey(array[i]), Index: i);
 			}
 
-			Array.Sort<KeyType, T>(KeyList, array, index, length, KeyTypeComparer);
+			Array.Sort(KeyList, array, index, length, KeyTypeComparer);
 		}
 	}
 
@@ -73,13 +73,13 @@ internal static class StableSort {
 				KeyList[i] = new(Key: array[i], Index: i);
 			}
 
-			Array.Sort<KeyType, T>(KeyList, array, index, length, KeyTypeComparer);
+			Array.Sort(KeyList, array, index, length, KeyTypeComparer);
 		}
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static void ArrayStableSort<T>(T[] array, int index, int length, SpriteSortMode sortMode) where T : IComparable<T> {
-		if (DrawState.CurrentBlendState == Microsoft.Xna.Framework.Graphics.BlendState.Additive) {
+		if (DrawState.CurrentBlendState == BlendState.Additive) {
 			// There is basically no reason to sort when the blend state is additive.
 			return;
 		}
@@ -126,8 +126,10 @@ internal static class StableSort {
 			return instructions;
 		}
 
+		var codeInstructions = instructions as CodeInstruction[] ?? instructions.ToArray();
+
 		IEnumerable<CodeInstruction> ApplyPatch() {
-			foreach (var instruction in instructions) {
+			foreach (var instruction in codeInstructions) {
 				if (
 					instruction.opcode.Value != OpCodes.Call.Value ||
 					instruction.operand is not MethodInfo callee ||
@@ -148,7 +150,7 @@ internal static class StableSort {
 
 		var result = ApplyPatch();
 
-		if (result.SequenceEqual(instructions)) {
+		if (result.SequenceEqual(codeInstructions)) {
 			Debug.Error("Could not apply SpriteBatcher stable sorting patch: Sort call could not be found in IL");
 		}
 

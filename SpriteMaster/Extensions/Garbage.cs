@@ -7,7 +7,6 @@ using System.Runtime.CompilerServices;
 namespace SpriteMaster.Extensions;
 
 internal static class Garbage {
-	private delegate void CompactingCollectDelegate(int generation, GCCollectionMode mode, bool blocking, bool compacting);
 	internal static volatile bool ManualCollection = false;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -32,7 +31,9 @@ internal static class Garbage {
 					Debug.Warning($"Set GC Latency Mode to '{mode}'");
 					break;
 				}
-				catch { }
+				catch {
+					// ignored
+				}
 			}
 		}
 	}

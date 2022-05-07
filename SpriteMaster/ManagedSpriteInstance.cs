@@ -257,11 +257,15 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 			return null;
 		}
 
-		if (!SpriteMap.TryGetReady(texture, source, expectedScale, out var scaleTexture)) {
-			return null;
+		if (SpriteMap.TryGetReady(texture, source, expectedScale, out var scaleTexture)) {
+			if (scaleTexture?.NoResample ?? false) {
+				return null;
+			}
+
+			return scaleTexture;
 		}
 
-		return scaleTexture.NoResample ? null : scaleTexture;
+		return null;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -347,7 +351,7 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 		// !texture.Meta().HasCachedData
 
 		TimeSpan? remainingTime = null;
-		bool? isCached;
+		bool? isCached = null;
 
 		string GetMetadataString() {
 			return isCached.HasValue ?
@@ -426,7 +430,7 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 			var textureMeta = texture.Meta();
 			var currentRevision = textureMeta.Revision;
 			if (textureMeta.InFlightTasks.TryGetValue(source, out var inFlightTask)) {
-				doDispatch = inFlightTask.Revision != currentRevision || inFlightTask.ResampleTask.Status != TaskStatus.WaitingToRun;
+				doDispatch = inFlightTask.Revision != currentRevision || inFlightTask.ResampleTask is null || inFlightTask.ResampleTask.Status != System.Threading.Tasks.TaskStatus.WaitingToRun;
 			}
 
 			Task<ManagedSpriteInstance?> resampleTask;

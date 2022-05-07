@@ -9,9 +9,6 @@ internal class ColorDist {
 	protected readonly Config Configuration;
 	private readonly YccConfig YccConfiguration;
 
-	// TODO : Only sRGB presently has the linearizer/delinearizer implemented.
-	private static readonly ColorSpace CurrentColorSpace = ColorSpace.sRGB_Precise;
-
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal ColorDist(Config cfg) {
 		Configuration = cfg;

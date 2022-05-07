@@ -30,13 +30,13 @@ internal static class TextureCache {
 	[Harmonize(
 		typeof(XTexture2D),
 		"FromStream",
-		Harmonize.Fixation.Prefix,
+		Fixation.Prefix,
 		PriorityLevel.Last,
-		platform: Harmonize.Platform.MonoGame,
+		platform: Platform.MonoGame,
 		instance: false,
 		critical: false
 	)]
-	public static bool FromStreamPre(ref XTexture2D __result, GraphicsDevice graphicsDevice, Stream stream, ref bool __state) {
+	public static bool FromStreamPre(ref XTexture2D? __result, GraphicsDevice? graphicsDevice, Stream? stream, ref bool __state) {
 		lock (Lock) {
 
 			if (!Config.IsUnconditionallyEnabled || !Config.TextureCache.Enabled) {
@@ -94,8 +94,8 @@ internal static class TextureCache {
 		}
 	}
 
-	[Harmonize(typeof(XTexture2D), "FromStream", Harmonize.Fixation.Postfix, PriorityLevel.Last, platform: Harmonize.Platform.MonoGame, instance: false)]
-	public static void FromStreamPost(ref XTexture2D __result, GraphicsDevice graphicsDevice, Stream stream, bool __state) {
+	[Harmonize(typeof(XTexture2D), "FromStream", Fixation.Postfix, PriorityLevel.Last, platform: Platform.MonoGame, instance: false)]
+	public static void FromStreamPost(ref XTexture2D? __result, GraphicsDevice? graphicsDevice, Stream? stream, bool __state) {
 		lock (Lock) {
 			if (!Config.IsUnconditionallyEnabled || !Config.TextureCache.Enabled) {
 				return;
@@ -121,8 +121,8 @@ internal static class TextureCache {
 		}
 	}
 
-	[Harmonize(typeof(XTexture2D), "FromStream", Harmonize.Fixation.Finalizer, PriorityLevel.Last, platform: Harmonize.Platform.MonoGame, instance: false)]
-	public static void FromStreamFinal(ref XTexture2D __result, GraphicsDevice graphicsDevice, Stream stream, bool __state) {
+	[Harmonize(typeof(XTexture2D), "FromStream", Fixation.Finalizer, PriorityLevel.Last, platform: Platform.MonoGame, instance: false)]
+	public static void FromStreamFinal(ref XTexture2D? __result, GraphicsDevice? graphicsDevice, Stream? stream, bool __state) {
 		lock (Lock) {
 			if (!Config.IsUnconditionallyEnabled || !Config.TextureCache.Enabled) {
 				return;
@@ -175,8 +175,8 @@ internal static class TextureCache {
 		typeof(StardewModdingAPI.Framework.ModLoading.RewriteFacades.AccessToolsFacade),
 		"StardewModdingAPI.Framework.ContentManagers.ModContentManager",
 		"PremultiplyTransparency",
-		Harmonize.Fixation.Prefix,
-		Harmonize.PriorityLevel.First
+		Fixation.Prefix,
+		PriorityLevel.First
 	)]
 	public static bool PremultiplyTransparencyPre(ContentManager __instance, ref XTexture2D __result, XTexture2D texture) {
 		lock (Lock) {
@@ -199,8 +199,8 @@ internal static class TextureCache {
 		typeof(StardewModdingAPI.Framework.ModLoading.RewriteFacades.AccessToolsFacade),
 		"StardewModdingAPI.Framework.ContentManagers.ModContentManager",
 		"PremultiplyTransparency",
-		Harmonize.Fixation.Finalizer,
-		Harmonize.PriorityLevel.First
+		Fixation.Finalizer,
+		PriorityLevel.First
 	)]
 	public static void PremultiplyTransparencyPost(ContentManager __instance, XTexture2D __result, XTexture2D texture) {
 		lock (Lock) {

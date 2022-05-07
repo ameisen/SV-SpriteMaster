@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 
-using static SpriteMaster.Runtime;
-
 namespace SpriteMaster.Extensions;
 
 internal static class Compression {

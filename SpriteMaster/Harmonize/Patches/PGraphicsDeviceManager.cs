@@ -17,9 +17,9 @@ namespace SpriteMaster.Harmonize.Patches;
 [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Harmony")]
 internal static class PGraphicsDeviceManager {
 	private struct DeviceState {
-		internal Vector2I Size = new(int.MinValue);
-		internal bool Initialized = false;
-		internal bool IsFullscreen = false;
+		private Vector2I Size = new(int.MinValue);
+		private bool Initialized = false;
+		private bool IsFullscreen = false;
 
 		public DeviceState() { }
 
@@ -43,9 +43,9 @@ internal static class PGraphicsDeviceManager {
 	private static DeviceState LastState = new();
 
 	[Harmonize(
-		typeof(Microsoft.Xna.Framework.Graphics.RenderTarget2D),
-		Harmonize.Constructor,
-		Harmonize.Fixation.Prefix,
+		typeof(RenderTarget2D),
+		Constructor,
+		Fixation.Prefix,
 		PriorityLevel.Last
 	)]
 	public static void OnRenderTarget2DConstruct(
@@ -74,7 +74,7 @@ internal static class PGraphicsDeviceManager {
 				continue;
 			}
 
-			switch (method?.Name) {
+			switch (method.Name) {
 				case "SetWindowSize": {
 						__state = true;
 						GraphicsDevice? device = null;
@@ -106,9 +106,9 @@ internal static class PGraphicsDeviceManager {
 	}
 
 	[Harmonize(
-		typeof(Microsoft.Xna.Framework.Graphics.RenderTarget2D),
-		Harmonize.Constructor,
-		Harmonize.Fixation.Postfix,
+		typeof(RenderTarget2D),
+		Constructor,
+		Fixation.Postfix,
 		PriorityLevel.Last
 	)]
 	public static void OnRenderTarget2DConstructPost(
@@ -133,7 +133,7 @@ internal static class PGraphicsDeviceManager {
 
 	[Harmonize(
 		"ApplyChanges",
-		Harmonize.Fixation.Prefix,
+		Fixation.Prefix,
 		PriorityLevel.First
 	)]
 	public static bool OnApplyChanges(GraphicsDeviceManager __instance) {
@@ -162,7 +162,7 @@ internal static class PGraphicsDeviceManager {
 
 	[Harmonize(
 		"ApplyChanges",
-		Harmonize.Fixation.Postfix,
+		Fixation.Postfix,
 		PriorityLevel.Last
 	)]
 	public static void OnApplyChangesPost(GraphicsDeviceManager __instance) {
@@ -186,7 +186,10 @@ internal static class PGraphicsDeviceManager {
 			try {
 				SystemInfo.Dump(__instance, device);
 			}
-			catch { }
+			catch {
+				// ignored
+			}
+
 			DumpedSystemInfo = true;
 		}
 
@@ -237,7 +240,8 @@ internal static class PGraphicsDeviceManager {
 						try {
 							Config.ClampDimension = currentDimension;
 							//Math.Min(i, Config.PreferredMaxTextureDimension);
-							using (var testTexture = new DumpTexture2D(@this.GraphicsDevice, currentDimension, currentDimension) { Name = "Resolution Test Texture" }) {
+							using (new DumpTexture2D(@this.GraphicsDevice, currentDimension, currentDimension) { Name = "Resolution Test Texture" })
+							{
 								/* do nothing. We want to dispose of it immediately. */
 							}
 							Garbage.Collect(compact: true, blocking: true, background: false);

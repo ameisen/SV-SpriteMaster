@@ -61,7 +61,7 @@ internal static partial class Debug {
 	}
 
 	[DebuggerStepThrough, DebuggerHidden()]
-	private static string Format(this string memberName, bool format = true) {
+	private static string Format(this string? memberName, bool format = true) {
 		return (!format || memberName is null) ? "" : $"[{memberName}] ";
 	}
 

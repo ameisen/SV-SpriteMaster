@@ -61,7 +61,7 @@ internal sealed partial class Scaler {
 		Vector2I sourceSize,
 		Vector2I targetSize
 	) {
-		if (scaleMultiplier < MinScale || scaleMultiplier > MaxScale) {
+		if (scaleMultiplier is < MinScale or > MaxScale) {
 			throw new ArgumentOutOfRangeException(nameof(scaleMultiplier));
 		}
 		/*

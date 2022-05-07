@@ -31,8 +31,8 @@ internal static class SystemInfo {
 		}
 
 		try {
-			if (!device.IsDisposed) {
-				var adapter = device.Adapter;
+			if (!(device?.IsDisposed).GetValueOrDefault(false)) {
+				var adapter = device?.Adapter;
 				if (adapter is not null) {
 					dumpBuilder.AppendLine($"\tGraphics Adapter: {adapter}");
 					dumpBuilder.AppendLine($"\tGraphics Adapter Description: {adapter.Description}");

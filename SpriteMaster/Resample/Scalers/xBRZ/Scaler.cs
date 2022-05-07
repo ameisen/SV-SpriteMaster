@@ -125,7 +125,7 @@ internal sealed partial class Scaler {
 
 	private static (int R, int G, int B, int A) BlendColor(int offset, int max, Color16 a, Color16 b) {
 		offset = SharpenOffset(offset, max);
-		int aCount = max - offset;
+		var aCount = max - offset;
 		(int r, int g, int b, int a) color32 = (
 			(a.R.Value * aCount + b.R.Value * offset),
 			(a.G.Value * aCount + b.G.Value * offset),
@@ -178,7 +178,7 @@ internal sealed partial class Scaler {
 	//detect blend direction
 	[Pure]
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private BlendResult PreProcessCorners(in Kernel4x4 ker) {
+	private BlendResult PreProcessCorners(in Kernel4X4 ker) {
 		var result = new BlendResult();
 
 		if (ker.F == ker.G && ker.J == ker.K || ker.F == ker.J && ker.G == ker.K) {
@@ -234,7 +234,7 @@ internal sealed partial class Scaler {
 			blendInfo: result of preprocessing all four corners of pixel "e"
 	*/
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private void ScalePixel(Structures.IScaler scaler, RotationDegree rotDeg, in Kernel3x3 ker, ref OutputMatrix outputMatrix, int targetIndex, PreprocessType blendInfo) {
+	private void ScalePixel(Structures.IScaler scaler, RotationDegree rotDeg, in Kernel3X3 ker, ref OutputMatrix outputMatrix, int targetIndex, PreprocessType blendInfo) {
 		var blend = blendInfo.Rotate(rotDeg);
 
 		if (blend.GetBottomR() == BlendType.None) {
@@ -391,7 +391,7 @@ internal sealed partial class Scaler {
 				var xP2 = GetX(x + 2);
 
 				//read sequentially from memory as far as possible
-				var ker4 = new Kernel4x4(
+				var ker4 = new Kernel4X4(
 					GetPixel(source, sM1, xM1),
 					GetPixel(source, sM1, x),
 					GetPixel(source, sM1, xP1),
@@ -461,7 +461,7 @@ internal sealed partial class Scaler {
 				//blend_xy for current (x, y) position
 
 				//read sequentially from memory as far as possible
-				var ker4 = new Kernel4x4(
+				var ker4 = new Kernel4X4(
 					GetPixel(source, sM1, xM1),
 					GetPixel(source, sM1, x),
 					GetPixel(source, sM1, xP1),
@@ -550,7 +550,7 @@ internal sealed partial class Scaler {
 				}
 
 				//read sequentially from memory as far as possible
-				var ker3 = new Kernel3x3(
+				var ker3 = new Kernel3X3(
 					ker4.A,
 					ker4.B,
 					ker4.C,

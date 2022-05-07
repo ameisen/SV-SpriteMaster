@@ -14,14 +14,12 @@ internal static class ExtractSprite {
 			return Extract(data, textureBounds, spriteBounds, stride, out newExtent);
 		}
 
-		Span<Color8> result;
-
-		Bounds bounds = new Bounds(
+		var bounds = new Bounds(
 			spriteBounds.Offset,
 			(spriteBounds.Extent / block).Max((1, 1))
 		);
 
-		result = SpanExt.MakeUninitialized<Color8>(bounds.Area);
+		var result = SpanExt.MakeUninitialized<Color8>(bounds.Area);
 
 		int startOffset = (bounds.Offset.Y * stride) + bounds.Offset.X;
 		int outOffset = 0;

@@ -42,8 +42,9 @@ internal static partial class Debug {
 			}
 
 			void PrintSpritesheetProperties(IEnumerable<KeyValuePair<string, string>> properties) {
-				int maxKeyLen = properties.Max(prop => prop.Key.Length);
-				foreach (var kvp in properties) {
+				var keyValuePairs = properties as KeyValuePair<string, string>[] ?? properties.ToArray();
+				int maxKeyLen = keyValuePairs.Max(prop => prop.Key.Length);
+				foreach (var kvp in keyValuePairs) {
 					dumpBuilder!.AppendLine($"│ ├ {kvp.Key.PadRight(maxKeyLen)}: {kvp.Value}");
 				}
 			}
@@ -99,12 +100,14 @@ internal static partial class Debug {
 			});
 
 			foreach (var sprite in sortedSprites) {
-				if (sprite.IsReady && sprite.Texture is not null) {
-					bool last = object.ReferenceEquals(list.Value.LastF(), sprite);
-					var spriteDisposed = sprite.Texture.IsDisposed;
-					dumpBuilder.AppendLine($"│ {(last ? '└' : '├')} sprite: {sprite.OriginalSourceRectangle} :: {sprite.MemorySize.AsDataSize()} {DisposedString(spriteDisposed)}");
-					totalSize += spriteDisposed ? 0 : sprite.MemorySize;
+				if (!sprite.IsReady || sprite.Texture is null) {
+					continue;
 				}
+
+				bool last = object.ReferenceEquals(list.Value.LastF(), sprite);
+				var spriteDisposed = sprite.Texture.IsDisposed;
+				dumpBuilder.AppendLine($"│ {(last ? '└' : '├')} sprite: {sprite.OriginalSourceRectangle} :: {sprite.MemorySize.AsDataSize()} {DisposedString(spriteDisposed)}");
+				totalSize += spriteDisposed ? 0 : sprite.MemorySize;
 			}
 		}
 		dumpBuilder.AppendLine( "│");

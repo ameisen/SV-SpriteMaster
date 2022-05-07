@@ -33,8 +33,6 @@ internal sealed class Texture2DMeta : IDisposable {
 	private sealed class SpriteData {
 		internal ulong? Hash = null;
 		internal SpriteFlag Flags = SpriteFlag.None;
-
-		public SpriteData() { }
 	}
 
 	private readonly ConcurrentDictionary<Bounds, SpriteData> SpriteDataMap = new();
@@ -80,10 +78,7 @@ internal sealed class Texture2DMeta : IDisposable {
 
 	internal bool RemoveFromSpriteInstanceTable(ulong key, bool dispose, out ManagedSpriteInstance? instance) {
 		using (Lock.Write) {
-			if (SpriteInstanceTable.Remove(key, out instance)) {
-				return true;
-			}
-			return false;
+			return SpriteInstanceTable.Remove(key, out instance);
 		}
 	}
 
@@ -142,23 +137,23 @@ internal sealed class Texture2DMeta : IDisposable {
 		return false;
 	}
 
-	private string? _NormalizedName = null;
+	private string? NormalizedNameInternal = null;
 	private string? NormalizedName {
 		get {
-			if (_NormalizedName is null) {
+			if (NormalizedNameInternal is null) {
 				if (Owner.TryGetTarget(out var owner)) {
-					_NormalizedName = owner?.NormalizedNameOrNull();
+					NormalizedNameInternal = owner?.NormalizedNameOrNull();
 				}
 			}
-			return _NormalizedName;
+			return NormalizedNameInternal;
 		}
 	}
 
 	/// <summary>The current (static) ID, incremented every time a new <see cref="Texture2DMeta"/> is created.</summary>
-	private static ulong CurrentID = 0U;
-	/// <summary>Whenever a new <see cref="Texture2DMeta"/> is created, <see cref="CurrentID"/> is incremented and <see cref="UniqueIDString"/> is set to a string representation of it.</summary>
-	private readonly ulong MetaID = Interlocked.Increment(ref CurrentID);
-	private readonly string UniqueIDString;
+	private static ulong CurrentId = 0U;
+	/// <summary>Whenever a new <see cref="Texture2DMeta"/> is created, <see cref="CurrentId"/> is incremented and <see cref="UniqueIdString"/> is set to a string representation of it.</summary>
+	private readonly ulong MetaId = Interlocked.Increment(ref CurrentId);
+	private readonly string UniqueIdString;
 
 	internal readonly SharedLock Lock = new(LockRecursionPolicy.SupportsRecursion);
 
@@ -180,19 +175,19 @@ internal sealed class Texture2DMeta : IDisposable {
 
 	internal Texture2DMeta(XTexture2D texture) {
 		Owner = texture.MakeWeak();
-		UniqueIDString = MetaID.ToString64();
+		UniqueIdString = MetaId.ToString64();
 		IsCompressed = texture.Format.IsCompressed();
 		Format = texture.Format;
 		Size = texture.Extent();
-		SpriteInstanceTable = SpriteDictionaries.GetOrAdd(MetaID, id => new());
+		SpriteInstanceTable = SpriteDictionaries.GetOrAdd(MetaId, id => new());
 		if (!texture.Anonymous()) {
 			SpriteDataMap = GlobalSpriteDataMaps.GetOrAdd(texture.NormalizedName(), _ => new());
 		}
 	}
 
 	// TODO : this presently is not threadsafe.
-	private readonly WeakReference<byte[]> _CachedData = (Config.MemoryCache.Enabled) ? new(null!) : null!;
-	private readonly WeakReference<byte[]> _CachedRawData = (Config.MemoryCache.Enabled) ? new(null!) : null!;
+	private readonly WeakReference<byte[]> CachedDataInternal = (Config.MemoryCache.Enabled) ? new(null!) : null!;
+	private readonly WeakReference<byte[]> CachedRawDataInternal = (Config.MemoryCache.Enabled) ? new(null!) : null!;
 
 	internal bool HasCachedData {
 		[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -202,7 +197,7 @@ internal sealed class Texture2DMeta : IDisposable {
 			}
 
 			using (Lock.Read) {
-				return _CachedData.TryGetTarget(out var target);
+				return CachedDataInternal.TryGetTarget(out var target);
 			}
 		}
 	}
@@ -323,7 +318,7 @@ internal sealed class Texture2DMeta : IDisposable {
 			}
 
 			using (var locked = Lock.TryRead) if (locked) {
-					_CachedRawData.TryGetTarget(out var target);
+					CachedRawDataInternal.TryGetTarget(out var target);
 					return target;
 				}
 			return BlockedSentinel;
@@ -338,7 +333,7 @@ internal sealed class Texture2DMeta : IDisposable {
 			}
 
 			using (Lock.Read) {
-				_CachedRawData.TryGetTarget(out var target);
+				CachedRawDataInternal.TryGetTarget(out var target);
 				return target;
 			}
 		}
@@ -351,25 +346,25 @@ internal sealed class Texture2DMeta : IDisposable {
 
 				TracePrinted = false;
 
-				//if (_CachedRawData.TryGetTarget(out var target) && target == value) {
+				//if (CachedRawDataInternal.TryGetTarget(out var target) && target == value) {
 				//	return;
 				//}
 				if (value is null) {
 					using (Lock.Write) {
-						_CachedRawData.SetTarget(null!);
-						_CachedData.SetTarget(null!);
-						ResidentCache.Remove(UniqueIDString);
+						CachedRawDataInternal.SetTarget(null!);
+						CachedDataInternal.SetTarget(null!);
+						ResidentCache.Remove(UniqueIdString);
 					}
 				}
 				else {
 					using (Lock.Write) {
-						ResidentCache.Set(UniqueIDString, value);
-						_CachedRawData.SetTarget(value);
+						ResidentCache.Set(UniqueIdString, value);
+						CachedRawDataInternal.SetTarget(value);
 						if (!IsCompressed) {
-							_CachedData.SetTarget(value);
+							CachedDataInternal.SetTarget(value);
 						}
 						else {
-							_CachedData.SetTarget(null!);
+							CachedDataInternal.SetTarget(null!);
 							DecodeTask.Dispatch(this);
 						}
 					}
@@ -384,7 +379,7 @@ internal sealed class Texture2DMeta : IDisposable {
 	internal byte[]? CachedData {
 		get {
 			using (Lock.Read) {
-				if (_CachedData.TryGet(out var data)) {
+				if (CachedDataInternal.TryGet(out var data)) {
 					return data;
 				}
 				return null;
@@ -394,7 +389,7 @@ internal sealed class Texture2DMeta : IDisposable {
 
 	internal void SetCachedDataUnsafe(Span<byte> data) {
 		using (Lock.Write) {
-			_CachedData.SetTarget(data.ToArray());
+			CachedDataInternal.SetTarget(data.ToArray());
 		}
 	}
 
@@ -432,7 +427,7 @@ internal sealed class Texture2DMeta : IDisposable {
 	~Texture2DMeta() => Dispose();
 
 	public void Dispose() {
-		ResourceManager.ReleasedTextureMetas.Push(MetaID);
+		ResourceManager.ReleasedTextureMetas.Push(MetaId);
 		//ResourceManager.SuspendableSpriteInstances.Push(new(SpriteInstanceTable.Values));
 
 		GC.SuppressFinalize(this);

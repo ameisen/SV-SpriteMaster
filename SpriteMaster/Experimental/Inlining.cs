@@ -38,8 +38,6 @@ internal static class Inlining {
 			return;
 		}
 
-		var loopResult = Parallel.ForEach(Harmony.GetAllPatchedMethods(), method => {
-			EnableInlining(method);
-		});
+		_ = Parallel.ForEach(Harmony.GetAllPatchedMethods(), EnableInlining);
 	}
 }

@@ -230,10 +230,10 @@ internal static partial class Debug {
 	[MethodImpl(MethodImpl.Cold)]
 	internal static void ConditionalError<T>(bool condition, T exception, [CallerMemberName] string caller = null!) where T : Exception {
 		if (condition) {
-			Error<T>(exception: exception, caller: caller);
+			Error(exception: exception, caller: caller);
 		}
 		else {
-			Trace<T>(exception: exception, caller: caller);
+			Trace(exception: exception, caller: caller);
 		}
 	}
 
@@ -241,7 +241,7 @@ internal static partial class Debug {
 	[MethodImpl(MethodImpl.Cold)]
 	internal static void ConditionalError<T>(bool condition, string message, T exception, [CallerMemberName] string caller = null!) where T : Exception {
 		if (condition) {
-			Error<T>(message: message, exception: exception, caller: caller);
+			Error(message: message, exception: exception, caller: caller);
 		}
 		else {
 			Trace(message: message, caller: caller);

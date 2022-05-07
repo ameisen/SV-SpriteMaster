@@ -32,5 +32,5 @@ internal static class LongHash {
 }
 
 internal interface ILongHash {
-	internal ulong GetLongHashCode();
+	ulong GetLongHashCode();
 }

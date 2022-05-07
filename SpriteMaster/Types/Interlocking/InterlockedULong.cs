@@ -50,9 +50,9 @@ internal struct InterlockedULong :
 	public readonly bool Equals(/*in*/ InterlockedULong other) => Value.Equals(other.Value);
 
 	private ulong _Value;
-	internal ulong Value {
+	internal readonly ulong Value {
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		readonly get => Get();
+		get => Get();
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		set => Set(value);
 	}

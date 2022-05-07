@@ -10,14 +10,14 @@ internal static class GammaCorrection {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void Delinearize(Span<Color16> data, in Vector2I size) {
-		foreach (ref Color16 color in data) {
+		foreach (ref var color in data) {
 			color = ColorSpace.Delinearize(color);
 		}
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void Linearize(Span<Color16> data, in Vector2I size) {
-		foreach (ref Color16 color in data) {
+		foreach (ref var color in data) {
 			color = ColorSpace.Linearize(color);
 		}
 	}

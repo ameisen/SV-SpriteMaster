@@ -17,8 +17,8 @@ internal struct Vector2B :
 	IEquatable<Vector2B>,
 	IEquatable<bool>,
 	IEquatable<(bool, bool)> {
-	internal static readonly Vector2B True = new(Packed: All_Value);
-	internal static readonly Vector2B False = new(Packed: ZeroByte);
+	internal static readonly Vector2B True = new(packed: AllValue);
+	internal static readonly Vector2B False = new(packed: ZeroByte);
 
 	/*
 	// TODO : would an int be faster? Since it would be a native type?
@@ -28,34 +28,34 @@ internal struct Vector2B :
 
 	private const byte ZeroByte = 0;
 	private const byte OneByte = 1;
-	private const byte X_Bit = 0;
-	private const byte Y_Bit = 1;
-	private const byte X_Value = 1 << X_Bit;
-	private const byte Y_Value = 1 << Y_Bit;
-	private const byte All_Value = X_Value | Y_Value;
+	private const byte XBit = 0;
+	private const byte YBit = 1;
+	private const byte XValue = 1 << XBit;
+	private const byte YValue = 1 << YBit;
+	private const byte AllValue = XValue | YValue;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static byte GetX(bool Value) => (byte)(Value.ToByte() << X_Bit);
+	private static byte GetX(bool value) => (byte)(value.ToByte() << XBit);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static byte GetY(bool Value) => (byte)(Value.ToByte() << Y_Bit);
+	private static byte GetY(bool value) => (byte)(value.ToByte() << YBit);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static byte Get(bool X, bool Y) => (byte)(GetX(X) | GetY(Y));
+	private static byte Get(bool x, bool y) => (byte)(GetX(x) | GetY(y));
 
 	private byte Packed = 0;
 
 	internal bool X {
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		readonly get => (Packed & X_Value) != ZeroByte;
+		readonly get => (Packed & XValue) != ZeroByte;
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		set => Packed.SetBit(X_Bit, value);
+		set => Packed.SetBit(XBit, value);
 	}
 	internal bool Y {
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		readonly get => (Packed & Y_Value) != ZeroByte;
+		readonly get => (Packed & YValue) != ZeroByte;
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		set => Packed.SetBit(Y_Bit, value);
+		set => Packed.SetBit(YBit, value);
 	}
 
 	internal bool Width {
@@ -86,7 +86,7 @@ internal struct Vector2B :
 
 	internal readonly bool None => Packed == ZeroByte;
 	internal readonly bool Any => Packed != ZeroByte;
-	internal readonly bool All => Packed == All_Value;
+	internal readonly bool All => Packed == AllValue;
 
 	internal readonly Vector2B Invert => (!X, !Y);
 
@@ -108,34 +108,34 @@ internal struct Vector2B :
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Vector2B(byte Packed) => this.Packed = Packed;
+	internal Vector2B(byte packed) => this.Packed = packed;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static Vector2B From(byte Packed) => new(Packed: Packed);
+	internal static Vector2B From(byte packed) => new(packed: packed);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Vector2B(bool X, bool Y) : this(Packed: Get(X, Y)) { }
+	internal Vector2B(bool x, bool y) : this(packed: Get(x, y)) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static Vector2B From(bool X, bool Y) => new(X, Y);
+	internal static Vector2B From(bool x, bool y) => new(x, y);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Vector2B(in (bool X, bool Y) Value) : this(Value.X, Value.Y) { }
+	internal Vector2B(in (bool X, bool Y) value) : this(value.X, value.Y) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static Vector2B From(in (bool X, bool Y) Value) => new(Value.X, Value.Y);
+	internal static Vector2B From(in (bool X, bool Y) value) => new(value.X, value.Y);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Vector2B(bool Value) : this(Value ? All_Value : ZeroByte) { }
+	internal Vector2B(bool value) : this(value ? AllValue : ZeroByte) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static Vector2B From(bool Value) => new(Value: Value);
+	internal static Vector2B From(bool value) => new(value: value);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Vector2B(Vector2B Vector) : this(Vector.Packed) { }
+	internal Vector2B(Vector2B vector) : this(vector.Packed) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static Vector2B From(Vector2B Vector) => new(Vector: Vector);
+	internal static Vector2B From(Vector2B vector) => new(vector: vector);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal readonly Vector2B Clone() => this;

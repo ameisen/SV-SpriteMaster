@@ -33,7 +33,7 @@ internal sealed class Resampler {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ulong GetHash(SpriteInfo input, TextureType textureType) {
 		// Need to make Hashing.CombineHash work better.
-		ulong hash = input.Hash;
+		var hash = input.Hash;
 
 		if (Config.Resample.EnableDynamicScale) {
 			hash = Hashing.Combine(hash, Hashing.Rehash(input.ExpectedScale));
@@ -52,7 +52,7 @@ internal sealed class Resampler {
 		}
 
 		// Need to make Hashing.CombineHash work better.
-		ulong hash = input.Hash.Value;
+		var hash = input.Hash.Value;
 
 		if (Config.Resample.EnableDynamicScale) {
 			hash = Hashing.Combine(hash, Hashing.Rehash(input.ExpectedScale));
@@ -67,7 +67,6 @@ internal sealed class Resampler {
 	private static readonly WeakSet<XTexture2D> GarbageMarkSet = Config.Garbage.CollectAccountUnownedTextures ? new() : null!;
 
 	private const int WaterBlock = 4;
-	private const int FontBlock = 1;
 
 	// TODO : use MemoryFailPoint class. Extensively.
 
@@ -192,7 +191,7 @@ internal sealed class Resampler {
 		}
 
 		// TODO : handle inverted input.Bounds
-		var spriteRawData8 = Passes.ExtractSprite.Extract(
+		var spriteRawData8 = ExtractSprite.Extract(
 			data: input.ReferenceData.AsSpan<Color8>(),
 			textureBounds: input.Reference.Bounds,
 			spriteBounds: inputBounds,
@@ -213,7 +212,7 @@ internal sealed class Resampler {
 
 		// At this point, rawData includes just the sprite's raw data.
 
-		var analysis = Passes.Analysis.AnalyzeLegacy(
+		var analysis = Analysis.AnalyzeLegacy(
 			reference: input.Reference,
 			data: spriteRawData8,
 			bounds: spriteRawExtent,
@@ -303,7 +302,7 @@ internal sealed class Resampler {
 
 		Span<Color16> bitmapDataWide = spriteRawData;
 
-		scalerInfo = Resample.Scalers.IScaler.GetScalerInfo(scalerType);
+		scalerInfo = Scalers.IScaler.GetScalerInfo(scalerType);
 
 		if (scalerInfo is not null) {
 			scale *= (uint)blockSize;
@@ -328,14 +327,14 @@ internal sealed class Resampler {
 			bool handlePadding = !directImage;
 
 			if (handlePadding) {
-				if (Passes.Padding.IsBlacklisted(inputBounds, input.Reference)) {
+				if (Padding.IsBlacklisted(inputBounds, input.Reference)) {
 					handlePadding = false;
 				}
 			}
 
 			// Apply padding to the sprite if necessary
 			if (handlePadding) {
-				spriteRawData = Passes.Padding.Apply(
+				spriteRawData = Padding.Apply(
 					data: spriteRawData,
 					spriteSize: spriteRawExtent,
 					scale: scale,
@@ -356,12 +355,12 @@ internal sealed class Resampler {
 				var doWrap = wrapped | input.IsWater;
 
 				if (gammaCorrect && currentGammaState == GammaState.Gamma) {
-					Passes.GammaCorrection.Linearize(spriteRawData, spriteRawExtent);
+					GammaCorrection.Linearize(spriteRawData, spriteRawExtent);
 					currentGammaState = GammaState.Linear;
 				}
 
 				if (premultiplyAlpha) {
-					Passes.PremultipliedAlpha.Reverse(spriteRawData, spriteRawExtent);
+					PremultipliedAlpha.Reverse(spriteRawData, spriteRawExtent);
 				}
 
 				if (Config.Resample.Deposterization.PreEnabled) {
@@ -399,7 +398,7 @@ internal sealed class Resampler {
 				}
 
 				if (Config.Resample.UseColorEnhancement) {
-					bitmapDataWide = Recolor.Enhance<Color16>(bitmapDataWide, scaledSize);
+					bitmapDataWide = Recolor.Enhance(bitmapDataWide, scaledSize);
 				}
 
 				if (premultiplyAlpha) {
@@ -614,17 +613,18 @@ internal sealed class Resampler {
 						result: out var result
 					);
 
-					if (result is (ResampleStatus.DisabledGradient or ResampleStatus.DisabledSolid)) {
-						Debug.Trace($"Skipping resample of {spriteInstance.Name} {input.Bounds}: NoResample");
-						spriteInstance.NoResample = true;
-						if (input.Reference is XTexture2D texture) {
-							texture.Meta().AddNoResample(input.Bounds);
-						}
-
-						return null;
+					if (result is not (ResampleStatus.DisabledGradient or ResampleStatus.DisabledSolid)) {
+						return resultTexture;
 					}
 
-					return resultTexture;
+					Debug.Trace($"Skipping resample of {spriteInstance.Name} {input.Bounds}: NoResample");
+					spriteInstance.NoResample = true;
+					if (input.Reference is { } texture) {
+						texture.Meta().AddNoResample(input.Bounds);
+					}
+
+					return null;
+
 				}
 				catch (OutOfMemoryException) {
 					Debug.Warning("OutOfMemoryException encountered during Upscale, garbage collecting and deferring.");
@@ -642,7 +642,8 @@ internal sealed class Resampler {
 
 	internal static readonly Action<XTexture2D, int, byte[], int, int>? PlatformSetData = typeof(XTexture2D).GetMethods(
 		BindingFlags.Instance | BindingFlags.NonPublic
-	).SingleF(m => m.Name == "PlatformSetData" && m.GetParameters().Length == 4)?.MakeGenericMethod(new Type[] { typeof(byte) })?.CreateDelegate<Action<XTexture2D, int, byte[], int, int>>();
+	).SingleF(m => m.Name == "PlatformSetData" && m.GetParameters().Length == 4).MakeGenericMethod(typeof(byte))
+		.CreateDelegate<Action<XTexture2D, int, byte[], int, int>>();
 
 	private static ManagedTexture2D? UpscaleInternal(ManagedSpriteInstance spriteInstance, ref uint scale, SpriteInfo input, ulong hash, ref Vector2B wrapped, bool async, out ResampleStatus result) {
 		var spriteFormat = TextureFormat.Color;
@@ -657,21 +658,14 @@ internal sealed class Resampler {
 
 		var hashString = hash.ToString("x");
 
-		var inputSize = input.TextureType switch {
-			TextureType.Sprite => input.Bounds.Extent,
-			TextureType.Image => input.ReferenceSize,
-			TextureType.SlicedImage => input.Bounds.Extent,
-			_ => throw new NotImplementedException("Unknown Image Type provided")
-		};
-
 		result = ResampleStatus.Unknown;
 
-		Span<byte> bitmapData;
 		try {
 			var newSize = Vector2I.Zero;
 
 			var cachePath = FileCache.GetPath($"{hashString}.cache");
 
+			Span<byte> bitmapData;
 			try {
 				if (FileCache.Fetch(
 					path: cachePath,
@@ -744,7 +738,9 @@ internal sealed class Resampler {
 						data: bitmapData
 					);
 				}
-				catch { }
+				catch {
+					// ignored
+				}
 			}
 
 			spriteInstance.UnpaddedSize = newSize - (spriteInstance.Padding.Sum + spriteInstance.BlockPadding);
@@ -803,10 +799,12 @@ internal sealed class Resampler {
 				ManagedTexture2D? newTexture = null;
 				try {
 					newTexture = CreateTexture(bitmapData.ToArray());
-					if (isAsync) {
-						spriteInstance.Texture = newTexture;
-						spriteInstance.Finish();
+					if (!isAsync) {
+						return newTexture;
 					}
+
+					spriteInstance.Texture = newTexture;
+					spriteInstance.Finish();
 					return newTexture;
 				}
 				catch (Exception ex) {

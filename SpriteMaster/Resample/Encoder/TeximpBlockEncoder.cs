@@ -79,6 +79,6 @@ internal static class TeximpBlockEncoder {
 		}
 		format = oldSpriteFormat;
 
-		return data.ToSpanUnsafe().Cast<byte>(); ;
+		return data.ToSpanUnsafe().Cast<byte>();
 	}
 }

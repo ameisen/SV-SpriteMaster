@@ -21,12 +21,12 @@ internal static class Setup {
 
 	private static IGenericModConfigMenuApi? ConfigAPI = null;
 	private static readonly Dictionary<string, FieldInfo> FieldMap = new();
-	private static Preview.Override PreviewOverride = new();
+	private static Override PreviewOverride = new();
 	private static bool IsMenuOpened = false;
 	private static bool DisposeNextClick = false;
-	private static Preview.Scene? PreviewScene = null;
+	private static Scene? PreviewScene = null;
 
-	private static readonly int RowHeight = 0;
+	private const int RowHeight = 0;
 
 	internal static void Initialize() {
 		if (Initialized) {
@@ -171,7 +171,6 @@ internal static class Setup {
 		if (order < 0) {
 			throw new ArgumentOutOfRangeException(nameof(order), "parameter must not be negative");
 		}
-		var shift = 10 * order;
 
 		// 1024^1 = (1024 << 0)
 		// 1024^2 = (1024 << 10)
@@ -295,17 +294,21 @@ internal static class Setup {
 
 		var comments = field.GetCustomAttributes<Attributes.CommentAttribute>();
 		string? comment = null;
-		if (comments.Any()) {
+		var commentAttributes = comments as Attributes.CommentAttribute[] ?? comments.ToArray();
+		if (commentAttributes.Any()) {
 			comment = string.Join(
 				Environment.NewLine,
-				comments.Select(attr => attr.Message)
+				commentAttributes.Select(attr => attr.Message)
 			);
 		}
 
 		var fieldType = field.FieldType;
 		var fieldId = $"{field.ReflectedType?.FullName ?? "unknown"}.{field.Name}";
 		Func<string> fieldName = () => GetFieldName(field);
-		Func<string>? tooltip = comment is null ? null : () => comment;
+		Func<string>? tooltip = null;
+		if (comment is not null) {
+			tooltip = () => comment;
+		}
 
 		FieldMap[fieldId] = field;
 
@@ -568,7 +571,7 @@ internal static class Setup {
 		destination.Offset.X += scissor.X;
 
 		if (PreviewScene is null) {
-			PreviewScene = new Preview.Scene1(destination);
+			PreviewScene = new Scene1(destination);
 		}
 		else {
 			if (PreviewScene.ReferenceRegion != destination) {

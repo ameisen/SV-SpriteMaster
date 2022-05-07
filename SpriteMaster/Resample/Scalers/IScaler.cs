@@ -29,27 +29,27 @@ internal interface IScaler {
 
 	internal static IScaler Default => new DefaultScaler.Scaler.ScalerInterface();
 
-	internal static IScalerInfo? GetScalerInfo(Resample.Scaler scaler) => scaler switch {
-		Resample.Scaler.xBRZ => Resample.Scalers.xBRZ.ScalerInfo.Instance,
+	internal static IScalerInfo? GetScalerInfo(Scaler scaler) => scaler switch {
+		Scaler.xBRZ => xBRZ.ScalerInfo.Instance,
 #if !SHIPPING
 		Resample.Scaler.SuperXBR => Resample.Scalers.SuperXBR.ScalerInfo.Instance,
 #endif
-		Resample.Scaler.EPX =>Resample.Scalers.EPX.ScalerInfo.Instance,
+		Scaler.EPX =>EPX.ScalerInfo.Instance,
 #if !SHIPPING
 		Resample.Scaler.Bilinear => throw new NotImplementedException("Bilinear scaling is not implemented"),
 #endif
-		Resample.Scaler.None => null,
+		Scaler.None => null,
 		_ => throw new InvalidOperationException($"Unknown Scaler Type: {SMConfig.Resample.Scaler}")
 	};
 
 	internal static IScalerInfo? CurrentInfo => GetScalerInfo(SMConfig.Resample.Scaler);
 
 	internal static IScaler Current => SMConfig.Resample.Scaler switch {
-		Resample.Scaler.xBRZ => Resample.Scalers.xBRZ.Scaler.ScalerInterface.Instance,
+		Scaler.xBRZ => xBRZ.Scaler.ScalerInterface.Instance,
 #if !SHIPPING
 		Resample.Scaler.SuperXBR => Resample.Scalers.SuperXBR.Scaler.ScalerInterface.Instance,
 #endif
-		Resample.Scaler.EPX => Resample.Scalers.EPX.Scaler.ScalerInterface.Instance,
+		Scaler.EPX => EPX.Scaler.ScalerInterface.Instance,
 #if !SHIPPING
 		Resample.Scaler.Bilinear => throw new NotImplementedException("Bilinear scaling is not implemented"),
 #endif

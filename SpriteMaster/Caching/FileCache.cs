@@ -41,8 +41,8 @@ internal static class FileCache {
 
 	[StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Unicode)]
 	private struct CacheHeader {
-		internal ulong Assembly = AssemblyHash;
-		internal ulong ConfigHash = Serialize.ConfigHash;
+		private readonly ulong Assembly = AssemblyHash;
+		private readonly ulong ConfigHash = Serialize.ConfigHash;
 		internal ulong DataHash = default;
 		internal Vector2I Size = default;
 		internal PaddingQuad Padding = default;
@@ -53,7 +53,7 @@ internal static class FileCache {
 		internal uint Scale = default;
 		internal uint UncompressedDataLength = default;
 		internal uint DataLength = default;
-		internal Resample.Scaler Scaler = Resample.Scaler.None;
+		internal Scaler Scaler = Scaler.None;
 		internal Vector2B Wrapped = default;
 		internal bool Gradient = false;
 
@@ -63,7 +63,10 @@ internal static class FileCache {
 		internal static CacheHeader Read(BinaryReader reader) {
 			CacheHeader newHeader = new();
 			var newHeaderSpan = MemoryMarshal.CreateSpan(ref newHeader, 1).Cast<CacheHeader, byte>();
-			reader.Read(newHeaderSpan);
+			var readBytes = reader.Read(newHeaderSpan);
+			if (readBytes != newHeaderSpan.Length) {
+				throw new IOException($"Cache File is corrupted");
+			}
 
 			return newHeader;
 		}
@@ -114,8 +117,6 @@ internal static class FileCache {
 				}
 			}
 		}
-
-		internal Profiler() { }
 
 		internal ulong AddFetchTime(ulong time) {
 			lock (Lock) {
@@ -178,11 +179,10 @@ internal static class FileCache {
 						return errorCode is (32 or 33);
 					}
 
-					Resample.Scaler scaler;
-
 					try {
-						long start_time = Config.FileCache.Profile ? DateTime.Now.Ticks : 0L;
+						long startTime = Config.FileCache.Profile ? DateTime.Now.Ticks : 0L;
 
+						Scaler scaler;
 						using (var reader = new BinaryReader(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))) {
 							var header = CacheHeader.Read(reader);
 							header.Validate(path);
@@ -209,8 +209,8 @@ internal static class FileCache {
 						}
 
 						if (Config.FileCache.Profile) {
-							var mean_ticks = CacheProfiler.AddFetchTime((ulong)(DateTime.Now.Ticks - start_time));
-							Debug.Info($"Mean Time Per Fetch: {(double)mean_ticks / TimeSpan.TicksPerMillisecond} ms");
+							var meanTicks = CacheProfiler.AddFetchTime((ulong)(DateTime.Now.Ticks - startTime));
+							Debug.Info($"Mean Time Per Fetch: {(double)meanTicks / TimeSpan.TicksPerMillisecond} ms");
 						}
 
 						scalerInfo = Resample.Scalers.IScaler.GetScalerInfo(scaler);
@@ -269,7 +269,7 @@ internal static class FileCache {
 					var data = (byte[])obj!;
 					bool failure = false;
 					try {
-						long start_time = Config.FileCache.Profile ? DateTime.Now.Ticks : 0L;
+						long startTime = Config.FileCache.Profile ? DateTime.Now.Ticks : 0L;
 
 						using (var writer = new BinaryWriter(new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None))) {
 							if (!writer.BaseStream.CanWrite) {
@@ -296,7 +296,7 @@ internal static class FileCache {
 								UncompressedDataLength = (uint)data.Length,
 								DataLength = (uint)compressedData.Length,
 								DataHash = compressedData.Hash(),
-								Scaler = scalerInfo?.Scaler ?? Resample.Scaler.None,
+								Scaler = scalerInfo?.Scaler ?? Scaler.None,
 								Gradient = gradient
 							}.Write(writer);
 
@@ -309,8 +309,8 @@ internal static class FileCache {
 						SavingMap.TryUpdate(path, SaveState.Saved, SaveState.Saving);
 
 						if (Config.FileCache.Profile) {
-							var mean_ticks = CacheProfiler.AddStoreTime((ulong)(DateTime.Now.Ticks - start_time));
-							Debug.Info($"Mean Time Per Store: {(double)mean_ticks / TimeSpan.TicksPerMillisecond} ms");
+							var meanTicks = CacheProfiler.AddStoreTime((ulong)(DateTime.Now.Ticks - startTime));
+							Debug.Info($"Mean Time Per Store: {(double)meanTicks / TimeSpan.TicksPerMillisecond} ms");
 						}
 					}
 					catch (IOException ex) {
@@ -323,7 +323,7 @@ internal static class FileCache {
 					}
 					if (failure) {
 						try { File.Delete(path); } catch { }
-						SavingMap.TryRemove(path, out var _);
+						SavingMap.TryRemove(path, out _);
 					}
 				}
 				finally {
@@ -355,7 +355,7 @@ internal static class FileCache {
 		}
 	}
 
-	private enum LinkType : int {
+	private enum LinkType {
 		File = 0,
 		Directory = 1
 	}

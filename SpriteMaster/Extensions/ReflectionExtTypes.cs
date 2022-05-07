@@ -8,7 +8,7 @@ namespace SpriteMaster.Extensions;
 
 internal static partial class ReflectionExt {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static int TypeSize<T>(this T obj) where T : struct => Marshal.SizeOf((typeof(T) is Type) ? typeof(T) : obj.GetType());
+	internal static int TypeSize<T>(this T obj) where T : struct => Marshal.SizeOf((typeof(T) is not null) ? typeof(T) : obj.GetType());
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static int Size(this Type type) => Marshal.SizeOf(type);
@@ -30,14 +30,6 @@ internal static partial class ReflectionExt {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	[Obsolete("Non-performant: is uncached/non-delegate")]
 	internal static T? CreateInstance<T>(this Type _, params object[] parameters) => (T?)Activator.CreateInstance(typeof(T), parameters);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	[Obsolete("Non-performant: is uncached/non-delegate")]
-	internal static T CreateInstance<T>(this Type<T> _) => Activator.CreateInstance<T>();
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	[Obsolete("Non-performant: is uncached/non-delegate")]
-	internal static T? CreateInstance<T>(this Type<T> _, params object[] parameters) => (T?)Activator.CreateInstance(typeof(T), parameters);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	[Obsolete("Non-performant: is uncached/non-delegate")]

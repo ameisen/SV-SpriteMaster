@@ -9,7 +9,7 @@ namespace SpriteMaster.Configuration;
 internal static class Command {
 	private static Serialize.Category Root => Serialize.Root;
 
-	[CommandAttribute("config", "Config Commands")]
+	[Command("config", "Config Commands")]
 	public static void OnConsoleCommand(string command, Queue<string> arguments) {
 		if (arguments.Count == 0) {
 			EmitHelp(new());
@@ -287,7 +287,7 @@ internal static class Command {
 	}
 
 	private static void Load(Queue<string> arguments) {
-		string path = Configuration.Config.Path;
+		string path = Config.Path;
 		if (arguments.Count > 1) {
 			throw new ArgumentException($"Too many arguments for load: expected 0 or 1, found {arguments.Count}");
 		}
@@ -299,13 +299,13 @@ internal static class Command {
 	}
 
 	internal static bool LoadConfig(string? path = null, bool retain = true) {
-		path ??= Configuration.Config.Path;
+		path ??= Config.Path;
 
 		return Serialize.Load(path, retain);
 	}
 
 	private static void Save(Queue<string> arguments) {
-		string path = Configuration.Config.Path;
+		string path = Config.Path;
 		if (arguments.Count > 1) {
 			throw new ArgumentException($"Too many arguments for save: expected 0 or 1, found {arguments.Count}");
 		}
@@ -317,7 +317,7 @@ internal static class Command {
 	}
 
 	internal static bool SaveConfig(string? path = null) {
-		path ??= Configuration.Config.Path;
+		path ??= Config.Path;
 
 		return Serialize.Save(path);
 	}

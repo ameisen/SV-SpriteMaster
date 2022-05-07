@@ -120,28 +120,28 @@ internal static partial class Integer {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static int SetBit(this ref int value, int bit) {
 		CheckBit<int>(bit);
-		value |= (int)(1 << bit);
+		value |= 1 << bit;
 		return value;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static uint SetBit(this ref uint value, int bit) {
 		CheckBit<uint>(bit);
-		value |= (uint)(1U << bit);
+		value |= 1U << bit;
 		return value;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static long SetBit(this ref long value, int bit) {
 		CheckBit<long>(bit);
-		value |= (long)(1L << bit);
+		value |= 1L << bit;
 		return value;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ulong SetBit(this ref ulong value, int bit) {
 		CheckBit<ulong>(bit);
-		value |= (ulong)(1UL << bit);
+		value |= 1UL << bit;
 		return value;
 	}
 
@@ -194,28 +194,28 @@ internal static partial class Integer {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static int ClearBit(this ref int value, int bit) {
 		CheckBit<int>(bit);
-		value &= (int)~(1 << bit);
+		value &= ~(1 << bit);
 		return value;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static uint ClearBit(this ref uint value, int bit) {
 		CheckBit<uint>(bit);
-		value &= (uint)~(1U << bit);
+		value &= ~(1U << bit);
 		return value;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static long ClearBit(this ref long value, int bit) {
 		CheckBit<long>(bit);
-		value &= (long)~(1L << bit);
+		value &= ~(1L << bit);
 		return value;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ulong ClearBit(this ref ulong value, int bit) {
 		CheckBit<ulong>(bit);
-		value &= (ulong)~(1UL << bit);
+		value &= ~(1UL << bit);
 		return value;
 	}
 
@@ -274,48 +274,48 @@ internal static partial class Integer {
 		CheckBit<ushort>(bit);
 		var mask = (ushort)(1U << bit);
 		var flag = condition ? ushort.MaxValue : default;
-		var Value = value;
-		Value = (ushort)((ushort)(Value & (ushort)~mask) | (ushort)(flag & mask));
-		return value = Value;
+		var casted = value;
+		casted = (ushort)((ushort)(casted & (ushort)~mask) | (ushort)(flag & mask));
+		return value = casted;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static int SetBit(this ref int value, int bit, bool condition) {
 		CheckBit<int>(bit);
-		var mask = (uint)(1U << bit);
+		var mask = 1U << bit;
 		var flag = condition ? uint.MaxValue : default;
-		var Value = (uint)value;
-		Value = (uint)((uint)(Value & (uint)~mask) | (uint)(flag & mask));
-		return value = (int)Value;
+		var casted = (uint)value;
+		casted = (casted & ~mask) | (flag & mask);
+		return value = (int)casted;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static uint SetBit(this ref uint value, int bit, bool condition) {
 		CheckBit<uint>(bit);
-		var mask = (uint)(1U << bit);
+		var mask = 1U << bit;
 		var flag = condition ? uint.MaxValue : default;
-		var Value = value;
-		Value = (uint)((uint)(Value & (uint)~mask) | (uint)(flag & mask));
-		return value = Value;
+		var casted = value;
+		casted = (casted & ~mask) | (flag & mask);
+		return value = casted;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static long SetBit(this ref long value, int bit, bool condition) {
 		CheckBit<long>(bit);
-		var mask = (ulong)(1UL << bit);
+		var mask = 1UL << bit;
 		var flag = condition ? ulong.MaxValue : default;
-		var Value = (ulong)value;
-		Value = (ulong)((ulong)(Value & (ulong)~mask) | (ulong)(flag & mask));
-		return value = (long)Value;
+		var casted = (ulong)value;
+		casted = (casted & ~mask) | (flag & mask);
+		return value = (long)casted;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ulong SetBit(this ref ulong value, int bit, bool condition) {
 		CheckBit<ulong>(bit);
-		var mask = (ulong)(1UL << bit);
+		var mask = 1UL << bit;
 		var flag = condition ? ulong.MaxValue : default;
-		var Value = value;
-		Value = (ulong)((ulong)(Value & (ulong)~mask) | (ulong)(flag & mask));
-		return value = Value;
+		var casted = value;
+		casted = (casted & ~mask) | (flag & mask);
+		return value = casted;
 	}
 }

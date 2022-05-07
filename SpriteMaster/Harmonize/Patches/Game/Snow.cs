@@ -18,22 +18,22 @@ internal static class Snow {
 	private static Dictionary<Bounds, List<SnowWeatherDebris>> MappedWeatherDebris = new();
 	private static List<WeatherDebris> AllWeatherDebris = new();
 
-	internal struct SnowState {
-		internal readonly Dictionary<Bounds, List<SnowWeatherDebris>> MappedWeatherDebris { get; init; }
-		internal readonly List<WeatherDebris> AllWeatherDebris { get; init; }
+	internal readonly struct SnowState {
+		internal Dictionary<Bounds, List<SnowWeatherDebris>> MappedWeatherDebris { get; init; }
+		internal List<WeatherDebris> AllWeatherDebris { get; init; }
 
 		internal static SnowState Backup() => new() {
 			MappedWeatherDebris = new(Snow.MappedWeatherDebris),
 			AllWeatherDebris = new(Snow.AllWeatherDebris)
 		};
 
-		internal readonly void Restore() {
+		internal void Restore() {
 			Snow.MappedWeatherDebris = MappedWeatherDebris;
 			Snow.AllWeatherDebris = AllWeatherDebris;
 		}
 	}
 
-	internal sealed class SnowWeatherDebris : StardewValley.WeatherDebris {
+	internal sealed class SnowWeatherDebris : WeatherDebris {
 		internal float Rotation;
 		internal readonly float RotationRate;
 		internal readonly float Scale;
@@ -46,7 +46,7 @@ internal static class Snow {
 		}
 
 		internal void Update() {
-			base.update();
+			update();
 			Rotation = (Rotation + RotationRate) % (2.0f * MathF.PI);
 		}
 	}
@@ -66,20 +66,20 @@ internal static class Snow {
 		Harmonize.PriorityLevel.Last,
 		critical: false
 	)]
-	public static bool DrawWeather(Game1 __instance, GameTime time, RenderTarget2D target_screen, ref DrawWeatherState __state) {
+	public static bool DrawWeather(Game1 __instance, GameTime? time, RenderTarget2D? target_screen, ref DrawWeatherState __state) {
 		__state = new(false, null);
 
 		if (!Config.IsEnabled || !Config.Extras.Snow.Enabled) {
 			return true;
 		}
 
-		bool isPrecipitationSnow = Configuration.Preview.Scene.Current?.Precipitation == Configuration.Preview.PrecipitationType.Snow;
+		bool isPrecipitationSnow = Scene.Current?.Precipitation == PrecipitationType.Snow;
 
-		if ((!ShouldDrawSnow || Configuration.Preview.Scene.Current is not null) && !isPrecipitationSnow) {
+		if ((!ShouldDrawSnow || Scene.Current is not null) && !isPrecipitationSnow) {
 			return true;
 		}
 
-		if (MappedWeatherDebris is null || MappedWeatherDebris.Count == 0) {
+		if (MappedWeatherDebris.Count == 0) {
 			return true;
 		}
 
@@ -123,10 +123,8 @@ internal static class Snow {
 				if (IsPuffersnow) {
 					XTexture2D drawTexture = FishTexture.Value;
 
-					foreach (var mappedListPair in MappedWeatherDebris) {
-						var source = mappedListPair.Key;
-
-						foreach (SnowWeatherDebris item in mappedListPair.Value) {
+					foreach (var weatherDebris in MappedWeatherDebris.Values) {
+						foreach (SnowWeatherDebris item in weatherDebris) {
 							Game1.spriteBatch.Draw(
 								texture: drawTexture,
 								position: item.position,
@@ -144,10 +142,7 @@ internal static class Snow {
 				else {
 					XTexture2D drawTexture = Game1.mouseCursors;
 
-					foreach (var mappedListPair in MappedWeatherDebris) {
-						var source = mappedListPair.Key;
-						var list = mappedListPair.Value;
-
+					foreach (var (source, list) in MappedWeatherDebris) {
 #if !USE_MULTIDRAW
 						foreach (SnowWeatherDebris item in list) {
 							Game1.spriteBatch.Draw(
@@ -228,9 +223,9 @@ internal static class Snow {
 			return true;
 		}
 
-		bool isPrecipitationSnow = Configuration.Preview.Scene.Current?.Precipitation == Configuration.Preview.PrecipitationType.Snow;
+		bool isPrecipitationSnow = Scene.Current?.Precipitation == PrecipitationType.Snow;
 
-		if ((!ShouldDrawSnow || Configuration.Preview.Scene.Current is not null) && !isPrecipitationSnow) {
+		if ((!ShouldDrawSnow || Scene.Current is not null) && !isPrecipitationSnow) {
 			return true;
 		}
 
@@ -257,7 +252,7 @@ internal static class Snow {
 			(item as SnowWeatherDebris)!.Update();
 		}
 
-		if (Configuration.Preview.Scene.Current is null) {
+		if (Scene.Current is null) {
 			Game1.updateDebrisWeatherForMovement(AllWeatherDebris);
 		}
 

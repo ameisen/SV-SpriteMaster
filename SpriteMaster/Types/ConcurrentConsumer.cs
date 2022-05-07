@@ -32,8 +32,6 @@ internal sealed class ConcurrentConsumer<T> {
 	}
 
 	private void Loop() {
-		var dequeued = new List<T>();
-
 		while (true) {
 			try {
 				Event.WaitOne();
@@ -53,7 +51,6 @@ internal sealed class ConcurrentConsumer<T> {
 				break;
 			}
 			catch (AbandonedMutexException) {
-				continue;
 			}
 		}
 	}

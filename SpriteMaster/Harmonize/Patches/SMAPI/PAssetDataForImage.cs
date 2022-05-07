@@ -6,11 +6,12 @@ using System.Reflection;
 namespace SpriteMaster.Harmonize.Patches.SMAPI;
 
 internal static class PAssetDataForImage {
-	private const int MaxStackSize = 256;
-
 	private static readonly Assembly? ReferenceAssembly = typeof(StardewModdingAPI.Framework.ModLoading.RewriteFacades.AccessToolsFacade)?.Assembly;
-	private static readonly Type? AssetDataForImageType = ReferenceAssembly?.GetType("StardewModdingAPI.Framework.Content.AssetDataForImage");
-	private static readonly byte MinOpacity = ((byte?)AssetDataForImageType?.GetField("MinOpacity", BindingFlags.NonPublic | BindingFlags.Static)?.GetValue(null)) ?? 5;
+	private static readonly Type? AssetDataForImageType = ReferenceAssembly?.
+		GetType("StardewModdingAPI.Framework.Content.AssetDataForImage");
+	private static readonly byte MinOpacity = (byte?)AssetDataForImageType?.
+		GetField("MinOpacity", BindingFlags.NonPublic | BindingFlags.Static)?.
+		GetValue(null) ?? 5;
 
 	[Harmonize(
 		typeof(StardewModdingAPI.Framework.ModLoading.RewriteFacades.AccessToolsFacade),
@@ -20,7 +21,7 @@ internal static class PAssetDataForImage {
 		Harmonize.PriorityLevel.Last,
 		critical: false
 	)]
-	public static unsafe bool PatchImage(IAssetDataForImage __instance, XTexture2D source, XRectangle? sourceArea, XRectangle? targetArea, PatchMode patchMode) {
+	public static bool PatchImage(IAssetDataForImage __instance, XTexture2D source, XRectangle? sourceArea, XRectangle? targetArea, PatchMode patchMode) {
 		if (!Config.SMAPI.ApplyPatchEnabled) {
 			return true;
 		}

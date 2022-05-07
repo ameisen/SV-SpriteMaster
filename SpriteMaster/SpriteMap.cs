@@ -118,7 +118,7 @@ internal static class SpriteMap {
 					var removeList = new List<ulong>();
 					using (meta.Lock.Write) {
 						foreach (var skv in spriteTable) {
-							if (skv.Value.Texture?.IsDisposed ?? false) {
+							if (skv.Value?.Texture?.IsDisposed ?? false) {
 								removeList.Add(skv.Key);
 							}
 						}
@@ -184,7 +184,7 @@ internal static class SpriteMap {
 
 		ManagedSpriteInstance? instance = null;
 		using (meta.Lock.Write) {
-			if (spriteTable.TryGetValue(instanceData.MapHash, out _)) {
+			if (spriteTable.TryGetValue(instanceData.MapHash, out var currentValue) && currentValue is null) {
 				meta.RemoveFromSpriteInstanceTable(instanceData.MapHash, dispose: false, out instance);
 			}
 		}

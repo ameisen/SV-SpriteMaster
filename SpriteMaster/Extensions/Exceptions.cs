@@ -7,7 +7,7 @@ using static SpriteMaster.Runtime;
 namespace SpriteMaster.Extensions;
 
 internal static class Exceptions {
-	[DebuggerStepThrough, DebuggerHidden()]
+	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden()]
 	[MethodImpl(MethodImpl.ErrorPath)]
 	internal static void PrintTrace<T>(this T exception, [CallerMemberName] string caller = null!) where T : Exception => Debug.Trace(exception: exception, caller: caller);
 

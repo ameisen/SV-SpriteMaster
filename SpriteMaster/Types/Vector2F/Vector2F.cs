@@ -184,7 +184,7 @@ internal unsafe partial struct Vector2F : ILongHash {
 
 	// C# GetHashCode on all integer primitives, even longs, just returns it truncated to an int.
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly override int GetHashCode() => NumericVector.GetHashCode();
+	public override readonly int GetHashCode() => NumericVector.GetHashCode();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	readonly ulong ILongHash.GetLongHashCode() => (ulong)NumericVector.GetHashCode();

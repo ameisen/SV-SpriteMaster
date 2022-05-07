@@ -8,7 +8,7 @@ internal partial struct Vector2F :
 	IEquatable<(float, float)>,
 	IEquatable<XVector2> {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly override bool Equals(object? other) => other switch {
+	public override readonly bool Equals(object? other) => other switch {
 		Vector2F vec => Equals(vec),
 		Vector2I vec => Equals(vec),
 		XVector2 vec => Equals(vec),

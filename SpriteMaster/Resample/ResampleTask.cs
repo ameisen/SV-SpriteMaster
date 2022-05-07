@@ -51,7 +51,7 @@ internal static class ResampleTask {
 			return Factory.StartNew(Resample, parameters);
 		}
 		else {
-			return Task<ManagedSpriteInstance?>.FromResult(ResampleFunction(parameters));
+			return Task.FromResult(ResampleFunction(parameters));
 		}
 	}
 

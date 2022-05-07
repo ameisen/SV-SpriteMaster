@@ -7,7 +7,7 @@ using System.Text;
 
 namespace SpriteMaster.Core;
 
-internal static partial class OnDrawStringImpl {
+internal static class OnDrawStringImpl {
 	private const bool Continue = true;
 	private const bool Stop = false;
 
@@ -19,7 +19,6 @@ internal static partial class OnDrawStringImpl {
 
 	private static readonly Dictionary<SpriteFont, Dictionary<char, int?>> GlyphIndexCache = new();
 	private static bool TryGetGlyphIndex(this SpriteFont font, char c, out int index) {
-		/*
 		if (!GlyphIndexCache.TryGetValue(font, out var indexCache)) {
 			GlyphIndexCache.Add(font, indexCache = new());
 		}
@@ -29,15 +28,13 @@ internal static partial class OnDrawStringImpl {
 				return indexOpt.HasValue;
 			}
 		}
-		*/
 		if (TryGetGlyphIndexFunc!(font, c, out index)) {
-			//indexCache.Add(c, index);
+			indexCache.Add(c, index);
 			return true;
 		}
-		else {
-			//indexCache.Add(c, null);
-			return false;
-		}
+
+		indexCache.Add(c, null);
+		return false;
 	}
 
 	internal static bool DrawString(
@@ -112,10 +109,7 @@ internal static partial class OnDrawStringImpl {
 		}
 
 		public override string ToString() {
-			if (String is not null) {
-				return String.ToString();
-}
-			return Builder!.ToString();
+			return String ?? Builder!.ToString();
 		}
 	}
 

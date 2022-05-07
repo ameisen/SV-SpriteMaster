@@ -2,67 +2,67 @@
 
 internal static class Reinterpret {
 	internal static unsafe U ReinterpretAs<T, U>(this T value) where T : unmanaged where U : unmanaged {
-		Contracts.AssertLessEqual(sizeof(U), sizeof(T));
+		sizeof(U).AssertLessEqual(sizeof(T));
 		return *(U*)&value;
 	}
 
 	internal static unsafe U ReinterpretAs<U>(this bool value) where U : unmanaged {
-		Contracts.AssertLessEqual(sizeof(U), sizeof(bool));
+		sizeof(U).AssertLessEqual(sizeof(bool));
 		return *(U*)&value;
 	}
 
 	internal static unsafe U ReinterpretAs<U>(this byte value) where U : unmanaged {
-		Contracts.AssertLessEqual(sizeof(U), sizeof(byte));
+		sizeof(U).AssertLessEqual(sizeof(byte));
 		return *(U*)&value;
 	}
 
 	internal static unsafe U ReinterpretAs<U>(this sbyte value) where U : unmanaged {
-		Contracts.AssertLessEqual(sizeof(U), sizeof(sbyte));
+		sizeof(U).AssertLessEqual(sizeof(sbyte));
 		return *(U*)&value;
 	}
 
 	internal static unsafe U ReinterpretAs<U>(this ushort value) where U : unmanaged {
-		Contracts.AssertLessEqual(sizeof(U), sizeof(ushort));
+		sizeof(U).AssertLessEqual(sizeof(ushort));
 		return *(U*)&value;
 	}
 
 	internal static unsafe U ReinterpretAs<U>(this short value) where U : unmanaged {
-		Contracts.AssertLessEqual(sizeof(U), sizeof(short));
+		sizeof(U).AssertLessEqual(sizeof(short));
 		return *(U*)&value;
 	}
 
 	internal static unsafe U ReinterpretAs<U>(this uint value) where U : unmanaged {
-		Contracts.AssertLessEqual(sizeof(U), sizeof(uint));
+		sizeof(U).AssertLessEqual(sizeof(uint));
 		return *(U*)&value;
 	}
 
 	internal static unsafe U ReinterpretAs<U>(this int value) where U : unmanaged {
-		Contracts.AssertLessEqual(sizeof(U), sizeof(int));
+		sizeof(U).AssertLessEqual(sizeof(int));
 		return *(U*)&value;
 	}
 
 	internal static unsafe U ReinterpretAs<U>(this ulong value) where U : unmanaged {
-		Contracts.AssertLessEqual(sizeof(U), sizeof(ulong));
+		sizeof(U).AssertLessEqual(sizeof(ulong));
 		return *(U*)&value;
 	}
 
 	internal static unsafe U ReinterpretAs<U>(this long value) where U : unmanaged {
-		Contracts.AssertLessEqual(sizeof(U), sizeof(long));
+		sizeof(U).AssertLessEqual(sizeof(long));
 		return *(U*)&value;
 	}
 
 	internal static unsafe U ReinterpretAs<U>(this half value) where U : unmanaged {
-		Contracts.AssertLessEqual(sizeof(U), sizeof(half));
+		sizeof(U).AssertLessEqual(sizeof(half));
 		return *(U*)&value;
 	}
 
 	internal static unsafe U ReinterpretAs<U>(this float value) where U : unmanaged {
-		Contracts.AssertLessEqual(sizeof(U), sizeof(float));
+		sizeof(U).AssertLessEqual(sizeof(float));
 		return *(U*)&value;
 	}
 
 	internal static unsafe U ReinterpretAs<U>(this double value) where U : unmanaged {
-		Contracts.AssertLessEqual(sizeof(U), sizeof(double));
+		sizeof(U).AssertLessEqual(sizeof(double));
 		return *(U*)&value;
 	}
 }

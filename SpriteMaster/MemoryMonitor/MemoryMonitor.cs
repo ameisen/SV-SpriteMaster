@@ -35,7 +35,7 @@ internal class MemoryMonitor {
 		}
 	}
 
-	internal void TriggerGC() {
+	internal void TriggerGarbageCollection() {
 		lock (CollectLock) {
 			Garbage.Collect(compact: true, blocking: true, background: false);
 			DrawState.TriggerCollection.Set(true);
@@ -57,7 +57,7 @@ internal class MemoryMonitor {
 				continue;
 			}
 
-			lock (CollectLock!) {
+			lock (CollectLock) {
 				try {
 					using var _ = new MemoryFailPoint(Config.Garbage.RequiredFreeMemory);
 				}
@@ -82,7 +82,7 @@ internal class MemoryMonitor {
 					Thread.Sleep(128);
 					continue;
 				}
-				lock (CollectLock!) {
+				lock (CollectLock) {
 					if (DrawState.TriggerCollection && DrawState.TriggerCollection.Wait()) {
 						continue;
 					}
@@ -94,7 +94,7 @@ internal class MemoryMonitor {
 			}
 		}
 		catch {
-
+			// ignored
 		}
 	}
 }

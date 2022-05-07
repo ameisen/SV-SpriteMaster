@@ -12,7 +12,7 @@ internal abstract class HarmonizeFinalizeCatcherFixedAttribute : HarmonizeAttrib
 		type: type,
 		method: $"~{type.Name.Split('`', 2)[0]}",
 		fixation: Fixation.Finalizer,
-		priority: Harmonize.PriorityLevel.Highest,
+		priority: PriorityLevel.Highest,
 		instance: true,
 		platform: platform,
 		critical: critical
@@ -24,8 +24,8 @@ internal abstract class HarmonizeFinalizeCatcherFixedAttribute : HarmonizeAttrib
 
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = true)]
 internal sealed class HarmonizeFinalizeCatcherAttribute<T, E> : HarmonizeFinalizeCatcherFixedAttribute where E : Exception {
-	internal static readonly new Type Type = typeof(T);
-	internal static readonly new Type Exception = typeof(E);
+	internal static new readonly Type Type = typeof(T);
+	internal static new readonly Type Exception = typeof(E);
 
 	private static Exception? Implementation(T __instance, Exception __exception) => (__exception is E) ? null : __exception;
 

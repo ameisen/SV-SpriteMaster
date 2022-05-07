@@ -41,13 +41,8 @@ internal static class Analysis {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static byte GetAlpha(uint sample) {
-		return (byte)(((uint)sample >> 24) & 0xFF);
-	}
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static unsafe LegacyResults AnalyzeLegacy(ReadOnlySpan<Color8> data, Bounds bounds, Vector2B wrapped, bool strict = true) {
-		Vector2B boundsInverted = bounds.Invert;
+		var boundsInverted = bounds.Invert;
 
 		if (bounds.Width < 0 || bounds.Height < 0) {
 			Debug.Error($"Inverted Sprite Bounds Value leaked to AnalyzeLegacy: {bounds}");
@@ -166,9 +161,8 @@ internal static class Analysis {
 				for (int x = 1; x < bounds.Width; ++x) {
 					var currColor = data[offset + x];
 
-					uint difference;
 					//if (Config.Resample.Analysis.UseRedmean)
-					difference = ColorHelpers.RedmeanDifference(prevColor, currColor, false, true);
+					var difference = prevColor.RedmeanDifference(currColor, false, true);
 
 					if (difference >= Config.Resample.Analysis.MaxGradientColorDifference) {
 						gradientAxial.X = false;
@@ -186,9 +180,8 @@ internal static class Analysis {
 			for (int y = 1; gradientAxial.Y && y < bounds.Height; ++y) {
 				for (int x = 0; x < bounds.Width; ++x) {
 					var currColor = data[offset + (y * bounds.Width) + x];
-					uint difference;
 					//if (Config.Resample.Analysis.UseRedmean)
-					difference = ColorHelpers.RedmeanDifference(prevColor, currColor, false, true);
+					var difference = prevColor.RedmeanDifference(currColor, false, true);
 
 					if (difference >= Config.Resample.Analysis.MaxGradientColorDifference) {
 						gradientAxial.Y = false;

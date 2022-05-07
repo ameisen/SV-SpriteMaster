@@ -2,7 +2,7 @@
 
 namespace SpriteMaster.SMAPIConsole;
 
-[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
+[AttributeUsage(AttributeTargets.Class)]
 internal sealed class StatsAttribute : Attribute {
 	internal readonly string Name;
 

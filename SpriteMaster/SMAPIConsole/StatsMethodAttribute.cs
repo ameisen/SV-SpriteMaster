@@ -2,7 +2,6 @@
 
 namespace SpriteMaster.SMAPIConsole;
 
-[AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
+[AttributeUsage(AttributeTargets.Method)]
 internal class StatsMethodAttribute : Attribute {
-	internal StatsMethodAttribute() { }
 }

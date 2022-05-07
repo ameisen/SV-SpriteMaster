@@ -72,7 +72,7 @@ internal static partial class Pathfinding {
 	private static NPC? GetDummyNPC() {
 		NPC? dummyNPC = null;
 		foreach (var location in Game1.locations) {
-			dummyNPC = location.getCharacters().FirstOrDefaultF(c => c is NPC);
+			dummyNPC = location.getCharacters().FirstOrDefaultF(c => c is not null);
 			if (dummyNPC is not null) {
 				break;
 			}
@@ -91,7 +91,7 @@ internal static partial class Pathfinding {
 
 		internal struct Comparer : IEqualityComparer<QueueLocation> {
 			[MethodImpl(Runtime.MethodImpl.Hot)]
-			public bool Equals(QueueLocation? x, QueueLocation? y) => x?.Location == y?.Location;
+			public bool Equals(QueueLocation? x, QueueLocation? y) => ReferenceEquals(x?.Location, y?.Location);
 			[MethodImpl(Runtime.MethodImpl.Hot)]
 			public int GetHashCode([DisallowNull] QueueLocation obj) => obj.Location.GetHashCode();
 		}
@@ -132,7 +132,7 @@ internal static partial class Pathfinding {
 				var qLocation = queue.Dequeue();
 
 				// Once we've reached the end node, traverse in reverse over the previous instances, to build a route
-				if (qLocation.Location == end) {
+				if (ReferenceEquals(qLocation.Location, end)) {
 					var result = new string[qLocation.ListDistance + 1];
 
 					QueueLocation? current = qLocation;

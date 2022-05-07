@@ -8,9 +8,8 @@ namespace SpriteMaster.Types;
 
 [CLSCompliant(false)]
 [DebuggerDisplay("[{X}, {Y}}")]
-[StructLayout(LayoutKind.Explicit, Pack = Vector2I.Alignment, Size = Vector2I.ByteSize)]
+[StructLayout(LayoutKind.Explicit, Pack = Alignment, Size = ByteSize)]
 internal unsafe partial struct Vector2I :
-	CompositePrimitive<ulong>,
 	ILongHash {
 	internal const int ByteSize = sizeof(ulong);
 	internal const int Alignment = sizeof(ulong);
@@ -77,19 +76,19 @@ internal unsafe partial struct Vector2I :
 	internal readonly float Length => MathF.Sqrt(LengthSquared);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Vector2I(ulong Packed) : this() => this.Packed = Packed;
+	internal Vector2I(ulong packed) : this() => this.Packed = packed;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static Vector2I From(ulong Packed) => new(Packed: Packed);
+	internal static Vector2I From(ulong packed) => new(packed: packed);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Vector2I(int X, int Y) : this() {
-		this.X = X;
-		this.Y = Y;
+	internal Vector2I(int x, int y) : this() {
+		this.X = x;
+		this.Y = y;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static Vector2I From(int X, int Y) => new(X, Y);
+	internal static Vector2I From(int x, int y) => new(x, y);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal Vector2I(in (int X, int Y) vec) : this(vec.X, vec.Y) { }
@@ -98,16 +97,16 @@ internal unsafe partial struct Vector2I :
 	internal static Vector2I From(in (int X, int Y) vec) => new(vec.X, vec.Y);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Vector2I(int Value) : this(Value, Value) { }
+	internal Vector2I(int value) : this(value, value) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static Vector2I From(int Value) => new(Value);
+	internal static Vector2I From(int value) => new(value);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Vector2I(in XVector2 Vector, bool Round = true) : this(Round ? Vector.NearestInt() : Vector.TruncateInt()) { }
+	internal Vector2I(in XVector2 vector, bool round = true) : this(round ? vector.NearestInt() : vector.TruncateInt()) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Vector2I(in Vector2F Vector, bool Round = true) : this(Round ? Vector.NearestInt() : Vector.TruncateInt()) { }
+	internal Vector2I(in Vector2F vector, bool round = true) : this(round ? vector.NearestInt() : vector.TruncateInt()) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal Vector2I(Vector2I vec) : this(vec.Packed) { }
@@ -177,7 +176,7 @@ internal unsafe partial struct Vector2I :
 
 	// C# GetHashCode on all integer primitives, even longs, just returns it truncated to an int.
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly override int GetHashCode() => (int)Hashing.Combine(X.GetHashCode(), Y.GetHashCode());
+	public override readonly int GetHashCode() => Hashing.Combine(X.GetHashCode(), Y.GetHashCode());
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	ulong ILongHash.GetLongHashCode() => ((ulong)X.GetHashCode() << 32) | (uint)Y.GetHashCode();

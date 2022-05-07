@@ -16,18 +16,17 @@ internal static class PrecipitationPatches {
 		instance: false,
 		critical: false
 	)]
-	public static bool IsSnowingHere(ref bool __result, GameLocation location) {
+	public static bool IsSnowingHere(ref bool __result, GameLocation? location) {
 		if (Precipitation != PrecipitationType.Snow) {
 			if (Scene.Current is null) {
 				return true;
 			}
-			else {
-				__result = false;
-				return false;
-			}
+
+			__result = false;
+			return false;
 		}
 
-		if (location == Scene.SceneLocation.Value || location is null) {
+		if (ReferenceEquals(location, Scene.SceneLocation.Value) || location is null) {
 			__result = true;
 			return false;
 		}
@@ -43,7 +42,7 @@ internal static class PrecipitationPatches {
 		instance: false,
 		critical: false
 	)]
-	public static bool IsRainingHere(ref bool __result, GameLocation location) {
+	public static bool IsRainingHere(ref bool __result, GameLocation? location) {
 		if (Precipitation != PrecipitationType.Rain) {
 			if (Scene.Current is null) {
 				return true;
@@ -54,7 +53,7 @@ internal static class PrecipitationPatches {
 			}
 		}
 
-		if (location == Scene.SceneLocation.Value || location is null) {
+		if (ReferenceEquals(location, Scene.SceneLocation.Value) || location is null) {
 			__result = true;
 			return false;
 		}

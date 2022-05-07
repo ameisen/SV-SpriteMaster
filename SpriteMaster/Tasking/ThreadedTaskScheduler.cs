@@ -28,7 +28,7 @@ internal sealed class ThreadedTaskScheduler : TaskScheduler, IDisposable {
 	}
 
 	private readonly CancellationTokenSource DisposeCancellation = new();
-	public int ConcurrencyLevel { get; private init; }
+	public int ConcurrencyLevel { get; }
 
 	[ThreadStatic]
 	private static bool IsTaskProcessingThread = false;

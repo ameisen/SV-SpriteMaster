@@ -17,7 +17,7 @@ internal static class SuspendedSpriteCache {
 	private static readonly Thread CacheTrimThread = ThreadExt.Run(CacheTrimLoop, background: true, name: "Cache Trim Thread");
 
 	private static void TrimSize() {
-		if (Config.SuspendedCache.MaxCacheSize <= 0 || Config.SuspendedCache.MaxCacheSize == long.MaxValue) {
+		if (Config.SuspendedCache.MaxCacheSize is <= 0 or long.MaxValue) {
 			return;
 		}
 
@@ -76,6 +76,7 @@ internal static class SuspendedSpriteCache {
 		}
 	}
 
+	[DoesNotReturn]
 	private static void CacheTrimLoop() {
 		while (true) {
 			TrimEvent.Wait();
@@ -83,6 +84,7 @@ internal static class SuspendedSpriteCache {
 			TrimSize();
 			TrimCount();
 		}
+		// ReSharper disable once FunctionNeverReturns
 	}
 
 	private static void OnEntryRemoved(CacheEntryRemovedReason reason, ManagedSpriteInstance element) {

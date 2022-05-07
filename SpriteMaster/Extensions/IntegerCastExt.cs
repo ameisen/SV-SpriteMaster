@@ -7,37 +7,37 @@ internal static partial class Integer {
 	// Unsigned Conversions
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static unsafe bool ToBool(this byte value) => value.ReinterpretAs<bool>();
+	internal static bool ToBool(this byte value) => value.ReinterpretAs<bool>();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static unsafe bool ToBool(this int value) => value.ReinterpretAs<bool>();
+	internal static bool ToBool(this int value) => value.ReinterpretAs<bool>();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static unsafe byte ToByte(this bool value) => value.ReinterpretAs<byte>();
+	internal static byte ToByte(this bool value) => value.ReinterpretAs<byte>();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static unsafe sbyte ToSByte(this bool value) => value.ReinterpretAs<sbyte>();
+	internal static sbyte ToSByte(this bool value) => value.ReinterpretAs<sbyte>();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static unsafe short ToShort(this bool value) => value.ReinterpretAs<byte>();
+	internal static short ToShort(this bool value) => value.ReinterpretAs<byte>();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static unsafe ushort ToUShort(this bool value) => value.ReinterpretAs<byte>();
+	internal static ushort ToUShort(this bool value) => value.ReinterpretAs<byte>();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static unsafe int ToInt(this bool value) => value.ReinterpretAs<byte>();
+	internal static int ToInt(this bool value) => value.ReinterpretAs<byte>();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static unsafe uint ToUInt(this bool value) => value.ReinterpretAs<byte>();
+	internal static uint ToUInt(this bool value) => value.ReinterpretAs<byte>();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static unsafe long ToLong(this bool value) => value.ReinterpretAs<byte>();
+	internal static long ToLong(this bool value) => value.ReinterpretAs<byte>();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static unsafe ulong ToULong(this bool value) => value.ReinterpretAs<byte>();
+	internal static ulong ToULong(this bool value) => value.ReinterpretAs<byte>();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static byte Byte(this byte value) => (byte)value;
+	internal static byte Byte(this byte value) => value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static byte Byte(this ushort value) => (byte)value;
@@ -49,10 +49,10 @@ internal static partial class Integer {
 	internal static byte Byte(this ulong value) => (byte)value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static ushort Short(this byte value) => (ushort)value;
+	internal static ushort Short(this byte value) => value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static ushort Short(this ushort value) => (ushort)value;
+	internal static ushort Short(this ushort value) => value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ushort Short(this uint value) => (ushort)value;
@@ -61,33 +61,33 @@ internal static partial class Integer {
 	internal static ushort Short(this ulong value) => (ushort)value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static uint Int(this byte value) => (uint)value;
+	internal static uint Int(this byte value) => value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static uint Int(this ushort value) => (uint)value;
+	internal static uint Int(this ushort value) => value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static uint Int(this uint value) => (uint)value;
+	internal static uint Int(this uint value) => value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static uint Int(this ulong value) => (uint)value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static ulong Long(this byte value) => (ulong)value;
+	internal static ulong Long(this byte value) => value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static ulong Long(this ushort value) => (ulong)value;
+	internal static ulong Long(this ushort value) => value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static ulong Long(this uint value) => (ulong)value;
+	internal static ulong Long(this uint value) => value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static ulong Long(this ulong value) => (ulong)value;
+	internal static ulong Long(this ulong value) => value;
 
 	// Signed Conversions
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static sbyte Byte(this sbyte value) => (sbyte)value;
+	internal static sbyte Byte(this sbyte value) => value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static sbyte Byte(this short value) => (sbyte)value;
@@ -99,10 +99,10 @@ internal static partial class Integer {
 	internal static sbyte Byte(this long value) => (sbyte)value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static short Short(this sbyte value) => (short)value;
+	internal static short Short(this sbyte value) => value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static short Short(this short value) => (short)value;
+	internal static short Short(this short value) => value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static short Short(this int value) => (short)value;
@@ -111,60 +111,60 @@ internal static partial class Integer {
 	internal static short Short(this long value) => (short)value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static int Int(this sbyte value) => (int)value;
+	internal static int Int(this sbyte value) => value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static int Int(this short value) => (int)value;
+	internal static int Int(this short value) => value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static int Int(this int value) => (int)value;
+	internal static int Int(this int value) => value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static int Int(this long value) => (int)value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static long Long(this sbyte value) => (long)value;
+	internal static long Long(this sbyte value) => value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static long Long(this short value) => (long)value;
+	internal static long Long(this short value) => value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static long Long(this int value) => (long)value;
+	internal static long Long(this int value) => value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static long Long(this long value) => (long)value;
+	internal static long Long(this long value) => value;
 
 	// Widen
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static ushort Widen(this byte value) => (ushort)value;
+	internal static ushort Widen(this byte value) => value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static uint Widen(this ushort value) => (uint)value;
+	internal static uint Widen(this ushort value) => value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static ulong Widen(this uint value) => (ulong)value;
+	internal static ulong Widen(this uint value) => value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static BigInteger Widen(this ulong value) => (BigInteger)value;
+	internal static BigInteger Widen(this ulong value) => value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static short Widen(this sbyte value) => (short)value;
+	internal static short Widen(this sbyte value) => value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static int Widen(this short value) => (int)value;
+	internal static int Widen(this short value) => value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static long Widen(this int value) => (long)value;
+	internal static long Widen(this int value) => value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static BigInteger Widen(this long value) => (BigInteger)value;
+	internal static BigInteger Widen(this long value) => value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static BigInteger Widen(this BigInteger value) => (BigInteger)value;
+	internal static BigInteger Widen(this BigInteger value) => value;
 
 	// Narrow
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static byte Narrow(this byte value) => (byte)value;
+	internal static byte Narrow(this byte value) => value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static byte Narrow(this ushort value) => (byte)value;
@@ -176,7 +176,7 @@ internal static partial class Integer {
 	internal static uint Narrow(this ulong value) => (uint)value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static sbyte Narrow(this sbyte value) => (sbyte)value;
+	internal static sbyte Narrow(this sbyte value) => value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static sbyte Narrow(this short value) => (sbyte)value;
@@ -192,16 +192,16 @@ internal static partial class Integer {
 
 	// Signed/Unsigned
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static byte Unsigned(this byte value) => (byte)value;
+	internal static byte Unsigned(this byte value) => value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static ushort Unsigned(this ushort value) => (ushort)value;
+	internal static ushort Unsigned(this ushort value) => value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static uint Unsigned(this uint value) => (uint)value;
+	internal static uint Unsigned(this uint value) => value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static ulong Unsigned(this ulong value) => (ulong)value;
+	internal static ulong Unsigned(this ulong value) => value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static byte Unsigned(this sbyte value) => (byte)value;
@@ -228,16 +228,16 @@ internal static partial class Integer {
 	internal static long Signed(this ulong value) => (long)value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static sbyte Signed(this sbyte value) => (sbyte)value;
+	internal static sbyte Signed(this sbyte value) => value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static short Signed(this short value) => (short)value;
+	internal static short Signed(this short value) => value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static int Signed(this int value) => (int)value;
+	internal static int Signed(this int value) => value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static long Signed(this long value) => (long)value;
+	internal static long Signed(this long value) => value;
 
 	// Bitwise Fuse
 

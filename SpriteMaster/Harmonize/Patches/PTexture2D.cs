@@ -123,7 +123,7 @@ internal static class PTexture2D {
 		return true;
 	}
 
-	[Harmonize("SetData", Harmonize.Fixation.Prefix, PriorityLevel.Last, Harmonize.Generic.Struct)]
+	[Harmonize("SetData", Fixation.Prefix, PriorityLevel.Last, Generic.Struct)]
 	public static bool OnSetData<T>(XTexture2D __instance, T[] data) where T : unmanaged {
 		if (__instance is (ManagedTexture2D or InternalTexture2D)) {
 			return true;
@@ -137,7 +137,7 @@ internal static class PTexture2D {
 		return false;
 	}
 
-	[Harmonize("SetData", Harmonize.Fixation.Prefix, PriorityLevel.Last, Harmonize.Generic.Struct)]
+	[Harmonize("SetData", Fixation.Prefix, PriorityLevel.Last, Generic.Struct)]
 	public static bool OnSetData<T>(XTexture2D __instance, T[] data, int startIndex, int elementCount) where T : unmanaged {
 		if (__instance is (ManagedTexture2D or InternalTexture2D)) {
 			return true;
@@ -151,7 +151,7 @@ internal static class PTexture2D {
 		return false;
 	}
 
-	[Harmonize("SetData", Harmonize.Fixation.Prefix, PriorityLevel.Last, Harmonize.Generic.Struct)]
+	[Harmonize("SetData", Fixation.Prefix, PriorityLevel.Last, Generic.Struct)]
 	public static bool OnSetData<T>(XTexture2D __instance, int level, in XRectangle? rect, T[] data, int startIndex, int elementCount) where T : unmanaged {
 		if (__instance is (ManagedTexture2D or InternalTexture2D)) {
 			return true;
@@ -165,7 +165,7 @@ internal static class PTexture2D {
 		return false;
 	}
 
-	[Harmonize("SetData", Harmonize.Fixation.Prefix, PriorityLevel.Last, Harmonize.Generic.Struct)]
+	[Harmonize("SetData", Fixation.Prefix, PriorityLevel.Last, Generic.Struct)]
 	public static bool OnSetData<T>(XTexture2D __instance, int level, int arraySlice, in XRectangle? rect, T[] data, int startIndex, int elementCount) where T : unmanaged {
 		if (__instance is (ManagedTexture2D or InternalTexture2D)) {
 			return true;
@@ -190,22 +190,22 @@ internal static class PTexture2D {
 		return true;
 	}
 
-	[Harmonize("GetData", Harmonize.Fixation.Prefix, PriorityLevel.Last, Harmonize.Generic.Struct)]
+	[Harmonize("GetData", Fixation.Prefix, PriorityLevel.Last, Generic.Struct)]
 	public static bool OnGetData<T>(XTexture2D __instance, T[] data) where T : unmanaged {
 		return OnGetData<T>(__instance, 0, null, data, 0, data.Length);
 	}
 
-	[Harmonize("GetData", Harmonize.Fixation.Prefix, PriorityLevel.Last, Harmonize.Generic.Struct)]
+	[Harmonize("GetData", Fixation.Prefix, PriorityLevel.Last, Generic.Struct)]
 	public static bool OnGetData<T>(XTexture2D __instance, T[] data, int startIndex, int elementCount) where T : unmanaged {
 		return OnGetData<T>(__instance, 0, null, data, startIndex, elementCount);
 	}
 
-	[Harmonize("GetData", Harmonize.Fixation.Prefix, PriorityLevel.Last, Harmonize.Generic.Struct)]
+	[Harmonize("GetData", Fixation.Prefix, PriorityLevel.Last, Generic.Struct)]
 	public static bool OnGetData<T>(XTexture2D __instance, int level, in XRectangle? rect, T[] data, int startIndex, int elementCount) where T : unmanaged {
 		return OnGetData<T>(__instance, level, 0, rect, data, startIndex, elementCount);
 	}
 
-	[Harmonize("GetData", Harmonize.Fixation.Prefix, PriorityLevel.Last, Harmonize.Generic.Struct)]
+	[Harmonize("GetData", Fixation.Prefix, PriorityLevel.Last, Generic.Struct)]
 	public static unsafe bool OnGetData<T>(XTexture2D __instance, int level, int arraySlice, in XRectangle? rect, T[] data, int startIndex, int elementCount) where T : unmanaged {
 		if (!Config.IsEnabled || !Config.SMAPI.ApplyGetDataPatch) {
 			return true;
@@ -321,7 +321,7 @@ internal static class PTexture2D {
 		return false;
 	}
 
-	[Harmonize("PlatformSetData", Harmonize.Fixation.Postfix, PriorityLevel.Average, Harmonize.Generic.Struct, platform: Harmonize.Platform.MonoGame)]
+	[Harmonize("PlatformSetData", Fixation.Postfix, PriorityLevel.Average, Generic.Struct, platform: Platform.MonoGame)]
 	public static void OnPlatformSetDataPost<T>(XTexture2D __instance, int level, T[] data, int startIndex, int elementCount) where T : unmanaged {
 		if (__instance is (ManagedTexture2D or InternalTexture2D)) {
 			return;
@@ -337,7 +337,7 @@ internal static class PTexture2D {
 		);
 	}
 
-	[Harmonize("PlatformSetData", Harmonize.Fixation.Postfix, PriorityLevel.Average, Harmonize.Generic.Struct, platform: Harmonize.Platform.MonoGame)]
+	[Harmonize("PlatformSetData", Fixation.Postfix, PriorityLevel.Average, Generic.Struct, platform: Platform.MonoGame)]
 	public static void OnPlatformSetDataPost<T>(XTexture2D __instance, int level, int arraySlice, XRectangle rect, T[] data, int startIndex, int elementCount) where T : unmanaged {
 		if (__instance is (ManagedTexture2D or InternalTexture2D)) {
 			return;

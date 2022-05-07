@@ -12,14 +12,14 @@ internal static class MonoBlockDecoder {
 	internal delegate byte[] DecompressDelegateArray(byte[] data, int width, int height);
 	internal delegate byte[] DecompressDelegateStream(Stream data, int width, int height);
 
-	internal static readonly DecompressDelegateArray? DecompressDXT1Array = GetDelegate<DecompressDelegateArray>("DecompressDxt1");
-	internal static readonly DecompressDelegateStream? DecompressDXT1Stream = GetDelegate<DecompressDelegateStream>("DecompressDxt1");
+	private static readonly DecompressDelegateArray? DecompressDXT1Array = GetDelegate<DecompressDelegateArray>("DecompressDxt1");
+	private static readonly DecompressDelegateStream? DecompressDXT1Stream = GetDelegate<DecompressDelegateStream>("DecompressDxt1");
 
-	internal static readonly DecompressDelegateArray? DecompressDXT3Array = GetDelegate<DecompressDelegateArray>("DecompressDxt3");
-	internal static readonly DecompressDelegateStream? DecompressDXT3Stream = GetDelegate<DecompressDelegateStream>("DecompressDxt3");
+	private static readonly DecompressDelegateArray? DecompressDXT3Array = GetDelegate<DecompressDelegateArray>("DecompressDxt3");
+	private static readonly DecompressDelegateStream? DecompressDXT3Stream = GetDelegate<DecompressDelegateStream>("DecompressDxt3");
 
-	internal static readonly DecompressDelegateArray? DecompressDXT5Array = GetDelegate<DecompressDelegateArray>("DecompressDxt5");
-	internal static readonly DecompressDelegateStream? DecompressDXT5Stream = GetDelegate<DecompressDelegateStream>("DecompressDxt5");
+	private static readonly DecompressDelegateArray? DecompressDXT5Array = GetDelegate<DecompressDelegateArray>("DecompressDxt5");
+	private static readonly DecompressDelegateStream? DecompressDXT5Stream = GetDelegate<DecompressDelegateStream>("DecompressDxt5");
 
 	private static T? GetDelegate<T>(string name) where T : Delegate => DxtUtil?.GetMethod(
 		name,
@@ -34,22 +34,13 @@ internal static class MonoBlockDecoder {
 			case SurfaceFormat.Dxt1:
 			case SurfaceFormat.Dxt1SRgb:
 			case SurfaceFormat.Dxt1a:
-				if (DecompressDXT1Array is null) {
-					return null;
-				}
-				return DecompressDXT1Array(data.ToArray(), size.Width, size.Height);
+				return DecompressDXT1Array?.Invoke(data.ToArray(), size.Width, size.Height);
 			case SurfaceFormat.Dxt3:
 			case SurfaceFormat.Dxt3SRgb:
-				if (DecompressDXT3Array is null) {
-					return null;
-				}
-				return DecompressDXT3Array(data.ToArray(), size.Width, size.Height);
+				return DecompressDXT3Array?.Invoke(data.ToArray(), size.Width, size.Height);
 			case SurfaceFormat.Dxt5:
 			case SurfaceFormat.Dxt5SRgb:
-				if (DecompressDXT5Array is null) {
-					return null;
-				}
-				return DecompressDXT5Array(data.ToArray(), size.Width, size.Height);
+				return DecompressDXT5Array?.Invoke(data.ToArray(), size.Width, size.Height);
 			default:
 				return default;
 		}

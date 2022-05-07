@@ -17,7 +17,7 @@ internal sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
 	internal static readonly SynchronizedTaskScheduler Instance = new();
 	internal static readonly TaskFactory TaskFactory = new(Instance);
 
-	internal static readonly Func<bool>? IsUIThread = typeof(XTexture2D).Assembly.GetType(
+	internal static readonly Func<bool>? IsUiThread = typeof(XTexture2D).Assembly.GetType(
 		"Microsoft.Xna.Framework.Threading"
 	)?.GetMethod(
 		"IsOnUIThread",
@@ -63,8 +63,6 @@ internal sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
 		}
 	}
 
-	internal SynchronizedTaskScheduler() {}
-
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal void Dispatch(in TimeSpan remainingTime) {
 		if (!Config.IsEnabled) {
@@ -91,7 +89,7 @@ internal sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private void DispatchInternal(in TimeSpan remainingTime) {
-		var watch = System.Diagnostics.Stopwatch.StartNew();
+		var watch = Stopwatch.StartNew();
 		{
 			var pendingActions = PendingImmediate.Current;
 			bool invoke;
@@ -210,7 +208,7 @@ internal sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
 		task.Start(this);
 	}
 
-	protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued) => (IsUIThread?.Invoke() ?? false) && TryExecuteTask(task);
+	protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued) => (IsUiThread?.Invoke() ?? false) && TryExecuteTask(task);
 
 	protected override IEnumerable<Task> GetScheduledTasks() {
 		var immediate = PendingImmediate.Both;

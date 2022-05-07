@@ -24,43 +24,43 @@ internal partial struct Vector2I :
 	public readonly int CompareTo(Vector2I other) => Packed.CompareTo(other.Packed);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly int CompareTo(Vector2I? other) => other.HasValue ? Packed.CompareTo(other.Value.Packed) : Packed.CompareTo((object?)null);
+	public readonly int CompareTo(Vector2I? other) => other.HasValue ? Packed.CompareTo(other.Value.Packed) : Packed.CompareTo(null);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public readonly int CompareTo((int, int) other) => CompareTo((Vector2I)other);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly int CompareTo((int, int)? other) => other.HasValue ? CompareTo((Vector2I)other.Value) : Packed.CompareTo((object?)null);
+	public readonly int CompareTo((int, int)? other) => other.HasValue ? CompareTo((Vector2I)other.Value) : Packed.CompareTo(null);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public readonly int CompareTo(DrawingPoint other) => CompareTo((Vector2I)other);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly int CompareTo(DrawingPoint? other) => other.HasValue ? CompareTo((Vector2I)other.Value) : Packed.CompareTo((object?)null);
+	public readonly int CompareTo(DrawingPoint? other) => other.HasValue ? CompareTo((Vector2I)other.Value) : Packed.CompareTo(null);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public readonly int CompareTo(XNA.Point other) => CompareTo((Vector2I)other);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly int CompareTo(XNA.Point? other) => other.HasValue ? CompareTo((Vector2I)other.Value) : Packed.CompareTo((object?)null);
+	public readonly int CompareTo(XNA.Point? other) => other.HasValue ? CompareTo((Vector2I)other.Value) : Packed.CompareTo(null);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public readonly int CompareTo(XTilePoint other) => CompareTo((Vector2I)other);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly int CompareTo(XTilePoint? other) => other.HasValue ? CompareTo((Vector2I)other.Value) : Packed.CompareTo((object?)null);
+	public readonly int CompareTo(XTilePoint? other) => other.HasValue ? CompareTo((Vector2I)other.Value) : Packed.CompareTo(null);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public readonly int CompareTo(DrawingSize other) => CompareTo((Vector2I)other);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly int CompareTo(DrawingSize? other) => other.HasValue ? CompareTo((Vector2I)other.Value) : Packed.CompareTo((object?)null);
+	public readonly int CompareTo(DrawingSize? other) => other.HasValue ? CompareTo((Vector2I)other.Value) : Packed.CompareTo(null);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public readonly int CompareTo(XTileSize other) => CompareTo((Vector2I)other);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly int CompareTo(XTileSize? other) => other.HasValue ? CompareTo((Vector2I)other.Value) : Packed.CompareTo((object?)null);
+	public readonly int CompareTo(XTileSize? other) => other.HasValue ? CompareTo((Vector2I)other.Value) : Packed.CompareTo(null);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	readonly int IComparable.CompareTo(object? other) => other switch {

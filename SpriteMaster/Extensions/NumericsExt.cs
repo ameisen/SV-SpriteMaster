@@ -63,7 +63,7 @@ internal static class NumericsExt {
 	// Example: ExtractByte(0x00F0, 8) would return 0xF
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static byte ExtractByte(this byte value, int offset) {
-		Contracts.AssertZero(offset);
+		offset.AssertZero();
 		return value;
 	}
 
@@ -71,7 +71,7 @@ internal static class NumericsExt {
 	// Example: ExtractByte(0x00F0, 8) would return 0xF
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static byte ExtractByte(this ushort value, int offset) {
-		Contracts.AssertLess(Math.Abs(offset), sizeof(ushort) * 8);
+		Math.Abs(offset).AssertLess(sizeof(ushort) * 8);
 		return (byte)((value >> offset) & 0xFFU);
 	}
 
@@ -79,7 +79,7 @@ internal static class NumericsExt {
 	// Example: ExtractByte(0x00F0, 8) would return 0xF
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static byte ExtractByte(this uint value, int offset) {
-		Contracts.AssertLess(Math.Abs(offset), sizeof(uint) * 8);
+		Math.Abs(offset).AssertLess(sizeof(uint) * 8);
 		return (byte)((value >> offset) & 0xFFU);
 	}
 
@@ -87,7 +87,7 @@ internal static class NumericsExt {
 	// Example: ExtractByte(0x00F0, 8) would return 0xF
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static byte ExtractByte(this ulong value, int offset) {
-		Contracts.AssertLess(Math.Abs(offset), sizeof(ulong) * 8);
+		Math.Abs(offset).AssertLess(sizeof(ulong) * 8);
 		return (byte)((value >> offset) & 0xFFU);
 	}
 
@@ -176,8 +176,8 @@ internal static class NumericsExt {
 	}
 
 	private static string Delimit(this string valueString, string delimiter, uint delimitCount) {
-		Contracts.AssertPositive(delimitCount);
-		Contracts.AssertTrue(delimiter.IsNormalized());
+		delimitCount.AssertPositive();
+		delimiter.IsNormalized().AssertTrue();
 
 		delimiter = delimiter.Reversed();
 
@@ -227,25 +227,25 @@ internal static class NumericsExt {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static string AsDataSize(this long value, DataFormat format = DataFormat.IEC, int decimals = 2) {
-		Contracts.AssertNotNegative(value);
+		value.AssertNotNegative();
 		return AsDataSize((ulong)value, format, decimals);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static string AsDataSize(this int value, DataFormat format = DataFormat.IEC, int decimals = 2) {
-		Contracts.AssertNotNegative(value);
+		value.AssertNotNegative();
 		return AsDataSize((ulong)value, format, decimals);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static string AsDataSize(this short value, DataFormat format = DataFormat.IEC, int decimals = 2) {
-		Contracts.AssertNotNegative(value);
+		value.AssertNotNegative();
 		return AsDataSize((ulong)value, format, decimals);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static string AsDataSize(this sbyte value, DataFormat format = DataFormat.IEC, int decimals = 2) {
-		Contracts.AssertNotNegative(value);
+		value.AssertNotNegative();
 		return AsDataSize((ulong)value, format, decimals);
 	}
 
@@ -265,21 +265,21 @@ internal static class NumericsExt {
 	}
 
 	internal static string AsDataSize(this ulong number, DataFormat format = DataFormat.IEC, int decimals = 2) {
-		Contracts.AssertNotNegative(decimals);
+		decimals.AssertNotNegative();
 		uint fraction = (format == DataFormat.Metric) ? 1000U : 1024U;
 
-		var SuffixTable = (format == DataFormat.IEC) ? BinarySuffixTable : DecimalSuffixTable;
+		var suffixTable = (format == DataFormat.IEC) ? BinarySuffixTable : DecimalSuffixTable;
 
 		// Maintain fraction?
 		double value = (double)number;
 		// TODO : This can be done in constant time, but meh.
 		int suffixIndex = 0;
-		while (value >= fraction && suffixIndex < SuffixTable.Length) {
+		while (value >= fraction && suffixIndex < suffixTable.Length) {
 			value /= fraction;
 			++suffixIndex;
 		}
 
-		return string.Format($"{{0:0.00}} {SuffixTable[suffixIndex]}", value);
+		return string.Format($"{{0:0.00}} {suffixTable[suffixIndex]}", value);
 	}
 
 #if NET6_0_OR_GREATER

@@ -10,8 +10,8 @@ internal readonly struct Drawable {
 	private readonly float Rotation;
 	private readonly int Offset;
 
-	internal readonly int Width => Source?.Width ?? Texture?.Width ?? AnimatedTexture?.Size.Width ?? 0;
-	internal readonly int Height => Source?.Height ?? Texture?.Height ?? AnimatedTexture?.Size.Height ?? 0;
+	internal int Width => Source?.Width ?? Texture?.Width ?? AnimatedTexture?.Size.Width ?? 0;
+	internal int Height => Source?.Height ?? Texture?.Height ?? AnimatedTexture?.Size.Height ?? 0;
 
 	private static float DegreesToRadians(int degrees) => (MathF.PI / 180.0f) * degrees;
 
@@ -42,11 +42,11 @@ internal readonly struct Drawable {
 
 	public static implicit operator Drawable(AnimatedTexture animatedTexture) => new(animatedTexture);
 
-	internal readonly void Tick() {
+	internal void Tick() {
 		AnimatedTexture?.Tick();
 	}
 
-	internal readonly Drawable Rotate(float rotation) => new(
+	internal Drawable Rotate(float rotation) => new(
 		Texture,
 		Source,
 		AnimatedTexture,
@@ -54,7 +54,7 @@ internal readonly struct Drawable {
 		Offset
 	);
 
-	internal readonly Drawable Rotate(int rotationDegrees) => new(
+	internal Drawable Rotate(int rotationDegrees) => new(
 		Texture,
 		Source,
 		AnimatedTexture,
@@ -70,21 +70,21 @@ internal readonly struct Drawable {
 
 	public static bool operator !=(in Drawable left, in Drawable right) => !(left == right);
 
-	public override readonly bool Equals(object? obj) {
+	public override bool Equals(object? obj) {
 		if (obj is Drawable drawable) {
 			return this == drawable;
 		}
 		return false;
 	}
 
-	public override readonly int GetHashCode() => Hashing.Combine32(
+	public override int GetHashCode() => Hashing.Combine32(
 		Texture?.GetHashCode(),
 		Source?.GetHashCode(),
 		AnimatedTexture?.GetHashCode(),
 		Rotation.GetHashCode()
 	);
 
-	internal readonly void Draw(Scene scene, XSpriteBatch batch, Vector2I location, float layerDepth = 0.0f) {
+	internal void Draw(Scene scene, XSpriteBatch batch, Vector2I location, float layerDepth = 0.0f) {
 		/*
 		int spriteHeight = Height / 16;
 		if (spriteHeight > 1 && (spriteHeight & 1) == 1) {
@@ -115,7 +115,7 @@ internal readonly struct Drawable {
 		}
 	}
 
-	internal readonly Drawable Clone(Random? rand = null) => new(
+	internal Drawable Clone(Random? rand = null) => new(
 		Texture,
 		Source,
 		AnimatedTexture?.Clone(rand),
@@ -143,11 +143,11 @@ internal readonly struct DrawableInstance {
 		LayerDepth = Location.Y + height;
 	}
 
-	internal readonly void Tick() {
+	internal void Tick() {
 		Drawable.Tick();
 	}
 
-	internal readonly void Draw(Scene scene, XSpriteBatch batch, int index) {
+	internal void Draw(Scene scene, XSpriteBatch batch, int index) {
 		float layerDepth = (LayerDepth + scene.Region.Height + (index * 0.0001f)) / (scene.Region.Height * 4.0f);
 
 		Drawable.Draw(
@@ -158,7 +158,7 @@ internal readonly struct DrawableInstance {
 		);
 	}
 
-	internal readonly void Draw(Scene scene, XSpriteBatch batch, Vector2I offset, int index) {
+	internal void Draw(Scene scene, XSpriteBatch batch, Vector2I offset, int index) {
 		float layerDepth = (LayerDepth + scene.Region.Height + offset.Y + (index * 0.0001f)) / (scene.Region.Height * 4.0f);
 
 		Drawable.Draw(
@@ -169,7 +169,7 @@ internal readonly struct DrawableInstance {
 		);
 	}
 
-	internal readonly Vector2B IsOffscreenStart(Scene scene) {
+	internal Vector2B IsOffscreenStart(Scene scene) {
 		Vector2I min = Location - (new Vector2I(Drawable.Width, Drawable.Height) * 4);
 
 		return new(
@@ -178,7 +178,7 @@ internal readonly struct DrawableInstance {
 		);
 	}
 
-	internal readonly Vector2B IsOffscreenEnd(Scene scene) {
+	internal Vector2B IsOffscreenEnd(Scene scene) {
 		Vector2I max = Location + (new Vector2I(Drawable.Width, Drawable.Height) * 4);
 
 		return new(

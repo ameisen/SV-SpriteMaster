@@ -3,7 +3,7 @@
 namespace SpriteMaster.Resample;
 
 internal interface IScalerInfo {
-	Resample.Scaler Scaler { get; }
+	Scaler Scaler { get; }
 	int MinScale { get; }
 	int MaxScale { get; }
 	XGraphics.TextureFilter Filter { get; }

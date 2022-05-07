@@ -27,7 +27,7 @@ internal static class StringExt {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static unsafe string Reverse(this string str) {
-		Contracts.AssertNotNull(str);
+		str.AssertNotNull();
 
 		fixed (char* p = str) {
 			for (int i = 0; i < str.Length / 2; ++i) {
@@ -43,7 +43,7 @@ internal static class StringExt {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static string Reversed(this string str) {
-		Contracts.AssertNotNull(str);
+		str.AssertNotNull();
 		return new string(str).Reverse();
 	}
 

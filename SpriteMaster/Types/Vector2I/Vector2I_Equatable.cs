@@ -22,7 +22,7 @@ internal partial struct Vector2I :
 	#region Equals
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly override bool Equals(object? other) => other switch {
+	public override readonly bool Equals(object? other) => other switch {
 		Vector2I vec => Equals(vec),
 		DrawingPoint vec => Equals(vec),
 		XNA.Point vec => Equals(vec),

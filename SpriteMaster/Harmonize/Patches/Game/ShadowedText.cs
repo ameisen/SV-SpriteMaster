@@ -15,7 +15,7 @@ internal static class ShadowedText {
 	};
 
 	[Harmonize(
-		typeof(StardewValley.Utility),
+		typeof(Utility),
 		"drawTextWithShadow",
 		Harmonize.Fixation.Prefix,
 		Harmonize.PriorityLevel.Last,
@@ -73,7 +73,7 @@ internal static class ShadowedText {
 	}
 
 	[Harmonize(
-		typeof(StardewValley.Utility),
+		typeof(Utility),
 		"drawTextWithShadow",
 		Harmonize.Fixation.Prefix,
 		Harmonize.PriorityLevel.Last,
@@ -82,8 +82,8 @@ internal static class ShadowedText {
 	)]
 	public static bool DrawTextWithShadow(
 		XSpriteBatch b,
-		string text,
-		SpriteFont font,
+		string? text,
+		SpriteFont? font,
 		XVector2 position,
 		XColor color,
 		float scale = 1f,
@@ -95,6 +95,10 @@ internal static class ShadowedText {
 	) {
 		if (!Config.IsUnconditionallyEnabled || !Config.Extras.StrokeShadowedText) {
 			return true;
+		}
+
+		if (font is null) {
+			throw new NullReferenceException(nameof(font));
 		}
 
 		if (layerDepth == -1f) {
@@ -129,7 +133,7 @@ internal static class ShadowedText {
 	}
 
 	[Harmonize(
-		typeof(StardewValley.Utility),
+		typeof(Utility),
 		"drawTextWithColoredShadow",
 		Harmonize.Fixation.Prefix,
 		Harmonize.PriorityLevel.Last,
@@ -138,8 +142,8 @@ internal static class ShadowedText {
 	)]
 	public static bool DrawTextWithColoredShadow(
 		XSpriteBatch b,
-		string text,
-		SpriteFont font,
+		string? text,
+		SpriteFont? font,
 		XVector2 position,
 		XColor color,
 		XColor shadowColor,
@@ -151,6 +155,10 @@ internal static class ShadowedText {
 	) {
 		if (!Config.IsUnconditionallyEnabled || !Config.Extras.StrokeShadowedText) {
 			return true;
+		}
+
+		if (font is null) {
+			throw new NullReferenceException(nameof(font));
 		}
 
 		if (layerDepth == -1f) {
@@ -186,8 +194,8 @@ internal static class ShadowedText {
 
 	private static void DrawStrokedText(
 		XSpriteBatch b,
-		string text,
-		SpriteFont font,
+		string? text,
+		SpriteFont? font,
 		Vector2F position,
 		XColor color,
 		XColor shadowColor,
@@ -196,6 +204,10 @@ internal static class ShadowedText {
 		Vector2I shadowOffset,
 		int numShadows
 	) {
+		if (font is null) {
+			throw new NullReferenceException(nameof(font));
+		}
+
 		foreach (var offset in ShadowedStringOffsets) {
 			b.DrawString(
 				font,

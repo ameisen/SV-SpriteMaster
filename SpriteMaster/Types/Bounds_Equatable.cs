@@ -14,7 +14,7 @@ internal partial struct Bounds :
 	IEquatable<XTileRectangle?> {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly override bool Equals(object? other) => other switch {
+	public override readonly bool Equals(object? other) => other switch {
 		Bounds bounds => Equals(bounds),
 		DrawingRectangle rect => Equals(rect),
 		XRectangle rect => Equals(rect),

@@ -8,8 +8,8 @@ namespace SpriteMaster.Extensions;
 using ManagementObject = IDisposable;
 
 internal static class DirectoryExt {
-	private static MethodInfo? ManagementInvokeMethod = null;
-	private static Type? ManagementObjectType = null;
+	private static readonly MethodInfo? ManagementInvokeMethod = null;
+	private static readonly Type? ManagementObjectType = null;
 
 	static DirectoryExt() {
 		try {
@@ -27,7 +27,9 @@ internal static class DirectoryExt {
 				}
 			}
 		}
-		catch { }
+		catch {
+			// ignored
+		}
 	}
 
 	internal static bool CompressDirectory(string path, bool force = false) {
@@ -56,7 +58,7 @@ internal static class DirectoryExt {
 
 			// I am switching this to use reflection does it doesn't try to search for these assemblies on Unix.
 
-			using var obj = (ManagementObject?)Activator.CreateInstance(ManagementObjectType!, new object[] { objectPath });
+			using var obj = (ManagementObject?)Activator.CreateInstance(ManagementObjectType!, objectPath);
 			if (obj is null) {
 				return false;
 			}

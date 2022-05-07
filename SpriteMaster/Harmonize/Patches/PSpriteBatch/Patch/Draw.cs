@@ -26,7 +26,7 @@ internal static class Draw {
 	[Harmonize("Draw", priority: Harmonize.PriorityLevel.First)]
 	public static bool OnDrawFirst(
 		XSpriteBatch __instance,
-		ref XTexture2D texture,
+		ref XTexture2D? texture,
 		ref XRectangle destinationRectangle,
 		ref XRectangle? sourceRectangle,
 		XColor color,
@@ -34,7 +34,7 @@ internal static class Draw {
 		ref XVector2 origin,
 		ref SpriteEffects effects,
 		float layerDepth,
-		ref ManagedTexture2D __state
+		ref ManagedTexture2D? __state
 	) {
 		if (!Config.IsEnabled) {
 			return true;
@@ -56,7 +56,7 @@ internal static class Draw {
 	[Harmonize("Draw", priority: Harmonize.PriorityLevel.Last)]
 	public static bool OnDrawLast(
 		XSpriteBatch __instance,
-		ref XTexture2D texture,
+		ref XTexture2D? texture,
 		ref XRectangle destinationRectangle,
 		ref XRectangle? sourceRectangle,
 		ref XColor color,
@@ -64,7 +64,7 @@ internal static class Draw {
 		ref XVector2 origin,
 		ref SpriteEffects effects,
 		ref float layerDepth,
-		ref ManagedTexture2D __state
+		ref ManagedTexture2D? __state
 	) {
 		if (!Config.IsEnabled) {
 			return true;
@@ -85,7 +85,7 @@ internal static class Draw {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static bool ForwardDraw(
 		XSpriteBatch @this,
-		XTexture2D texture,
+		XTexture2D? texture,
 		XRectangle destinationRectangle,
 		XColor color,
 		in XRectangle? sourceRectangle = null,
@@ -113,7 +113,7 @@ internal static class Draw {
 	}
 
 	[Harmonize("Draw", priority: Harmonize.PriorityLevel.First)]
-	public static bool OnDraw(XSpriteBatch __instance, XTexture2D texture, XRectangle destinationRectangle, XRectangle? sourceRectangle, XColor color) {
+	public static bool OnDraw(XSpriteBatch __instance, XTexture2D? texture, XRectangle destinationRectangle, XRectangle? sourceRectangle, XColor color) {
 		return ForwardDraw(
 			@this: __instance,
 			texture: texture,
@@ -124,7 +124,7 @@ internal static class Draw {
 	}
 
 	[Harmonize("Draw", priority: Harmonize.PriorityLevel.First)]
-	public static bool OnDraw(XSpriteBatch __instance, XTexture2D texture, XRectangle destinationRectangle, XColor color) {
+	public static bool OnDraw(XSpriteBatch __instance, XTexture2D? texture, XRectangle destinationRectangle, XColor color) {
 		return ForwardDraw(
 			@this: __instance,
 			texture: texture,
@@ -136,7 +136,7 @@ internal static class Draw {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static bool ForwardDraw(
 		XSpriteBatch @this,
-		XTexture2D texture,
+		XTexture2D? texture,
 		XVector2 position,
 		XColor color,
 		in XRectangle? sourceRectangle = null,
@@ -166,7 +166,7 @@ internal static class Draw {
 	}
 
 	[Harmonize("Draw", priority: Harmonize.PriorityLevel.Last)]
-	public static bool OnDraw(XSpriteBatch __instance, ref XTexture2D texture, ref XVector2 position, ref XRectangle? sourceRectangle, ref XColor color, float rotation, ref XVector2 origin, ref XVector2 scale, SpriteEffects effects, float layerDepth) {
+	public static bool OnDraw(XSpriteBatch __instance, ref XTexture2D? texture, ref XVector2 position, ref XRectangle? sourceRectangle, ref XColor color, float rotation, ref XVector2 origin, ref XVector2 scale, SpriteEffects effects, float layerDepth) {
 		if (!Config.IsEnabled) {
 			return true;
 		}
@@ -185,7 +185,7 @@ internal static class Draw {
 	}
 
 	[Harmonize("Draw", priority: Harmonize.PriorityLevel.First)]
-	public static bool OnDraw(XSpriteBatch __instance, XTexture2D texture, XVector2 position, in XRectangle? sourceRectangle, XColor color, float rotation, XVector2 origin, float scale, SpriteEffects effects, float layerDepth) {
+	public static bool OnDraw(XSpriteBatch __instance, XTexture2D? texture, XVector2 position, in XRectangle? sourceRectangle, XColor color, float rotation, XVector2 origin, float scale, SpriteEffects effects, float layerDepth) {
 		return ForwardDraw(
 			@this: __instance,
 			texture: texture,
@@ -201,7 +201,7 @@ internal static class Draw {
 	}
 
 	[Harmonize("Draw", priority: Harmonize.PriorityLevel.First)]
-	public static bool OnDraw(XSpriteBatch __instance, XTexture2D texture, XVector2 position, in XRectangle? sourceRectangle, XColor color) {
+	public static bool OnDraw(XSpriteBatch __instance, XTexture2D? texture, XVector2 position, in XRectangle? sourceRectangle, XColor color) {
 		return ForwardDraw(
 			@this: __instance,
 			texture: texture,
@@ -212,7 +212,7 @@ internal static class Draw {
 	}
 
 	[Harmonize("Draw", priority: Harmonize.PriorityLevel.First)]
-	public static bool OnDraw(XSpriteBatch __instance, XTexture2D texture, XVector2 position, XColor color) {
+	public static bool OnDraw(XSpriteBatch __instance, XTexture2D? texture, XVector2 position, XColor color) {
 		return ForwardDraw(
 			@this: __instance,
 			texture: texture,

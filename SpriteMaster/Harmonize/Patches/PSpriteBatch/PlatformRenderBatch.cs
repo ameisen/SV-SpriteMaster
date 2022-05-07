@@ -70,7 +70,7 @@ internal static class PlatformRenderBatch {
 			return reference;
 		}
 
-		bool isInternalTexture = texture is InternalTexture2D internalTexture;
+		bool isInternalTexture = texture is InternalTexture2D;
 		bool isLighting = !isInternalTexture && (texture?.NormalizedName().StartsWith(@"LooseSprites\Lighting\") ?? false);
 
 		if (isInternalTexture || isLighting) {
@@ -87,24 +87,22 @@ internal static class PlatformRenderBatch {
 					filter: preferredFilter
 				);
 			}
-			else if (reference.AddressU == TextureAddressMode.Border && reference.AddressV == TextureAddressMode.Border) {
+			if (reference.AddressU == TextureAddressMode.Border && reference.AddressV == TextureAddressMode.Border) {
 				return GetSamplerState(
 					addressMode: TextureAddressMode.Border,
 					filter: preferredFilter
 				);
 			}
-			else if (reference.AddressU == TextureAddressMode.Mirror && reference.AddressV == TextureAddressMode.Mirror) {
+			if (reference.AddressU == TextureAddressMode.Mirror && reference.AddressV == TextureAddressMode.Mirror) {
 				return GetSamplerState(
 					addressMode: TextureAddressMode.Mirror,
 					filter: preferredFilter
 				);
 			}
-			else {
-				return GetSamplerState(
-					addressMode: TextureAddressMode.Clamp,
-					filter: preferredFilter
-				);
-			}
+			return GetSamplerState(
+				addressMode: TextureAddressMode.Clamp,
+				filter: preferredFilter
+			);
 		}
 
 		return reference;
@@ -116,9 +114,9 @@ internal static class PlatformRenderBatch {
 		"Microsoft.Xna.Framework.Graphics",
 		"Microsoft.Xna.Framework.Graphics.SpriteBatcher",
 		"FlushVertexArray",
-		Harmonize.Fixation.Prefix,
+		Fixation.Prefix,
 		PriorityLevel.First,
-		platform: Harmonize.Platform.MonoGame
+		platform: Platform.MonoGame
 	)]
 	public static void OnFlushVertexArray(
 		SpriteBatcher __instance,
@@ -170,17 +168,15 @@ internal static class PlatformRenderBatch {
 		}
 
 		__state = new(originalSamplerState, originalBlendState);
-
-		return;
 	}
 
 	[Harmonize(
 		"Microsoft.Xna.Framework.Graphics",
 		"Microsoft.Xna.Framework.Graphics.SpriteBatcher",
 		"FlushVertexArray",
-		Harmonize.Fixation.Postfix,
+		Fixation.Postfix,
 		PriorityLevel.Last,
-		platform: Harmonize.Platform.MonoGame
+		platform: Platform.MonoGame
 	)]
 	public static void OnFlushVertexArray(
 	SpriteBatcher __instance,

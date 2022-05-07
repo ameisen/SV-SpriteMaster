@@ -10,7 +10,7 @@ internal static partial class ConsoleSupport {
 		{ "help", ((_, _) => InvokeHelp(null), "Prints this command guide") },
 		{ "all-stats", ((_, _) => Debug.DumpAllStats(), "Dump Statistics") },
 		{ "memory", ((_, _) => Debug.DumpMemory(), "Dump Memory") },
-		{ "gc", ((_, _) => SpriteMaster.Self.MemoryMonitor.TriggerGC(), "Trigger full GC") },
+		{ "gc", ((_, _) => SpriteMaster.Self.MemoryMonitor.TriggerGarbageCollection(), "Trigger full GC") },
 		{ "purge", ((_, _) => SpriteMaster.Self.MemoryMonitor.TriggerPurge(), "Trigger Purge") }
 	};
 
@@ -58,7 +58,6 @@ internal static partial class ConsoleSupport {
 		}
 		else {
 			InvokeHelp(subCommand);
-			return;
 		}
 	}
 }

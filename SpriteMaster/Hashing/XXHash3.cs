@@ -27,7 +27,7 @@ internal partial class Hashing {
 		private const int XXH_ACC_NB = (XXH_STRIPE_LEN / sizeof(ulong));
 
 		private static readonly byte[] XXH3_SECRET_ARRAY;
-		private static unsafe readonly byte* SSH3_SECRET;
+		private static readonly unsafe byte* SSH3_SECRET;
 
 		static unsafe XXHash3() {
 			ReadOnlySpan<byte> secret = stackalloc byte[] {

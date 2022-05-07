@@ -24,8 +24,7 @@ internal sealed class Scene1 : Scene {
 
 	private Vector2I TileCount = default;
 
-	internal override PrecipitationType Precipitation => ScenePrecipitation;
-	private readonly PrecipitationType ScenePrecipitation;
+	internal override PrecipitationType Precipitation { get; }
 
 	private static int RandomSeed => Guid.NewGuid().GetHashCode();
 
@@ -190,10 +189,10 @@ internal sealed class Scene1 : Scene {
 		Season = Seasons[rand.Next(Seasons.Length)];
 
 		if (Season == "winter") {
-			ScenePrecipitation = PrecipitationType.Snow;
+			Precipitation = PrecipitationType.Snow;
 		}
 		else {
-			ScenePrecipitation = PrecipitationType.Rain;
+			Precipitation = PrecipitationType.Rain;
 		}
 
 		string outdoorsTileSheet = $@"Maps\{Season}_outdoorsTileSheet";
@@ -251,13 +250,13 @@ internal sealed class Scene1 : Scene {
 	}
 
 	public override void Dispose() {
-		CenterCharacterTexture?.Dispose();
+		CenterCharacterTexture.Dispose();
 	}
 
 	private const string ReferenceBasicText = "Llanfairpwllgwyngyllgogerychwyrndrobwllllantysiliogogogoch";
-	private XGraphics.SpriteFont BasicTextFont => StardewValley.Game1.dialogueFont;
+	private XGraphics.SpriteFont BasicTextFont => Game1.dialogueFont;
 	private const string ReferenceUtilityText = "It was the best of times, it was the blurst of times.";
-	private XGraphics.SpriteFont UtilityTextFont => StardewValley.Game1.smallFont;
+	private XGraphics.SpriteFont UtilityTextFont => Game1.smallFont;
 
 	private static readonly Vector2I[] ShadowedStringOffsets = { (-1, -1), (1, -1), (-1, 1), (1, 1) };
 	private void DrawStringStroked(
@@ -291,7 +290,7 @@ internal sealed class Scene1 : Scene {
 		);
 	}
 
-	protected override void OnDraw(XSpriteBatch batch, in Preview.Override overrideState) {
+	protected override void OnDraw(XSpriteBatch batch, in Override overrideState) {
 		float lastLayerDepth = float.NaN;
 		int index = 0;
 		foreach (var drawable in Drawables) {
@@ -307,7 +306,7 @@ internal sealed class Scene1 : Scene {
 		}
 	}
 
-	protected override void OnDrawOverlay(XSpriteBatch batch, in Preview.Override overrideState) {
+	protected override void OnDrawOverlay(XSpriteBatch batch, in Override overrideState) {
 		{
 			// Draw basic text
 			DrawStringStroked(
@@ -478,7 +477,7 @@ internal sealed class Scene1 : Scene {
 		try { tileArray[mid.X, mid.Y].Add(new(shadowTexture)); } catch (IndexOutOfRangeException) { }
 
 		// insert Character
-		try { tileArray[mid.X, mid.Y].Add(new(CenterCharacterTexture, offset: -(Scene.TileSizeRendered / 2))); } catch (IndexOutOfRangeException) { }
+		try { tileArray[mid.X, mid.Y].Add(new(CenterCharacterTexture, offset: -(TileSizeRendered / 2))); } catch (IndexOutOfRangeException) { }
 
 		// insert Tree
 		try { tileArray[mid.X - 4, mid.Y + 2].Add(TreeTexture[1, 0]); } catch (IndexOutOfRangeException) { }

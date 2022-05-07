@@ -264,7 +264,14 @@ public sealed class SpriteMaster : Mod {
 		var frameworkedMods = new Dictionary<string, List<IModInfo>>();
 
 		foreach (var mod in Helper.ModRegistry.GetAll()) {
+			if (mod is null) {
+				continue;
+			}
 			var manifest = mod.Manifest;
+
+			if (manifest is null) {
+				continue;
+			}
 
 			foreach (var framework in WarnFrameworks) {
 				if (

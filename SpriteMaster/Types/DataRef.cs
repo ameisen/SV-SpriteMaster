@@ -4,34 +4,34 @@ using System.Runtime.CompilerServices;
 namespace SpriteMaster.Types;
 
 internal readonly ref struct DataRef<T> where T : struct {
-	private readonly T[]? Data_;
+	private readonly T[]? DataInternal;
 	internal readonly int Offset;
 	internal readonly int Length;
 
-	internal readonly T[] Data {
+	internal T[] Data {
 		get {
-			if (Data_ is null) {
+			if (DataInternal is null) {
 				throw new NullReferenceException(nameof(Data));
 			}
-			return Data_;
+			return DataInternal;
 		}
 	}
 
-	internal readonly bool IsEmpty => Data_ is null || Length == 0;
+	internal bool IsEmpty => DataInternal is null || Length == 0;
 
-	internal readonly bool IsNull => Data_ is null;
+	internal bool IsNull => DataInternal is null;
 
-	internal readonly bool IsEntire => Data_ is not null && Offset == 0 && Length == Data_.Length;
+	internal bool IsEntire => DataInternal is not null && Offset == 0 && Length == DataInternal.Length;
 
 	internal static DataRef<T> Null => new(null);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal DataRef(T[]? data, int offset = 0, int length = 0) {
-		Contracts.AssertPositiveOrZero(offset);
+		offset.AssertPositiveOrZero();
 
-		Data_ = data;
+		DataInternal = data;
 		Offset = offset;
-		Length = (length == 0 && Data_ is not null) ? Data_.Length : length;
+		Length = (length == 0 && DataInternal is not null) ? DataInternal.Length : length;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -42,26 +42,26 @@ internal readonly ref struct DataRef<T> where T : struct {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(in DataRef<T> lhs, in DataRef<T> rhs) => lhs.Data_ == rhs.Data_ && lhs.Offset == rhs.Offset;
+	public static bool operator ==(in DataRef<T> lhs, in DataRef<T> rhs) => lhs.DataInternal == rhs.DataInternal && lhs.Offset == rhs.Offset;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(in DataRef<T> lhs, object rhs) => lhs.Data_ == rhs;
+	public static bool operator ==(in DataRef<T> lhs, object rhs) => lhs.DataInternal == rhs;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(in DataRef<T> lhs, in DataRef<T> rhs) => lhs.Data_ == rhs.Data_ && lhs.Offset == rhs.Offset;
+	public static bool operator !=(in DataRef<T> lhs, in DataRef<T> rhs) => lhs.DataInternal == rhs.DataInternal && lhs.Offset == rhs.Offset;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(in DataRef<T> lhs, object rhs) => lhs.Data_ != rhs;
+	public static bool operator !=(in DataRef<T> lhs, object rhs) => lhs.DataInternal != rhs;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly bool Equals(in DataRef<T> other) => this == other;
+	internal bool Equals(in DataRef<T> other) => this == other;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly override bool Equals(object? other) => other is not null && this == other;
+	public override bool Equals(object? other) => other is not null && this == other;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public readonly override int GetHashCode() {
+	public override int GetHashCode() {
 		// TODO : This isn't right. We need to hash Data _from_ the offset.
-		return Hashing.Combine32(Data_, Offset);
+		return Hashing.Combine32(DataInternal, Offset);
 	}
 }
