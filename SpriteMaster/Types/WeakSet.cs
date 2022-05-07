@@ -144,7 +144,7 @@ sealed class WeakSet<T> :
 
 	public bool SetEquals(IEnumerable<T> other) => Items.ToHashSet().SetEquals(other);
 
-	public void SymmetricExceptWith(IEnumerable<T> other) => Items.ToHashSet().SetEquals(other);
+	public void SymmetricExceptWith(IEnumerable<T> other) => Items.ToHashSet().SymmetricExceptWith(other);
 
 	public void UnionWith(IEnumerable<T> other) => AddRange(other);
 

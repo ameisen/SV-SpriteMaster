@@ -405,7 +405,7 @@ sealed partial class ManagedSpriteInstance : IDisposable {
 
 		// Check for a suspended sprite instance that happens to match.
 		if (TryResurrect(in spriteInfoInitializer, out var resurrectedInstance)) {
-			return currentInstance;
+			return resurrectedInstance;
 		}
 
 		if (!textureChain && currentInstance is not null) {

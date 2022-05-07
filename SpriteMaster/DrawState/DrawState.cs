@@ -192,11 +192,11 @@ static partial class DrawState {
 	internal static void OnBegin(
 		XSpriteBatch @this,
 		SpriteSortMode sortMode,
-		BlendState blendState,
-		SamplerState samplerState,
-		DepthStencilState depthStencilState,
-		RasterizerState rasterizerState,
-		Effect effect,
+		BlendState? blendState,
+		SamplerState? samplerState,
+		DepthStencilState? depthStencilState,
+		RasterizerState? rasterizerState,
+		Effect? effect,
 		in Matrix transformMatrix
 	) {
 		using var watchdogScoped = WatchDog.WatchDog.ScopedWorkingState;

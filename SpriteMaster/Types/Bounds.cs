@@ -138,6 +138,8 @@ partial struct Bounds :
 		set => Height = value - Offset.Y;
 	}
 
+	[Browsable(false)] internal readonly Vector2I End => Offset + Extent;
+
 	[Browsable(false)]
 	internal readonly Vector2I Center => Offset + (Extent / 2);
 
