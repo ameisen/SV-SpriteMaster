@@ -7,16 +7,12 @@ namespace SpriteMaster.Types;
 
 [CLSCompliant(false)]
 [DebuggerDisplay("[{Min} <-> {Max}}")]
-[StructLayout(LayoutKind.Explicit, Pack = Vector2I.Alignment, Size = Vector2I.ByteSize)]
+[StructLayout(LayoutKind.Sequential, Pack = Vector2I.Alignment, Size = Vector2I.ByteSize)]
 internal readonly struct ExtentI : IEquatable<ExtentI>, ILongHash {
-	[FieldOffset(0)]
 	private readonly Vector2I Value;
 
-	[FieldOffset(0)]
-	internal readonly int Min;
-
-	[FieldOffset(sizeof(int))]
-	internal readonly int Max;
+	internal int Min => Value.X;
+	internal int Max => Value.Y;
 
 	internal bool IsValid => Min <= Max;
 
