@@ -107,17 +107,17 @@ internal readonly struct ColorSpace {
 
 	[MethodImpl(Runtime.MethodImpl.RunOnce)]
 	private static (T[] LinearizeTable, T[] DelinearizeTable) InitializeTable<T>(CurveDelegateDouble linearize, CurveDelegateDouble delinearize, int maxValue) where T : unmanaged {
-		Func<T, double> ToScalar;
-		Func<double, T> FromScalar;
+		Func<T, double> toScalar;
+		Func<double, T> fromScalar;
 
 		switch (typeof(T)) {
 			case var type when type == typeof(byte):
-				ToScalar = value => value.ReinterpretAs<T, byte>().ValueToScalar();
-				FromScalar = value => value.ScalarToValue8().ReinterpretAs<T>();
+				toScalar = value => value.ReinterpretAsUnsafe<T, byte>().ValueToScalar();
+				fromScalar = value => value.ScalarToValue8().ReinterpretAs<T>();
 				break;
 			case var type when type == typeof(ushort):
-				ToScalar = value => value.ReinterpretAs<T, ushort>().ValueToScalar();
-				FromScalar = value => value.ScalarToValue16().ReinterpretAs<T>();
+				toScalar = value => value.ReinterpretAsUnsafe<T, ushort>().ValueToScalar();
+				fromScalar = value => value.ScalarToValue16().ReinterpretAs<T>();
 				break;
 			default:
 				throw new ArgumentException($"Unknown Table Type: '{typeof(T).Name}'");
@@ -126,8 +126,8 @@ internal readonly struct ColorSpace {
 		var linearizeTable = GC.AllocateUninitializedArray<T>(maxValue);
 		var delinearizeTable = GC.AllocateUninitializedArray<T>(maxValue);
 		for (int i = 0; i < maxValue; ++i) {
-			linearizeTable[i] = FromScalar(linearize(ToScalar(ConvertTo<int, T>(i))));
-			delinearizeTable[i] = FromScalar(delinearize(ToScalar(ConvertTo<int, T>(i))));
+			linearizeTable[i] = fromScalar(linearize(toScalar(ConvertTo<int, T>(i))));
+			delinearizeTable[i] = fromScalar(delinearize(toScalar(ConvertTo<int, T>(i))));
 		}
 
 		return (linearizeTable, delinearizeTable);
