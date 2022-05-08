@@ -7,23 +7,41 @@ using System.Runtime.InteropServices;
 namespace SpriteMaster.Types;
 
 [DebuggerDisplay("[{R.Value}, {G.Value}, {B.Value}, {A.Value}]")]
-[StructLayout(LayoutKind.Explicit, Pack = sizeof(uint), Size = sizeof(uint))]
+[StructLayout(LayoutKind.Sequential, Pack = sizeof(uint), Size = sizeof(uint))]
 internal partial struct Color8 : IEquatable<Color8>, IEquatable<uint>, ILongHash {
 	internal static readonly Color8 Zero = new(0U);
 
-	[FieldOffset(0)]
 	internal uint Packed = 0;
 
 	internal readonly uint AsPacked => Packed;
 
-	[FieldOffset(0)]
-	internal Fixed8 R = 0;
-	[FieldOffset(1)]
-	internal Fixed8 G = 0;
-	[FieldOffset(2)]
-	internal Fixed8 B = 0;
-	[FieldOffset(3)]
-	internal Fixed8 A = 0;
+	[StructLayout(LayoutKind.Sequential, Pack = sizeof(uint), Size = sizeof(uint))]
+	private struct PackedWrapper {
+		internal Fixed8 R;
+		internal Fixed8 G;
+		internal Fixed8 B;
+		internal Fixed8 A;
+	}
+
+	internal Fixed8 R {
+		readonly get => Packed.ReinterpretAs<PackedWrapper>().R;
+		set => Reinterpret.ReinterpretAsRefUnsafe<uint, PackedWrapper>(Packed).R = value;
+	}
+
+	internal Fixed8 G {
+		readonly get => Packed.ReinterpretAs<PackedWrapper>().G;
+		set => Reinterpret.ReinterpretAsRefUnsafe<uint, PackedWrapper>(Packed).G = value;
+	}
+
+	internal Fixed8 B {
+		readonly get => Packed.ReinterpretAs<PackedWrapper>().B;
+		set => Reinterpret.ReinterpretAsRefUnsafe<uint, PackedWrapper>(Packed).B = value;
+	}
+
+	internal Fixed8 A {
+		readonly get => Packed.ReinterpretAs<PackedWrapper>().A;
+		set => Reinterpret.ReinterpretAsRefUnsafe<uint, PackedWrapper>(Packed).A = value;
+	}
 
 	internal uint ARGB => new PackedUInt(
 		A.Value, R.Value, G.Value, B.Value

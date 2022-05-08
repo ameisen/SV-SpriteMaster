@@ -7,23 +7,41 @@ using System.Runtime.InteropServices;
 namespace SpriteMaster.Types;
 
 [DebuggerDisplay("[{R.Value}, {G.Value}, {B.Value}, {A.Value}]")]
-[StructLayout(LayoutKind.Explicit, Pack = sizeof(ulong), Size = sizeof(ulong))]
+[StructLayout(LayoutKind.Sequential, Pack = sizeof(ulong), Size = sizeof(ulong))]
 internal struct Color16 : IEquatable<Color16>, IEquatable<ulong>, ILongHash {
 	internal static readonly Color16 Zero = new(0UL);
 
-	[FieldOffset(0)]
 	internal ulong Packed = 0;
 
 	internal readonly ulong AsPacked => Packed;
 
-	[FieldOffset(0)]
-	internal Fixed16 R = 0;
-	[FieldOffset(2)]
-	internal Fixed16 G = 0;
-	[FieldOffset(4)]
-	internal Fixed16 B = 0;
-	[FieldOffset(6)]
-	internal Fixed16 A = 0;
+	[StructLayout(LayoutKind.Sequential, Pack = sizeof(ulong), Size = sizeof(ulong))]
+	private struct PackedWrapper {
+		internal Fixed16 R;
+		internal Fixed16 G;
+		internal Fixed16 B;
+		internal Fixed16 A;
+	}
+
+	internal Fixed16 R {
+		readonly get => Packed.ReinterpretAs<PackedWrapper>().R;
+		set => Reinterpret.ReinterpretAsRefUnsafe<ulong, PackedWrapper>(Packed).R = value;
+	}
+
+	internal Fixed16 G {
+		readonly get => Packed.ReinterpretAs<PackedWrapper>().G;
+		set => Reinterpret.ReinterpretAsRefUnsafe<ulong, PackedWrapper>(Packed).G = value;
+	}
+
+	internal Fixed16 B {
+		readonly get => Packed.ReinterpretAs<PackedWrapper>().B;
+		set => Reinterpret.ReinterpretAsRefUnsafe<ulong, PackedWrapper>(Packed).B = value;
+	}
+
+	internal Fixed16 A {
+		readonly get => Packed.ReinterpretAs<PackedWrapper>().A;
+		set => Reinterpret.ReinterpretAsRefUnsafe<ulong, PackedWrapper>(Packed).A = value;
+	}
 
 	internal readonly Color16 NoAlpha => this with { A = 0 };
 
