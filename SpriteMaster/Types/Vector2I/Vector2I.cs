@@ -31,13 +31,13 @@ internal partial struct Vector2I :
 	}
 
 	internal int X {
-		readonly get => Unsafe.As<ulong, PackedInt>(ref Unsafe.AsRef(in Packed)).X;
-		set => Unsafe.As<ulong, PackedInt>(ref Packed).X = value;
+		readonly get => Packed.ReinterpretAs<PackedInt>().X;
+		set => Reinterpret.ReinterpretAsRefUnsafe<ulong, PackedInt>(Packed).X = value;
 	}
 
 	internal int Y {
-		readonly get => Unsafe.As<ulong, PackedInt>(ref Unsafe.AsRef(in Packed)).Y;
-		set => Unsafe.As<ulong, PackedInt>(ref Packed).Y = value;
+		readonly get => Packed.ReinterpretAs<PackedInt>().Y;
+		set => Reinterpret.ReinterpretAsRefUnsafe<ulong, PackedInt>(Packed).Y = value;
 	}
 
 	internal int Width {

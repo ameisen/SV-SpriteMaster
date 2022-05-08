@@ -8,7 +8,7 @@ using NumericsVector2 = System.Numerics.Vector2;
 namespace SpriteMaster.Types;
 
 [DebuggerDisplay("[{X}, {Y}]")]
-[StructLayout(LayoutKind.Explicit, Pack = sizeof(float) * 2, Size = sizeof(float) * 2)]
+[StructLayout(LayoutKind.Sequential, Pack = sizeof(float) * 2, Size = sizeof(float) * 2)]
 internal partial struct Vector2F : ILongHash {
 
 	internal static readonly Vector2F Zero = (0.0f, 0.0f);
@@ -16,7 +16,6 @@ internal partial struct Vector2F : ILongHash {
 	internal static readonly Vector2F MinusOne = (-1.0f, -1.0f);
 	internal static readonly Vector2F Empty = Zero;
 
-	[FieldOffset(0)]
 	private NumericsVector2 NumericVector;
 
 	internal float X {
