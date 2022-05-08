@@ -9,12 +9,11 @@ using static SpriteMaster.Runtime;
 namespace SpriteMaster.Types.Fixed;
 
 [DebuggerDisplay("{Value}")]
-[StructLayout(LayoutKind.Explicit, Pack = sizeof(byte), Size = sizeof(byte))]
+[StructLayout(LayoutKind.Sequential, Pack = sizeof(byte), Size = sizeof(byte))]
 internal readonly struct Fixed8 : IEquatable<Fixed8>, IEquatable<byte>, ILongHash {
 	internal static readonly Fixed8 Zero = new(0);
 	internal static readonly Fixed8 Max = new(byte.MaxValue);
 
-	[field: FieldOffset(0)]
 	internal byte Value { get; } = 0;
 
 	[MethodImpl(MethodImpl.Hot)]

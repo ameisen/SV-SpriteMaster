@@ -9,12 +9,11 @@ using static SpriteMaster.Runtime;
 namespace SpriteMaster.Types.Fixed;
 
 [DebuggerDisplay("{Value}")]
-[StructLayout(LayoutKind.Explicit, Pack = sizeof(ushort), Size = sizeof(ushort))]
+[StructLayout(LayoutKind.Sequential, Pack = sizeof(ushort), Size = sizeof(ushort))]
 internal readonly struct Fixed16 : IEquatable<Fixed16>, IEquatable<ushort>, ILongHash {
 	internal static readonly Fixed16 Zero = new((ushort)0);
 	internal static readonly Fixed16 Max = new(ushort.MaxValue);
 
-	[field: FieldOffset(0)]
 	internal ushort Value { get; } = 0;
 
 	[MethodImpl(MethodImpl.Hot)]
