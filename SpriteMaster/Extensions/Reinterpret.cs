@@ -1,68 +1,91 @@
-﻿namespace SpriteMaster.Extensions;
+﻿using System;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+
+namespace SpriteMaster.Extensions;
 
 internal static class Reinterpret {
-	internal static unsafe U ReinterpretAs<T, U>(this T value) where T : unmanaged where U : unmanaged {
-		sizeof(U).AssertLessEqual(sizeof(T));
-		return *(U*)&value;
+	#region ReinterpretAs
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static TTo ReinterpretAs<TFrom, TTo>(this TFrom value) where TFrom : struct where TTo : struct {
+		Marshal.SizeOf<TTo>().AssertLessEqual(Marshal.SizeOf<TFrom>());
+		return Unsafe.As<TFrom, TTo>(ref Unsafe.AsRef(in value));
 	}
 
-	internal static unsafe U ReinterpretAs<U>(this bool value) where U : unmanaged {
-		sizeof(U).AssertLessEqual(sizeof(bool));
-		return *(U*)&value;
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static unsafe TTo ReinterpretAsUnsafe<TFrom, TTo>(this TFrom value) where TFrom : unmanaged where TTo : unmanaged {
+		sizeof(TTo).AssertLessEqual(sizeof(TFrom));
+		return *(TTo*)&value;
 	}
 
-	internal static unsafe U ReinterpretAs<U>(this byte value) where U : unmanaged {
-		sizeof(U).AssertLessEqual(sizeof(byte));
-		return *(U*)&value;
+	internal static TTo ReinterpretAs<TTo>(this bool value) where TTo : unmanaged =>
+		ReinterpretAsUnsafe<bool, TTo>(value);
+
+	internal static TTo ReinterpretAs<TTo>(this byte value) where TTo : unmanaged =>
+		ReinterpretAsUnsafe<byte, TTo>(value);
+
+	internal static TTo ReinterpretAs<TTo>(this sbyte value) where TTo : unmanaged =>
+		ReinterpretAsUnsafe<sbyte, TTo>(value);
+
+	internal static TTo ReinterpretAs<TTo>(this ushort value) where TTo : unmanaged =>
+		ReinterpretAsUnsafe<ushort, TTo>(value);
+
+	internal static TTo ReinterpretAs<TTo>(this short value) where TTo : unmanaged =>
+		ReinterpretAsUnsafe<short, TTo>(value);
+
+	internal static TTo ReinterpretAs<TTo>(this uint value) where TTo : unmanaged =>
+		ReinterpretAsUnsafe<uint, TTo>(value);
+
+	internal static TTo ReinterpretAs<TTo>(this int value) where TTo : unmanaged =>
+		ReinterpretAsUnsafe<int, TTo>(value);
+
+	internal static TTo ReinterpretAs<TTo>(this ulong value) where TTo : unmanaged =>
+		ReinterpretAsUnsafe<ulong, TTo>(value);
+
+	internal static TTo ReinterpretAs<TTo>(this long value) where TTo : unmanaged =>
+		ReinterpretAsUnsafe<long, TTo>(value);
+
+	internal static TTo ReinterpretAs<TTo>(this half value) where TTo : unmanaged =>
+		ReinterpretAsUnsafe<half, TTo>(value);
+
+	internal static TTo ReinterpretAs<TTo>(this float value) where TTo : unmanaged =>
+		ReinterpretAsUnsafe<float, TTo>(value);
+
+	internal static TTo ReinterpretAs<TTo>(this double value) where TTo : unmanaged =>
+		ReinterpretAsUnsafe<double, TTo>(value);
+
+	#endregion
+
+	#region ReinterpretAsRef
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static ref TTo ReinterpretAsRef<TFrom, TTo>(in TFrom value) where TFrom : struct where TTo : struct {
+		Marshal.SizeOf<TTo>().AssertLessEqual(Marshal.SizeOf<TFrom>());
+		return ref Unsafe.As<TFrom, TTo>(ref Unsafe.AsRef(in value));
 	}
 
-	internal static unsafe U ReinterpretAs<U>(this sbyte value) where U : unmanaged {
-		sizeof(U).AssertLessEqual(sizeof(sbyte));
-		return *(U*)&value;
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static unsafe ref TTo ReinterpretAsRefUnsafe<TFrom, TTo>(in TFrom value) where TFrom : unmanaged where TTo : unmanaged {
+		sizeof(TTo).AssertLessEqual(sizeof(TFrom));
+		return ref Unsafe.As<TFrom, TTo>(ref Unsafe.AsRef(in value));
 	}
 
-	internal static unsafe U ReinterpretAs<U>(this ushort value) where U : unmanaged {
-		sizeof(U).AssertLessEqual(sizeof(ushort));
-		return *(U*)&value;
+	#endregion
+
+	#region ReinterpretAsRef
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static unsafe Span<TTo> ReinterpretAsSpan<TFrom, TTo>(in TFrom value) where TFrom : struct where TTo : struct {
+		Marshal.SizeOf<TTo>().AssertLessEqual(Marshal.SizeOf<TFrom>());
+		return new(Unsafe.AsPointer(ref Unsafe.AsRef(in value)), Marshal.SizeOf<TFrom>() / Marshal.SizeOf<TTo>());
 	}
 
-	internal static unsafe U ReinterpretAs<U>(this short value) where U : unmanaged {
-		sizeof(U).AssertLessEqual(sizeof(short));
-		return *(U*)&value;
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static unsafe Span<TTo> ReinterpretAsSpanUnsafe<TFrom, TTo>(in TFrom value) where TFrom : unmanaged where TTo : unmanaged {
+		sizeof(TTo).AssertLessEqual(sizeof(TFrom));
+		return new(Unsafe.AsPointer(ref Unsafe.AsRef(in value)), sizeof(TFrom) / sizeof(TTo));
 	}
 
-	internal static unsafe U ReinterpretAs<U>(this uint value) where U : unmanaged {
-		sizeof(U).AssertLessEqual(sizeof(uint));
-		return *(U*)&value;
-	}
-
-	internal static unsafe U ReinterpretAs<U>(this int value) where U : unmanaged {
-		sizeof(U).AssertLessEqual(sizeof(int));
-		return *(U*)&value;
-	}
-
-	internal static unsafe U ReinterpretAs<U>(this ulong value) where U : unmanaged {
-		sizeof(U).AssertLessEqual(sizeof(ulong));
-		return *(U*)&value;
-	}
-
-	internal static unsafe U ReinterpretAs<U>(this long value) where U : unmanaged {
-		sizeof(U).AssertLessEqual(sizeof(long));
-		return *(U*)&value;
-	}
-
-	internal static unsafe U ReinterpretAs<U>(this half value) where U : unmanaged {
-		sizeof(U).AssertLessEqual(sizeof(half));
-		return *(U*)&value;
-	}
-
-	internal static unsafe U ReinterpretAs<U>(this float value) where U : unmanaged {
-		sizeof(U).AssertLessEqual(sizeof(float));
-		return *(U*)&value;
-	}
-
-	internal static unsafe U ReinterpretAs<U>(this double value) where U : unmanaged {
-		sizeof(U).AssertLessEqual(sizeof(double));
-		return *(U*)&value;
-	}
+	#endregion
 }
