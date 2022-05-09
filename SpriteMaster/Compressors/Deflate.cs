@@ -57,7 +57,7 @@ internal static class Deflate {
 				SetStrategy?.Invoke(compressor, CompressionStrategy.Filtered);
 				compressor.Write(data, 0, data.Length);
 			}
-			return val.ToArray();
+			return val.GetArray();
 		}
 		catch (DllNotFoundException) when (compressor is not null) {
 			GC.SuppressFinalize(compressor);
@@ -72,7 +72,7 @@ internal static class Deflate {
 			SetStrategy?.Invoke(compressor, CompressionStrategy.Filtered);
 			compressor.Write(data, 0, data.Length);
 		}
-		return val.ToArray();
+		return val.GetArray();
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -82,7 +82,7 @@ internal static class Deflate {
 			SetStrategy?.Invoke(compressor, CompressionStrategy.Filtered);
 			compressor.Write(data.ToArray(), 0, data.Length);
 		}
-		return val.ToArray();
+		return val.GetArray();
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]

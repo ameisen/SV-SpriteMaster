@@ -1,4 +1,5 @@
 ﻿using LinqFasterer;
+using SpriteMaster.Extensions;
 using System;
 using System.IO;
 using System.Runtime.CompilerServices;
@@ -58,7 +59,7 @@ internal static class SystemIO {
 			using (compressor = new IOC.DeflateStream(val, IOC.CompressionLevel.Optimal)) {
 				compressor.Write(data, 0, data.Length);
 			}
-			return val.ToArray();
+			return val.GetArray();
 		}
 		catch (DllNotFoundException) when (compressor is not null) {
 			GC.SuppressFinalize(compressor);
@@ -72,7 +73,7 @@ internal static class SystemIO {
 		using (var compressor = new IOC.DeflateStream(val, IOC.CompressionLevel.Optimal)) {
 			compressor.Write(data, 0, data.Length);
 		}
-		return val.ToArray();
+		return val.GetArray();
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -81,7 +82,7 @@ internal static class SystemIO {
 		using (var compressor = new IOC.DeflateStream(val, IOC.CompressionLevel.Optimal)) {
 			compressor.Write(data);
 		}
-		return val.ToArray();
+		return val.GetArray();
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -91,7 +92,7 @@ internal static class SystemIO {
 		using (var compressor = new IOC.DeflateStream(dataStream, IOC.CompressionMode.Decompress)) {
 			compressor.CopyTo(val);
 		}
-		return val.ToArray();
+		return val.GetArray();
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]

@@ -51,7 +51,7 @@ internal static partial class Hashing {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static ulong HashXX3(this MemoryStream stream) => XXHash3.Hash64(stream.ToArray());
+	internal static ulong HashXX3(this MemoryStream stream) => XXHash3.Hash64(stream.GetArray());
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ulong HashXX3(this UnmanagedMemoryStream stream) => stream.ToReadOnlySpan<byte>().HashXX3();
