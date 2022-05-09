@@ -92,7 +92,7 @@ internal sealed partial class Scaler {
 	}
 
 	private readonly Config Configuration;
-	private readonly Structures.IScaler Scalerer;
+	private readonly Structures.AbstractScaler Scalerer;
 
 	private readonly ColorDist ColorDistance;
 	private readonly ColorEq ColorEqualizer;
@@ -113,13 +113,12 @@ internal sealed partial class Scaler {
 	}
 
 	private static int SharpenOffset(int offset, int max) {
-		double offsetD = (double)offset / (double)max;
-		if (offsetD < 0.5) {
-			offsetD = Math.Pow(offsetD, 5.0);
-		}
-		else if (offsetD > 0.5) {
-			offsetD = Math.Pow(offsetD, 1.0 / 5.0);
-		}
+		var offsetD = (double)offset / (double)max;
+		offsetD = offsetD switch {
+			< 0.5 => Math.Pow(offsetD, 5.0),
+			> 0.5 => Math.Pow(offsetD, 1.0 / 5.0),
+			_ => offsetD
+		};
 		return (offsetD * max).RoundToInt();
 	}
 
@@ -135,7 +134,7 @@ internal sealed partial class Scaler {
 		return color32;
 	}
 
-	private static (int R, int G, int B, int A) BlendColor(int offset, int max, in (int R, int G, int B, int A) a, in (int R, int G, int B, int A) b) {
+	private static (int R, int G, int B, int A) BlendColor(int offset, int max, (int R, int G, int B, int A) a, (int R, int G, int B, int A) b) {
 		offset = SharpenOffset(offset, max);
 		int aCount = max - offset;
 		(int r, int g, int b, int a) color32 = (
@@ -234,7 +233,7 @@ internal sealed partial class Scaler {
 			blendInfo: result of preprocessing all four corners of pixel "e"
 	*/
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private void ScalePixel(Structures.IScaler scaler, RotationDegree rotDeg, in Kernel3X3 ker, ref OutputMatrix outputMatrix, int targetIndex, PreprocessType blendInfo) {
+	private void ScalePixel(Structures.AbstractScaler abstractScaler, RotationDegree rotDeg, in Kernel3X3 ker, ref OutputMatrix outputMatrix, int targetIndex, PreprocessType blendInfo) {
 		var blend = blendInfo.Rotate(rotDeg);
 
 		if (blend.GetBottomR() == BlendType.None) {
@@ -282,7 +281,7 @@ internal sealed partial class Scaler {
 		outputMatrix.Move(rotDeg, targetIndex);
 
 		if (!doLineBlend) {
-			scaler.BlendCorner(px, ref outputMatrix);
+			abstractScaler.BlendCorner(px, ref outputMatrix);
 			return;
 		}
 
@@ -296,18 +295,18 @@ internal sealed partial class Scaler {
 
 		if (haveShallowLine) {
 			if (haveSteepLine) {
-				scaler.BlendLineSteepAndShallow(px, ref outputMatrix);
+				abstractScaler.BlendLineSteepAndShallow(px, ref outputMatrix);
 			}
 			else {
-				scaler.BlendLineShallow(px, ref outputMatrix);
+				abstractScaler.BlendLineShallow(px, ref outputMatrix);
 			}
 		}
 		else {
 			if (haveSteepLine) {
-				scaler.BlendLineSteep(px, ref outputMatrix);
+				abstractScaler.BlendLineSteep(px, ref outputMatrix);
 			}
 			else {
-				scaler.BlendLineDiagonal(px, ref outputMatrix);
+				abstractScaler.BlendLineDiagonal(px, ref outputMatrix);
 			}
 		}
 	}

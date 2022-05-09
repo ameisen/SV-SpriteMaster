@@ -9,8 +9,8 @@ internal static class Common {
 		bool useRedmean,
 		bool gammaCorrected,
 		bool hasAlpha,
-		in Color16 pix1,
-		in Color16 pix2,
+		Color16 pix1,
+		Color16 pix2,
 		in YccConfig yccConfig
 	) {
 		if (useRedmean) {

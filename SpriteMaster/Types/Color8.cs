@@ -70,7 +70,7 @@ internal partial struct Color8 : IEquatable<Color8>, IEquatable<uint>, ILongHash
 		Packed = rgba;
 	}
 
-	internal Color8(in (byte R, byte G, byte B) color) : this(color.R, color.G, color.B) { }
+	internal Color8((byte R, byte G, byte B) color) : this(color.R, color.G, color.B) { }
 
 	internal Color8(byte r, byte g, byte b) : this() {
 		R = r;
@@ -78,7 +78,7 @@ internal partial struct Color8 : IEquatable<Color8>, IEquatable<uint>, ILongHash
 		B = b;
 	}
 
-	internal Color8(in (Fixed8 R, Fixed8 G, Fixed8 B) color) : this(color.R, color.G, color.B) { }
+	internal Color8((Fixed8 R, Fixed8 G, Fixed8 B) color) : this(color.R, color.G, color.B) { }
 
 	internal Color8(Fixed8 r, Fixed8 g, Fixed8 b) : this() {
 		R = r;
@@ -86,7 +86,7 @@ internal partial struct Color8 : IEquatable<Color8>, IEquatable<uint>, ILongHash
 		B = b;
 	}
 
-	internal Color8(in (byte R, byte G, byte B, byte A) color) : this(color.R, color.G, color.B, color.A) { }
+	internal Color8((byte R, byte G, byte B, byte A) color) : this(color.R, color.G, color.B, color.A) { }
 
 	internal Color8(byte r, byte g, byte b, byte a) : this() {
 		R = r;
@@ -95,7 +95,7 @@ internal partial struct Color8 : IEquatable<Color8>, IEquatable<uint>, ILongHash
 		A = a;
 	}
 
-	internal Color8(in (Fixed8 R, Fixed8 G, Fixed8 B, Fixed8 A) color) : this(color.R, color.G, color.B, color.A) { }
+	internal Color8((Fixed8 R, Fixed8 G, Fixed8 B, Fixed8 A) color) : this(color.R, color.G, color.B, color.A) { }
 
 	internal Color8(Fixed8 r, Fixed8 g, Fixed8 b, Fixed8 a) : this() {
 		R = r;

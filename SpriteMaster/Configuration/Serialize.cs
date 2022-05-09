@@ -672,13 +672,13 @@ internal static class Serialize {
 		return true;
 	}
 
-	internal static bool Save(string ConfigPath) {
+	internal static bool Save(string configPath) {
 		try {
 			var document = new DocumentSyntax();
 
 			SaveClass(0, typeof(Config), document);
 
-			using var writer = File.CreateText(ConfigPath);
+			using var writer = File.CreateText(configPath);
 			document.WriteTo(writer);
 			writer.Flush();
 		}

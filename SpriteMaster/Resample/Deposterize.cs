@@ -24,8 +24,8 @@ internal static class Deposterize {
 		private readonly YccConfig YccConfiguration;
 
 		internal DeposterizeContext(
-			in Vector2I size,
-			in Vector2B wrapped,
+			Vector2I size,
+			Vector2B wrapped,
 			int passes,
 			int threshold,
 			int blockSize,
@@ -45,7 +45,7 @@ internal static class Deposterize {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		internal uint ColorDifference(in Color16 pix1, in Color16 pix2) {
+		private uint ColorDifference(Color16 pix1, Color16 pix2) {
 			if (UseRedmean) {
 				return pix1.RedmeanDifference(pix2,
 					linear: true,
@@ -252,8 +252,8 @@ internal static class Deposterize {
 	[MethodImpl(Runtime.MethodImpl.Optimize)]
 	internal static unsafe T[] Enhance<T>(
 		T[] data,
-		in Vector2I size,
-		in Vector2B wrapped) where T : unmanaged {
+		Vector2I size,
+		Vector2B wrapped) where T : unmanaged {
 		return Enhance<T>(data.AsFixedSpan(), size, wrapped);
 	}
 	*/
@@ -261,8 +261,8 @@ internal static class Deposterize {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static Span<T> Enhance<T>(
 		ReadOnlySpan<T> data,
-		in Vector2I size,
-		in Vector2B wrapped,
+		Vector2I size,
+		Vector2B wrapped,
 		int? passes = null,
 		int? threshold = null,
 		int? blockSize = null

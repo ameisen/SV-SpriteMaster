@@ -80,7 +80,7 @@ internal abstract class Scene : IDisposable {
 	private RasterizerState? State = null;
 	protected Vector2I Size => Region.Extent;
 
-	protected Scene(in Bounds region) {
+	protected Scene(Bounds region) {
 		ReferenceRegion = region;
 	}
 
@@ -91,8 +91,8 @@ internal abstract class Scene : IDisposable {
 	internal void DrawAt(
 		XSpriteBatch batch,
 		XTexture2D texture,
-		in Bounds destination,
-		in Bounds? source = null,
+		Bounds destination,
+		Bounds? source = null,
 		Color8? color = null,
 		float rotation = 0.0f,
 		SpriteEffects effects = SpriteEffects.None,
@@ -134,7 +134,7 @@ internal abstract class Scene : IDisposable {
 		XSpriteBatch batch,
 		XTexture2D texture,
 		Vector2I destination,
-		in Bounds? source = null,
+		Bounds? source = null,
 		Color8? color = null,
 		float rotation = 0.0f,
 		Vector2F? origin = null,
@@ -372,7 +372,7 @@ internal abstract class Scene : IDisposable {
 	}
 	protected abstract void OnResize(Vector2I size, Vector2I oldSize);
 
-	internal void Resize(in Bounds newRegion) {
+	internal void Resize(Bounds newRegion) {
 		using var savedWeatherState = WeatherState.Backup();
 		CurrentWeatherState.Restore();
 		using var currentScope = new CurrentScope(this);
@@ -385,7 +385,7 @@ internal abstract class Scene : IDisposable {
 		CurrentWeatherState = WeatherState.Backup();
 	}
 
-	internal void ChangeOffset(in Vector2I offset) {
+	internal void ChangeOffset(Vector2I offset) {
 		ReferenceRegion = new(offset, ReferenceRegion.Extent);
 	}
 

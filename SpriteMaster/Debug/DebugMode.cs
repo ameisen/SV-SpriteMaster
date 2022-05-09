@@ -158,18 +158,18 @@ internal static partial class Debug {
 			internal DrawInfo(
 				ManagedSpriteInstance? instance,
 				XTexture2D texture,
-				in Bounds destination,
-				in Bounds source,
+				Bounds destination,
+				Bounds source,
 				in XColor color,
 				float rotation,
 				Vector2F origin,
 				XGraphics.SpriteEffects effects,
 				float layerDepth,
 				float scale,
-				in Vector2F? originalPosition = null,
-				in Bounds? originalSource = null,
-				in Bounds? originalDestination = null,
-				in Vector2F? originalOrigin = null
+				Vector2F? originalPosition = null,
+				Bounds? originalSource = null,
+				Bounds? originalDestination = null,
+				Vector2F? originalOrigin = null
 			) {
 				Instance = instance;
 				Texture = texture;
@@ -193,18 +193,18 @@ internal static partial class Debug {
 		internal static bool RegisterDrawForSelect(
 			ManagedSpriteInstance? instance,
 			XTexture2D texture,
-			in Bounds destination,
-			in Bounds source,
+			Bounds destination,
+			Bounds source,
 			in XColor color,
 			float rotation,
 			Vector2F origin,
 			XGraphics.SpriteEffects effects,
 			float layerDepth,
 			Vector2F? scale = null,
-			in Bounds? originalDestination = null,
-			in Vector2F? originalPosition = null,
-			in Bounds? originalSource = null,
-			in Vector2F? originalOrigin = null
+			Bounds? originalDestination = null,
+			Vector2F? originalPosition = null,
+			Bounds? originalSource = null,
+			Vector2F? originalOrigin = null
 		) {
 			if (!IsModeEnabled(DebugModeFlags.Select)) {
 				return false;
@@ -253,16 +253,16 @@ internal static partial class Debug {
 			ManagedSpriteInstance? instance,
 			XTexture2D texture,
 			Vector2F position,
-			in Bounds source,
+			Bounds source,
 			in XColor color,
 			float rotation,
 			Vector2F origin,
 			Vector2F scale,
 			XGraphics.SpriteEffects effects,
 			float layerDepth,
-			in Vector2F? originalPosition = null,
-			in Bounds? originalSource = null,
-			in Vector2F? originalOrigin = null
+			Vector2F? originalPosition = null,
+			Bounds? originalSource = null,
+			Vector2F? originalOrigin = null
 		) {
 			if (!IsModeEnabled(DebugModeFlags.Select)) {
 				return false;

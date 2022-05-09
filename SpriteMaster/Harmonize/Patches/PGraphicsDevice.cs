@@ -10,7 +10,7 @@ internal static class PGraphicsDevice {
 	#region Present
 
 	//[Harmonize("Present", fixation: Harmonize.Fixation.Postfix, priority: PriorityLevel.Last, critical: false)]
-	//internal static void PresentPost(GraphicsDevice __instance, in XRectangle? sourceRectangle, in XRectangle? destinationRectangle, IntPtr overrideWindowHandle) => DrawState.OnPresentPost();
+	//internal static void PresentPost(GraphicsDevice __instance, XRectangle? sourceRectangle, XRectangle? destinationRectangle, IntPtr overrideWindowHandle) => DrawState.OnPresentPost();
 
 	[Harmonize("Present", fixation: Fixation.Prefix, priority: PriorityLevel.Last)]
 	public static void PresentPre(GraphicsDevice __instance) {

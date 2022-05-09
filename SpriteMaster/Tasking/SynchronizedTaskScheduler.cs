@@ -64,7 +64,7 @@ internal sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal void Dispatch(in TimeSpan remainingTime) {
+	internal void Dispatch(TimeSpan remainingTime) {
 		if (!Config.IsEnabled) {
 			return;
 		}
@@ -88,7 +88,7 @@ internal sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private void DispatchInternal(in TimeSpan remainingTime) {
+	private void DispatchInternal(TimeSpan remainingTime) {
 		var watch = Stopwatch.StartNew();
 		{
 			var pendingActions = PendingImmediate.Current;
@@ -190,7 +190,7 @@ internal sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal void QueueDeferred(Action action, in TextureAction actionData) {
+	internal void QueueDeferred(Action action, TextureAction actionData) {
 		if (!Config.IsEnabled) {
 			return;
 		}

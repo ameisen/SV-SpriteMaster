@@ -29,22 +29,10 @@ internal partial struct Bounds :
 	public readonly bool Equals(Bounds? other) => other.HasValue && ((Offset == other.Value.Offset) & (Extent == other.Value.Extent));
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly bool Equals(in Bounds other) => (Offset == other.Offset) & (Extent == other.Extent);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly bool Equals(in Bounds? other) => other.HasValue && ((Offset == other.Value.Offset) & (Extent == other.Value.Extent));
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public readonly bool Equals(DrawingRectangle other) => Equals((Bounds)other);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public readonly bool Equals(DrawingRectangle? other) => other.HasValue && Equals((Bounds)other.Value);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly bool Equals(in DrawingRectangle other) => Equals((Bounds)other);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly bool Equals(in DrawingRectangle? other) => other.HasValue && Equals((Bounds)other.Value);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public readonly bool Equals(XRectangle other) => Equals((Bounds)other);
@@ -53,62 +41,50 @@ internal partial struct Bounds :
 	public readonly bool Equals(XRectangle? other) => other.HasValue && Equals((Bounds)other.Value);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly bool Equals(in XRectangle other) => Equals((Bounds)other);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly bool Equals(in XRectangle? other) => other.HasValue && Equals((Bounds)other.Value);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public readonly bool Equals(XTileRectangle other) => Equals((Bounds)other);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public readonly bool Equals(XTileRectangle? other) => other.HasValue && Equals((Bounds)other.Value);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly bool Equals(in XTileRectangle other) => Equals((Bounds)other);
+	public static bool operator ==(Bounds lhs, Bounds rhs) => lhs.Equals(rhs);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly bool Equals(in XTileRectangle? other) => other.HasValue && Equals((Bounds)other.Value);
+	public static bool operator !=(Bounds lhs, Bounds rhs) => !(lhs == rhs);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(in Bounds lhs, in Bounds rhs) => lhs.Equals(in rhs);
+	public static bool operator ==(Bounds lhs, DrawingRectangle rhs) => lhs.Equals(rhs);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(in Bounds lhs, in Bounds rhs) => !(lhs == rhs);
+	public static bool operator !=(Bounds lhs, DrawingRectangle rhs) => !(lhs == rhs);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(in Bounds lhs, in DrawingRectangle rhs) => lhs.Equals(rhs);
+	public static bool operator ==(DrawingRectangle lhs, Bounds rhs) => rhs.Equals(lhs);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(in Bounds lhs, in DrawingRectangle rhs) => !(lhs == rhs);
+	public static bool operator !=(DrawingRectangle lhs, Bounds rhs) => !(lhs == rhs);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(in DrawingRectangle lhs, in Bounds rhs) => rhs.Equals(lhs);
+	public static bool operator ==(Bounds lhs, XRectangle rhs) => lhs.Equals(rhs);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(in DrawingRectangle lhs, in Bounds rhs) => !(lhs == rhs);
+	public static bool operator !=(Bounds lhs, XRectangle rhs) => !(lhs == rhs);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(in Bounds lhs, in XRectangle rhs) => lhs.Equals(rhs);
+	public static bool operator ==(XRectangle lhs, Bounds rhs) => rhs.Equals(lhs);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(in Bounds lhs, in XRectangle rhs) => !(lhs == rhs);
+	public static bool operator !=(XRectangle lhs, Bounds rhs) => !(lhs == rhs);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(in XRectangle lhs, in Bounds rhs) => rhs.Equals(lhs);
+	public static bool operator ==(Bounds lhs, XTileRectangle rhs) => lhs.Equals(rhs);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(in XRectangle lhs, in Bounds rhs) => !(lhs == rhs);
+	public static bool operator !=(Bounds lhs, XTileRectangle rhs) => !(lhs == rhs);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(in Bounds lhs, in XTileRectangle rhs) => lhs.Equals(rhs);
+	public static bool operator ==(XTileRectangle lhs, Bounds rhs) => rhs.Equals(lhs);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(in Bounds lhs, in XTileRectangle rhs) => !(lhs == rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(in XTileRectangle lhs, in Bounds rhs) => rhs.Equals(lhs);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(in XTileRectangle lhs, in Bounds rhs) => !(lhs == rhs);
+	public static bool operator !=(XTileRectangle lhs, Bounds rhs) => !(lhs == rhs);
 }

@@ -29,10 +29,10 @@ internal static class BlockDecoderCommon {
 		}
 
 		internal Vector2U(Vector2I vec) : this((uint)vec.X, (uint)vec.Y) { }
-		internal Vector2U(in (uint X, uint Y) vec) : this(vec.X, vec.Y) { }
+		internal Vector2U((uint X, uint Y) vec) : this(vec.X, vec.Y) { }
 
 		public static implicit operator Vector2U(Vector2I vec) => new(vec);
-		public static implicit operator Vector2U(in (uint X, uint Y) vec) => new(vec);
+		public static implicit operator Vector2U((uint X, uint Y) vec) => new(vec);
 		public static implicit operator Vector2I(Vector2U vec) => new((int)vec.X, (int)vec.Y);
 
 		public override readonly string ToString() => $"{{{X}, {Y}}}";

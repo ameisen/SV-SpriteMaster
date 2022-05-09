@@ -47,12 +47,6 @@ internal partial struct Vector2I :
 	public readonly bool Equals((int, int)? other) => other is not null && this == (Vector2I)other.Value;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly bool Equals(in (int X, int Y) other) => this == (Vector2I)other;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly bool Equals(in (int X, int Y)? other) => other is not null && this == (Vector2I)other.Value;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public readonly bool Equals(DrawingPoint other) => this == (Vector2I)other;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -93,16 +87,16 @@ internal partial struct Vector2I :
 	public static bool operator !=(Vector2I lhs, Vector2I rhs) => lhs.Packed != rhs.Packed;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(Vector2I lhs, in (int X, int Y) rhs) => lhs.Equals(rhs);
+	public static bool operator ==(Vector2I lhs, (int X, int Y) rhs) => lhs.Equals(rhs);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(Vector2I lhs, in (int X, int Y) rhs) => !(lhs == rhs);
+	public static bool operator !=(Vector2I lhs, (int X, int Y) rhs) => !(lhs == rhs);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(in (int X, int Y) lhs, Vector2I rhs) => rhs.Equals(lhs);
+	public static bool operator ==((int X, int Y) lhs, Vector2I rhs) => rhs.Equals(lhs);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(in (int X, int Y) lhs, Vector2I rhs) => !(lhs == rhs);
+	public static bool operator !=((int X, int Y) lhs, Vector2I rhs) => !(lhs == rhs);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static bool operator ==(Vector2I lhs, DrawingPoint rhs) => lhs.Equals(rhs);

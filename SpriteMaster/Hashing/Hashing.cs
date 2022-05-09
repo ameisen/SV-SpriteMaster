@@ -130,21 +130,21 @@ internal static partial class Hashing {
 	internal static ulong Hash(this UnmanagedMemoryStream stream) => stream.HashXX3();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static ulong Hash(this in DrawingRectangle rectangle) =>
+	internal static ulong Hash(this DrawingRectangle rectangle) =>
 		(ulong)rectangle.X & 0xFFFF |
 		((ulong)rectangle.Y & 0xFFFF) << 16 |
 		((ulong)rectangle.Width & 0xFFFF) << 32 |
 		((ulong)rectangle.Height & 0xFFFF) << 48;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static ulong Hash(this in XRectangle rectangle) =>
+	internal static ulong Hash(this XRectangle rectangle) =>
 		(ulong)rectangle.X & 0xFFFF |
 		((ulong)rectangle.Y & 0xFFFF) << 16 |
 		((ulong)rectangle.Width & 0xFFFF) << 32 |
 		((ulong)rectangle.Height & 0xFFFF) << 48;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static ulong Hash(this in Bounds rectangle) =>
+	internal static ulong Hash(this Bounds rectangle) =>
 		(ulong)rectangle.X & 0xFFFF |
 		((ulong)rectangle.Y & 0xFFFF) << 16 |
 		((ulong)rectangle.Width & 0xFFFF) << 32 |

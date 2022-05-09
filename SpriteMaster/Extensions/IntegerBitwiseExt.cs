@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 namespace SpriteMaster.Extensions;
 
 internal static partial class Integer {
-	[DebuggerStepThrough, DebuggerHidden()]
+	[DebuggerStepThrough, DebuggerHidden]
 	[Conditional("DEBUG")]
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static unsafe void CheckBit<T>(int bit) where T : unmanaged {

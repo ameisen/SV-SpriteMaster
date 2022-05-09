@@ -249,7 +249,7 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 #endif
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static ManagedSpriteInstance? Fetch(XTexture2D texture, in Bounds source, uint expectedScale) {
+	internal static ManagedSpriteInstance? Fetch(XTexture2D texture, Bounds source, uint expectedScale) {
 		if (!Config.IsEnabled || !Config.Resample.IsEnabled) {
 			return null;
 		}
@@ -312,7 +312,7 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static ManagedSpriteInstance? FetchOrCreate(XTexture2D texture, in Bounds source, uint expectedScale, bool sliced) {
+	internal static ManagedSpriteInstance? FetchOrCreate(XTexture2D texture, Bounds source, uint expectedScale, bool sliced) {
 		if (!Config.IsEnabled || !Config.Resample.IsEnabled) {
 			return null;
 		}
@@ -329,16 +329,18 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 				currentInstance = scaleTexture;
 				textureChain = true;
 			}
-			else if (scaleTexture.IsReady) {
-				return scaleTexture;
-			}
-			else if (!scaleTexture.IsReady && scaleTexture.PreviousSpriteInstance is not null && scaleTexture.PreviousSpriteInstance.IsReady) {
-				currentInstance = scaleTexture.PreviousSpriteInstance;
-				textureChain = false;
-			}
-			else {
-				currentInstance = scaleTexture;
-				textureChain = false;
+			else switch (scaleTexture.IsReady)
+			{
+				case true:
+					return scaleTexture;
+				case false when scaleTexture.PreviousSpriteInstance is not null && scaleTexture.PreviousSpriteInstance.IsReady:
+					currentInstance = scaleTexture.PreviousSpriteInstance;
+					textureChain = false;
+					break;
+				default:
+					currentInstance = scaleTexture;
+					textureChain = false;
+					break;
 			}
 		}
 
@@ -386,7 +388,7 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 			dimensions: source,
 			expectedScale: expectedScale,
 			textureType: textureType,
-			animated: texture.Meta().IsAnimated(in source)
+			animated: texture.Meta().IsAnimated(source)
 		);
 
 		// Check for a suspended sprite instance that happens to match.
@@ -538,7 +540,7 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static void Purge(XTexture2D reference, in Bounds? bounds, in DataRef<byte> data, bool animated = false) {
+	internal static void Purge(XTexture2D reference, Bounds? bounds, in DataRef<byte> data, bool animated = false) {
 		SpriteInfo.Purge(reference, bounds, data, animated: animated);
 		if (data.IsNull) {
 			SpriteMap.Purge(reference, bounds, animated: animated);
@@ -579,7 +581,7 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal ManagedSpriteInstance(string assetName, SpriteInfo spriteInfo, in Bounds sourceRectangle, TextureType textureType, bool async, uint expectedScale, ManagedSpriteInstance? previous = null) {
+	internal ManagedSpriteInstance(string assetName, SpriteInfo spriteInfo, Bounds sourceRectangle, TextureType textureType, bool async, uint expectedScale, ManagedSpriteInstance? previous = null) {
 		PreviousSpriteInstance = previous;
 
 		TexType = textureType;
@@ -605,17 +607,12 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 			return;
 		}
 
-		switch (TexType) {
-			case TextureType.Sprite:
-				OriginalSize = sourceRectangle.Extent;
-				break;
-			case TextureType.Image:
-				OriginalSize = source.Extent();
-				break;
-			case TextureType.SlicedImage:
-				OriginalSize = sourceRectangle.Extent;
-				break;
-		}
+		OriginalSize = TexType switch {
+			TextureType.Sprite => sourceRectangle.Extent,
+			TextureType.Image => source.Extent(),
+			TextureType.SlicedImage => sourceRectangle.Extent,
+			_ => OriginalSize
+		};
 
 		// TODO store the HD Texture in _this_ object instead. Will confuse things like subtexture updates, though.
 		Hash = GetHash(spriteInfo, textureType);

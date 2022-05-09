@@ -74,15 +74,15 @@ internal sealed class SpriteInfo : IDisposable {
 		}
 	}
 
-	private static ulong? GetDataHash(byte[] data, XTexture2D reference, in Bounds bounds, int rawOffset, int rawStride) {
+	private static ulong? GetDataHash(byte[] data, XTexture2D reference, Bounds bounds, int rawOffset, int rawStride) {
 		var meta = reference.Meta();
 
-		if (meta.TryGetSpriteHash(in bounds, out ulong hash)) {
+		if (meta.TryGetSpriteHash(bounds, out ulong hash)) {
 			return hash;
 		}
 
 		var format = reference.Format.IsCompressed() ? SurfaceFormat.Color : reference.Format;
-		int actualWidth = (int)format.SizeBytes(bounds.Extent.X);
+		var actualWidth = (int)format.SizeBytes(bounds.Extent.X);
 
 		try {
 			var spriteData = new Span2D<byte>(
@@ -147,7 +147,7 @@ internal sealed class SpriteInfo : IDisposable {
 	// Attempt to update the bytedata cache for the reference texture, or purge if it that makes more sense or if updating
 	// is not plausible.
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static void Purge(XTexture2D reference, in Bounds? bounds, in DataRef<byte> data, bool animated) => reference.Meta().Purge(reference, bounds, data, animated: animated);
+	internal static void Purge(XTexture2D reference, Bounds? bounds, in DataRef<byte> data, bool animated) => reference.Meta().Purge(reference, bounds, data, animated: animated);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool IsCached(XTexture2D reference) => reference.Meta().CachedDataNonBlocking is not null;
@@ -167,7 +167,7 @@ internal sealed class SpriteInfo : IDisposable {
 		internal readonly Resample.Scaler Scaler;
 		internal readonly Resample.Scaler ScalerGradient;
 
-		internal Initializer(XTexture2D reference, in Bounds dimensions, uint expectedScale, TextureType textureType, bool animated) {
+		internal Initializer(XTexture2D reference, Bounds dimensions, uint expectedScale, TextureType textureType, bool animated) {
 			Reference = reference;
 			BlendState = DrawState.CurrentBlendState;
 			SamplerState = DrawState.CurrentSamplerState;

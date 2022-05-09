@@ -48,7 +48,7 @@ internal readonly struct ColorSpace {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal byte Linearize(Fixed8 value) => Linearize(value.Value);
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Color8 Linearize(in Color8 color) {
+	internal Color8 Linearize(Color8 color) {
 		return new(
 			Linearize(color.R),
 			Linearize(color.G),
@@ -61,7 +61,7 @@ internal readonly struct ColorSpace {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal Fixed16 Linearize(Fixed16 value) => Linearize(value.Value);
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Color16 Linearize(in Color16 color) {
+	internal Color16 Linearize(Color16 color) {
 		return new(
 			Linearize(color.R),
 			Linearize(color.G),
@@ -74,7 +74,7 @@ internal readonly struct ColorSpace {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal byte Delinearize(Fixed8 value) => Delinearize(value.Value);
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Color8 Delinearize(in Color8 color) {
+	internal Color8 Delinearize(Color8 color) {
 		return new(
 			Delinearize(color.R),
 			Delinearize(color.G),
@@ -87,7 +87,7 @@ internal readonly struct ColorSpace {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal Fixed16 Delinearize(Fixed16 value) => Delinearize(value.Value);
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Color16 Delinearize(in Color16 color) {
+	internal Color16 Delinearize(Color16 color) {
 		return new(
 			Delinearize(color.R),
 			Delinearize(color.G),

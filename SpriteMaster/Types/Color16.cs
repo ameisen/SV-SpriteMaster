@@ -66,7 +66,7 @@ internal struct Color16 : IEquatable<Color16>, IEquatable<ulong>, ILongHash {
 		Packed = rgba;
 	}
 
-	internal Color16(in (ushort R, ushort G, ushort B) color) : this(color.R, color.G, color.B) { }
+	internal Color16((ushort R, ushort G, ushort B) color) : this(color.R, color.G, color.B) { }
 
 	internal Color16(ushort r, ushort g, ushort b) : this() {
 		R = r;
@@ -74,7 +74,7 @@ internal struct Color16 : IEquatable<Color16>, IEquatable<ulong>, ILongHash {
 		B = b;
 	}
 
-	internal Color16(in (Fixed16 R, Fixed16 G, Fixed16 B) color) : this(color.R, color.G, color.B) { }
+	internal Color16((Fixed16 R, Fixed16 G, Fixed16 B) color) : this(color.R, color.G, color.B) { }
 
 	internal Color16(Fixed16 r, Fixed16 g, Fixed16 b) : this() {
 		R = r;
@@ -82,7 +82,7 @@ internal struct Color16 : IEquatable<Color16>, IEquatable<ulong>, ILongHash {
 		B = b;
 	}
 
-	internal Color16(in (ushort R, ushort G, ushort B, ushort A) color) : this(color.R, color.G, color.B, color.A) { }
+	internal Color16((ushort R, ushort G, ushort B, ushort A) color) : this(color.R, color.G, color.B, color.A) { }
 
 	internal Color16(ushort r, ushort g, ushort b, ushort a) : this() {
 		R = r;
@@ -91,7 +91,7 @@ internal struct Color16 : IEquatable<Color16>, IEquatable<ulong>, ILongHash {
 		A = a;
 	}
 
-	internal Color16(in (Fixed16 R, Fixed16 G, Fixed16 B, Fixed16 A) color) : this(color.R, color.G, color.B, color.A) { }
+	internal Color16((Fixed16 R, Fixed16 G, Fixed16 B, Fixed16 A) color) : this(color.R, color.G, color.B, color.A) { }
 
 	internal Color16(Fixed16 r, Fixed16 g, Fixed16 b, Fixed16 a) : this() {
 		R = r;

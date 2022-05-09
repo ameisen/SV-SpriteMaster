@@ -6,12 +6,12 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Resample.Scalers.xBRZ.Structures;
 
-internal abstract class IScaler {
+internal abstract class AbstractScaler {
 	internal readonly int Scale;
 	internal readonly Config Configuration;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	protected IScaler(int scale, Config configuration) {
+	protected AbstractScaler(int scale, Config configuration) {
 		Scale = scale;
 		Configuration = configuration;
 	}
@@ -62,7 +62,7 @@ internal abstract class IScaler {
 	}
 }
 
-internal sealed class Scaler2X : IScaler {
+internal sealed class Scaler2X : AbstractScaler {
 	internal new const int Scale = 2;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -99,7 +99,7 @@ internal sealed class Scaler2X : IScaler {
 	}
 }
 
-internal sealed class Scaler3X : IScaler {
+internal sealed class Scaler3X : AbstractScaler {
 	internal new const int Scale = 3;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -148,7 +148,7 @@ internal sealed class Scaler3X : IScaler {
 	}
 }
 
-internal sealed class Scaler4X : IScaler {
+internal sealed class Scaler4X : AbstractScaler {
 	internal new const int Scale = 4;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -202,7 +202,7 @@ internal sealed class Scaler4X : IScaler {
 	}
 }
 
-internal sealed class Scaler5X : IScaler {
+internal sealed class Scaler5X : AbstractScaler {
 	internal new const int Scale = 5;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -273,7 +273,7 @@ internal sealed class Scaler5X : IScaler {
 	}
 }
 
-internal sealed class Scaler6X : IScaler {
+internal sealed class Scaler6X : AbstractScaler {
 	internal new const int Scale = 6;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]

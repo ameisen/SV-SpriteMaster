@@ -53,12 +53,12 @@ internal static class Zstd {
 		internal byte[] Unwrap(byte[] data, int size) => Delegate.Unwrap(data, size);
 	}
 
-	private static bool? IsSupported_ = null;
+	private static bool? IsSupportedInternal = null;
 	internal static bool IsSupported {
 		[MethodImpl(MethodImpl.RunOnce)]
 		get {
-			if (IsSupported_.HasValue) {
-				return IsSupported_.Value;
+			if (IsSupportedInternal.HasValue) {
+				return IsSupportedInternal.Value;
 			}
 
 			try {
@@ -69,18 +69,18 @@ internal static class Zstd {
 					throw new Exception("Original and Uncompressed Data Mismatch");
 				}
 				Debug.Info("Zstd Compression is supported".Pastel(DrawingColor.LightGreen));
-				IsSupported_ = true;
+				IsSupportedInternal = true;
 			}
 			catch (DllNotFoundException) {
 				Debug.Info("Zstd Compression not supported".Pastel(DrawingColor.LightGreen));
-				IsSupported_ = false;
+				IsSupportedInternal = false;
 			}
 			catch (Exception ex) {
 				Debug.Info($"Zstd Compression not supported: '{ex.GetType().Name} {ex.Message}'".Pastel(DrawingColor.Red));
-				IsSupported_ = false;
+				IsSupportedInternal = false;
 			}
 
-			return IsSupported_.Value;
+			return IsSupportedInternal.Value;
 		}
 	}
 
@@ -97,16 +97,8 @@ internal static class Zstd {
 
 	[MethodImpl(MethodImpl.RunOnce)]
 	private static byte[] CompressTest(byte[] data) {
-		Compressor? encoder = null;
-		try {
-			using (encoder = GetEncoder()) {
-				return encoder.Wrap(data);
-			}
-		}
-		catch (DllNotFoundException) when (encoder is not null) {
-			GC.SuppressFinalize(encoder);
-			throw;
-		}
+		using var encoder = GetEncoder();
+		return encoder.Wrap(data);
 	}
 
 	[MethodImpl(MethodImpl.Hot)]

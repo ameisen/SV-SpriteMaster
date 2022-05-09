@@ -31,7 +31,7 @@ internal static partial class OnDrawImpl {
 	internal static void DrawMulti(
 		this XSpriteBatch @this,
 		XTexture2D texture,
-		in Bounds source,
+		Bounds source,
 		XColor color,
 		XVector2 origin,
 		SpriteEffects effects,

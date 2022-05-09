@@ -90,7 +90,7 @@ internal struct Vector2B :
 
 	internal readonly Vector2B Invert => (!X, !Y);
 
-	[MethodImpl(Runtime.MethodImpl.Hot), DebuggerStepThrough, DebuggerHidden()]
+	[MethodImpl(Runtime.MethodImpl.Hot), DebuggerStepThrough, DebuggerHidden]
 	private static int CheckIndex(int index) {
 #if DEBUG
 		if (index < 0 || index >= 2) {
@@ -120,10 +120,10 @@ internal struct Vector2B :
 	internal static Vector2B From(bool x, bool y) => new(x, y);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Vector2B(in (bool X, bool Y) value) : this(value.X, value.Y) { }
+	internal Vector2B((bool X, bool Y) value) : this(value.X, value.Y) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static Vector2B From(in (bool X, bool Y) value) => new(value.X, value.Y);
+	internal static Vector2B From((bool X, bool Y) value) => new(value.X, value.Y);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal Vector2B(bool value) : this(value ? AllValue : ZeroByte) { }
@@ -144,7 +144,7 @@ internal struct Vector2B :
 	readonly object ICloneable.Clone() => this;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static implicit operator Vector2B(in (bool X, bool Y) vec) => new(vec.X, vec.Y);
+	public static implicit operator Vector2B((bool X, bool Y) vec) => new(vec.X, vec.Y);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static implicit operator (bool X, bool Y)(Vector2B vec) => (vec.X, vec.Y);

@@ -140,7 +140,7 @@ internal sealed partial class Scaler {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static void SetPixel(Span<Color16> dst, int stride, int offset, in Color16 color) {
+	private static void SetPixel(Span<Color16> dst, int stride, int offset, Color16 color) {
 		// We can try embedded a distance calculation as well. Perhaps instead of a negative stride/offset, we provide a 
 		// negative distance from the edge and just recalculate the stride/offset in that case.
 		// We can scale the alpha reduction by the distance to hopefully correct the edges.
@@ -162,7 +162,7 @@ internal sealed partial class Scaler {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private bool ColorEq(in Color16 a, in Color16 b) {
+	private bool ColorEq(Color16 a, Color16 b) {
 		return a == b;
 		/*
 		return Resample.Scalers.Common.ColorDistance(
@@ -243,10 +243,10 @@ internal sealed partial class Scaler {
 				var x13 = x * 2;
 				var x24 = x * 2 + 1;
 
-				SetPixel(destination, yo12, x13, in o1);
-				SetPixel(destination, yo12, x24, in o2);
-				SetPixel(destination, yo34, x13, in o3);
-				SetPixel(destination, yo34, x24, in o4);
+				SetPixel(destination, yo12, x13, o1);
+				SetPixel(destination, yo12, x24, o2);
+				SetPixel(destination, yo34, x13, o3);
+				SetPixel(destination, yo34, x24, o4);
 			}
 		}
 	}
@@ -343,17 +343,17 @@ internal sealed partial class Scaler {
 				var x258 = x * 3 + 1;
 				var x369 = x * 3 + 2;
 
-				SetPixel(destination, yo123, x147, in o1);
-				SetPixel(destination, yo123, x258, in o2);
-				SetPixel(destination, yo123, x369, in o3);
+				SetPixel(destination, yo123, x147, o1);
+				SetPixel(destination, yo123, x258, o2);
+				SetPixel(destination, yo123, x369, o3);
 
-				SetPixel(destination, yo456, x147, in o4);
-				SetPixel(destination, yo456, x258, in o5);
-				SetPixel(destination, yo456, x369, in o6);
+				SetPixel(destination, yo456, x147, o4);
+				SetPixel(destination, yo456, x258, o5);
+				SetPixel(destination, yo456, x369, o6);
 
-				SetPixel(destination, yo789, x147, in o7);
-				SetPixel(destination, yo789, x258, in o8);
-				SetPixel(destination, yo789, x369, in o9);
+				SetPixel(destination, yo789, x147, o7);
+				SetPixel(destination, yo789, x258, o8);
+				SetPixel(destination, yo789, x369, o9);
 			}
 		}
 	}

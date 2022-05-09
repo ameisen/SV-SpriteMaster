@@ -181,7 +181,7 @@ internal sealed class Scene1 : Scene {
 		"winter"
 	};
 
-	internal Scene1(in Bounds scissor) : base(in scissor) {
+	internal Scene1(Bounds scissor) : base(scissor) {
 		CenterCharacterTexture = GetCenterCharacter();
 
 		var rand = new Random(RandomSeed);

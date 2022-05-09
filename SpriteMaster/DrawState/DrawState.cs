@@ -83,15 +83,15 @@ internal static partial class DrawState {
 	internal static void UpdateDevice() {
 		var currentDevice = Game1.graphics.GraphicsDevice;
 		if (currentDevice != PreviousDevice) {
-			Harmonize.Patches.Game.HoeDirt.OnNewGraphicsDevice(currentDevice);
 			PreviousDevice = currentDevice;
+			Harmonize.Patches.Game.HoeDirt.OnNewGraphicsDevice(currentDevice);
 		}
 	}
 
 	internal static bool PushedUpdateWithin(int frames) => (long)(CurrentFrame - UpdateState.LastUpdated) <= frames;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static TimeSpan RemainingFrameTime(float multiplier = 1.0f, in TimeSpan? offset = null) {
+	internal static TimeSpan RemainingFrameTime(float multiplier = 1.0f, TimeSpan? offset = null) {
 		var actualRemainingTime = ActualRemainingFrameTime();
 		return (actualRemainingTime - (BaselineFrameTime + (offset ?? TimeSpan.Zero))).Multiply(multiplier);
 	}

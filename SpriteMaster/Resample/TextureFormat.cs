@@ -72,9 +72,9 @@ internal readonly struct TextureFormat {
 		return null;
 	}
 
-	public static bool operator ==(in TextureFormat left, in TextureFormat right) => left.SurfaceFormat == right.SurfaceFormat && left.CompressionFormat == right.CompressionFormat;
+	public static bool operator ==(TextureFormat left, TextureFormat right) => left.SurfaceFormat == right.SurfaceFormat && left.CompressionFormat == right.CompressionFormat;
 
-	public static bool operator !=(in TextureFormat left, in TextureFormat right) => left.SurfaceFormat != right.SurfaceFormat || left.CompressionFormat != right.CompressionFormat;
+	public static bool operator !=(TextureFormat left, TextureFormat right) => left.SurfaceFormat != right.SurfaceFormat || left.CompressionFormat != right.CompressionFormat;
 
 	public override bool Equals(object? obj) {
 		if (obj is TextureFormat format) {

@@ -151,7 +151,7 @@ internal partial struct Bounds :
 	internal readonly bool IsEmpty => Area == 0;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Bounds(in Vector2I offset, in Vector2I extent) {
+	internal Bounds(Vector2I offset, Vector2I extent) {
 		//Contract.AssertNotZero(extent.Width, $"{nameof(extent.Width)} is zero");
 		//Contract.AssertNotZero(extent.Height, $"{nameof(extent.Height)} is zero");
 		Offset = offset;
@@ -174,23 +174,23 @@ internal partial struct Bounds :
 	internal Bounds(int width, int height) : this(0, 0, width, height) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Bounds(in Vector2I extent) : this(Vector2I.Zero, extent) { }
+	internal Bounds(Vector2I extent) : this(Vector2I.Zero, extent) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Bounds(in Bounds bounds) {
+	internal Bounds(Bounds bounds) {
 		Offset = bounds.Offset;
 		ExtentReal = bounds.Extent;
 		Invert = bounds.Invert;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Bounds(in DrawingRectangle rect) : this(rect.X, rect.Y, rect.Width, rect.Height) { }
+	internal Bounds(DrawingRectangle rect) : this(rect.X, rect.Y, rect.Width, rect.Height) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Bounds(in XRectangle rect) : this(rect.X, rect.Y, rect.Width, rect.Height) { }
+	internal Bounds(XRectangle rect) : this(rect.X, rect.Y, rect.Width, rect.Height) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Bounds(in XTileRectangle rect) : this(rect.X, rect.Y, rect.Width, rect.Height) { }
+	internal Bounds(XTileRectangle rect) : this(rect.X, rect.Y, rect.Width, rect.Height) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal Bounds(XTexture2D tex) : this(tex.Width, tex.Height) { }
@@ -199,7 +199,7 @@ internal partial struct Bounds :
 	//internal Bounds(System.Drawing.Bitmap bmp) : this(bmp.Width, bmp.Height) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly bool Overlaps(in Bounds other) =>
+	internal readonly bool Overlaps(Bounds other) =>
 	!(
 		other.Left > Right ||
 		other.Right < Left ||
@@ -208,7 +208,7 @@ internal partial struct Bounds :
 	);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly bool Contains(in Bounds other) =>
+	internal readonly bool Contains(Bounds other) =>
 	(
 		Left <= other.Left &&
 		Right >= other.Right &&
@@ -231,22 +231,22 @@ internal partial struct Bounds :
 	readonly object ICloneable.Clone() => this;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static implicit operator DrawingRectangle(in Bounds bounds) => new(bounds.X, bounds.Y, bounds.InvertedWidth, bounds.InvertedHeight);
+	public static implicit operator DrawingRectangle(Bounds bounds) => new(bounds.X, bounds.Y, bounds.InvertedWidth, bounds.InvertedHeight);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static implicit operator XRectangle(in Bounds bounds) => new(bounds.X, bounds.Y, bounds.InvertedWidth, bounds.InvertedHeight);
+	public static implicit operator XRectangle(Bounds bounds) => new(bounds.X, bounds.Y, bounds.InvertedWidth, bounds.InvertedHeight);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static implicit operator XTileRectangle(in Bounds bounds) => new(bounds.X, bounds.Y, bounds.InvertedWidth, bounds.InvertedHeight);
+	public static implicit operator XTileRectangle(Bounds bounds) => new(bounds.X, bounds.Y, bounds.InvertedWidth, bounds.InvertedHeight);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static implicit operator Bounds(in DrawingRectangle rect) => new(rect);
+	public static implicit operator Bounds(DrawingRectangle rect) => new(rect);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static implicit operator Bounds(in XRectangle rect) => new(rect);
+	public static implicit operator Bounds(XRectangle rect) => new(rect);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static implicit operator Bounds(in XTileRectangle rect) => new(rect);
+	public static implicit operator Bounds(XTileRectangle rect) => new(rect);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public override readonly string ToString() => $"[[{X}, {Y}] [{InvertedWidth}, {InvertedHeight}]]";
@@ -258,7 +258,7 @@ internal partial struct Bounds :
 	ulong ILongHash.GetLongHashCode() => ((ulong)Offset.GetHashCode() << 32) | (uint)Extent.GetHashCode();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly Bounds ClampTo(in Bounds clamp) {
+	internal readonly Bounds ClampTo(Bounds clamp) {
 		Bounds source = this;
 
 		// Validate that the bounds even overlap at all
@@ -292,7 +292,7 @@ internal partial struct Bounds :
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly bool ClampToChecked(in Bounds clamp, out Bounds clamped) {
+	internal readonly bool ClampToChecked(Bounds clamp, out Bounds clamped) {
 		Bounds result = ClampTo(clamp);
 		if (result != this) {
 			clamped = result;

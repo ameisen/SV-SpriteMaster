@@ -137,7 +137,7 @@ internal static class ColorHelpers {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static uint RedmeanDifference(this in Color8 colorA, in Color8 colorB, bool linear, bool alpha = true) {
+	internal static uint RedmeanDifference(this Color8 colorA, Color8 colorB, bool linear, bool alpha = true) {
 		static int Square(int value) => value * value;
 
 		if (colorA == colorB) {
@@ -201,7 +201,7 @@ internal static class ColorHelpers {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static uint RedmeanDifference(this in Color16 colorA, in Color16 colorB, bool linear, bool alpha = true) {
+	internal static uint RedmeanDifference(this Color16 colorA, Color16 colorB, bool linear, bool alpha = true) {
 		static int Square(int value) => value * value;
 
 		if (colorA == colorB) {
@@ -270,12 +270,12 @@ internal static class ColorHelpers {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static uint YccDifference(this in Color16 colorA, in Color16 colorB, in YccConfig config, bool linear, bool alpha = true) {
+	internal static uint YccDifference(this Color16 colorA, Color16 colorB, in YccConfig config, bool linear, bool alpha = true) {
 		if (colorA == colorB) {
 			return 0;
 		}
 
-		static double YccColorDifference(in Color16 pix1, in Color16 pix2, in YccConfig config) {
+		static double YccColorDifference(Color16 pix1, Color16 pix2, in YccConfig config) {
 			// See if the colors are the same
 			if (pix1.NoAlpha == pix2.NoAlpha) {
 				return 0.0;

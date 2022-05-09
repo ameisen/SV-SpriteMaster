@@ -25,7 +25,7 @@ internal readonly struct ExtentI : IEquatable<ExtentI>, ILongHash {
 
 	internal ExtentI(ExtentI value) : this(value.Min, value.Max) { }
 
-	internal ExtentI(in (int Min, int Max) value) : this(value.Min, value.Max) { }
+	internal ExtentI((int Min, int Max) value) : this(value.Min, value.Max) { }
 
 	internal bool ContainsInclusive(int value) => value.WithinInclusive(Min, Max);
 

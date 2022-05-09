@@ -188,11 +188,11 @@ internal static class Textures {
 	internal static void DumpTexture(
 		string path,
 		byte[] source,
-		in Vector2I sourceSize,
+		Vector2I sourceSize,
 		SurfaceFormat format = SurfaceFormat.Color,
-		in double? adjustGamma = null,
-		in Bounds? destBounds = null,
-		in (int i0, int i1, int i2, int i3)? swap = null
+		double? adjustGamma = null,
+		Bounds? destBounds = null,
+		(int i0, int i1, int i2, int i3)? swap = null
 	) {
 		DumpTexture(path, source.AsReadOnlySpan(), sourceSize, format, adjustGamma, destBounds, swap);
 	}
@@ -200,11 +200,11 @@ internal static class Textures {
 	internal static void DumpTexture(
 		string path,
 		ReadOnlySpan<byte> source,
-		in Vector2I sourceSize,
+		Vector2I sourceSize,
 		SurfaceFormat format = SurfaceFormat.Color,
-		in double? adjustGamma = null,
-		in Bounds? destBounds = null,
-		in (int i0, int i1, int i2, int i3)? swap = null
+		double? adjustGamma = null,
+		Bounds? destBounds = null,
+		(int i0, int i1, int i2, int i3)? swap = null
 	) {
 		if (format.IsCompressed()) {
 			DumpTextureInternal<byte, byte, byte>(path, source, sourceSize, format, adjustGamma, destBounds, null);
@@ -217,11 +217,11 @@ internal static class Textures {
 	internal static void DumpTexture(
 		string path,
 		ReadOnlySpan<Color8> source,
-		in Vector2I sourceSize,
+		Vector2I sourceSize,
 		SurfaceFormat format = SurfaceFormat.Color,
-		in double? adjustGamma = null,
-		in Bounds? destBounds = null,
-		in (int i0, int i1, int i2, int i3)? swap = null
+		double? adjustGamma = null,
+		Bounds? destBounds = null,
+		(int i0, int i1, int i2, int i3)? swap = null
 	) {
 		DumpTextureInternal<Color8, uint, byte>(path, source, sourceSize, format, adjustGamma, destBounds, swap);
 	}
@@ -229,11 +229,11 @@ internal static class Textures {
 	internal static void DumpTexture(
 		string path,
 		ReadOnlySpan<Color16> source,
-		in Vector2I sourceSize,
+		Vector2I sourceSize,
 		SurfaceFormat format = SurfaceFormat.Rgba64,
-		in double? adjustGamma = null,
-		in Bounds? destBounds = null,
-		in (int i0, int i1, int i2, int i3)? swap = null
+		double? adjustGamma = null,
+		Bounds? destBounds = null,
+		(int i0, int i1, int i2, int i3)? swap = null
 	) {
 		DumpTextureInternal<Color16, ulong, ushort>(path, source, sourceSize, format, adjustGamma, destBounds, swap);
 	}
@@ -241,11 +241,11 @@ internal static class Textures {
 	private static void DumpTextureInternal<ColorT, RawT, UnderlyingT>(
 		string path,
 		ReadOnlySpan<ColorT> source,
-		in Vector2I sourceSize,
+		Vector2I sourceSize,
 		SurfaceFormat format,
-		in double? adjustGamma = null,
-		in Bounds? destBounds = null,
-		in (int i0, int i1, int i2, int i3)? swap = null
+		double? adjustGamma = null,
+		Bounds? destBounds = null,
+		(int i0, int i1, int i2, int i3)? swap = null
 	)
 		where ColorT : unmanaged
 		where RawT : unmanaged

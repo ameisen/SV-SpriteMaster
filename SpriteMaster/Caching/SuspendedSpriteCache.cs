@@ -48,7 +48,7 @@ internal static class SuspendedSpriteCache {
 	}
 
 	private static void TrimCount() {
-		if (Config.SuspendedCache.MaxCacheCount <= 0 || Config.SuspendedCache.MaxCacheCount == int.MaxValue) {
+		if (Config.SuspendedCache.MaxCacheCount is <= 0 or int.MaxValue) {
 			return;
 		}
 
@@ -124,10 +124,7 @@ internal static class SuspendedSpriteCache {
 
 	internal static bool Remove(ulong hash) {
 		var element = Cache.Remove(hash.ToString64());
-		if (element is not null) {
-			return true;
-		}
-		return false;
+		return element is not null;
 	}
 
 	internal static bool Remove(ManagedSpriteInstance instance) => Remove(instance.Hash);

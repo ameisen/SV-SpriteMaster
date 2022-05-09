@@ -43,11 +43,11 @@ internal sealed class Texture2DMeta : IDisposable {
 
 	internal IReadOnlyDictionary<ulong, ManagedSpriteInstance> GetSpriteInstanceTable() => SpriteInstanceTable;
 
-	internal void SetSpriteHash(in Bounds bounds, ulong hash) {
+	internal void SetSpriteHash(Bounds bounds, ulong hash) {
 		SpriteDataMap.GetOrAdd(bounds, _ => new()).Hash = hash;
 	}
 
-	internal bool TryGetSpriteHash(in Bounds bounds, out ulong hash) {
+	internal bool TryGetSpriteHash(Bounds bounds, out ulong hash) {
 		if (SpriteDataMap.TryGetValue(bounds, out var data) && data.Hash.HasValue) {
 			hash = data.Hash.Value;
 			return true;
@@ -99,27 +99,21 @@ internal sealed class Texture2DMeta : IDisposable {
 		}
 	}
 
-	internal void AddNoResample(in Bounds bounds) {
+	internal void AddNoResample(Bounds bounds) {
 		SpriteDataMap.GetOrAdd(bounds, _ => new()).Flags |= SpriteFlag.NoResample;
 	}
 
-	internal bool IsNoResample(in Bounds bounds) {
-		if (SpriteDataMap.TryGetValue(bounds, out var data)) {
-			return (data.Flags & SpriteFlag.NoResample) != 0U;
-		}
-		return false;
+	internal bool IsNoResample(Bounds bounds) {
+		return SpriteDataMap.TryGetValue(bounds, out var data) && data.Flags.HasFlag(SpriteFlag.NoResample);
 	}
 
-	internal bool IsAnimated(in Bounds bounds) {
-		if (SpriteDataMap.TryGetValue(bounds, out var data)) {
-			return (data.Flags & SpriteFlag.Animated) != 0U;
-		}
-		return false;
+	internal bool IsAnimated(Bounds bounds) {
+		return SpriteDataMap.TryGetValue(bounds, out var data) && data.Flags.HasFlag(SpriteFlag.Animated);
 	}
 
 	private readonly Dictionary<Bounds, Config.TextureRef?> SlicedCache = new();
 
-	internal bool CheckSliced(in Bounds bounds, [NotNullWhen(true)] out Config.TextureRef? result) {
+	internal bool CheckSliced(Bounds bounds, [NotNullWhen(true)] out Config.TextureRef? result) {
 		if (SlicedCache.TryGetValue(bounds, out var textureRef)) {
 			result = textureRef;
 			return textureRef.HasValue;
@@ -130,11 +124,14 @@ internal sealed class Texture2DMeta : IDisposable {
 				if (!NormalizedName.StartsWith(slicedTexture.Texture)) {
 					continue;
 				}
-				if (slicedTexture.Bounds.IsEmpty || slicedTexture.Bounds.Contains(bounds)) {
-					SlicedCache.Add(bounds, slicedTexture);
-					result = slicedTexture;
-					return true;
+
+				if (!slicedTexture.Bounds.IsEmpty && !slicedTexture.Bounds.Contains(bounds)) {
+					continue;
 				}
+
+				SlicedCache.Add(bounds, slicedTexture);
+				result = slicedTexture;
+				return true;
 			}
 		}
 		SlicedCache.Add(bounds, null);
@@ -145,10 +142,12 @@ internal sealed class Texture2DMeta : IDisposable {
 	private string? NormalizedNameInternal = null;
 	private string? NormalizedName {
 		get {
-			if (NormalizedNameInternal is null) {
-				if (Owner.TryGetTarget(out var owner)) {
-					NormalizedNameInternal = owner.NormalizedNameOrNull();
-				}
+			if (NormalizedNameInternal is not null) {
+				return NormalizedNameInternal;
+			}
+
+			if (Owner.TryGetTarget(out var owner)) {
+				NormalizedNameInternal = owner.NormalizedNameOrNull();
 			}
 			return NormalizedNameInternal;
 		}
@@ -191,8 +190,8 @@ internal sealed class Texture2DMeta : IDisposable {
 	}
 
 	// TODO : this presently is not threadsafe.
-	private readonly WeakReference<byte[]> CachedDataInternal = (Config.MemoryCache.Enabled) ? new(null!) : null!;
-	private readonly WeakReference<byte[]> CachedRawDataInternal = (Config.MemoryCache.Enabled) ? new(null!) : null!;
+	private readonly WeakReference<byte[]> CachedDataInternal = new(null!);
+	private readonly WeakReference<byte[]> CachedRawDataInternal = new(null!);
 
 	internal bool HasCachedData {
 		[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -202,7 +201,7 @@ internal sealed class Texture2DMeta : IDisposable {
 			}
 
 			using (Lock.Read) {
-				return CachedDataInternal.TryGetTarget(out var target);
+				return CachedDataInternal.TryGetTarget(out _);
 			}
 		}
 	}
@@ -217,7 +216,7 @@ internal sealed class Texture2DMeta : IDisposable {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal void Purge(XTexture2D reference, in Bounds? bounds, in DataRef<byte> data, bool animated) {
+	internal void Purge(XTexture2D reference, Bounds? bounds, in DataRef<byte> data, bool animated) {
 		using (Lock.Write) {
 			bool hasCachedData = CachedRawData is not null;
 
@@ -323,9 +322,9 @@ internal sealed class Texture2DMeta : IDisposable {
 			}
 
 			using (var locked = Lock.TryRead) if (locked) {
-					CachedRawDataInternal.TryGetTarget(out var target);
-					return target;
-				}
+				CachedRawDataInternal.TryGetTarget(out var target);
+				return target;
+			}
 			return BlockedSentinel;
 		}
 	}
@@ -384,10 +383,7 @@ internal sealed class Texture2DMeta : IDisposable {
 	internal byte[]? CachedData {
 		get {
 			using (Lock.Read) {
-				if (CachedDataInternal.TryGet(out var data)) {
-					return data;
-				}
-				return null;
+				return CachedDataInternal.TryGet(out var data) ? data : null;
 			}
 		}
 	}
@@ -407,14 +403,16 @@ internal sealed class Texture2DMeta : IDisposable {
 	internal ulong GetHash(SpriteInfo info) {
 		using (Lock.ReadWrite) {
 			ulong hash = Hash;
-			if (hash == 0) {
-				if (info.ReferenceData is null) {
-					throw new NullReferenceException(nameof(info.ReferenceData));
-				}
-				hash = info.ReferenceData.Hash();
-				using (Lock.Write) {
-					Hash = hash;
-				}
+			if (hash != 0) {
+				return hash;
+			}
+
+			if (info.ReferenceData is null) {
+				throw new NullReferenceException(nameof(info.ReferenceData));
+			}
+			hash = info.ReferenceData.Hash();
+			using (Lock.Write) {
+				Hash = hash;
 			}
 			return hash;
 		}
@@ -422,9 +420,10 @@ internal sealed class Texture2DMeta : IDisposable {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal bool ShouldReportError(ReportOnceErrors error) {
-		if ((ReportedErrors & error) != 0) {
+		if (ReportedErrors.HasFlag(error)) {
 			return false;
 		}
+
 		ReportedErrors |= error;
 		return true;
 	}

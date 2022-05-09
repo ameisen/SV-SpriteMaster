@@ -47,12 +47,9 @@ internal static class ResampleTask {
 			PreviousInstance: previousInstance
 		);
 
-		if (async) {
-			return Factory.StartNew(Resample, parameters);
-		}
-		else {
-			return Task.FromResult(ResampleFunction(parameters));
-		}
+		return async ?
+			Factory.StartNew(Resample, parameters) :
+			Task.FromResult(ResampleFunction(parameters));
 	}
 
 }

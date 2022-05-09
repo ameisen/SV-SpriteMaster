@@ -5,7 +5,7 @@ using System;
 namespace SpriteMaster.Resample.Passes;
 
 internal static class BlockMultipleAnalysis {
-	private static bool BlockTest(ReadOnlySpan<Color8> data, in Bounds textureBounds, in Bounds spriteBounds, int stride, int block) {
+	private static bool BlockTest(ReadOnlySpan<Color8> data, Bounds textureBounds, Bounds spriteBounds, int stride, int block) {
 		// If it doesn't align to the bounds, then we cannot analyze this multiple.
 		if ((spriteBounds.Extent % block) != Vector2I.Zero) {
 			return false;
@@ -42,7 +42,7 @@ internal static class BlockMultipleAnalysis {
 		return true;
 	}
 
-	private static int QuickBlockTest(ReadOnlySpan<Color8> data, in Bounds textureBounds, in Bounds spriteBounds, int stride) {
+	private static int QuickBlockTest(ReadOnlySpan<Color8> data, Bounds textureBounds, Bounds spriteBounds, int stride) {
 		// Scan row by row, just seeing what the largest sequential sequence of texels is. Return the smallest.
 		int minimumBlock = Math.Min(spriteBounds.Width, spriteBounds.Height);
 
@@ -73,9 +73,9 @@ internal static class BlockMultipleAnalysis {
 		return minimumBlock;
 	}
 
-	internal static int Analyze(ReadOnlySpan<Color8> data, in Bounds textureBounds, in Bounds spriteBounds, int stride) {
+	internal static int Analyze(ReadOnlySpan<Color8> data, Bounds textureBounds, Bounds spriteBounds, int stride) {
 		// A very quick test to determine the maximum possible block size, just checking horizontal stride
-		var maxBlockLimit = QuickBlockTest(data, in textureBounds, in spriteBounds, stride);
+		var maxBlockLimit = QuickBlockTest(data, textureBounds, spriteBounds, stride);
 
 		// Common multiples
 		for (int block = maxBlockLimit; block > 1; --block) {

@@ -44,7 +44,7 @@ internal static partial class Debug {
 
 	// Logging Stuff
 
-	[DebuggerStepThrough, DebuggerHidden()]
+	[DebuggerStepThrough, DebuggerHidden]
 	[MethodImpl(MethodImpl.Cold)]
 	private static string ParseException(Exception exception) {
 		var output = new StringBuilder();
@@ -60,11 +60,11 @@ internal static partial class Debug {
 		return output.ToString();
 	}
 
-	[DebuggerStepThrough, DebuggerHidden()]
+	[DebuggerStepThrough, DebuggerHidden]
 	private static string Format(this string? memberName, bool format = true) {
 		return (!format || memberName is null) ? "" : $"[{memberName}] ";
 	}
 
-	[DebuggerStepThrough, DebuggerHidden()]
+	[DebuggerStepThrough, DebuggerHidden]
 	internal static void Flush() => _ = Console.Error.FlushAsync();
 }

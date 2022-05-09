@@ -10,8 +10,8 @@ namespace SpriteMaster.Core;
 
 internal static partial class OnDrawImpl {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static bool GetIsSliced(in Bounds bounds, XTexture2D reference, [NotNullWhen(true)] out Config.TextureRef? result) {
-		return reference.Meta().CheckSliced(in bounds, out result);
+	private static bool GetIsSliced(Bounds bounds, XTexture2D reference, [NotNullWhen(true)] out Config.TextureRef? result) {
+		return reference.Meta().CheckSliced(bounds, out result);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -136,7 +136,7 @@ internal static partial class OnDrawImpl {
 	private static bool Validate(this ManagedTexture2D texture) => !texture.IsDisposed;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static void GetDrawParameters(XTexture2D texture, in XRectangle? source, out Bounds bounds, out float scaleFactor) {
+	private static void GetDrawParameters(XTexture2D texture, XRectangle? source, out Bounds bounds, out float scaleFactor) {
 		if (texture is not InternalTexture2D) {
 			texture.Meta().UpdateLastAccess();
 		}

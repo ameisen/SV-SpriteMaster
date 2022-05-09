@@ -31,22 +31,10 @@ internal partial struct Bounds :
 	public readonly int CompareTo(Bounds? other) => other.HasValue ? CompareTo(other.Value) : CompareTo((object?)null);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly int CompareTo(in Bounds other) => Offset.CompareTo(other.Offset) << 16 | (Extent.CompareTo(other.Extent) & 0xFFFF);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly int CompareTo(in Bounds? other) => other.HasValue ? CompareTo(other.Value) : CompareTo((object?)null);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public readonly int CompareTo(DrawingRectangle other) => CompareTo((Bounds)other);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public readonly int CompareTo(DrawingRectangle? other) => other.HasValue ? CompareTo((Bounds)other.Value) : CompareTo((object?)null);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly int CompareTo(in DrawingRectangle other) => CompareTo((Bounds)other);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly int CompareTo(in DrawingRectangle? other) => other.HasValue ? CompareTo((Bounds)other.Value) : CompareTo((object?)null);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public readonly int CompareTo(XRectangle other) => CompareTo((Bounds)other);
@@ -55,20 +43,8 @@ internal partial struct Bounds :
 	public readonly int CompareTo(XRectangle? other) => other.HasValue ? CompareTo((Bounds)other.Value) : CompareTo((object?)null);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly int CompareTo(in XRectangle other) => CompareTo((Bounds)other);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly int CompareTo(in XRectangle? other) => other.HasValue ? CompareTo((Bounds)other.Value) : CompareTo((object?)null);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public readonly int CompareTo(XTileRectangle other) => CompareTo((Bounds)other);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public readonly int CompareTo(XTileRectangle? other) => other.HasValue ? CompareTo((Bounds)other.Value) : CompareTo((object?)null);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly int CompareTo(in XTileRectangle other) => CompareTo((Bounds)other);
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly int CompareTo(in XTileRectangle? other) => other.HasValue ? CompareTo((Bounds)other.Value) : CompareTo((object?)null);
 }

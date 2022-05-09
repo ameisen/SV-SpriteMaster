@@ -39,7 +39,7 @@ internal static class TextureDecode {
 				}
 			}
 			catch {
-				continue;
+				// ignored
 			}
 		}
 

@@ -81,10 +81,10 @@ internal partial struct Vector2I :
 	internal static Vector2I From(int x, int y) => new(x, y);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Vector2I(in (int X, int Y) vec) : this(vec.X, vec.Y) { }
+	internal Vector2I((int X, int Y) vec) : this(vec.X, vec.Y) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static Vector2I From(in (int X, int Y) vec) => new(vec.X, vec.Y);
+	internal static Vector2I From((int X, int Y) vec) => new(vec.X, vec.Y);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal Vector2I(int value) : this(value, value) { }
@@ -93,10 +93,10 @@ internal partial struct Vector2I :
 	internal static Vector2I From(int value) => new(value);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Vector2I(in XVector2 vector, bool round = true) : this(round ? vector.NearestInt() : vector.TruncateInt()) { }
+	internal Vector2I(XVector2 vector, bool round = true) : this(round ? vector.NearestInt() : vector.TruncateInt()) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Vector2I(in Vector2F vector, bool round = true) : this(round ? vector.NearestInt() : vector.TruncateInt()) { }
+	internal Vector2I(Vector2F vector, bool round = true) : this(round ? vector.NearestInt() : vector.TruncateInt()) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal Vector2I(Vector2I vec) : this(vec.Packed) { }
@@ -120,7 +120,7 @@ internal partial struct Vector2I :
 	internal Vector2I(XTexture2D tex) : this(tex.Width, tex.Height) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static implicit operator Vector2I(in (int X, int Y) vec) => new(vec.X, vec.Y);
+	public static implicit operator Vector2I((int X, int Y) vec) => new(vec.X, vec.Y);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static implicit operator (int X, int Y)(Vector2I vec) => (vec.X, vec.Y);

@@ -58,10 +58,10 @@ internal partial struct Vector2F : ILongHash {
 	internal static Vector2F From(float x, float y) => new(x, y);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Vector2F(in (float X, float Y) vec) : this(vec.X, vec.Y) { }
+	internal Vector2F((float X, float Y) vec) : this(vec.X, vec.Y) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static Vector2F From(in (float X, float Y) vec) => new(vec.X, vec.Y);
+	internal static Vector2F From((float X, float Y) vec) => new(vec.X, vec.Y);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal Vector2F(float value) => NumericVector = new(value);
@@ -70,7 +70,7 @@ internal partial struct Vector2F : ILongHash {
 	internal static Vector2F From(float value) => new(value);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal Vector2F(in XVector2 vector) : this(vector.X, vector.Y) { }
+	internal Vector2F(XVector2 vector) : this(vector.X, vector.Y) { }
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal Vector2F(Vector2F vec) : this(vec.NumericVector) { }
@@ -100,7 +100,7 @@ internal partial struct Vector2F : ILongHash {
 	internal void Set(float x, float y) => NumericVector = new(x, y);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal void Set(in (float X, float Y) vec) => NumericVector = new(vec.X, vec.Y);
+	internal void Set((float X, float Y) vec) => NumericVector = new(vec.X, vec.Y);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal void Set(float v) => Set(v, v);
@@ -115,7 +115,7 @@ internal partial struct Vector2F : ILongHash {
 	internal void Set(XVector2 vec) => Set(vec.X, vec.Y);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static implicit operator Vector2F(in (float X, float Y) vec) => new(vec.X, vec.Y);
+	public static implicit operator Vector2F((float X, float Y) vec) => new(vec.X, vec.Y);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static implicit operator (float X, float Y)(Vector2F vec) => (vec.X, vec.Y);

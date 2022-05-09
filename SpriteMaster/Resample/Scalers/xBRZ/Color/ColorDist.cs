@@ -19,7 +19,7 @@ internal class ColorDist {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal uint ColorDistance(in Color16 pix1, in Color16 pix2) {
+	internal uint ColorDistance(Color16 pix1, Color16 pix2) {
 		return Resample.Scalers.Common.ColorDistance(
 			useRedmean: Configuration.UseRedmean,
 			gammaCorrected: Configuration.GammaCorrected,

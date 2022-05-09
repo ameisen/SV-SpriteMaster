@@ -24,9 +24,6 @@ internal partial struct Vector2F :
 	public readonly bool Equals((float, float) other) => this == (Vector2F)other;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly bool Equals(in (float X, float Y) other) => this == (Vector2F)other;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public readonly bool Equals(Vector2I other) => this == (Vector2F)other;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -39,16 +36,16 @@ internal partial struct Vector2F :
 	public static bool operator !=(Vector2F lhs, Vector2F rhs) => lhs.NumericVector != rhs.NumericVector;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(Vector2F lhs, in (float X, float Y) rhs) => lhs.Equals(rhs);
+	public static bool operator ==(Vector2F lhs, (float X, float Y) rhs) => lhs.Equals(rhs);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(Vector2F lhs, in (float X, float Y) rhs) => !(lhs == rhs);
+	public static bool operator !=(Vector2F lhs, (float X, float Y) rhs) => !(lhs == rhs);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(in (float X, float Y) lhs, Vector2F rhs) => rhs.Equals(lhs);
+	public static bool operator ==((float X, float Y) lhs, Vector2F rhs) => rhs.Equals(lhs);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(in (float X, float Y) lhs, Vector2F rhs) => !(rhs == lhs);
+	public static bool operator !=((float X, float Y) lhs, Vector2F rhs) => !(rhs == lhs);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static bool operator ==(Vector2F lhs, Vector2I rhs) => lhs.Equals(rhs);

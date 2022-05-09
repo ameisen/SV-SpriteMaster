@@ -7,11 +7,11 @@ using System.Runtime.CompilerServices;
 namespace SpriteMaster.Extensions;
 
 internal static class Untraced {
-	[DebuggerStepThrough, DebuggerHidden()]
+	[DebuggerStepThrough, DebuggerHidden]
 	[MethodImpl(Runtime.MethodImpl.ErrorPath)]
 	internal static bool IsUntraced(this MethodBase method) => method.IsDefined(typeof(DebuggerStepThroughAttribute), true) || method.IsDefined(typeof(DebuggerHiddenAttribute), true);
 
-	[DebuggerStepThrough, DebuggerHidden()]
+	[DebuggerStepThrough, DebuggerHidden]
 	[MethodImpl(Runtime.MethodImpl.ErrorPath)]
 	internal static string GetStackTrace(this Exception e) {
 		var tracedStrings = new List<string>();

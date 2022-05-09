@@ -15,7 +15,7 @@ internal readonly struct Drawable {
 
 	private static float DegreesToRadians(int degrees) => (MathF.PI / 180.0f) * degrees;
 
-	private Drawable(XTexture2D? texture, in Bounds? source, AnimatedTexture? animatedTexture, float rotation, int offset) {
+	private Drawable(XTexture2D? texture, Bounds? source, AnimatedTexture? animatedTexture, float rotation, int offset) {
 		Texture = texture;
 		Source = source;
 		AnimatedTexture = animatedTexture;
@@ -23,14 +23,14 @@ internal readonly struct Drawable {
 		Offset = offset;
 	}
 
-	internal Drawable(XTexture2D texture, in Bounds? source = null, float rotation = 0.0f, int offset = 0) {
+	internal Drawable(XTexture2D texture, Bounds? source = null, float rotation = 0.0f, int offset = 0) {
 		Texture = texture;
 		Source = source;
 		Rotation = Math.Clamp(rotation, 0.0f, MathF.PI * 2.0f);
 		Offset = offset;
 	}
 
-	internal Drawable(XTexture2D texture, in Bounds? source, int rotationDegrees) : this(texture, source, DegreesToRadians(rotationDegrees)) { }
+	internal Drawable(XTexture2D texture, Bounds? source, int rotationDegrees) : this(texture, source, DegreesToRadians(rotationDegrees)) { }
 
 	internal Drawable(AnimatedTexture texture, float rotation = 0.0f, int offset = 0) {
 		AnimatedTexture = texture;

@@ -102,12 +102,12 @@ internal sealed class Resampler {
 		blockPadding = Vector2I.Zero;
 		isGradient = false;
 
-		string MakeDumpPath(in Analysis.LegacyResults? analysis = null, in PaddingQuad? padding = null, string? subPath = null, string[]? modifiers = null) {
+		string MakeDumpPath(in Analysis.LegacyResults? analysis = null, PaddingQuad? padding = null, string? subPath = null, string[]? modifiers = null) {
 			var normalizedName = input.Reference.NormalizedName().Replace('\\', '.');
 			var dumpPath = new StringBuilder();
 			dumpPath.Append($"{normalizedName}.{hashString}");
 			if (analysis.HasValue) {
-				static string SimplifyBools(in Vector2B vec) {
+				static string SimplifyBools(Vector2B vec) {
 					return $"{vec.X.ToInt()}{vec.Y.ToInt()}";
 				}
 
@@ -786,9 +786,7 @@ internal sealed class Resampler {
 					}
 					catch (Exception ex) {
 						ex.PrintError();
-						if (newTexture is not null) {
-							newTexture.Dispose();
-						}
+						newTexture?.Dispose();
 						spriteInstance.Dispose();
 					}
 				}
@@ -809,9 +807,7 @@ internal sealed class Resampler {
 				}
 				catch (Exception ex) {
 					ex.PrintError();
-					if (newTexture is not null) {
-						newTexture.Dispose();
-					}
+					newTexture?.Dispose();
 				}
 			}
 		}

@@ -36,7 +36,7 @@ internal sealed class SharedLock : CriticalFinalizerObject, IDisposable {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		public static implicit operator bool(in ReadCookie cookie) => cookie.Lock is not null;
+		public static implicit operator bool(ReadCookie cookie) => cookie.Lock is not null;
 	}
 	internal ref struct ExclusiveCookie {
 		private LockType? Lock = null;
@@ -64,7 +64,7 @@ internal sealed class SharedLock : CriticalFinalizerObject, IDisposable {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		public static implicit operator bool(in ExclusiveCookie cookie) => cookie.Lock is not null;
+		public static implicit operator bool(ExclusiveCookie cookie) => cookie.Lock is not null;
 	}
 
 	internal ref struct ReadWriteCookie {
@@ -95,7 +95,7 @@ internal sealed class SharedLock : CriticalFinalizerObject, IDisposable {
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Hot)]
-		public static implicit operator bool(in ReadWriteCookie cookie) => cookie.Lock is not null;
+		public static implicit operator bool(ReadWriteCookie cookie) => cookie.Lock is not null;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
