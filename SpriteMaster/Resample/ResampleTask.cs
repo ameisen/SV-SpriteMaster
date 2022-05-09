@@ -5,11 +5,11 @@ using System.Threading.Tasks;
 namespace SpriteMaster.Resample;
 
 internal static class ResampleTask {
-	private static readonly TaskFactory<ManagedSpriteInstance?> Factory = new(ThreadedTaskScheduler.Instance);
+	private static readonly TaskFactory<ManagedSpriteInstance> Factory = new(ThreadedTaskScheduler.Instance);
 
-	private static ManagedSpriteInstance? Resample(object? parametersObj) => ResampleFunction((TaskParameters)parametersObj!);
+	private static ManagedSpriteInstance Resample(object? parametersObj) => ResampleFunction((TaskParameters)parametersObj!);
 
-	private static ManagedSpriteInstance? ResampleFunction(in TaskParameters parameters) {
+	private static ManagedSpriteInstance ResampleFunction(in TaskParameters parameters) {
 		try {
 			if (ManagedSpriteInstance.TryResurrect(parameters.SpriteInfo, out var resurrectedInstance)) {
 				return resurrectedInstance;
@@ -36,7 +36,7 @@ internal static class ResampleTask {
 		ManagedSpriteInstance? PreviousInstance = null
 	);
 
-	internal static Task<ManagedSpriteInstance?> Dispatch(
+	internal static Task<ManagedSpriteInstance> Dispatch(
 		SpriteInfo spriteInfo,
 		bool async,
 		ManagedSpriteInstance? previousInstance = null

@@ -66,10 +66,10 @@ internal sealed class Texture2DMeta : IDisposable {
 		using (Lock.Write) {
 			foreach (var spriteInstance in SpriteInstanceTable.Values) {
 				if (allowSuspend) {
-					spriteInstance?.Suspend();
+					spriteInstance.Suspend();
 				}
 				else {
-					spriteInstance?.Dispose();
+					spriteInstance.Dispose();
 				}
 			}
 			SpriteInstanceTable.Clear();
@@ -78,7 +78,12 @@ internal sealed class Texture2DMeta : IDisposable {
 
 	internal bool RemoveFromSpriteInstanceTable(ulong key, bool dispose, out ManagedSpriteInstance? instance) {
 		using (Lock.Write) {
-			return SpriteInstanceTable.Remove(key, out instance);
+			if (SpriteInstanceTable.Remove(key, out instance)) {
+				return true;
+			}
+
+			instance = null;
+			return false;
 		}
 	}
 
@@ -142,7 +147,7 @@ internal sealed class Texture2DMeta : IDisposable {
 		get {
 			if (NormalizedNameInternal is null) {
 				if (Owner.TryGetTarget(out var owner)) {
-					NormalizedNameInternal = owner?.NormalizedNameOrNull();
+					NormalizedNameInternal = owner.NormalizedNameOrNull();
 				}
 			}
 			return NormalizedNameInternal;
@@ -266,7 +271,7 @@ internal sealed class Texture2DMeta : IDisposable {
 					
 					CachedRawData = data.Data;
 				}
-				else if (!IsCompressed && (bounds.HasValue != (data.Offset != 0)) && CachedRawData is var currentData && currentData is not null) {
+				else if (!IsCompressed && (bounds.HasValue != (data.Offset != 0)) && CachedRawData is { } currentData) {
 					Debug.Trace($"{(hasCachedData ? "Updating" : "Setting")} '{reference.NormalizedName(DrawingColor.LightYellow)}' Cache in Purge: {bounds.HasValue}");
 
 					if (bounds.HasValue) {
@@ -308,7 +313,7 @@ internal sealed class Texture2DMeta : IDisposable {
 		}
 	}
 
-	internal static readonly byte[] BlockedSentinel = new byte[1] { 0xFF };
+	internal static readonly byte[] BlockedSentinel = { 0xFF };
 
 	internal byte[]? CachedDataNonBlocking {
 		[MethodImpl(Runtime.MethodImpl.Hot)]

@@ -65,7 +65,7 @@ internal static class PlatformRenderBatch {
 		}
 	}
 
-	private static SamplerState GetNewSamplerState(Texture texture, SamplerState reference) {
+	private static SamplerState GetNewSamplerState(Texture? texture, SamplerState reference) {
 		if (!Config.DrawState.IsSetLinear) {
 			return reference;
 		}
@@ -122,9 +122,9 @@ internal static class PlatformRenderBatch {
 		SpriteBatcher __instance,
 		int start,
 		int end,
-		Effect effect,
-		Texture texture,
-		GraphicsDevice ____device,
+		Effect? effect,
+		Texture? texture,
+		GraphicsDevice? ____device,
 		ref States __state
 	) {
 		if (!Config.IsEnabled) {
@@ -182,9 +182,9 @@ internal static class PlatformRenderBatch {
 	SpriteBatcher __instance,
 	int start,
 	int end,
-	Effect effect,
-	Texture texture,
-	GraphicsDevice ____device,
+	Effect? effect,
+	Texture? texture,
+	GraphicsDevice? ____device,
 	States __state
 ) {
 		if (!Config.IsEnabled) {

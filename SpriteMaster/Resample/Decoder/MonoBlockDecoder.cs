@@ -25,7 +25,7 @@ internal static class MonoBlockDecoder {
 		name,
 		BindingFlags.NonPublic | BindingFlags.Static,
 		null,
-		new Type[] { typeof(T) == typeof(DecompressDelegateArray) ? typeof(byte[]) : typeof(Stream), typeof(int), typeof(int) },
+		new[] { typeof(T) == typeof(DecompressDelegateArray) ? typeof(byte[]) : typeof(Stream), typeof(int), typeof(int) },
 		null
 	)?.CreateDelegate<T>();
 

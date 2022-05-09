@@ -28,12 +28,12 @@ internal readonly struct TextureFormat {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static implicit operator CompressionFormat(TextureFormat format) => format.CompressionFormat;
 
-	internal readonly bool IsSupported => Config.Resample.SupportedFormats.Contains(this);
+	internal bool IsSupported => Config.Resample.SupportedFormats.Contains(this);
 
-	internal readonly TextureFormat? SupportedOr => IsSupported ? this : null;
+	internal TextureFormat? SupportedOr => IsSupported ? this : null;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal readonly long SizeBytes(int area) => SurfaceFormat.SizeBytes(area);
+	internal long SizeBytes(int area) => SurfaceFormat.SizeBytes(area);
 
 	internal static readonly TextureFormat None = new((SurfaceFormat)(-1), (CompressionFormat)(-1));
 

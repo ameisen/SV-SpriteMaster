@@ -370,7 +370,7 @@ internal abstract class Scene : IDisposable {
 
 		CurrentWeatherState = WeatherState.Backup();
 	}
-	protected abstract void OnResize(Vector2I Size, Vector2I OldSize);
+	protected abstract void OnResize(Vector2I size, Vector2I oldSize);
 
 	internal void Resize(in Bounds newRegion) {
 		using var savedWeatherState = WeatherState.Backup();

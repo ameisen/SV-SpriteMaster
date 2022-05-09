@@ -192,16 +192,16 @@ internal sealed partial class Scaler {
 			dist.ColorDistance(ker.F, ker.C) +
 			dist.ColorDistance(ker.N, ker.K) +
 			dist.ColorDistance(ker.K, ker.H) +
-			MathExt.RoundToInt(Configuration.CenterDirectionBias * dist.ColorDistance(ker.J, ker.G));
+			(Configuration.CenterDirectionBias * dist.ColorDistance(ker.J, ker.G)).RoundToInt();
 		var fk =
 			dist.ColorDistance(ker.E, ker.J) +
 			dist.ColorDistance(ker.J, ker.O) +
 			dist.ColorDistance(ker.B, ker.G) +
 			dist.ColorDistance(ker.G, ker.L) +
-			MathExt.RoundToInt(Configuration.CenterDirectionBias * dist.ColorDistance(ker.F, ker.K));
+			(Configuration.CenterDirectionBias * dist.ColorDistance(ker.F, ker.K)).RoundToInt();
 
 		if (jg < fk) {
-			var dominantGradient = MathExt.RoundToInt(Configuration.DominantDirectionThreshold * jg) < fk ? BlendType.Dominant : BlendType.Normal;
+			var dominantGradient = (Configuration.DominantDirectionThreshold * jg).RoundToInt() < fk ? BlendType.Dominant : BlendType.Normal;
 			if (ker.F != ker.G && ker.F != ker.J) {
 				result.F = dominantGradient;
 			}
@@ -210,7 +210,7 @@ internal sealed partial class Scaler {
 			}
 		}
 		else if (fk < jg) {
-			var dominantGradient = MathExt.RoundToInt(Configuration.DominantDirectionThreshold * fk) < jg ? BlendType.Dominant : BlendType.Normal;
+			var dominantGradient = (Configuration.DominantDirectionThreshold * fk).RoundToInt() < jg ? BlendType.Dominant : BlendType.Normal;
 			if (ker.J != ker.F && ker.J != ker.K) {
 				result.J = dominantGradient;
 			}
@@ -291,8 +291,8 @@ internal sealed partial class Scaler {
 		var fg = dist.ColorDistance(f, g);
 		var hc = dist.ColorDistance(h, c);
 
-		var haveShallowLine = MathExt.RoundToInt(Configuration.SteepDirectionThreshold * fg) <= hc && e != g && d != g;
-		var haveSteepLine = MathExt.RoundToInt(Configuration.SteepDirectionThreshold * hc) <= fg && e != c && b != c;
+		var haveShallowLine = (Configuration.SteepDirectionThreshold * fg).RoundToInt() <= hc && e != g && d != g;
+		var haveSteepLine = (Configuration.SteepDirectionThreshold * hc).RoundToInt() <= fg && e != c && b != c;
 
 		if (haveShallowLine) {
 			if (haveSteepLine) {

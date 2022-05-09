@@ -20,7 +20,7 @@ internal static class DecodeTask {
 			return;
 		}
 
-		var uncompressedData = TextureDecode.DecodeBlockCompressedTexture(metadata.Format, metadata!.Size, rawData);
+		var uncompressedData = TextureDecode.DecodeBlockCompressedTexture(metadata.Format, metadata.Size, rawData);
 		if (uncompressedData.IsEmpty) {
 			throw new InvalidOperationException("Compressed data failed to decompress");
 		}

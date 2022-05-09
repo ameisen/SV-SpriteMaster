@@ -42,7 +42,7 @@ internal static class Harmonize {
 		MonoGame
 	}
 
-	internal enum PriorityLevel : int {
+	internal enum PriorityLevel {
 		Last = int.MinValue,
 		Lowest = Priority.Last,
 		VeryLow = Priority.VeryLow,
@@ -56,7 +56,7 @@ internal static class Harmonize {
 		First = int.MaxValue
 	}
 
-	internal static readonly Type[] StructTypes = new[] {
+	internal static readonly Type[] StructTypes = {
 		typeof(XColor),
 		typeof(char),
 		typeof(byte),
@@ -103,7 +103,7 @@ internal static class Harmonize {
 			var instanceType = attribute.Type;
 			if (instanceType is null) {
 				var instancePar = method.GetParameters().WhereF(p => p.Name == "__instance");
-				Contracts.AssertTrue(instancePar.Count != 0, $"Type not specified for method {method.GetFullName()}, but no __instance argument present");
+				(instancePar.Count != 0).AssertTrue($"Type not specified for method {method.GetFullName()}, but no __instance argument present");
 				instanceType = instancePar[0].ParameterType.RemoveRef();
 			}
 
@@ -324,69 +324,71 @@ internal static class Harmonize {
 			}
 		}
 
-		if (typeMethod is null) {
-			MethodBase[] typeMethods = constructor ?
-				type.GetConstructors(flags) :
-				type.GetMethods(name, flags).ToArrayF();
+		if (typeMethod is not null) {
+			return typeMethod;
+		}
 
-			foreach (var testMethod in typeMethods) {
-				// Compare the parameters. Ignore references.
-				var testParameters = testMethod.GetParameters();
-				if (testParameters.Length != methodParameters.Length) {
+		MethodBase[] typeMethods = constructor ?
+			type.GetConstructors(flags) :
+			type.GetMethods(name, flags).ToArrayF();
+
+		foreach (var testMethod in typeMethods) {
+			// Compare the parameters. Ignore references.
+			var testParameters = testMethod.GetParameters();
+			if (testParameters.Length != methodParameters.Length) {
+				continue;
+			}
+
+			if (isGeneric) {
+				if (!testMethod.IsGenericMethod) {
 					continue;
 				}
-
-				if (isGeneric) {
-					if (!testMethod.IsGenericMethod) {
-						continue;
-					}
-					if (testMethod.GetGenericArguments().Length != numGenericArguments) {
-						continue;
-					}
+				if (testMethod.GetGenericArguments().Length != numGenericArguments) {
+					continue;
 				}
+			}
 
-				bool found = true;
-				for (int i = 0; i < testParameters.Length; ++i) {
-					var testParameter = testParameters[i].ParameterType.RemoveRef();
-					var testParameterRef = testParameter.AddRef();
-					var testBaseParameter = testParameter.IsArray ? testParameter.GetElementType()! : testParameter;
-					var methodParameter = methodParameters[i].RemoveRef();
-					var methodParameterRef = methodParameter.AddRef();
-					var baseParameter = methodParameter.IsArray ? methodParameter.GetElementType()! : methodParameter;
-					if (
-						!(testParameter.IsPointer && methodParameter.IsPointer) &&
-						!testParameterRef.Equals(methodParameterRef) &&
-						!(
-							(testBaseParameter.IsGenericType && baseParameter.IsGenericType) ||
-							(testBaseParameter.IsGenericParameter && baseParameter.IsGenericParameter)
-						) &&
-						!methodParameter.Equals(typeof(object)) &&
-						!(
-							testParameter.IsArray &&
-							methodParameter.IsArray &&
-							baseParameter.Equals(typeof(object)))
-						) {
-						found = false;
-						break;
-					}
-				}
-				if (found) {
-					typeMethod = testMethod;
+			bool found = true;
+			for (int i = 0; i < testParameters.Length; ++i) {
+				var testParameter = testParameters[i].ParameterType.RemoveRef();
+				var testParameterRef = testParameter.AddRef();
+				var testBaseParameter = testParameter.IsArray ? testParameter.GetElementType()! : testParameter;
+				var methodParameter = methodParameters[i].RemoveRef();
+				var methodParameterRef = methodParameter.AddRef();
+				var baseParameter = methodParameter.IsArray ? methodParameter.GetElementType()! : methodParameter;
+				if (
+					!(testParameter.IsPointer && methodParameter.IsPointer) &&
+					testParameterRef != methodParameterRef &&
+					!(
+						(testBaseParameter.IsGenericType && baseParameter.IsGenericType) ||
+						(testBaseParameter.IsGenericParameter && baseParameter.IsGenericParameter)
+					) &&
+					methodParameter != typeof(object) &&
+					!(
+						testParameter.IsArray &&
+						methodParameter.IsArray &&
+						baseParameter == typeof(object))
+				) {
+					found = false;
 					break;
 				}
 			}
-
-			if (typeMethod is null) {
-				Debug.Warning($"Failed to patch {type.Name.Pastel(DrawingColor.LightYellow)}.{name.Pastel(DrawingColor.LightYellow)}");
-				return null;
+			if (found) {
+				typeMethod = testMethod;
+				break;
 			}
+		}
+
+		if (typeMethod is null) {
+			Debug.Warning($"Failed to patch {type.Name.Pastel(DrawingColor.LightYellow)}.{name.Pastel(DrawingColor.LightYellow)}");
+			return null;
 		}
 		return typeMethod;
 	}
 
 	internal static int GetPriority(MethodInfo method, int defaultPriority) {
 		try {
-			if (method.GetCustomAttribute<HarmonyPriority>() is HarmonyPriority priorityAttribute) {
+			if (method.GetCustomAttribute<HarmonyPriority>() is { } priorityAttribute) {
 				return priorityAttribute.info.priority;
 			}
 		}

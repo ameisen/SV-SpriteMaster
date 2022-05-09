@@ -57,12 +57,11 @@ internal static class Command {
 			}
 			foreach (var subCategory in category.Children) {
 				var comment = subCategory.Value.Type.GetCustomAttribute<Attributes.CommentAttribute>();
-				if (comment is null) {
-					output.AppendLine($"\t{subCategory.Value.Name}");
-				}
-				else {
-					output.AppendLine($"\t{subCategory.Value.Name.PadRight(maxCategoryLength)} : {comment.Message}");
-				}
+				output.AppendLine(
+					comment is null
+					? $"\t{subCategory.Value.Name}"
+					: $"\t{subCategory.Value.Name.PadRight(maxCategoryLength)} : {comment.Message}"
+				);
 			}
 			if (category.Fields.Count != 0) {
 				output.AppendLine();
@@ -77,12 +76,11 @@ internal static class Command {
 
 			foreach (var field in category.Fields) {
 				var comment = field.Value.GetCustomAttribute<Attributes.CommentAttribute>();
-				if (comment is null) {
-					output.AppendLine($"\t{field.Value.Name}");
-				}
-				else {
-					output.AppendLine($"\t{field.Value.Name.PadRight(maxFieldLength)} : {comment.Message}");
-				}
+				output.AppendLine(
+					comment is null
+					? $"\t{field.Value.Name}"
+					: $"\t{field.Value.Name.PadRight(maxFieldLength)} : {comment.Message}"
+				);
 			}
 		}
 		Debug.Info(output.ToString());

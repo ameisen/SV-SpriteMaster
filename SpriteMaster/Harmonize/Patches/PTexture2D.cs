@@ -24,7 +24,7 @@ internal static class PTexture2D {
 	// Always returns a duplicate of the array, since we do not own the source array.
 	// It performs a shallow copy, which is fine.
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private static unsafe byte[] GetByteArray<T>(T[] data, int startIndex, int elementCount, out int typeSize) where T : struct {
+	private static byte[] GetByteArray<T>(T[] data, int startIndex, int elementCount, out int typeSize) where T : struct {
 		// TODO : we shouldn't copy all the texture data from this, only the relevant parts from startIndex/elementCount
 		typeSize = Marshal.SizeOf<T>();
 		ReadOnlySpan<T> inData = data;
@@ -53,7 +53,6 @@ internal static class PTexture2D {
 
 		int elementSize = 0;
 		var byteData = Cacheable(texture) ? GetByteArray(data, startIndex, elementCount, out elementSize) : null;
-		startIndex = 0;
 
 #if ASYNC_SETDATA
 			ThreadQueue.Queue((data) =>
@@ -73,7 +72,7 @@ internal static class PTexture2D {
 			bounds: rect,
 			data: new DataRef<byte>(
 				data: byteData,
-				offset: startIndex * elementSize,
+				offset: 0,
 				length: elementCount * elementSize
 			),
 			animated: animated
@@ -88,7 +87,7 @@ internal static class PTexture2D {
 	private static bool CheckDataChange<T>(XTexture2D instance, int level, int arraySlice, in XRectangle? inRect, T[] data, int startIndex, int elementCount) where T : unmanaged {
 		Bounds rect = inRect ?? instance.Bounds;
 
-		if (instance.TryMeta(out var meta) && meta.CachedData is byte[] cachedData) {
+		if (instance.TryMeta(out var meta) && meta.CachedData is { } cachedData) {
 			var dataSpan = data.AsReadOnlySpan().Cast<T, byte>();
 			var cachedDataSpan = cachedData.AsReadOnlySpan();
 
@@ -192,17 +191,17 @@ internal static class PTexture2D {
 
 	[Harmonize("GetData", Fixation.Prefix, PriorityLevel.Last, Generic.Struct)]
 	public static bool OnGetData<T>(XTexture2D __instance, T[] data) where T : unmanaged {
-		return OnGetData<T>(__instance, 0, null, data, 0, data.Length);
+		return OnGetData(__instance, 0, null, data, 0, data.Length);
 	}
 
 	[Harmonize("GetData", Fixation.Prefix, PriorityLevel.Last, Generic.Struct)]
 	public static bool OnGetData<T>(XTexture2D __instance, T[] data, int startIndex, int elementCount) where T : unmanaged {
-		return OnGetData<T>(__instance, 0, null, data, startIndex, elementCount);
+		return OnGetData(__instance, 0, null, data, startIndex, elementCount);
 	}
 
 	[Harmonize("GetData", Fixation.Prefix, PriorityLevel.Last, Generic.Struct)]
 	public static bool OnGetData<T>(XTexture2D __instance, int level, in XRectangle? rect, T[] data, int startIndex, int elementCount) where T : unmanaged {
-		return OnGetData<T>(__instance, level, 0, rect, data, startIndex, elementCount);
+		return OnGetData(__instance, level, 0, rect, data, startIndex, elementCount);
 	}
 
 	[Harmonize("GetData", Fixation.Prefix, PriorityLevel.Last, Generic.Struct)]
@@ -223,7 +222,7 @@ internal static class PTexture2D {
 			if (
 				level == 0 &&
 				arraySlice == 0 &&
-				__instance.TryMeta(out var sourceMeta) && sourceMeta.CachedData is byte[] cachedSourceData
+				__instance.TryMeta(out var sourceMeta) && sourceMeta.CachedData is { } cachedSourceData
 			) {
 				Bounds bounds = rect ?? __instance.Bounds;
 
@@ -305,15 +304,15 @@ internal static class PTexture2D {
 	//private void PlatformSetData<T>(int level, int arraySlice, XRectangle rect, T[] data, int startIndex, int elementCount) where T : struct
 
 
-	private static readonly Assembly? CPAAssembly = AppDomain.CurrentDomain.GetAssemblies().SingleOrDefaultF(assembly => assembly.GetName().Name == "ContentPatcherAnimations");
+	private static readonly Assembly? CpaAssembly = AppDomain.CurrentDomain.GetAssemblies().SingleOrDefaultF(assembly => assembly.GetName().Name == "ContentPatcherAnimations");
 	private static bool IsFromContentPatcherAnimations() {
-		if (CPAAssembly is null) {
+		if (CpaAssembly is null) {
 			return false;
 		}
 
 		var stackTrace = new StackTrace(skipFrames: 2, fNeedFileInfo: false);
 		foreach (var frame in stackTrace.GetFrames()) {
-			if (frame.GetMethod() is MethodBase method && method.DeclaringType?.Assembly == CPAAssembly) {
+			if (frame.GetMethod() is { } method && method.DeclaringType?.Assembly == CpaAssembly) {
 				return true;
 			}
 		}

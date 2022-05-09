@@ -35,11 +35,11 @@ internal sealed class SpriteInfo : IDisposable {
 
 	public override string ToString() => $"SpriteInfo[Name: '{Reference.Name}', ReferenceSize: {ReferenceSize}, Size: {Bounds}]";
 
-	private ulong? _SpriteDataHash = null;
+	private ulong? SpriteDataHashInternal = null;
 	private ulong? SpriteDataHash {
 		get {
-			if (_SpriteDataHash.HasValue) {
-				return _SpriteDataHash;
+			if (SpriteDataHashInternal.HasValue) {
+				return SpriteDataHashInternal;
 			}
 
 			if (ReferenceDataInternal is null) {
@@ -48,7 +48,7 @@ internal sealed class SpriteInfo : IDisposable {
 
 			var result = GetDataHash(ReferenceDataInternal, Reference, Bounds, RawOffset, RawStride);
 			if (result.HasValue) {
-				_SpriteDataHash = result.Value;
+				SpriteDataHashInternal = result.Value;
 				return result;
 			}
 
@@ -69,7 +69,7 @@ internal sealed class SpriteInfo : IDisposable {
 			}
 			ReferenceDataInternal = value;
 			if (ReferenceDataInternal is null) {
-				_SpriteDataHash = null;
+				SpriteDataHashInternal = null;
 			}
 		}
 	}
@@ -116,7 +116,7 @@ internal sealed class SpriteInfo : IDisposable {
 		return null;
 	}
 
-	private InterlockedULong _Hash = 0;
+	private InterlockedULong HashInternal = 0;
 	internal ulong Hash {
 		[MethodImpl(Runtime.MethodImpl.Hot)]
 		get {
@@ -124,7 +124,7 @@ internal sealed class SpriteInfo : IDisposable {
 				throw new NullReferenceException(nameof(ReferenceDataInternal));
 			}
 
-			ulong hash = _Hash;
+			ulong hash = HashInternal;
 			if (hash == 0) {
 				hash = Hashing.Combine(
 					SpriteDataHash,
@@ -139,7 +139,7 @@ internal sealed class SpriteInfo : IDisposable {
 				);
 
 			}
-			_Hash = hash;
+			HashInternal = hash;
 			return hash;// ^ (ulong)ExpectedScale.GetHashCode();
 		}
 	}
@@ -152,7 +152,7 @@ internal sealed class SpriteInfo : IDisposable {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool IsCached(XTexture2D reference) => reference.Meta().CachedDataNonBlocking is not null;
 
-	internal ref struct Initializer {
+	internal readonly ref struct Initializer {
 		internal readonly byte[]? ReferenceData;
 		internal readonly Bounds Bounds;
 		internal readonly XTexture2D Reference;
@@ -215,7 +215,7 @@ internal sealed class SpriteInfo : IDisposable {
 			}
 		}
 
-		private readonly ulong? GetHash() {
+		private ulong? GetHash() {
 			if (ReferenceData is null) {
 				return null;
 			}
@@ -277,13 +277,13 @@ internal sealed class SpriteInfo : IDisposable {
 		IsFont = !IsWater && TextureType == TextureType.Sprite && SpriteOverrides.IsFont(Reference, Bounds.Extent, ReferenceSize);
 
 		if (initializer.Hash.HasValue) {
-			_Hash = initializer.Hash.Value;
+			HashInternal = initializer.Hash.Value;
 		}
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public void Dispose() {
 		ReferenceData = null;
-		_Hash = 0;
+		HashInternal = 0;
 	}
 }

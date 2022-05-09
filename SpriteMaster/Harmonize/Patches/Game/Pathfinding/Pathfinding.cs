@@ -21,7 +21,7 @@ internal static partial class Pathfinding {
 
 	static Pathfinding() {
 		if (RoutesFromLocationToLocationSet is null) {
-			Debug.Warning($"Could not find 'NPC.routesFromLocationToLocation'");
+			Debug.Warning("Could not find 'NPC.routesFromLocationToLocation'");
 		}
 	}
 
@@ -50,11 +50,6 @@ internal static partial class Pathfinding {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static bool GetTarget(this in DoorPair door, Dictionary<string, GameLocation?> locations, [NotNullWhen(true)] out GameLocation? target) {
-		if (door.Value is null) {
-			target = null;
-			return false;
-		}
-
 		target = locations.GetValueOrDefault(
 			key: door.Value switch {
 				"BoatTunnel" => "IslandSouth",
@@ -93,7 +88,7 @@ internal static partial class Pathfinding {
 			[MethodImpl(Runtime.MethodImpl.Hot)]
 			public bool Equals(QueueLocation? x, QueueLocation? y) => ReferenceEquals(x?.Location, y?.Location);
 			[MethodImpl(Runtime.MethodImpl.Hot)]
-			public int GetHashCode([DisallowNull] QueueLocation obj) => obj.Location.GetHashCode();
+			public int GetHashCode(QueueLocation obj) => obj.Location.GetHashCode();
 		}
 	}
 
@@ -137,7 +132,7 @@ internal static partial class Pathfinding {
 
 					QueueLocation? current = qLocation;
 					int insertionIndex = qLocation.ListDistance;
-					while (current is QueueLocation qCurrent) {
+					while (current is { } qCurrent) {
 						result[insertionIndex--] = qCurrent.Location.Name;
 						current = qCurrent.Previous;
 					}
@@ -156,7 +151,7 @@ internal static partial class Pathfinding {
 					int nodeDistance;
 
 					// Calculate the distance
-					if (Config.Extras.TrueShortestPath && qLocation.StartPosition is Vector2I currentPos) {
+					if (Config.Extras.TrueShortestPath && qLocation.StartPosition is not null) {
 						// If we are (and can) calculate the true distance, we do that based upon egress position
 						//var straightDistance = (egress - currentPos).LengthSquared;
 						nodeDistance = distance + 1 + length;

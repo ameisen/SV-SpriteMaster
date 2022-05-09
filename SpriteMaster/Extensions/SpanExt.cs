@@ -15,9 +15,9 @@ internal static class SpanExt {
 
 	internal static Span<T> MakePinned<T>(int count) where T : struct => MakeUninitialized<T>(count, pinned: true);
 
-	internal static unsafe Span<T> ToSpan<T>(this UnmanagedMemoryStream stream) where T : unmanaged => new Span<T>(stream.PositionPointer, (int)((stream.Length - stream.Position) / sizeof(T)));
+	internal static unsafe Span<T> ToSpan<T>(this UnmanagedMemoryStream stream) where T : unmanaged => new(stream.PositionPointer, (int)((stream.Length - stream.Position) / sizeof(T)));
 
-	internal static unsafe ReadOnlySpan<T> ToReadOnlySpan<T>(this UnmanagedMemoryStream stream) where T : unmanaged => new ReadOnlySpan<T>(stream.PositionPointer, (int)((stream.Length - stream.Position) / sizeof(T)));
+	internal static unsafe ReadOnlySpan<T> ToReadOnlySpan<T>(this UnmanagedMemoryStream stream) where T : unmanaged => new(stream.PositionPointer, (int)((stream.Length - stream.Position) / sizeof(T)));
 
 	internal static Span<T> ToSpanUnsafe<T>(this ReadOnlySpan<T> span) => MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(span), span.Length);
 

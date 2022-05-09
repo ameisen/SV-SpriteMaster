@@ -109,12 +109,12 @@ internal static class HoeDirt {
 #endif
 
 	internal static void OnNewGraphicsDevice(GraphicsDevice device) {
-		if (device != DirtBatch?.GraphicsDevice) {
-			DirtBatch?.Dispose();
+		if (device != DirtBatch.GraphicsDevice) {
+			DirtBatch.Dispose();
 			DirtBatch = new XSpriteBatch(device);
 		}
-		if (device != FertBatch?.GraphicsDevice) {
-			FertBatch?.Dispose();
+		if (device != FertBatch.GraphicsDevice) {
+			FertBatch.Dispose();
 			FertBatch = new XSpriteBatch(device);
 		}
 	}

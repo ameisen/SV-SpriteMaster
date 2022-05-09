@@ -212,32 +212,32 @@ internal sealed partial class Scaler {
 				var x0 = GetX(x);
 				var xP1 = GetX(x + 1);
 
-				var A = GetPixel(source, yM1, x0);
-				var C = GetPixel(source, y0, xM1);
-				var P = GetPixel(source, y0, x0);
-				var B = GetPixel(source, y0, xP1);
-				var D = GetPixel(source, yP1, x0);
+				var a = GetPixel(source, yM1, x0);
+				var c = GetPixel(source, y0, xM1);
+				var p = GetPixel(source, y0, x0);
+				var b = GetPixel(source, y0, xP1);
+				var d = GetPixel(source, yP1, x0);
 
-				var o1 = P;
-				var o2 = P;
-				var o3 = P;
-				var o4 = P;
+				var o1 = p;
+				var o2 = p;
+				var o3 = p;
+				var o4 = p;
 
-				bool AC = ColorEq(A, C);
-				bool CD = ColorEq(C, D);
-				bool AB = ColorEq(A, B);
-				if (AC && !CD && !AB) {
-					o1 = A;
+				bool ac = ColorEq(a, c);
+				bool cd = ColorEq(c, d);
+				bool ab = ColorEq(a, b);
+				if (ac && !cd && !ab) {
+					o1 = a;
 				}
-				bool BD = ColorEq(B, D);
-				if (AB && !AC && !BD) {
-					o2 = B;
+				bool bd = ColorEq(b, d);
+				if (ab && !ac && !bd) {
+					o2 = b;
 				}
-				if (CD && !BD && !AC) {
-					o3 = C;
+				if (cd && !bd && !ac) {
+					o3 = c;
 				}
-				if (BD && !AB && !CD) {
-					o4 = D;
+				if (bd && !ab && !cd) {
+					o4 = d;
 				}
 
 				var x13 = x * 2;
@@ -275,68 +275,68 @@ internal sealed partial class Scaler {
 				var x0 =  GetX(x);
 				var xP1 = GetX(x + 1);
 
-				var A = GetPixel(source, yM1, xM1);
-				var B = GetPixel(source, yM1, x0 );
-				var C = GetPixel(source, yM1, xP1);
-				var D = GetPixel(source, y0 , xM1);
-				var E = GetPixel(source, y0 , x0 );
-				var F = GetPixel(source, y0 , xP1);
-				var G = GetPixel(source, yP1, xM1);
-				var H = GetPixel(source, yP1, x0 );
-				var I = GetPixel(source, yP1, xP1);
+				var a = GetPixel(source, yM1, xM1);
+				var b = GetPixel(source, yM1, x0 );
+				var c = GetPixel(source, yM1, xP1);
+				var d = GetPixel(source, y0 , xM1);
+				var e = GetPixel(source, y0 , x0 );
+				var f = GetPixel(source, y0 , xP1);
+				var g = GetPixel(source, yP1, xM1);
+				var h = GetPixel(source, yP1, x0 );
+				var i = GetPixel(source, yP1, xP1);
 
-				var o1 = E;
-				var o2 = E;
-				var o3 = E;
-				var o4 = E;
-				var o5 = E;
-				var o6 = E;
-				var o7 = E;
-				var o8 = E;
-				var o9 = E;
+				var o1 = e;
+				var o2 = e;
+				var o3 = e;
+				var o4 = e;
+				var o5 = e;
+				var o6 = e;
+				var o7 = e;
+				var o8 = e;
+				var o9 = e;
 
-				bool BD = ColorEq(B, D);
-				bool DH = ColorEq(D, H);
-				bool BF = ColorEq(B, F);
+				bool bd = ColorEq(b, d);
+				bool dh = ColorEq(d, h);
+				bool bf = ColorEq(b, f);
 				// IF D==B AND D!=H AND B!=F => 1=D
-				if (BD && !DH && !BF) {
-					o1 = D;
+				if (bd && !dh && !bf) {
+					o1 = d;
 				}
 
-				bool CE = ColorEq(C, E);
-				bool FH = ColorEq(F, H);
-				bool AE = ColorEq(A, E);
+				bool ce = ColorEq(c, e);
+				bool fh = ColorEq(f, h);
+				bool ae = ColorEq(a, e);
 				// IF (D==B AND D!=H AND B!=F AND E!=C) OR (B==F AND B!=D AND F!=H AND E!=A) => 2=B
-				if ((BD && !DH && !BF && !CE) || (BF && !BD && !FH && !AE)) {
-					o2 = B;
+				if ((bd && !dh && !bf && !ce) || (bf && !bd && !fh && !ae)) {
+					o2 = b;
 				}
 				// IF B==F AND B!=D AND F!=H => 3=F
-				if (BF && !BD && !FH) {
-					o3 = F;
+				if (bf && !bd && !fh) {
+					o3 = f;
 				}
 
-				bool EG = ColorEq(E, G);
+				bool eg = ColorEq(e, g);
 				// IF (H==D AND H!=F AND D!=B AND E!=A) OR (D==B AND D!=H AND B!=F AND E!=G) => 4=D
-				if ((DH && !FH && !BD && !AE) || (BD && !DH && !BF && !EG)) {
-					o4 = D;
+				if ((dh && !fh && !bd && !ae) || (bd && !dh && !bf && !eg)) {
+					o4 = d;
 				}
 
-				bool EI = ColorEq(E, I);
+				bool ei = ColorEq(e, i);
 				// IF (B==F AND B!=D AND F!=H AND E!=I) OR (F==H AND F!=B AND H!=D AND E!=C) => 6=F
-				if ((BF && !BD && !FH && !EI) || (FH && !BF && !DH && !CE)) {
-					o6 = F;
+				if ((bf && !bd && !fh && !ei) || (fh && !bf && !dh && !ce)) {
+					o6 = f;
 				}
 				// IF H==D AND H!=F AND D!=B => 7=D
-				if (DH && !FH && !BD) {
-					o7 = D;
+				if (dh && !fh && !bd) {
+					o7 = d;
 				}
 				// IF (F==H AND F!=B AND H!=D AND E!=G) OR (H==D AND H!=F AND D!=B AND E!=I) => 8=H
-				if ((FH && !BF && !DH && !EG) || (DH && !FH && !BD && !EI)) {
-					o8 = H;
+				if ((fh && !bf && !dh && !eg) || (dh && !fh && !bd && !ei)) {
+					o8 = h;
 				}
 				// IF F==H AND F!=B AND H!=D => 9=F
-				if (FH && !BF && !DH) {
-					o9 = F;
+				if (fh && !bf && !dh) {
+					o9 = f;
 				}
 
 				var x147 = x * 3;

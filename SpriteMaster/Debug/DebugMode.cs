@@ -104,7 +104,7 @@ internal static partial class Debug {
 						foreach (var value in Enum.GetValues<DebugModeFlags>()) {
 							CurrentMode |= value;
 						}
-						Info($"All Debug Mode flags enabled");
+						Info("All Debug Mode flags enabled");
 					}
 					break;
 				default:

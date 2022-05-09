@@ -29,7 +29,7 @@ internal static class SystemIO {
 				IsSupportedInternal = true;
 			}
 			catch (DllNotFoundException) {
-				Debug.Info($"System.IO Compression not supported");
+				Debug.Info("System.IO Compression not supported");
 				IsSupportedInternal = false;
 			}
 			catch (Exception ex) {
@@ -98,10 +98,9 @@ internal static class SystemIO {
 	internal static byte[] Decompress(byte[] data, int size) {
 		using var dataStream = new MemoryStream(data);
 		var output = new byte[size];
-		using (var val = new MemoryStream(output)) {
-			using var compressor = new IOC.DeflateStream(dataStream, IOC.CompressionMode.Decompress);
-			compressor.CopyTo(val);
-		}
+		using var val = new MemoryStream(output);
+		using var compressor = new IOC.DeflateStream(dataStream, IOC.CompressionMode.Decompress);
+		compressor.CopyTo(val);
 		return output;
 	}
 }

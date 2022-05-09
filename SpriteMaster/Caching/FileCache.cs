@@ -65,7 +65,7 @@ internal static class FileCache {
 			var newHeaderSpan = MemoryMarshal.CreateSpan(ref newHeader, 1).Cast<CacheHeader, byte>();
 			var readBytes = reader.Read(newHeaderSpan);
 			if (readBytes != newHeaderSpan.Length) {
-				throw new IOException($"Cache File is corrupted");
+				throw new IOException("Cache File is corrupted");
 			}
 
 			return newHeader;
@@ -219,12 +219,14 @@ internal static class FileCache {
 					}
 					catch (Exception ex) {
 						switch (ex) {
-							case FileNotFoundException _:
-							case EndOfStreamException _:
 							case IOException iox when !WasLocked(iox):
 							default:
 								ex.PrintWarning();
-								try { File.Delete(path); } catch { }
+								try { File.Delete(path); }
+								catch {
+									// ignored
+								}
+
 								return false;
 							case IOException iox when WasLocked(iox):
 								Debug.Trace($"File was locked when trying to load cache file '{path}': {ex} - {ex.Message} [{retries} retries]");
@@ -322,7 +324,11 @@ internal static class FileCache {
 						failure = true;
 					}
 					if (failure) {
-						try { File.Delete(path); } catch { }
+						try { File.Delete(path); }
+						catch {
+							// ignored
+						}
+
 						SavingMap.TryRemove(path, out _);
 					}
 				}

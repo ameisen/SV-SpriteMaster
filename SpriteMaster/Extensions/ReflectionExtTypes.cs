@@ -8,7 +8,7 @@ namespace SpriteMaster.Extensions;
 
 internal static partial class ReflectionExt {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static int TypeSize<T>(this T obj) where T : struct => Marshal.SizeOf((typeof(T) is not null) ? typeof(T) : obj.GetType());
+	internal static int TypeSize<T>(this T obj) where T : struct => Marshal.SizeOf<T>();
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static int Size(this Type type) => Marshal.SizeOf(type);

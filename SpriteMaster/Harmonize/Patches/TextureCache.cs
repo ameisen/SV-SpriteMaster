@@ -57,7 +57,7 @@ internal static class TextureCache {
 			bool isContentManager = false;
 			var stackTrace = new StackTrace(fNeedFileInfo: false, skipFrames: 1);
 			foreach (var frame in stackTrace.GetFrames()) {
-				if (frame.GetMethod() is MethodBase method) {
+				if (frame.GetMethod() is { } method) {
 					if (method.DeclaringType == ModContentManagerType) {
 						isContentManager = true;
 						break;

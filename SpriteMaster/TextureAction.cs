@@ -1,3 +1,3 @@
 ﻿namespace SpriteMaster;
 
-internal record struct TextureAction(int Size) { }
+internal record struct TextureAction(int Size);

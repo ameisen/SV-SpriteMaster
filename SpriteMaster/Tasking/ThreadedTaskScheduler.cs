@@ -99,11 +99,9 @@ internal sealed class ThreadedTaskScheduler : TaskScheduler, IDisposable {
 					while (!Config.ForcedDisable) {
 						try {
 							foreach (var task in PendingTasks.GetConsumingEnumerable(DisposeCancellation.Token)) {
-								if (task is not null) {
-									using var workingState = WatchDog.WatchDog.ScopedWorkingState;
-									if (TryExecuteTask(task) || task.IsCompleted) {
-										task.Dispose();
-									}
+								using var workingState = WatchDog.WatchDog.ScopedWorkingState;
+								if (TryExecuteTask(task) || task.IsCompleted) {
+									task.Dispose();
 								}
 							}
 						}

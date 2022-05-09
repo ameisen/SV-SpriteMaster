@@ -101,9 +101,7 @@ internal sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
 				PendingImmediate.Swap();
 				lock (pendingActions) {
 					foreach (var task in pendingActions) {
-						if (task is not null) {
-							InvokeTask(task);
-						}
+						InvokeTask(task);
 					}
 					pendingActions.Clear();
 				}
@@ -123,11 +121,6 @@ internal sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
 					if (Config.AsyncScaling.ThrottledSynchronousLoads && !GameState.IsLoading) {
 						int processed = 0;
 						foreach (var task in pendingLoads) {
-							if (task is null) {
-								++processed;
-								continue;
-							}
-
 							var estimate = TexelAverage.Estimate(task.ActionData);
 							if (DrawState.PushedUpdateWithin(0) && watch.Elapsed + estimate > remainingTime) {
 								break;
@@ -153,9 +146,7 @@ internal sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
 					}
 					else {
 						foreach (var task in pendingLoads) {
-							if (task is not null) {
-								InvokeTask(task);
-							}
+							InvokeTask(task);
 						}
 					}
 					pendingLoads.Clear();

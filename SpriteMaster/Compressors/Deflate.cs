@@ -30,7 +30,7 @@ internal static class Deflate {
 				IsSupportedInternal = true;
 			}
 			catch (DllNotFoundException) {
-				Debug.Info($"Deflate Compression not supported");
+				Debug.Info("Deflate Compression not supported");
 				IsSupportedInternal = false;
 			}
 			catch (Exception ex) {
@@ -98,10 +98,9 @@ internal static class Deflate {
 	internal static byte[] Decompress(byte[] data, int size) {
 		using var dataStream = new MemoryStream(data);
 		var output = new byte[size];
-		using (var val = new MemoryStream(output)) {
-			using var compressor = new ZlibStream(dataStream, CompressionMode.Decompress);
-			compressor.CopyTo(val);
-		}
+		using var val = new MemoryStream(output);
+		using var compressor = new ZlibStream(dataStream, CompressionMode.Decompress);
+		compressor.CopyTo(val);
 		return output;
 	}
 }

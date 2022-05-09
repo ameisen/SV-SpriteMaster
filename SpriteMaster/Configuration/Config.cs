@@ -7,7 +7,6 @@ using StardewModdingAPI;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
 using System.Runtime;
 using System.Text.RegularExpressions;
 using TeximpNet.Compression;
@@ -17,7 +16,7 @@ using Root = SpriteMaster;
 namespace SpriteMaster.Configuration;
 
 internal static class Config {
-	internal static readonly string ModuleName = typeof(SMConfig).Namespace?.Split('.')?.ElementAtOrDefaultF(0) ?? "SpriteMaster";
+	internal static readonly string ModuleName = typeof(SMConfig).Namespace?.Split('.').ElementAtOrDefaultF(0) ?? "SpriteMaster";
 
 	[Attributes.Ignore]
 	internal static string Path { get; private set; } = null!;

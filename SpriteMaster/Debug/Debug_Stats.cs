@@ -21,9 +21,9 @@ internal partial class Debug {
 			$"\t\tProcess Virtual Memory : {virtualMem.AsDataSize()}:",
 			$"\t\tGC Allocated Memory    : {gcAllocated.AsDataSize()}:",
 			"",
+			"\tSuspended Sprite Cache Stats:"
 		};
 
-		lines.Add("\tSuspended Sprite Cache Stats:");
 		lines.AddRange(SuspendedSpriteCache.DumpStats().SelectF(s => $"\t{s}"));
 		lines.Add("");
 

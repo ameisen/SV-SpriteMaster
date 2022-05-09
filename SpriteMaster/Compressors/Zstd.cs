@@ -72,7 +72,7 @@ internal static class Zstd {
 				IsSupported_ = true;
 			}
 			catch (DllNotFoundException) {
-				Debug.Info($"Zstd Compression not supported".Pastel(DrawingColor.LightGreen));
+				Debug.Info("Zstd Compression not supported".Pastel(DrawingColor.LightGreen));
 				IsSupported_ = false;
 			}
 			catch (Exception ex) {

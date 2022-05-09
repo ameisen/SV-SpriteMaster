@@ -103,12 +103,7 @@ internal static partial class OnDrawImpl {
 
 			bool isSliced = false;
 			if (GetIsSliced(clampedSource, reference, out var textureRef)) {
-				if (textureRef.Value.Bounds.IsEmpty) {
-					clampedSource = reference.Extent();
-				}
-				else {
-					clampedSource = textureRef.Value.Bounds;
-				}
+				clampedSource = textureRef.Value.Bounds.IsEmpty ? reference.Extent() : textureRef.Value.Bounds;
 				isSliced = true;
 			}
 
@@ -148,12 +143,7 @@ internal static partial class OnDrawImpl {
 
 		var sourceRectangle = (Bounds)source.GetValueOrDefault(new(0, 0, texture.Width, texture.Height));
 
-		if (SpriteOverrides.IsWater(sourceRectangle, texture)) {
-			scaleFactor = 4.0f;
-		}
-		else {
-			scaleFactor = 1.0f;
-		}
+		scaleFactor = SpriteOverrides.IsWater(sourceRectangle, texture) ? 4.0f : 1.0f;
 
 		ReportOnceValidations.Validate(sourceRectangle, texture);
 		bounds = sourceRectangle;

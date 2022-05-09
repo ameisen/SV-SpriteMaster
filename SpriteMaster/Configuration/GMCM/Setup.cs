@@ -185,7 +185,7 @@ internal static class Setup {
 				var divisor = SizeOrder(1024, order);
 				var dValue = (double)value / divisor;
 				var prefix = Prefixes[Math.Min(order, Prefixes.Length - 1)][0];
-				return $"{dValue.ToString("0.##")} {prefix}";
+				return $"{dValue:0.##} {prefix}";
 			}
 			return null;
 		}

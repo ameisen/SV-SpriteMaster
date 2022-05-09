@@ -77,12 +77,7 @@ internal static class PGraphicsDeviceManager {
 			switch (method.Name) {
 				case "SetWindowSize": {
 						__state = true;
-						GraphicsDevice? device = null;
-						if (!LastGraphicsDevice?.TryGetTarget(out device) ?? true) {
-							return;
-						}
-
-						if (device is null) {
+						if (LastGraphicsDevice is null || !LastGraphicsDevice.TryGetTarget(out var device)) {
 							return;
 						}
 
@@ -102,7 +97,6 @@ internal static class PGraphicsDeviceManager {
 		}
 
 		__state = false;
-		return;
 	}
 
 	[Harmonize(
@@ -194,15 +188,15 @@ internal static class PGraphicsDeviceManager {
 		}
 
 		try {
-			static FieldInfo? getPrivateField(object obj, string name, bool instance = true) {
+			static FieldInfo? GetPrivateField(object obj, string name, bool instance = true) {
 				return obj.GetType().GetField(name, BindingFlags.NonPublic | BindingFlags.Public | (instance ? BindingFlags.Instance : BindingFlags.Static));
 			}
 
-			var capabilitiesProperty = getPrivateField(device, "_profileCapabilities");
+			var capabilitiesProperty = GetPrivateField(device, "_profileCapabilities");
 
 			if (capabilitiesProperty is null) {
 				// Probably monogame?
-				var maxTextureSizeProperty = getPrivateField(device, "_maxTextureSize");
+				var maxTextureSizeProperty = GetPrivateField(device, "_maxTextureSize");
 				int? maxTextureSize = maxTextureSizeProperty?.GetValue<int>(device);
 				if (maxTextureSize.HasValue) {
 					Config.ClampDimension = maxTextureSize.Value;
@@ -216,7 +210,7 @@ internal static class PGraphicsDeviceManager {
 				}
 
 				var capabilitiesList = new[] {
-					getPrivateField(capabilitiesMember, "HiDef", instance: false)?.GetValue(capabilitiesMember),
+					GetPrivateField(capabilitiesMember, "HiDef", instance: false)?.GetValue(capabilitiesMember),
 					capabilitiesMember
 				};
 
@@ -224,7 +218,7 @@ internal static class PGraphicsDeviceManager {
 					if (capabilities is null) {
 						continue;
 					}
-					var maxTextureSizeProperty = getPrivateField(capabilities, "MaxTextureSize");
+					var maxTextureSizeProperty = GetPrivateField(capabilities, "MaxTextureSize");
 
 					if (maxTextureSizeProperty is null) {
 						throw new NullReferenceException(nameof(maxTextureSizeProperty));
@@ -232,7 +226,7 @@ internal static class PGraphicsDeviceManager {
 
 					for (var currentDimension = Config.AbsoluteMaxTextureDimension; currentDimension >= Config.BaseMaxTextureDimension; currentDimension >>= 1) {
 						maxTextureSizeProperty.SetValue(capabilities, currentDimension);
-						var maxTextureAspectRatioField = getPrivateField(capabilities, "MaxTextureAspectRatio");
+						var maxTextureAspectRatioField = GetPrivateField(capabilities, "MaxTextureAspectRatio");
 						if (maxTextureAspectRatioField is null) {
 							throw new NullReferenceException(nameof(maxTextureAspectRatioField));
 						}

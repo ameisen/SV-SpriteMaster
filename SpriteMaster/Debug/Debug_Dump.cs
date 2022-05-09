@@ -45,7 +45,7 @@ internal static partial class Debug {
 				var keyValuePairs = properties as KeyValuePair<string, string>[] ?? properties.ToArray();
 				int maxKeyLen = keyValuePairs.Max(prop => prop.Key.Length);
 				foreach (var kvp in keyValuePairs) {
-					dumpBuilder!.AppendLine($"│ ├ {kvp.Key.PadRight(maxKeyLen)}: {kvp.Value}");
+					dumpBuilder.AppendLine($"│ ├ {kvp.Key.PadRight(maxKeyLen)}: {kvp.Value}");
 				}
 			}
 
@@ -78,8 +78,7 @@ internal static partial class Debug {
 
 			var sortedSprites = new List<ManagedSpriteInstance>(list.Value);
 			sortedSprites.Sort((a, b) => {
-				int cmp;
-				cmp = a.OriginalSourceRectangle.Left - b.OriginalSourceRectangle.Left;
+				var cmp = a.OriginalSourceRectangle.Left - b.OriginalSourceRectangle.Left;
 				if (cmp != 0) {
 					return cmp;
 				}

@@ -27,9 +27,9 @@ internal partial class Hashing {
 		private const int XXH_ACC_NB = (XXH_STRIPE_LEN / sizeof(ulong));
 
 		private static readonly byte[] XXH3_SECRET_ARRAY;
-		private static readonly unsafe byte* SSH3_SECRET;
+		private static readonly byte* SSH3_SECRET;
 
-		static unsafe XXHash3() {
+		static XXHash3() {
 			ReadOnlySpan<byte> secret = stackalloc byte[] {
 				0xb8, 0xfe, 0x6c, 0x39, 0x23, 0xa4, 0x4b, 0xbe, 0x7c, 0x01, 0x81, 0x2c, 0xf7, 0x21, 0xad, 0x1c,
 				0xde, 0xd4, 0x6d, 0xe9, 0x83, 0x90, 0x97, 0xdb, 0x72, 0x40, 0xa4, 0xa4, 0xb7, 0xb3, 0x67, 0x1f,
@@ -76,26 +76,26 @@ internal partial class Hashing {
 			if (length > 8) return xxh3_len_9to16_64(data, length, secret);
 			else if (length >= 4) return xxh3_len_4to8_64(data, length, secret);
 			else if (length > 0) return xxh3_len_1to3_64(data, length, secret);
-			else return xxh3_avalanche(read_le64(secret + (56)) ^ read_le64(secret + (64)));
+			else return xxh3_avalanche(ReadLE64(secret + (56)) ^ ReadLE64(secret + (64)));
 
 			[MethodImpl(MethodImpl.Hot)]
 			static ulong xxh3_len_9to16_64(ReadOnlySpan<byte> data, int length, byte* secret) {
-				ulong bitflip1 = (read_le64(secret + (24)) ^ read_le64(secret + (32)));
-				ulong bitflip2 = (read_le64(secret + (40)) ^ read_le64(secret + (48)));
-				ulong input_low = read_le64(data) ^ bitflip1;
-				ulong input_high = read_le64(data[(length - 8)..]) ^ bitflip2;
-				ulong acc = (ulong)length + swap64(input_low) + input_high + xxh3_mul128_fold64(input_low, input_high);
+				ulong bitFlip1 = (ReadLE64(secret + (24)) ^ ReadLE64(secret + (32)));
+				ulong bitFlip2 = (ReadLE64(secret + (40)) ^ ReadLE64(secret + (48)));
+				ulong inputLow = ReadLE64(data) ^ bitFlip1;
+				ulong inputHigh = ReadLE64(data[(length - 8)..]) ^ bitFlip2;
+				ulong acc = (ulong)length + Swap64(inputLow) + inputHigh + xxh3_mul128_fold64(inputLow, inputHigh);
 
 				return xxh3_avalanche(acc);
 			}
 
 			[MethodImpl(MethodImpl.Hot)]
 			static ulong xxh3_len_4to8_64(ReadOnlySpan<byte> data, int length, byte* secret) {
-				uint input1 = read_le32(data);
-				uint input2 = read_le32(data[(length - 4)..]);
-				ulong bitflip = (read_le64(secret + (8)) ^ read_le64(secret + (16)));
+				uint input1 = ReadLE32(data);
+				uint input2 = ReadLE32(data[(length - 4)..]);
+				ulong bitFlip = (ReadLE64(secret + (8)) ^ ReadLE64(secret + (16)));
 				ulong input64 = input2 + (((ulong)input1) << 32);
-				ulong keyed = input64 ^ bitflip;
+				ulong keyed = input64 ^ bitFlip;
 
 				return xxh3_rrmxmx(keyed, (ulong)length);
 			}
@@ -106,8 +106,8 @@ internal partial class Hashing {
 				byte c2 = data[length >> 1];
 				byte c3 = data[length - 1];
 				uint combined = ((uint)c1 << 16) | ((uint)c2 << 24) | ((uint)c3 << 0) | ((uint)length << 8);
-				ulong bitflip = (read_le32(secret) ^ read_le32(secret + (4)));
-				ulong keyed = (ulong)combined ^ bitflip;
+				ulong bitFlip = (ReadLE32(secret) ^ ReadLE32(secret + (4)));
+				ulong keyed = combined ^ bitFlip;
 
 				return xxh64_avalanche(keyed);
 			}
@@ -142,14 +142,14 @@ internal partial class Hashing {
 		private static ulong xxh3_129to240_64(ReadOnlySpan<byte> data, int length, byte* secret) {
 			ulong acc = (ulong)length * XXH_PRIME64_1;
 
-			int round_count = length / 16;
+			int roundCount = length / 16;
 			for (int i = 0; i < 8; i++) {
 				acc += xxh3_mix16B(data[(16 * i)..], secret + ((16 * i)));
 			}
 
 			acc = xxh3_avalanche(acc);
 
-			for (int i = 8; i < round_count; i++) {
+			for (int i = 8; i < roundCount; i++) {
 				acc += xxh3_mix16B(data[(16 * i)..], secret + (((16 * (i - 8)) + 3)));
 			}
 
@@ -159,7 +159,7 @@ internal partial class Hashing {
 		}
 
 		[MethodImpl(MethodImpl.Hot)]
-		private static unsafe ulong xxh3_hashLong_64(ReadOnlySpan<byte> data, int length, byte* secret) {
+		private static ulong xxh3_hashLong_64(ReadOnlySpan<byte> data, int length, byte* secret) {
 			int secretLength = XXH3_SECRET_ARRAY.Length;
 
 			Span<ulong> acc = stackalloc ulong[8] {
@@ -204,7 +204,7 @@ internal partial class Hashing {
 
 		[MethodImpl(MethodImpl.Hot)]
 		private static ulong xxh3_mix2accs(Span<ulong> acc, byte* secret) {
-			return xxh3_mul128_fold64(acc[0] ^ read_le64(secret), acc[1] ^ read_le64(secret + (8)));
+			return xxh3_mul128_fold64(acc[0] ^ ReadLE64(secret), acc[1] ^ ReadLE64(secret + (8)));
 		}
 
 		[MethodImpl(MethodImpl.Hot)]
@@ -229,7 +229,7 @@ internal partial class Hashing {
 
 		[MethodImpl(MethodImpl.Hot)]
 		private static ulong xxh3_rrmxmx(ulong h64, ulong len) {
-			h64 ^= rotl64(h64, 49) ^ rotl64(h64, 24);
+			h64 ^= Rotl64(h64, 49) ^ Rotl64(h64, 24);
 			h64 *= 0x9FB21C651E98DF25UL;
 			h64 ^= (h64 >> 35) + len;
 			h64 *= 0x9FB21C651E98DF25UL;
@@ -239,12 +239,12 @@ internal partial class Hashing {
 
 		[MethodImpl(MethodImpl.Hot)]
 		private static ulong xxh3_mix16B(ReadOnlySpan<byte> data, byte* secret) {
-			ulong input_low = read_le64(data);
-			ulong input_high = read_le64(data[8..]);
+			ulong inputLow = ReadLE64(data);
+			ulong inputHigh = ReadLE64(data[8..]);
 
 			return xxh3_mul128_fold64(
-					input_low ^ (read_le64(secret)),
-					input_high ^ (read_le64(secret + (8))));
+					inputLow ^ (ReadLE64(secret)),
+					inputHigh ^ (ReadLE64(secret + (8))));
 		}
 
 		[MethodImpl(MethodImpl.Hot)]
@@ -257,11 +257,11 @@ internal partial class Hashing {
 		[MethodImpl(MethodImpl.Hot)]
 		private static void xxh3_accumulate_512_scalar(Span<ulong> acc, ReadOnlySpan<byte> data, byte* secret) {
 			for (int i = 0; i < XXH_ACC_NB; i++) {
-				ulong data_val = read_le64(data[(8 * i)..]);
-				ulong data_key = data_val ^ read_le64(secret + ((i * 8)));
+				ulong dataVal = ReadLE64(data[(8 * i)..]);
+				ulong dataKey = dataVal ^ ReadLE64(secret + ((i * 8)));
 
-				acc[i ^ 1] += data_val;
-				acc[i] += xxh_mul32to64(data_key, data_key >> 32);
+				acc[i ^ 1] += dataVal;
+				acc[i] += xxh_mul32to64(dataKey, dataKey >> 32);
 			}
 		}
 
@@ -295,7 +295,7 @@ internal partial class Hashing {
 		[MethodImpl(MethodImpl.Hot)]
 		private static void xxh3_scramble_acc_scalar(Span<ulong> acc, byte* secret) {
 			for (int i = 0; i < XXH_ACC_NB; i++) {
-				ulong key64 = read_le64(secret + ((8 * i)));
+				ulong key64 = ReadLE64(secret + ((8 * i)));
 				ulong acc64 = acc[i];
 
 				acc64 = xxh_xorshift64(acc64, 47);
@@ -319,7 +319,7 @@ internal partial class Hashing {
 		private static ulong xxh_xorshift64(ulong v64, int shift) => v64 ^ (v64 >> shift);
 
 		[MethodImpl(MethodImpl.Hot)]
-		private static unsafe ulong xxh3_mul128_fold64(ulong lhs, ulong rhs) {
+		private static ulong xxh3_mul128_fold64(ulong lhs, ulong rhs) {
 			if (Bmi2.IsSupported) {
 				ulong low;
 				ulong high = Bmi2.X64.MultiplyNoFlags(lhs, rhs, &low);
@@ -332,28 +332,28 @@ internal partial class Hashing {
 		}
 
 		[MethodImpl(MethodImpl.Hot)]
-		private static ulong xxh_mul32to64(ulong x, ulong y) => (ulong)(uint)x * (ulong)(uint)y;
+		private static ulong xxh_mul32to64(ulong x, ulong y) => (uint)x * (ulong)(uint)y;
 
 
 		// -------------- UTILITY METHODS -------------- \\
 		[MethodImpl(MethodImpl.Hot)]
-		private static uint read_le32(ReadOnlySpan<byte> data) => BinaryPrimitives.ReadUInt32LittleEndian(data);
+		private static uint ReadLE32(ReadOnlySpan<byte> data) => BinaryPrimitives.ReadUInt32LittleEndian(data);
 		[MethodImpl(MethodImpl.Hot)]
-		private static ulong read_le64(ReadOnlySpan<byte> data) => BinaryPrimitives.ReadUInt64LittleEndian(data);
+		private static ulong ReadLE64(ReadOnlySpan<byte> data) => BinaryPrimitives.ReadUInt64LittleEndian(data);
 
 		[MethodImpl(MethodImpl.Hot)]
-		private static uint read_le32(byte* data) => *(uint*)data;
+		private static uint ReadLE32(byte* data) => *(uint*)data;
 		[MethodImpl(MethodImpl.Hot)]
-		private static ulong read_le64(byte* data) => *(ulong*)data;
+		private static ulong ReadLE64(byte* data) => *(ulong*)data;
 
 		[MethodImpl(MethodImpl.Hot)]
-		private static uint swap32(uint value) => BinaryPrimitives.ReverseEndianness(value);
+		private static uint Swap32(uint value) => BinaryPrimitives.ReverseEndianness(value);
 		[MethodImpl(MethodImpl.Hot)]
-		private static ulong swap64(ulong value) => BinaryPrimitives.ReverseEndianness(value);
+		private static ulong Swap64(ulong value) => BinaryPrimitives.ReverseEndianness(value);
 		[MethodImpl(MethodImpl.Hot)]
-		private static ulong rotl64(ulong value, int shift) => BitOperations.RotateLeft(value, shift);
+		private static ulong Rotl64(ulong value, int shift) => BitOperations.RotateLeft(value, shift);
 		[MethodImpl(MethodImpl.Hot)]
-		private static ulong rotr64(ulong value, int shift) => BitOperations.RotateRight(value, shift);
+		private static ulong Rotr64(ulong value, int shift) => BitOperations.RotateRight(value, shift);
 
 		[MethodImpl(MethodImpl.Hot)]
 		private static byte _mm_shuffle(byte p3, byte p2, byte p1, byte p0) => (byte)((p3 << 6) | (p2 << 4) | (p1 << 2) | p0);

@@ -188,12 +188,7 @@ internal sealed class Scene1 : Scene {
 
 		Season = Seasons[rand.Next(Seasons.Length)];
 
-		if (Season == "winter") {
-			Precipitation = PrecipitationType.Snow;
-		}
-		else {
-			Precipitation = PrecipitationType.Rain;
-		}
+		Precipitation = Season == "winter" ? PrecipitationType.Snow : PrecipitationType.Rain;
 
 		string outdoorsTileSheet = $@"Maps\{Season}_outdoorsTileSheet";
 
@@ -342,17 +337,17 @@ internal sealed class Scene1 : Scene {
 		var rand = new Random(RandomSeed);
 
 		var plainGrass = winter ?
-			new Drawable[] {
+			new[] {
 				OutdoorTiles[1, 14],
 				OutdoorTiles[1, 14],
 				OutdoorTiles[1, 14]
-			} : new Drawable[] {
+			} : new[] {
 				OutdoorTiles[0, 7],
 				OutdoorTiles[0, 11],
 				OutdoorTiles[2, 16]
 			};
 		var grassArray = winter ?
-			new Drawable[] {
+			new[] {
 				OutdoorTilesWeed,
 				OutdoorTilesFlower,
 				plainGrass[0],
@@ -369,7 +364,7 @@ internal sealed class Scene1 : Scene {
 				OutdoorTiles[5, 12],
 				OutdoorTiles[4, 13],
 			} :
-			new Drawable[] {
+			new[] {
 				OutdoorTilesWeed,
 				OutdoorTilesFlower,
 				plainGrass[0],
@@ -386,7 +381,7 @@ internal sealed class Scene1 : Scene {
 				OutdoorTiles[4, 10],
 				OutdoorTiles[5, 10],
 			};
-		var debrisArray = new Drawable[] {
+		var debrisArray = new[] {
 			OutdoorTiles[7, 9],
 			OutdoorTiles[7, 10],
 			OutdoorTiles[7, 11],
@@ -504,7 +499,7 @@ internal sealed class Scene1 : Scene {
 		return drawableInstances.ToArray();
 	}
 
-	protected override void OnResize(Vector2I Size, Vector2I OldSize) {
+	protected override void OnResize(Vector2I size, Vector2I oldSize) {
 		Drawables = SetupScene(Season == "winter");
 	}
 

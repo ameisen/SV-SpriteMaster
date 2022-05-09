@@ -85,7 +85,7 @@ internal class MasterSchedulePatch {
 		Harmonize.PriorityLevel.Last,
 		critical: false
 	)]
-	public static bool getSchedulePre(NPC __instance, ref MasterSchedule? __result, int dayOfMonth) {
+	public static bool GetSchedulePre(NPC __instance, ref MasterSchedule? __result, int dayOfMonth) {
 		if (!Config.IsUnconditionallyEnabled || !Config.Extras.FixMasterSchedule) {
 			return true;
 		}

@@ -12,9 +12,9 @@ namespace SpriteMaster.Harmonize.Patches.Game.Pathfinding;
 
 internal static partial class Pathfinding {
 	private static readonly Func<NPC, int>? GetDefaultFacingDirection = typeof(NPC).GetFieldGetter<NPC, int>("defaultFacingDirection");
-	private static readonly Func<NPC?, string?, int, int, string?, int, int, int, string?, string?, SchedulePathDescription>? PathfindToNextScheduleLocation =
+	private static readonly Func<NPC?, string?, int, int, string?, int, int, int, string?, string?, SchedulePathDescription?>? PathfindToNextScheduleLocation =
 		typeof(NPC).GetMethod("pathfindToNextScheduleLocation", BindingFlags.Instance | BindingFlags.NonPublic)?.
-		CreateDelegate<Func<NPC?, string?, int, int, string?, int, int, int, string?, string?, SchedulePathDescription>>();
+		CreateDelegate<Func<NPC?, string?, int, int, string?, int, int, int, string?, string?, SchedulePathDescription?>>();
 
 	/*
 	[Harmonize(
@@ -57,7 +57,7 @@ internal static partial class Pathfinding {
 			return true;
 		}
 
-		if (character is null || Game1.player is not Farmer player) {
+		if (character is null || Game1.player is not { } player) {
 			return true;
 		}
 
@@ -89,7 +89,7 @@ internal static partial class Pathfinding {
 			}
 
 			// If it's a pet, it appears that 'behavior 1' indicates sleeping.
-			if (character is Pet pet && pet.CurrentBehavior is Pet.behavior_Sleep or Pet.behavior_SitDown or Cat.behavior_Flop or Dog.behavior_SitSide) {
+			if (character is Pet {CurrentBehavior: Pet.behavior_Sleep or Pet.behavior_SitDown or Cat.behavior_Flop or Dog.behavior_SitSide}) {
 				return true;
 			}
 
@@ -107,7 +107,7 @@ internal static partial class Pathfinding {
 			// Do _not_ execute this logic for Events.
 			var trace = new StackTrace();
 			foreach (var frame in trace.GetFrames()) {
-				if (frame.GetMethod() is MethodBase method) {
+				if (frame.GetMethod() is { } method) {
 					if (method.DeclaringType == typeof(Event) || method.Name.Contains("parseDebugInput")) {
 						return true;
 					}
@@ -115,9 +115,9 @@ internal static partial class Pathfinding {
 			}
 
 			// Try to path. If we fail, revert to default logic.
-			int direction = (GetDefaultFacingDirection is null) ? -1 : GetDefaultFacingDirection(character);
+			int direction = GetDefaultFacingDirection?.Invoke(character) ?? -1;
 
-			if (character.currentLocation == targetLocation) {
+			if (ReferenceEquals(character.currentLocation, targetLocation)) {
 				character.temporaryController = new PathFindController(c: character, location: targetLocation, endPoint: Utility.Vector2ToPoint(position), finalFacingDirection: direction); // TODO: we often do know the expected final facing direction.
 				if (character.temporaryController.pathToEndPoint is null || character.temporaryController.pathToEndPoint.Count <= 0) {
 					character.temporaryController = null;

@@ -15,7 +15,7 @@ internal static class DirectoryExt {
 		try {
 			if (Runtime.IsWindows) {
 				var managementAssembly = Assembly.Load("System.Management");
-				ManagementObjectType = managementAssembly?.GetType("System.Management.ManagementObject");
+				ManagementObjectType = managementAssembly.GetType("System.Management.ManagementObject");
 
 				if (ManagementObjectType is null) {
 					return;
@@ -58,7 +58,7 @@ internal static class DirectoryExt {
 
 			// I am switching this to use reflection does it doesn't try to search for these assemblies on Unix.
 
-			using var obj = (ManagementObject?)Activator.CreateInstance(ManagementObjectType!, objectPath);
+			using var obj = (ManagementObject?)Activator.CreateInstance(ManagementObjectType, objectPath);
 			if (obj is null) {
 				return false;
 			}
@@ -98,11 +98,8 @@ internal static class DirectoryExt {
 			return false;
 		}
 		try {
-			if (info is not null) {
-				info.Refresh();
-				return info.Attributes.HasFlag(FileAttributes.Compressed);
-			}
-			return false;
+			info.Refresh();
+			return info.Attributes.HasFlag(FileAttributes.Compressed);
 		}
 		catch {
 			return false;

@@ -44,15 +44,15 @@ internal static class Collections {
 
 	#region Blanked
 	[MethodImpl(MethodImpl.Hot)]
-	internal static T? Blanked<T>(this T? enumerable) where T : class?, IEnumerable<T> => enumerable.IsBlank() ? null : enumerable;
+	internal static T? Blanked<T>(this T? enumerable) where T : class, IEnumerable<T> => enumerable.IsBlank() ? null : enumerable;
 
 	[MethodImpl(MethodImpl.Hot)]
 	internal static T[]? Blanked<T>(this T[]? array) => array.IsBlank() ? null : array;
 	#endregion
 
 	[MethodImpl(MethodImpl.Hot)]
-	internal static V? GetOrAddDefault<K, V>(this Dictionary<K, V> dictionary, K key, Func<V> defaultGetter) where K : notnull {
-		if (dictionary.TryGetValue(key, out V? value)) {
+	internal static V GetOrAddDefault<K, V>(this Dictionary<K, V> dictionary, K key, Func<V> defaultGetter) where K : notnull {
+		if (dictionary.TryGetValue(key, out var value)) {
 			return value;
 		}
 		var newValue = defaultGetter.Invoke();

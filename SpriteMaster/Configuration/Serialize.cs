@@ -105,18 +105,14 @@ internal static class Serialize {
 					return false;
 				}
 
-				if (CurrentValue is null) {
-					CurrentValue = InitialValue;
-				}
-				else {
-					CurrentValue = CurrentValue.Parent;
+				CurrentValue = CurrentValue is null ? InitialValue : CurrentValue.Parent;
+
+				if (CurrentValue is not null) {
+					return true;
 				}
 
-				if (CurrentValue is null) {
-					PastEnd = true;
-					return false;
-				}
-				return true;
+				PastEnd = true;
+				return false;
 			}
 
 			public void Reset() {
@@ -130,7 +126,7 @@ internal static class Serialize {
 
 	private static bool HasValidFields(Type type) {
 		foreach (var field in type.GetFields(StaticFlags)) {
-			if (field is null || IsFieldIgnored(field)) {
+			if (IsFieldIgnored(field)) {
 				continue;
 			}
 
@@ -153,7 +149,7 @@ internal static class Serialize {
 
 		void ProcessCategory(Category category) {
 			foreach (var field in category.Type.GetFields(StaticFlags)) {
-				if (field is null || IsFieldIgnored(field)) {
+				if (IsFieldIgnored(field)) {
 					continue;
 				}
 
@@ -168,7 +164,7 @@ internal static class Serialize {
 				category.Fields[field.Name.ToLowerInvariant()] = field;
 			}
 			foreach (var subType in category.Type.GetNestedTypes(StaticFlags)) {
-				if (subType is null || IsClassIgnored(subType) || subType.IsEnum) {
+				if (IsClassIgnored(subType) || subType.IsEnum) {
 					continue;
 				}
 
@@ -190,10 +186,10 @@ internal static class Serialize {
 		ProcessCategory(Root);
 	}
 
-	private static bool Parse(DocumentSyntax Data, bool retain) {
+	private static bool Parse(DocumentSyntax data, bool retain) {
 		try {
-			foreach (var table in Data.Tables) {
-				if (table?.Name is null) {
+			foreach (var table in data.Tables) {
+				if (table.Name is null) {
 					continue;
 				}
 
@@ -232,7 +228,7 @@ internal static class Serialize {
 					}
 
 					foreach (var value in table.Items) {
-						if (value?.Key is null) {
+						if (value.Key is null) {
 							continue;
 						}
 						try {
@@ -260,31 +256,31 @@ internal static class Serialize {
 
 							object? fieldValue = field.GetValue(null);
 							switch (fieldValue) {
-								case string _:
-									field.SetValue(null, ((StringValueSyntax?)value.Value)?.Value?.Trim()?.Intern());
+								case string:
+									field.SetValue(null, ((StringValueSyntax?)value.Value)?.Value?.Trim().Intern());
 									break;
-								case sbyte _:
+								case sbyte:
 									field.SetValue(null, (sbyte?)((IntegerValueSyntax?)value.Value)?.Value);
 									break;
-								case byte _:
+								case byte:
 									field.SetValue(null, (byte?)((IntegerValueSyntax?)value.Value)?.Value);
 									break;
-								case short _:
+								case short:
 									field.SetValue(null, (short?)((IntegerValueSyntax?)value.Value)?.Value);
 									break;
-								case ushort _:
+								case ushort:
 									field.SetValue(null, (ushort?)((IntegerValueSyntax?)value.Value)?.Value);
 									break;
-								case int _:
+								case int:
 									field.SetValue(null, (int?)((IntegerValueSyntax?)value.Value)?.Value);
 									break;
-								case uint _:
+								case uint:
 									field.SetValue(null, (uint?)((IntegerValueSyntax?)value.Value)?.Value);
 									break;
-								case ulong _:
+								case ulong:
 									field.SetValue(null, (ulong?)((IntegerValueSyntax?)value.Value)?.Value);
 									break;
-								case float _: {
+								case float: {
 										if (value.Value is IntegerValueSyntax ivalue) {
 											field.SetValue(null, (float)ivalue.Value);
 										}
@@ -293,7 +289,7 @@ internal static class Serialize {
 										}
 									}
 									break;
-								case double _: {
+								case double: {
 										if (value.Value is IntegerValueSyntax ivalue) {
 											field.SetValue(null, (double)ivalue.Value);
 										}
@@ -302,12 +298,12 @@ internal static class Serialize {
 										}
 									}
 									break;
-								case bool _:
+								case bool:
 									field.SetValue(null, ((BooleanValueSyntax?)value.Value)?.Value);
 									break;
 								default:
 									switch (fieldValue) {
-										case List<string> _: {
+										case List<string>: {
 												var arrayValue = ((ArraySyntax?)value.Value)?.Items;
 												if (arrayValue is null) {
 													break;
@@ -327,7 +323,7 @@ internal static class Serialize {
 												field.SetValue(null, list);
 											}
 											break;
-										case string[] _: {
+										case string[]: {
 												var arrayValue = ((ArraySyntax?)value.Value)?.Items;
 												if (arrayValue is null) {
 													break;
@@ -349,7 +345,7 @@ internal static class Serialize {
 												field.SetValue(null, list);
 											}
 											break;
-										case List<int> _: {
+										case List<int>: {
 												var arrayValue = ((ArraySyntax?)value.Value)?.Items;
 												if (arrayValue is null) {
 													break;
@@ -369,7 +365,7 @@ internal static class Serialize {
 												field.SetValue(null, list);
 											}
 											break;
-										case int[] _: {
+										case int[]: {
 												var arrayValue = ((ArraySyntax?)value.Value)?.Items;
 												if (arrayValue is null) {
 													break;
@@ -390,7 +386,7 @@ internal static class Serialize {
 												field.SetValue(null, list);
 											}
 											break;
-										case Enum _: {
+										case Enum: {
 												var enumNames = fieldValue.GetType().GetEnumNames();
 												var values = fieldValue.GetType().GetEnumValues();
 
@@ -446,10 +442,8 @@ internal static class Serialize {
 		var tableItems = table.Items;
 
 		var typeCommentAttributes = type.GetCustomAttributes<Attributes.CommentAttribute>();
-		if (typeCommentAttributes is not null) {
-			foreach (var attribute in typeCommentAttributes) {
-				table.AddLeadingTrivia(TokenKind.Comment, $"{indent}# {attribute.Message}");
-			}
+		foreach (var attribute in typeCommentAttributes) {
+			table.AddLeadingTrivia(TokenKind.Comment, $"{indent}# {attribute.Message}");
 		}
 
 		foreach (var field in fields) {
@@ -544,10 +538,8 @@ internal static class Serialize {
 			);
 
 			var commentAttributes = field.GetCustomAttributes<Attributes.CommentAttribute>();
-			if (commentAttributes is not null) {
-				foreach (var attribute in commentAttributes) {
-					keyValue.AddLeadingTrivia(TokenKind.Comment, $"{indent}# {attribute.Message}\n");
-				}
+			foreach (var attribute in commentAttributes) {
+				keyValue.AddLeadingTrivia(TokenKind.Comment, $"{indent}# {attribute.Message}\n");
 			}
 
 			var subType = field.FieldType.IsEnum ? field.FieldType : field.FieldType.GetElementType();
@@ -557,11 +549,11 @@ internal static class Serialize {
 				var enumMap = new Dictionary<object, List<string>>();
 				foreach (var enumName in Enum.GetNames(subType)) {
 					var enumValue = Enum.Parse(subType, enumName);
-					if (!enumMap.TryGetValue(enumValue, out var enumList)) {
-						enumMap[enumValue] = enumList = new() { enumName };
+					if (enumMap.TryGetValue(enumValue, out var enumList)) {
+						enumList.Add(enumName);
 					}
 					else {
-						enumList.Add(enumName);
+						enumMap[enumValue] = new() { enumName };
 					}
 				}
 
@@ -609,7 +601,7 @@ internal static class Serialize {
 			if (child.IsNestedPrivate || IsClassIgnored(child)) {
 				continue;
 			}
-			var childKey = new KeySyntax(typeof(Config).Name);
+			var childKey = new KeySyntax(nameof(Config));
 
 			string?[] parentKey = key.ToString().Split('.');
 			if (parentKey.Length != 0) {
@@ -628,9 +620,9 @@ internal static class Serialize {
 
 	internal static bool Load(MemoryStream stream, bool retain = false) {
 		try {
-			string ConfigText = Encoding.UTF8.GetString(stream.ToArray());
-			var Data = Toml.Parse(ConfigText);
-			return Parse(Data, retain);
+			string configText = Encoding.UTF8.GetString(stream.ToArray());
+			var data = Toml.Parse(configText);
+			return Parse(data, retain);
 		}
 		catch (Exception ex) {
 			ex.PrintWarning();
@@ -641,15 +633,15 @@ internal static class Serialize {
 		}
 	}
 
-	internal static bool Load(string ConfigPath, bool retain = false) {
-		if (!File.Exists(ConfigPath)) {
+	internal static bool Load(string configPath, bool retain = false) {
+		if (!File.Exists(configPath)) {
 			return false;
 		}
 
 		try {
-			string ConfigText = File.ReadAllText(ConfigPath);
-			var Data = Toml.Parse(ConfigText, ConfigPath);
-			return Parse(Data, retain);
+			string configText = File.ReadAllText(configPath);
+			var data = Toml.Parse(configText, configPath);
+			return Parse(data, retain);
 		}
 		catch (Exception ex) {
 			ex.PrintWarning();
@@ -662,12 +654,12 @@ internal static class Serialize {
 
 	internal static bool Save(MemoryStream stream, bool leaveOpen = false) {
 		try {
-			var Document = new DocumentSyntax();
+			var document = new DocumentSyntax();
 
-			SaveClass(0, typeof(Config), Document);
+			SaveClass(0, typeof(Config), document);
 
 			using var writer = new StreamWriter(stream, leaveOpen: leaveOpen);
-			Document.WriteTo(writer);
+			document.WriteTo(writer);
 			writer.Flush();
 		}
 		catch (Exception ex) {
@@ -682,12 +674,12 @@ internal static class Serialize {
 
 	internal static bool Save(string ConfigPath) {
 		try {
-			var Document = new DocumentSyntax();
+			var document = new DocumentSyntax();
 
-			SaveClass(0, typeof(Config), Document);
+			SaveClass(0, typeof(Config), document);
 
 			using var writer = File.CreateText(ConfigPath);
-			Document.WriteTo(writer);
+			document.WriteTo(writer);
 			writer.Flush();
 		}
 		catch (Exception ex) {

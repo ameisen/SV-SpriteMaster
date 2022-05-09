@@ -413,9 +413,9 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 		}
 
 		string GetRemainingTime() {
-			return !remainingTime.HasValue ?
-				"" :
-				$" (remaining time: {remainingTime?.TotalMilliseconds.ToString(DrawingColor.LightYellow)} ms)";
+			return remainingTime.HasValue
+				? $" (remaining time: {remainingTime.Value.TotalMilliseconds.ToString(DrawingColor.LightYellow)} ms)" :
+				"";
 		}
 
 		// If this is null, it can only happen due to something being blocked, so we should try again later.
@@ -434,7 +434,7 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 				doDispatch = inFlightTask.Revision != currentRevision || inFlightTask.ResampleTask.Status != TaskStatus.WaitingToRun;
 			}
 
-			Task<ManagedSpriteInstance?> resampleTask;
+			Task<ManagedSpriteInstance> resampleTask;
 			if (!useAsync || doDispatch) {
 				resampleTask = ResampleTask.Dispatch(
 					spriteInfo: new(spriteInfoInitializer),

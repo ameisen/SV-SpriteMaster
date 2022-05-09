@@ -14,7 +14,7 @@ internal partial struct Bounds :
 	private Vector2I ExtentReal;
 
 	internal Vector2I Offset;
-	internal readonly Vector2F OffsetF => new Vector2F(Offset);
+	internal readonly Vector2F OffsetF => new(Offset);
 	internal Vector2I Extent {
 		readonly get => ExtentReal;
 		set {
@@ -37,8 +37,6 @@ internal partial struct Bounds :
 	}
 	internal readonly Vector2F ExtentF => new(Extent);
 	internal Vector2B Invert;
-
-	internal void ForceSetExtent(in Vector2I extent) => ExtentReal = extent;
 
 	internal Vector2I Position {
 		[MethodImpl(Runtime.MethodImpl.Hot)]

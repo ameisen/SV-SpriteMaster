@@ -43,6 +43,6 @@ internal static class TextureDecode {
 			}
 		}
 
-		throw new InvalidOperationException($"Failed to decode compressed texture data");
+		throw new InvalidOperationException("Failed to decode compressed texture data");
 	}
 }

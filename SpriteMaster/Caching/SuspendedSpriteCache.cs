@@ -139,9 +139,10 @@ internal static class SuspendedSpriteCache {
 
 	[SMAPIConsole.StatsMethod]
 	internal static string[] DumpStats() {
-		var statsLines = new List<string>();
-		statsLines.Add($"\tTotal Suspended Elements: {Cache.Count}");
-		statsLines.Add($"\tTotal Memory Size       : {Interlocked.Read(ref TotalCachedSize).AsDataSize()}");
+		var statsLines = new List<string> {
+			$"\tTotal Suspended Elements: {Cache.Count}",
+			$"\tTotal Memory Size       : {Interlocked.Read(ref TotalCachedSize).AsDataSize()}"
+		};
 		return statsLines.ToArray();
 	}
 }

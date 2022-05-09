@@ -32,7 +32,7 @@ internal static partial class Hashing {
 	internal static ulong Accumulate(ulong hash, ulong hashend) => hash ^ hashend + Default + (hash << 6) + (hash >> 2);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static int Accumulate(int hash, int hashend) => hash ^ (int)((uint)hashend + (uint)Default32) + (hash << 6) + (int)((uint)hash >> 2);
+	internal static int Accumulate(int hash, int hashend) => hash ^ (int)((uint)hashend + Default32) + (hash << 6) + (int)((uint)hash >> 2);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ulong Accumulate(ulong hash, int hashend) => Accumulate(hash, (ulong)hashend);

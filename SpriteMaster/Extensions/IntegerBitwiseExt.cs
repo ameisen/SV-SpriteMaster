@@ -1,5 +1,4 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
@@ -243,9 +242,9 @@ internal static partial class Integer {
 		CheckBit<sbyte>(bit);
 		var mask = (byte)(1U << bit);
 		var flag = condition ? byte.MaxValue : default;
-		var Value = value;
-		Value = (sbyte)((sbyte)(Value & (sbyte)~mask) | (sbyte)(flag & mask));
-		return value = Value;
+		var localValue = value;
+		localValue = (sbyte)((sbyte)(localValue & (sbyte)~mask) | (sbyte)(flag & mask));
+		return value = localValue;
 	}
 
 	// https://graphics.stanford.edu/~seander/bithacks.html#ConditionalSetOrClearBitsWithoutBranching
@@ -254,9 +253,9 @@ internal static partial class Integer {
 		CheckBit<byte>(bit);
 		var mask = (byte)(1U << bit);
 		var flag = condition ? byte.MaxValue : default;
-		var Value = value;
-		Value = (byte)((byte)(Value & (byte)~mask) | (byte)(flag & mask));
-		return value = Value;
+		var localValue = value;
+		localValue = (byte)((byte)(localValue & (byte)~mask) | (byte)(flag & mask));
+		return value = localValue;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -264,9 +263,9 @@ internal static partial class Integer {
 		CheckBit<short>(bit);
 		var mask = (ushort)(1U << bit);
 		var flag = condition ? ushort.MaxValue : default;
-		var Value = (ushort)value;
-		Value = (ushort)((ushort)(Value & (ushort)~mask) | (ushort)(flag & mask));
-		return value = (short)Value;
+		var localValue = (ushort)value;
+		localValue = (ushort)((ushort)(localValue & (ushort)~mask) | (ushort)(flag & mask));
+		return value = (short)localValue;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]

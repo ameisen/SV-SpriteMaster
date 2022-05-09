@@ -84,17 +84,11 @@ where T : class? {
 	private bool IsTrackResurrection() => Reflect.IsTrackResurrection(Reference);
 
 	public override int GetHashCode() {
-		if (Reference.TryGetTarget(out T? target) && target is not null) {
-			return target.GetHashCode();
-		}
-		return NullHash;
+		return Reference.TryGetTarget(out var target) ? target.GetHashCode() : NullHash;
 	}
 
 	public ulong GetLongHashCode() {
-		if (Reference.TryGetTarget(out T? target) && target is not null) {
-			return LongHash.From(target);
-		}
-		return LongHash.Null;
+		return Reference.TryGetTarget(out var target) ? LongHash.From(target) : LongHash.Null;
 	}
 
 	public static implicit operator WeakReference<T>(ComparableWeakReference<T> reference) => reference.Reference;

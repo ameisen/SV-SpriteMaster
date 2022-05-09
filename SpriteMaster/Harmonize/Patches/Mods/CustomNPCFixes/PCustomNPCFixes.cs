@@ -24,7 +24,7 @@ internal static class PCustomNPCFixes {
 			return true;
 		}
 
-		List<NPC> allCharacters = Utility.getAllCharacters(new())!;
+		List<NPC?> allCharacters = Utility.getAllCharacters(new())!;
 		var processedSet = new ConcurrentDictionary<NPC, byte>();
 
 		Parallel.ForEach(allCharacters, npc => {

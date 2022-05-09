@@ -18,7 +18,9 @@ namespace SpriteMaster.Resample.Scalers.xBRZ.Structures;
 */
 [ImmutableObject(true)]
 internal unsafe ref struct Kernel4X4 {
+#pragma warning disable CS0649
 	private fixed ulong Data[4 * 4];
+#pragma warning restore CS0649
 
 	internal readonly Color16 A => (Color16)Data[0x0];
 	internal readonly Color16 B => (Color16)Data[0x1];

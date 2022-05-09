@@ -84,7 +84,7 @@ internal static class OnDrawStringImpl {
 	}
 
 	// Ripped from MonoGame SpriteFont.cs
-	internal ref struct CharSource {
+	internal readonly ref struct CharSource {
 		private readonly string? String = null;
 		private readonly StringBuilder? Builder = null;
 		internal readonly int Length;
@@ -99,18 +99,9 @@ internal static class OnDrawStringImpl {
 			Builder = builder;
 		}
 
-		internal char this[int index] {
-			get {
-				if (String is not null) {
-					return String[index];
-				}
-				return Builder![index];
-			}
-		}
+		internal char this[int index] => String is not null ? String[index] : Builder![index];
 
-		public override string ToString() {
-			return String ?? Builder!.ToString();
-		}
+		public override string ToString() => String ?? Builder!.ToString();
 	}
 
 	// internal float TexelWidth { get; private set; }
@@ -166,7 +157,7 @@ internal static class OnDrawStringImpl {
 				tempTransform.M42 = (flippedOrigin.Y * tempTransform.M22) + position.Y;
 			}
 			else {
-				(float sin, float cos) = MathExt.SinCos(rotation);
+				(float sin, float cos) = rotation.SinCos();
 
 				tempTransform.M11 = flippedScale.X * cos;
 				tempTransform.M12 = flippedScale.X * sin;

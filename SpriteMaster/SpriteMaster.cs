@@ -75,7 +75,7 @@ public sealed class SpriteMaster : Mod {
 				var slicedTexture = textureRefStrings[i];
 				//@"LooseSprites\Cursors::0,640:2000,256"
 				var elements = slicedTexture.Split("::", 2);
-				var texture = elements[0]!;
+				var texture = elements[0];
 				var bounds = Bounds.Empty;
 				if (elements.Length > 1) {
 					try {
@@ -264,14 +264,7 @@ public sealed class SpriteMaster : Mod {
 		var frameworkedMods = new Dictionary<string, List<IModInfo>>();
 
 		foreach (var mod in Helper.ModRegistry.GetAll()) {
-			if (mod is null) {
-				continue;
-			}
 			var manifest = mod.Manifest;
-
-			if (manifest is null) {
-				continue;
-			}
 
 			foreach (var framework in WarnFrameworks) {
 				if (
@@ -313,13 +306,13 @@ public sealed class SpriteMaster : Mod {
 
 		internal WaitWrapper(object waiter) => Waiter = waiter;
 
-		public readonly void Dispose() {
+		public void Dispose() {
 			if (Waiter is IDisposable disposable) {
 				disposable.Dispose();
 			}
 		}
 
-		internal readonly void Wait() {
+		internal void Wait() {
 			switch (Waiter) {
 				case Task task:
 					task.Wait();

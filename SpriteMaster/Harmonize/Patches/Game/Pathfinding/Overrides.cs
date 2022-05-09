@@ -32,7 +32,7 @@ internal static partial class Pathfinding {
 		// && ((int)this.gender == 0 || !s.Contains<string>("BathHouse_MensLocker", StringComparer.Ordinal)) && ((int)this.gender != 0 || !s.Contains<string>("BathHouse_WomensLocker", StringComparer.Ordinal))
 
 		if (FasterRouteMap.TryGetValue(startingLocation, out var innerRoute)) {
-			if (innerRoute.TryGetValue(endingLocation, out var route) && route is not null && route.Count != 0) {
+			if (innerRoute.TryGetValue(endingLocation, out var route) && route.Count != 0) {
 				__result = route;
 				return false;
 			}
@@ -78,7 +78,7 @@ internal static partial class Pathfinding {
 		FasterRouteMap.Clear();
 		foreach (var route in routeList) {
 			var innerRoutes = FasterRouteMap.GetOrAddDefault(route.FirstF(), () => new Dictionary<string, List<string>>());
-			innerRoutes![route.LastF()] = route;
+			innerRoutes[route.LastF()] = route;
 		}
 
 		return false;
@@ -112,7 +112,7 @@ internal static partial class Pathfinding {
 		FasterRouteMap.Clear();
 		foreach (var listedRoute in routeList) {
 			var innerRoutes = FasterRouteMap.GetOrAddDefault(listedRoute.FirstF(), () => new Dictionary<string, List<string>>());
-			innerRoutes![listedRoute.LastF()] = listedRoute;
+			innerRoutes[listedRoute.LastF()] = listedRoute;
 		}
 		return false;
 	}

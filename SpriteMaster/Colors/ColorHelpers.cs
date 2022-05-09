@@ -35,10 +35,10 @@ internal static class ColorHelpers {
 	internal static ushort Color8To16(this byte value) => (ushort)((value << 8) | value);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static byte Color16To8Fast(this ushort value) => (byte)((uint)((value * 0xFF01U) + 0x800000U) >> 24);
+	internal static byte Color16To8Fast(this ushort value) => (byte)((value * 0xFF01U) + 0x800000U >> 24);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static byte Color16To8Accurate(this ushort value) => (byte)(((uint)value + 128U) / 0x101U);
+	internal static byte Color16To8Accurate(this ushort value) => (byte)((value + 128U) / 0x101U);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static byte Color16to8(this ushort value) => Color16To8Accurate(value);
@@ -49,21 +49,21 @@ internal static class ColorHelpers {
 			ushort shortValue = 0;
 			return shortValue.ReinterpretAs<half>();
 		}
-		const uint InBits = sizeof(byte) * 8;
-		uint uValue = (uint)value;
-		int leadingZerosWithMSB = value.CountLeadingZeros() + 1;
-		uValue = (byte)(uValue << leadingZerosWithMSB);
-		uint remainingBits = (uint)(InBits - (leadingZerosWithMSB));
-		int shiftRight = (leadingZerosWithMSB) + ((int)remainingBits - (int)Numeric.Float.Half.SignificandBits);
-		if (InBits <= Numeric.Float.Half.SignificandBits || shiftRight < 0) {
+		const uint inBits = sizeof(byte) * 8;
+		uint uValue = value;
+		int leadingZerosWithMsb = value.CountLeadingZeros() + 1;
+		uValue = (byte)(uValue << leadingZerosWithMsb);
+		uint remainingBits = (uint)(inBits - (leadingZerosWithMsb));
+		int shiftRight = (leadingZerosWithMsb) + ((int)remainingBits - (int)Numeric.Float.Half.SignificandBits);
+		if (inBits <= Numeric.Float.Half.SignificandBits || shiftRight < 0) {
 			uValue <<= -shiftRight;
 		}
 		else {
 			uValue >>= shiftRight;
 		}
 		uint mantissa = uValue;
-		uint exponent = ((uint)-(int)(leadingZerosWithMSB + 1)) & (Numeric.Float.Half.ExponentMask >> 1);
-		uint result = (mantissa | exponent << (int)Numeric.Float.Half.SignificandBits);
+		uint exponent = ((uint)-(leadingZerosWithMsb + 1)) & (Numeric.Float.Half.ExponentMask >> 1);
+		uint result = mantissa | exponent << (int)Numeric.Float.Half.SignificandBits;
 		return result.ReinterpretAs<half>();
 	}
 
@@ -72,21 +72,21 @@ internal static class ColorHelpers {
 		if (value == 0) {
 			return value.ReinterpretAs<half>();
 		}
-		const uint InBits = sizeof(ushort) * 8;
-		uint uValue = (uint)value;
-		int leadingZerosWithMSB = value.CountLeadingZeros() + 1;
-		uValue = (byte)(uValue << leadingZerosWithMSB);
-		uint remainingBits = (uint)(InBits - (leadingZerosWithMSB));
-		int shiftRight = (leadingZerosWithMSB) + ((int)remainingBits - (int)Numeric.Float.Half.SignificandBits);
-		if (InBits <= Numeric.Float.Half.SignificandBits || shiftRight < 0) {
+		const uint inBits = sizeof(ushort) * 8;
+		uint uValue = value;
+		int leadingZerosWithMsb = value.CountLeadingZeros() + 1;
+		uValue = (byte)(uValue << leadingZerosWithMsb);
+		uint remainingBits = (uint)(inBits - (leadingZerosWithMsb));
+		int shiftRight = (leadingZerosWithMsb) + ((int)remainingBits - (int)Numeric.Float.Half.SignificandBits);
+		if (inBits <= Numeric.Float.Half.SignificandBits || shiftRight < 0) {
 			uValue <<= -shiftRight;
 		}
 		else {
 			uValue >>= shiftRight;
 		}
 		uint mantissa = uValue;
-		uint exponent = ((uint)-(int)(leadingZerosWithMSB + 1)) & (Numeric.Float.Half.ExponentMask >> 1);
-		uint result = (mantissa | exponent << (int)Numeric.Float.Half.SignificandBits);
+		uint exponent = ((uint)-(leadingZerosWithMsb + 1)) & (Numeric.Float.Half.ExponentMask >> 1);
+		uint result = mantissa | exponent << (int)Numeric.Float.Half.SignificandBits;
 		return result.ReinterpretAs<half>();
 	}
 
@@ -95,21 +95,21 @@ internal static class ColorHelpers {
 		if (value == 0) {
 			return 0.0f;
 		}
-		const uint InBits = sizeof(byte) * 8;
-		uint uValue = (uint)value;
-		int leadingZerosWithMSB = value.CountLeadingZeros() + 1;
-		uValue = (byte)(uValue << leadingZerosWithMSB);
-		uint remainingBits = (uint)(InBits - (leadingZerosWithMSB));
-		int shiftRight = (leadingZerosWithMSB) + ((int)remainingBits - (int)Numeric.Float.Single.SignificandBits);
-		if (InBits <= Numeric.Float.Single.SignificandBits || shiftRight < 0) {
+		const uint inBits = sizeof(byte) * 8;
+		uint uValue = value;
+		int leadingZerosWithMsb = value.CountLeadingZeros() + 1;
+		uValue = (byte)(uValue << leadingZerosWithMsb);
+		uint remainingBits = (uint)(inBits - (leadingZerosWithMsb));
+		int shiftRight = (leadingZerosWithMsb) + ((int)remainingBits - (int)Numeric.Float.Single.SignificandBits);
+		if (inBits <= Numeric.Float.Single.SignificandBits || shiftRight < 0) {
 			uValue <<= -shiftRight;
 		}
 		else {
 			uValue >>= shiftRight;
 		}
 		uint mantissa = uValue;
-		uint exponent = ((uint)-(int)(leadingZerosWithMSB + 1)) & (Numeric.Float.Single.ExponentMask >> 1);
-		uint result = (mantissa | exponent << (int)Numeric.Float.Single.SignificandBits);
+		uint exponent = ((uint)-(leadingZerosWithMsb + 1)) & (Numeric.Float.Single.ExponentMask >> 1);
+		uint result = mantissa | exponent << (int)Numeric.Float.Single.SignificandBits;
 		return result.ReinterpretAs<float>();
 	}
 
@@ -118,21 +118,21 @@ internal static class ColorHelpers {
 		if (value == 0) {
 			return 0.0f;
 		}
-		const uint InBits = sizeof(ushort) * 8;
-		uint uValue = (uint)value;
-		int leadingZerosWithMSB = value.CountLeadingZeros() + 1;
-		uValue = (byte)(uValue << leadingZerosWithMSB);
-		uint remainingBits = (uint)(InBits - (leadingZerosWithMSB));
-		int shiftRight = (leadingZerosWithMSB) + ((int)remainingBits - (int)Numeric.Float.Single.SignificandBits);
-		if (InBits <= Numeric.Float.Single.SignificandBits || shiftRight < 0) {
+		const uint inBits = sizeof(ushort) * 8;
+		uint uValue = value;
+		int leadingZerosWithMsb = value.CountLeadingZeros() + 1;
+		uValue = (byte)(uValue << leadingZerosWithMsb);
+		uint remainingBits = (uint)(inBits - (leadingZerosWithMsb));
+		int shiftRight = (leadingZerosWithMsb) + ((int)remainingBits - (int)Numeric.Float.Single.SignificandBits);
+		if (inBits <= Numeric.Float.Single.SignificandBits || shiftRight < 0) {
 			uValue <<= -shiftRight;
 		}
 		else {
 			uValue >>= shiftRight;
 		}
 		uint mantissa = uValue;
-		uint exponent = ((uint)-(int)(leadingZerosWithMSB + 1)) & (Numeric.Float.Single.ExponentMask >> 1);
-		uint result = (mantissa | exponent << (int)Numeric.Float.Single.SignificandBits);
+		uint exponent = ((uint)-(leadingZerosWithMsb + 1)) & (Numeric.Float.Single.ExponentMask >> 1);
+		uint result = mantissa | exponent << (int)Numeric.Float.Single.SignificandBits;
 		return result.ReinterpretAs<float>();
 	}
 
@@ -144,7 +144,7 @@ internal static class ColorHelpers {
 			return 0;
 		}
 
-		Fixed8 alphaScalar = Fixed8.Max;
+		var alphaScalar = Fixed8.Max;
 		if (alpha) {
 			alphaScalar = Math.Min(colorA.A.Value, colorB.A.Value);
 
@@ -189,7 +189,7 @@ internal static class ColorHelpers {
 			var bFac = bWeight * bDiff;
 			var sumSq = rFac + gFac + bFac;
 			var sum = MathF.Sqrt(sumSq);
-			colorDistance = (Fixed8)MathExt.RoundToInt(Math.Clamp(sum, 0, 255));
+			colorDistance = (Fixed8)Math.Clamp(sum, 0, 255).RoundToInt();
 		}
 
 		if (alphaScalar == Fixed8.Max) {
@@ -208,7 +208,7 @@ internal static class ColorHelpers {
 			return 0;
 		}
 
-		Fixed16 alphaScalar = Fixed16.Max;
+		var alphaScalar = Fixed16.Max;
 		if (alpha) {
 			alphaScalar = Math.Min(colorA.A.Value, colorB.A.Value);
 
@@ -253,7 +253,7 @@ internal static class ColorHelpers {
 			var bFac = bWeight * bDiff;
 			var sumSq = rFac + gFac + bFac;
 			var sum = MathF.Sqrt(sumSq);
-			colorDistance = (Fixed16)MathExt.RoundToInt(Math.Clamp(sum, 0, 65_535));
+			colorDistance = (Fixed16)Math.Clamp(sum, 0, 65_535).RoundToInt();
 		}
 
 		if (alphaScalar == Fixed16.Max) {
@@ -324,6 +324,6 @@ internal static class ColorHelpers {
 			distance = alphaScalar * distance + Math.Abs(a2.Value - a1.Value);
 		}
 
-		return (uint)MathExt.RoundToInt(Math.Clamp(distance, 0.0, 65_535.0));
+		return (uint)Math.Clamp(distance, 0.0, 65_535.0).RoundToInt();
 	}
 }

@@ -309,7 +309,7 @@ internal static class Textures {
 				};
 
 				dumpTexture.SetData(subData);
-				if (Path.GetDirectoryName(path) is string directory) {
+				if (Path.GetDirectoryName(path) is { } directory) {
 					Directory.CreateDirectory(directory);
 				}
 				using var dumpFile = File.Create(path);

@@ -482,20 +482,20 @@ internal sealed class Resampler {
 			// so it will just ignore the padding areas. That would be more efficient than this.
 
 			// Check for special cases
-			bool HasAlpha = true;
-			bool IsPunchThroughAlpha = false;
-			bool IsMasky = false;
+			bool hasAlpha = true;
+			bool isPunchThroughAlpha = false;
+			bool isMasky = false;
 			bool hasR = true;
 			bool hasG = true;
 			bool hasB = true;
 			{
-				const int MaxShades = byte.MaxValue + 1;
+				const int maxShades = byte.MaxValue + 1;
 
-				Span<int> alpha = stackalloc int[MaxShades];
-				Span<int> blue = stackalloc int[MaxShades];
-				Span<int> green = stackalloc int[MaxShades];
-				Span<int> red = stackalloc int[MaxShades];
-				for (int i = 0; i < MaxShades; ++i) {
+				Span<int> alpha = stackalloc int[maxShades];
+				Span<int> blue = stackalloc int[maxShades];
+				Span<int> green = stackalloc int[maxShades];
+				Span<int> red = stackalloc int[maxShades];
+				for (int i = 0; i < maxShades; ++i) {
 					alpha[i] = 0;
 					blue[i] = 0;
 					green[i] = 0;
@@ -514,12 +514,12 @@ internal sealed class Resampler {
 				hasB = blue[0] != bitmapData.Length;
 
 				//Debug.Warning($"Punch-through Alpha: {intData.Length}");
-				IsPunchThroughAlpha = IsMasky = alpha[0] + alpha[MaxShades - 1] == bitmapData.Length;
-				HasAlpha = alpha[MaxShades - 1] != bitmapData.Length;
+				isPunchThroughAlpha = isMasky = alpha[0] + alpha[maxShades - 1] == bitmapData.Length;
+				hasAlpha = alpha[maxShades - 1] != bitmapData.Length;
 
-				if (HasAlpha && !IsPunchThroughAlpha) {
-					var alphaDeviation = Statistics.StandardDeviation(alpha, MaxShades, 1, MaxShades - 2);
-					IsMasky = alphaDeviation < Config.Resample.BlockCompression.HardAlphaDeviationThreshold;
+				if (hasAlpha && !isPunchThroughAlpha) {
+					var alphaDeviation = Statistics.StandardDeviation(alpha, maxShades, 1, maxShades - 2);
+					isMasky = alphaDeviation < Config.Resample.BlockCompression.HardAlphaDeviationThreshold;
 				}
 			}
 
@@ -572,9 +572,9 @@ internal sealed class Resampler {
 				data: bitmapData,
 				format: ref format,
 				dimensions: scaledSizeClamped,
-				hasAlpha: HasAlpha,
-				isPunchthroughAlpha: IsPunchThroughAlpha,
-				isMasky: IsMasky,
+				hasAlpha: hasAlpha,
+				isPunchthroughAlpha: isPunchThroughAlpha,
+				isMasky: isMasky,
 				hasR: hasR,
 				hasG: hasG,
 				hasB: hasB
@@ -771,7 +771,7 @@ internal sealed class Resampler {
 			if (!isAsync || Config.AsyncScaling.ForceSynchronousStores || DrawState.ForceSynchronous) {
 				var reference = input.Reference;
 				var bitmapDataArray = bitmapData.ToArray();
-				void syncCall() {
+				void SyncCall() {
 					if (reference.IsDisposed) {
 						return;
 					}
@@ -792,7 +792,7 @@ internal sealed class Resampler {
 						spriteInstance.Dispose();
 					}
 				}
-				SynchronizedTaskScheduler.Instance.QueueDeferred(syncCall, new(bitmapData.Length));
+				SynchronizedTaskScheduler.Instance.QueueDeferred(SyncCall, new(bitmapData.Length));
 				return null;
 			}
 			else {

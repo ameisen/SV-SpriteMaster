@@ -6,8 +6,8 @@ using System.Reflection;
 namespace SpriteMaster.Harmonize.Patches.SMAPI;
 
 internal static class PAssetDataForImage {
-	private static readonly Assembly? ReferenceAssembly = typeof(StardewModdingAPI.Framework.ModLoading.RewriteFacades.AccessToolsFacade)?.Assembly;
-	private static readonly Type? AssetDataForImageType = ReferenceAssembly?.
+	private static readonly Assembly ReferenceAssembly = typeof(StardewModdingAPI.Framework.ModLoading.RewriteFacades.AccessToolsFacade).Assembly;
+	private static readonly Type? AssetDataForImageType = ReferenceAssembly.
 		GetType("StardewModdingAPI.Framework.Content.AssetDataForImage");
 	private static readonly byte MinOpacity = (byte?)AssetDataForImageType?.
 		GetField("MinOpacity", BindingFlags.NonPublic | BindingFlags.Static)?.

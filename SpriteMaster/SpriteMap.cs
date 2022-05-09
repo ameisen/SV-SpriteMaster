@@ -118,7 +118,7 @@ internal static class SpriteMap {
 					var removeList = new List<ulong>();
 					using (meta.Lock.Write) {
 						foreach (var skv in spriteTable) {
-							if (skv.Value?.Texture?.IsDisposed ?? false) {
+							if (skv.Value.Texture?.IsDisposed ?? false) {
 								removeList.Add(skv.Key);
 							}
 						}
@@ -148,7 +148,7 @@ internal static class SpriteMap {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void DirectRemove(ManagedSpriteInstance instance) {
 		RemoveInternal(instance);
-		instance?.Suspend();
+		instance.Suspend();
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -184,7 +184,7 @@ internal static class SpriteMap {
 
 		ManagedSpriteInstance? instance = null;
 		using (meta.Lock.Write) {
-			if (spriteTable.TryGetValue(instanceData.MapHash, out var currentValue) && currentValue is null) {
+			if (!spriteTable.TryGetValue(instanceData.MapHash, out instance)) {
 				meta.RemoveFromSpriteInstanceTable(instanceData.MapHash, dispose: false, out instance);
 			}
 		}
@@ -307,7 +307,7 @@ internal static class SpriteMap {
 
 		try {
 			foreach (var spriteInstance in SpriteInstanceReferences) {
-				if (spriteInstance?.Anonymous() != false) {
+				if (spriteInstance.Anonymous()) {
 					continue;
 				}
 
@@ -330,7 +330,7 @@ internal static class SpriteMap {
 		var result = new Dictionary<XTexture2D, List<ManagedSpriteInstance>>();
 
 		foreach (var spriteInstance in SpriteInstanceReferences) {
-			if (!(spriteInstance?.Reference.TryGetTarget(out var referenceTexture) ?? false)) {
+			if (!spriteInstance.Reference.TryGetTarget(out var referenceTexture)) {
 				continue;
 			}
 

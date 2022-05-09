@@ -59,7 +59,7 @@ internal static class StringExt {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static IEnumerable<string> Lines(this string str, bool removeEmpty = false) {
 		var strings = str.Split(NewlineChars);
-		var validLines = removeEmpty ? strings.WhereF(l => !l.IsBlank()) : strings.WhereF(l => l is not null);
+		var validLines = removeEmpty ? strings.WhereF(l => !l.IsBlank()) : strings;
 		return validLines;
 	}
 

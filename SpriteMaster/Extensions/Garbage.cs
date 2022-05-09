@@ -103,25 +103,25 @@ internal static class Garbage {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void Mark(long size) {
-		Contracts.AssertPositiveOrZero(size);
+		size.AssertPositiveOrZero();
 		GC.AddMemoryPressure(size);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void Mark(XTexture2D texture) {
-		Contracts.AssertNotNull(texture);
+		texture.AssertNotNull();
 		Mark(texture.SizeBytes());
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void Unmark(long size) {
-		Contracts.AssertPositiveOrZero(size);
+		size.AssertPositiveOrZero();
 		GC.RemoveMemoryPressure(size);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void Unmark(XTexture2D texture) {
-		Contracts.AssertNotNull(texture);
+		texture.AssertNotNull();
 		Unmark(texture.SizeBytes());
 	}
 
@@ -130,7 +130,7 @@ internal static class Garbage {
 		if (!Config.Garbage.CollectAccountOwnedTextures) {
 			return;
 		}
-		Contracts.AssertPositiveOrZero(texels);
+		texels.AssertPositiveOrZero();
 		var size = format.SizeBytes(texels);
 		Mark(size);
 	}
@@ -140,7 +140,7 @@ internal static class Garbage {
 		if (!Config.Garbage.CollectAccountOwnedTextures) {
 			return;
 		}
-		Contracts.AssertPositiveOrZero(texels);
+		texels.AssertPositiveOrZero();
 		var size = format.SizeBytes(texels);
 		Unmark(size);
 	}
@@ -150,7 +150,7 @@ internal static class Garbage {
 		if (!Config.Garbage.CollectAccountUnownedTextures) {
 			return;
 		}
-		Contracts.AssertPositiveOrZero(texels);
+		texels.AssertPositiveOrZero();
 		var size = format.SizeBytes(texels);
 		Mark(size);
 	}
@@ -160,7 +160,7 @@ internal static class Garbage {
 		if (!Config.Garbage.CollectAccountUnownedTextures) {
 			return;
 		}
-		Contracts.AssertPositiveOrZero(texels);
+		texels.AssertPositiveOrZero();
 		var size = format.SizeBytes(texels);
 		Unmark(size);
 	}

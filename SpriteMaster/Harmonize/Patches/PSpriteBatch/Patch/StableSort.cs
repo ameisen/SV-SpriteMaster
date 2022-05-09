@@ -114,15 +114,15 @@ internal static class StableSort {
 		}
 
 		if (GetSortKeyImpl is null) {
-			Debug.Warning($"Could not get accessor for SpriteBatchItem 'SortKey' - slower path being used");
+			Debug.Warning("Could not get accessor for SpriteBatchItem 'SortKey' - slower path being used");
 		}
 
 
-		var newMethod = typeof(StableSort).GetMethod("ArrayStableSort", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public)?.MakeGenericMethod(new Type[] { SpriteBatchItemType });
+		var newMethod = typeof(StableSort).GetMethod("ArrayStableSort", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public)?.MakeGenericMethod(SpriteBatchItemType);
 		//var newMethod = typeof(StableSort).GetMethod("ArrayStableSort", BindingFlags.Static | BindingFlags.NonPublic)?.MakeGenericMethod(new Type[] { SpriteBatchItemType });
 
 		if (newMethod is null) {
-			Debug.Error($"Could not apply SpriteBatcher stable sorting patch: could not find MethodInfo for ArrayStableSort");
+			Debug.Error("Could not apply SpriteBatcher stable sorting patch: could not find MethodInfo for ArrayStableSort");
 			return instructions;
 		}
 
