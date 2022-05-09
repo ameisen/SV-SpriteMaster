@@ -19,7 +19,7 @@ internal static class ExtractSprite {
 			(spriteBounds.Extent / block).Max((1, 1))
 		);
 
-		var result = SpanExt.MakeUninitialized<Color8>(bounds.Area);
+		var result = SpanExt.Make<Color8>(bounds.Area);
 
 		int startOffset = (bounds.Offset.Y * stride) + bounds.Offset.X;
 		int outOffset = 0;
@@ -42,7 +42,7 @@ internal static class ExtractSprite {
 			return data.ToSpanUnsafe();
 		}
 		else {
-			var resultData = SpanExt.MakeUninitialized<Color8>(inBounds.Area);
+			var resultData = SpanExt.Make<Color8>(inBounds.Area);
 			int sourceOffset = (textureBounds.Width * inBounds.Top) + inBounds.Left;
 			int destOffset = 0;
 			for (int y = 0; y < inBounds.Height; ++y) {

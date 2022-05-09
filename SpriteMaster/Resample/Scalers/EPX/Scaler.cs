@@ -34,8 +34,8 @@ internal sealed partial class Scaler {
 			throw new ArgumentOutOfRangeException(nameof(targetSize));
 		}
 
-		if (targetData == Span<Color16>.Empty) {
-			targetData = SpanExt.MakeUninitialized<Color16>(targetSize.Area);
+		if (targetData.IsEmpty) {
+			targetData = SpanExt.Make<Color16>(targetSize.Area);
 		}
 		else {
 			if (targetSize.Area > targetData.Length) {

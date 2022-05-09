@@ -2,6 +2,7 @@
 using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
+using SpriteMaster.Types.Spans;
 using System;
 using System.Runtime.CompilerServices;
 using TeximpNet.Compression;
@@ -27,9 +28,21 @@ internal static class TeximpBlockEncoder {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static unsafe Span<byte> Encode(ReadOnlySpan<Color8> data, ref TextureFormat format, Vector2I dimensions, bool hasAlpha, bool isPunchthroughAlpha, bool isMasky, bool hasR, bool hasG, bool hasB) {
+	internal static unsafe bool Encode(
+		ReadOnlySpan<Color8> data,
+		ref TextureFormat format,
+		Vector2I dimensions,
+		bool hasAlpha,
+		bool isPunchthroughAlpha,
+		bool isMasky,
+		bool hasR,
+		bool hasG,
+		bool hasB,
+		out PinnedSpan<byte> result
+	) {
 		if (!BlockCompressionFunctional) {
-			return data.ToSpanUnsafe().Cast<byte>();
+			result = default;
+			return false;
 		}
 
 		var oldSpriteFormat = format;
@@ -61,11 +74,12 @@ internal static class TeximpBlockEncoder {
 			fixed (byte* p = data.Cast<byte>()) {
 				using var mipData = new MipData(dimensions.Width, dimensions.Height, dimensions.Width * sizeof(int), (IntPtr)p, false);
 				compressor.Input.SetData(mipData, false);
-				var memoryBuffer = new byte[((SurfaceFormat)textureFormat).SizeBytes(dimensions.Area)];
+				var memoryBuffer = GC.AllocateUninitializedArray<byte>((int)((SurfaceFormat)textureFormat).SizeBytes(dimensions.Area), pinned: true);
 				using var stream = memoryBuffer.Stream();
 				if (compressor.Process(stream)) {
 					format = textureFormat;
-					return memoryBuffer;
+					result = memoryBuffer;
+					return true;
 				}
 				else {
 					Debug.Warning($"Failed to use {(CompressionFormat)textureFormat} compression: " + compressor.LastErrorString);
@@ -79,6 +93,7 @@ internal static class TeximpBlockEncoder {
 		}
 		format = oldSpriteFormat;
 
-		return data.ToSpanUnsafe().Cast<byte>();
+		result = default;
+		return false;
 	}
 }

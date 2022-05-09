@@ -2,6 +2,7 @@
 using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
+using SpriteMaster.Types.Spans;
 using System;
 
 namespace SpriteMaster.Resample.Passes;
@@ -129,7 +130,7 @@ internal static class Padding {
 
 		// The actual padding logic. If we get to this point, we are actually performing padding.
 
-		var paddedData = SpanExt.MakeUninitialized<Color16>(paddedSpriteSize.Area);
+		var paddedData = SpanExt.Make<Color16>(paddedSpriteSize.Area);
 		paddedData.Clear();
 
 		{

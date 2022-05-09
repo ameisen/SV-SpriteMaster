@@ -167,7 +167,7 @@ internal static class InternalBlockDecoder {
 		switch (format) {
 			case SurfaceFormat.Dxt1: {
 					var blocks = data.Cast<ColorBlock>();
-					var outData = SpanExt.MakePinned<byte>((int)uSize.Area);
+					var outData = SpanExt.Make<byte>((int)uSize.Area);
 					var outDataPacked = outData.Cast<uint>();
 
 					var widthBlocks = uSize.Width >> 2;
@@ -192,7 +192,7 @@ internal static class InternalBlockDecoder {
 				}
 			case SurfaceFormat.Dxt3: {
 					var blocks = data.Cast<ColorBlockDxt3>();
-					var outData = SpanExt.MakePinned<byte>((int)uSize.Area * sizeof(uint));
+					var outData = SpanExt.Make<byte>((int)uSize.Area * sizeof(uint));
 					var outDataPacked = outData.Cast<uint>();
 
 					var widthBlocks = uSize.Width >> 2;

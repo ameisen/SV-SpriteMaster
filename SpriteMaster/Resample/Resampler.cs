@@ -1,5 +1,4 @@
 ﻿using LinqFasterer;
-using Microsoft.Toolkit.HighPerformance;
 using SpriteMaster.Caching;
 using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
@@ -8,6 +7,7 @@ using SpriteMaster.Resample.Passes;
 using SpriteMaster.Tasking;
 using SpriteMaster.Types;
 using SpriteMaster.Types.Fixed;
+using SpriteMaster.Types.Spans;
 using System;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -72,13 +72,12 @@ internal sealed class Resampler {
 
 	private enum GammaState {
 		Linear,
-		Gamma,
-		Unknown
+		Gamma
 	}
 
 	//internal static readonly ArrayPool<Color16> ResamplerArrayPool = ArrayPool<Color16>.Shared;
 
-	private static unsafe Span<byte> CreateNewTexture(
+	private static unsafe ReadOnlyPinnedSpan<byte> CreateNewTexture(
 		ManagedSpriteInstance texture,
 		bool async,
 		SpriteInfo input,
@@ -186,20 +185,27 @@ internal sealed class Resampler {
 				result = ResampleStatus.DisabledSolid;
 				size = default;
 				format = default;
-				return Span<byte>.Empty;
+				return PinnedSpan<byte>.Empty;
 			}
 		}
 
 		// TODO : handle inverted input.Bounds
-		var spriteRawData8 = ExtractSprite.Extract(
-			data: input.ReferenceData.AsSpan<Color8>(),
-			textureBounds: input.Reference.Bounds,
-			spriteBounds: inputBounds,
-			stride: input.ReferenceSize.Width,
-			block: blockSize,
-			newExtent: out Vector2I spriteRawExtent
-		);
-		var innerSpriteRawExtent = spriteRawExtent;
+		ReadOnlySpan<Color8> spriteRawData8;
+		Vector2I spriteRawExtent;
+		if (blockSize <= 1 && inputBounds == input.Reference.Bounds) {
+			spriteRawData8 = input.ReferenceData.AsReadOnlySpan<Color8>();
+			spriteRawExtent = inputBounds.Extent;
+		}
+		else {
+			spriteRawData8 = ExtractSprite.Extract(
+				data: input.ReferenceData.AsSpan<Color8>(),
+				textureBounds: input.Reference.Bounds,
+				spriteBounds: inputBounds,
+				stride: input.ReferenceSize.Width,
+				block: blockSize,
+				newExtent: out spriteRawExtent
+			);
+		}
 
 		if (Config.Debug.Sprite.DumpReference) {
 			Textures.DumpTexture(
@@ -251,7 +257,7 @@ internal sealed class Resampler {
 			result = isGradient ? ResampleStatus.DisabledGradient : ResampleStatus.Disabled;
 			size = default;
 			format = default;
-			return Span<byte>.Empty;
+			return PinnedSpan<byte>.Empty;
 		}
 
 		if (analysis.MaxChannelShades <= 1) {
@@ -268,7 +274,7 @@ internal sealed class Resampler {
 				result = ResampleStatus.DisabledSolid;
 				size = default;
 				format = default;
-				return Span<byte>.Empty;
+				return PinnedSpan<byte>.Empty;
 			}
 		}
 
@@ -349,7 +355,7 @@ internal sealed class Resampler {
 			scaledSize = spriteRawExtent * scale;
 			scaledSizeClamped = scaledSize.Min(Config.ClampDimension);
 
-			bitmapDataWide = SpanExt.MakePinned<Color16>(scaledSize.Area);
+			bitmapDataWide = SpanExt.Make<Color16>(scaledSize.Area);
 
 			try {
 				var doWrap = wrapped | input.IsWater;
@@ -364,7 +370,7 @@ internal sealed class Resampler {
 				}
 
 				if (Config.Resample.Deposterization.PreEnabled) {
-					spriteRawData = Deposterize.Enhance<Color16>(spriteRawData, spriteRawExtent, doWrap);
+					spriteRawData = Deposterize.Enhance(spriteRawData, spriteRawExtent, doWrap);
 
 					if (Config.Debug.Sprite.DumpReference) {
 						Textures.DumpTexture(
@@ -394,7 +400,7 @@ internal sealed class Resampler {
 				);
 
 				if (Config.Resample.Deposterization.PostEnabled) {
-					bitmapDataWide = Deposterize.Enhance<Color16>(bitmapDataWide, scaledSize, doWrap);
+					bitmapDataWide = Deposterize.Enhance(bitmapDataWide, scaledSize, doWrap);
 				}
 
 				if (Config.Resample.UseColorEnhancement) {
@@ -457,7 +463,7 @@ internal sealed class Resampler {
 		}
 
 		// Narrow
-		var bitmapData = Color8.Convert(bitmapDataWide);
+		var bitmapData = Color8.ConvertPinned(bitmapDataWide);
 		var resultData = bitmapData.AsBytes();
 
 		if (Config.Debug.Sprite.DumpResample) {
@@ -501,8 +507,9 @@ internal sealed class Resampler {
 					green[i] = 0;
 					red[i] = 0;
 				}
-
-				foreach (var color in bitmapData) {
+				
+				for (int i = 0; i < bitmapData.Length; ++i) {
+					var color = bitmapData[i];
 					alpha[color.A.Value]++;
 					blue[color.B.Value]++;
 					green[color.G.Value]++;
@@ -523,10 +530,14 @@ internal sealed class Resampler {
 				}
 			}
 
+			ReadOnlySpan<Color8> uncompressedBitmapData = bitmapData;
+			var originalScaledSizeClamped = scaledSizeClamped;
+			var originalBlockPadding = blockPadding;
+
 			if (!Decoder.BlockDecoderCommon.IsBlockMultiple(scaledSizeClamped)) {
 				var blockPaddedSize = scaledSizeClamped + 3 & ~3;
 
-				var spanDst = SpanExt.MakeUninitialized<Color8>(blockPaddedSize.Area);
+				var spanDst = SpanExt.Make<Color8>(blockPaddedSize.Area);
 				var spanSrc = bitmapData;
 
 				int y;
@@ -554,13 +565,13 @@ internal sealed class Resampler {
 					}
 				}
 
-				bitmapData = spanDst;
+				uncompressedBitmapData = spanDst;
 				blockPadding += blockPaddedSize - scaledSizeClamped;
 				scaledSizeClamped = blockPaddedSize;
 
 				if (Config.Debug.Sprite.DumpResample) {
 					Textures.DumpTexture(
-						source: bitmapData,
+						source: uncompressedBitmapData,
 						sourceSize: blockPaddedSize,
 						// swap: (2, 1, 0, 4),
 						path: MakeDumpPath(analysis: analysis, padding: padding, modifiers: new[] { "resample", "blockpadded" })
@@ -568,29 +579,22 @@ internal sealed class Resampler {
 				}
 			}
 
-			resultData = TextureEncode.Encode(
-				data: bitmapData,
-				format: ref format,
-				dimensions: scaledSizeClamped,
-				hasAlpha: hasAlpha,
-				isPunchthroughAlpha: isPunchThroughAlpha,
-				isMasky: isMasky,
-				hasR: hasR,
-				hasG: hasG,
-				hasB: hasB
-			);
-
-			/*
-			if (Config.Debug.Sprite.DumpResample) {
-				Textures.DumpTexture(
-					source: resultData,
-					sourceSize: scaledSizeClamped,
-					format: format,
-					// swap: (2, 1, 0, 4),
-					path: MakeDumpPath(analysis: analysis, padding: padding, modifiers: new[] { "resample", "encoded" })
-				);
+			if (!TextureEncode.Encode(
+					data: uncompressedBitmapData,
+					format: ref format,
+					dimensions: scaledSizeClamped,
+					hasAlpha: hasAlpha,
+					isPunchthroughAlpha: isPunchThroughAlpha,
+					isMasky: isMasky,
+					hasR: hasR,
+					hasG: hasG,
+					hasB: hasB,
+					result: out resultData
+				)) {
+				resultData = bitmapData.AsBytes();
+				blockPadding = originalBlockPadding;
+				scaledSizeClamped = originalScaledSizeClamped;
 			}
-			*/
 		}
 
 		size = scaledSizeClamped;
@@ -665,7 +669,7 @@ internal sealed class Resampler {
 
 			var cachePath = FileCache.GetPath($"{hashString}.cache");
 
-			Span<byte> bitmapData;
+			ReadOnlySpan<byte> bitmapData;
 			try {
 				if (FileCache.Fetch(
 					path: cachePath,
@@ -698,8 +702,9 @@ internal sealed class Resampler {
 			if (bitmapData.IsEmpty) {
 				bool isGradient = false;
 
+				ReadOnlyPinnedSpan<byte> pinnedBitmapData;
 				try {
-					bitmapData = CreateNewTexture(
+					bitmapData = pinnedBitmapData = CreateNewTexture(
 						async: async,
 						texture: spriteInstance,
 						input: input,
@@ -735,7 +740,7 @@ internal sealed class Resampler {
 						blockPadding: spriteInstance.BlockPadding,
 						scalerInfo: spriteInstance.ScalerInfo,
 						gradient: isGradient,
-						data: bitmapData
+						data: pinnedBitmapData
 					);
 				}
 				catch {

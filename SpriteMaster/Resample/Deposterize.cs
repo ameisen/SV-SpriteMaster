@@ -4,6 +4,7 @@ using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using SpriteMaster.Types.Fixed;
+using SpriteMaster.Types.Spans;
 using System;
 using System.Runtime.CompilerServices;
 using static SpriteMaster.Colors.ColorHelpers;
@@ -14,7 +15,7 @@ namespace SpriteMaster.Resample;
 internal static class Deposterize {
 	private static readonly ColorSpace CurrentColorSpace = ColorSpace.sRGB_Precise;
 
-	private class DeposterizeContext<T> where T : unmanaged {
+	private class DeposterizeContext {
 		private readonly Vector2I Size;
 		private readonly Vector2B Wrapped;
 		private readonly int Passes;
@@ -227,20 +228,16 @@ internal static class Deposterize {
 			}
 		}
 
-		internal Span<T> Execute(ReadOnlySpan<T> data) {
-			var buffer1 = SpanExt.MakeUninitialized<T>(data.Length);
-			var buffer2 = SpanExt.MakeUninitialized<T>(data.Length);
+		internal Span<Color16> Execute(ReadOnlySpan<Color16> data) {
+			var buffer1 = SpanExt.Make<Color16>(data.Length);
+			var buffer2 = SpanExt.Make<Color16>(data.Length);
 
-			var inData = data.Cast<T, Color16>();
-			var buffer1Data = buffer1.Cast<T, Color16>();
-			var buffer2Data = buffer2.Cast<T, Color16>();
-
-			DeposterizeH(inData, buffer1Data);
-			DeposterizeV(buffer1Data, buffer2Data);
+			DeposterizeH(data, buffer1);
+			DeposterizeV(buffer1, buffer2);
 			//buffer1Data.CopyTo(buffer2Data);
 			for (int pass = 1; pass < Passes; ++pass) {
-				DeposterizeH(buffer2Data, buffer1Data);
-				DeposterizeV(buffer1Data, buffer2Data);
+				DeposterizeH(buffer2, buffer1);
+				DeposterizeV(buffer1, buffer2);
 				//buffer1Data.CopyTo(buffer2Data);
 			}
 
@@ -259,15 +256,15 @@ internal static class Deposterize {
 	*/
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static Span<T> Enhance<T>(
-		ReadOnlySpan<T> data,
+	internal static Span<Color16> Enhance(
+		ReadOnlySpan<Color16> data,
 		Vector2I size,
 		Vector2B wrapped,
 		int? passes = null,
 		int? threshold = null,
 		int? blockSize = null
-	) where T : unmanaged {
-		var context = new DeposterizeContext<T>(
+	) {
+		var context = new DeposterizeContext(
 			size: size,
 			wrapped: wrapped,
 			passes: passes ?? Config.Resample.Deposterization.Passes,

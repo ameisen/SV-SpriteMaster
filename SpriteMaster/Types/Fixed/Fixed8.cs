@@ -127,7 +127,7 @@ internal readonly struct Fixed8 : IEquatable<Fixed8>, IEquatable<byte>, ILongHas
 
 	[MethodImpl(MethodImpl.Hot)]
 	internal static Span<float> ConvertToReal(ReadOnlySpan<Fixed8> values) {
-		var result = SpanExt.MakeUninitialized<float>(values.Length);
+		var result = SpanExt.Make<float>(values.Length);
 		for (int i = 0; i < values.Length; ++i) {
 			result[i] = values[i].Real;
 		}
@@ -136,7 +136,7 @@ internal readonly struct Fixed8 : IEquatable<Fixed8>, IEquatable<byte>, ILongHas
 
 	[MethodImpl(MethodImpl.Hot)]
 	internal static Span<Fixed8> ConvertFromReal(ReadOnlySpan<float> values) {
-		var result = SpanExt.MakeUninitialized<Fixed8>(values.Length);
+		var result = SpanExt.Make<Fixed8>(values.Length);
 		for (int i = 0; i < values.Length; ++i) {
 			result[i] = values[i].ScalarToValue8();
 		}

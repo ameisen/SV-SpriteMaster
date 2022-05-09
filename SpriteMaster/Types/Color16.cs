@@ -1,5 +1,6 @@
 ﻿using SpriteMaster.Extensions;
 using SpriteMaster.Types.Fixed;
+using SpriteMaster.Types.Spans;
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -135,8 +136,16 @@ internal struct Color16 : IEquatable<Color16>, IEquatable<ulong>, ILongHash {
 		}
 	}
 
-	internal static Span<Color16> Convert(ReadOnlySpan<Color8> source, bool pinned = true) {
-		var destination = SpanExt.MakeUninitialized<Color16>(source.Length, pinned: pinned);
+	internal static Span<Color16> Convert(ReadOnlySpan<Color8> source) {
+		var destination = SpanExt.Make<Color16>(source.Length);
+		for (int i = 0; i < source.Length; ++i) {
+			destination[i] = From(source[i]);
+		}
+		return destination;
+	}
+
+	internal static PinnedSpan<Color16> ConvertPinned(ReadOnlySpan<Color8> source) {
+		var destination = SpanExt.MakePinned<Color16>(source.Length);
 		for (int i = 0; i < source.Length; ++i) {
 			destination[i] = From(source[i]);
 		}

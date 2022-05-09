@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SpriteMaster.Types.Spans;
+using System;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Extensions;
@@ -56,6 +57,9 @@ internal static class Compression {
 	internal static byte[] Compress(this Span<byte> data, Algorithm algorithm) => Compress((ReadOnlySpan<byte>)data, algorithm);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static byte[] Compress(this PinnedSpan<byte> data, Algorithm algorithm) => Compress((ReadOnlyPinnedSpan<byte>)data, algorithm);
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static byte[] Compress(this byte[] data) => Compress(data, BestAlgorithm);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -63,6 +67,12 @@ internal static class Compression {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static byte[] Compress(this Span<byte> data) => Compress((ReadOnlySpan<byte>)data);
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static byte[] Compress(this ReadOnlyPinnedSpan<byte> data) => Compress(data, BestAlgorithm);
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static byte[] Compress(this PinnedSpan<byte> data) => Compress((ReadOnlySpan<byte>)data);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static byte[] Decompress(this byte[] data, int size, Algorithm algorithm) {

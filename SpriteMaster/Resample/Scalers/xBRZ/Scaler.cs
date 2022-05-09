@@ -5,6 +5,7 @@ using SpriteMaster.Resample.Scalers.xBRZ.Common;
 using SpriteMaster.Resample.Scalers.xBRZ.Scalers;
 using SpriteMaster.Resample.Scalers.xBRZ.Structures;
 using SpriteMaster.Types;
+using SpriteMaster.Types.Spans;
 using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
@@ -41,8 +42,8 @@ internal sealed partial class Scaler {
 			throw new ArgumentOutOfRangeException(nameof(targetSize));
 		}
 
-		if (targetData == Span<Color16>.Empty) {
-			targetData = SpanExt.MakeUninitialized<Color16>(targetSize.Area);
+		if (targetData.IsEmpty) {
+			targetData = SpanExt.Make<Color16>(targetSize.Area);
 		}
 		else {
 			if (targetSize.Area > targetData.Length) {

@@ -4,6 +4,7 @@ using SpriteMaster.Extensions;
 using SpriteMaster.Resample;
 using SpriteMaster.Tasking;
 using SpriteMaster.Types;
+using SpriteMaster.Types.Spans;
 using System;
 using System.Collections.Concurrent;
 using System.IO;
@@ -149,7 +150,7 @@ internal static class FileCache {
 		out Vector2I blockPadding,
 		out IScalerInfo? scalerInfo,
 		out bool gradient,
-		out Span<byte> data
+		out ReadOnlySpan<byte> data
 	) {
 		scale = 0;
 		size = Vector2I.Zero;
@@ -164,75 +165,77 @@ internal static class FileCache {
 		try {
 			CurrentTaskLock.EnterReadLock();
 
-			if (Config.FileCache.Enabled && File.Exists(path)) {
-				int retries = Config.FileCache.LockRetries;
+			if (!Config.FileCache.Enabled || !File.Exists(path)) {
+				return false;
+			}
 
-				while (retries-- > 0) {
-					if (SavingMap.TryGetValue(path, out var state) && state != SaveState.Saved) {
-						Thread.Sleep(Config.FileCache.LockSleepMS);
-						continue;
+			int retries = Config.FileCache.LockRetries;
+
+			while (retries-- > 0) {
+				if (SavingMap.TryGetValue(path, out var state) && state != SaveState.Saved) {
+					Thread.Sleep(Config.FileCache.LockSleepMS);
+					continue;
+				}
+
+				// https://stackoverflow.com/questions/1304/how-to-check-for-file-lock
+				static bool WasLocked(IOException ex) {
+					var errorCode = Marshal.GetHRForException(ex) & (1 << 16) - 1;
+					return errorCode is (32 or 33);
+				}
+
+				try {
+					long startTime = Config.FileCache.Profile ? DateTime.Now.Ticks : 0L;
+
+					Scaler scaler;
+					using (var reader = new BinaryReader(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))) {
+						var header = CacheHeader.Read(reader);
+						header.Validate(path);
+
+						scale = header.Scale;
+						size = header.Size;
+						format = header.Format;
+						wrapped = header.Wrapped;
+						padding = header.Padding;
+						blockPadding = header.BlockPadding;
+						scaler = header.Scaler;
+						gradient = header.Gradient;
+						var uncompressedDataLength = header.UncompressedDataLength;
+						var dataLength = header.DataLength;
+						var dataHash = header.DataHash;
+
+						var rawData = reader.ReadBytes((int)dataLength);
+
+						if (rawData.Hash() != dataHash) {
+							throw new IOException($"Cache File '{path}' is corrupted");
+						}
+
+						data = rawData.Decompress((int)uncompressedDataLength, header.Algorithm);
 					}
 
-					// https://stackoverflow.com/questions/1304/how-to-check-for-file-lock
-					static bool WasLocked(IOException ex) {
-						var errorCode = Marshal.GetHRForException(ex) & (1 << 16) - 1;
-						return errorCode is (32 or 33);
+					if (Config.FileCache.Profile) {
+						var meanTicks = CacheProfiler.AddFetchTime((ulong)(DateTime.Now.Ticks - startTime));
+						Debug.Info($"Mean Time Per Fetch: {(double)meanTicks / TimeSpan.TicksPerMillisecond} ms");
 					}
 
-					try {
-						long startTime = Config.FileCache.Profile ? DateTime.Now.Ticks : 0L;
+					scalerInfo = Resample.Scalers.IScaler.GetScalerInfo(scaler);
 
-						Scaler scaler;
-						using (var reader = new BinaryReader(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))) {
-							var header = CacheHeader.Read(reader);
-							header.Validate(path);
-
-							scale = header.Scale;
-							size = header.Size;
-							format = header.Format;
-							wrapped = header.Wrapped;
-							padding = header.Padding;
-							blockPadding = header.BlockPadding;
-							scaler = header.Scaler;
-							gradient = header.Gradient;
-							var uncompressedDataLength = header.UncompressedDataLength;
-							var dataLength = header.DataLength;
-							var dataHash = header.DataHash;
-
-							var rawData = reader.ReadBytes((int)dataLength);
-
-							if (rawData.Hash() != dataHash) {
-								throw new IOException($"Cache File '{path}' is corrupted");
+					return true;
+				}
+				catch (Exception ex) {
+					switch (ex) {
+						case IOException iox when !WasLocked(iox):
+						default:
+							ex.PrintWarning();
+							try { File.Delete(path); }
+							catch {
+								// ignored
 							}
 
-							data = rawData.Decompress((int)uncompressedDataLength, header.Algorithm);
-						}
-
-						if (Config.FileCache.Profile) {
-							var meanTicks = CacheProfiler.AddFetchTime((ulong)(DateTime.Now.Ticks - startTime));
-							Debug.Info($"Mean Time Per Fetch: {(double)meanTicks / TimeSpan.TicksPerMillisecond} ms");
-						}
-
-						scalerInfo = Resample.Scalers.IScaler.GetScalerInfo(scaler);
-
-						return true;
-					}
-					catch (Exception ex) {
-						switch (ex) {
-							case IOException iox when !WasLocked(iox):
-							default:
-								ex.PrintWarning();
-								try { File.Delete(path); }
-								catch {
-									// ignored
-								}
-
-								return false;
-							case IOException iox when WasLocked(iox):
-								Debug.Trace($"File was locked when trying to load cache file '{path}': {ex} - {ex.Message} [{retries} retries]");
-								Thread.Sleep(Config.FileCache.LockSleepMS);
-								break;
-						}
+							return false;
+						case IOException iox when WasLocked(iox):
+							Debug.Trace($"File was locked when trying to load cache file '{path}': {ex} - {ex.Message} [{retries} retries]");
+							Thread.Sleep(Config.FileCache.LockSleepMS);
+							break;
 					}
 				}
 			}
@@ -241,6 +244,18 @@ internal static class FileCache {
 		finally {
 			CurrentTaskLock.ExitReadLock();
 		}
+	}
+
+	private unsafe readonly struct PinnedData<T> where T : unmanaged {
+		private readonly T* Pointer;
+		private readonly int Length;
+
+		internal PinnedData(ReadOnlyPinnedSpan<T> span) {
+			Pointer = (T*)Unsafe.AsPointer(ref span.GetPinnableReferenceUnsafe());
+			Length = span.Length;
+		}
+
+		internal PinnedSpan<T> AsSpan => new(Pointer, Length);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -254,7 +269,7 @@ internal static class FileCache {
 		Vector2I blockPadding,
 		IScalerInfo? scalerInfo,
 		bool gradient,
-		ReadOnlySpan<byte> data
+		ReadOnlyPinnedSpan<byte> data
 	) {
 		if (!Config.FileCache.Enabled) {
 			return true;
@@ -268,19 +283,18 @@ internal static class FileCache {
 			TaskFactory.StartNew(obj => {
 				CurrentTaskLock.EnterReadLock();
 				try {
-					var data = (byte[])obj!;
+					var data = ((PinnedData<byte>)obj!).AsSpan;
 					bool failure = false;
 					try {
 						long startTime = Config.FileCache.Profile ? DateTime.Now.Ticks : 0L;
 
 						using (var writer = new BinaryWriter(new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None))) {
 							if (!writer.BaseStream.CanWrite) {
-								failure = true;
 								return;
 							}
 							var algorithm = SystemCompression && !Config.FileCache.ForceCompress ? Compression.Algorithm.None : Config.FileCache.Compress;
 
-							var compressedData = data.Compress(algorithm);
+							Span<byte> compressedData = data.Compress(algorithm);
 
 							if (compressedData.Length >= data.Length) {
 								compressedData = data;
@@ -335,7 +349,7 @@ internal static class FileCache {
 				finally {
 					CurrentTaskLock.ExitReadLock();
 				}
-			}, data.ToArray()); // TODO : eliminate this copy
+			}, new PinnedData<byte>(data));
 			return true;
 		}
 		finally {

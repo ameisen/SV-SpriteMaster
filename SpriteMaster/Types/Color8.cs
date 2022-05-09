@@ -1,5 +1,6 @@
 ﻿using SpriteMaster.Extensions;
 using SpriteMaster.Types.Fixed;
+using SpriteMaster.Types.Spans;
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -150,8 +151,16 @@ internal partial struct Color8 : IEquatable<Color8>, IEquatable<uint>, ILongHash
 		}
 	}
 
-	internal static Span<Color8> Convert(ReadOnlySpan<Color16> source, bool pinned = true) {
-		var destination = SpanExt.MakeUninitialized<Color8>(source.Length, pinned: pinned);
+	internal static Span<Color8> Convert(ReadOnlySpan<Color16> source) {
+		var destination = SpanExt.Make<Color8>(source.Length);
+		for (int i = 0; i < source.Length; ++i) {
+			destination[i] = From(source[i]);
+		}
+		return destination;
+	}
+
+	internal static PinnedSpan<Color8> ConvertPinned(ReadOnlySpan<Color16> source) {
+		var destination = SpanExt.MakePinned<Color8>(source.Length);
 		for (int i = 0; i < source.Length; ++i) {
 			destination[i] = From(source[i]);
 		}
