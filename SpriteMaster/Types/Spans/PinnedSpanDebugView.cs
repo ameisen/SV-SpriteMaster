@@ -5,7 +5,7 @@
 
 namespace SpriteMaster.Types.Spans;
 
-internal sealed class PinnedSpanDebugView<T> {
+internal sealed class PinnedSpanDebugView<T> where T : unmanaged {
 	private readonly T[] _array;
 
 	public PinnedSpanDebugView(PinnedSpan<T> span) {
@@ -14,6 +14,12 @@ internal sealed class PinnedSpanDebugView<T> {
 
 	public PinnedSpanDebugView(ReadOnlyPinnedSpan<T> span) {
 		_array = span.ToArray();
+	}
+
+	public PinnedSpanDebugView(PinnedSpan<T>.FixedSpan span) : this(span.AsSpan) {
+	}
+
+	public PinnedSpanDebugView(ReadOnlyPinnedSpan<T>.FixedSpan span) : this(span.AsSpan) {
 	}
 
 	[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]

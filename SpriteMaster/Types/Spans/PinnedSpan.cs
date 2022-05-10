@@ -8,10 +8,11 @@ namespace SpriteMaster.Types.Spans;
 
 [DebuggerTypeProxy(typeof(PinnedSpanDebugView<>))]
 [DebuggerDisplay("{ToString(),raw}")]
-internal readonly ref struct PinnedSpan<T> {
+internal readonly ref struct PinnedSpan<T> where T : unmanaged {
 
 	internal static PinnedSpan<T> Empty => new(null);
 
+	internal readonly object ReferenceObject;
 	internal readonly Span<T> InnerSpan;
 
 	/// <summary>
@@ -21,6 +22,7 @@ internal readonly ref struct PinnedSpan<T> {
 	/// <remarks>Returns default when <paramref name="array"/> is null.</remarks>
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal PinnedSpan(T[]? array) {
+		ReferenceObject = array!;
 		InnerSpan = new(array);
 	}
 
@@ -37,6 +39,7 @@ internal readonly ref struct PinnedSpan<T> {
 	/// </exception>
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal PinnedSpan(T[] array, int start, int length) {
+		ReferenceObject = array;
 		InnerSpan = new(array, start, length);
 	}
 
@@ -55,22 +58,25 @@ internal readonly ref struct PinnedSpan<T> {
 	/// Thrown when the specified <paramref name="length"/> is negative.
 	/// </exception>
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal unsafe PinnedSpan(void* pointer, int length) {
+	internal unsafe PinnedSpan(object refObject, void* pointer, int length) {
+		ReferenceObject = refObject;
 		InnerSpan = new(pointer, length);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal unsafe PinnedSpan(ref T pointer, int length) {
+	internal unsafe PinnedSpan(object refObject, ref T pointer, int length) {
+		ReferenceObject = refObject;
 		InnerSpan = new(Unsafe.AsPointer(ref pointer), length);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private PinnedSpan(Span<T> span) {
+	private PinnedSpan(object refObject, Span<T> span) {
+		ReferenceObject = refObject;
 		InnerSpan = span;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static PinnedSpan<T> FromInternal(Span<T> span) => new(span);
+	internal static PinnedSpan<T> FromInternal(object refObject, Span<T> span) => new(refObject, span);
 
 	// Most ripped from Span.cs
 
@@ -163,12 +169,6 @@ internal readonly ref struct PinnedSpan<T> {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static implicit operator PinnedSpan<T>(T[]? array) => new(array);
 
-	/// <summary>
-	/// Defines an implicit conversion of a <see cref="ArraySegment{T}"/> to a <see cref="PinnedSpan{T}"/>
-	/// </summary>
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static implicit operator PinnedSpan<T>(ArraySegment<T> segment) => new(segment);
-
 	/// <summary>Gets an enumerator for this span.</summary>
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public Span<T>.Enumerator GetEnumerator() => InnerSpan.GetEnumerator();
@@ -236,7 +236,7 @@ internal readonly ref struct PinnedSpan<T> {
 	/// Defines an implicit conversion of a <see cref="PinnedSpan{T}"/> to a <see cref="ReadOnlyPinnedSpan{T}"/>
 	/// </summary>
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static implicit operator ReadOnlyPinnedSpan<T>(PinnedSpan<T> span) => ReadOnlyPinnedSpan<T>.FromInternal(span.InnerSpan);
+	public static implicit operator ReadOnlyPinnedSpan<T>(PinnedSpan<T> span) => ReadOnlyPinnedSpan<T>.FromInternal(span.ReferenceObject, span.InnerSpan);
 
 	/// <summary>
 	/// For <see cref="Span{Char}"/>, returns a new instance of string that represents the characters pointed to by the span.
@@ -253,7 +253,7 @@ internal readonly ref struct PinnedSpan<T> {
 	/// Thrown when the specified <paramref name="start"/> index is not in range (&lt;0 or &gt;Length).
 	/// </exception>
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal PinnedSpan<T> Slice(int start) => new(InnerSpan.Slice(start));
+	internal PinnedSpan<T> Slice(int start) => new(ReferenceObject, InnerSpan.Slice(start));
 
 	/// <summary>
 	/// Forms a slice out of the given span, beginning at 'start', of given length
@@ -264,7 +264,7 @@ internal readonly ref struct PinnedSpan<T> {
 	/// Thrown when the specified <paramref name="start"/> or end index is not in range (&lt;0 or &gt;Length).
 	/// </exception>
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal PinnedSpan<T> Slice(int start, int length) => new(InnerSpan.Slice(start, length));
+	internal PinnedSpan<T> Slice(int start, int length) => new(ReferenceObject, InnerSpan.Slice(start, length));
 
 	/// <summary>
 	/// Copies the contents of this span into a new array.  This heap
@@ -273,4 +273,22 @@ internal readonly ref struct PinnedSpan<T> {
 	/// </summary>
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal T[] ToArray() => InnerSpan.ToArray();
+
+	[DebuggerTypeProxy(typeof(PinnedSpanDebugView<>))]
+	[DebuggerDisplay("{AsSpan.ToString(),raw}")]
+	internal unsafe readonly struct FixedSpan {
+		private readonly object ReferenceObject;
+		private readonly void* Pointer;
+		private readonly int Length;
+
+		internal FixedSpan(PinnedSpan<T> span) {
+			ReferenceObject = span.ReferenceObject;
+			Pointer = Unsafe.AsPointer(ref span.GetPinnableReferenceUnsafe());
+			Length = span.Length;
+		}
+
+		internal PinnedSpan<T> AsSpan => new(ReferenceObject, Pointer, Length);
+	}
+
+	internal FixedSpan Fixed => new(this);
 }

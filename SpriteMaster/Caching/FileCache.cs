@@ -246,18 +246,6 @@ internal static class FileCache {
 		}
 	}
 
-	private unsafe readonly struct PinnedData<T> where T : unmanaged {
-		private readonly T* Pointer;
-		private readonly int Length;
-
-		internal PinnedData(ReadOnlyPinnedSpan<T> span) {
-			Pointer = (T*)Unsafe.AsPointer(ref span.GetPinnableReferenceUnsafe());
-			Length = span.Length;
-		}
-
-		internal PinnedSpan<T> AsSpan => new(Pointer, Length);
-	}
-
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool Save(
 		string path,
@@ -283,7 +271,7 @@ internal static class FileCache {
 			TaskFactory.StartNew(obj => {
 				CurrentTaskLock.EnterReadLock();
 				try {
-					var data = ((PinnedData<byte>)obj!).AsSpan;
+					var data = ((ReadOnlyPinnedSpan<byte>.FixedSpan)obj!).AsSpan;
 					bool failure = false;
 					try {
 						long startTime = Config.FileCache.Profile ? DateTime.Now.Ticks : 0L;
@@ -294,7 +282,7 @@ internal static class FileCache {
 							}
 							var algorithm = SystemCompression && !Config.FileCache.ForceCompress ? Compression.Algorithm.None : Config.FileCache.Compress;
 
-							Span<byte> compressedData = data.Compress(algorithm);
+							ReadOnlySpan<byte> compressedData = data.Compress(algorithm);
 
 							if (compressedData.Length >= data.Length) {
 								compressedData = data;
@@ -349,7 +337,7 @@ internal static class FileCache {
 				finally {
 					CurrentTaskLock.ExitReadLock();
 				}
-			}, new PinnedData<byte>(data));
+			}, data.Fixed);
 			return true;
 		}
 		finally {

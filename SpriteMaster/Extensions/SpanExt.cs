@@ -14,7 +14,7 @@ namespace SpriteMaster.Extensions;
 internal static class SpanExt {
 	internal static Span<T> Make<T>(int count) where T : struct => GC.AllocateUninitializedArray<T>(count, pinned: false);
 
-	internal static PinnedSpan<T> MakePinned<T>(int count) where T : struct => GC.AllocateUninitializedArray<T>(count, pinned: true);
+	internal static PinnedSpan<T> MakePinned<T>(int count) where T : unmanaged => GC.AllocateUninitializedArray<T>(count, pinned: true);
 
 	internal static unsafe Span<T> ToSpan<T>(this UnmanagedMemoryStream stream) where T : unmanaged => new(stream.PositionPointer, (int)((stream.Length - stream.Position) / sizeof(T)));
 
@@ -28,17 +28,17 @@ internal static class SpanExt {
 	internal static void CopyTo<T>(this ReadOnlySpan<T> inSpan, Span<T> outSpan, int inOffset, int outOffset, int count) =>
 		inSpan.Slice(inOffset, count).CopyTo(outSpan.Slice(outOffset, count));
 
-	internal static void CopyTo<T>(this PinnedSpan<T> inSpan, Span<T> outSpan, int inOffset, int outOffset, int count) =>
+	internal static void CopyTo<T>(this PinnedSpan<T> inSpan, Span<T> outSpan, int inOffset, int outOffset, int count) where T : unmanaged =>
 		inSpan.Slice(inOffset, count).CopyTo(outSpan.Slice(outOffset, count));
 
-	internal static void CopyTo<T>(this ReadOnlyPinnedSpan<T> inSpan, Span<T> outSpan, int inOffset, int outOffset, int count) =>
+	internal static void CopyTo<T>(this ReadOnlyPinnedSpan<T> inSpan, Span<T> outSpan, int inOffset, int outOffset, int count) where T : unmanaged =>
 		inSpan.Slice(inOffset, count).CopyTo(outSpan.Slice(outOffset, count));
 
 	internal static PinnedSpan<U> Cast<T, U>(this PinnedSpan<T> span) where T : unmanaged where U : unmanaged =>
-		PinnedSpan<U>.FromInternal(span.InnerSpan.Cast<T, U>());
+		PinnedSpan<U>.FromInternal(span.ReferenceObject, span.InnerSpan.Cast<T, U>());
 
 	internal static ReadOnlyPinnedSpan<U> Cast<T, U>(this ReadOnlyPinnedSpan<T> span) where T : unmanaged where U : unmanaged =>
-		ReadOnlyPinnedSpan<U>.FromInternal(span.InnerSpan.Cast<T, U>());
+		ReadOnlyPinnedSpan<U>.FromInternal(span.ReferenceObject, span.InnerSpan.Cast<T, U>());
 
 	internal static Span<T> Cast<T>(this Span<byte> span) where T : unmanaged => span.Cast<byte, T>();
 	internal static Span<T> Cast<T>(this Span<int> span) where T : unmanaged => span.Cast<int, T>();

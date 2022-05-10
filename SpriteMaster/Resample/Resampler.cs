@@ -669,6 +669,7 @@ internal sealed class Resampler {
 
 			var cachePath = FileCache.GetPath($"{hashString}.cache");
 
+			ReadOnlyPinnedSpan<byte> pinnedBitmapData = default;
 			ReadOnlySpan<byte> bitmapData;
 			try {
 				if (FileCache.Fetch(
@@ -702,7 +703,6 @@ internal sealed class Resampler {
 			if (bitmapData.IsEmpty) {
 				bool isGradient = false;
 
-				ReadOnlyPinnedSpan<byte> pinnedBitmapData;
 				try {
 					bitmapData = pinnedBitmapData = CreateNewTexture(
 						async: async,
@@ -751,23 +751,18 @@ internal sealed class Resampler {
 			spriteInstance.UnpaddedSize = newSize - (spriteInstance.Padding.Sum + spriteInstance.BlockPadding);
 			spriteInstance.InnerRatio = (Vector2F)newSize / (Vector2F)spriteInstance.UnpaddedSize;
 
-			ManagedTexture2D? CreateTexture(byte[] data) {
+			ManagedTexture2D? CreateTexture(ReadOnlyPinnedSpan<byte>.FixedSpan data) {
 				if (input.Reference.GraphicsDevice.IsDisposed) {
 					return null;
 				}
 				//var newTexture2 = GL.GLTexture.CreateTexture2D(newSize, false, spriteFormat);
 				var newTexture = new ManagedTexture2D(
+					data: data,
 					instance: spriteInstance,
 					reference: input.Reference,
 					dimensions: newSize,
 					format: spriteFormat
 				);
-				if (PlatformSetData is not null) {
-					PlatformSetData(newTexture, 0, data, 0, data.Length);
-				}
-				else {
-					newTexture.SetData(data);
-				}
 
 				return newTexture;
 			}
@@ -775,8 +770,13 @@ internal sealed class Resampler {
 			var isAsync = Config.AsyncScaling.Enabled && async;
 			if (!isAsync || Config.AsyncScaling.ForceSynchronousStores || DrawState.ForceSynchronous) {
 				var reference = input.Reference;
-				var bitmapDataArray = bitmapData.ToArray();
-				void SyncCall() {
+
+				byte[]? bitmapDataArray = null;
+				if (pinnedBitmapData.IsEmpty) {
+					bitmapDataArray = bitmapData.ToArray();
+				}
+
+				void SyncCallFixed(ReadOnlyPinnedSpan<byte>.FixedSpan data) {
 					if (reference.IsDisposed) {
 						return;
 					}
@@ -785,7 +785,7 @@ internal sealed class Resampler {
 					}
 					ManagedTexture2D? newTexture = null;
 					try {
-						newTexture = CreateTexture(bitmapDataArray);
+						newTexture = CreateTexture(data);
 						spriteInstance.Texture = newTexture;
 						spriteInstance.Finish();
 					}
@@ -795,13 +795,55 @@ internal sealed class Resampler {
 						spriteInstance.Dispose();
 					}
 				}
-				SynchronizedTaskScheduler.Instance.QueueDeferred(SyncCall, new(bitmapData.Length));
+
+				void SyncCallArray() {
+					if (reference.IsDisposed) {
+						return;
+					}
+					if (spriteInstance.IsDisposed) {
+						return;
+					}
+
+					unsafe {
+						fixed (byte* ptr = bitmapDataArray) {
+							var pinnedSpan = new ReadOnlyPinnedSpan<byte>(bitmapDataArray, ptr, bitmapDataArray.Length);
+							SyncCallFixed(pinnedSpan.Fixed);
+						}
+					}
+				}
+
+				if (bitmapDataArray is null) {
+					var fixedData = pinnedBitmapData.Fixed;
+					SynchronizedTaskScheduler.Instance.QueueDeferred(
+						() => SyncCallFixed(fixedData),
+						new(bitmapData.Length)
+					);
+				}
+				else {
+					SynchronizedTaskScheduler.Instance.QueueDeferred(
+						SyncCallArray,
+						new(bitmapData.Length)
+					);
+				}
 				return null;
 			}
 			else {
 				ManagedTexture2D? newTexture = null;
 				try {
-					newTexture = CreateTexture(bitmapData.ToArray());
+					// TODO : this is very inefficient
+					if (pinnedBitmapData.IsEmpty) {
+						var asArray = bitmapData.ToArray();
+						unsafe {
+							fixed (byte* ptr = asArray) {
+								var pinnedSpan = new ReadOnlyPinnedSpan<byte>(asArray, ptr, asArray.Length);
+								newTexture = CreateTexture(pinnedSpan.Fixed);
+							}
+						}
+					}
+					else {
+
+					}
+					newTexture = CreateTexture(pinnedBitmapData.Fixed);
 					if (!isAsync) {
 						return newTexture;
 					}

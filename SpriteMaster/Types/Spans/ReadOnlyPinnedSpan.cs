@@ -2,6 +2,7 @@
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 // ReSharper disable UnusedMember.Global
@@ -10,10 +11,11 @@ namespace SpriteMaster.Types.Spans;
 
 [DebuggerTypeProxy(typeof(PinnedSpanDebugView<>))]
 [DebuggerDisplay("{ToString(),raw}")]
-internal readonly ref struct ReadOnlyPinnedSpan<T> {
+internal readonly ref struct ReadOnlyPinnedSpan<T> where T : unmanaged {
 
 	internal static ReadOnlyPinnedSpan<T> Empty => new(null);
 
+	internal readonly object ReferenceObject;
 	internal readonly ReadOnlySpan<T> InnerSpan;
 
 	/// <summary>
@@ -23,6 +25,7 @@ internal readonly ref struct ReadOnlyPinnedSpan<T> {
 	/// <remarks>Returns default when <paramref name="array"/> is null.</remarks>
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal ReadOnlyPinnedSpan(T[]? array) {
+		ReferenceObject = array!;
 		InnerSpan = new(array);
 	}
 
@@ -39,6 +42,7 @@ internal readonly ref struct ReadOnlyPinnedSpan<T> {
 	/// </exception>
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal ReadOnlyPinnedSpan(T[] array, int start, int length) {
+		ReferenceObject = array;
 		InnerSpan = new(array, start, length);
 	}
 
@@ -57,30 +61,34 @@ internal readonly ref struct ReadOnlyPinnedSpan<T> {
 	/// Thrown when the specified <paramref name="length"/> is negative.
 	/// </exception>
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal unsafe ReadOnlyPinnedSpan(void* pointer, int length) {
+	internal unsafe ReadOnlyPinnedSpan(object refObject, void* pointer, int length) {
+		ReferenceObject = refObject;
 		InnerSpan = new(pointer, length);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal unsafe ReadOnlyPinnedSpan(ref T pointer, int length) {
+	internal unsafe ReadOnlyPinnedSpan(object refObject, ref T pointer, int length) {
+		ReferenceObject = refObject;
 		InnerSpan = new(Unsafe.AsPointer(ref pointer), length);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private ReadOnlyPinnedSpan(ReadOnlySpan<T> span) {
+	private ReadOnlyPinnedSpan(object refObject, ReadOnlySpan<T> span) {
+		ReferenceObject = refObject;
 		InnerSpan = span;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private ReadOnlyPinnedSpan(Span<T> span) {
+	private ReadOnlyPinnedSpan(object refObject, Span<T> span) {
+		ReferenceObject = refObject;
 		InnerSpan = span;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static ReadOnlyPinnedSpan<T> FromInternal(Span<T> span) => new(span);
+	internal static ReadOnlyPinnedSpan<T> FromInternal(object refObject, Span<T> span) => new(refObject, span);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static ReadOnlyPinnedSpan<T> FromInternal(ReadOnlySpan<T> span) => new(span);
+	internal static ReadOnlyPinnedSpan<T> FromInternal(object refObject, ReadOnlySpan<T> span) => new(refObject, span);
 
 	// Most ripped from Span.cs
 
@@ -173,12 +181,6 @@ internal readonly ref struct ReadOnlyPinnedSpan<T> {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static implicit operator ReadOnlyPinnedSpan<T>(T[]? array) => new(array);
 
-	/// <summary>
-	/// Defines an implicit conversion of a <see cref="ArraySegment{T}"/> to a <see cref="ReadOnlyPinnedSpan{T}"/>
-	/// </summary>
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static implicit operator ReadOnlyPinnedSpan<T>(ArraySegment<T> segment) => new(segment);
-
 	/// <summary>Gets an enumerator for this span.</summary>
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public ReadOnlySpan<T>.Enumerator GetEnumerator() => InnerSpan.GetEnumerator();
@@ -239,7 +241,7 @@ internal readonly ref struct ReadOnlyPinnedSpan<T> {
 	/// Thrown when the specified <paramref name="start"/> index is not in range (&lt;0 or &gt;Length).
 	/// </exception>
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal ReadOnlyPinnedSpan<T> Slice(int start) => new(InnerSpan.Slice(start));
+	internal ReadOnlyPinnedSpan<T> Slice(int start) => new(ReferenceObject, InnerSpan.Slice(start));
 
 	/// <summary>
 	/// Forms a slice out of the given span, beginning at 'start', of given length
@@ -250,7 +252,7 @@ internal readonly ref struct ReadOnlyPinnedSpan<T> {
 	/// Thrown when the specified <paramref name="start"/> or end index is not in range (&lt;0 or &gt;Length).
 	/// </exception>
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal ReadOnlyPinnedSpan<T> Slice(int start, int length) => new(InnerSpan.Slice(start, length));
+	internal ReadOnlyPinnedSpan<T> Slice(int start, int length) => new(ReferenceObject, InnerSpan.Slice(start, length));
 
 	/// <summary>
 	/// Copies the contents of this span into a new array.  This heap
@@ -262,5 +264,26 @@ internal readonly ref struct ReadOnlyPinnedSpan<T> {
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal PinnedSpan<T> ToSpanUnsafe() =>
-		PinnedSpan<T>.FromInternal(MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(InnerSpan), InnerSpan.Length));
+		PinnedSpan<T>.FromInternal(ReferenceObject, MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(InnerSpan), InnerSpan.Length));
+
+	[DebuggerTypeProxy(typeof(PinnedSpanDebugView<>))]
+	[DebuggerDisplay("{AsSpan.ToString(),raw}")]
+	internal unsafe readonly struct FixedSpan {
+		private readonly object ReferenceObject;
+		internal readonly void* Pointer;
+		internal readonly int Length;
+
+		internal bool IsEmpty => Pointer is null || Length == 0;
+
+		internal FixedSpan(ReadOnlyPinnedSpan<T> span) {
+			// TODO : is a branch needed for IsEmpty?
+			ReferenceObject = span.ReferenceObject;
+			Pointer = Unsafe.AsPointer(ref span.GetPinnableReferenceUnsafe());
+			Length = span.Length;
+		}
+
+		internal ReadOnlyPinnedSpan<T> AsSpan => new(ReferenceObject, Pointer, Length);
+	}
+
+	internal FixedSpan Fixed => new(this);
 }

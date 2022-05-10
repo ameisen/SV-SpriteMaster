@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Resample.Scalers.SuperXBR;
 
-sealed partial class Scaler {
+internal sealed partial class Scaler {
 	private const uint MinScale = 2;
 	private const uint MaxScale = Config.MaxScale;
 
@@ -102,7 +102,7 @@ sealed partial class Scaler {
 		// Run the scaling algorithm into a temporary buffer for each scaling up until the final one
 		for (uint currentScale = ScaleMultiplier; currentScale > 2U; currentScale >>= 1) {
 			currentTargetSize <<= 1;
-			var currentTarget = SpanExt.MakeUninitialized<Color16>(currentTargetSize.Area);
+			var currentTarget = SpanExt.Make<Color16>(currentTargetSize.Area);
 
 			Scale(currentSource, currentSourceSize, currentTarget, currentTargetSize);
 

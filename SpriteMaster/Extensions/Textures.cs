@@ -28,18 +28,38 @@ internal static class Textures {
 			case SurfaceFormat.Dxt1SRgb:
 			case SurfaceFormat.Dxt1a:
 			case var _ when format == TextureFormat.BC1a:
+			case SurfaceFormat.RgbEtc1:
+			case SurfaceFormat.Rgb8Etc2:
+			case SurfaceFormat.Srgb8Etc2:
+			case SurfaceFormat.Rgb8A1Etc2:
+			case SurfaceFormat.Srgb8A1Etc2:
+			case SurfaceFormat.RgbPvrtc4Bpp:
+			case SurfaceFormat.RgbaPvrtc4Bpp:
 				return texels / 2;
+
+			case SurfaceFormat.Dxt3:
+			case SurfaceFormat.Dxt3SRgb:
+			case SurfaceFormat.Dxt5:
+			case SurfaceFormat.Dxt5SRgb:
+			case SurfaceFormat.RgbPvrtc2Bpp:
+			case SurfaceFormat.RgbaPvrtc2Bpp:
+			case SurfaceFormat.RgbaAtcExplicitAlpha:
+			case SurfaceFormat.RgbaAtcInterpolatedAlpha:
+			case SurfaceFormat.Rgba8Etc2:
+			case SurfaceFormat.SRgb8A8Etc2:
+				return texels;
 		}
 
 		long elementSize = format switch {
 			SurfaceFormat.Color => 4,
+			SurfaceFormat.ColorSRgb => 4,
 			SurfaceFormat.Bgr565 => 2,
 			SurfaceFormat.Bgra5551 => 2,
 			SurfaceFormat.Bgra4444 => 2,
-			SurfaceFormat.Dxt3 => 1,
-			SurfaceFormat.Dxt3SRgb => 1,
-			SurfaceFormat.Dxt5 => 1,
-			SurfaceFormat.Dxt5SRgb => 1,
+			SurfaceFormat.Bgr32 => 4,
+			SurfaceFormat.Bgr32SRgb => 4,
+			SurfaceFormat.Bgra32 => 4,
+			SurfaceFormat.Bgra32SRgb => 4,
 			SurfaceFormat.NormalizedByte2 => 2,
 			SurfaceFormat.NormalizedByte4 => 4,
 			SurfaceFormat.Rgba1010102 => 4,
@@ -62,11 +82,24 @@ internal static class Textures {
 	internal static bool IsCompressed(this SurfaceFormat format) => format switch {
 		SurfaceFormat.Dxt1 or
 		SurfaceFormat.Dxt1SRgb or
-		SurfaceFormat.Dxt3 or
+		SurfaceFormat.Dxt3 or 
 		SurfaceFormat.Dxt3SRgb or
 		SurfaceFormat.Dxt5 or
 		SurfaceFormat.Dxt5SRgb or
-		SurfaceFormat.Dxt1a
+		SurfaceFormat.RgbPvrtc4Bpp or
+		SurfaceFormat.RgbaPvrtc4Bpp or
+		SurfaceFormat.RgbEtc1 or
+		SurfaceFormat.Dxt1a or
+		SurfaceFormat.RgbaAtcExplicitAlpha or
+		SurfaceFormat.RgbaAtcInterpolatedAlpha or
+		SurfaceFormat.Rgb8Etc2 or
+		SurfaceFormat.Srgb8Etc2 or
+		SurfaceFormat.Rgb8A1Etc2 or
+		SurfaceFormat.Srgb8A1Etc2 or
+		SurfaceFormat.Rgba8Etc2 or
+		SurfaceFormat.SRgb8A8Etc2 or
+		SurfaceFormat.RgbPvrtc2Bpp or
+		SurfaceFormat.RgbaPvrtc2Bpp
 		=> true,
 		_ => false
 	};
@@ -75,16 +108,30 @@ internal static class Textures {
 	internal static bool IsBlock(this SurfaceFormat format) => IsCompressed(format);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static int BlockEdge(this SurfaceFormat format) => format switch {
+	internal static Vector2I BlockEdge(this SurfaceFormat format) => format switch {
 		SurfaceFormat.Dxt1 or
 		SurfaceFormat.Dxt1SRgb or
 		SurfaceFormat.Dxt3 or
 		SurfaceFormat.Dxt3SRgb or
 		SurfaceFormat.Dxt5 or
 		SurfaceFormat.Dxt5SRgb or
-		SurfaceFormat.Dxt1a
-		=> 4,
-		_ => 1
+		SurfaceFormat.RgbPvrtc4Bpp or
+		SurfaceFormat.RgbaPvrtc4Bpp or
+		SurfaceFormat.RgbEtc1 or
+		SurfaceFormat.Dxt1a or
+		SurfaceFormat.RgbaAtcExplicitAlpha or
+		SurfaceFormat.RgbaAtcInterpolatedAlpha or
+		SurfaceFormat.Rgb8Etc2 or
+		SurfaceFormat.Srgb8Etc2 or
+		SurfaceFormat.Rgb8A1Etc2 or
+		SurfaceFormat.Srgb8A1Etc2 or
+		SurfaceFormat.Rgba8Etc2 or
+		SurfaceFormat.SRgb8A8Etc2
+		=> (4, 4),
+		SurfaceFormat.RgbPvrtc2Bpp or
+		SurfaceFormat.RgbaPvrtc2Bpp
+		=> (8, 4),
+		_ => (1, 1)
 	};
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
