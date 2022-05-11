@@ -185,6 +185,12 @@ internal readonly ref struct PinnedSpan<T> where T : unmanaged {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal ref T GetPinnableReferenceUnsafe() => ref InnerSpan.GetPinnableReference();
 
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal unsafe T* GetPointer() => (T*)Unsafe.AsPointer(ref GetPinnableReferenceUnsafe());
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal unsafe IntPtr GetIntPointer() => (IntPtr)Unsafe.AsPointer(ref GetPinnableReferenceUnsafe());
+
 	/// <summary>
 	/// Clears the contents of this span.
 	/// </summary>

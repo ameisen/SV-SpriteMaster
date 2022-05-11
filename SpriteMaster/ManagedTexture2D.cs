@@ -1,6 +1,4 @@
-﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using MonoGame.OpenGL;
+﻿using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
 using SpriteMaster.Types;
@@ -42,14 +40,14 @@ internal sealed class ManagedTexture2D : InternalTexture2D {
 	) : base(
 		graphicsDevice: reference.GraphicsDevice.IsDisposed ? DrawState.Device : reference.GraphicsDevice,
 		width: dimensions.Width,
-		height: dimensions.Height, 
+		height: dimensions.Height,
 		mipmap: UseMips,
 		format: format,
 		type: SurfaceType.SwapChainRenderTarget, // this prevents the texture from being constructed immediately
 		shared: UseShared,
 		arraySize: 1
 	) {
-		Construct(data, dimensions, UseMips, format, SurfaceType.Texture, UseShared);
+		Texture2DGL.Construct(this, data, dimensions, UseMips, format, SurfaceType.Texture, UseShared);
 
 		Name = name ?? $"{reference.NormalizedName()} [internal managed <{format}>]";
 
@@ -102,112 +100,5 @@ internal sealed class ManagedTexture2D : InternalTexture2D {
 		Garbage.UnmarkOwned(Format, Width * Height);
 		Interlocked.Add(ref TotalAllocatedSize, (ulong)-this.SizeBytes());
 		Interlocked.Decrement(ref TotalManagedTextures);
-	}
-
-	private unsafe void Construct<T>(
-		ReadOnlyPinnedSpan<T>.FixedSpan dataIn,
-		Vector2I size,
-		bool mipmap,
-		SurfaceFormat format,
-		SurfaceType type,
-		bool shared
-	) where T : unmanaged {
-		glTarget = TextureTarget.Texture2D;
-		format.GetGLFormat(GraphicsDevice, out glInternalFormat, out glFormat, out glType);
-
-		Threading.BlockOnUIThread(() => {
-			ReadOnlyPinnedSpan<byte> data = default;
-
-			if (!dataIn.IsEmpty) {
-				data = dataIn.AsSpan.Cast<T, byte>();
-			}
-
-			GenerateGLTextureIfRequired();
-
-			if (!data.IsEmpty) {
-				MonoGame.OpenGL.GL.PixelStore(PixelStoreParameter.UnpackAlignment, Math.Min(Format.GetSize(), 8));
-			}
-
-			Vector2I dimensions = size;
-			int level = 0;
-			int currentOffset = 0;
-
-			while (true) {
-				int levelSize;
-				if (glFormat == PixelFormat.CompressedTextureFormats) {
-					int imageSize;
-					switch (format) {
-						// PVRTC has explicit calculations for imageSize
-						// https://www.khronos.org/registry/OpenGL/extensions/IMG/IMG_texture_compression_pvrtc.txt
-						case SurfaceFormat.RgbPvrtc2Bpp:
-						case SurfaceFormat.RgbaPvrtc2Bpp: {
-							var maxDimensions = dimensions.Max((16, 8));
-							imageSize = ((maxDimensions.X * maxDimensions.Y) << 1 + 7) >> 3;
-							break;
-						}
-						case SurfaceFormat.RgbPvrtc4Bpp:
-						case SurfaceFormat.RgbaPvrtc4Bpp: {
-							var maxDimensions = dimensions.Max((8, 8));
-							imageSize = ((maxDimensions.X * maxDimensions.Y) << 2 + 7) >> 3;
-							break;
-						}
-						default:
-						{
-							int blockSize = format.GetSize();
-							Vector2I blockDimensions = format.BlockEdge();
-
-							Vector2I blocks = (dimensions + (blockDimensions - 1)) / blockDimensions;
-							imageSize = blocks.X * blocks.Y * blockSize;
-							break;
-						}
-					}
-
-					levelSize = (int)format.SizeBytes(dimensions.Area);
-
-					IntPtr dataPtr = data.IsEmpty ? IntPtr.Zero : (IntPtr)Unsafe.AsPointer(ref data.Slice(currentOffset, levelSize).GetPinnableReferenceUnsafe());
-
-					MonoGame.OpenGL.GL.CompressedTexImage2D(
-						TextureTarget.Texture2D,
-						level,
-						glInternalFormat, 
-						dimensions.X,
-						dimensions.Y,
-						0,
-						imageSize,
-						dataPtr
-					);
-					GraphicsExtensions.CheckGLError();
-				}
-				else {
-					levelSize = (int)format.SizeBytes(dimensions.Area);
-
-					IntPtr dataPtr = data.IsEmpty ? IntPtr.Zero : (IntPtr)Unsafe.AsPointer(ref data.Slice(currentOffset, levelSize).GetPinnableReferenceUnsafe());
-
-					MonoGame.OpenGL.GL.TexImage2D(
-						TextureTarget.Texture2D,
-						level,
-						glInternalFormat, 
-						dimensions.X, 
-						dimensions.Y, 
-						0,
-						glFormat,
-						glType,
-						dataPtr
-					);
-					GraphicsExtensions.CheckGLError();
-				}
-
-				if (dimensions == (1, 1) || !mipmap)
-					break;
-
-				currentOffset += levelSize;
-
-				if (dimensions.X > 1)
-					dimensions.X >>= 1;
-				if (dimensions.Y > 1)
-					dimensions.Y >>= 1;
-				++level;
-			}
-		});
 	}
 }

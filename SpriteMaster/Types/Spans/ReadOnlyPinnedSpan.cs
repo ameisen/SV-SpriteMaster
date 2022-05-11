@@ -197,6 +197,12 @@ internal readonly ref struct ReadOnlyPinnedSpan<T> where T : unmanaged {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal ref T GetPinnableReferenceUnsafe() => ref MemoryMarshal.GetReference(InnerSpan);
 
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal unsafe T* GetPointer() => (T*)Unsafe.AsPointer(ref GetPinnableReferenceUnsafe());
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal unsafe IntPtr GetIntPointer() => (IntPtr)Unsafe.AsPointer(ref GetPinnableReferenceUnsafe());
+
 	/// <summary>
 	/// Copies the contents of this span into destination span. If the source
 	/// and destinations overlap, this method behaves as if the original values in
