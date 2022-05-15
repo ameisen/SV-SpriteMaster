@@ -21,9 +21,8 @@ internal readonly ref struct PinnedSpan<T> where T : unmanaged {
 	/// <param name="array">The target array.</param>
 	/// <remarks>Returns default when <paramref name="array"/> is null.</remarks>
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal PinnedSpan(T[]? array) {
-		ReferenceObject = array!;
-		InnerSpan = new(array);
+	internal PinnedSpan(T[]? array) :
+		this(array!, new(array)) {
 	}
 
 	/// <summary>
@@ -38,9 +37,8 @@ internal readonly ref struct PinnedSpan<T> where T : unmanaged {
 	/// Thrown when the specified <paramref name="start"/> or end index is not in the range (&lt;0 or &gt;Length).
 	/// </exception>
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal PinnedSpan(T[] array, int start, int length) {
-		ReferenceObject = array;
-		InnerSpan = new(array, start, length);
+	internal PinnedSpan(T[] array, int start, int length) :
+		this(array, new(array, start, length)) {
 	}
 
 	/// <summary>
@@ -49,6 +47,7 @@ internal readonly ref struct PinnedSpan<T> where T : unmanaged {
 	/// out of a void*-typed block of memory.  And the length is not checked.
 	/// But if this creation is correct, then all subsequent uses are correct.
 	/// </summary>
+	/// <param name="refObject">Reference object for garbage collection purposes.</param>
 	/// <param name="pointer">An unmanaged pointer to memory.</param>
 	/// <param name="length">The number of <typeparamref name="T"/> elements the memory contains.</param>
 	/// <exception cref="System.ArgumentException">
@@ -58,15 +57,13 @@ internal readonly ref struct PinnedSpan<T> where T : unmanaged {
 	/// Thrown when the specified <paramref name="length"/> is negative.
 	/// </exception>
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal unsafe PinnedSpan(object refObject, void* pointer, int length) {
-		ReferenceObject = refObject;
-		InnerSpan = new(pointer, length);
+	internal unsafe PinnedSpan(object refObject, void* pointer, int length) :
+		this(refObject, new(pointer, length)) {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal unsafe PinnedSpan(object refObject, ref T pointer, int length) {
-		ReferenceObject = refObject;
-		InnerSpan = new(Unsafe.AsPointer(ref pointer), length);
+	internal unsafe PinnedSpan(object refObject, ref T pointer, int length) : 
+		this(refObject, new(Unsafe.AsPointer(ref pointer), length)) {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]

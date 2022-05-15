@@ -39,7 +39,7 @@ public sealed class SpriteMaster : Mod {
 
 		Garbage.EnterNonInteractive();
 
-		MemoryMonitor = new MemoryMonitor();
+		MemoryMonitor = new();
 
 		var assemblyPath = Assembly.Location;
 		assemblyPath = Path.GetDirectoryName(assemblyPath);
@@ -86,13 +86,13 @@ public sealed class SpriteMaster : Mod {
 						var offset = new Vector2I(int.Parse(offsetElements[0]), int.Parse(offsetElements[1]));
 						var extent = new Vector2I(int.Parse(extentElements[0]), int.Parse(extentElements[1]));
 
-						bounds = new Bounds(offset, extent);
+						bounds = new(offset, extent);
 					}
 					catch {
 						Debug.Error($"Invalid SlicedTexture Bounds: '{elements[1]}'");
 					}
 				}
-				result[i] = new Config.TextureRef(string.Intern(texture), bounds);
+				result[i] = new(string.Intern(texture), bounds);
 			}
 			return result;
 		}
@@ -108,7 +108,7 @@ public sealed class SpriteMaster : Mod {
 				pattern = pattern.StartsWith('@') ?
 					pattern[1..] :
 					$"^{Regex.Escape(pattern)}.*";
-				result[i] = new Regex(pattern, RegexOptions.Compiled);
+				result[i] = new(pattern, RegexOptions.Compiled);
 			}
 			return result;
 		}
@@ -163,6 +163,7 @@ public sealed class SpriteMaster : Mod {
 		Helper.Events.Display.MenuChanged += OnMenuChanged;
 	}
 
+	[UsedImplicitly]
 	public override void Entry(IModHelper help) {
 		Debug.Message(Versioning.StringHeader);
 
@@ -177,9 +178,9 @@ public sealed class SpriteMaster : Mod {
 
 		Serialize.Save(Config.Path);
 
-		TryAddConsoleCommand("spritemaster", "SpriteMaster Commands", ConsoleSupport.Invoke);
+		_ = TryAddConsoleCommand("spritemaster", "SpriteMaster Commands", ConsoleSupport.Invoke);
 		// Try to add 'sm' as a shortcut for my own sanity.
-		TryAddConsoleCommand("sm", "SpriteMaster Commands", ConsoleSupport.Invoke);
+		_ = TryAddConsoleCommand("sm", "SpriteMaster Commands", ConsoleSupport.Invoke);
 
 		InitializeEvents();
 

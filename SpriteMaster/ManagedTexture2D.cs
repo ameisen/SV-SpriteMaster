@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
+using SpriteMaster.Harmonize.Patches;
 using SpriteMaster.Metadata;
 using SpriteMaster.Types;
 using SpriteMaster.Types.Spans;
@@ -43,11 +44,14 @@ internal sealed class ManagedTexture2D : InternalTexture2D {
 		height: dimensions.Height,
 		mipmap: UseMips,
 		format: format,
-		type: SurfaceType.SwapChainRenderTarget, // this prevents the texture from being constructed immediately
+		type: PTexture2D.PlatformConstruct is null ? SurfaceType.Texture : SurfaceType.SwapChainRenderTarget, // this prevents the texture from being constructed immediately
 		shared: UseShared,
 		arraySize: 1
 	) {
-		Texture2DGL.Construct(this, data, dimensions, UseMips, format, SurfaceType.Texture, UseShared);
+		if (PTexture2D.PlatformConstruct is not null && !GL.Texture2DExt.Construct(this, data, dimensions, UseMips, format, SurfaceType.Texture, UseShared)) {
+			PTexture2D.PlatformConstruct(this, dimensions.X, dimensions.Y, UseMips, format, SurfaceType.Texture, UseShared);
+			SetData(data.Array);
+		}
 
 		Name = name ?? $"{reference.NormalizedName()} [internal managed <{format}>]";
 

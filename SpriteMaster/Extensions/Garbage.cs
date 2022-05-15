@@ -110,7 +110,7 @@ internal static class Garbage {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void Mark(XTexture2D texture) {
 		texture.AssertNotNull();
-		Mark(texture.SizeBytes());
+		Mark(texture.SizeBytesLong());
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -122,7 +122,7 @@ internal static class Garbage {
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void Unmark(XTexture2D texture) {
 		texture.AssertNotNull();
-		Unmark(texture.SizeBytes());
+		Unmark(texture.SizeBytesLong());
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -131,7 +131,7 @@ internal static class Garbage {
 			return;
 		}
 		texels.AssertPositiveOrZero();
-		var size = format.SizeBytes(texels);
+		var size = format.SizeBytesLong(texels);
 		Mark(size);
 	}
 
@@ -141,7 +141,7 @@ internal static class Garbage {
 			return;
 		}
 		texels.AssertPositiveOrZero();
-		var size = format.SizeBytes(texels);
+		var size = format.SizeBytesLong(texels);
 		Unmark(size);
 	}
 
@@ -151,7 +151,7 @@ internal static class Garbage {
 			return;
 		}
 		texels.AssertPositiveOrZero();
-		var size = format.SizeBytes(texels);
+		var size = format.SizeBytesLong(texels);
 		Mark(size);
 	}
 
@@ -161,7 +161,7 @@ internal static class Garbage {
 			return;
 		}
 		texels.AssertPositiveOrZero();
-		var size = format.SizeBytes(texels);
+		var size = format.SizeBytesLong(texels);
 		Unmark(size);
 	}
 }

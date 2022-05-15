@@ -406,7 +406,7 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 				return currentInstance;
 			}
 
-			var estimatedDuration = GetTimer(texture: texture, async: useAsync, out bool cached).Estimate((int)texture.Format.SizeBytes(source.Area));
+			var estimatedDuration = GetTimer(texture: texture, async: useAsync, out bool cached).Estimate(texture.Format.SizeBytes(source.Area));
 			isCached = cached;
 			if (estimatedDuration > TimeSpan.Zero && estimatedDuration > remainingTime) {
 				Debug.Trace($"Not enough frame time left to begin resampling {GetNameString()} ({estimatedDuration.TotalMilliseconds.ToString(DrawingColor.LightBlue)} ms >= {remainingTime?.TotalMilliseconds.ToString(DrawingColor.LightBlue)} ms)");

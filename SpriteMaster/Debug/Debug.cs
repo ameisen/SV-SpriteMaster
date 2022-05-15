@@ -67,4 +67,8 @@ internal static partial class Debug {
 
 	[DebuggerStepThrough, DebuggerHidden]
 	internal static void Flush() => _ = Console.Error.FlushAsync();
+
+	[DebuggerStepThrough, DebuggerHidden]
+	[Conditional("DEBUG")]
+	internal static void Break() => Debugger.Break();
 }

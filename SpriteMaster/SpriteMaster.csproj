@@ -65,7 +65,7 @@
 		<PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.0.1" />
 		<PackageReference Include="System.Runtime.Caching" Version="5.0.0" />
 		<PackageReference Include="TeximpNet" Version="1.4.3" />
-		<PackageReference Include="Tomlyn" Version="0.14.2" />
+		<PackageReference Include="Tomlyn" Version="0.14.3" />
 		<PackageReference Include="ZstdNet" Version="1.4.5" />
 	</ItemGroup>
 	
@@ -82,6 +82,7 @@
 		<Publicize>$(Publicize);MonoGame.Framework:Microsoft.Xna.Framework.Graphics.Texture.glType</Publicize>
 		<Publicize>$(Publicize);MonoGame.Framework:Microsoft.Xna.Framework.Graphics.Texture.GetSizeForLevel</Publicize>
 		<Publicize>$(Publicize);MonoGame.Framework:Microsoft.Xna.Framework.Graphics.Texture2D.GenerateGLTextureIfRequired</Publicize>
+		<Publicize>$(Publicize);MonoGame.Framework:Microsoft.Xna.Framework.Graphics.Texture2D.PlatformConstruct</Publicize>
 		<Publicize>$(Publicize);MonoGame.Framework:MonoGame.OpenGL.TextureTarget</Publicize>
 		<Publicize>$(Publicize);MonoGame.Framework:MonoGame.OpenGL.PixelFormat</Publicize>
 		<Publicize>$(Publicize);MonoGame.Framework:MonoGame.OpenGL.PixelInternalFormat</Publicize>
@@ -114,7 +115,7 @@
 	</ItemGroup>
 
 	<Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-	  <Exec Command="$(SolutionDir)SetVersion.rb -q" />
+	  <Exec Command="$(SolutionDir)SetVersion.rb -q" WorkingDirectory="$(SolutionDir)" />
 	</Target>
 
 </Project>

@@ -22,7 +22,7 @@ internal static class Textures {
 	internal static Bounds Bounds(this XTexture2D texture) => new(texture);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static long SizeBytes(this SurfaceFormat format, int texels) {
+	internal static long SizeBytesLong(this SurfaceFormat format, int texels) {
 		switch (format) {
 			case SurfaceFormat.Dxt1:
 			case SurfaceFormat.Dxt1SRgb:
@@ -50,7 +50,7 @@ internal static class Textures {
 				return texels;
 		}
 
-		long elementSize = format switch {
+		int elementSize = format switch {
 			SurfaceFormat.Color => 4,
 			SurfaceFormat.ColorSRgb => 4,
 			SurfaceFormat.Bgr565 => 2,
@@ -75,7 +75,13 @@ internal static class Textures {
 			_ => throw new ArgumentException(nameof(format))
 		};
 
-		return texels * elementSize;
+		return (long)texels * elementSize;
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static int SizeBytes(this SurfaceFormat format, int texels) {
+		var result = SizeBytesLong(format, texels);
+		return checked((int)result);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -135,10 +141,10 @@ internal static class Textures {
 	};
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static long SizeBytes(this XTexture2D texture) => texture.Format.SizeBytes(texture.Area());
+	internal static long SizeBytesLong(this XTexture2D texture) => texture.Format.SizeBytesLong(texture.Area());
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static long SizeBytes(this ManagedTexture2D texture) => (long)texture.Area() * 4;
+	internal static int SizeBytes(this XTexture2D texture) => texture.Format.SizeBytes(texture.Area());
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool Anonymous(this XTexture2D texture) => texture.Name.IsWhiteBlank();

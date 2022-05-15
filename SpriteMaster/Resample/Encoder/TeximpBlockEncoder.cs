@@ -74,7 +74,7 @@ internal static class TeximpBlockEncoder {
 			fixed (byte* p = data.Cast<byte>()) {
 				using var mipData = new MipData(dimensions.Width, dimensions.Height, dimensions.Width * sizeof(int), (IntPtr)p, false);
 				compressor.Input.SetData(mipData, false);
-				var memoryBuffer = GC.AllocateUninitializedArray<byte>((int)((SurfaceFormat)textureFormat).SizeBytes(dimensions.Area), pinned: true);
+				var memoryBuffer = GC.AllocateUninitializedArray<byte>(((SurfaceFormat)textureFormat).SizeBytes(dimensions.Area), pinned: true);
 				using var stream = memoryBuffer.Stream();
 				if (compressor.Process(stream)) {
 					format = textureFormat;

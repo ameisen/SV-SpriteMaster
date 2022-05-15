@@ -2,47 +2,15 @@
 using System;
 using System.Diagnostics;
 using System.Reflection;
-using System.Text;
 
 namespace SpriteMaster;
 
 internal static partial class DrawState {
 
 	private static readonly Func<SamplerState, SamplerState> SamplerStateClone =
-		typeof(SamplerState).GetMethod("Clone", BindingFlags.Instance | BindingFlags.NonPublic)?.CreateDelegate<Func<SamplerState, SamplerState>>() ?? throw new NullReferenceException(nameof(SamplerStateClone));
-
-#if DEBUG
-	private static string Dump(this BlendState blendState) {
-		// TODO : use delegates instead of reflection here
-		try {
-			var sb = new StringBuilder();
-
-			var properties = typeof(BlendState).GetProperties();
-			int maxNameLen = int.MinValue;
-			foreach (var property in properties) {
-				if (property.Name.Length > maxNameLen) {
-					maxNameLen = property.Name.Length;
-				}
-			}
-
-			++maxNameLen;
-
-			foreach (var property in properties) {
-				try {
-					var propertyValue = property.GetValue(blendState);
-					sb.AppendLine($"{property.Name.PadLeft(maxNameLen)}: {(propertyValue is null ? "[null]" : propertyValue.ToString())}");
-				}
-				catch { }
-			}
-
-			return sb.ToString();
-		}
-		catch (Exception ex) {
-			Debug.Warning(ex);
-			return blendState.ToString();
-		}
-	}
-#endif
+		typeof(SamplerState).GetMethod("Clone", BindingFlags.Instance | BindingFlags.NonPublic)?.
+			CreateDelegate<Func<SamplerState, SamplerState>>() ??
+				throw new NullReferenceException(nameof(SamplerStateClone));
 
 	[Conditional("DEBUG")]
 	private static void CheckStates() {

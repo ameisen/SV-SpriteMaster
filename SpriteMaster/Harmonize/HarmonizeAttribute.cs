@@ -18,6 +18,7 @@ internal class HarmonizeAttribute : Attribute {
 	internal readonly Platform ForPlatform;
 	internal readonly bool Critical;
 	internal readonly string? ForMod;
+	internal readonly Type[]? ArgumentTypes;
 
 	internal static bool CheckPlatform(Platform platform) => platform switch {
 		Platform.All => true,
@@ -85,7 +86,8 @@ internal class HarmonizeAttribute : Attribute {
 		bool instance = true,
 		bool critical = true,
 		Platform platform = Platform.All,
-		string? forMod = null
+		string? forMod = null,
+		Type[]? argumentTypes = null
 	) {
 		Type = type;
 		Name = method;
@@ -96,6 +98,7 @@ internal class HarmonizeAttribute : Attribute {
 		ForPlatform = platform;
 		Critical = critical;
 		ForMod = forMod;
+		ArgumentTypes = argumentTypes;
 	}
 
 	internal HarmonizeAttribute(
@@ -108,7 +111,8 @@ internal class HarmonizeAttribute : Attribute {
 		bool instance = true,
 		bool critical = true,
 		Platform platform = Platform.All,
-		string? forMod = null
+		string? forMod = null,
+		Type[]? argumentTypes = null
 	) :
 		this(
 			type: CheckPlatform(platform) ? GetAssembly(assembly, critical: critical, forMod: forMod)?.GetType(type, true) : null,
@@ -119,7 +123,8 @@ internal class HarmonizeAttribute : Attribute {
 			instance: instance,
 			critical: critical,
 			platform: platform,
-			forMod: forMod
+			forMod: forMod,
+			argumentTypes: argumentTypes
 		) { }
 
 	internal HarmonizeAttribute(
@@ -132,7 +137,8 @@ internal class HarmonizeAttribute : Attribute {
 		bool instance = true,
 		bool critical = true,
 		Platform platform = Platform.All,
-		string? forMod = null
+		string? forMod = null,
+		Type[]? argumentTypes = null
 	) :
 		this(
 			type: CheckPlatform(platform) ? parent.Assembly.GetType(type, true) : null,
@@ -143,7 +149,8 @@ internal class HarmonizeAttribute : Attribute {
 			instance: instance,
 			critical: critical,
 			platform: platform,
-			forMod: forMod
+			forMod: forMod,
+			argumentTypes: argumentTypes
 		) { }
 
 	internal HarmonizeAttribute(
@@ -156,7 +163,8 @@ internal class HarmonizeAttribute : Attribute {
 		bool instance = true,
 		bool critical = true,
 		Platform platform = Platform.All,
-		string? forMod = null
+		string? forMod = null,
+		Type[]? argumentTypes = null
 	) :
 		this(
 			type: CheckPlatform(platform) ? ResolveType(parent.Assembly, type) : null,
@@ -167,7 +175,8 @@ internal class HarmonizeAttribute : Attribute {
 			instance: instance,
 			critical: critical,
 			platform: platform,
-			forMod: forMod
+			forMod: forMod,
+			argumentTypes: argumentTypes
 		) { }
 
 	internal HarmonizeAttribute(
@@ -180,7 +189,8 @@ internal class HarmonizeAttribute : Attribute {
 		bool instance = true,
 		bool critical = true,
 		Platform platform = Platform.All,
-		string? forMod = null
+		string? forMod = null,
+		Type[]? argumentTypes = null
 	) :
 		this(
 			type: CheckPlatform(platform) ? ResolveType(GetAssembly(assembly, critical: critical, forMod: forMod), type) : null,
@@ -191,7 +201,8 @@ internal class HarmonizeAttribute : Attribute {
 			instance: instance,
 			critical: critical,
 			platform: platform,
-			forMod: forMod
+			forMod: forMod,
+			argumentTypes: argumentTypes
 		) { }
 
 	internal HarmonizeAttribute(
@@ -202,7 +213,8 @@ internal class HarmonizeAttribute : Attribute {
 		bool instance = true,
 		bool critical = true,
 		Platform platform = Platform.All,
-		string? forMod = null
+		string? forMod = null,
+		Type[]? argumentTypes = null
 	) :
 		this(
 			type: null,
@@ -213,7 +225,8 @@ internal class HarmonizeAttribute : Attribute {
 			instance: instance,
 			critical: critical,
 			platform: platform,
-			forMod: forMod
+			forMod: forMod,
+			argumentTypes: argumentTypes
 		) { }
 
 	internal HarmonizeAttribute(
@@ -223,7 +236,8 @@ internal class HarmonizeAttribute : Attribute {
 		bool instance = true,
 		bool critical = true,
 		Platform platform = Platform.All,
-		string? forMod = null
+		string? forMod = null,
+		Type[]? argumentTypes = null
 	) :
 		this(
 			type: null,
@@ -234,6 +248,7 @@ internal class HarmonizeAttribute : Attribute {
 			instance: instance,
 			critical: critical,
 			platform: platform,
-			forMod: forMod
+			forMod: forMod,
+			argumentTypes: argumentTypes
 		) { }
 }

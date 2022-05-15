@@ -101,11 +101,11 @@ internal static class StableSort {
 		}
 	}
 
-	[Harmonize(
+	[HarmonizeTranspile(
 		typeof(XSpriteBatch),
 		"Microsoft.Xna.Framework.Graphics.SpriteBatcher",
 		"DrawBatch",
-		fixation: Harmonize.Fixation.Transpile
+		argumentTypes: new [] { typeof(SpriteSortMode), typeof(Effect) }
 	)]
 	public static IEnumerable<CodeInstruction> SpriteBatcherTranspiler(IEnumerable<CodeInstruction> instructions) {
 		if (SpriteBatchItemType is null) {

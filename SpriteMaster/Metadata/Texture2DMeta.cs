@@ -28,6 +28,11 @@ internal sealed class Texture2DMeta : IDisposable {
 		Animated =		1U << 1,
 	}
 
+	[Flags]
+	internal enum TextureFlag : uint {
+		None = 0U,
+	}
+
 	// Class and not a struct because we want to avoid a plethora of dictionary accesses to mutate them.
 	// TODO : use an object cache/allocator
 	private sealed class SpriteData {
@@ -40,6 +45,7 @@ internal sealed class Texture2DMeta : IDisposable {
 
 	internal readonly record struct InFlightData(long Revision, Task ResampleTask);
 	internal readonly ConcurrentDictionary<Bounds, InFlightData> InFlightTasks = new();
+	internal TextureFlag Flags = TextureFlag.None; // TODO use properties for this
 
 	internal IReadOnlyDictionary<ulong, ManagedSpriteInstance> GetSpriteInstanceTable() => SpriteInstanceTable;
 
@@ -56,9 +62,13 @@ internal sealed class Texture2DMeta : IDisposable {
 		return false;
 	}
 
-	internal void ClearSpriteHashes() {
+	internal void ClearSpriteHashes(bool animated = false) {
 		foreach (var pair in SpriteDataMap) {
-			pair.Value.Hash = null;
+			var spriteData = pair.Value;
+			spriteData.Hash = null;
+			if (animated) {
+				spriteData.Flags |= SpriteFlag.Animated;
+			}
 		}
 	}
 
@@ -183,13 +193,13 @@ internal sealed class Texture2DMeta : IDisposable {
 		IsCompressed = texture.Format.IsCompressed();
 		Format = texture.Format;
 		Size = texture.Extent();
-		SpriteInstanceTable = SpriteDictionaries.GetOrAdd(MetaId, id => new());
+		SpriteInstanceTable = SpriteDictionaries.GetOrAdd(MetaId, _ => new());
 		if (!texture.Anonymous()) {
 			SpriteDataMap = GlobalSpriteDataMaps.GetOrAdd(texture.NormalizedName(), _ => new());
 		}
 	}
 
-	// TODO : this presently is not threadsafe.
+	// TODO : this presently is not thread-safe.
 	private readonly WeakReference<byte[]> CachedDataInternal = new(null!);
 	private readonly WeakReference<byte[]> CachedRawDataInternal = new(null!);
 
@@ -216,7 +226,35 @@ internal sealed class Texture2DMeta : IDisposable {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal bool IsAnyAnimated(XTexture2D reference, Bounds? bounds) {
+		bounds ??= reference.Bounds();
+
+		using (Lock.Read) {
+			foreach (var dataPair in SpriteDataMap) {
+				if (!dataPair.Key.Overlaps(bounds.Value)) {
+					continue;
+				}
+
+				if (dataPair.Value.Flags.HasFlag(SpriteFlag.Animated)) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	// TODO : This is currently an all-or-nothing task.
+	// That is, if it cannot update the cache, it purges it. It has no ability to mark
+	// regions of the cache as invalidated.
+	// This should be changed.
+	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal void Purge(XTexture2D reference, Bounds? bounds, in DataRef<byte> data, bool animated) {
+		// Bounds is meaningless if it encompasses the entire texture
+		if (bounds == reference.Bounds()) {
+			bounds = null;
+		}
+
 		using (Lock.Write) {
 			bool hasCachedData = CachedRawData is not null;
 
@@ -225,17 +263,11 @@ internal sealed class Texture2DMeta : IDisposable {
 					Debug.Trace($"Clearing '{reference.NormalizedName(DrawingColor.LightYellow)}' Cache");
 				}
 				CachedRawData = null;
-				foreach (var pair in SpriteDataMap) {
-					var spriteData = pair.Value;
-					spriteData.Hash = null;
-					if (animated) {
-						spriteData.Flags |= SpriteFlag.Animated;
-					}
-				}
+				ClearSpriteHashes(animated);
 				return;
 			}
 
-			var refSize = (int)reference.SizeBytes();
+			var refSize = reference.SizeBytes();
 
 			bool forcePurge = false;
 
@@ -250,13 +282,7 @@ internal sealed class Texture2DMeta : IDisposable {
 				}
 			}
 			else {
-				foreach (var pair in SpriteDataMap) {
-					var spriteData = pair.Value;
-					spriteData.Hash = null;
-					if (animated) {
-						spriteData.Flags |= SpriteFlag.Animated;
-					}
-				}
+				ClearSpriteHashes(animated);
 			}
 
 
@@ -265,33 +291,57 @@ internal sealed class Texture2DMeta : IDisposable {
 				if (Config.MemoryCache.AlwaysFlush) {
 					forcePurge = true;
 				}
-				else if (!bounds.HasValue && data.Offset == 0 && data.Length == refSize) {
-					Debug.Trace($"{(hasCachedData ? "Overriding" : "Setting")} '{reference.NormalizedName(DrawingColor.LightYellow)}' Cache in Purge: {bounds.HasValue}, {data.Offset}, {data.Length}");
-					
-					CachedRawData = data.Data;
-				}
-				else if (!IsCompressed && (bounds.HasValue != (data.Offset != 0)) && CachedRawData is { } currentData) {
-					Debug.Trace($"{(hasCachedData ? "Updating" : "Setting")} '{reference.NormalizedName(DrawingColor.LightYellow)}' Cache in Purge: {bounds.HasValue}");
+				else if (!bounds.HasValue && data.Length == refSize) {
+					Debug.Trace($"{(hasCachedData ? "Overriding" : "Setting")} '{reference.NormalizedName(DrawingColor.LightYellow)}' Cache in Purge: {bounds.HasValue}, {data.Length}");
 
-					if (bounds.HasValue) {
-						var source = data.Data.AsReadOnlySpan<uint>();
-						var dest = currentData.AsSpan<uint>();
-						int sourceOffset = 0;
-						for (int y = bounds.Value.Top; y < bounds.Value.Bottom; ++y) {
-							int destOffset = (y * reference.Width) + bounds.Value.Left;
-							var sourceSlice = source.Slice(sourceOffset, bounds.Value.Width);
-							var destSlice = dest.Slice(destOffset, bounds.Value.Width);
-							sourceSlice.CopyTo(destSlice);
-							sourceOffset += bounds.Value.Width;
-						}
+					if (data.HasData) {
+						CachedRawData = data.DataCopy;
 					}
 					else {
-						var source = data.Data;
-						var length = Math.Min(currentData.Length - data.Offset, data.Length);
-						Array.Copy(source, 0, currentData, data.Offset, length);
+						if (hasCachedData) {
+							Debug.Trace($"Forcing full '{reference.NormalizedName(DrawingColor.LightYellow)}' Purge");
+						}
+						forcePurge = true;
 					}
-					Hash = 0;
-					CachedRawData = currentData; // Force it to update the global cache.
+				}
+				else if (!IsCompressed && CachedRawData is { } currentData) {
+					Debug.Trace($"{(hasCachedData ? "Updating" : "Setting")} '{reference.NormalizedName(DrawingColor.LightYellow)}' Cache in Purge: {bounds.HasValue}");
+
+					if (data.HasData) {
+						if (bounds.HasValue) {
+							int elementSize = Format.GetSize();
+
+							//int referenceStride = reference.Width * elementSize;
+							int boundsStride = bounds.Value.Width * elementSize;
+
+							var source = data.Data;
+							var dest = currentData.AsSpan();
+							int sourceOffset = 0;
+							for (int y = bounds.Value.Top; y < bounds.Value.Bottom; ++y) {
+								int destOffset = (y * reference.Width) + bounds.Value.Left;
+								var sourceSlice = source.Slice(sourceOffset * elementSize, boundsStride);
+								var destSlice = dest.Slice(destOffset * elementSize, boundsStride);
+								sourceSlice.CopyTo(destSlice);
+								sourceOffset += bounds.Value.Width;
+							}
+						}
+						else {
+							//var source = data.Data;
+							//var length = Math.Min(currentData.Length - data.Offset, data.Length);
+							//source.CopyTo(currentData.AsSpan(data.Offset, length));
+
+							data.Data.CopyTo(currentData);
+						}
+
+						Hash = 0;
+						CachedRawData = currentData; // Force it to update the global cache.
+					}
+					else {
+						if (hasCachedData) {
+							Debug.Trace($"Forcing full '{reference.NormalizedName(DrawingColor.LightYellow)}' Purge");
+						}
+						forcePurge = true;
+					}
 				}
 				else {
 					if (hasCachedData) {
@@ -305,7 +355,6 @@ internal sealed class Texture2DMeta : IDisposable {
 				forcePurge = true;
 			}
 
-			// TODO : maybe we need to purge more often?
 			if (forcePurge && hasCachedData) {
 				CachedRawData = null;
 			}
@@ -428,13 +477,15 @@ internal sealed class Texture2DMeta : IDisposable {
 		return true;
 	}
 
-	~Texture2DMeta() => Dispose();
+	~Texture2DMeta() => Dispose(false);
 
-	public void Dispose() {
+	public void Dispose() => Dispose(true);
+
+	private void Dispose(bool disposing) {
 		ResourceManager.ReleasedTextureMetas.Push(MetaId);
-		//ResourceManager.SuspendableSpriteInstances.Push(new(SpriteInstanceTable.Values));
-
-		GC.SuppressFinalize(this);
+		if (disposing) {
+			GC.SuppressFinalize(this);
+		}
 	}
 
 	internal static void Cleanup(in ulong id) {

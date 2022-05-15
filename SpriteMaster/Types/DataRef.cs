@@ -1,67 +1,54 @@
-﻿using System;
+﻿using Microsoft.Toolkit.HighPerformance;
+using SpriteMaster.Extensions;
+using System;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Types;
 
-internal readonly ref struct DataRef<T> where T : struct {
-	private readonly T[]? DataInternal;
-	internal readonly int Offset;
-	internal readonly int Length;
+internal ref struct DataRef<T> where T : unmanaged {
+	internal static DataRef<T> Null => new(null, 0);
 
-	internal T[] Data {
-		get {
-			if (DataInternal is null) {
-				throw new NullReferenceException(nameof(Data));
+	private readonly ReadOnlySpan<T> DataInternal = default;
+	private T[]? CopiedData = null;
+	private readonly int LengthInternal = 0;
+	internal readonly int Length => DataInternal.Length;
+
+	internal readonly ReadOnlySpan<T> Data => CopiedData is null ? DataInternal : CopiedData.AsReadOnlySpan();
+
+	internal readonly T[] DataCopy {
+		 get {
+			if (DataInternal.IsEmpty) {
+				throw new NullReferenceException(nameof(DataCopy));
 			}
-			return DataInternal;
+
+			if (CopiedData is null) {
+				Unsafe.AsRef(in CopiedData) = GC.AllocateUninitializedArray<T>(DataInternal.Length);
+				DataInternal.CopyTo(CopiedData.AsSpan());
+			}
+			return CopiedData!;
 		}
 	}
 
-	internal bool IsEmpty => DataInternal is null || Length == 0;
+	internal readonly bool IsEmpty => Length == 0;
 
-	internal bool IsNull => DataInternal is null;
+	internal readonly bool IsNull => DataInternal.IsEmpty || Length == 0;
 
-	internal bool IsEntire => DataInternal is not null && Offset == 0 && Length == DataInternal.Length;
-
-	internal static DataRef<T> Null => new(null);
+	internal readonly bool HasData => !DataInternal.IsEmpty;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal DataRef(T[]? data, int offset = 0, int length = 0) {
-		offset.AssertPositiveOrZero();
-
+	internal DataRef(ReadOnlySpan<T> data, int length, T[]? referenceArray = null, bool copied = false) {
+#if DEBUG
+		if (referenceArray is null && copied) {
+			throw new NullReferenceException(nameof(referenceArray));
+		}
+#endif
 		DataInternal = data;
-		Offset = offset;
-		Length = (length == 0 && DataInternal is not null) ? DataInternal.Length : length;
+		CopiedData = copied ? referenceArray : null;
+		LengthInternal = length;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static implicit operator DataRef<T>(T[]? data) {
-		if (data is null)
-			return Null;
-		return new DataRef<T>(data);
-	}
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(in DataRef<T> lhs, in DataRef<T> rhs) => lhs.DataInternal == rhs.DataInternal && lhs.Offset == rhs.Offset;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator ==(in DataRef<T> lhs, object rhs) => lhs.DataInternal == rhs;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(in DataRef<T> lhs, in DataRef<T> rhs) => lhs.DataInternal == rhs.DataInternal && lhs.Offset == rhs.Offset;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public static bool operator !=(in DataRef<T> lhs, object rhs) => lhs.DataInternal != rhs;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal bool Equals(in DataRef<T> other) => this == other;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public override bool Equals(object? other) => other is not null && this == other;
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public override int GetHashCode() {
-		// TODO : This isn't right. We need to hash Data _from_ the offset.
-		return Hashing.Combine32(DataInternal, Offset);
+	public override readonly int GetHashCode() {
+		return (int)DataInternal.AsBytes().Hash();
 	}
 }

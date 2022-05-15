@@ -5,7 +5,6 @@ using SpriteMaster.Resample.Scalers.xBRZ.Common;
 using SpriteMaster.Resample.Scalers.xBRZ.Scalers;
 using SpriteMaster.Resample.Scalers.xBRZ.Structures;
 using SpriteMaster.Types;
-using SpriteMaster.Types.Spans;
 using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
@@ -93,7 +92,7 @@ internal sealed partial class Scaler {
 	}
 
 	private readonly Config Configuration;
-	private readonly Structures.AbstractScaler Scalerer;
+	private readonly AbstractScaler Scalerer;
 
 	private readonly ColorDist ColorDistance;
 	private readonly ColorEq ColorEqualizer;
@@ -234,7 +233,7 @@ internal sealed partial class Scaler {
 			blendInfo: result of preprocessing all four corners of pixel "e"
 	*/
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private void ScalePixel(Structures.AbstractScaler abstractScaler, RotationDegree rotDeg, in Kernel3X3 ker, ref OutputMatrix outputMatrix, int targetIndex, PreprocessType blendInfo) {
+	private void ScalePixel(AbstractScaler abstractScaler, RotationDegree rotDeg, in Kernel3X3 ker, ref OutputMatrix outputMatrix, int targetIndex, PreprocessType blendInfo) {
 		var blend = blendInfo.Rotate(rotDeg);
 
 		if (blend.GetBottomR() == BlendType.None) {

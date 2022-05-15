@@ -1,4 +1,6 @@
-﻿using System;
+﻿using LinqFasterer;
+using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -116,4 +118,52 @@ internal static partial class ReflectionExt {
 		name,
 		AllInstanceBinding | BindingFlags.FlattenHierarchy
 	)?.GetValue(obj);
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[DynamicallyAccessedMembers(AllMethods)]
+	internal static IList<MethodInfo> GetMethods(this Type type, string name, BindingFlags bindingFlags) {
+		return type.GetMethods(bindingFlags).WhereF(t => t.Name == name);
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[DynamicallyAccessedMembers(AllMethods)]
+	internal static IList<MethodInfo> GetStaticMethods(this Type type, string name) {
+		return type.GetMethods(name, ShallowStaticFlags);
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[DynamicallyAccessedMembers(AllMethods)]
+	internal static MethodInfo? GetStaticMethod(this Type type, string name) {
+		return type.GetMethod(name, ShallowStaticFlags);
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[DynamicallyAccessedMembers(AllMethods)]
+	internal static IList<MethodInfo> GetInstanceMethods(this Type type, string name) {
+		return type.GetMethods(name, ShallowInstanceFlags);
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[DynamicallyAccessedMembers(AllMethods)]
+	internal static MethodInfo? GetInstanceMethod(this Type type, string name) {
+		return type.GetMethod(name, ShallowInstanceFlags);
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[DynamicallyAccessedMembers(AllMethods)]
+	internal static IList<MethodInfo> GetMethods<T>(string name, BindingFlags bindingFlags) {
+		return typeof(T).GetMethods(name, bindingFlags);
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[DynamicallyAccessedMembers(AllMethods)]
+	internal static IList<MethodInfo> GetStaticMethods<T>(string name) {
+		return typeof(T).GetStaticMethods(name);
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[DynamicallyAccessedMembers(AllMethods)]
+	internal static IList<MethodInfo> GetInstanceMethods<T>(string name) {
+		return typeof(T).GetInstanceMethods(name);
+	}
 }

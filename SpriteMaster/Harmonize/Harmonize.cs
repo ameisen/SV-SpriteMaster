@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace SpriteMaster.Harmonize;
 
@@ -107,6 +108,8 @@ internal static class Harmonize {
 				instanceType = instancePar[0].ParameterType.RemoveRef();
 			}
 
+			bool wasError = false;
+
 			switch (attribute.GenericType) {
 				case Generic.None:
 					Patch(
@@ -118,24 +121,32 @@ internal static class Harmonize {
 						finalizer: (attribute.PatchFixation == Fixation.Finalizer) ? method : null,
 						trans: (attribute.PatchFixation == Fixation.Transpile) ? method : null,
 						reverse: (attribute.PatchFixation == Fixation.Reverse) ? method : null,
-						instanceMethod: attribute.Instance
+						instanceMethod: attribute.Instance,
+						attribute: attribute
 					);
 					break;
 				case Generic.Struct:
 					foreach (var structType in StructTypes) {
-						//Debug.Trace($"\tGeneric Type: {structType.FullName}");
-						Patch(
-							@this,
-							instanceType,
-							structType,
-							methodName,
-							pre: (attribute.PatchFixation == Fixation.Prefix) ? method : null,
-							post: (attribute.PatchFixation == Fixation.Postfix) ? method : null,
-							finalizer: (attribute.PatchFixation == Fixation.Finalizer) ? method : null,
-							trans: (attribute.PatchFixation == Fixation.Transpile) ? method : null,
-							reverse: (attribute.PatchFixation == Fixation.Reverse) ? method : null,
-							instanceMethod: attribute.Instance
-						);
+						try {
+							//Debug.Trace($"\tGeneric Type: {structType.FullName}");
+							Patch(
+								@this,
+								instanceType,
+								structType,
+								methodName,
+								pre: (attribute.PatchFixation == Fixation.Prefix) ? method : null,
+								post: (attribute.PatchFixation == Fixation.Postfix) ? method : null,
+								finalizer: (attribute.PatchFixation == Fixation.Finalizer) ? method : null,
+								trans: (attribute.PatchFixation == Fixation.Transpile) ? method : null,
+								reverse: (attribute.PatchFixation == Fixation.Reverse) ? method : null,
+								instanceMethod: attribute.Instance,
+								attribute: attribute
+							);
+						}
+						catch (Exception ex) {
+							Debug.ConditionalError(attribute.Critical, $"Exception Patching Method {GetFullMethodName(type, method, attribute)}<{structType.Name}> ({(method?.GetFullName() ?? "[null]")})", ex);
+							wasError = true;
+						}
 					}
 					break;
 				case Generic.Class:
@@ -149,11 +160,16 @@ internal static class Harmonize {
 						finalizer: (attribute.PatchFixation == Fixation.Finalizer) ? method : null,
 						trans: (attribute.PatchFixation == Fixation.Transpile) ? method : null,
 						reverse: (attribute.PatchFixation == Fixation.Reverse) ? method : null,
-						instanceMethod: attribute.Instance
+						instanceMethod: attribute.Instance,
+						attribute: attribute
 					);
 					break;
 				default:
 					throw new NotImplementedException($"Unknown Generic Enum: {attribute.GenericType}");
+			}
+
+			if (wasError) {
+				Debug.Warning( $"There were exceptions patching Method {GetFullMethodName(type, method, attribute)} ({(method?.GetFullName() ?? "[null]")})");
 			}
 		}
 		catch (Exception ex) {
@@ -163,9 +179,9 @@ internal static class Harmonize {
 
 	private static void ApplyPatches(Harmony @this, Type type, MethodInfo method, IEnumerable<HarmonizeAttribute> attributes) {
 		try {
-			foreach (var attribute in attributes) {
+			Parallel.ForEach(attributes, attribute => {
 				ApplyPatch(@this, type, method, attribute);
-			}
+			});
 		}
 		catch (Exception ex) {
 			Debug.Warning($"Exception Patching Method {method.GetFullName()}", ex);
@@ -176,83 +192,59 @@ internal static class Harmonize {
 		@this.AssertNotNull();
 		Debug.Trace("Applying Patches");
 		var assembly = typeof(Harmonize).Assembly;
-		foreach (var type in assembly.GetTypes()) {
-			var typeAttributes = type.GetCustomAttributes<HarmonizeFinalizeCatcherFixedAttribute>();
-			foreach (var attribute in typeAttributes) {
-				ApplyPatch(
-					@this: @this,
-					type: type,
-					method: attribute.MethodInfo,
-					attribute: attribute
-				);
-			}
+		Parallel.ForEach(
+			assembly.GetTypes(), type => {
+				var typeAttributes = type.GetCustomAttributes<HarmonizeFinalizeCatcherFixedAttribute>();
+				Parallel.ForEach(typeAttributes, attribute => {
+					ApplyPatch(
+						@this: @this,
+						type: type,
+						method: attribute.MethodInfo,
+						attribute: attribute
+					);
+				});
 
-			foreach (var method in type.GetMethods(StaticFlags)) {
-				ApplyPatches(
-					@this: @this,
-					type: type,
-					method: method,
-					attributes: method.GetCustomAttributes<HarmonizeAttribute>()
-				);
+				Parallel.ForEach(type.GetMethods(StaticFlags), method => {
+					ApplyPatches(
+						@this: @this,
+						type: type,
+						method: method,
+						attributes: method.GetCustomAttributes<HarmonizeAttribute>()
+					);
+				});
 			}
-		}
+		);
 		Debug.Trace("Done Applying Patches");
 	}
 
-	private static Type[] GetArguments(this MethodInfo method) {
+	private static Type[] GetArguments(this MethodInfo method, HarmonizeAttribute attribute) {
+		if (attribute.ArgumentTypes is not null) {
+			return attribute.ArgumentTypes;
+		}
+
 		var filteredParameters = method.GetParameters().WhereF(t => t.Name is null || !t.Name.StartsWith("__") || t.Name.StartsWith("__unnamed"));
 		return filteredParameters.SelectF(p => p.ParameterType).ToArrayF();
 	}
 
-	internal static IList<MethodInfo> GetMethods(this Type type, string name, BindingFlags bindingFlags) {
-		return type.GetMethods(bindingFlags).WhereF(t => t.Name == name);
-	}
-
-	internal static IList<MethodInfo> GetStaticMethods(this Type type, string name) {
-		return type.GetMethods(name, StaticFlags);
-	}
-
-	internal static MethodInfo? GetStaticMethod(this Type type, string name) {
-		return type.GetMethod(name, StaticFlags);
-	}
-
-	internal static IList<MethodInfo> GetInstanceMethods(this Type type, string name) {
-		return type.GetMethods(name, InstanceFlags);
-	}
-
-	internal static MethodInfo? GetInstanceMethod(this Type type, string name) {
-		return type.GetMethod(name, InstanceFlags);
-	}
-
-	internal static IList<MethodInfo> GetMethods<T>(string name, BindingFlags bindingFlags) {
-		return typeof(T).GetMethods(name, bindingFlags);
-	}
-
-	internal static IList<MethodInfo> GetStaticMethods<T>(string name) {
-		return typeof(T).GetStaticMethods(name);
-	}
-
-	internal static IList<MethodInfo> GetInstanceMethods<T>(string name) {
-		return typeof(T).GetInstanceMethods(name);
-	}
-
-	private static MethodBase? GetPatchMethod(Type type, string name, MethodInfo method, bool instance, bool isFinalizer, bool transpile = false) {
+	private static MethodBase? GetPatchMethod(Type type, string name, MethodInfo method, HarmonizeAttribute attribute, bool instance, bool isFinalizer, bool transpile = false) {
 		bool constructor = (name == Constructor);
 		var flags = instance ? InstanceFlags : StaticFlags;
 
 		if (transpile) {
 			if (constructor) {
 				// TODO fix me
-				return type.GetConstructor(Type.EmptyTypes);
+				return type.GetConstructor(attribute.ArgumentTypes ?? Type.EmptyTypes);
 			}
-			else {
-				return type.GetInstanceMethod(name);
+
+			if (attribute.ArgumentTypes is null) {
+				Debug.Warning($"Transpile method for {method.GetFullName()} specified, but no argument types provided");
+				return null;
 			}
 		}
 
 		var bindingFlags = instance ? InstanceFlags : StaticFlags;
 
-		var methodParameters = method.GetArguments();
+		var methodParameters = method.GetArguments(attribute);
 
 		int numGenericArguments = 0;
 		bool isGeneric = method.IsGenericMethod;
@@ -308,7 +300,7 @@ internal static class Harmonize {
 					return null;
 				}
 				if (typeMethod.DeclaringType != type) {
-					if (typeMethod.DeclaringType == typeof(Object)) {
+					if (typeMethod.DeclaringType == typeof(object)) {
 						return null;
 					}
 					else {
@@ -356,6 +348,7 @@ internal static class Harmonize {
 				var methodParameter = methodParameters[i].RemoveRef();
 				var methodParameterRef = methodParameter.AddRef();
 				var baseParameter = methodParameter.IsArray ? methodParameter.GetElementType()! : methodParameter;
+
 				if (
 					!(testParameter.IsPointer && methodParameter.IsPointer) &&
 					testParameterRef != methodParameterRef &&
@@ -367,7 +360,9 @@ internal static class Harmonize {
 					!(
 						testParameter.IsArray &&
 						methodParameter.IsArray &&
-						baseParameter == typeof(object))
+						(testBaseParameter.IsAssignableTo(baseParameter) || baseParameter == typeof(object) || baseParameter == typeof(Array))
+					) &&
+					!testParameter.IsAssignableTo(methodParameter)
 				) {
 					found = false;
 					break;
@@ -403,6 +398,7 @@ internal static class Harmonize {
 		this Harmony instance,
 		Type type,
 		string name,
+		HarmonizeAttribute attribute,
 		MethodInfo? pre = null,
 		MethodInfo? post = null,
 		MethodInfo? finalizer = null,
@@ -412,14 +408,16 @@ internal static class Harmonize {
 		bool instanceMethod = true
 	) {
 		[return: NotNullIfNotNull("methodInfo")]
-		HarmonyMethod? MakeHarmonyMethod(MethodInfo? methodInfo) => (methodInfo is null) ? null : new(methodInfo) { priority = GetPriority(methodInfo, priority) };
+		HarmonyMethod? MakeHarmonyMethod(MethodInfo? methodInfo) =>
+			(methodInfo is null) ? null : new(methodInfo) { priority = GetPriority(methodInfo, priority) };
 
 		var referenceMethod = pre ?? post ?? finalizer;
 		if (referenceMethod is not null) {
 			var typeMethod = GetPatchMethod(
-				type,
-				name,
-				referenceMethod,
+				type: type,
+				name: name,
+				method: referenceMethod,
+				attribute: attribute,
 				instance: instanceMethod,
 				isFinalizer: referenceMethod == finalizer
 			) ?? throw new ArgumentException($"Method '{name}' in type '{type.FullName}' could not be found");
@@ -432,9 +430,10 @@ internal static class Harmonize {
 		}
 		if (trans is not null) {
 			var typeMethod = GetPatchMethod(
-				type,
-				name,
-				referenceMethod ?? trans,
+				type: type,
+				name: name,
+				method: referenceMethod ?? trans,
+				attribute: attribute,
 				transpile: true,
 				instance: instanceMethod,
 				isFinalizer: referenceMethod == finalizer
@@ -448,9 +447,10 @@ internal static class Harmonize {
 			priority = Priority.Normal;
 
 			var typeMethod = GetPatchMethod(
-				type,
-				name,
-				referenceMethod ?? reverse,
+				type: type,
+				name: name,
+				method: referenceMethod ?? reverse,
+				attribute: attribute,
 				instance: instanceMethod,
 				isFinalizer: referenceMethod == finalizer
 			) ?? throw new ArgumentException($"Method '{name}' in type '{type.FullName}' could not be found");
@@ -466,6 +466,7 @@ internal static class Harmonize {
 		Type type,
 		Type genericType,
 		string name,
+		HarmonizeAttribute attribute,
 		MethodInfo? pre = null,
 		MethodInfo? post = null,
 		MethodInfo? finalizer = null,
@@ -475,14 +476,18 @@ internal static class Harmonize {
 		bool instanceMethod = true
 	) {
 		[return: NotNullIfNotNull("methodInfo")]
-		HarmonyMethod? MakeHarmonyMethod(MethodInfo? methodInfo) => (methodInfo is null) ? null : new(methodInfo.MakeGenericMethod(genericType)) { priority = GetPriority(methodInfo, priority) };
+		HarmonyMethod? MakeHarmonyMethod(MethodInfo? methodInfo) =>
+			(methodInfo is null) ? null : new(
+				methodInfo.ContainsGenericParameters ? methodInfo.MakeGenericMethod(genericType) : methodInfo
+			) { priority = GetPriority(methodInfo, priority) };
 
 		var referenceMethod = pre ?? post ?? finalizer;
 		if (referenceMethod is not null) {
 			var typeMethod = GetPatchMethod(
-				type,
-				name,
-				referenceMethod,
+				type: type,
+				name: name,
+				method: referenceMethod,
+				attribute: attribute,
 				instance: instanceMethod,
 				isFinalizer: referenceMethod == finalizer
 			) ?? throw new ArgumentException($"Method '{name}' in type '{type.FullName}' could not be found");
@@ -496,12 +501,13 @@ internal static class Harmonize {
 		}
 		if (trans is not null) {
 			var typeMethod = GetPatchMethod(
-				type,
-				name,
-				referenceMethod ?? trans,
+				type: type,
+				name: name,
+				method: referenceMethod ?? trans,
+				attribute: attribute,
 				transpile: true,
 				instance: instanceMethod,
-				isFinalizer: referenceMethod == finalizer
+				isFinalizer: (referenceMethod ?? trans) == finalizer
 			) ?? throw new ArgumentException($"Method '{name}' in type '{type.FullName}' could not be found");
 			var typeMethodInfo = (MethodInfo)typeMethod;
 			instance.Patch(
@@ -513,9 +519,10 @@ internal static class Harmonize {
 			priority = Priority.Normal;
 
 			var typeMethod = GetPatchMethod(
-				type,
-				name,
-				referenceMethod ?? reverse,
+				type: type,
+				name: name,
+				method: referenceMethod ?? reverse,
+				attribute: attribute,
 				instance: instanceMethod,
 				isFinalizer: referenceMethod == finalizer
 			) ?? throw new ArgumentException($"Method '{name}' in type '{type.FullName}' could not be found");

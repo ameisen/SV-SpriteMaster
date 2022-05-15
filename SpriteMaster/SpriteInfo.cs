@@ -82,7 +82,7 @@ internal sealed class SpriteInfo : IDisposable {
 		}
 
 		var format = reference.Format.IsCompressed() ? SurfaceFormat.Color : reference.Format;
-		var actualWidth = (int)format.SizeBytes(bounds.Extent.X);
+		var actualWidth = format.SizeBytes(bounds.Extent.X);
 
 		try {
 			var spriteData = new Span2D<byte>(
@@ -147,7 +147,8 @@ internal sealed class SpriteInfo : IDisposable {
 	// Attempt to update the bytedata cache for the reference texture, or purge if it that makes more sense or if updating
 	// is not plausible.
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static void Purge(XTexture2D reference, Bounds? bounds, in DataRef<byte> data, bool animated) => reference.Meta().Purge(reference, bounds, data, animated: animated);
+	internal static void Purge(XTexture2D reference, Bounds? bounds, in DataRef<byte> data, bool animated) =>
+		reference.Meta().Purge(reference, bounds, data, animated: animated);
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool IsCached(XTexture2D reference) => reference.Meta().CachedDataNonBlocking is not null;
@@ -221,8 +222,8 @@ internal sealed class SpriteInfo : IDisposable {
 			}
 
 			var format = Reference.Format.IsCompressed() ? SurfaceFormat.Color : Reference.Format;
-			int rawStride = (int)format.SizeBytes(Reference.Width);
-			int rawOffset = (rawStride * Bounds.Top) + (int)format.SizeBytes(Bounds.Left);
+			int rawStride = format.SizeBytes(Reference.Width);
+			int rawOffset = (rawStride * Bounds.Top) + format.SizeBytes(Bounds.Left);
 
 			bool blendEnabled = BlendState.AlphaSourceBlend != Blend.One;
 			bool isWater = TextureType == TextureType.Sprite && SpriteOverrides.IsWater(Bounds, Reference);
@@ -256,8 +257,8 @@ internal sealed class SpriteInfo : IDisposable {
 		Bounds = initializer.Bounds;
 		TextureType = initializer.TextureType;
 		var format = Reference.Format.IsCompressed() ? SurfaceFormat.Color : Reference.Format;
-		RawStride = (int)format.SizeBytes(ReferenceSize.Width);
-		RawOffset = (RawStride * Bounds.Top) + (int)format.SizeBytes(Bounds.Left);
+		RawStride = format.SizeBytes(ReferenceSize.Width);
+		RawOffset = (RawStride * Bounds.Top) + format.SizeBytes(Bounds.Left);
 		ReferenceData = initializer.ReferenceData;
 		IsPreview = initializer.IsPreview;
 		Scaler = initializer.Scaler;

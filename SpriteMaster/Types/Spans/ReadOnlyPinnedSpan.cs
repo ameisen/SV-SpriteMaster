@@ -1,8 +1,6 @@
-﻿using Microsoft.Toolkit.HighPerformance;
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 // ReSharper disable UnusedMember.Global
@@ -24,9 +22,8 @@ internal readonly ref struct ReadOnlyPinnedSpan<T> where T : unmanaged {
 	/// <param name="array">The target array.</param>
 	/// <remarks>Returns default when <paramref name="array"/> is null.</remarks>
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal ReadOnlyPinnedSpan(T[]? array) {
-		ReferenceObject = array!;
-		InnerSpan = new(array);
+	internal ReadOnlyPinnedSpan(T[]? array) :
+		this(array!, new(array)) {
 	}
 
 	/// <summary>
@@ -41,9 +38,9 @@ internal readonly ref struct ReadOnlyPinnedSpan<T> where T : unmanaged {
 	/// Thrown when the specified <paramref name="start"/> or end index is not in the range (&lt;0 or &gt;Length).
 	/// </exception>
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal ReadOnlyPinnedSpan(T[] array, int start, int length) {
-		ReferenceObject = array;
-		InnerSpan = new(array, start, length);
+	internal ReadOnlyPinnedSpan(T[] array, int start, int length) :
+		this(array, new(array, start, length)
+	) {
 	}
 
 	/// <summary>
@@ -52,6 +49,7 @@ internal readonly ref struct ReadOnlyPinnedSpan<T> where T : unmanaged {
 	/// out of a void*-typed block of memory.  And the length is not checked.
 	/// But if this creation is correct, then all subsequent uses are correct.
 	/// </summary>
+	/// <param name="refObject">Reference object for garbage collection purposes</param>
 	/// <param name="pointer">An unmanaged pointer to memory.</param>
 	/// <param name="length">The number of <typeparamref name="T"/> elements the memory contains.</param>
 	/// <exception cref="System.ArgumentException">
@@ -61,25 +59,22 @@ internal readonly ref struct ReadOnlyPinnedSpan<T> where T : unmanaged {
 	/// Thrown when the specified <paramref name="length"/> is negative.
 	/// </exception>
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal unsafe ReadOnlyPinnedSpan(object refObject, void* pointer, int length) {
-		ReferenceObject = refObject;
-		InnerSpan = new(pointer, length);
+	internal unsafe ReadOnlyPinnedSpan(object refObject, void* pointer, int length) :
+		this(refObject, new(pointer, length)) {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal unsafe ReadOnlyPinnedSpan(object refObject, ref T pointer, int length) {
-		ReferenceObject = refObject;
-		InnerSpan = new(Unsafe.AsPointer(ref pointer), length);
+	internal unsafe ReadOnlyPinnedSpan(object refObject, ref T pointer, int length) :
+		this(refObject, Unsafe.AsPointer(ref pointer), length) {
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	private ReadOnlyPinnedSpan(object refObject, Span<T> span) :
+		this(refObject, (ReadOnlySpan<T>)span) {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private ReadOnlyPinnedSpan(object refObject, ReadOnlySpan<T> span) {
-		ReferenceObject = refObject;
-		InnerSpan = span;
-	}
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	private ReadOnlyPinnedSpan(object refObject, Span<T> span) {
 		ReferenceObject = refObject;
 		InnerSpan = span;
 	}
@@ -289,6 +284,8 @@ internal readonly ref struct ReadOnlyPinnedSpan<T> where T : unmanaged {
 		}
 
 		internal ReadOnlyPinnedSpan<T> AsSpan => new(ReferenceObject, Pointer, Length);
+
+		internal T[] Array => (ReferenceObject as T[]) ?? AsSpan.ToArray();
 	}
 
 	internal FixedSpan Fixed => new(this);

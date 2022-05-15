@@ -10,11 +10,9 @@ internal static partial class Integer {
 	[Conditional("DEBUG")]
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static unsafe void CheckBit<T>(int bit) where T : unmanaged {
-#if DEBUG
 		if (bit >= sizeof(T) * 8) {
 			throw new ArgumentOutOfRangeException(nameof(bit));
 		}
-#endif
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
@@ -79,163 +77,132 @@ internal static partial class Integer {
 	internal static bool GetBit(this in BigInteger value, int bit) => ((int)(value >> bit) & 1) != 0;
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
+	// ReSharper disable once RedundantAssignment
 	internal static bool SetBit(this ref bool value, int bit) {
 #if DEBUG
 		if (bit != 0) {
 			throw new ArgumentOutOfRangeException(nameof(bit));
 		}
 #endif
-		value = true;
-		return value;
+		return value = true;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static sbyte SetBit(this ref sbyte value, int bit) {
 		CheckBit<sbyte>(bit);
-		value |= (sbyte)(1 << bit);
-		return value;
+		return value |= (sbyte)(1 << bit);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static byte SetBit(this ref byte value, int bit) {
 		CheckBit<byte>(bit);
-		value |= (byte)(1U << bit);
-		return value;
+		return value |= (byte)(1U << bit);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static short SetBit(this ref short value, int bit) {
 		CheckBit<short>(bit);
-		value |= (short)(1 << bit);
-		return value;
+		return value |= (short)(1 << bit);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ushort SetBit(this ref ushort value, int bit) {
 		CheckBit<ushort>(bit);
-		value |= (ushort)(1U << bit);
-		return value;
+		return value |= (ushort)(1U << bit);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static int SetBit(this ref int value, int bit) {
 		CheckBit<int>(bit);
-		value |= 1 << bit;
-		return value;
+		return value |= 1 << bit;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static uint SetBit(this ref uint value, int bit) {
 		CheckBit<uint>(bit);
-		value |= 1U << bit;
-		return value;
+		return value |= 1U << bit;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static long SetBit(this ref long value, int bit) {
 		CheckBit<long>(bit);
-		value |= 1L << bit;
-		return value;
+		return value |= 1L << bit;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ulong SetBit(this ref ulong value, int bit) {
 		CheckBit<ulong>(bit);
-		value |= 1UL << bit;
-		return value;
+		return value |= 1UL << bit;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static BigInteger SetBit(this ref BigInteger value, int bit) {
-		CheckBit<ulong>(bit);
-		value |= BigInteger.One << bit;
-		return value;
-	}
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	// ReSharper disable once RedundantAssignment
 	internal static bool ClearBit(this ref bool value, int bit) {
 #if DEBUG
 		if (bit != 0) {
 			throw new ArgumentOutOfRangeException(nameof(bit));
 		}
 #endif
-		value = false;
-		return value;
+		return value = false;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static sbyte ClearBit(this ref sbyte value, int bit) {
 		CheckBit<sbyte>(bit);
-		value &= (sbyte)~(1 << bit);
-		return value;
+		return value &= (sbyte)~(1 << bit);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static byte ClearBit(this ref byte value, int bit) {
 		CheckBit<byte>(bit);
-		value &= (byte)~(1U << bit);
-		return value;
+		return value &= (byte)~(1U << bit);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static short ClearBit(this ref short value, int bit) {
 		CheckBit<short>(bit);
-		value &= (short)~(1 << bit);
-		return value;
+		return value &= (short)~(1 << bit);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ushort ClearBit(this ref ushort value, int bit) {
 		CheckBit<ushort>(bit);
-		value &= (ushort)~(1U << bit);
-		return value;
+		return value &= (ushort)~(1U << bit);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static int ClearBit(this ref int value, int bit) {
 		CheckBit<int>(bit);
-		value &= ~(1 << bit);
-		return value;
+		return value &= ~(1 << bit);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static uint ClearBit(this ref uint value, int bit) {
 		CheckBit<uint>(bit);
-		value &= ~(1U << bit);
-		return value;
+		return value &= ~(1U << bit);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static long ClearBit(this ref long value, int bit) {
 		CheckBit<long>(bit);
-		value &= ~(1L << bit);
-		return value;
+		return value &= ~(1L << bit);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ulong ClearBit(this ref ulong value, int bit) {
 		CheckBit<ulong>(bit);
-		value &= ~(1UL << bit);
-		return value;
+		return value &= ~(1UL << bit);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static BigInteger ClearBit(this ref BigInteger value, int bit) {
-		CheckBit<ulong>(bit);
-		// TODO : I don't think this will necessarily work, as the BigInteger shifted might not be large eonugh to mask against the entirety of 'value'.
-		value &= ~(BigInteger.One << bit);
-		return value;
-	}
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	// ReSharper disable once RedundantAssignment
 	internal static bool SetBit(this ref bool value, int bit, bool condition) {
 #if DEBUG
 		if (bit != 0) {
 			throw new ArgumentOutOfRangeException(nameof(bit));
 		}
 #endif
-		value = condition;
-		return value;
+		return value = condition;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Hot)]

@@ -1,4 +1,5 @@
 ﻿using SpriteMaster.Configuration;
+using SpriteMaster.GL;
 using StardewModdingAPI;
 using System;
 using System.Reflection;
@@ -30,6 +31,7 @@ internal static class PAssetDataForImage {
 		if (source is null) {
 			throw new ArgumentNullException(nameof(source), "Can't patch from a null source texture.");
 		}
+
 		XTexture2D target = __instance.Data;
 
 		// get areas
@@ -43,6 +45,10 @@ internal static class PAssetDataForImage {
 			throw new ArgumentOutOfRangeException(nameof(targetArea), "The target area is outside the bounds of the target texture.");
 		if (sourceArea.Value.Size != targetArea.Value.Size)
 			throw new InvalidOperationException("The source and target areas must be the same size.");
+
+		if (GL.Texture2DExt.CopyTexture(source, sourceArea.Value, target, targetArea.Value, patchMode)) {
+			return false;
+		}
 
 		// get source data
 		int pixelCount = sourceArea.Value.Width * sourceArea.Value.Height;

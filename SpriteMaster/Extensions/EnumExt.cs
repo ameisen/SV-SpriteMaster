@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Extensions;
 
@@ -12,6 +13,7 @@ internal static class EnumExt {
 	/// </summary>
 	/// <typeparam name="TEnum">Enumerator Type</typeparam>
 	/// <returns>Array of name-value pairs</returns>
+	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static KeyValuePair<string, TEnum>[] Get<TEnum>() where TEnum : struct, Enum {
 		var names = Enum.GetNames(typeof(TEnum));
 		var result = new KeyValuePair<string, TEnum>[names.Length];
@@ -26,6 +28,7 @@ internal static class EnumExt {
 	/// </summary>
 	/// <param name="type">Enumerator Type</param>
 	/// <returns>Array of name-value pairs</returns>
+	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static KeyValuePair<string, int>[] Get(Type type) {
 		var names = Enum.GetNames(type);
 		var result = new KeyValuePair<string, int>[names.Length];
@@ -34,4 +37,7 @@ internal static class EnumExt {
 		}
 		return result;
 	}
+
+	[MethodImpl(Runtime.MethodImpl.Hot)]
+	internal static Type GetUnderlyingType<T>() where T : Enum => Enum.GetUnderlyingType(typeof(T));
 }
