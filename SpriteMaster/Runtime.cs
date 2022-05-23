@@ -7,8 +7,8 @@ namespace SpriteMaster;
 
 internal static class Runtime {
 	internal static class MethodImpl {
-		internal const MethodImplOptions Hot = MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization;
-		internal const MethodImplOptions Cold = MethodImplOptions.NoInlining | MethodImplOptions.AggressiveOptimization;
+		internal const MethodImplOptions Inline = MethodImplOptions.AggressiveInlining;
+		internal const MethodImplOptions Cold = MethodImplOptions.NoInlining;
 		internal const MethodImplOptions ErrorPath = MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization;
 		internal const MethodImplOptions RunOnce = MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization;
 		internal const MethodImplOptions IgnoreOptimization = MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization;

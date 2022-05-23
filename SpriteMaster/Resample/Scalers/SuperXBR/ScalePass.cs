@@ -15,8 +15,6 @@ internal sealed partial class Scaler {
 	// https://github.com/libretro/common-shaders/blob/master/xbr/shaders/super-xbr/super-xbr-small-details-pass0.cg
 	// https://github.com/libretro/common-shaders/blob/master/xbr/shaders/super-xbr/super-xbr-small-details-pass1.cg
 	// https://github.com/libretro/common-shaders/blob/master/xbr/shaders/super-xbr/super-xbr-small-details-pass2.cg
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private void Scale(ReadOnlySpan<Color16> source, Vector2I sourceSize, Span<Color16> target, Vector2I targetSize) {
 		var source0 = Fixed16.ConvertToReal(source.Elements()).Cast<float, Float4>();
 

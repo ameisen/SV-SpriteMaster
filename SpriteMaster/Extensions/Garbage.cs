@@ -9,12 +9,11 @@ namespace SpriteMaster.Extensions;
 internal static class Garbage {
 	internal static volatile bool ManualCollection = false;
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static void EnterNonInteractive() {
 		GCSettings.LatencyMode = GCLatencyMode.Interactive;
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void EnterInteractive() {
 		//Debug.Error("Interactive GC");
 
@@ -38,7 +37,7 @@ internal static class Garbage {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static void MarkCompact() {
 		Debug.Trace("Marking for Compact");
 		try {
@@ -49,7 +48,6 @@ internal static class Garbage {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void Collect(bool compact = false, bool blocking = false, bool background = true) {
 		try {
 			ManualCollection = true;
@@ -101,31 +99,31 @@ internal static class Garbage {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static void Mark(long size) {
 		size.AssertPositiveOrZero();
 		GC.AddMemoryPressure(size);
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static void Mark(XTexture2D texture) {
 		texture.AssertNotNull();
 		Mark(texture.SizeBytesLong());
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static void Unmark(long size) {
 		size.AssertPositiveOrZero();
 		GC.RemoveMemoryPressure(size);
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static void Unmark(XTexture2D texture) {
 		texture.AssertNotNull();
 		Unmark(texture.SizeBytesLong());
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static void MarkOwned(SurfaceFormat format, int texels) {
 		if (!Config.Garbage.CollectAccountOwnedTextures) {
 			return;
@@ -135,7 +133,7 @@ internal static class Garbage {
 		Mark(size);
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static void UnmarkOwned(SurfaceFormat format, int texels) {
 		if (!Config.Garbage.CollectAccountOwnedTextures) {
 			return;
@@ -145,7 +143,7 @@ internal static class Garbage {
 		Unmark(size);
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static void MarkUnowned(SurfaceFormat format, int texels) {
 		if (!Config.Garbage.CollectAccountUnownedTextures) {
 			return;
@@ -155,7 +153,7 @@ internal static class Garbage {
 		Mark(size);
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static void UnmarkUnowned(SurfaceFormat format, int texels) {
 		if (!Config.Garbage.CollectAccountUnownedTextures) {
 			return;

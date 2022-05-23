@@ -12,7 +12,6 @@ internal static class LogMonitor {
 #if !SHIPPING
 	private static readonly HashSet<string> SilencedMods = new();
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static bool SilencedMod(string? source) {
 		if (source is null) {
 			return false;
@@ -34,7 +33,6 @@ internal static class LogMonitor {
 		Harmonize.PriorityLevel.Last,
 		critical: false
 	)]
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static bool LogImplPre(IMonitor __instance, string? source, string? message, object level) {
 		if (!Config.Debug.Logging.SilenceOtherMods) {
 			return true;
@@ -50,7 +48,7 @@ internal static class LogMonitor {
 
 	private static readonly Func<object, StreamWriter?>? GetLogFileStream = typeof(IMonitor).Assembly.GetType("StardewModdingAPI.Framework.Logging.LogFileManager")?.GetFieldGetter<object, StreamWriter>("Stream");
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private static void FlushFileStream(object logFile) {
 		var streamWriter = GetLogFileStream!(logFile);
 		if (streamWriter is null) {
@@ -67,7 +65,7 @@ internal static class LogMonitor {
 		Harmonize.PriorityLevel.Last,
 		critical: true
 	)]
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static void LogImplFinalizer(IMonitor __instance, object ___LogFile, string? source, string? message, object level) {
 		if (GetLogFileStream is null) {
 			return;

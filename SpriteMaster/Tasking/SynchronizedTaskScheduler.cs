@@ -63,7 +63,6 @@ internal sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal void Dispatch(TimeSpan remainingTime) {
 		if (!Config.IsEnabled) {
 			return;
@@ -80,14 +79,13 @@ internal sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
 		catch (OperationCanceledException) { /* do nothing */ }
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private void InvokeTask(Task task) {
 		if (TryExecuteTask(task) || task.IsCompleted) {
 			task.Dispose();
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private void DispatchInternal(TimeSpan remainingTime) {
 		var watch = Stopwatch.StartNew();
 		{
@@ -155,7 +153,6 @@ internal sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	protected override void QueueTask(Task task) {
 		if (!Config.IsEnabled) {
 			return;
@@ -179,7 +176,7 @@ internal sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal void QueueImmediate(Action action) {
 		if (!Config.IsEnabled) {
 			return;
@@ -189,7 +186,7 @@ internal sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
 		task.Start(this);
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal void QueueDeferred(Action action, TextureAction actionData) {
 		if (!Config.IsEnabled) {
 			return;

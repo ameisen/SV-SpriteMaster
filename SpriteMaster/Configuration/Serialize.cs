@@ -1,4 +1,5 @@
 ﻿using SpriteMaster.Extensions;
+using SpriteMaster.Hashing;
 using SpriteMaster.Types;
 using System;
 using System.Collections;
@@ -31,11 +32,11 @@ internal static class Serialize {
 		ulong hash = default;
 
 		foreach (var field in type.GetFields(StaticFlags)) {
-			hash = Hashing.Combine(hash, field.GetValue(null).GetLongHashCode());
+			hash = HashUtility.Combine(hash, field.GetValue(null).GetLongHashCode());
 		}
 
 		foreach (var child in type.GetNestedTypes(StaticFlags)) {
-			hash = Hashing.Combine(hash, HashClass(child));
+			hash = HashUtility.Combine(hash, HashClass(child));
 		}
 
 		return hash;

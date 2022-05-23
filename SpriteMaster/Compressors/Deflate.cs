@@ -42,10 +42,10 @@ internal static class Deflate {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static int CompressedLengthEstimate(byte[] data) => data.Length >> 1;
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static int CompressedLengthEstimate(ReadOnlySpan<byte> data) => data.Length >> 1;
 
 	[MethodImpl(Runtime.MethodImpl.RunOnce)]
@@ -65,7 +65,6 @@ internal static class Deflate {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static byte[] Compress(byte[] data) {
 		using var val = new MemoryStream(CompressedLengthEstimate(data));
 		using (var compressor = new ZlibStream(val, CompressionMode.Compress, CompressionLevel.BestCompression)) {
@@ -75,7 +74,6 @@ internal static class Deflate {
 		return val.GetArray();
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static byte[] Compress(ReadOnlySpan<byte> data) {
 		using var val = new MemoryStream(CompressedLengthEstimate(data));
 		using (var compressor = new ZlibStream(val, CompressionMode.Compress, CompressionLevel.BestCompression)) {
@@ -85,10 +83,9 @@ internal static class Deflate {
 		return val.GetArray();
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static byte[] Decompress(byte[] data) => ZlibStream.UncompressBuffer(data);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static byte[] Decompress(byte[] data, int size) {
 		using var dataStream = new MemoryStream(data);
 		var output = new byte[size];

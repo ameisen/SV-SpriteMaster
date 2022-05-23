@@ -12,7 +12,7 @@ internal sealed partial class Scaler {
 
 	private static uint ClampScale(uint scale) => Math.Clamp(scale, MinScale, MaxScale);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private static Span<Color16> Apply(
 		Config? config,
 		uint scaleMultiplier,
@@ -54,7 +54,7 @@ internal sealed partial class Scaler {
 		return targetData;
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private Scaler(
 		in Config configuration,
 		uint scaleMultiplier,
@@ -93,7 +93,7 @@ internal sealed partial class Scaler {
 	private readonly Vector2I SourceSize;
 	private readonly Vector2I TargetSize;
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private int GetX(int x) {
 		if (Configuration.Wrapped.X) {
 			x = (x + SourceSize.Width) % SourceSize.Width;
@@ -104,7 +104,7 @@ internal sealed partial class Scaler {
 		return x;
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private int GetY(int y) {
 		if (Configuration.Wrapped.Y) {
 			y = (y + SourceSize.Height) % SourceSize.Height;
@@ -115,7 +115,7 @@ internal sealed partial class Scaler {
 		return y;
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private static Color16 GetPixel(ReadOnlySpan<Color16> src, int stride, int offset) {
 		// We can try embedded a distance calculation as well. Perhaps instead of a negative stride/offset, we provide a 
 		// negative distance from the edge and just recalculate the stride/offset in that case.
@@ -139,7 +139,7 @@ internal sealed partial class Scaler {
 		return src[stride + offset];
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private static void SetPixel(Span<Color16> dst, int stride, int offset, Color16 color) {
 		// We can try embedded a distance calculation as well. Perhaps instead of a negative stride/offset, we provide a 
 		// negative distance from the edge and just recalculate the stride/offset in that case.
@@ -161,7 +161,7 @@ internal sealed partial class Scaler {
 		dst[stride + offset] = color;
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private bool ColorEq(Color16 a, Color16 b) {
 		return a == b;
 		/*
@@ -177,7 +177,7 @@ internal sealed partial class Scaler {
 	}
 
 	// https://en.wikipedia.org/wiki/Pixel-art_scaling_algorithms#EPX/Scale2%C3%97/AdvMAME2%C3%97
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private void Scale(ReadOnlySpan<Color16> source, Span<Color16> destination) {
 		switch (ScaleMultiplier) {
 			case 2:
@@ -191,7 +191,6 @@ internal sealed partial class Scaler {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private void Scale2(ReadOnlySpan<Color16> source, Span<Color16> destination) {
 		var last = SourceSize;
 
@@ -251,9 +250,6 @@ internal sealed partial class Scaler {
 		}
 	}
 
-
-
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private void Scale3(ReadOnlySpan<Color16> source, Span<Color16> destination) {
 		var last = SourceSize;
 

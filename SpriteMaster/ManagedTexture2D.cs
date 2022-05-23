@@ -30,7 +30,6 @@ internal sealed class ManagedTexture2D : InternalTexture2D {
 			});
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal ManagedTexture2D(
 		ReadOnlyPinnedSpan<byte>.FixedSpan data,
 		ManagedSpriteInstance instance,
@@ -67,7 +66,7 @@ internal sealed class ManagedTexture2D : InternalTexture2D {
 		Garbage.MarkOwned(format, dimensions.Area);
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	~ManagedTexture2D() {
 		if (!IsDisposed) {
 			//Debug.Error($"Memory leak: ManagedTexture2D '{Name}' was finalized without the Dispose method called");
@@ -75,10 +74,10 @@ internal sealed class ManagedTexture2D : InternalTexture2D {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private void OnParentDispose(object? resource, EventArgs args) => OnParentDispose(resource as XTexture2D);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private void OnParentDispose(XTexture2D? referenceTexture) {
 		if (!IsDisposed) {
 			Debug.Trace($"Disposing ManagedTexture2D '{Name}'");
@@ -88,7 +87,6 @@ internal sealed class ManagedTexture2D : InternalTexture2D {
 		referenceTexture?.Meta().Dispose();
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	protected override void Dispose(bool disposing) {
 		base.Dispose(disposing);
 

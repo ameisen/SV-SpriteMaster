@@ -693,6 +693,9 @@ internal static class Config {
 		internal static bool PreventUnresponsive = true;
 		[Attributes.Comment("Should the engine's deferred thread task runner be optimized?")]
 		internal static bool OptimizeEngineTaskRunner = true;
+
+		[Attributes.Comment("Should low-level OpenGL optimizations be performed?")]
+		internal static bool OptimizeOpenGL = true;
 		internal static class Snow {
 			[Attributes.Comment("Should custom snowfall be used during snowstorms?")]
 			internal static bool Enabled = true;

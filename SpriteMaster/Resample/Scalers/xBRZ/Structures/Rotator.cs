@@ -15,7 +15,7 @@ internal static class Rotator {
 	// g = 6, h = 7, i = 8;
 	private static readonly int[] RotationsArray = new int[MaxRotations * MaxPositions];
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static int Get(int index) => RotationsArray[index];
 
 	static Rotator() {

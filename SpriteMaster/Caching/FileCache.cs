@@ -1,6 +1,7 @@
 ﻿using Microsoft.Toolkit.HighPerformance;
 using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
+using SpriteMaster.Hashing;
 using SpriteMaster.Resample;
 using SpriteMaster.Tasking;
 using SpriteMaster.Types;
@@ -34,10 +35,10 @@ internal static class FileCache {
 	internal static readonly ManualCondition Initialized = new(false);
 	internal static readonly ReaderWriterLockSlim CurrentTaskLock = new(LockRecursionPolicy.SupportsRecursion);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static string GetPath(params string[] path) => Path.Combine(LocalDataPath, Path.Combine(path));
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static string GetDumpPath(params string[] path) => Path.Combine(DumpPath, Path.Combine(path)).Replace('=', '_');
 
 	[StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Unicode)]
@@ -60,7 +61,7 @@ internal static class FileCache {
 
 		public CacheHeader() { }
 
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		internal static CacheHeader Read(BinaryReader reader) {
 			CacheHeader newHeader = new();
 			var newHeaderSpan = MemoryMarshal.CreateSpan(ref newHeader, 1).Cast<CacheHeader, byte>();
@@ -72,14 +73,14 @@ internal static class FileCache {
 			return newHeader;
 		}
 
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		internal void Write(BinaryWriter writer) {
 			var headerSpan = MemoryMarshal.CreateSpan(ref this, 1).Cast<CacheHeader, byte>();
 
 			writer.Write(headerSpan);
 		}
 
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		internal void Validate(string path) {
 			if (Assembly != AssemblyHash) {
 				throw new IOException($"Texture Cache File out of date '{path}'");
@@ -139,7 +140,6 @@ internal static class FileCache {
 
 	private static readonly ConcurrentDictionary<string, SaveState> SavingMap = Config.FileCache.Enabled ? new() : null!;
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool Fetch(
 		string path,
 		out uint scale,
@@ -246,7 +246,6 @@ internal static class FileCache {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool Save(
 		string path,
 		uint scale,
@@ -369,9 +368,9 @@ internal static class FileCache {
 	}
 
 	[DllImport("kernel32.dll")]
-	private static extern bool CreateSymbolicLink(string Link, string Target, LinkType Type);
+	private static extern bool CreateSymbolicLink(string link, string target, LinkType type);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private static bool IsSymbolic(string path) => new FileInfo(path).Attributes.HasFlag(FileAttributes.ReparsePoint);
 
 	private static void DeleteCaches(string? retain) {
@@ -439,9 +438,9 @@ internal static class FileCache {
 		catch { /* Ignore failure */ }
 		try {
 			CreateSymbolicLink(
-				Link: Path.Combine(Config.LocalRoot, JunctionCacheName),
-				Target: Path.Combine(LocalDataPath),
-				Type: LinkType.Directory
+				link: Path.Combine(Config.LocalRoot, JunctionCacheName),
+				target: Path.Combine(LocalDataPath),
+				type: LinkType.Directory
 			);
 		}
 		catch { /* Ignore failure */ }

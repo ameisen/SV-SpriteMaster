@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
+using SpriteMaster.Hashing;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -16,23 +17,23 @@ internal readonly struct TextureFormat {
 	[MarshalAs(UnmanagedType.I4)]
 	private readonly CompressionFormat CompressionFormat;
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal TextureFormat(SurfaceFormat surfaceFormat, CompressionFormat compressionFormat) {
 		SurfaceFormat = surfaceFormat;
 		CompressionFormat = compressionFormat;
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static implicit operator SurfaceFormat(TextureFormat format) => format.SurfaceFormat;
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static implicit operator CompressionFormat(TextureFormat format) => format.CompressionFormat;
 
 	internal bool IsSupported => Config.Resample.SupportedFormats.Contains(this);
 
 	internal TextureFormat? SupportedOr => IsSupported ? this : null;
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal long SizeBytes(int area) => SurfaceFormat.SizeBytes(area);
 
 	internal static readonly TextureFormat None = new((SurfaceFormat)(-1), (CompressionFormat)(-1));
@@ -59,7 +60,7 @@ internal readonly struct TextureFormat {
 	internal static readonly TextureFormat WithPunchthroughAlpha =	BC1a.SupportedOr ?? WithHardAlpha;
 	internal static readonly TextureFormat WithNoAlpha =						BC1.SupportedOr ?? WithPunchthroughAlpha;
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static TextureFormat? Get(CompressionFormat format) {
 		var fields = typeof(TextureFormat).GetFields(BindingFlags.Static | BindingFlags.NonPublic);
 		foreach (var field in fields) {
@@ -83,5 +84,5 @@ internal readonly struct TextureFormat {
 		return false;
 	}
 
-	public override int GetHashCode() => Hashing.Combine32(SurfaceFormat, CompressionFormat);
+	public override int GetHashCode() => HashUtility.Combine32(SurfaceFormat, CompressionFormat);
 }

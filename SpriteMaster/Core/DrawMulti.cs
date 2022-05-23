@@ -3,7 +3,6 @@ using SpriteMaster.Extensions;
 using SpriteMaster.Harmonize;
 using SpriteMaster.Types;
 using System;
-using System.Runtime.CompilerServices;
 using static SpriteMaster.Harmonize.Harmonize;
 
 namespace SpriteMaster.Core;
@@ -27,7 +26,6 @@ internal static partial class OnDrawImpl {
 		throw new NotImplementedException($"{nameof(RawDraw)} is a reverse patch");
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void DrawMulti(
 		this XSpriteBatch @this,
 		XTexture2D texture,

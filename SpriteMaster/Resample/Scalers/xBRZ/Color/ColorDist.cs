@@ -1,5 +1,4 @@
-﻿using SpriteMaster.Colors;
-using SpriteMaster.Types;
+﻿using SpriteMaster.Types;
 using System.Runtime.CompilerServices;
 using static SpriteMaster.Colors.ColorHelpers;
 
@@ -9,7 +8,7 @@ internal class ColorDist {
 	protected readonly Config Configuration;
 	private readonly YccConfig YccConfiguration;
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal ColorDist(Config cfg) {
 		Configuration = cfg;
 		YccConfiguration = new() {
@@ -18,7 +17,7 @@ internal class ColorDist {
 		};
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal uint ColorDistance(Color16 pix1, Color16 pix2) {
 		return Resample.Scalers.Common.ColorDistance(
 			useRedmean: Configuration.UseRedmean,

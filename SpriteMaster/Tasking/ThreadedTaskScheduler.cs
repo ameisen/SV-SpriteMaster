@@ -88,7 +88,6 @@ internal sealed class ThreadedTaskScheduler : TaskScheduler, IDisposable {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private void DispatchLoop(int index, Action<Thread, int>? onInit, Action<Thread, int>? onFinally) {
 		try {
 			IsTaskProcessingThread = true;
@@ -127,7 +126,7 @@ internal sealed class ThreadedTaskScheduler : TaskScheduler, IDisposable {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	protected override void QueueTask(Task task) {
 		if (!Config.IsEnabled) {
 			return;

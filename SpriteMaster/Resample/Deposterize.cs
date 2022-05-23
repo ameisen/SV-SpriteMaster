@@ -1,10 +1,8 @@
-﻿using Microsoft.Toolkit.HighPerformance;
-using SpriteMaster.Colors;
+﻿using SpriteMaster.Colors;
 using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using SpriteMaster.Types.Fixed;
-using SpriteMaster.Types.Spans;
 using System;
 using System.Runtime.CompilerServices;
 using static SpriteMaster.Colors.ColorHelpers;
@@ -45,7 +43,7 @@ internal static class Deposterize {
 			};
 		}
 
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		private uint ColorDifference(Color16 pix1, Color16 pix2) {
 			if (UseRedmean) {
 				return pix1.RedmeanDifference(pix2,
@@ -62,7 +60,7 @@ internal static class Deposterize {
 			}
 		}
 
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		private bool Compare(Fixed16 reference, Fixed16 lower, Fixed16 higher) {
 			return
 				(lower != higher) &&
@@ -72,7 +70,6 @@ internal static class Deposterize {
 				);
 		}
 
-		[MethodImpl(Runtime.MethodImpl.Hot)]
 		private Color16 Merge(Color16 reference, Color16 lower, Color16 higher) {
 			Color16 result = reference;
 
@@ -103,7 +100,7 @@ internal static class Deposterize {
 			return result;
 		}
 
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		private int GetX(int value) {
 			if (Wrapped.X) {
 				var result = value % Size.X;
@@ -117,7 +114,7 @@ internal static class Deposterize {
 			}
 		}
 
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		private int GetY(int value) {
 			if (Wrapped.Y) {
 				var result = value % Size.Y;
@@ -131,7 +128,6 @@ internal static class Deposterize {
 			}
 		}
 
-		[MethodImpl(Runtime.MethodImpl.Hot)]
 		private void DeposterizeH(ReadOnlySpan<Color16> inData, Span<Color16> outData) {
 			int minY = 0;
 			int maxY = Size.Height;
@@ -158,7 +154,6 @@ internal static class Deposterize {
 			}
 		}
 
-		[MethodImpl(Runtime.MethodImpl.Hot)]
 		private void DeposterizeV2(ReadOnlySpan<Color16> inData, Span<Color16> outData) {
 			int minY = -1;
 			int maxY = Size.Height + 1;
@@ -255,7 +250,7 @@ internal static class Deposterize {
 	}
 	*/
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static Span<Color16> Enhance(
 		ReadOnlySpan<Color16> data,
 		Vector2I size,

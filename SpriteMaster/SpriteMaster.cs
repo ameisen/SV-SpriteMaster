@@ -39,6 +39,8 @@ public sealed class SpriteMaster : Mod {
 
 		Garbage.EnterNonInteractive();
 
+		//SteamHelper.Init();
+
 		MemoryMonitor = new();
 
 		var assemblyPath = Assembly.Location;

@@ -19,7 +19,7 @@ internal sealed partial class Scaler {
 
 	private static uint ClampScale(uint scale) => Math.Clamp(scale, MinScale, MaxScale);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private static Span<Color16> Apply(
 		Config? config,
 		uint scaleMultiplier,
@@ -61,7 +61,7 @@ internal sealed partial class Scaler {
 		return targetData;
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private Scaler(
 		in Config configuration,
 		uint scaleMultiplier,
@@ -101,7 +101,7 @@ internal sealed partial class Scaler {
 	private readonly Vector2I TargetSize;
 
 	//fill block with the given color
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private static void FillBlock(Span<Color16> target, int targetOffset, int pitch, Color16 color, int blockSize) {
 		for (
 			var y = 0;
@@ -112,6 +112,7 @@ internal sealed partial class Scaler {
 		}
 	}
 
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private static int SharpenOffset(int offset, int max) {
 		var offsetD = (double)offset / (double)max;
 		offsetD = offsetD switch {
@@ -122,6 +123,7 @@ internal sealed partial class Scaler {
 		return (offsetD * max).RoundToInt();
 	}
 
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private static (int R, int G, int B, int A) BlendColor(int offset, int max, Color16 a, Color16 b) {
 		offset = SharpenOffset(offset, max);
 		var aCount = max - offset;
@@ -134,6 +136,7 @@ internal sealed partial class Scaler {
 		return color32;
 	}
 
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private static (int R, int G, int B, int A) BlendColor(int offset, int max, (int R, int G, int B, int A) a, (int R, int G, int B, int A) b) {
 		offset = SharpenOffset(offset, max);
 		int aCount = max - offset;
@@ -146,7 +149,7 @@ internal sealed partial class Scaler {
 		return color32;
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private static void BlendBlock(Span<Color16> target, int targetOffset, int pitch, Color16 topLeft, Color16 topRight, Color16 bottomLeft, Color16 bottomRight, int blockSize) {
 		if (topLeft == topRight && topLeft == bottomLeft && topLeft == bottomRight) {
 			FillBlock(target, targetOffset, pitch, topLeft, blockSize);
@@ -176,7 +179,6 @@ internal sealed partial class Scaler {
 
 	//detect blend direction
 	[Pure]
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private BlendResult PreProcessCorners(in Kernel4X4 ker) {
 		var result = new BlendResult();
 
@@ -232,7 +234,6 @@ internal sealed partial class Scaler {
 			-------------
 			blendInfo: result of preprocessing all four corners of pixel "e"
 	*/
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private void ScalePixel(AbstractScaler abstractScaler, RotationDegree rotDeg, in Kernel3X3 ker, ref OutputMatrix outputMatrix, int targetIndex, PreprocessType blendInfo) {
 		var blend = blendInfo.Rotate(rotDeg);
 
@@ -311,7 +312,7 @@ internal sealed partial class Scaler {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private int GetX(int x) {
 		if (Configuration.Wrapped.X) {
 			x = (x + SourceSize.Width) % SourceSize.Width;
@@ -322,7 +323,7 @@ internal sealed partial class Scaler {
 		return x;
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private int GetY(int y) {
 		if (Configuration.Wrapped.Y) {
 			y = (y + SourceSize.Height) % SourceSize.Height;
@@ -334,7 +335,6 @@ internal sealed partial class Scaler {
 	}
 
 	//scaler policy: see "Scaler2x" reference implementation
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private void Scale(ReadOnlySpan<Color16> source, Span<Color16> destination) {
 		int targetStride = TargetSize.Width * Scalerer.Scale;
 		int yLast = SourceSize.Height;
@@ -347,7 +347,7 @@ internal sealed partial class Scaler {
 		Span<PreprocessType> preProcBuffer = stackalloc PreprocessType[SourceSize.Width];
 		preProcBuffer.Fill(0);
 
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		static Color16 GetPixel(ReadOnlySpan<Color16> src, int stride, int offset) {
 			// We can try embedded a distance calculation as well. Perhaps instead of a negative stride/offset, we provide a 
 			// negative distance from the edge and just recalculate the stride/offset in that case.

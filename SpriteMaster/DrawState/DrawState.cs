@@ -90,17 +90,16 @@ internal static partial class DrawState {
 
 	internal static bool PushedUpdateWithin(int frames) => (long)(CurrentFrame - UpdateState.LastUpdated) <= frames;
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static TimeSpan RemainingFrameTime(float multiplier = 1.0f, TimeSpan? offset = null) {
 		var actualRemainingTime = ActualRemainingFrameTime();
 		return (actualRemainingTime - (BaselineFrameTime + (offset ?? TimeSpan.Zero))).Multiply(multiplier);
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private static TimeSpan ActualRemainingFrameTime() => ExpectedFrameTime - FrameStopwatch.Elapsed;
 
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void OnPresent() {
 		Thread.CurrentThread.Priority = ThreadPriority.Highest;
 
@@ -142,7 +141,7 @@ internal static partial class DrawState {
 		TransientCollection(++CurrentFrame);
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private static void TransientCollection(ulong currentFrame) {
 		var tickCount = Config.Performance.TransientGCTickCount;
 		if (tickCount > 0 && (currentFrame % (ulong)tickCount) == 0) {
@@ -176,7 +175,7 @@ internal static partial class DrawState {
 		LastMitigatedDevice.SetTarget(Game1.mapDisplayDevice);
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static void OnPresentPost() {
 		using var watchdogScoped = WatchDog.WatchDog.ScopedWorkingState;
 
@@ -190,7 +189,6 @@ internal static partial class DrawState {
 
 	private static bool FirstDraw = true;
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void OnBegin(
 		XSpriteBatch @this,
 		SpriteSortMode sortMode,

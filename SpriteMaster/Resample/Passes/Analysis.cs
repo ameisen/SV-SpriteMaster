@@ -18,7 +18,7 @@ internal static class Analysis {
 		internal readonly Vector2B GradientDiagonal;
 		internal readonly int MaxChannelShades;
 
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		internal LegacyResults(
 			Vector2B wrapped,
 			Vector2B repeatX,
@@ -40,7 +40,6 @@ internal static class Analysis {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static unsafe LegacyResults AnalyzeLegacy(ReadOnlySpan<Color8> data, Bounds bounds, Vector2B wrapped, bool strict = true) {
 		var boundsInverted = bounds.Invert;
 
@@ -238,7 +237,7 @@ internal static class Analysis {
 		);
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static LegacyResults AnalyzeLegacy(XTexture2D? reference, ReadOnlySpan<Color8> data, Bounds bounds, Vector2B wrapped) {
 		return AnalyzeLegacy(
 			data: data,

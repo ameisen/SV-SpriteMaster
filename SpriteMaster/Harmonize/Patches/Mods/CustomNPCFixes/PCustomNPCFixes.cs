@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 namespace SpriteMaster.Harmonize.Patches.Mods.CustomNPCFixes;
 
 internal static class PCustomNPCFixes {
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	[Harmonize(
 		"CustomNPCFixes",
 		"CustomNPCFixes.Mod",

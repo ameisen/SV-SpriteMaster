@@ -38,7 +38,7 @@ internal abstract class Pass {
 		);
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	protected int GetX(int x, Vector2I size) {
 		if (Configuration.Wrapped.X) {
 			x = (x + size.Width) % size.Width;
@@ -49,7 +49,7 @@ internal abstract class Pass {
 		return x;
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	protected int GetY(int y, Vector2I size) {
 		if (Configuration.Wrapped.Y) {
 			y = (y + size.Height) % size.Height;

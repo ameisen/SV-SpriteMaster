@@ -9,7 +9,7 @@ internal partial struct Vector2F :
 	IComparable<Vector2F>,
 	IComparable<(float, float)>,
 	IComparable<XVector2> {
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public readonly int CompareTo(Vector2F other) {
 		var result = X.CompareTo(other.X);
 		if (result == 0) {
@@ -18,16 +18,16 @@ internal partial struct Vector2F :
 		return result;
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public readonly int CompareTo((float, float) other) => CompareTo((Vector2F)other);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public readonly int CompareTo(Vector2I other) => CompareTo((Vector2F)other);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public readonly int CompareTo(XVector2 other) => CompareTo((Vector2F)other);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	readonly int IComparable.CompareTo(object? other) => other switch {
 		Vector2F vec => CompareTo(vec),
 		Vector2I vec => CompareTo(vec),

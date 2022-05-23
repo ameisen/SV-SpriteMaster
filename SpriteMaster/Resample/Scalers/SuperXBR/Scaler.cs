@@ -12,7 +12,7 @@ internal sealed partial class Scaler {
 
 	private static uint ClampScale(uint scale) => 2;// Math.Clamp((uint)MathExt.RoundToInt(Math.Pow(Math.Ceiling(Math.Log2(scale)), 2)), MinScale, MaxScale);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private static Span<Color16> Apply(
 		Config? config,
 		uint scaleMultiplier,
@@ -58,7 +58,7 @@ internal sealed partial class Scaler {
 		return targetData;
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private Scaler(
 		in Config configuration,
 		uint scaleMultiplier,
@@ -89,7 +89,6 @@ internal sealed partial class Scaler {
 	private readonly Vector2I SourceSize;
 	private readonly Vector2I TargetSize;
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private void Scale(ReadOnlySpan<Color16> source, Span<Color16> target) {
 		if (ScaleMultiplier == 1) {
 			source.CopyTo(target);

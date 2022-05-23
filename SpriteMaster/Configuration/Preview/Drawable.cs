@@ -1,4 +1,5 @@
-﻿using SpriteMaster.Types;
+﻿using SpriteMaster.Hashing;
+using SpriteMaster.Types;
 using System;
 
 namespace SpriteMaster.Configuration.Preview;
@@ -77,7 +78,7 @@ internal readonly struct Drawable {
 		return false;
 	}
 
-	public override int GetHashCode() => Hashing.Combine32(
+	public override int GetHashCode() => HashUtility.Combine32(
 		Texture?.GetHashCode(),
 		Source?.GetHashCode(),
 		AnimatedTexture?.GetHashCode(),

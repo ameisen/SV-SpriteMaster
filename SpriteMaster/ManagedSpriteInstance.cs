@@ -23,7 +23,7 @@ namespace SpriteMaster;
 internal sealed class ManagedSpriteInstance : IDisposable {
 	private static readonly WeakInstanceList RecentAccessList = new();
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private static bool HasLegalFormat(XTexture2D texture) => AllowedFormats.ContainsF(texture.Format);
 
 	private static void PurgeInvalidated(XTexture2D texture) {
@@ -38,7 +38,6 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 
 	internal static ulong? GetHash(in SpriteInfo.Initializer info, TextureType type) => Resampler.GetHash(in info, type);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool Validate(XTexture2D texture, bool clean = false) {
 		var meta = texture.Meta();
 		if (meta.Validation.HasValue) {
@@ -226,7 +225,7 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 		TexelAverageCachedSync.Reset();
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private static TexelTimer GetTimer(bool cached, bool async) {
 		if (async) {
 			return cached ? TexelAverageCached : TexelAverage;
@@ -236,7 +235,7 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private static TexelTimer GetTimer(XTexture2D texture, bool async, out bool isCached) {
 		var isTextureCached = SpriteInfo.IsCached(texture);
 		isCached = isTextureCached;
@@ -248,7 +247,6 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 	private static int TimeSpanSamples = 0;
 #endif
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ManagedSpriteInstance? Fetch(XTexture2D texture, Bounds source, uint expectedScale) {
 		if (!Config.IsEnabled || !Config.Resample.IsEnabled) {
 			return null;
@@ -269,7 +267,6 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 		return null;
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool TryResurrect(in SpriteInfo.Initializer initializer, [NotNullWhen(true)] out ManagedSpriteInstance? resurrected) {
 		// Check for a suspended sprite instance that happens to match.
 		if (!Config.SuspendedCache.Enabled) {
@@ -290,7 +287,6 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 		return false;
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool TryResurrect(SpriteInfo info, [NotNullWhen(true)] out ManagedSpriteInstance? resurrected) {
 		// Check for a suspended sprite instance that happens to match.
 		if (!Config.SuspendedCache.Enabled) {
@@ -311,7 +307,6 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 		return false;
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ManagedSpriteInstance? FetchOrCreate(XTexture2D texture, Bounds source, uint expectedScale, bool sliced) {
 		if (!Config.IsEnabled || !Config.Resample.IsEnabled) {
 			return null;
@@ -530,7 +525,7 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 	internal static long TotalMemoryUsage = 0U;
 
 	internal long MemorySize {
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		get {
 			if (!IsReady || Texture is null) {
 				return 0;
@@ -539,7 +534,7 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static void Purge(XTexture2D reference, Bounds? bounds, in DataRef<byte> data, bool animated = false) {
 		SpriteInfo.Purge(reference, bounds, data, animated: animated);
 		if (data.IsNull) {
@@ -551,13 +546,12 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 		//Resampler.PurgeHash(reference);
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static void FullPurge(XTexture2D reference, bool animated = false) {
 		SpriteInfo.Purge(reference, reference.Bounds, DataRef<byte>.Null, animated: animated);
 		SpriteMap.Purge(reference, reference.Bounds, animated: animated);
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void PurgeTextures(long purgeTotalBytes) {
 		purgeTotalBytes.AssertPositive();
 
@@ -580,7 +574,6 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal ManagedSpriteInstance(string assetName, SpriteInfo spriteInfo, Bounds sourceRectangle, TextureType textureType, bool async, uint expectedScale, ManagedSpriteInstance? previous = null) {
 		PreviousSpriteInstance = previous;
 
@@ -635,11 +628,10 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public void OnParentDispose(object? sender, EventArgs args) => OnParentDispose(sender as XTexture2D);
 
 	// Async Call
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal void Finish() {
 		ManagedTexture2D? texture;
 		lock (this) {
@@ -687,7 +679,6 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal void UpdateReferenceFrame() {
 		if (IsDisposed) {
 			return;
@@ -728,7 +719,7 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	~ManagedSpriteInstance() {
 		if (IsDisposed) {
 			return;
@@ -737,7 +728,6 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 		ReleasedSpriteInstances.Push(new(this));
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal void Dispose(bool disposeChildren) {
 		if (disposeChildren && Texture is not null) {
 			if (!Texture.IsDisposed) {
@@ -748,7 +738,6 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 		Dispose();
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public void Dispose() {
 		if (IsDisposed) {
 			return;
@@ -784,7 +773,6 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 		GC.SuppressFinalize(this);
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void Cleanup(in CleanupData data) {
 		Debug.Trace("Cleaning up finalized ManagedSpriteInstance");
 
@@ -810,14 +798,13 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private void OnParentDispose(XTexture2D? texture) {
 		Debug.Trace($"Parent Texture Disposing: {texture?.NormalizedName() ?? "[NULL]"}, suspending/disposing ManagedSpriteInstance");
 
 		Suspend();
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal void Suspend(bool clearChildrenIfDispose = false) {
 		if (IsDisposed || Suspended) {
 			return;
@@ -856,7 +843,6 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 		Debug.Trace($"Sprite Instance '{Name}' {"Suspended".Pastel(DrawingColor.LightGoldenrodYellow)}");
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal bool Resurrect(XTexture2D texture, ulong spriteMapHash) {
 		if (StardewValley.Game1.quit) {
 			return false;

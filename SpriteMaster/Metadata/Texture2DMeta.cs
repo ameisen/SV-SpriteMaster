@@ -2,6 +2,7 @@
 using SpriteMaster.Caching;
 using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
+using SpriteMaster.Hashing;
 using SpriteMaster.Resample;
 using SpriteMaster.Types;
 using SpriteMaster.Types.Interlocking;
@@ -204,7 +205,7 @@ internal sealed class Texture2DMeta : IDisposable {
 	private readonly WeakReference<byte[]> CachedRawDataInternal = new(null!);
 
 	internal bool HasCachedData {
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		get {
 			if (!Config.MemoryCache.Enabled) {
 				return false;
@@ -225,7 +226,6 @@ internal sealed class Texture2DMeta : IDisposable {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal bool IsAnyAnimated(XTexture2D reference, Bounds? bounds) {
 		bounds ??= reference.Bounds();
 
@@ -248,7 +248,6 @@ internal sealed class Texture2DMeta : IDisposable {
 	// That is, if it cannot update the cache, it purges it. It has no ability to mark
 	// regions of the cache as invalidated.
 	// This should be changed.
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal void Purge(XTexture2D reference, Bounds? bounds, in DataRef<byte> data, bool animated) {
 		// Bounds is meaningless if it encompasses the entire texture
 		if (bounds == reference.Bounds()) {
@@ -364,7 +363,7 @@ internal sealed class Texture2DMeta : IDisposable {
 	internal static readonly byte[] BlockedSentinel = { 0xFF };
 
 	internal byte[]? CachedDataNonBlocking {
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		get {
 			if (!Config.MemoryCache.Enabled) {
 				return null;
@@ -379,7 +378,7 @@ internal sealed class Texture2DMeta : IDisposable {
 	}
 
 	internal byte[]? CachedRawData {
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		get {
 			if (!Config.MemoryCache.Enabled) {
 				return null;
@@ -390,7 +389,6 @@ internal sealed class Texture2DMeta : IDisposable {
 				return target;
 			}
 		}
-		[MethodImpl(Runtime.MethodImpl.Hot)]
 		set {
 			try {
 				if (!Config.MemoryCache.Enabled) {
@@ -430,6 +428,7 @@ internal sealed class Texture2DMeta : IDisposable {
 	}
 
 	internal byte[]? CachedData {
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		get {
 			using (Lock.Read) {
 				return CachedDataInternal.TryGet(out var data) ? data : null;
@@ -437,18 +436,18 @@ internal sealed class Texture2DMeta : IDisposable {
 		}
 	}
 
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal void SetCachedDataUnsafe(Span<byte> data) {
 		using (Lock.Write) {
 			CachedDataInternal.SetTarget(data.ToArray());
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal void UpdateLastAccess() {
 		LastAccessFrame = DrawState.CurrentFrame;
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal ulong GetHash(SpriteInfo info) {
 		using (Lock.ReadWrite) {
 			ulong hash = Hash;
@@ -467,7 +466,7 @@ internal sealed class Texture2DMeta : IDisposable {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal bool ShouldReportError(ReportOnceErrors error) {
 		if (ReportedErrors.HasFlag(error)) {
 			return false;
@@ -477,10 +476,13 @@ internal sealed class Texture2DMeta : IDisposable {
 		return true;
 	}
 
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	~Texture2DMeta() => Dispose(false);
 
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public void Dispose() => Dispose(true);
 
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private void Dispose(bool disposing) {
 		ResourceManager.ReleasedTextureMetas.Push(MetaId);
 		if (disposing) {

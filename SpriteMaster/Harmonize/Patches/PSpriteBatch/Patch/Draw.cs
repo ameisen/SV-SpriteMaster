@@ -82,7 +82,7 @@ internal static class Draw {
 			__state: ref __state
 		);
 	}
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private static bool ForwardDraw(
 		XSpriteBatch @this,
 		XTexture2D? texture,
@@ -133,7 +133,7 @@ internal static class Draw {
 		);
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private static bool ForwardDraw(
 		XSpriteBatch @this,
 		XTexture2D? texture,

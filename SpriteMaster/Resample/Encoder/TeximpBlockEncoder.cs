@@ -16,7 +16,7 @@ internal static class TeximpBlockEncoder {
 
 	private const int SwapIndex0 = 0;
 	private const int SwapIndex1 = 2;
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private static unsafe void FlipColorBytes(byte* p, int length) {
 		for (int i = 0; i < length; i += 4) {
 			int index0 = i + SwapIndex0;
@@ -27,7 +27,6 @@ internal static class TeximpBlockEncoder {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static unsafe bool Encode(
 		ReadOnlySpan<Color8> data,
 		ref TextureFormat format,

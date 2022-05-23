@@ -7,43 +7,42 @@ using System.Runtime.CompilerServices;
 namespace SpriteMaster.Colors;
 
 internal static class ColorHelpers {
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static double ValueToScalar(this byte value) => value / 255.0;
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static double ValueToScalar(this ushort value) => value / 65_535.0;
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static double ValueToScalar(this uint value) => value / 4_294_967_295.0;
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static double ValueToScalar(this Fixed8 value) => ValueToScalar(value.Value);
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static double ValueToScalar(this Fixed16 value) => ValueToScalar(value.Value);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static byte ScalarToValue8(this double scalar) => (byte)((scalar * 255.0) + 0.5);
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static byte ScalarToValue8(this float scalar) => (byte)((scalar * 255.0f) + 0.5f);
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static ushort ScalarToValue16(this double scalar) => (ushort)((scalar * 655_35.0) + 0.5);
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static ushort ScalarToValue16(this float scalar) => (ushort)((scalar * 655_35.0f) + 0.5f);
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static uint ScalarToValue32(this double scalar) => (uint)((scalar * 4_294_967_295.0) + 0.5);
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static uint ScalarToValue32(this float scalar) => (uint)((scalar * 4_294_967_295.0f) + 0.5f);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static ushort Color8To16(this byte value) => (ushort)((value << 8) | value);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static byte Color16To8Fast(this ushort value) => (byte)((value * 0xFF01U) + 0x800000U >> 24);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static byte Color16To8Accurate(this ushort value) => (byte)((value + 128U) / 0x101U);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static byte Color16to8(this ushort value) => Color16To8Accurate(value);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static half Color8ToHalf(this byte value) {
 		if (value == 0) {
 			ushort shortValue = 0;
@@ -67,7 +66,6 @@ internal static class ColorHelpers {
 		return result.ReinterpretAs<half>();
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static half Color16ToHalf(this ushort value) {
 		if (value == 0) {
 			return value.ReinterpretAs<half>();
@@ -90,7 +88,6 @@ internal static class ColorHelpers {
 		return result.ReinterpretAs<half>();
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static float Color8ToFloat(this byte value) {
 		if (value == 0) {
 			return 0.0f;
@@ -113,7 +110,6 @@ internal static class ColorHelpers {
 		return result.ReinterpretAs<float>();
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static float Color16ToFloat(this ushort value) {
 		if (value == 0) {
 			return 0.0f;
@@ -136,7 +132,6 @@ internal static class ColorHelpers {
 		return result.ReinterpretAs<float>();
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static uint RedmeanDifference(this Color8 colorA, Color8 colorB, bool linear, bool alpha = true) {
 		static int Square(int value) => value * value;
 
@@ -200,7 +195,6 @@ internal static class ColorHelpers {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static uint RedmeanDifference(this Color16 colorA, Color16 colorB, bool linear, bool alpha = true) {
 		static int Square(int value) => value * value;
 
@@ -269,7 +263,6 @@ internal static class ColorHelpers {
 		internal double ChrominanceWeight { get; init; }
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static uint YccDifference(this Color16 colorA, Color16 colorB, in YccConfig config, bool linear, bool alpha = true) {
 		if (colorA == colorB) {
 			return 0;

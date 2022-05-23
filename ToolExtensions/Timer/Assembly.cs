@@ -8,7 +8,7 @@ using System.Security;
 [assembly: AllowPartiallyTrustedCallers]
 [assembly: SecurityTransparent]
 [assembly: SecurityRules(SecurityRuleSet.Level2, SkipVerificationInFullTrust = true)]
-[assembly: ChangeList("a5b27ac:0.14.0-25-ga5b27ac")]
+[assembly: ChangeList("439fdf3:0.14.0-28-g439fdf3")]
 [assembly: BuildComputerName("Palatinate")]
 [assembly: FullVersion("0.14.0.300")]
 // [assembly: SuppressUnmanagedCodeSecurity]

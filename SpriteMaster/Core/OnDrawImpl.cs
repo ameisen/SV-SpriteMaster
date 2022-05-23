@@ -3,7 +3,6 @@ using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Core;
 
@@ -114,7 +113,6 @@ internal static partial class OnDrawImpl {
 		return Continue;
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool OnDraw(
 		this XSpriteBatch @this,
 		ref XTexture2D? texture,

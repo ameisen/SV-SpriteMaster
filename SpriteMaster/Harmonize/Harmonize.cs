@@ -244,6 +244,21 @@ internal static class Harmonize {
 
 		var bindingFlags = instance ? InstanceFlags : StaticFlags;
 
+		{
+			// Handle Properties
+			bool get = name.EndsWith(".get");
+			bool set = !get && name.EndsWith(".set");
+			if (get || set) {
+				var property = type.GetProperty(name[..name.IndexOf('.')], bindingFlags);
+				if (property is null) {
+					return null;
+				}
+
+				var result = get ? property.GetMethod : property.SetMethod;
+				return result;
+			}
+		}
+
 		var methodParameters = method.GetArguments(attribute);
 
 		int numGenericArguments = 0;

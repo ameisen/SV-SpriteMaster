@@ -55,7 +55,6 @@ internal static class ClickCrash {
 		Harmonize.PriorityLevel.Last,
 		critical: false
 	)]
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static void SdlRunLoopPost(object __instance) {
 		if (!Config.IsEnabled) {
 			return;
@@ -66,7 +65,7 @@ internal static class ClickCrash {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private static void OnStartTask() {
 		if (!IsRunnable || SdlUpdate.Elapsed < RunLoopAfter) {
 			return;
@@ -89,7 +88,6 @@ internal static class ClickCrash {
 		Harmonize.PriorityLevel.Last,
 		critical: false
 	)]
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static void StartTaskPre(object __instance, Task task, string id) {
 		if (!Config.IsEnabled) {
 			return;
@@ -107,7 +105,6 @@ internal static class ClickCrash {
 		generic: Harmonize.Generic.Class,
 		critical: false
 	)]
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static void StartTaskPre<T>(T __instance, Task<T> task, string id) {
 		if (!Config.IsEnabled) {
 			return;

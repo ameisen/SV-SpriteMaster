@@ -21,7 +21,6 @@ internal static class ThreadRun {
 		instance: false,
 		critical: false
 	)]
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static bool Run() {
 		if (!Config.IsUnconditionallyEnabled || !Config.Extras.OptimizeEngineTaskRunner) {
 			return true;

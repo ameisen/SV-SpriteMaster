@@ -18,20 +18,20 @@ internal ref struct OutputMatrix {
 	private const int MaxScale = Config.MaxScale; // Highest possible scale
 	private const int MaxScaleSquared = MaxScale * MaxScale;
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal OutputMatrix(int scale, Span<Color16> outSpan, int outWidth) {
 		N = (scale - 2) * Rotator.MaxRotations * MaxScaleSquared;
 		OutSpan = outSpan;
 		Width = outWidth;
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal void Move(RotationDegree rotDeg, int outIndex) {
 		NRow = N + (int)rotDeg * MaxScaleSquared;
 		Index = outIndex;
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private readonly int GetIndex(int i, int j) {
 		var rot = MatrixRotation[NRow + i * MaxScale + j];
 		return Index + rot.J + rot.I * Width;

@@ -9,12 +9,12 @@ namespace SpriteMaster;
 internal static class SpriteOverrides {
 	internal const int WaterBlock = 4; // Water is scaled up 4x for some reason
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static bool IsWater(Bounds bounds, XTexture2D texture) {
 		return bounds.Right <= 640 && bounds.Top >= 2000 && bounds.Extent.MinOf >= WaterBlock && texture.NormalizedName() == @"LooseSprites\Cursors";
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static bool IsFont(XTexture2D texture, Vector2I spriteSize, Vector2I sheetSize) {
 		switch (texture.Format) {
 			case SurfaceFormat.Dxt1:
@@ -30,6 +30,6 @@ internal static class SpriteOverrides {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static bool IsFont(SpriteInfo info) => IsFont(info.Reference, info.Bounds.Extent, info.ReferenceSize);
 }

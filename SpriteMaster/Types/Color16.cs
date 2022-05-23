@@ -1,4 +1,5 @@
 ﻿using SpriteMaster.Extensions;
+using SpriteMaster.Hashing;
 using SpriteMaster.Types.Fixed;
 using SpriteMaster.Types.Spans;
 using System;
@@ -154,7 +155,7 @@ internal struct Color16 : IEquatable<Color16>, IEquatable<ulong>, ILongHash {
 
 	public override readonly int GetHashCode() => Packed.GetHashCode();
 
-	readonly ulong ILongHash.GetLongHashCode() => Hashing.Combine(Packed);
+	readonly ulong ILongHash.GetLongHashCode() => HashUtility.Combine(Packed);
 
 	static Color16() {
 #if SM_INTERNAL_TESTING

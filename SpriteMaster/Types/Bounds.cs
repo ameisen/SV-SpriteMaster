@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SpriteMaster.Hashing;
+using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -39,70 +40,70 @@ internal partial struct Bounds :
 	internal Vector2B Invert;
 
 	internal Vector2I Position {
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		readonly get => Offset;
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		set => Offset = value;
 	}
 
 	internal Vector2I Location {
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		readonly get => Offset;
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		set => Offset = value;
 	}
 
 	[Browsable(false)]
 	internal Vector2I Size {
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		readonly get => Extent;
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		set => Extent = value;
 	}
 
 	internal int X {
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		readonly get => Offset.X;
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		set => Offset.X = value;
 	}
 
 	internal int Y {
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		readonly get => Offset.Y;
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		set => Offset.Y = value;
 	}
 
 	internal int Width {
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		readonly get => Extent.X;
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		set => Extent = Vector2I.From(value, Extent.Y);
 	}
 
 	internal readonly int InvertedWidth {
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		get => Invert.X ? -Extent.X : Extent.X;
 	}
 
 	internal int Height {
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		readonly get => Extent.Y;
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		set => Extent = Vector2I.From(Extent.X, value);
 	}
 
 	internal readonly int InvertedHeight {
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		get => Invert.Y ? -Extent.Y : Extent.Y;
 	}
 
 	[Browsable(false)]
 	internal int Left {
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		readonly get => Offset.X;
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		set {
 			Width += (Offset.X - value);
 			Offset.X = value;
@@ -111,9 +112,9 @@ internal partial struct Bounds :
 
 	[Browsable(false)]
 	internal int Top {
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		readonly get => Offset.Y;
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		set {
 			Height += (Offset.Y - value);
 			Offset.Y = value;
@@ -122,17 +123,17 @@ internal partial struct Bounds :
 
 	[Browsable(false)]
 	internal int Right {
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		readonly get => Offset.X + Extent.X;
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		set => Width = value - Offset.X;
 	}
 
 	[Browsable(false)]
 	internal int Bottom {
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		readonly get => Offset.Y + Extent.Y;
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		set => Height = value - Offset.Y;
 	}
 
@@ -150,7 +151,7 @@ internal partial struct Bounds :
 
 	internal readonly bool IsEmpty => Area == 0;
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal Bounds(Vector2I offset, Vector2I extent) {
 		//Contract.AssertNotZero(extent.Width, $"{nameof(extent.Width)} is zero");
 		//Contract.AssertNotZero(extent.Height, $"{nameof(extent.Height)} is zero");
@@ -167,38 +168,38 @@ internal partial struct Bounds :
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal Bounds(int x, int y, int width, int height) : this(new Vector2I(x, y), new Vector2I(width, height)) { }
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal Bounds(int width, int height) : this(0, 0, width, height) { }
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal Bounds(Vector2I extent) : this(Vector2I.Zero, extent) { }
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal Bounds(Bounds bounds) {
 		Offset = bounds.Offset;
 		ExtentReal = bounds.Extent;
 		Invert = bounds.Invert;
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal Bounds(DrawingRectangle rect) : this(rect.X, rect.Y, rect.Width, rect.Height) { }
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal Bounds(XRectangle rect) : this(rect.X, rect.Y, rect.Width, rect.Height) { }
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal Bounds(XTileRectangle rect) : this(rect.X, rect.Y, rect.Width, rect.Height) { }
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal Bounds(XTexture2D tex) : this(tex.Width, tex.Height) { }
 
-	//[MethodImpl(Runtime.MethodImpl.Hot)]
+	//[MethodImpl(Runtime.MethodImpl.Inline)]
 	//internal Bounds(System.Drawing.Bitmap bmp) : this(bmp.Width, bmp.Height) { }
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal readonly bool Overlaps(Bounds other) =>
 	!(
 		other.Left > Right ||
@@ -207,7 +208,7 @@ internal partial struct Bounds :
 		other.Bottom < Top
 	);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal readonly bool Contains(Bounds other) =>
 	(
 		Left <= other.Left &&
@@ -216,7 +217,7 @@ internal partial struct Bounds :
 		Bottom >= other.Bottom
 	);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal readonly bool Contains(Vector2I vector) =>
 	(
 		Left <= vector.X &&
@@ -225,39 +226,37 @@ internal partial struct Bounds :
 		Bottom >= vector.Y
 	);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal readonly Bounds Clone() => this;
 
 	readonly object ICloneable.Clone() => this;
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static implicit operator DrawingRectangle(Bounds bounds) => new(bounds.X, bounds.Y, bounds.InvertedWidth, bounds.InvertedHeight);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static implicit operator XRectangle(Bounds bounds) => new(bounds.X, bounds.Y, bounds.InvertedWidth, bounds.InvertedHeight);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static implicit operator XTileRectangle(Bounds bounds) => new(bounds.X, bounds.Y, bounds.InvertedWidth, bounds.InvertedHeight);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static implicit operator Bounds(DrawingRectangle rect) => new(rect);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static implicit operator Bounds(XRectangle rect) => new(rect);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static implicit operator Bounds(XTileRectangle rect) => new(rect);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public override readonly string ToString() => $"[[{X}, {Y}] [{InvertedWidth}, {InvertedHeight}]]";
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	public override readonly int GetHashCode() => Hashing.Combine(Offset.GetHashCode(), Extent.GetHashCode());
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	public override readonly int GetHashCode() => HashUtility.Combine(Offset.GetHashCode(), Extent.GetHashCode());
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	ulong ILongHash.GetLongHashCode() => ((ulong)Offset.GetHashCode() << 32) | (uint)Extent.GetHashCode();
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal readonly Bounds ClampTo(Bounds clamp) {
 		Bounds source = this;
 
@@ -291,7 +290,6 @@ internal partial struct Bounds :
 		return source;
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal readonly bool ClampToChecked(Bounds clamp, out Bounds clamped) {
 		Bounds result = ClampTo(clamp);
 		if (result != this) {
@@ -304,14 +302,13 @@ internal partial struct Bounds :
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal readonly Bounds OffsetBy(Vector2I offset) => new(
 		Offset + offset,
 		Extent
 	);
 
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal readonly Bounds Expand(Vector2I size) {
 		int left = size.X / 2;
 		int right = size.X - left;

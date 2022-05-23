@@ -8,10 +8,10 @@ namespace SpriteMaster.Types;
 internal sealed class DoubleBuffer<T> {
 	internal const int StartingIndex = 0;
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private static uint GetIndex(uint index) => (index & 1U);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private T GetBuffer(uint index) => (GetIndex(index) == 0U) ? Buffer0 : Buffer1;
 
 	// Regarding bounds checking on x86 and x64
@@ -32,7 +32,7 @@ internal sealed class DoubleBuffer<T> {
 	internal T this[uint index] => GetBuffer(index);
 
 	internal (T, T) Both {
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		get {
 			var currentIndex = CurrentBufferIndex;
 			return (
@@ -62,9 +62,9 @@ internal sealed class DoubleBuffer<T> {
 #pragma warning restore CS0618 // Type or member is obsolete
 	) { }
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal void Swap() => Interlocked.Increment(ref CurrentBufferIndex);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static implicit operator T(in DoubleBuffer<T> buffer) => buffer.Current;
 }

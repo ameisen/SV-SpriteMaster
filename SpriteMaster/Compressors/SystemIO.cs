@@ -42,13 +42,13 @@ internal static class SystemIO {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static int CompressedLengthEstimate(byte[] data) => data.Length >> 1;
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static int CompressedLengthEstimate(ReadOnlySpan<byte> data) => data.Length >> 1;
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static int DecompressedLengthEstimate(byte[] data) => data.Length << 1;
 
 	[MethodImpl(Runtime.MethodImpl.RunOnce)]
@@ -67,7 +67,6 @@ internal static class SystemIO {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static byte[] Compress(byte[] data) {
 		using var val = new MemoryStream(CompressedLengthEstimate(data));
 		using (var compressor = new IOC.DeflateStream(val, IOC.CompressionLevel.Optimal)) {
@@ -76,7 +75,6 @@ internal static class SystemIO {
 		return val.GetArray();
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static byte[] Compress(ReadOnlySpan<byte> data) {
 		using var val = new MemoryStream(CompressedLengthEstimate(data));
 		using (var compressor = new IOC.DeflateStream(val, IOC.CompressionLevel.Optimal)) {
@@ -85,7 +83,6 @@ internal static class SystemIO {
 		return val.GetArray();
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static byte[] Decompress(byte[] data) {
 		using var dataStream = new MemoryStream(data);
 		using var val = new MemoryStream(DecompressedLengthEstimate(data));
@@ -95,7 +92,6 @@ internal static class SystemIO {
 		return val.GetArray();
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static byte[] Decompress(byte[] data, int size) {
 		using var dataStream = new MemoryStream(data);
 		var output = new byte[size];

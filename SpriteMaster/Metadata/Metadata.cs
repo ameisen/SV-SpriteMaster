@@ -8,7 +8,7 @@ namespace SpriteMaster.Metadata;
 internal static class Metadata {
 	private static readonly ConditionalWeakTable<XTexture2D, Texture2DMeta> Texture2DMetaTable = new();
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static Texture2DMeta Meta(this XTexture2D @this) {
 #if DEBUG
 		if (@this is InternalTexture2D) {
@@ -18,13 +18,15 @@ internal static class Metadata {
 		return Texture2DMetaTable.GetValue(@this, key => new(key));
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static bool TryMeta(this XTexture2D @this, [NotNullWhen(true)] out Texture2DMeta? value) => Texture2DMetaTable.TryGetValue(@this, out value);
 
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static void Purge() {
 		Texture2DMetaTable.Clear();
 	}
 
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static void FlushValidations() {
 		foreach (var p in Texture2DMetaTable) {
 			p.Value.Validation = null;

@@ -16,7 +16,7 @@ internal static class Texture2DExt {
 	private readonly ref struct RebindTexture {
 		private readonly int? PreviousTexture = null;
 
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		internal RebindTexture(int texture) {
 			var currentTexture = GraphicsExtensions.GetBoundTexture2D();
 			if (texture == currentTexture) {
@@ -29,7 +29,7 @@ internal static class Texture2DExt {
 			}
 		}
 
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		internal void Dispose() {
 			if (!PreviousTexture.HasValue) {
 				return;
@@ -43,9 +43,9 @@ internal static class Texture2DExt {
 	private sealed class Texture2DGLMeta : IDisposable {
 		private static readonly ConditionalWeakTable<Texture2D, Texture2DGLMeta> Map = new();
 
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		internal static bool TryGet(Texture2D texture, out Texture2DGLMeta meta) => Map.TryGetValue(texture, out meta!);
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		internal static Texture2DGLMeta Get(Texture2D texture) => Map.GetValue(texture, t => new(t));
 
 		[Flags]
@@ -56,7 +56,7 @@ internal static class Texture2DExt {
 
 		internal Flag Flags = Flag.Initialized;
 
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		private Texture2DGLMeta(Texture2D texture) {
 			texture.Disposing += (_, _) => Dispose();
 		}
@@ -65,10 +65,10 @@ internal static class Texture2DExt {
 
 		}
 
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		public void Dispose() => Dispose(true);
 		
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		private void Dispose(bool disposing) {
 			if (disposing) {
 				GC.SuppressFinalize(this);
@@ -77,7 +77,6 @@ internal static class Texture2DExt {
 	}
 
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static unsafe bool SetDataInternal<T>(
 		Texture2D @this,
 		int level,
@@ -219,7 +218,7 @@ internal static class Texture2DExt {
 	}
 
 	internal static volatile bool Working = true;
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static GLExt.SizedInternalFormat GetSizedFormat(PixelInternalFormat format) => format switch {
 		PixelInternalFormat.Rgba => GLExt.SizedInternalFormat.RGBA8,
 		PixelInternalFormat.Rgb => GLExt.SizedInternalFormat.RGB8,
@@ -228,7 +227,6 @@ internal static class Texture2DExt {
 		_ => (GLExt.SizedInternalFormat)format
 	};
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool Construct<T>(
 	Texture2D @this,
 	ReadOnlyPinnedSpan<T>.FixedSpan dataIn,
@@ -238,6 +236,10 @@ internal static class Texture2DExt {
 	SurfaceType type,
 	bool shared
 ) where T : unmanaged {
+		if (!Configuration.Config.Extras.OptimizeOpenGL) {
+			return false;
+		}
+
 		if (!Working) {
 			return false;
 		}
@@ -393,7 +395,6 @@ internal static class Texture2DExt {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool CopyTexture(
 		XTexture2D source,
 		Bounds sourceArea,
@@ -401,6 +402,10 @@ internal static class Texture2DExt {
 		Bounds targetArea,
 		PatchMode patchMode
 	) {
+		if (!Configuration.Config.Extras.OptimizeOpenGL) {
+			return false;
+		}
+
 		if (GLExt.CopyImageSubData is null) {
 			return false;
 		}

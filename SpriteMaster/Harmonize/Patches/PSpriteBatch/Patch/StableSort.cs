@@ -17,7 +17,7 @@ internal static class StableSort {
 	private static readonly Func<object?, float>? GetSortKeyImpl = SpriteBatchItemType?.GetFieldGetter<object?, float>("SortKey");
 
 	internal static class BySortKey {
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		private static float GetSortKey(object? obj) => obj is null ? float.MinValue : GetSortKeyImpl!(obj);
 
 		private readonly record struct KeyType(float Key, int Index);
@@ -77,7 +77,7 @@ internal static class StableSort {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static void ArrayStableSort<T>(T[] array, int index, int length, SpriteSortMode sortMode) where T : IComparable<T> {
 		if (DrawState.CurrentBlendState == BlendState.Additive) {
 			// There is basically no reason to sort when the blend state is additive.

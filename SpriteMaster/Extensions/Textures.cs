@@ -12,16 +12,16 @@ using System.Runtime.CompilerServices;
 namespace SpriteMaster.Extensions;
 
 internal static class Textures {
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static int Area(this XTexture2D texture) => texture.Width * texture.Height;
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static Vector2I Extent(this XTexture2D texture) => new(texture.Width, texture.Height);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static Bounds Bounds(this XTexture2D texture) => new(texture);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static long SizeBytesLong(this SurfaceFormat format, int texels) {
 		switch (format) {
 			case SurfaceFormat.Dxt1:
@@ -78,13 +78,13 @@ internal static class Textures {
 		return (long)texels * elementSize;
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static int SizeBytes(this SurfaceFormat format, int texels) {
 		var result = SizeBytesLong(format, texels);
 		return checked((int)result);
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static bool IsCompressed(this SurfaceFormat format) => format switch {
 		SurfaceFormat.Dxt1 or
 		SurfaceFormat.Dxt1SRgb or
@@ -110,10 +110,10 @@ internal static class Textures {
 		_ => false
 	};
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static bool IsBlock(this SurfaceFormat format) => IsCompressed(format);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static Vector2I BlockEdge(this SurfaceFormat format) => format switch {
 		SurfaceFormat.Dxt1 or
 		SurfaceFormat.Dxt1SRgb or
@@ -140,19 +140,19 @@ internal static class Textures {
 		_ => (1, 1)
 	};
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static long SizeBytesLong(this XTexture2D texture) => texture.Format.SizeBytesLong(texture.Area());
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static int SizeBytes(this XTexture2D texture) => texture.Format.SizeBytes(texture.Area());
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static bool Anonymous(this XTexture2D texture) => texture.Name.IsWhiteBlank();
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static bool Anonymous(this ManagedSpriteInstance texture) => texture.Name.IsWhiteBlank();
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private static string NormalizeNameInternal(this string? name) {
 		/*
 		if (name.IsWhiteBlank()) {
@@ -177,7 +177,7 @@ internal static class Textures {
 		return name.Replace('/', '\\').Replace(@"\\", @"\");
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private static string? NormalizeNameOrNullInternal(this string? name) {
 		/*
 		if (name.IsWhiteBlank()) {
@@ -202,40 +202,40 @@ internal static class Textures {
 		return name.Replace('/', '\\').Replace(@"\\", @"\");
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static string? NormalizedNameOrNull(this string name) => name.NormalizeNameOrNullInternal();
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static string NormalizedName(this string name) => name.NormalizeNameInternal();
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static string NormalizedName(this string name, in DrawingColor color) => name.NormalizeNameInternal().Pastel(color);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static string NormalizedName(this Texture texture) => texture.Name.NormalizedName();
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static string NormalizedName(this Texture texture, in DrawingColor color) => texture.Name.NormalizedName(in color);
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static string? NormalizedNameOrNull(this Texture texture) => texture.Name.NormalizedNameOrNull();
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static string NormalizedName(this XTexture2D texture) => texture.Name.NormalizedName();
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static string NormalizedName(this XTexture2D texture, in DrawingColor color) => texture.Name.NormalizedName(in color);
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static string? NormalizedNameOrNull(this XTexture2D texture) => texture.Name.NormalizedNameOrNull();
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static string NormalizedName(this ManagedTexture2D texture) => texture.Name;
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static string NormalizedName(this ManagedTexture2D texture, in DrawingColor color) => texture.Name.Pastel(color);
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static string? NormalizedNameOrNull(this ManagedTexture2D texture) => texture.Name.NormalizedNameOrNull();
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static string NormalizedName(this ManagedSpriteInstance instance) => instance.Name;
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static string NormalizedName(this ManagedSpriteInstance instance, in DrawingColor color) => instance.Name.Pastel(color);
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static string? NormalizedNameOrNull(this ManagedSpriteInstance texture) => texture.Name.NormalizedNameOrNull();
 
 	internal static void DumpTexture(

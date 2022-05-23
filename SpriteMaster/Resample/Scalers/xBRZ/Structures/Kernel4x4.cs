@@ -39,7 +39,7 @@ internal unsafe ref struct Kernel4X4 {
 	internal readonly Color16 O => (Color16)Data[0xE];
 	internal readonly Color16 P => (Color16)Data[0xF];
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal Kernel4X4(
 		Color16 _0,
 		Color16 _1,

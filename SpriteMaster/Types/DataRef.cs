@@ -1,16 +1,16 @@
 ﻿using Microsoft.Toolkit.HighPerformance;
 using SpriteMaster.Extensions;
+using SpriteMaster.Hashing;
 using System;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Types;
 
 internal ref struct DataRef<T> where T : unmanaged {
-	internal static DataRef<T> Null => new(null, 0);
+	internal static DataRef<T> Null => new(null);
 
 	private readonly ReadOnlySpan<T> DataInternal = default;
 	private T[]? CopiedData = null;
-	private readonly int LengthInternal = 0;
 	internal readonly int Length => DataInternal.Length;
 
 	internal readonly ReadOnlySpan<T> Data => CopiedData is null ? DataInternal : CopiedData.AsReadOnlySpan();
@@ -35,8 +35,8 @@ internal ref struct DataRef<T> where T : unmanaged {
 
 	internal readonly bool HasData => !DataInternal.IsEmpty;
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal DataRef(ReadOnlySpan<T> data, int length, T[]? referenceArray = null, bool copied = false) {
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	internal DataRef(ReadOnlySpan<T> data, T[]? referenceArray = null, bool copied = false) {
 #if DEBUG
 		if (referenceArray is null && copied) {
 			throw new NullReferenceException(nameof(referenceArray));
@@ -44,10 +44,9 @@ internal ref struct DataRef<T> where T : unmanaged {
 #endif
 		DataInternal = data;
 		CopiedData = copied ? referenceArray : null;
-		LengthInternal = length;
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public override readonly int GetHashCode() {
 		return (int)DataInternal.AsBytes().Hash();
 	}

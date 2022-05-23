@@ -24,7 +24,7 @@ internal static partial class Pathfinding {
 		Harmonize.PriorityLevel.Last,
 		critical: false
 	)]
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static bool PrepareToDisembarkOnNewSchedulePath(NPC __instance) {
 		if (!Config.Enabled || !Config.Extras.AllowNPCsOnFarm || !Config.Extras.OptimizeWarpPoints) {
 			return true;
@@ -47,7 +47,6 @@ internal static partial class Pathfinding {
 		instance: false,
 		critical: false
 	)]
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static bool WarpCharacter(NPC? character, GameLocation? targetLocation, XVector2 position) {
 		if (!Config.IsUnconditionallyEnabled || !Config.Extras.AllowNPCsOnFarm || !Config.Extras.OptimizeWarpPoints) {
 			return true;
@@ -211,7 +210,6 @@ internal static partial class Pathfinding {
 		Harmonize.PriorityLevel.Last,
 		critical: false
 	)]
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	public static bool CharacterDestroyObjectWithinRectangle(GameLocation __instance, ref bool __result, XRectangle rect, bool showDestroyedObject) {
 		if (__instance.IsFarm || __instance.IsGreenhouse) {
 			__result = false;

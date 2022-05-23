@@ -1,4 +1,5 @@
 ﻿using SpriteMaster.Configuration;
+using SpriteMaster.Hashing;
 using StardewModdingAPI;
 using System;
 using System.Collections.Generic;
@@ -65,7 +66,6 @@ internal static partial class Debug {
 	}
 
 	[DebuggerStepThrough, DebuggerHidden]
-	[MethodImpl(MethodImpl.Hot)]
 	internal static void Message(string message, bool format = true, [CallerMemberName] string caller = null!) {
 		if (!CheckLogLevel(LogLevel.Info))
 			return;
@@ -73,7 +73,6 @@ internal static partial class Debug {
 	}
 
 	[DebuggerStepThrough, DebuggerHidden]
-	[MethodImpl(MethodImpl.Hot)]
 	internal static void Message<T>(T exception, [CallerMemberName] string caller = null!) where T : Exception {
 		if (!CheckLogLevel(LogLevel.Info))
 			return;
@@ -81,7 +80,6 @@ internal static partial class Debug {
 	}
 
 	[DebuggerStepThrough, DebuggerHidden]
-	[MethodImpl(MethodImpl.Hot)]
 	private static void MessageLn(string message, bool format = true, [CallerMemberName] string caller = null!) {
 		Message($"{message}\n", format, caller);
 	}
@@ -111,7 +109,6 @@ internal static partial class Debug {
 	}
 
 	[DebuggerStepThrough, DebuggerHidden]
-	[MethodImpl(MethodImpl.Hot)]
 	private static void WarningLn(string message, bool format = true, [CallerMemberName] string caller = null!) {
 		Warning($"{message}\n", format, caller);
 	}
@@ -121,7 +118,7 @@ internal static partial class Debug {
 	[DebuggerStepThrough, DebuggerHidden]
 	[MethodImpl(MethodImpl.Cold)]
 	internal static void WarningOnce(string message, bool format = true, [CallerMemberName] string caller = null!, [CallerFilePath] string path = null!, [CallerLineNumber] int line = 0) {
-		if (!CheckLogLevel(LogLevel.Warn) || !WarningOnceSet.Add(Hashing.Combine(caller, path, line)))
+		if (!CheckLogLevel(LogLevel.Warn) || !WarningOnceSet.Add(HashUtility.Combine(caller, path, line)))
 			return;
 		DebugWrite(LogLevel.Warn, $"{caller.Format(format)}{message}");
 	}
@@ -129,7 +126,7 @@ internal static partial class Debug {
 	[DebuggerStepThrough, DebuggerHidden]
 	[MethodImpl(MethodImpl.Cold)]
 	internal static void WarningOnce<T>(T exception, [CallerMemberName] string caller = null!, [CallerFilePath] string path = null!, [CallerLineNumber] int line = 0) where T : Exception {
-		if (!CheckLogLevel(LogLevel.Warn) || !WarningOnceSet.Add(Hashing.Combine(caller, path, line)))
+		if (!CheckLogLevel(LogLevel.Warn) || !WarningOnceSet.Add(HashUtility.Combine(caller, path, line)))
 			return;
 		WarningLn(ParseException(exception), caller: caller);
 	}
@@ -137,7 +134,7 @@ internal static partial class Debug {
 	[DebuggerStepThrough, DebuggerHidden]
 	[MethodImpl(MethodImpl.Cold)]
 	internal static void WarningOnce<T>(string message, T exception, [CallerMemberName] string caller = null!, [CallerFilePath] string path = null!, [CallerLineNumber] int line = 0) where T : Exception {
-		if (!CheckLogLevel(LogLevel.Warn) || !WarningOnceSet.Add(Hashing.Combine(caller, path, line)))
+		if (!CheckLogLevel(LogLevel.Warn) || !WarningOnceSet.Add(HashUtility.Combine(caller, path, line)))
 			return;
 		WarningLn($"{message}\n{ParseException(exception)}", caller: caller);
 	}

@@ -18,7 +18,7 @@ internal sealed class Config : Resample.Scalers.Config {
 	// Precalculated
 	internal readonly double ChrominanceWeight;
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal Config(
 		Vector2B wrapped,
 		bool hasAlpha = true,

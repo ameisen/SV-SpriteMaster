@@ -9,12 +9,11 @@ using System.Runtime.CompilerServices;
 namespace SpriteMaster.Core;
 
 internal static partial class OnDrawImpl {
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private static bool GetIsSliced(Bounds bounds, XTexture2D reference, [NotNullWhen(true)] out Config.TextureRef? result) {
 		return reference.Meta().CheckSliced(bounds, out result);
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static bool Cleanup(this ref Bounds sourceBounds, XTexture2D reference) {
 		if (Config.ClampInvalidBounds && !sourceBounds.ClampToChecked(reference.Extent(), out var clampedBounds)) {
 			//Debug.Warning($"Draw.Cleanup: '{reference.SafeName()}' bounds '{sourceBounds}' are not contained in reference bounds '{(Bounds)reference.Bounds}' - clamped ({(sourceBounds.Degenerate ? "degenerate" : "")})");
@@ -35,7 +34,6 @@ internal static partial class OnDrawImpl {
 		LastDrawSpriteInstance = null;
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static bool FetchScaledTexture(
 		this XTexture2D reference,
 		uint expectedScale,
@@ -132,10 +130,9 @@ internal static partial class OnDrawImpl {
 		return null;
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private static bool Validate(this ManagedTexture2D texture) => !texture.IsDisposed;
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static void GetDrawParameters(XTexture2D texture, XRectangle? source, out Bounds bounds, out float scaleFactor) {
 		if (texture is not InternalTexture2D) {
 			texture.Meta().UpdateLastAccess();

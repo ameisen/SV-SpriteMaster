@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
+using SpriteMaster.Hashing;
 using SpriteMaster.Metadata;
 using SpriteMaster.Types;
 using SpriteMaster.Types.Interlocking;
@@ -118,7 +119,6 @@ internal sealed class SpriteInfo : IDisposable {
 
 	private InterlockedULong HashInternal = 0;
 	internal ulong Hash {
-		[MethodImpl(Runtime.MethodImpl.Hot)]
 		get {
 			if (ReferenceDataInternal is null) {
 				throw new NullReferenceException(nameof(ReferenceDataInternal));
@@ -126,7 +126,7 @@ internal sealed class SpriteInfo : IDisposable {
 
 			ulong hash = HashInternal;
 			if (hash == 0) {
-				hash = Hashing.Combine(
+				hash = HashUtility.Combine(
 					SpriteDataHash,
 					Bounds.Extent.GetLongHashCode(),
 					BlendEnabled.GetLongHashCode(),
@@ -140,33 +140,34 @@ internal sealed class SpriteInfo : IDisposable {
 
 			}
 			HashInternal = hash;
-			return hash;// ^ (ulong)ExpectedScale.GetHashCode();
+			return hash;
 		}
 	}
 
 	// Attempt to update the bytedata cache for the reference texture, or purge if it that makes more sense or if updating
 	// is not plausible.
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static void Purge(XTexture2D reference, Bounds? bounds, in DataRef<byte> data, bool animated) =>
 		reference.Meta().Purge(reference, bounds, data, animated: animated);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
-	internal static bool IsCached(XTexture2D reference) => reference.Meta().CachedDataNonBlocking is not null;
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	internal static bool IsCached(XTexture2D reference) =>
+		reference.Meta().CachedDataNonBlocking is not null;
 
 	internal readonly ref struct Initializer {
-		internal readonly byte[]? ReferenceData;
 		internal readonly Bounds Bounds;
+		internal readonly byte[]? ReferenceData;
 		internal readonly XTexture2D Reference;
 		internal readonly BlendState BlendState;
 		internal readonly SamplerState SamplerState;
+		internal readonly ulong? Hash;
 		internal readonly uint ExpectedScale;
 		internal readonly TextureType TextureType;
+		internal readonly Resample.Scaler Scaler;
+		internal readonly Resample.Scaler ScalerGradient;
 		// For statistics and throttling
 		internal readonly bool WasCached;
 		internal readonly bool IsPreview;
-		internal readonly ulong? Hash;
-		internal readonly Resample.Scaler Scaler;
-		internal readonly Resample.Scaler ScalerGradient;
 
 		internal Initializer(XTexture2D reference, Bounds dimensions, uint expectedScale, TextureType textureType, bool animated) {
 			Reference = reference;
@@ -234,7 +235,7 @@ internal sealed class SpriteInfo : IDisposable {
 				return null;
 			}
 
-			var result = Hashing.Combine(
+			var result = HashUtility.Combine(
 				dataHash,
 				Bounds.Extent.GetLongHashCode(),
 				blendEnabled.GetLongHashCode(),
@@ -249,7 +250,6 @@ internal sealed class SpriteInfo : IDisposable {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal SpriteInfo(in Initializer initializer) {
 		Reference = initializer.Reference;
 		BlendState = initializer.BlendState;
@@ -282,7 +282,7 @@ internal sealed class SpriteInfo : IDisposable {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public void Dispose() {
 		ReferenceData = null;
 		HashInternal = 0;

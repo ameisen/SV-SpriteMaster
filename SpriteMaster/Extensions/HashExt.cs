@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using SpriteMaster.Hashing;
+using System.Text;
 
 namespace SpriteMaster.Extensions;
 
@@ -17,7 +18,7 @@ internal static class HashExt {
 	internal static int GetSafeHash(this long value) => value.GetHashCode();
 
 	internal static int GetSafeHash<T>(this T? value) => value switch {
-		null => Hashing.Null32,
+		null => HashUtility.Null32,
 		string s => s.GetSafeHash(),
 		StringBuilder s => s.ToString().GetSafeHash(),
 		_ => value.GetHashCode()

@@ -18,7 +18,7 @@ internal sealed class WeakSet<T> :
 	private IEnumerable<T> Items => InternalTable.Select(kv => kv.Key);
 
 	public int Count {
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		get {
 			using (Lock.Read) {
 				return InternalTable.Count();
@@ -28,7 +28,7 @@ internal sealed class WeakSet<T> :
 
 	public bool IsReadOnly => false;
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	[SecuritySafeCritical]
 	internal bool Contains(T item) {
 		using (Lock.Read) {
@@ -36,13 +36,13 @@ internal sealed class WeakSet<T> :
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	bool ICollection<T>.Contains(T item) => Contains(item);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	bool IReadOnlySet<T>.Contains(T item) => Contains(item);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	[SecuritySafeCritical]
 	internal bool Remove(T item) {
 		using (Lock.Write) {
@@ -50,10 +50,10 @@ internal sealed class WeakSet<T> :
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	bool ICollection<T>.Remove(T item) => Remove(item);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	[SecuritySafeCritical]
 	internal bool Add(T item) {
 		try {
@@ -72,7 +72,7 @@ internal sealed class WeakSet<T> :
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	[SecuritySafeCritical]
 	internal void AddOrIgnore(T item) {
 		using (Lock.Write) {
@@ -80,7 +80,7 @@ internal sealed class WeakSet<T> :
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal void AddRange(IEnumerable<T> collection) {
 		// TODO : This can be improved upon using reflection/delegates.
 
@@ -91,7 +91,7 @@ internal sealed class WeakSet<T> :
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal void RemoveRange(IEnumerable<T> collection) {
 		// TODO : This can be improved upon using reflection/delegates.
 
@@ -102,13 +102,14 @@ internal sealed class WeakSet<T> :
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public void Clear() {
 		using (Lock.Write) {
 			InternalTable.Clear();
 		}
 	}
 
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public void CopyTo(T[] array, int arrayIndex) {
 		// TODO : this can be implemented better
 		using (Lock.Read) {
@@ -116,15 +117,16 @@ internal sealed class WeakSet<T> :
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	void ICollection<T>.Add(T item) => AddOrIgnore(item);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public IEnumerator<T> GetEnumerator() => Items.GetEnumerator();
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
 
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	bool ISet<T>.Add(T item) => Add(item);
 
 	public bool IsProperSubsetOf(IEnumerable<T> other) => Items.ToHashSet().IsProperSubsetOf(other);

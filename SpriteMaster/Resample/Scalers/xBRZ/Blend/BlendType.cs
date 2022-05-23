@@ -13,12 +13,12 @@ internal enum BlendType : PreprocessType {
 }
 
 internal static class BlendTypeExtension {
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static PreprocessType Value(this BlendType type) => (byte)type;
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static BlendType BlendType(this PreprocessType value) => (BlendType)value;
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static BlendType BlendType(this int value) => (BlendType)value;
 }

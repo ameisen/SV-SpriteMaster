@@ -2,6 +2,7 @@
 using SpriteMaster.Caching;
 using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
+using SpriteMaster.Hashing;
 using SpriteMaster.Metadata;
 using SpriteMaster.Resample.Passes;
 using SpriteMaster.Tasking;
@@ -25,27 +26,25 @@ internal sealed class Resampler {
 		Disabled = 4,
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static void PurgeHash(XTexture2D reference) {
 		reference.Meta().CachedRawData = null;
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ulong GetHash(SpriteInfo input, TextureType textureType) {
 		// Need to make Hashing.CombineHash work better.
 		var hash = input.Hash;
 
 		if (Config.Resample.EnableDynamicScale) {
-			hash = Hashing.Combine(hash, Hashing.Rehash(input.ExpectedScale));
+			hash = HashUtility.Combine(hash, HashUtility.Rehash(input.ExpectedScale));
 		}
 
 		if (textureType == TextureType.Sprite) {
-			hash = Hashing.Combine(hash, input.Bounds.Extent.GetLongHashCode());
+			hash = HashUtility.Combine(hash, input.Bounds.Extent.GetLongHashCode());
 		}
 		return hash;
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static ulong? GetHash(in SpriteInfo.Initializer input, TextureType textureType) {
 		if (!input.Hash.HasValue) {
 			return null;
@@ -55,11 +54,11 @@ internal sealed class Resampler {
 		var hash = input.Hash.Value;
 
 		if (Config.Resample.EnableDynamicScale) {
-			hash = Hashing.Combine(hash, Hashing.Rehash(input.ExpectedScale));
+			hash = HashUtility.Combine(hash, HashUtility.Rehash(input.ExpectedScale));
 		}
 
 		if (textureType == TextureType.Sprite) {
-			hash = Hashing.Combine(hash, input.Bounds.Extent.GetLongHashCode());
+			hash = HashUtility.Combine(hash, input.Bounds.Extent.GetLongHashCode());
 		}
 		return hash;
 	}

@@ -21,7 +21,7 @@ internal readonly ref struct ReadOnlyPinnedSpan<T> where T : unmanaged {
 	/// </summary>
 	/// <param name="array">The target array.</param>
 	/// <remarks>Returns default when <paramref name="array"/> is null.</remarks>
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal ReadOnlyPinnedSpan(T[]? array) :
 		this(array!, new(array)) {
 	}
@@ -37,7 +37,7 @@ internal readonly ref struct ReadOnlyPinnedSpan<T> where T : unmanaged {
 	/// <exception cref="System.ArgumentOutOfRangeException">
 	/// Thrown when the specified <paramref name="start"/> or end index is not in the range (&lt;0 or &gt;Length).
 	/// </exception>
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal ReadOnlyPinnedSpan(T[] array, int start, int length) :
 		this(array, new(array, start, length)
 	) {
@@ -58,31 +58,31 @@ internal readonly ref struct ReadOnlyPinnedSpan<T> where T : unmanaged {
 	/// <exception cref="System.ArgumentOutOfRangeException">
 	/// Thrown when the specified <paramref name="length"/> is negative.
 	/// </exception>
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal unsafe ReadOnlyPinnedSpan(object refObject, void* pointer, int length) :
 		this(refObject, new(pointer, length)) {
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal unsafe ReadOnlyPinnedSpan(object refObject, ref T pointer, int length) :
 		this(refObject, Unsafe.AsPointer(ref pointer), length) {
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private ReadOnlyPinnedSpan(object refObject, Span<T> span) :
 		this(refObject, (ReadOnlySpan<T>)span) {
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private ReadOnlyPinnedSpan(object refObject, ReadOnlySpan<T> span) {
 		ReferenceObject = refObject;
 		InnerSpan = span;
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static ReadOnlyPinnedSpan<T> FromInternal(object refObject, Span<T> span) => new(refObject, span);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static ReadOnlyPinnedSpan<T> FromInternal(object refObject, ReadOnlySpan<T> span) => new(refObject, span);
 
 	// Most ripped from Span.cs
@@ -96,7 +96,7 @@ internal readonly ref struct ReadOnlyPinnedSpan<T> where T : unmanaged {
 	/// Thrown when index less than 0 or index greater than or equal to Length
 	/// </exception>
 	internal ref readonly T this[int index] {
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		get => ref InnerSpan[index];
 	}
 
@@ -104,7 +104,7 @@ internal readonly ref struct ReadOnlyPinnedSpan<T> where T : unmanaged {
 	/// The number of items in the span.
 	/// </summary>
 	internal int Length {
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		get => InnerSpan.Length;
 	}
 
@@ -112,7 +112,7 @@ internal readonly ref struct ReadOnlyPinnedSpan<T> where T : unmanaged {
 	/// Returns true if Length is 0.
 	/// </summary>
 	internal bool IsEmpty {
-		[MethodImpl(Runtime.MethodImpl.Hot)]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		get => InnerSpan.IsEmpty;
 	}
 
@@ -120,28 +120,28 @@ internal readonly ref struct ReadOnlyPinnedSpan<T> where T : unmanaged {
 	/// Returns true if left and right point at the same memory and have the same length.  Note that
 	/// this does *not* check to see if the *contents* are equal.
 	/// </summary>
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static bool operator ==(ReadOnlyPinnedSpan<T> left, ReadOnlySpan<T> right) => left.InnerSpan == right;
 
 	/// <summary>
 	/// Returns true if left and right point at the same memory and have the same length.  Note that
 	/// this does *not* check to see if the *contents* are equal.
 	/// </summary>
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static bool operator ==(ReadOnlySpan<T> left, ReadOnlyPinnedSpan<T> right) => left == right.InnerSpan;
 
 	/// <summary>
 	/// Returns false if left and right point at the same memory and have the same length.  Note that
 	/// this does *not* check to see if the *contents* are equal.
 	/// </summary>
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static bool operator !=(ReadOnlyPinnedSpan<T> left, ReadOnlySpan<T> right) => !(left == right);
 
 	/// <summary>
 	/// Returns false if left and right point at the same memory and have the same length.  Note that
 	/// this does *not* check to see if the *contents* are equal.
 	/// </summary>
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static bool operator !=(ReadOnlySpan<T> left, ReadOnlyPinnedSpan<T> right) => !(left == right);
 
 	/// <summary>
@@ -152,7 +152,7 @@ internal readonly ref struct ReadOnlyPinnedSpan<T> where T : unmanaged {
 	/// </summary>
 	[Obsolete("Equals() on Span will always throw an exception. Use == instead.")]
 	[EditorBrowsable(EditorBrowsableState.Never)]
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 #pragma warning disable CS0809 // Obsolete member overrides non-obsolete member
 	public override bool Equals(object? obj) => InnerSpan.Equals(obj);
 #pragma warning restore CS0809 // Obsolete member overrides non-obsolete member
@@ -165,7 +165,7 @@ internal readonly ref struct ReadOnlyPinnedSpan<T> where T : unmanaged {
 	/// </summary>
 	[Obsolete("GetHashCode() on Span will always throw an exception.")]
 	[EditorBrowsable(EditorBrowsableState.Never)]
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 #pragma warning disable CS0809 // Obsolete member overrides non-obsolete member
 	public override int GetHashCode() => InnerSpan.GetHashCode();
 #pragma warning restore CS0809 // Obsolete member overrides non-obsolete member
@@ -173,11 +173,11 @@ internal readonly ref struct ReadOnlyPinnedSpan<T> where T : unmanaged {
 	/// <summary>
 	/// Defines an implicit conversion of an array to a <see cref="ReadOnlyPinnedSpan{T}"/>
 	/// </summary>
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static implicit operator ReadOnlyPinnedSpan<T>(T[]? array) => new(array);
 
 	/// <summary>Gets an enumerator for this span.</summary>
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public ReadOnlySpan<T>.Enumerator GetEnumerator() => InnerSpan.GetEnumerator();
 
 	/// <summary>
@@ -185,17 +185,17 @@ internal readonly ref struct ReadOnlyPinnedSpan<T> where T : unmanaged {
 	/// It can be used for pinning and is required to support the use of span within a fixed statement.
 	/// </summary>
 	[EditorBrowsable(EditorBrowsableState.Never)]
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal ref readonly T GetPinnableReference() => ref InnerSpan.GetPinnableReference();
 
 	[EditorBrowsable(EditorBrowsableState.Never)]
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal ref T GetPinnableReferenceUnsafe() => ref MemoryMarshal.GetReference(InnerSpan);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal unsafe T* GetPointer() => (T*)Unsafe.AsPointer(ref GetPinnableReferenceUnsafe());
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal unsafe IntPtr GetIntPointer() => (IntPtr)Unsafe.AsPointer(ref GetPinnableReferenceUnsafe());
 
 	/// <summary>
@@ -207,7 +207,7 @@ internal readonly ref struct ReadOnlyPinnedSpan<T> where T : unmanaged {
 	/// <exception cref="System.ArgumentException">
 	/// Thrown when the destination Span is shorter than the source Span.
 	/// </exception>
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal void CopyTo(Span<T> destination) => InnerSpan.CopyTo(destination);
 
 	/// <summary>
@@ -218,20 +218,20 @@ internal readonly ref struct ReadOnlyPinnedSpan<T> where T : unmanaged {
 	/// <param name="destination">The span to copy items into.</param>
 	/// <returns>If the destination span is shorter than the source span, this method
 	/// return false and no data is written to the destination.</returns>
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal bool TryCopyTo(Span<T> destination) => InnerSpan.TryCopyTo(destination);
 
 	/// <summary>
 	/// Defines an implicit conversion of a <see cref="ReadOnlyPinnedSpan{T}"/> to a <see cref="ReadOnlySpan{T}"/>
 	/// </summary>
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static implicit operator ReadOnlySpan<T>(ReadOnlyPinnedSpan<T> span) => span.InnerSpan;
 
 	/// <summary>
 	/// For <see cref="Span{Char}"/>, returns a new instance of string that represents the characters pointed to by the span.
 	/// Otherwise, returns a <see cref="string"/> with the name of the type and the number of elements.
 	/// </summary>
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public override string ToString() => InnerSpan.ToString();
 
 	/// <summary>
@@ -241,7 +241,7 @@ internal readonly ref struct ReadOnlyPinnedSpan<T> where T : unmanaged {
 	/// <exception cref="System.ArgumentOutOfRangeException">
 	/// Thrown when the specified <paramref name="start"/> index is not in range (&lt;0 or &gt;Length).
 	/// </exception>
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal ReadOnlyPinnedSpan<T> Slice(int start) => new(ReferenceObject, InnerSpan.Slice(start));
 
 	/// <summary>
@@ -252,7 +252,7 @@ internal readonly ref struct ReadOnlyPinnedSpan<T> where T : unmanaged {
 	/// <exception cref="System.ArgumentOutOfRangeException">
 	/// Thrown when the specified <paramref name="start"/> or end index is not in range (&lt;0 or &gt;Length).
 	/// </exception>
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal ReadOnlyPinnedSpan<T> Slice(int start, int length) => new(ReferenceObject, InnerSpan.Slice(start, length));
 
 	/// <summary>
@@ -260,10 +260,10 @@ internal readonly ref struct ReadOnlyPinnedSpan<T> where T : unmanaged {
 	/// allocates, so should generally be avoided, however it is sometimes
 	/// necessary to bridge the gap with APIs written in terms of arrays.
 	/// </summary>
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal T[] ToArray() => InnerSpan.ToArray();
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal PinnedSpan<T> ToSpanUnsafe() =>
 		PinnedSpan<T>.FromInternal(ReferenceObject, MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(InnerSpan), InnerSpan.Length));
 

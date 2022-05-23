@@ -3,6 +3,7 @@
 using LinqFasterer;
 using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
+using SpriteMaster.Hashing;
 using SpriteMaster.Metadata;
 using SpriteMaster.Types;
 using System.Collections.Generic;
@@ -29,12 +30,11 @@ internal static class SpriteMap {
 	[Conditional("WITH_SPRITE_REFERENCE_SET")]
 	private static void RemoveInternal(ManagedSpriteInstance instance) => SpriteInstanceReferencesGet.Remove(instance);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static ulong SpriteHash(XTexture2D texture, Bounds source, uint expectedScale, bool preview) {
-		return Hashing.Combine(source.Hash(), expectedScale.GetSafeHash(), preview.GetSafeHash());
+		return HashUtility.Combine(source.Hash(), expectedScale.GetSafeHash(), preview.GetSafeHash());
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool Add(XTexture2D reference, ManagedSpriteInstance instance, out ManagedSpriteInstance? current) {
 		AddInternal(instance);
 
@@ -53,7 +53,6 @@ internal static class SpriteMap {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool AddReplaceInvalidated(XTexture2D reference, ManagedSpriteInstance instance) {
 		AddInternal(instance);
 
@@ -72,7 +71,6 @@ internal static class SpriteMap {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void AddReplace(XTexture2D reference, ManagedSpriteInstance instance) {
 		AddInternal(instance);
 
@@ -86,7 +84,6 @@ internal static class SpriteMap {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool TryGetReady(XTexture2D texture, Bounds source, uint expectedScale, [NotNullWhen(true)] out ManagedSpriteInstance? result) {
 		if (TryGet(texture, source, expectedScale, out var internalResult)) {
 			if (internalResult.IsReady) {
@@ -104,7 +101,6 @@ internal static class SpriteMap {
 		return false;
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static bool TryGet(XTexture2D texture, Bounds source, uint expectedScale, [NotNullWhen(true)] out ManagedSpriteInstance? result) {
 		var rectangleHash = SpriteHash(texture: texture, source: source, expectedScale: expectedScale, preview: Configuration.Preview.Override.Instance is not null);
 
@@ -146,13 +142,12 @@ internal static class SpriteMap {
 		return false;
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static void DirectRemove(ManagedSpriteInstance instance) {
 		RemoveInternal(instance);
 		instance.Suspend();
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void Remove(ManagedSpriteInstance spriteInstance, XTexture2D texture) {
 		try {
 			RemoveInternal(spriteInstance);
@@ -178,7 +173,6 @@ internal static class SpriteMap {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void Remove(in ManagedSpriteInstance.CleanupData instanceData, XTexture2D texture) {
 		var meta = texture.Meta();
 		var spriteTable = meta.GetSpriteInstanceTable();
@@ -197,7 +191,6 @@ internal static class SpriteMap {
 	// This obviously prevents things from caching or functioning for sprites that are animated.
 	// The logic needs to be overridden and previously-cached textures stored in some fashion for sprites
 	// that are determined to be animated
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void Purge(XTexture2D reference, Bounds? sourceRectangle = null, bool animated = false) {
 		try {
 			var meta = reference.Meta();
@@ -263,7 +256,6 @@ internal static class SpriteMap {
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void Invalidate(XTexture2D reference, Bounds? sourceRectangle = null, bool animated = false) {
 		try {
 			var meta = reference.Meta();
@@ -300,7 +292,6 @@ internal static class SpriteMap {
 		"winter"
 	};
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static void SeasonPurge(string season) {
 		if (!Config.Garbage.SeasonalPurge) {
 			return;

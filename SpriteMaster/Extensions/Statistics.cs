@@ -4,7 +4,6 @@ using System.Runtime.CompilerServices;
 namespace SpriteMaster.Extensions;
 
 internal static class Statistics {
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static double StandardDeviation(this ReadOnlySpan<int> data, int length, int startIndex = 0, int count = 0) {
 		//return StandardDeviation(new FixedSpan<int>(data, length), startIndex: startIndex, count: count);
 

@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 namespace SpriteMaster.Resample;
 
 internal static class TextureEncode {
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static bool Encode(
 		ReadOnlySpan<Color8> data,
 		ref TextureFormat format,

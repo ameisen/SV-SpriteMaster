@@ -27,10 +27,9 @@ internal static class PTexture2D {
 
 	// https://benbowen.blog/post/fun_with_makeref/
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private static bool Cacheable(XTexture2D texture) => texture.LevelCount <= 1;
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static unsafe void SetDataPurge<T>(
 		XTexture2D texture,
 		XRectangle? rect,
@@ -72,7 +71,7 @@ internal static class PTexture2D {
 		ManagedSpriteInstance.Purge(
 			reference: texture,
 			bounds: rect,
-			data: new(span, elementCount * sizeof(T)),
+			data: new(span),
 			animated: animated
 		);
 #endif
@@ -198,7 +197,6 @@ internal static class PTexture2D {
 		return true;
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	internal static unsafe Span<T> GetCachedData<T>(
 		XTexture2D __instance,
 		int level,

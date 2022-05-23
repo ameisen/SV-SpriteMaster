@@ -35,7 +35,7 @@ internal static class Compression {
 		return Algorithm.None;
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static byte[] Compress(this byte[] data, Algorithm algorithm) => algorithm switch {
 		Algorithm.None => data,
 		Algorithm.Compress => Compressors.SystemIO.Compress(data),
@@ -44,7 +44,7 @@ internal static class Compression {
 		_ => throw new Exception($"Unknown Compression Algorithm: '{algorithm}'"),
 	};
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static byte[] Compress(this ReadOnlySpan<byte> data, Algorithm algorithm) => algorithm switch {
 		Algorithm.None => data.ToArray(),
 		Algorithm.Compress => Compressors.SystemIO.Compress(data),
@@ -53,31 +53,31 @@ internal static class Compression {
 		_ => throw new Exception($"Unknown Compression Algorithm: '{algorithm}'"),
 	};
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static byte[] Compress(this Span<byte> data, Algorithm algorithm) => Compress((ReadOnlySpan<byte>)data, algorithm);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static byte[] Compress(this PinnedSpan<byte> data, Algorithm algorithm) => Compress((Span<byte>)data, algorithm);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static byte[] Compress(this ReadOnlyPinnedSpan<byte> data, Algorithm algorithm) => Compress((ReadOnlySpan<byte>)data, algorithm);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static byte[] Compress(this byte[] data) => Compress(data, BestAlgorithm);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static byte[] Compress(this ReadOnlySpan<byte> data) => Compress(data, BestAlgorithm);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static byte[] Compress(this Span<byte> data) => Compress((ReadOnlySpan<byte>)data);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static byte[] Compress(this ReadOnlyPinnedSpan<byte> data) => Compress(data, BestAlgorithm);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static byte[] Compress(this PinnedSpan<byte> data) => Compress((ReadOnlySpan<byte>)data);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static byte[] Decompress(this byte[] data, int size, Algorithm algorithm) {
 		if (size == -1) {
 			return Decompress(data, algorithm);
@@ -92,12 +92,12 @@ internal static class Compression {
 		};
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static byte[] Decompress(this byte[] data, int size) {
 		return Decompress(data, size, BestAlgorithm);
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static byte[] Decompress(this byte[] data, Algorithm algorithm) => algorithm switch {
 		Algorithm.None => data,
 		Algorithm.Compress => Compressors.SystemIO.Decompress(data),
@@ -106,6 +106,6 @@ internal static class Compression {
 		_ => throw new Exception($"Unknown Compression Algorithm: '{algorithm}'"),
 	};
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static byte[] Decompress(this byte[] data) => Decompress(data, BestAlgorithm);
 }

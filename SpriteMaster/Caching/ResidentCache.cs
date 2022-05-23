@@ -16,13 +16,12 @@ internal static class ResidentCache {
 	private static readonly SharedLock CacheLock = new();
 	private static readonly TypedMemoryCache<byte[]> Cache = CreateCache();
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
 	private static TypedMemoryCache<byte[]> CreateCache() => Enabled ? new(name: "ResidentCache") : null!;
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static byte[]? Get(string key) => Cache.Get(key);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static bool TryGet(string key, [NotNullWhen(true)] out byte[]? value) {
 		var result = Get(key);
 		value = result;
@@ -31,17 +30,17 @@ internal static class ResidentCache {
 
 	internal static byte[] Set(string key, byte[] value) => Cache.Set(key, value);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static byte[]? Remove(string key) => Cache.Remove(key);
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static void Purge() {
 		using (CacheLock.Write) {
 			Cache.Clear();
 		}
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static void OnSettingsChanged() {
 		using (CacheLock.Write) {
 			if (!Enabled) {

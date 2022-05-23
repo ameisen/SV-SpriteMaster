@@ -1,12 +1,11 @@
 ﻿using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Metadata;
 
 internal static class ReportOnceValidations {
-	[Conditional("DEBUG"), MethodImpl(Runtime.MethodImpl.Hot)]
+	[Conditional("DEBUG")]
 	private static void DebugValidate(Bounds sourceBounds, XTexture2D referenceTexture) {
 		Bounds referenceBounds = referenceTexture.Bounds;
 
@@ -32,7 +31,7 @@ internal static class ReportOnceValidations {
 #endif
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Hot)]
+	[Conditional("DEBUG")]
 	internal static void Validate(Bounds sourceBounds, XTexture2D referenceTexture) {
 		DebugValidate(sourceBounds, referenceTexture);
 	}
