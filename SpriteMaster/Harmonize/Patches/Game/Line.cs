@@ -30,7 +30,7 @@ internal static class Line {
 		critical: false
 	)]
 	public static bool DrawLineWithScreenCoordinates(int x1, int y1, int x2, int y2, XSpriteBatch b, XColor color1, float layerDepth) {
-		if (!Config.IsEnabled || !Config.Extras.SmoothLines) {
+		if (!Config.IsEnabled || !Config.Extras.SmoothLines || !Config.Resample.IsEnabled) {
 			return true;
 		}
 

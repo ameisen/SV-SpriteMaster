@@ -1,9 +1,9 @@
 ﻿using SpriteMaster.Extensions;
-using SpriteMaster.Hashing;
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics;
 
 namespace SpriteMaster.Types;
 
@@ -22,6 +22,11 @@ internal partial struct Vector2I :
 	internal static readonly Vector2I One = (1, 1);
 	internal static readonly Vector2I MinusOne = (-1, -1);
 	internal static readonly Vector2I Empty = Zero;
+
+	private readonly Vector128<int> AsVec128 => Vector128.CreateScalarUnsafe(Packed).AsInt32();
+	private readonly Vector128<int> AsVec128Zeroed => Vector128.CreateScalar(Packed).AsInt32();
+	private readonly Vector128<int> AsVec128Max => Vector128.Create(Packed, ulong.MaxValue).AsInt32();
+	private readonly Vector128<int> AsVec128Min => Vector128.Create(Packed, 0x8000_0000_8000_0000ul).AsInt32();
 
 	internal ulong Packed;
 
@@ -171,8 +176,8 @@ internal partial struct Vector2I :
 
 	// C# GetHashCode on all integer primitives, even longs, just returns it truncated to an int.
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	public override readonly int GetHashCode() => HashUtility.Combine(X.GetHashCode(), Y.GetHashCode());
+	public override readonly int GetHashCode() => Packed.GetHashCode();
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	ulong ILongHash.GetLongHashCode() => ((ulong)X.GetHashCode() << 32) | (uint)Y.GetHashCode();
+	ulong ILongHash.GetLongHashCode() => Packed;
 }

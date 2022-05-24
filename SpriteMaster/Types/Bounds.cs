@@ -8,8 +8,7 @@ namespace SpriteMaster.Types;
 
 [StructLayout(LayoutKind.Sequential, Pack = Vector2I.Alignment)]
 internal partial struct Bounds :
-	ILongHash,
-	ICloneable {
+	ILongHash {
 	internal static readonly Bounds Empty = new(0, 0, 0, 0);
 
 	private Vector2I ExtentReal;
@@ -227,11 +226,6 @@ internal partial struct Bounds :
 	);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal readonly Bounds Clone() => this;
-
-	readonly object ICloneable.Clone() => this;
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static implicit operator DrawingRectangle(Bounds bounds) => new(bounds.X, bounds.Y, bounds.InvertedWidth, bounds.InvertedHeight);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
@@ -255,7 +249,7 @@ internal partial struct Bounds :
 	public override readonly int GetHashCode() => HashUtility.Combine(Offset.GetHashCode(), Extent.GetHashCode());
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	ulong ILongHash.GetLongHashCode() => ((ulong)Offset.GetHashCode() << 32) | (uint)Extent.GetHashCode();
+	ulong ILongHash.GetLongHashCode() => HashUtility.Combine(Offset.GetLongHashCode(), Extent.GetLongHashCode());
 
 	internal readonly Bounds ClampTo(Bounds clamp) {
 		Bounds source = this;

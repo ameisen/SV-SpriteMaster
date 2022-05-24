@@ -44,7 +44,7 @@ internal interface IScaler {
 
 	internal static IScalerInfo? CurrentInfo => GetScalerInfo(SMConfig.Resample.Scaler);
 
-	internal static IScaler Current => SMConfig.Resample.Scaler switch {
+	internal static IScaler? Current => SMConfig.Resample.Scaler switch {
 		Scaler.xBRZ => xBRZ.Scaler.ScalerInterface.Instance,
 #if !SHIPPING
 		Resample.Scaler.SuperXBR => Resample.Scalers.SuperXBR.Scaler.ScalerInterface.Instance,
@@ -53,6 +53,7 @@ internal interface IScaler {
 #if !SHIPPING
 		Resample.Scaler.Bilinear => throw new NotImplementedException("Bilinear scaling is not implemented"),
 #endif
+		Scaler.None => null,
 		_ => throw new InvalidOperationException($"Unknown Scaler Type: {SMConfig.Resample.Scaler}")
 	};
 }

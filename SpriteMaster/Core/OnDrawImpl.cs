@@ -223,7 +223,7 @@ internal static partial class OnDrawImpl {
 		factoredScale += 0.5f;
 		factoredScale = factoredScale.Clamp(2.0f, Config.Resample.MaxScale);
 		uint factoredScaleN = (uint)factoredScale.NextInt();
-		return Resample.Scalers.IScaler.Current.ClampScale(factoredScaleN);
+		return Resample.Scalers.IScaler.Current?.ClampScale(factoredScaleN) ?? 1u;
 	}
 
 	internal static bool OnDraw(

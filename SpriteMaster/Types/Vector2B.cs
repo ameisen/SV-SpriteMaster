@@ -9,7 +9,6 @@ namespace SpriteMaster.Types;
 [DebuggerDisplay("[{X}, {Y}]")]
 [StructLayout(LayoutKind.Sequential, Pack = sizeof(byte), Size = sizeof(byte))]
 internal struct Vector2B :
-	ICloneable,
 	IComparable,
 	IComparable<Vector2B>,
 	IComparable<bool>,
@@ -138,12 +137,6 @@ internal struct Vector2B :
 	internal static Vector2B From(Vector2B vector) => new(vector: vector);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal readonly Vector2B Clone() => this;
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	readonly object ICloneable.Clone() => this;
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static implicit operator Vector2B((bool X, bool Y) vec) => new(vec.X, vec.Y);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
@@ -196,7 +189,4 @@ internal struct Vector2B :
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public readonly bool Equals(bool other) => Packed == (other ? OneByte : ZeroByte);
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal readonly TypeCode GetTypeCode() => TypeCode.Object;
 }

@@ -5,8 +5,6 @@ using System.Runtime.Intrinsics.X86;
 namespace SpriteMaster.Types;
 
 internal partial struct Vector2I {
-	private Vector128<int> AsVec128 => Vector128.CreateScalarUnsafe(Packed).AsInt32();
-
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static Vector2I operator -(Vector2I value) => new(
 		-value.X,
