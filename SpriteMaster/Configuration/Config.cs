@@ -212,6 +212,15 @@ internal static class Config {
 		internal static bool IsSetLinear => Preview.Override.Instance?.SetLinear ?? SetLinear;
 #pragma warning restore CS0618 // Type or member is obsolete
 
+		[Attributes.Comment("Enable linear sampling for sprites")]
+		[Obsolete("Use IsSetLinear")]
+		internal static bool SetLinearUnresampled = false;
+
+		[Attributes.Ignore]
+#pragma warning disable CS0618 // Type or member is obsolete
+		internal static bool IsSetLinearUnresampled => (Preview.Override.Instance?.SetLinear ?? SetLinear && Resample.IsEnabled);
+#pragma warning restore CS0618 // Type or member is obsolete
+
 		[Attributes.Comment("How many MSAA samples should be used?")]
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.ResetDisplay | Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
 		[Attributes.LimitsInt(1, 16)]
