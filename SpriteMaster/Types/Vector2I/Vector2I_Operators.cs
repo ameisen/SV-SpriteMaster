@@ -16,7 +16,7 @@ internal partial struct Vector2I {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static Vector2I operator >>(Vector2I value, int bits) {
-		if (Sse2.IsSupported) {
+		if (Sse2.IsSupported && UseSIMD) {
 			var vec = value.AsVec128;
 			var res = Sse2.ShiftRightArithmetic(vec, (byte)bits);
 			return new(res.AsUInt64().ToScalar());
@@ -29,7 +29,7 @@ internal partial struct Vector2I {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static Vector2I operator <<(Vector2I value, int bits) {
-		if (Sse2.IsSupported) {
+		if (Sse2.IsSupported && UseSIMD) {
 			var vec = value.AsVec128;
 			var res = Sse2.ShiftLeftLogical(vec, (byte)bits);
 			return new(res.AsUInt64().ToScalar());
@@ -42,7 +42,7 @@ internal partial struct Vector2I {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static Vector2I operator +(Vector2I lhs, Vector2I rhs) {
-		if (Sse2.IsSupported) {
+		if (Sse2.IsSupported && UseSIMD) {
 			var lVec = lhs.AsVec128;
 			var rVec = rhs.AsVec128;
 			var res = Sse2.Add(lVec, rVec);
@@ -56,7 +56,7 @@ internal partial struct Vector2I {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static Vector2I operator -(Vector2I lhs, Vector2I rhs) {
-		if (Sse2.IsSupported) {
+		if (Sse2.IsSupported && UseSIMD) {
 			var lVec = lhs.AsVec128;
 			var rVec = rhs.AsVec128;
 			var res = Sse2.Subtract(lVec, rVec);
@@ -70,7 +70,7 @@ internal partial struct Vector2I {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static Vector2I operator *(Vector2I lhs, Vector2I rhs) {
-		if (Sse41.IsSupported) {
+		if (Sse41.IsSupported && UseSIMD) {
 			var lVec = lhs.AsVec128;
 			var rVec = rhs.AsVec128;
 			var res = Sse41.MultiplyLow(lVec, rVec);
@@ -98,7 +98,7 @@ internal partial struct Vector2I {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static Vector2I operator &(Vector2I lhs, Vector2I rhs) {
-		if (Sse2.IsSupported) {
+		if (Sse2.IsSupported && UseSIMD) {
 			var lVec = lhs.AsVec128;
 			var rVec = rhs.AsVec128;
 			var res = Sse2.And(lVec, rVec);
@@ -112,7 +112,7 @@ internal partial struct Vector2I {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static Vector2I operator |(Vector2I lhs, Vector2I rhs) {
-		if (Sse2.IsSupported) {
+		if (Sse2.IsSupported && UseSIMD) {
 			var lVec = lhs.AsVec128;
 			var rVec = rhs.AsVec128;
 			var res = Sse2.Or(lVec, rVec);
@@ -126,7 +126,7 @@ internal partial struct Vector2I {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static Vector2I operator ^(Vector2I lhs, Vector2I rhs) {
-		if (Sse2.IsSupported) {
+		if (Sse2.IsSupported && UseSIMD) {
 			var lVec = lhs.AsVec128;
 			var rVec = rhs.AsVec128;
 			var res = Sse2.Xor(lVec, rVec);
@@ -140,7 +140,7 @@ internal partial struct Vector2I {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static Vector2I operator +(Vector2I lhs, int rhs) {
-		if (Sse2.IsSupported) {
+		if (Sse2.IsSupported && UseSIMD) {
 			var lVec = lhs.AsVec128;
 			var scalar = Vector128.Create(rhs);
 			var res = Sse2.Add(lVec, scalar);
@@ -154,7 +154,7 @@ internal partial struct Vector2I {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static Vector2I operator -(Vector2I lhs, int rhs) {
-		if (Sse2.IsSupported) {
+		if (Sse2.IsSupported && UseSIMD) {
 			var lVec = lhs.AsVec128;
 			var scalar = Vector128.Create(rhs);
 			var res = Sse2.Subtract(lVec, scalar);
@@ -168,7 +168,7 @@ internal partial struct Vector2I {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static Vector2I operator *(Vector2I lhs, int rhs) {
-		if (Sse41.IsSupported) {
+		if (Sse41.IsSupported && UseSIMD) {
 			var lVec = lhs.AsVec128;
 			var scalar = Vector128.Create(rhs);
 			var res = Sse41.MultiplyLow(lVec, scalar);
@@ -194,7 +194,7 @@ internal partial struct Vector2I {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static Vector2I operator &(Vector2I lhs, int rhs) {
-		if (Sse2.IsSupported) {
+		if (Sse2.IsSupported && UseSIMD) {
 			var lVec = lhs.AsVec128;
 			var scalar = Vector128.Create(rhs);
 			var res = Sse2.And(lVec, scalar);
@@ -208,7 +208,7 @@ internal partial struct Vector2I {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static Vector2I operator |(Vector2I lhs, int rhs) {
-		if (Sse2.IsSupported) {
+		if (Sse2.IsSupported && UseSIMD) {
 			var lVec = lhs.AsVec128;
 			var scalar = Vector128.Create(rhs);
 			var res = Sse2.Or(lVec, scalar);
@@ -222,7 +222,7 @@ internal partial struct Vector2I {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static Vector2I operator ^(Vector2I lhs, int rhs) {
-		if (Sse2.IsSupported) {
+		if (Sse2.IsSupported && UseSIMD) {
 			var lVec = lhs.AsVec128;
 			var scalar = Vector128.Create(rhs);
 			var res = Sse2.Xor(lVec, scalar);

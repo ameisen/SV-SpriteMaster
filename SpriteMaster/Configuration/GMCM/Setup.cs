@@ -445,6 +445,9 @@ internal static class Setup {
 			case "SpriteMaster.Configuration.Config+DrawState.SetLinear":
 				PreviewOverride.SetLinear = (bool)value;
 				break;
+			case "SpriteMaster.Configuration.Config+DrawState.SetLinearUnresampled":
+				PreviewOverride.SetLinearUnresampled = (bool)value;
+				break;
 			case "SpriteMaster.Configuration.Config+Resample.Enabled":
 				PreviewOverride.ResampleEnabled = (bool)value;
 				break;

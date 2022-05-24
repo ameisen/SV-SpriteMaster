@@ -15,7 +15,7 @@ internal partial struct Vector2I {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal readonly Vector2I Min(Vector2I v) {
-		if (Sse41.IsSupported) {
+		if (Sse41.IsSupported && UseSIMD) {
 			var vec0 = AsVec128;
 			var vec1 = v.AsVec128;
 			var res = Sse41.Min(vec0, vec1);
@@ -29,7 +29,7 @@ internal partial struct Vector2I {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal readonly Vector2I Max(Vector2I v) {
-		if (Sse41.IsSupported) {
+		if (Sse41.IsSupported && UseSIMD) {
 			var vec0 = AsVec128;
 			var vec1 = v.AsVec128;
 			var res = Sse41.Max(vec0, vec1);
@@ -43,7 +43,7 @@ internal partial struct Vector2I {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal readonly Vector2I Clamp(Vector2I min, Vector2I max) {
-		if (Sse41.IsSupported) {
+		if (Sse41.IsSupported && UseSIMD) {
 			var vec = AsVec128;
 			var minVec = min.AsVec128;
 			var maxVec = max.AsVec128;
@@ -59,7 +59,7 @@ internal partial struct Vector2I {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal readonly Vector2I Min(int v) {
-		if (Sse41.IsSupported) {
+		if (Sse41.IsSupported && UseSIMD) {
 			var vec0 = AsVec128;
 			var vec1 = Vector128.Create(v);
 			var res = Sse41.Min(vec0, vec1);
@@ -73,7 +73,7 @@ internal partial struct Vector2I {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal readonly Vector2I Max(int v) {
-		if (Sse41.IsSupported) {
+		if (Sse41.IsSupported && UseSIMD) {
 			var vec0 = AsVec128;
 			var vec1 = Vector128.Create(v);
 			var res = Sse41.Max(vec0, vec1);
@@ -87,7 +87,7 @@ internal partial struct Vector2I {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal readonly Vector2I Clamp(int min, int max) {
-		if (Sse41.IsSupported) {
+		if (Sse41.IsSupported && UseSIMD) {
 			var vec = AsVec128;
 			var minVec = Vector128.Create(min);
 			var maxVec = Vector128.Create(max);
@@ -102,8 +102,9 @@ internal partial struct Vector2I {
 	}
 
 	internal readonly Vector2I Abs {
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		get {
-			if (Ssse3.IsSupported) {
+			if (Ssse3.IsSupported && UseSIMD) {
 				var vec = AsVec128;
 				var res = Ssse3.Abs(vec);
 				return new(res.AsUInt64().ToScalar());

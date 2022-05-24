@@ -218,7 +218,7 @@ internal static class Config {
 
 		[Attributes.Ignore]
 #pragma warning disable CS0618 // Type or member is obsolete
-		internal static bool IsSetLinearUnresampled => (Preview.Override.Instance?.SetLinear ?? SetLinear && Resample.IsEnabled);
+		internal static bool IsSetLinearUnresampled => (Preview.Override.Instance?.SetLinearUnresampled ?? SetLinearUnresampled && Resample.IsEnabled);
 #pragma warning restore CS0618 // Type or member is obsolete
 
 		[Attributes.Comment("How many MSAA samples should be used?")]

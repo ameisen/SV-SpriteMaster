@@ -12,6 +12,7 @@ internal class Override {
 	internal bool ResampleBasicText = false;
 
 	// draw state
+	internal bool SetLinearUnresampled = false;
 	internal bool SetLinear = true;
 
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -24,6 +25,7 @@ internal class Override {
 		ResampleText = Config.Resample.EnabledText,
 		ResampleBasicText = Config.Resample.EnabledBasicText,
 
+		SetLinearUnresampled = Config.DrawState.SetLinearUnresampled,
 		SetLinear = Config.DrawState.SetLinear
 	};
 #pragma warning restore CS0618 // Type or member is obsolete

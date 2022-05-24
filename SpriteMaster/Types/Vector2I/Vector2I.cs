@@ -12,6 +12,8 @@ namespace SpriteMaster.Types;
 [StructLayout(LayoutKind.Sequential, Pack = Alignment, Size = ByteSize)]
 internal partial struct Vector2I :
 	ILongHash {
+	private const bool UseSIMD = false;
+
 	internal const int ByteSize = sizeof(ulong);
 	internal const int Alignment = sizeof(ulong);
 
