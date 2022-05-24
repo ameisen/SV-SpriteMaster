@@ -26,7 +26,7 @@ using System.Security;
 [assembly: InternalsVisibleTo("xBRZ")]
 [assembly: InternalsVisibleTo("Hashing")]
 [assembly: SecurityRules(SecurityRuleSet.Level2, SkipVerificationInFullTrust = true)]
-[assembly: ChangeList("c3df9fb:0.14.1-Alpha-2-gc3df9fb")]
+[assembly: ChangeList("3f54073:0.14.1-alpha.2")]
 [assembly: BuildComputerName("Palatinate")]
 [assembly: FullVersion("0.14.1.2-alpha.2")]
 // [assembly: SuppressUnmanagedCodeSecurity]

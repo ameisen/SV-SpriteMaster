@@ -703,6 +703,8 @@ internal static class Config {
 		[Attributes.Comment("Should the engine's deferred thread task runner be optimized?")]
 		internal static bool OptimizeEngineTaskRunner = true;
 
+		[Attributes.Comment("Should dirt drawing optimizations be enabled?")]
+		internal static bool EnableDirtDrawOptimizations = false;
 		[Attributes.Comment("Should low-level OpenGL optimizations be performed?")]
 		internal static bool OptimizeOpenGL = true;
 		internal static class Snow {
