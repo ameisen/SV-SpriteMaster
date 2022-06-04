@@ -11,6 +11,7 @@ internal class HarmonizeTranspileAttribute : HarmonizeAttribute {
 		Type? type,
 		string? method,
 		Type[] argumentTypes,
+		Type[]? genericTypes = null,
 		Generic generic = Generic.None,
 		bool instance = true,
 		bool critical = true,
@@ -25,7 +26,8 @@ internal class HarmonizeTranspileAttribute : HarmonizeAttribute {
 		instance: instance,
 		critical: critical,
 		platform: platform,
-		forMod: forMod
+		forMod: forMod,
+		genericTypes: genericTypes
 	) {
 	}
 
@@ -34,6 +36,7 @@ internal class HarmonizeTranspileAttribute : HarmonizeAttribute {
 		string type,
 		string method,
 		Type[] argumentTypes,
+		Type[]? genericTypes = null,
 		Generic generic = Generic.None,
 		bool instance = true,
 		bool critical = true,
@@ -49,7 +52,8 @@ internal class HarmonizeTranspileAttribute : HarmonizeAttribute {
 		instance: instance,
 		critical: critical,
 		platform: platform,
-		forMod: forMod
+		forMod: forMod,
+		genericTypes: genericTypes
 	) { }
 
 	internal HarmonizeTranspileAttribute(
@@ -57,6 +61,7 @@ internal class HarmonizeTranspileAttribute : HarmonizeAttribute {
 		string type,
 		string method,
 		Type[] argumentTypes,
+		Type[]? genericTypes = null,
 		Generic generic = Generic.None,
 		bool instance = true,
 		bool critical = true,
@@ -72,7 +77,8 @@ internal class HarmonizeTranspileAttribute : HarmonizeAttribute {
 		instance: instance,
 		critical: critical,
 		platform: platform,
-		forMod: forMod
+		forMod: forMod,
+		genericTypes: genericTypes
 	) { }
 
 	internal HarmonizeTranspileAttribute(
@@ -80,6 +86,7 @@ internal class HarmonizeTranspileAttribute : HarmonizeAttribute {
 		string[] type,
 		string method,
 		Type[] argumentTypes,
+		Type[]? genericTypes = null,
 		Generic generic = Generic.None,
 		bool instance = true,
 		bool critical = true,
@@ -95,7 +102,8 @@ internal class HarmonizeTranspileAttribute : HarmonizeAttribute {
 		instance: instance,
 		critical: critical,
 		platform: platform,
-		forMod: forMod
+		forMod: forMod,
+		genericTypes: genericTypes
 	) { }
 
 	internal HarmonizeTranspileAttribute(
@@ -103,6 +111,7 @@ internal class HarmonizeTranspileAttribute : HarmonizeAttribute {
 		string[] type,
 		string method,
 		Type[] argumentTypes,
+		Type[]? genericTypes = null,
 		Generic generic = Generic.None,
 		bool instance = true,
 		bool critical = true,
@@ -118,12 +127,14 @@ internal class HarmonizeTranspileAttribute : HarmonizeAttribute {
 		instance: instance,
 		critical: critical,
 		platform: platform,
-		forMod: forMod
+		forMod: forMod,
+		genericTypes: genericTypes
 	) { }
 
 	internal HarmonizeTranspileAttribute(
 		string method,
 		Type[] argumentTypes,
+		Type[]? genericTypes = null,
 		Generic generic = Generic.None,
 		bool instance = true,
 		bool critical = true,
@@ -137,11 +148,13 @@ internal class HarmonizeTranspileAttribute : HarmonizeAttribute {
 		instance: instance,
 		critical: critical,
 		platform: platform,
-		forMod: forMod
+		forMod: forMod,
+		genericTypes: genericTypes
 	) { }
 
 	internal HarmonizeTranspileAttribute(
 		Type[] argumentTypes,
+		Type[]? genericTypes = null,
 		Generic generic = Generic.None,
 		bool instance = true,
 		bool critical = true,
@@ -154,6 +167,7 @@ internal class HarmonizeTranspileAttribute : HarmonizeAttribute {
 		instance: instance,
 		critical: critical,
 		platform: platform,
-		forMod: forMod
+		forMod: forMod,
+		genericTypes: genericTypes
 	) { }
 }

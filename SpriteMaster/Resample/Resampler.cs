@@ -63,7 +63,7 @@ internal sealed class Resampler {
 		return hash;
 	}
 
-	private static readonly WeakSet<XTexture2D> GarbageMarkSet = Config.Garbage.CollectAccountUnownedTextures ? new() : null!;
+	private static readonly WeakSet<XTexture2D> GarbageMarkSet = new();
 
 	private const int WaterBlock = 4;
 
@@ -311,7 +311,7 @@ internal sealed class Resampler {
 
 		if (scalerInfo is not null) {
 			scale *= (uint)blockSize;
-			scale = Math.Min(scale, (uint)scalerInfo.MaxScale);
+			scale = Math.Clamp(scale, (uint)scalerInfo.MinScale, (uint)scalerInfo.MaxScale);
 
 			// Adjust the scale value so that it is within the preferred dimensional limits
 			if (Config.Resample.Scale) {

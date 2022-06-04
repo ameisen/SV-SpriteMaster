@@ -32,7 +32,7 @@ internal static partial class Pathfinding {
 		}
 
 		// Warps can never path to "Volcano", and can only path to certain Locations when it's explicitly allowed in the settings.
-		if (warp.TargetName is "Volcano" || (!Config.Extras.AllowNPCsOnFarm && warp.TargetName is ("Farm" or "Woods" or "Backwoods" or "Tunnel"))) {
+		if (warp.TargetName is "Volcano" || (!Config.Extras.Pathfinding.AllowNPCsOnFarm && warp.TargetName is ("Farm" or "Woods" or "Backwoods" or "Tunnel"))) {
 			target = null;
 			return false;
 		}
@@ -149,7 +149,7 @@ internal static partial class Pathfinding {
 					int nodeDistance;
 
 					// Calculate the distance
-					if (Config.Extras.TrueShortestPath && qLocation.StartPosition is not null) {
+					if (Config.Extras.Pathfinding.TrueShortestPath && qLocation.StartPosition is not null) {
 						// If we are (and can) calculate the true distance, we do that based upon egress position
 						//var straightDistance = (egress - currentPos).LengthSquared;
 						nodeDistance = distance + 1 + length;
@@ -173,6 +173,11 @@ internal static partial class Pathfinding {
 						return 0;
 					}
 
+					// The vanilla game doesn't check for valid paths.
+					if (!Config.Extras.Pathfinding.TrueShortestPath) {
+						return 1;
+					}
+
 					var pointPair = new PointPair(qLocation.StartPosition.Value, point);
 
 					// Check if this ingress/point pair has already been calculated.
@@ -190,6 +195,7 @@ internal static partial class Pathfinding {
 						result.Push(point);
 					}
 					else {
+						// TODO : this lock really kills performance
 						lock (node) {
 							if (node.Name == "Farm") {
 								try {

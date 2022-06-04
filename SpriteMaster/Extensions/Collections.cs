@@ -1,6 +1,9 @@
-﻿using System;
+﻿using Microsoft.Toolkit.HighPerformance;
+using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using static SpriteMaster.Runtime;
@@ -61,11 +64,40 @@ internal static class Collections {
 	}
 
 	#region List Conversions
+	// TODO : define me for .NET and .NETfx
+	private static class ListReflectImpl<T> {
+		private const string ItemsFieldName = "_items";
+		private const string SizeFieldName = "_size";
+
+		internal static readonly Action<List<T>, T[]>? SetItems = typeof(List<T>).GetFieldSetter<List<T>, T[]>(ItemsFieldName);
+		internal static readonly Func<List<T>, T[]>? GetItems = typeof(List<T>).GetFieldGetter<List<T>, T[]>(ItemsFieldName);
+		internal static readonly Action<List<T>, int>? SetSize = typeof(List<T>).GetFieldSetter<List<T>, int>(SizeFieldName);
+		internal static readonly Func<List<T>, int>? GetSize = typeof(List<T>).GetFieldGetter<List<T>, int>(SizeFieldName);
+
+		[MemberNotNullWhen(true, nameof(SetItems), nameof(SetSize))]
+		// ReSharper disable once StaticMemberInGenericType
+		internal static bool SetEnabled { get; } =
+			SetItems is not null &&
+			SetSize is not null;
+
+		[MemberNotNullWhen(true, nameof(GetItems), nameof(GetSize))]
+		// ReSharper disable once StaticMemberInGenericType
+		internal static bool GetEnabled { get; } =
+			GetItems is not null &&
+			GetSize is not null;
+
+		[MemberNotNullWhen(true, nameof(GetItems), nameof(GetSize), nameof(SetItems), nameof(SetSize))]
+		// ReSharper disable once StaticMemberInGenericType
+		internal static bool Enabled { get; } =
+			SetEnabled &&
+			GetEnabled;
+	}
+
 	/// <summary>
 	/// Returns a new List that is constructed from the array.
 	/// </summary>
 	internal static List<T> ToList<T>(this T[] array) {
-		if (ListReflectImpl<T>.ListSetItems is null || ListReflectImpl<T>.ListSetSize is null) {
+		if (ListReflectImpl<T>.SetEnabled) {
 			var newList = new List<T>(array.Length);
 			foreach (var item in array) {
 				newList.Add(item);
@@ -77,25 +109,80 @@ internal static class Collections {
 		return newArray.BeList();
 	}
 
-	// TODO : define me for .NET and .NETfx
-	private static class ListReflectImpl<T> {
-		internal static readonly Action<List<T>, T[]>? ListSetItems = typeof(List<T>).GetFieldSetter<List<T>, T[]>("_items");
-		internal static readonly Action<List<T>, int>? ListSetSize = typeof(List<T>).GetFieldSetter<List<T>, int>("_size");
-	}
-
 	/// <summary>
 	/// Returns a new List that contains the same elements as the array.
 	/// <para>Warning: it is not safe to use the array afterwards - the List now owns it.</para>
 	/// </summary>
 	internal static List<T> BeList<T>(this T[] array) {
-		if (ListReflectImpl<T>.ListSetItems is null || ListReflectImpl<T>.ListSetSize is null) {
+		if (!ListReflectImpl<T>.SetEnabled) {
 			return array.ToList();
 		}
 
+
+		// I would use RuntimeHelpers.GetUninitializedObject,
+		// but it would be slower to manually initialize everything in the object
 		var newList = new List<T>();
-		ListReflectImpl<T>.ListSetItems(newList, array);
-		ListReflectImpl<T>.ListSetSize(newList, array.Length);
+		ListReflectImpl<T>.SetItems(newList, array);
+		ListReflectImpl<T>.SetSize(newList, array.Length);
 		return newList;
+	}
+
+	/// <summary>
+	/// Returns a <seealso cref="ReadOnlySpan{T}"/> representing the <paramref name="list"/>'s contents, and clears the <paramref name="list"/>.
+	/// </summary>
+	/// <typeparam name="T">Element type</typeparam>
+	/// <param name="list">List to fetch/clear</param>
+	/// <returns><seealso cref="ReadOnlySpan{T}"/> representing the <paramref name="list"/>'s contents</returns>
+	internal static ReadOnlySpan<T> ExchangeClear<T>(this List<T> list) {
+		T[] result;
+		if (!ListReflectImpl<T>.Enabled) {
+			result = list.ToArray();
+			list.Clear();
+			return result;
+		}
+
+		result = ListReflectImpl<T>.GetItems(list);
+		int count = list.Count;
+		ListReflectImpl<T>.SetItems(list, Array.Empty<T>());
+		ListReflectImpl<T>.SetSize(list, 0);
+		return result.AsReadOnlySpan(0, count);
+	}
+
+	/// <summary>
+	/// Returns a <seealso cref="ReadOnlySpan{T}"/> representing the <paramref name="list"/>'s contents, and clears the <paramref name="list"/>.
+	/// <para>
+	/// The <paramref name="list"/> is <see langword="lock"/>ed during any operations on it.
+	/// </para>
+	/// </summary>
+	/// <typeparam name="T">Element type</typeparam>
+	/// <param name="list">List to fetch/clear</param>
+	/// <returns><seealso cref="ReadOnlySpan{T}"/> representing the <paramref name="list"/>'s contents</returns>
+	internal static ReadOnlySpan<T> ExchangeClearLocked<T>(this List<T> list) {
+		T[] result;
+		if (!ListReflectImpl<T>.Enabled) {
+			lock (list) {
+				if (list.Count == 0) {
+					return default;
+				}
+				result = list.ToArray();
+				list.Clear();
+			}
+
+			return result;
+		}
+
+		int count;
+		lock (list) {
+			count = list.Count;
+			if (count == 0) {
+				return default;
+			}
+			result = ListReflectImpl<T>.GetItems(list);
+			ListReflectImpl<T>.SetItems(list, Array.Empty<T>());
+			ListReflectImpl<T>.SetSize(list, 0);
+		}
+
+		return result.AsReadOnlySpan(0, count);
 	}
 	#endregion
 

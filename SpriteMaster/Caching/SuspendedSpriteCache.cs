@@ -1,10 +1,9 @@
 ﻿using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
-using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.Caching;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace SpriteMaster.Caching;
@@ -12,38 +11,43 @@ namespace SpriteMaster.Caching;
 [SMAPIConsole.Stats("suspended-sprite-cache")]
 internal static class SuspendedSpriteCache {
 	private static long TotalCachedSize = 0L;
-	private static readonly TypedMemoryCache<ManagedSpriteInstance> Cache = new("SuspendedSpriteCache", OnEntryRemoved);
+	private const double MinTrimPercentage = 0.05;
+	private static readonly TypedMemoryCache<ulong, ManagedSpriteInstance> Cache = new(
+		name: "SuspendedSpriteCache",
+		maxSize: Config.SuspendedCache.MaxCacheSize,
+		removalAction: OnEntryRemoved
+	);
 	private static readonly Condition TrimEvent = new();
 	private static readonly Thread CacheTrimThread = ThreadExt.Run(CacheTrimLoop, background: true, name: "Cache Trim Thread");
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	private static int Percent75(int value) {
+		return (value >> 1) + (value >> 2);
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	private static long Percent75(long value) {
+		return (value >> 1) + (value >> 2);
+	}
 
 	private static void TrimSize() {
 		if (Config.SuspendedCache.MaxCacheSize is <= 0 or long.MaxValue) {
 			return;
 		}
 
-		int percentageOffset = 0;
 		var totalCachedSize = Interlocked.Read(ref TotalCachedSize);
+
+		// How much is needed to be reduced, with an additional safety of 25% or so?
+		var goal = Percent75(Config.SuspendedCache.MaxCacheSize);
+
+		Debug.Trace(
+			$"Trimming (Size) SuspendedSpriteCache: from {totalCachedSize.AsDataSize()} to {goal.AsDataSize()}"
+		);
+
 		while (totalCachedSize > Config.SuspendedCache.MaxCacheSize) {
+			Cache.Trim(1);
 
-			// How much is needed to be reduced, with an additional safety of 25% or so?
-			var goal = Config.SuspendedCache.MaxCacheSize * 0.75;
-			var multiplier = goal / totalCachedSize;
-			var percentageF = 1.0 - multiplier;
-			var percentageI = Math.Clamp((percentageF * 100.0).RoundToInt(), 1, 100);
-
-			Debug.Trace($"Trimming (Size) SuspendedSpriteCache: {percentageI}%, from {totalCachedSize.AsDataSize()} to {goal.RoundToLong().AsDataSize()}");
-			Cache.Trim(percentageI);
-
-			var currentTotalCachedSize = Interlocked.Read(ref TotalCachedSize);
-			if (currentTotalCachedSize == totalCachedSize) {
-				// We didn't trim anything...
-				++percentageOffset;
-				if (percentageI == 100 || percentageOffset == 100) {
-					Debug.Info($"Trimming (Size) SuspendedSprite Cache: Failed to trim, nothing trimmed at 100% (report to {"Ameisen".Colorized(DrawingColor.Red)})");
-					return;
-				}
-			}
-			totalCachedSize = currentTotalCachedSize;
+			totalCachedSize = Interlocked.Read(ref TotalCachedSize);
 		}
 	}
 
@@ -52,28 +56,16 @@ internal static class SuspendedSpriteCache {
 			return;
 		}
 
-		int percentageOffset = 0;
-		long totalCachedCount = Cache.Count;
-		while (totalCachedCount > Config.SuspendedCache.MaxCacheCount) {
-			// How much is needed to be reduced, with an additional safety of 25% or so?
-			var goal = Config.SuspendedCache.MaxCacheCount * 0.75;
-			var multiplier = goal / totalCachedCount;
-			var percentageF = 1.0 - multiplier;
-			var percentageI = Math.Clamp((percentageF * 100.0).RoundToInt() + percentageOffset, 1, 100);
+		int currentCacheCount = Cache.Count;
 
-			Debug.Trace($"Trimming (Count) SuspendedSpriteCache: {percentageI}%, from {totalCachedCount} to {goal.RoundToLong()}");
-			Cache.Trim(percentageI);
-			var currentTotalCachedCount = Cache.Count;
-			if (currentTotalCachedCount == totalCachedCount) {
-				// We didn't trim anything...
-				++percentageOffset;
-				if (percentageI == 100 || percentageOffset == 100) {
-					Debug.Info($"Trimming (Count) SuspendedSprite Cache: Failed to trim, nothing trimmed at 100% (report to {"Ameisen".Colorized(DrawingColor.Red)})");
-					return;
-				}
-			}
-			totalCachedCount = currentTotalCachedCount;
+		if (currentCacheCount <= Config.SuspendedCache.MaxCacheCount) {
+			return;
 		}
+
+		var goal = Percent75(Config.SuspendedCache.MaxCacheCount);
+
+		Debug.Trace($"Trimming (Count) SuspendedSpriteCache: {currentCacheCount} -> {goal}");
+		Cache.TrimTo(goal);
 	}
 
 	[DoesNotReturn]
@@ -87,7 +79,8 @@ internal static class SuspendedSpriteCache {
 		// ReSharper disable once FunctionNeverReturns
 	}
 
-	private static void OnEntryRemoved(CacheEntryRemovedReason reason, ManagedSpriteInstance element) {
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	private static void OnEntryRemoved(EvictionReason reason, ManagedSpriteInstance element) {
 		Interlocked.Add(ref TotalCachedSize, -element.MemorySize);
 		element.Dispose();
 	}
@@ -98,8 +91,7 @@ internal static class SuspendedSpriteCache {
 			return;
 		}
 
-		var key = instance.Hash.ToString64();
-		Cache.Set(key, instance);
+		Cache.Set(instance.Hash, instance, size: instance.MemorySize);
 		Interlocked.Add(ref TotalCachedSize, instance.MemorySize);
 		Debug.Trace($"SuspendedSpriteCache Size: {Cache.Count.ToString(DrawingColor.LightCoral)}");
 
@@ -113,8 +105,7 @@ internal static class SuspendedSpriteCache {
 			return null;
 		}
 
-		var key = hash.ToString64();
-		return Cache.Get(key);
+		return Cache.Get(hash);
 	}
 
 	internal static bool TryFetch(ulong hash, [NotNullWhen(true)] out ManagedSpriteInstance? instance) {
@@ -123,7 +114,7 @@ internal static class SuspendedSpriteCache {
 	}
 
 	internal static bool Remove(ulong hash) {
-		var element = Cache.Remove(hash.ToString64());
+		var element = Cache.Remove(hash);
 		return element is not null;
 	}
 

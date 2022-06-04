@@ -7,10 +7,13 @@ using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
 using SpriteMaster.Types;
 using SpriteMaster.Types.Spans;
+using StardewModdingAPI;
+using StardewValley.GameData.HomeRenovations;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -302,38 +305,8 @@ internal static class PTexture2D {
 		IEnumerable<CodeInstruction> instructions,
 		ILGenerator generator
 	) where T : unmanaged {
-		static bool HasParameters(MethodInfo method) {
-			var parameters = method.GetParameters().Types();
-
-			return
-				parameters.ElementAtOrDefaultF(0)?.RemoveRef() == typeof(XTexture2D) &&
-				parameters.ElementAtOrDefaultF(1)?.RemoveRef() == typeof(int) &&
-				parameters.ElementAtOrDefaultF(2)?.RemoveRef() == typeof(int) &&
-				parameters.ElementAtOrDefaultF(3)?.RemoveRef() == typeof(XRectangle) &&
-				(parameters.ElementAtOrDefaultF(4)?.IsAssignableTo(typeof(Array)) ?? false) &&
-				parameters.ElementAtOrDefaultF(5)?.RemoveRef() == typeof(int) &&
-				parameters.ElementAtOrDefaultF(6)?.RemoveRef() == typeof(int);
-		}
-
-		var preMethod = typeof(PTexture2D).GetMethods(
-			name: "OnPlatformSetDataPre",
-			bindingFlags: BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public
-		).FirstF(HasParameters)?.MakeGenericMethod(typeof(T));
-
-		if (preMethod is null) {
-			Debug.Error("Could not apply PlatformSetData patch: could not find MethodInfo for OnPlatformSetDataPre");
-			return instructions;
-		}
-
-		var postMethod = typeof(PTexture2D).GetMethods(
-			name: "OnPlatformSetDataPost",
-			bindingFlags: BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public
-		).FirstF(HasParameters)?.MakeGenericMethod(typeof(T));
-
-		if (postMethod is null) {
-			Debug.Error("Could not apply PlatformSetData patch: could not find MethodInfo for OnPlatformSetDataPost");
-			return instructions;
-		}
+		var preMethod = ((Func<XTexture2D, int, int, XRectangle, T[], int, int, bool>)OnPlatformSetDataPre).Method;
+		var postMethod = ((Action<XTexture2D, int, int, XRectangle, T[], int, int>)OnPlatformSetDataPost).Method;
 
 		var codeInstructions = instructions as CodeInstruction[] ?? instructions.ToArray();
 
@@ -376,7 +349,7 @@ internal static class PTexture2D {
 			}
 		}
 
-		return ApplyPatch(); ;
+		return ApplyPatch(); 
 	}
 
 	[HarmonizeTranspile(
@@ -390,36 +363,8 @@ internal static class PTexture2D {
 		IEnumerable<CodeInstruction> instructions,
 		ILGenerator generator
 	) where T : unmanaged {
-		static bool HasParameters(MethodInfo method) {
-			var parameters = method.GetParameters().Types();
-
-			return
-				parameters.ElementAtOrDefaultF(0) == typeof(XTexture2D) &&
-				parameters.ElementAtOrDefaultF(1) == typeof(int) &&
-				(parameters.ElementAtOrDefaultF(2)?.IsAssignableTo(typeof(Array)) ?? false) &&
-				parameters.ElementAtOrDefaultF(3) == typeof(int) &&
-				parameters.ElementAtOrDefaultF(4) == typeof(int);
-		}
-
-		var preMethod = typeof(PTexture2D).GetMethods(
-			name: "OnPlatformSetDataPre",
-			bindingFlags: BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public
-		).FirstF(HasParameters)?.MakeGenericMethod(typeof(T));
-
-		if (preMethod is null) {
-			Debug.Error("Could not apply PlatformSetData patch: could not find MethodInfo for OnPlatformSetDataPre");
-			return instructions;
-		}
-
-		var postMethod = typeof(PTexture2D).GetMethods(
-			name: "OnPlatformSetDataPost",
-			bindingFlags: BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public
-		).FirstF(HasParameters)?.MakeGenericMethod(typeof(T));
-
-		if (postMethod is null) {
-			Debug.Error("Could not apply PlatformSetData patch: could not find MethodInfo for OnPlatformSetDataPost");
-			return instructions;
-		}
+		var preMethod = ((Func<XTexture2D, int, T[], int, int, bool>)OnPlatformSetDataPre).Method;
+		var postMethod = ((Action<XTexture2D, int, T[], int, int>)OnPlatformSetDataPost).Method;
 
 		var codeInstructions = instructions as CodeInstruction[] ?? instructions.ToArray();
 
@@ -461,7 +406,7 @@ internal static class PTexture2D {
 		return ApplyPatch();
 	}
 
-	//[Harmonize("PlatformSetData", Fixation.Prefix, PriorityLevel.Last, Generic.Struct, platform: Platform.MonoGame)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static bool OnPlatformSetDataPre<T>(
 		XTexture2D __instance,
 		int level,
@@ -473,7 +418,7 @@ internal static class PTexture2D {
 		return OnPlatformSetDataPre(__instance, level, 0, rect, data, startIndex, elementCount);
 	}
 
-	//[Harmonize("PlatformSetData", Fixation.Prefix, PriorityLevel.Last, Generic.Struct, platform: Platform.MonoGame)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static bool OnPlatformSetDataPre<T>(
 		XTexture2D __instance,
 		int level,
@@ -525,7 +470,7 @@ internal static class PTexture2D {
 		return !TryInternal();
 	}
 
-	//[Harmonize("PlatformSetData", Fixation.Postfix, PriorityLevel.Last, Generic.Struct, platform: Platform.MonoGame)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static void OnPlatformSetDataPost<T>(
 		XTexture2D __instance,
 		int level,
@@ -536,7 +481,7 @@ internal static class PTexture2D {
 		OnPlatformSetDataPost(__instance, level, 0, __instance.Bounds(), data, startIndex, elementCount);
 	}
 
-	//[Harmonize("PlatformSetData", Fixation.Postfix, PriorityLevel.Last, Generic.Struct, platform: Platform.MonoGame)]
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static void OnPlatformSetDataPost<T>(
 		XTexture2D __instance,
 		int level,

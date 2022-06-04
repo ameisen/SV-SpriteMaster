@@ -160,8 +160,63 @@ internal static class Attributes {
 		}
 	}
 
+	[AttributeUsage(AttributeTargets.Field, AllowMultiple = false, Inherited = true)]
+	internal sealed class LimitsTimeSpanAttribute : LimitsAttribute {
+		internal readonly TimeSpan MinValue;
+		internal readonly TimeSpan MaxValue;
+
+		internal override T? GetMin<T>() {
+			if (typeof(T).IsAssignableFrom(typeof(TimeSpan))) {
+				return (MinValue == TimeSpan.MinValue) ? null : (T)(object)MinValue;
+			}
+
+			throw new InvalidCastException($"{typeof(T)} is not assignable from {typeof(TimeSpan)}");
+		}
+
+		internal override T? GetMax<T>() {
+			if (typeof(T).IsAssignableFrom(typeof(TimeSpan))) {
+				return (MaxValue == TimeSpan.MaxValue) ? null : (T)(object)MaxValue;
+			}
+
+			throw new InvalidCastException($"{typeof(T)} is not assignable from {typeof(TimeSpan)}");
+		}
+
+		internal override T? GetMin<T>(Type type) {
+			if (typeof(T) == typeof(TimeSpan)) {
+				return (MinValue == TimeSpan.MinValue) ? null : (T)Convert.ChangeType(Convert.ChangeType(MinValue, type), typeof(T));
+			}
+
+			throw new InvalidCastException($"{typeof(T)} is not assignable from {typeof(TimeSpan)}");
+		}
+
+		internal override T? GetMax<T>(Type type) {
+			if (typeof(T) == typeof(TimeSpan)) {
+				return (MaxValue == TimeSpan.MaxValue) ? null : (T)Convert.ChangeType(Convert.ChangeType(MaxValue, type), typeof(T));
+			}
+
+			throw new InvalidCastException($"{typeof(T)} is not assignable from {typeof(TimeSpan)}");
+		}
+
+		internal LimitsTimeSpanAttribute(long min = long.MinValue, long max = long.MaxValue) {
+			MinValue = TimeSpan.FromTicks(min);
+			MaxValue = TimeSpan.FromTicks(max);
+		}
+	}
+
 	[AttributeUsage(AttributeTargets.All, AllowMultiple = false, Inherited = true)]
 	internal sealed class AdvancedAttribute : ConfigAttribute {
+	}
+
+	[AttributeUsage(AttributeTargets.All, AllowMultiple = false, Inherited = true)]
+	internal class ExperimentalAttribute : ConfigAttribute {
+	}
+
+	[AttributeUsage(AttributeTargets.All, AllowMultiple = false, Inherited = true)]
+	internal sealed class BrokenAttribute : ExperimentalAttribute {
+	}
+
+	[AttributeUsage(AttributeTargets.All, AllowMultiple = false, Inherited = true)]
+	internal sealed class ChangesBehavior : ConfigAttribute {
 	}
 
 	[AttributeUsage(AttributeTargets.All, AllowMultiple = false, Inherited = true)]

@@ -22,7 +22,7 @@ internal struct InterlockedULong :
 	};
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	public readonly void Set(ulong value) => Interlocked.Exchange(ref Unsafe.AsRef(_Value), value);
+	public readonly void Set(ulong value) => Unsafe.AsRef(_Value) = value;
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public readonly ulong Get() => Interlocked.Read(ref Unsafe.AsRef(_Value));

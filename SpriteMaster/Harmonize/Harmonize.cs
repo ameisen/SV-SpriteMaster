@@ -126,7 +126,7 @@ internal static class Harmonize {
 					);
 					break;
 				case Generic.Struct:
-					foreach (var structType in StructTypes) {
+					foreach (var structType in attribute.GenericTypes ?? StructTypes) {
 						try {
 							//Debug.Trace($"\tGeneric Type: {structType.FullName}");
 							Patch(
@@ -150,19 +150,27 @@ internal static class Harmonize {
 					}
 					break;
 				case Generic.Class:
-					Patch(
-						@this,
-						instanceType,
-						typeof(object),
-						methodName,
-						pre: (attribute.PatchFixation == Fixation.Prefix) ? method : null,
-						post: (attribute.PatchFixation == Fixation.Postfix) ? method : null,
-						finalizer: (attribute.PatchFixation == Fixation.Finalizer) ? method : null,
-						trans: (attribute.PatchFixation == Fixation.Transpile) ? method : null,
-						reverse: (attribute.PatchFixation == Fixation.Reverse) ? method : null,
-						instanceMethod: attribute.Instance,
-						attribute: attribute
-					);
+					foreach (var objectType in attribute.GenericTypes ?? new[] {typeof(object)}) {
+						try {
+							Patch(
+								@this,
+								instanceType,
+								objectType,
+								methodName,
+								pre: (attribute.PatchFixation == Fixation.Prefix) ? method : null,
+								post: (attribute.PatchFixation == Fixation.Postfix) ? method : null,
+								finalizer: (attribute.PatchFixation == Fixation.Finalizer) ? method : null,
+								trans: (attribute.PatchFixation == Fixation.Transpile) ? method : null,
+								reverse: (attribute.PatchFixation == Fixation.Reverse) ? method : null,
+								instanceMethod: attribute.Instance,
+								attribute: attribute
+							);
+						}
+						catch (Exception ex) {
+							Debug.ConditionalError(attribute.Critical, $"Exception Patching Method {GetFullMethodName(type, method, attribute)}<{objectType.Name}> ({(method?.GetFullName() ?? "[null]")})", ex);
+							wasError = true;
+						}
+					}
 					break;
 				default:
 					throw new NotImplementedException($"Unknown Generic Enum: {attribute.GenericType}");
@@ -506,9 +514,10 @@ internal static class Harmonize {
 				instance: instanceMethod,
 				isFinalizer: referenceMethod == finalizer
 			) ?? throw new ArgumentException($"Method '{name}' in type '{type.FullName}' could not be found");
-			var typeMethodInfo = (MethodInfo)typeMethod;
-			instance.Patch(
-				original: typeMethodInfo.MakeGenericMethod(genericType),
+			var typeMethodInfo = typeMethod as MethodInfo ?? throw new InvalidCastException($"Could not get MethodInfo from '{typeMethod}'");
+			var typeMethodInfoGeneric = typeMethodInfo.MakeGenericMethod(genericType);
+			_ = instance.Patch(
+				original: typeMethodInfoGeneric,
 				prefix: MakeHarmonyMethod(pre),
 				postfix: MakeHarmonyMethod(post),
 				finalizer: MakeHarmonyMethod(finalizer)
@@ -524,9 +533,10 @@ internal static class Harmonize {
 				instance: instanceMethod,
 				isFinalizer: (referenceMethod ?? trans) == finalizer
 			) ?? throw new ArgumentException($"Method '{name}' in type '{type.FullName}' could not be found");
-			var typeMethodInfo = (MethodInfo)typeMethod;
-			instance.Patch(
-				original: typeMethodInfo.MakeGenericMethod(genericType),
+			var typeMethodInfo = typeMethod as MethodInfo ?? throw new InvalidCastException($"Could not get MethodInfo from '{typeMethod}'");
+			var typeMethodInfoGeneric = typeMethodInfo.MakeGenericMethod(genericType);
+			_ = instance.Patch(
+				original: typeMethodInfoGeneric,
 				transpiler: MakeHarmonyMethod(trans)
 			);
 		}
@@ -541,9 +551,10 @@ internal static class Harmonize {
 				instance: instanceMethod,
 				isFinalizer: referenceMethod == finalizer
 			) ?? throw new ArgumentException($"Method '{name}' in type '{type.FullName}' could not be found");
-			var typeMethodInfo = (MethodInfo)typeMethod;
-			instance.CreateReversePatcher(
-				original: typeMethodInfo.MakeGenericMethod(genericType),
+			var typeMethodInfo = typeMethod as MethodInfo ?? throw new InvalidCastException($"Could not get MethodInfo from '{typeMethod}'");
+			var typeMethodInfoGeneric = typeMethodInfo.MakeGenericMethod(genericType);
+			_ = instance.CreateReversePatcher(
+				original: typeMethodInfoGeneric,
 				standin: MakeHarmonyMethod(reverse)
 			).Patch(HarmonyReversePatchType.Original);
 		}

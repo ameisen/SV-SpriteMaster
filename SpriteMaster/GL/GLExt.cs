@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Security;
 
 // Defined with a 32-bit depth
 using GLEnum = System.UInt32;
@@ -72,7 +73,7 @@ internal static class GLExt {
 					((_, _) => null);
 		}
 
-		[System.Security.SuppressUnmanagedCodeSecurity]
+		[SuppressUnmanagedCodeSecurity]
 		[UnmanagedFunctionPointer(CallingConvention.Winapi)]
 		[MonoNativeFunctionWrapper]
 		internal delegate void TexStorage2D(
@@ -83,7 +84,7 @@ internal static class GLExt {
 			int height
 		);
 
-		[System.Security.SuppressUnmanagedCodeSecurity]
+		[SuppressUnmanagedCodeSecurity]
 		[UnmanagedFunctionPointer(CallingConvention.Winapi)]
 		[MonoNativeFunctionWrapper]
 		internal delegate void CopyImageSubData(
@@ -102,6 +103,14 @@ internal static class GLExt {
 			uint srcWidth,
 			uint srcHeight,
 			uint srcDepth
+		);
+
+		[SuppressUnmanagedCodeSecurity]
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)]
+		[MonoNativeFunctionWrapper]
+		public unsafe delegate void GetInteger64Delegate(
+			int param,
+			[Out] long* data
 		);
 	}
 	// ReSharper restore MemberHidesStaticFromOuterClass
@@ -148,4 +157,7 @@ internal static class GLExt {
 
 	internal static readonly Delegates.CopyImageSubData? CopyImageSubData =
 		Delegates.Generic<Delegates.CopyImageSubData>.LoadFunction("glCopyImageSubData");
+
+	internal static readonly Delegates.GetInteger64Delegate? GetInteger64v =
+		Delegates.Generic<Delegates.GetInteger64Delegate>.LoadFunction("glGetInteger64v");
 }

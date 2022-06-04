@@ -4,7 +4,6 @@ using SpriteMaster.Extensions;
 using StardewValley;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace SpriteMaster.Harmonize.Patches.Game.Pathfinding;
@@ -18,7 +17,7 @@ internal static partial class Pathfinding {
 		critical: false
 	)]
 	public static bool GetLocationRoute(NPC __instance, ref List<string>? __result, string startingLocation, string endingLocation) {
-		if (!Config.IsUnconditionallyEnabled || !Config.Extras.OptimizeWarpPoints) {
+		if (!Config.IsUnconditionallyEnabled || !Config.Extras.Pathfinding.OptimizeWarpPoints) {
 			return true;
 		}
 
@@ -51,7 +50,7 @@ internal static partial class Pathfinding {
 		critical: false
 	)]
 	public static bool PopulateRoutesFromLocationToLocationList() {
-		if (!Config.IsUnconditionallyEnabled || !Config.Extras.OptimizeWarpPoints) {
+		if (!Config.IsUnconditionallyEnabled || !Config.Extras.Pathfinding.OptimizeWarpPoints) {
 			return true;
 		}
 
@@ -63,7 +62,7 @@ internal static partial class Pathfinding {
 
 		// Iterate over every location in parallel, and collect all paths to every other location.
 		Parallel.ForEach(Game1.locations, location => {
-			if (Config.Extras.AllowNPCsOnFarm || location is not Farm && !ReferenceEquals(location, backwoodsLocation)) {
+			if (Config.Extras.Pathfinding.AllowNPCsOnFarm || location is not Farm && !ReferenceEquals(location, backwoodsLocation)) {
 				var route = new List<string>();
 				ExploreWarpPointsImpl(location, route, routeList, locations);
 			}
@@ -75,7 +74,7 @@ internal static partial class Pathfinding {
 		}
 		FasterRouteMap.Clear();
 		foreach (var route in routeList) {
-			var innerRoutes = FasterRouteMap.GetOrAddDefault(route.FirstF(), () => new Dictionary<string, List<string>>());
+			var innerRoutes = FasterRouteMap.GetOrAddDefault(route.FirstF(), () => new());
 			innerRoutes[route.LastF()] = route;
 		}
 
@@ -91,7 +90,7 @@ internal static partial class Pathfinding {
 		critical: false
 	)]
 	public static bool ExploreWarpPoints(ref bool __result, GameLocation l, List<string> route) {
-		if (!Config.IsUnconditionallyEnabled || !Config.Extras.OptimizeWarpPoints) {
+		if (!Config.IsUnconditionallyEnabled || !Config.Extras.Pathfinding.OptimizeWarpPoints) {
 			return true;
 		}
 
@@ -108,7 +107,7 @@ internal static partial class Pathfinding {
 		}
 		FasterRouteMap.Clear();
 		foreach (var listedRoute in routeList) {
-			var innerRoutes = FasterRouteMap.GetOrAddDefault(listedRoute.FirstF(), () => new Dictionary<string, List<string>>());
+			var innerRoutes = FasterRouteMap.GetOrAddDefault(listedRoute.FirstF(), () => new());
 			innerRoutes[listedRoute.LastF()] = listedRoute;
 		}
 		return false;

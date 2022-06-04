@@ -19,6 +19,7 @@ internal class HarmonizeAttribute : Attribute {
 	internal readonly bool Critical;
 	internal readonly string? ForMod;
 	internal readonly Type[]? ArgumentTypes;
+	internal readonly Type[]? GenericTypes;
 
 	internal static bool CheckPlatform(Platform platform) => platform switch {
 		Platform.All => true,
@@ -77,6 +78,21 @@ internal class HarmonizeAttribute : Attribute {
 	private static Type? ResolveType(Assembly? assembly, string[] type, int offset = 0) =>
 		assembly is null ? null : ResolveType(assembly.GetType(type[0], true), type, offset + 1);
 
+	private static Type? ResolveType(string type) {
+		if (Type.GetType(type) is {} globalType) {
+			return globalType;
+		}
+
+		var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+		foreach (var assembly in assemblies) {
+			if (assembly.GetType(type) is {} assemblyType) {
+				return assemblyType;
+			}
+		}
+
+		return null;
+	}
+
 	internal HarmonizeAttribute(
 		Type? type,
 		string? method,
@@ -87,7 +103,8 @@ internal class HarmonizeAttribute : Attribute {
 		bool critical = true,
 		Platform platform = Platform.All,
 		string? forMod = null,
-		Type[]? argumentTypes = null
+		Type[]? argumentTypes = null,
+		Type[]? genericTypes = null
 	) {
 		Type = type;
 		Name = method;
@@ -99,6 +116,7 @@ internal class HarmonizeAttribute : Attribute {
 		Critical = critical;
 		ForMod = forMod;
 		ArgumentTypes = argumentTypes;
+		GenericTypes = genericTypes;
 	}
 
 	internal HarmonizeAttribute(
@@ -112,7 +130,8 @@ internal class HarmonizeAttribute : Attribute {
 		bool critical = true,
 		Platform platform = Platform.All,
 		string? forMod = null,
-		Type[]? argumentTypes = null
+		Type[]? argumentTypes = null,
+		Type[]? genericTypes = null
 	) :
 		this(
 			type: CheckPlatform(platform) ? GetAssembly(assembly, critical: critical, forMod: forMod)?.GetType(type, true) : null,
@@ -124,7 +143,8 @@ internal class HarmonizeAttribute : Attribute {
 			critical: critical,
 			platform: platform,
 			forMod: forMod,
-			argumentTypes: argumentTypes
+			argumentTypes: argumentTypes,
+			genericTypes: genericTypes
 		) { }
 
 	internal HarmonizeAttribute(
@@ -138,7 +158,8 @@ internal class HarmonizeAttribute : Attribute {
 		bool critical = true,
 		Platform platform = Platform.All,
 		string? forMod = null,
-		Type[]? argumentTypes = null
+		Type[]? argumentTypes = null,
+		Type[]? genericTypes = null
 	) :
 		this(
 			type: CheckPlatform(platform) ? parent.Assembly.GetType(type, true) : null,
@@ -150,7 +171,35 @@ internal class HarmonizeAttribute : Attribute {
 			critical: critical,
 			platform: platform,
 			forMod: forMod,
-			argumentTypes: argumentTypes
+			argumentTypes: argumentTypes,
+			genericTypes: genericTypes
+		) { }
+
+	internal HarmonizeAttribute(
+		string type,
+		string method,
+		Fixation fixation = Fixation.Prefix,
+		PriorityLevel priority = PriorityLevel.Average,
+		Generic generic = Generic.None,
+		bool instance = true,
+		bool critical = true,
+		Platform platform = Platform.All,
+		string? forMod = null,
+		Type[]? argumentTypes = null,
+		Type[]? genericTypes = null
+	) :
+		this(
+			type: CheckPlatform(platform) ? ResolveType(type) : null,
+			method: method,
+			fixation: fixation,
+			priority: priority,
+			generic: generic,
+			instance: instance,
+			critical: critical,
+			platform: platform,
+			forMod: forMod,
+			argumentTypes: argumentTypes,
+			genericTypes: genericTypes
 		) { }
 
 	internal HarmonizeAttribute(
@@ -164,7 +213,8 @@ internal class HarmonizeAttribute : Attribute {
 		bool critical = true,
 		Platform platform = Platform.All,
 		string? forMod = null,
-		Type[]? argumentTypes = null
+		Type[]? argumentTypes = null,
+		Type[]? genericTypes = null
 	) :
 		this(
 			type: CheckPlatform(platform) ? ResolveType(parent.Assembly, type) : null,
@@ -176,7 +226,8 @@ internal class HarmonizeAttribute : Attribute {
 			critical: critical,
 			platform: platform,
 			forMod: forMod,
-			argumentTypes: argumentTypes
+			argumentTypes: argumentTypes,
+			genericTypes: genericTypes
 		) { }
 
 	internal HarmonizeAttribute(
@@ -190,7 +241,8 @@ internal class HarmonizeAttribute : Attribute {
 		bool critical = true,
 		Platform platform = Platform.All,
 		string? forMod = null,
-		Type[]? argumentTypes = null
+		Type[]? argumentTypes = null,
+		Type[]? genericTypes = null
 	) :
 		this(
 			type: CheckPlatform(platform) ? ResolveType(GetAssembly(assembly, critical: critical, forMod: forMod), type) : null,
@@ -202,7 +254,8 @@ internal class HarmonizeAttribute : Attribute {
 			critical: critical,
 			platform: platform,
 			forMod: forMod,
-			argumentTypes: argumentTypes
+			argumentTypes: argumentTypes,
+			genericTypes: genericTypes
 		) { }
 
 	internal HarmonizeAttribute(
@@ -214,10 +267,11 @@ internal class HarmonizeAttribute : Attribute {
 		bool critical = true,
 		Platform platform = Platform.All,
 		string? forMod = null,
-		Type[]? argumentTypes = null
+		Type[]? argumentTypes = null,
+		Type[]? genericTypes = null
 	) :
 		this(
-			type: null,
+			type: (Type?)null,
 			method: method,
 			fixation: fixation,
 			priority: priority,
@@ -226,7 +280,8 @@ internal class HarmonizeAttribute : Attribute {
 			critical: critical,
 			platform: platform,
 			forMod: forMod,
-			argumentTypes: argumentTypes
+			argumentTypes: argumentTypes,
+			genericTypes: genericTypes
 		) { }
 
 	internal HarmonizeAttribute(
@@ -237,10 +292,11 @@ internal class HarmonizeAttribute : Attribute {
 		bool critical = true,
 		Platform platform = Platform.All,
 		string? forMod = null,
-		Type[]? argumentTypes = null
+		Type[]? argumentTypes = null,
+		Type[]? genericTypes = null
 	) :
 		this(
-			type: null,
+			type: (Type?)null,
 			method: null,
 			fixation: fixation,
 			priority: priority,
@@ -249,6 +305,7 @@ internal class HarmonizeAttribute : Attribute {
 			critical: critical,
 			platform: platform,
 			forMod: forMod,
-			argumentTypes: argumentTypes
+			argumentTypes: argumentTypes,
+			genericTypes: genericTypes
 		) { }
 }

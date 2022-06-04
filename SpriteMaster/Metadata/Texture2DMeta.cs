@@ -166,9 +166,8 @@ internal sealed class Texture2DMeta : IDisposable {
 
 	/// <summary>The current (static) ID, incremented every time a new <see cref="Texture2DMeta"/> is created.</summary>
 	private static ulong CurrentId = 0U;
-	/// <summary>Whenever a new <see cref="Texture2DMeta"/> is created, <see cref="CurrentId"/> is incremented and <see cref="UniqueIdString"/> is set to a string representation of it.</summary>
+	/// <summary>Whenever a new <see cref="Texture2DMeta"/> is created, <see cref="CurrentId"/> is incremented and this is set to that.</summary>
 	private readonly ulong MetaId = Interlocked.Increment(ref CurrentId);
-	private readonly string UniqueIdString;
 
 	internal readonly SharedLock Lock = new(LockRecursionPolicy.SupportsRecursion);
 
@@ -190,7 +189,6 @@ internal sealed class Texture2DMeta : IDisposable {
 
 	internal Texture2DMeta(XTexture2D texture) {
 		Owner = texture.MakeWeak();
-		UniqueIdString = MetaId.ToString64();
 		IsCompressed = texture.Format.IsCompressed();
 		Format = texture.Format;
 		Size = texture.Extent();
@@ -207,7 +205,7 @@ internal sealed class Texture2DMeta : IDisposable {
 	internal bool HasCachedData {
 		[MethodImpl(Runtime.MethodImpl.Inline)]
 		get {
-			if (!Config.MemoryCache.Enabled) {
+			if (!Config.ResidentCache.Enabled) {
 				return false;
 			}
 
@@ -287,7 +285,7 @@ internal sealed class Texture2DMeta : IDisposable {
 
 			try {
 				// TODO : lock isn't granular enough.
-				if (Config.MemoryCache.AlwaysFlush) {
+				if (Config.ResidentCache.AlwaysFlush) {
 					forcePurge = true;
 				}
 				else if (!bounds.HasValue && data.Length == refSize) {
@@ -365,7 +363,7 @@ internal sealed class Texture2DMeta : IDisposable {
 	internal byte[]? CachedDataNonBlocking {
 		[MethodImpl(Runtime.MethodImpl.Inline)]
 		get {
-			if (!Config.MemoryCache.Enabled) {
+			if (!Config.ResidentCache.Enabled) {
 				return null;
 			}
 
@@ -380,7 +378,7 @@ internal sealed class Texture2DMeta : IDisposable {
 	internal byte[]? CachedRawData {
 		[MethodImpl(Runtime.MethodImpl.Inline)]
 		get {
-			if (!Config.MemoryCache.Enabled) {
+			if (!Config.ResidentCache.Enabled) {
 				return null;
 			}
 
@@ -391,7 +389,7 @@ internal sealed class Texture2DMeta : IDisposable {
 		}
 		set {
 			try {
-				if (!Config.MemoryCache.Enabled) {
+				if (!Config.ResidentCache.Enabled) {
 					return;
 				}
 
@@ -404,12 +402,12 @@ internal sealed class Texture2DMeta : IDisposable {
 					using (Lock.Write) {
 						CachedRawDataInternal.SetTarget(null!);
 						CachedDataInternal.SetTarget(null!);
-						ResidentCache.Remove(UniqueIdString);
+						ResidentCache.Remove(MetaId);
 					}
 				}
 				else {
 					using (Lock.Write) {
-						ResidentCache.Set(UniqueIdString, value);
+						ResidentCache.Set(MetaId, value);
 						CachedRawDataInternal.SetTarget(value);
 						if (!IsCompressed) {
 							CachedDataInternal.SetTarget(value);
@@ -491,7 +489,7 @@ internal sealed class Texture2DMeta : IDisposable {
 	}
 
 	internal static void Cleanup(in ulong id) {
-		ResidentCache.Remove(id.ToString64());
+		ResidentCache.Remove(id);
 		if (SpriteDictionaries.Remove(id, out var instances)) {
 			foreach (var instance in instances.Values) {
 				instance.Suspend();

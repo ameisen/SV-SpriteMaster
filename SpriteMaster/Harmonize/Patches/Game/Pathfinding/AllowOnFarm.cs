@@ -48,7 +48,7 @@ internal static partial class Pathfinding {
 		critical: false
 	)]
 	public static bool WarpCharacter(NPC? character, GameLocation? targetLocation, XVector2 position) {
-		if (!Config.IsUnconditionallyEnabled || !Config.Extras.AllowNPCsOnFarm || !Config.Extras.OptimizeWarpPoints) {
+		if (!Config.IsUnconditionallyEnabled || !Config.Extras.Pathfinding.AllowNPCsOnFarm || !Config.Extras.Pathfinding.OptimizeWarpPoints) {
 			return true;
 		}
 

@@ -69,7 +69,7 @@ internal sealed partial class Scaler {
 		Vector2I targetSize
 	) {
 		if (scaleMultiplier < MinScale || scaleMultiplier > MaxScale) {
-			throw new ArgumentOutOfRangeException(nameof(scaleMultiplier));
+			throw new ArgumentOutOfRangeException(nameof(scaleMultiplier), $"{scaleMultiplier} is not within ({MinScale}, {MaxScale})");
 		}
 		/*
 		if (sourceData is null) {
@@ -80,7 +80,7 @@ internal sealed partial class Scaler {
 		}
 		*/
 		if (sourceSize.X <= 0 || sourceSize.Y <= 0) {
-			throw new ArgumentOutOfRangeException(nameof(sourceSize));
+			throw new ArgumentOutOfRangeException(nameof(sourceSize), $"{nameof(sourceSize)} ({sourceSize}) must not be negative or degenerate");
 		}
 
 		Scalerer = scaleMultiplier.ToIScaler(configuration);
