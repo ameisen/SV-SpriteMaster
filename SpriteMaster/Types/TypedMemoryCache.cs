@@ -112,15 +112,17 @@ internal class TypedMemoryCache<TKey, TValue> where TKey : notnull where TValue 
 	internal TValue? Update(TKey key, TValue value, long? size) {
 		TValue? original = null;
 
-		using (CacheLock.Write) {
+		using (CacheLock.ReadWrite) {
 			var entry = Cache.GetValueOrDefault(key, default);
-			if (entry.IsValid) {
-				original = entry.Value;
-				entry.UpdateValue(value);
-				Cache[key] = entry;
-			}
-			else {
-				Cache.Add(key, new(value, RecentAccessList.AddFront(key)));
+			using (CacheLock.Write) {
+				if (entry.IsValid) {
+					original = entry.Value;
+					entry.UpdateValue(value);
+					Cache[key] = entry;
+				}
+				else {
+					Cache.Add(key, new(value, RecentAccessList.AddFront(key)));
+				}
 			}
 		}
 
@@ -135,7 +137,7 @@ internal class TypedMemoryCache<TKey, TValue> where TKey : notnull where TValue 
 	internal TValue? Remove(TKey key) {
 		TValue? result = null;
 
-		using (CacheLock.ReadWrite) {
+		using (CacheLock.Write) {
 			if (Cache.Remove(key, out var entry)) {
 				result = entry.Value;
 				RecentAccessList.Release(entry.Node);
@@ -158,7 +160,6 @@ internal class TypedMemoryCache<TKey, TValue> where TKey : notnull where TValue 
 		}
 
 		var trimArray = new KeyValuePair<TKey, TValue>[count];
-		// OnEntryRemoved(key, result, EvictionReason.Removed);
 
 		int trimArrayIndex = 0;
 		using (CacheLock.Write) {
