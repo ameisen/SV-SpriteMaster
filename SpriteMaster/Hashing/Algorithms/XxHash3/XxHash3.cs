@@ -284,7 +284,7 @@ internal static unsafe partial class XxHash3 {
 	private readonly struct Accumulator {
 		internal readonly ref CombinedVector128x512<ulong> Data128 => ref *(CombinedVector128x512<ulong>*)Unsafe.AsPointer(ref Unsafe.AsRef(this));
 
-		internal readonly ref CombinedVector256x512<ulong> Data256 => ref *(CombinedVector256x512<ulong> *)Unsafe.AsPointer(ref Unsafe.AsRef(this));
+		internal readonly ref CombinedVector256x512<ulong> Data256 => ref *(CombinedVector256x512<ulong>*)Unsafe.AsPointer(ref Unsafe.AsRef(this));
 
 		internal readonly ulong* Data => (ulong *)Unsafe.AsPointer(ref Unsafe.AsRef(this));
 
@@ -451,7 +451,6 @@ internal static unsafe partial class XxHash3 {
 	}
 
 	// xxh3_accumulate_512
-	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static void Accumulate512(ref Accumulator accumulator, byte* data, byte* secret) {
 		if (Avx2.IsSupported && UseAVX2) {
