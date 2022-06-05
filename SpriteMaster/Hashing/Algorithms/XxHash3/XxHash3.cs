@@ -64,9 +64,9 @@ internal static unsafe partial class XxHash3 {
 	private static ulong Hash0To16(ReadOnlySpan<byte> data) {
 		uint length = (uint)data.Length;
 		return length switch {
-			> 8 => Hash9To16(data),
+			>= 9 => Hash9To16(data),
 			>= 4 => Hash4To8(data),
-			> 0 => Hash1To3(data),
+			>= 1 => Hash1To3(data),
 			_ => Avalanche(SecretValues64.Secret38 ^ SecretValues64.Secret40)
 		};
 
@@ -120,9 +120,9 @@ internal static unsafe partial class XxHash3 {
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static ulong Hash0To16(byte* data, uint length) {
 		return length switch {
-			> 8 => Hash9To16(data, length),
+			>= 9 => Hash9To16(data, length),
 			>= 4 => Hash4To8(data, length),
-			> 0 => Hash1To3(data, length),
+			>= 1 => Hash1To3(data, length),
 			_ => Avalanche(SecretValues64.Secret38 ^ SecretValues64.Secret40)
 		};
 
