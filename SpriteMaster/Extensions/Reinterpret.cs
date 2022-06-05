@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -8,8 +9,15 @@ internal static class Reinterpret {
 	#region ReinterpretAs
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
+	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden]
+	private static void AssertSize<T>() =>
+		Marshal.SizeOf<T>().AssertEqual(Unsafe.SizeOf<T>());
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static TTo ReinterpretAs<TFrom, TTo>(this TFrom value) where TFrom : struct where TTo : struct {
-		Marshal.SizeOf<TTo>().AssertLessEqual(Marshal.SizeOf<TFrom>());
+		AssertSize<TFrom>();
+		AssertSize<TTo>();
+		Unsafe.SizeOf<TTo>().AssertLessEqual(Unsafe.SizeOf<TFrom>());
 		return Unsafe.As<TFrom, TTo>(ref Unsafe.AsRef(in value));
 	}
 
@@ -73,7 +81,9 @@ internal static class Reinterpret {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static ref TTo ReinterpretAsRef<TFrom, TTo>(in TFrom value) where TFrom : struct where TTo : struct {
-		Marshal.SizeOf<TTo>().AssertLessEqual(Marshal.SizeOf<TFrom>());
+		AssertSize<TFrom>();
+		AssertSize<TTo>();
+		Unsafe.SizeOf<TTo>().AssertLessEqual(Unsafe.SizeOf<TFrom>());
 		return ref Unsafe.As<TFrom, TTo>(ref Unsafe.AsRef(in value));
 	}
 
@@ -89,8 +99,10 @@ internal static class Reinterpret {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static unsafe Span<TTo> ReinterpretAsSpan<TFrom, TTo>(in TFrom value) where TFrom : struct where TTo : struct {
-		Marshal.SizeOf<TTo>().AssertLessEqual(Marshal.SizeOf<TFrom>());
-		return new(Unsafe.AsPointer(ref Unsafe.AsRef(in value)), Marshal.SizeOf<TFrom>() / Marshal.SizeOf<TTo>());
+		AssertSize<TFrom>();
+		AssertSize<TTo>();
+		Unsafe.SizeOf<TTo>().AssertLessEqual(Unsafe.SizeOf<TFrom>());
+		return new(Unsafe.AsPointer(ref Unsafe.AsRef(in value)), Unsafe.SizeOf<TFrom>() / Unsafe.SizeOf<TTo>());
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]

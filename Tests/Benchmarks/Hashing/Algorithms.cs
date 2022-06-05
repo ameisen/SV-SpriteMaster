@@ -15,8 +15,8 @@ namespace Hashing;
 //[SimpleJob(RuntimeMoniker.CoreRt50)]
 public class Algorithms {
 	private const int RandSeed = 0x13377113;
-	private const int MinSize = 0x77359400;
-	private const int MaxSize = 0x77359400;
+	private const int MinSize = 0x0;
+	private const int MaxSize = 4096;
 
 	public readonly struct DataSet<T> where T : unmanaged {
 		public readonly T[] Data;
@@ -75,6 +75,7 @@ public class Algorithms {
 		return XxHash3.Hash64(dataSet.Data);
 	}
 
+#if false
 	[Benchmark(Description = "FNV1a")]
 	[ArgumentsSource(nameof(DataSets), Priority = 0)]
 	public ulong FNV1a(in DataSet<byte> dataSet) {
@@ -94,4 +95,5 @@ public class Algorithms {
 		return Functions.CombHash(dataSet.Data);
 	}
 	*/
+#endif
 }

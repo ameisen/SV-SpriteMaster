@@ -3,9 +3,13 @@ using BenchmarkDotNet.Diagnostics.Windows.Configs;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Order;
 using Microsoft.Toolkit.HighPerformance;
+using SpriteMaster.Extensions;
 using SpriteMaster.Hashing.Algorithms;
+using System;
 using System.Net.Sockets;
 using System.Numerics;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Hashing;
@@ -40,13 +44,28 @@ public class AlgorithmsString {
 	public AlgorithmsString() {
 		var random = new Random(RandSeed);
 
+		unsafe void AddSet(in DataSet dataSet) {
+			DataSets.Add(dataSet);
+
+			var referenceHash = XxHash3.Hash64(dataSet.Data);
+			ulong cppHash;
+			var dataSpan = dataSet.Data.AsSpan().AsBytes();
+			fixed (byte* data = dataSpan) {
+				cppHash = XXH3_64bits(data, (ulong)dataSpan.Length);
+			}
+
+			if (referenceHash != cppHash) {
+				Console.Error.WriteLine($"Hashes Not Equal ({dataSpan.Length}) : {referenceHash} != {cppHash}");
+			}
+		}
+
 		{
 			var sb = new StringBuilder();
 			for (int j = 0; j < 0; ++j) {
 				sb.Append(Chars[random.Next(0, Chars.Length)]);
 			}
 
-			DataSets.Add(new(sb.ToString()));
+			AddSet(new(sb.ToString()));
 		}
 
 		for (int i = MinSize; i <= MaxSize; i *= 2) {
@@ -55,7 +74,7 @@ public class AlgorithmsString {
 				sb.Append(Chars[random.Next(0, Chars.Length)]);
 			}
 
-			DataSets.Add(new(sb.ToString()));
+			AddSet(new(sb.ToString()));
 		}
 
 		if (DataSets.Last().Data.Length != MaxSize) {
@@ -64,17 +83,16 @@ public class AlgorithmsString {
 				sb.Append(Chars[random.Next(0, Chars.Length)]);
 			}
 
-			DataSets.Add(new(sb.ToString()));
+			AddSet(new(sb.ToString()));
 		}
 	}
 
-	/*
-	[Benchmark(Description = "xxHash3", Baseline = true)]
-	[ArgumentsSource(nameof(DataSets))]
-	public ulong xxHash3(in DataSet dataSet) {
-		return SpriteMaster.Hashing.XXHash3.Hash64(dataSet.Data);
-	}
-	*/
+	// return Marvin.ComputeHash32(ref Unsafe.As<char, byte>(ref MemoryMarshal.GetReference(value)), (uint)value.Length * 2 /* in bytes, not chars */, (uint)seed, (uint)(seed >> 32));
+	// seed0 = (5381<<16) + 5381
+	// seed1 = 5381
+
+
+
 
 	[Benchmark(Description = "xxHash3")]
 	[ArgumentsSource(nameof(DataSets), Priority = 0)]
@@ -82,6 +100,7 @@ public class AlgorithmsString {
 		return XxHash3.Hash64(dataSet.Data);
 	}
 
+	/*
 	[Benchmark(Description = "DJB2")]
 	[ArgumentsSource(nameof(DataSets), Priority = 0)]
 	public int DJB2(in DataSet dataSet) {
@@ -93,138 +112,44 @@ public class AlgorithmsString {
 	public int HashCode(in DataSet dataSet) {
 		return dataSet.Data.GetHashCode();
 	}
+	*/
 
-	private static ulong FNV1aSpan64(ReadOnlySpan<byte> data) {
-		ulong hash = 0xcbf29ce484222325UL;
-		foreach (var octet in data) {
-			hash ^= octet;
-			hash *= 0x00000100000001B3UL;
-		}
-		return hash;
-	}
+	[DllImport("libxxhash.dll", CallingConvention = CallingConvention.Cdecl)]
+	private static extern unsafe ulong XXH3_64bits(void* input, ulong length);
+	// XXH_PUBLIC_API XXH_PUREF XXH64_hash_t XXH3_64bits(const void* input, size_t length);
 
-	private static uint FNV1aSpan32(ReadOnlySpan<byte> data) {
-		uint hash = 0x811c9dc5U;
-		foreach (var octet in data) {
-			hash ^= octet;
-			hash *= 0x01000193U;
-		}
-		return hash;
-	}
-
-	[Benchmark(Description = "FNV1a-64")]
+	[Benchmark(Description = "xxHash3 C++")]
 	[ArgumentsSource(nameof(DataSets), Priority = 0)]
-	public ulong FNV1a64(in DataSet dataSet) {
-		return FNV1aSpan64(dataSet.Data.AsSpan().AsBytes());
-	}
-
-	[Benchmark(Description = "FNV1a-32")]
-	[ArgumentsSource(nameof(DataSets), Priority = 0)]
-	public uint FNV1a32(in DataSet dataSet) {
-		return FNV1aSpan32(dataSet.Data.AsSpan().AsBytes());
-	}
-
-	private static uint SDBM32(ReadOnlySpan<byte> data) {
-		uint hash = 0;
-		foreach (var octet in data) {
-			hash = octet + (hash << 6) + (hash << 16) - hash;
+	public unsafe ulong xxHash3CPP(DataSet dataSet) {
+		var span = dataSet.Data.AsSpan().AsBytes();
+		fixed (byte* data = span) {
+			return XXH3_64bits(data, (ulong)span.Length);
 		}
-		return hash;
 	}
 
-	[Benchmark(Description = "SDBM-32")]
+#if false
+
+	private delegate int MarvinHash32Delegate(ReadOnlySpan<byte> data, ulong seed);
+
+	private const ulong MarvinHash32Seed = 0x0000_1505_1505_1505UL;
+
+	private static readonly MethodInfo ComputeHash32Method = Type.GetType("System.Marvin")?.GetMethod(
+		"ComputeHash32",
+		BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static,
+		null,
+		new Type[] { typeof(ReadOnlySpan<byte>), typeof(ulong) },
+		null
+	) ?? throw new MissingMethodException("ComputeHash32");
+
+	private static readonly MarvinHash32Delegate MarvinHash32Core = ComputeHash32Method.CreateDelegate<MarvinHash32Delegate>();
+
+	[Benchmark(Description = "Marvin32")]
 	[ArgumentsSource(nameof(DataSets), Priority = 0)]
-	public uint SBDM32(in DataSet dataSet) {
-		return SDBM32(dataSet.Data.AsSpan().AsBytes());
-	}
-
-	private static uint DJB2a32(ReadOnlySpan<byte> data) {
-		uint hash = 5381U;
-		foreach (var octet in data) {
-			hash = hash * 33 ^ octet;
-		}
-		return hash;
-	}
-
-	[Benchmark(Description = "Manual DJBa-32")]
-	[ArgumentsSource(nameof(DataSets), Priority = 0)]
-	public uint DJBa32(in DataSet dataSet) {
-		return DJB2a32(dataSet.Data.AsSpan().AsBytes());
-	}
-
-	private static uint DJB32(ReadOnlySpan<byte> data) {
-		uint hash = 5381U;
-		foreach (var octet in data) {
-			hash = hash * 33 + octet;
-		}
-		return hash;
-	}
-
-	[Benchmark(Description = "Manual DJB-32")]
-	[ArgumentsSource(nameof(DataSets), Priority = 0)]
-	public uint DJB32(in DataSet dataSet) {
-		return DJB32(dataSet.Data.AsSpan().AsBytes());
-	}
-
-	private static uint DJBb32(ReadOnlySpan<byte> data) {
-		uint hash = 5381U;
-		foreach (var octet in data) {
-			hash = ((hash << 5) + hash) ^ octet;
-		}
-		return hash;
-	}
-
-	[Benchmark(Description = "Manual DJBb-32")]
-	[ArgumentsSource(nameof(DataSets), Priority = 0)]
-	public uint DJBb32(in DataSet dataSet) {
-		return DJBb32(dataSet.Data.AsSpan().AsBytes());
-	}
-	private static uint DJBb32Unrolled(ReadOnlySpan<byte> data) {
-		uint hash = 5381U;
-		int index = 0;
-		while (data.Length - index >= 8) {
-			var octet0 = data[index + 0];
-			var octet1 = data[index + 1];
-			var octet2 = data[index + 2];
-			var octet3 = data[index + 3];
-			var octet4 = data[index + 4];
-			var octet5 = data[index + 5];
-			var octet6 = data[index + 6];
-			var octet7 = data[index + 7];
-			hash = ((hash << 5) + hash) ^ octet0;
-			hash = ((hash << 5) + hash) ^ octet1;
-			hash = ((hash << 5) + hash) ^ octet2;
-			hash = ((hash << 5) + hash) ^ octet3;
-			hash = ((hash << 5) + hash) ^ octet4;
-			hash = ((hash << 5) + hash) ^ octet5;
-			hash = ((hash << 5) + hash) ^ octet6;
-			hash = ((hash << 5) + hash) ^ octet7;
-			index += 8;
-		}
-		while (data.Length - index > 0) {
-			hash = ((hash << 5) + hash) ^ data[index++];
-		}
-		return hash;
-	}
-
-	[Benchmark(Description = "Manual DJBb-32 (Unrolled)")]
-	[ArgumentsSource(nameof(DataSets), Priority = 0)]
-	public uint DJBb32Unrolled(in DataSet dataSet) {
-		return DJBb32Unrolled(dataSet.Data.AsSpan().AsBytes());
-	}
-
-	private static uint LoseLose(ReadOnlySpan<byte> data) {
-		uint hash = 0U;
-		foreach (var octet in data) {
-			hash += octet;
-		}
-		return hash;
-	}
-
-	[Benchmark(Description = "LoseLose")]
-	[ArgumentsSource(nameof(DataSets), Priority = 0)]
-	public uint LoseLose(in DataSet dataSet) {
-		return LoseLose(dataSet.Data.AsSpan().AsBytes());
+	public int Marvin32(in DataSet dataSet) {
+		return MarvinHash32Core(
+			dataSet.Data.AsSpan().AsBytes(),
+			MarvinHash32Seed
+		);
 	}
 
 	private static uint NormanHash(ReadOnlySpan<byte> data) {
@@ -276,20 +201,5 @@ public class AlgorithmsString {
 	public uint NormanHashUnrolled(in DataSet dataSet) {
 		return NormanHashUnrolled(dataSet.Data.AsSpan().AsBytes());
 	}
-
-	/*
-	[Benchmark(Description = "FNV1a Span")]
-	[ArgumentsSource(nameof(DataSets), Priority = 0)]
-	public ulong FNV1aSpan(DataSet dataSet) {
-		return FNV1aSpan(dataSet.Data);
-	}
-
-	[Benchmark(Description = "FNV1a Pointer")]
-	[ArgumentsSource(nameof(DataSets), Priority = 0)]
-	public unsafe ulong FNV1aPtr(DataSet dataSet) {
-		fixed (byte* ptr = dataSet.Data) {
-			return FNV1aPtr(ptr, dataSet.Data.Length);
-		}
-	}
-	*/
+#endif
 }

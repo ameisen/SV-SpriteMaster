@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 
 namespace SpriteMaster.Types;
 
@@ -159,9 +158,8 @@ internal class TypedMemoryCache<TKey, TValue> where TKey : notnull where TValue 
 			return;
 		}
 
-		var trimArray = new KeyValuePair<TKey, TValue>[count];
+		var trimArray = GC.AllocateUninitializedArray<KeyValuePair<TKey, TValue>>(count);
 
-		int trimArrayIndex = 0;
 		using (CacheLock.Write) {
 			if (count > Cache.Count) {
 				count = Cache.Count;
@@ -171,10 +169,10 @@ internal class TypedMemoryCache<TKey, TValue> where TKey : notnull where TValue 
 				return;
 			}
 
-			for (; trimArrayIndex < count; trimArrayIndex++) {
+			for (int i = 0; i < count; i++) {
 				var removeKey = RecentAccessList.RemoveLast();
 				bool result = Cache.Remove(removeKey, out var entry);
-				trimArray[trimArrayIndex] = new(removeKey, entry.Value);
+				trimArray[i] = new(removeKey, entry.Value);
 				result.AssertTrue();
 			}
 		}
@@ -196,12 +194,15 @@ internal class TypedMemoryCache<TKey, TValue> where TKey : notnull where TValue 
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal void Clear() {
-		var removedPairs = new KeyValuePair<TKey, TValue>[Count];
+		int removedCount;
+		var removedPairs = GC.AllocateUninitializedArray<KeyValuePair<TKey, TValue>>(Count);
 
 		using (CacheLock.Write) {
-			if (Count != removedPairs.Length) {
-				Array.Resize(ref removedPairs, Count);
+			if (Count > removedPairs.Length) {
+				removedPairs = GC.AllocateUninitializedArray<KeyValuePair<TKey, TValue>>(Count);
 			}
+
+			removedCount = Count;
 
 			int removedIndex = 0;
 			foreach (var (key, entry) in Cache) {
@@ -212,7 +213,8 @@ internal class TypedMemoryCache<TKey, TValue> where TKey : notnull where TValue 
 			RecentAccessList.Clear();
 		}
 
-		foreach (var pair in removedPairs) {
+		for (int i = 0; i < removedCount; i++) {
+			var pair = removedPairs[i];
 			OnEntryRemoved(pair.Key, pair.Value, EvictionReason.Removed);
 		}
 	}

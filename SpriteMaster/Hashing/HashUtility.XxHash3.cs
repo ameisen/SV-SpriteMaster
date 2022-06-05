@@ -15,8 +15,13 @@ internal static partial class HashUtility {
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static ulong HashXx3(this ReadOnlySequence<byte> data) {
-		ulong currentHash = Default;
-		foreach (var seq in data) {
+		if (data.Length == 0) {
+			return Constants.Bits64.Default;
+		}
+
+		var firstSpan = data.FirstSpan;
+		ulong currentHash = firstSpan.HashXx3();
+		foreach (var seq in data.Slice(firstSpan.Length, data.Length - firstSpan.Length)) {
 			currentHash = Combine(currentHash, seq.Span.HashXx3());
 		}
 		return currentHash;
@@ -24,8 +29,12 @@ internal static partial class HashUtility {
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static ulong HashXx3(this Span2D<byte> data) {
-		ulong currentHash = Default;
-		for (int i = 0; i < data.Height; ++i) {
+		if (data.Height == 0) {
+			return Constants.Bits64.Default;
+		}
+
+		ulong currentHash = data.GetRowSpan(0).HashXx3();
+		for (int i = 1; i < data.Height; ++i) {
 			currentHash = Combine(currentHash, data.GetRowSpan(i).HashXx3());
 		}
 		return currentHash;
@@ -41,7 +50,7 @@ internal static partial class HashUtility {
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static unsafe ulong HashXx3(byte* data, int length) =>
-		XxHash3.Hash64(new ReadOnlySpan<byte>(data, length));
+		XxHash3.Hash64(data, length);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static ulong HashXx3(this byte[] data, int start, int length) =>

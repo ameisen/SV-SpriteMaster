@@ -170,7 +170,7 @@ internal partial struct Color8 : IEquatable<Color8>, IEquatable<uint>, ILongHash
 
 	public override readonly int GetHashCode() => Packed.GetHashCode();
 
-	readonly ulong ILongHash.GetLongHashCode() => HashUtility.Combine(Packed);
+	public readonly ulong GetLongHashCode() => HashUtility.Combine(Packed);
 
 	static Color8() {
 #if SM_INTERNAL_TESTING

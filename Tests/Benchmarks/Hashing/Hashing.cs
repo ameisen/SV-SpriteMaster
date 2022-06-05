@@ -9,8 +9,8 @@ public class Hashing {
 		var config = DefaultConfig.Instance
 			.WithOptions(ConfigOptions.Default)
 			.WithOptions(ConfigOptions.DisableOptimizationsValidator);
-		_ = BenchmarkRunner.Run<Algorithms>(config);
-		//_ = BenchmarkRunner.Run<AlgorithmsString>(config);
+		//_ = BenchmarkRunner.Run<Algorithms>(config);
+		_ = BenchmarkRunner.Run<AlgorithmsString>(config);
 		return 0;
 	}
 }

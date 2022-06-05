@@ -1,5 +1,6 @@
 ﻿using SpriteMaster.Types;
 using System;
+using System.Collections.Concurrent;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -8,10 +9,16 @@ namespace SpriteMaster.Extensions;
 
 internal static partial class ReflectionExt {
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal static int TypeSize<T>(this T obj) where T : struct => Marshal.SizeOf<T>();
+	internal static int TypeSize<T>(this T obj) where T : struct {
+		Marshal.SizeOf<T>().AssertEqual(Unsafe.SizeOf<T>());
+		return Unsafe.SizeOf<T>();
+	}
+
+
+	private static readonly ConcurrentDictionary<Type, int> MarshalSizeCache = new();
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal static int Size(this Type type) => Marshal.SizeOf(type);
+	internal static int Size(this Type type) => MarshalSizeCache.GetOrAdd(type, Marshal.SizeOf);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static T AddRef<T>(this T type) where T : Type => (type.MakeByRefType() as T)!;

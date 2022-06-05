@@ -1,7 +1,8 @@
-﻿using SpriteMaster.Extensions;
+﻿using SpriteMaster.Types;
 using StardewModdingAPI;
 using System;
 using System.Diagnostics;
+using System.Text;
 
 namespace SpriteMaster;
 
@@ -46,17 +47,30 @@ internal static partial class Debug {
 		}
 	}
 
+	private static readonly ObjectPool<StringBuilder> StringBuilderPool = new(1);
+
 	[DebuggerStepThrough, DebuggerHidden]
 	private static void DebugWriteStr(string str, LogLevel level) {
-		var lines = str.Lines(removeEmpty: true);
-		var fullString = string.Join("\n", lines);
-		lock (IOLock) {
-			SpriteMaster.Self.Monitor.Log(fullString, level);
-			/*
-			foreach (var line in lines) {
-				SpriteMaster.Self.Monitor.Log(line.TrimEnd(), level);
+		if (str.Contains("\n\n")) {
+			using var builder = StringBuilderPool.GetSafe();
+
+			builder.Value.EnsureCapacity(str.Length);
+
+			char lastChar = '\0';
+			foreach (var c in str)
+			{
+				if (c == '\n' && lastChar == '\n') {
+					continue;
+				}
+
+				lastChar = c;
+				builder.Value.Append(c);
 			}
-			*/
+
+			str = builder.Value.ToString();
+		}
+		lock (IOLock) {
+			SpriteMaster.Self.Monitor.Log(str, level);
 		}
 
 	}

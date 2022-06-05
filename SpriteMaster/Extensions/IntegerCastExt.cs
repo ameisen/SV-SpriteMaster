@@ -6,6 +6,8 @@ namespace SpriteMaster.Extensions;
 internal static partial class Integer {
 	// Unsigned Conversions
 
+	// https://github.com/dotnet/coreclr/pull/16138
+
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static bool ToBool(this byte value) => value.ReinterpretAs<bool>();
 
@@ -156,12 +158,6 @@ internal static partial class Integer {
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static long Widen(this int value) => value;
 
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal static BigInteger Widen(this long value) => value;
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal static BigInteger Widen(this BigInteger value) => value;
-
 	// Narrow
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static byte Narrow(this byte value) => value;
@@ -186,9 +182,6 @@ internal static partial class Integer {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static int Narrow(this long value) => (int)value;
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal static long Narrow(this BigInteger value) => (long)value;
 
 	// Signed/Unsigned
 	[MethodImpl(Runtime.MethodImpl.Inline)]
@@ -251,9 +244,6 @@ internal static partial class Integer {
 	internal static ulong Fuse(this uint lhs, uint rhs) => (lhs.Widen() | (rhs.Widen() << 32)).Unsigned().Long();
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal static BigInteger Fuse(this ulong lhs, ulong rhs) => (lhs.Widen() | (rhs.Widen() << 64));
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static short Fuse(this sbyte lhs, sbyte rhs) => (lhs.Unsigned().Widen() | (rhs.Unsigned().Widen() << 8)).Signed().Short();
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
@@ -261,7 +251,4 @@ internal static partial class Integer {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static long Fuse(this int lhs, int rhs) => (lhs.Unsigned().Widen() | (rhs.Unsigned().Widen() << 32)).Signed().Long();
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal static BigInteger Fuse(this long lhs, long rhs) => (lhs.Widen() | (rhs.Widen() << 64));
 }

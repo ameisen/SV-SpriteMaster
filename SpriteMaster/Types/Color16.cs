@@ -155,7 +155,7 @@ internal struct Color16 : IEquatable<Color16>, IEquatable<ulong>, ILongHash {
 
 	public override readonly int GetHashCode() => Packed.GetHashCode();
 
-	readonly ulong ILongHash.GetLongHashCode() => HashUtility.Combine(Packed);
+	public readonly ulong GetLongHashCode() => HashUtility.Combine(Packed);
 
 	static Color16() {
 #if SM_INTERNAL_TESTING

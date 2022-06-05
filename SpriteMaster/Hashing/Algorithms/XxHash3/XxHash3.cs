@@ -1,6 +1,7 @@
 ﻿using Microsoft.Toolkit.HighPerformance;
 using System;
 using System.Buffers.Binary;
+using System.Diagnostics.Contracts;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -12,10 +13,12 @@ namespace SpriteMaster.Hashing.Algorithms;
 
 // https://github.com/Crauzer/XXHash3.NET/tree/main/XXHash3.NET
 internal static unsafe partial class XxHash3 {
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static ulong Hash64(string data) =>
 		Hash64(data.AsSpan().AsBytes());
 
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static ulong Hash64(ReadOnlySpan<byte> data) {
 		uint length = (uint)data.Length;
@@ -25,28 +28,50 @@ internal static unsafe partial class XxHash3 {
 		}
 
 		fixed (byte* dataPtr = data) {
-			if (length <= 128) {
-				return Hash17To128(dataPtr, (uint)length);
-			}
-
-			if (length <= 240) {
-				return Hash129To240(dataPtr, (uint)length);
-			}
-
-			return HashLong(dataPtr, (uint)length);
+			return Hash64N16(dataPtr, length);
 		}
 	}
 
+	[Pure]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static ulong Hash64(byte* data, int length) =>
+		Hash64(data, (uint)length);
+
+	[Pure]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static ulong Hash64(byte* data, uint length) {
+		return length switch {
+			<= 16 => Hash0To16(data, length),
+			<= 128 => Hash17To128(data, length),
+			<= 240 => Hash129To240(data, length),
+			_ => HashLong(data, length)
+		};
+	}
+
+	[Pure]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static ulong Hash64N16(byte* data, uint length) {
+		return length switch {
+			<= 128 => Hash17To128(data, length),
+			<= 240 => Hash129To240(data, length),
+			_ => HashLong(data, length)
+		};
+	}
+
 	// xxh3_0to16_64
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static ulong Hash0To16(ReadOnlySpan<byte> data) {
 		uint length = (uint)data.Length;
-		if (length > 8) return Hash9To16(data);
-		if (length >= 4) return Hash4To8(data);
-		if (length > 0) return Hash1To3(data);
-		return Avalanche(SecretValues64.Secret38 ^ SecretValues64.Secret40);
+		return length switch {
+			> 8 => Hash9To16(data),
+			>= 4 => Hash4To8(data),
+			> 0 => Hash1To3(data),
+			_ => Avalanche(SecretValues64.Secret38 ^ SecretValues64.Secret40)
+		};
 
 		// xxh3_len_9to16_64
+		[Pure]
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		static ulong Hash9To16(ReadOnlySpan<byte> data) {
 			const ulong bitFlip1 = SecretValues64.Secret18 ^ SecretValues64.Secret20;
@@ -63,6 +88,7 @@ internal static unsafe partial class XxHash3 {
 		}
 
 		// xxh3_len_4to8_64
+		[Pure]
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		static ulong Hash4To8(ReadOnlySpan<byte> data) {
 			uint input1 = data.Cast<byte, uint>()[0];
@@ -75,12 +101,79 @@ internal static unsafe partial class XxHash3 {
 		}
 
 		// xxh3_len_1to3_64
+		[Pure]
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		static ulong Hash1To3(ReadOnlySpan<byte> data) {
 			byte c1 = data[0];
 			byte c2 = data[data.Length >> 1];
 			byte c3 = data[data.Length - 1];
-			uint combined = ((uint)c1 << 0x10) | ((uint)c2 << 24) | ((uint)c3 << 0) | ((uint)data.Length << 8);
+			uint combined = ((uint)c1 << 16) | ((uint)c2 << 24) | ((uint)c3 << 0) | ((uint)data.Length << 8);
+			const ulong bitFlip = SecretValues32.Secret00 ^ SecretValues32.Secret04;
+			ulong keyed = combined ^ bitFlip;
+
+			return AvalancheX64(keyed);
+		}
+	}
+
+	// xxh3_0to16_64
+	[Pure]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static ulong Hash0To16(byte* data, uint length) {
+		if (length > 8) return Hash9To16(data, length);
+		if (length >= 4) return Hash4To8(data, length);
+		if (length > 0) return Hash1To3(data, length);
+		return Avalanche(SecretValues64.Secret38 ^ SecretValues64.Secret40);
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		static byte* Slice(byte* data, uint offset) =>
+			data + offset;
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		static ulong* AsULong(byte* data) =>
+			(ulong*)data;
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		static uint* AsUInt(byte* data) =>
+			(uint*)data;
+
+		// xxh3_len_9to16_64
+		[Pure]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		static ulong Hash9To16(byte* data, uint length) {
+			const ulong bitFlip1 = SecretValues64.Secret18 ^ SecretValues64.Secret20;
+			const ulong bitFlip2 = SecretValues64.Secret28 ^ SecretValues64.Secret30;
+			ulong inputLow = AsULong(data)[0] ^ bitFlip1;
+			ulong inputHigh = AsULong(Slice(data, length - 8))[0] ^ bitFlip2;
+			ulong accumulator =
+				(ulong)length +
+				BinaryPrimitives.ReverseEndianness(inputLow) +
+				inputHigh +
+				Mul128Fold64(inputLow, inputHigh);
+
+			return Avalanche(accumulator);
+		}
+
+		// xxh3_len_4to8_64
+		[Pure]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		static ulong Hash4To8(byte* data, uint length) {
+			uint input1 = AsUInt(data)[0];
+			uint input2 = AsUInt(Slice(data, length - 4))[0];
+			const ulong bitFlip = SecretValues64.Secret08 ^ SecretValues64.Secret10;
+			ulong input64 = input2 + ((ulong)input1 << 0x20);
+			ulong keyed = input64 ^ bitFlip;
+
+			return RotRotMulXorMulXor(keyed, (ulong)length);
+		}
+
+		// xxh3_len_1to3_64
+		[Pure]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		static ulong Hash1To3(byte* data, uint length) {
+			byte c1 = data[0];
+			byte c2 = data[length >> 1];
+			byte c3 = data[length - 1];
+			uint combined = ((uint)c1 << 16) | ((uint)c2 << 24) | ((uint)c3 << 0) | ((uint)length << 8);
 			const ulong bitFlip = SecretValues32.Secret00 ^ SecretValues32.Secret04;
 			ulong keyed = combined ^ bitFlip;
 
@@ -89,6 +182,7 @@ internal static unsafe partial class XxHash3 {
 	}
 
 	// xxh3_17to128_64
+	[Pure]
 	//[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static ulong Hash17To128(byte* data, uint length) {
 		var accumulator = length * Prime64.Prime0;
@@ -115,6 +209,7 @@ internal static unsafe partial class XxHash3 {
 	}
 
 	// xxh3_129to240_64
+	[Pure]
 	//[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static ulong Hash129To240(byte* data, uint length) {
 		byte* secret = Secret;
@@ -150,47 +245,50 @@ internal static unsafe partial class XxHash3 {
 	}
 
 	[StructLayout(LayoutKind.Sequential, Pack = 0x10, Size = 0x40)]
-	private struct CombinedVector128x512<T>  where T : unmanaged {
+	private ref struct CombinedVector128x512<T>  where T : unmanaged {
 		internal Vector128<T> Data0;
 		internal Vector128<T> Data1;
 		internal Vector128<T> Data2;
 		internal Vector128<T> Data3;
 
-		internal Vector128<T>* AsPointer =>
-			(Vector128<T>*)Unsafe.AsPointer(ref Unsafe.AsRef(in this));
+		internal readonly Vector128<T>* AsPointer =>
+			(Vector128<T>*)Unsafe.AsPointer(ref Unsafe.AsRef(in Data0));
 
-		internal ref Vector128<T> AtOffset(uint offset) =>
+		[MethodImpl(Runtime.MethodImpl.Inline)]
+		internal readonly ref Vector128<T> AtOffset(uint offset) =>
 			ref AsPointer[offset / 0x10u];
 
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		internal CombinedVector128x512<TOther> As<TOther>() where TOther : unmanaged =>
 			*(CombinedVector128x512<TOther> *)Unsafe.AsPointer(ref Unsafe.AsRef(in Data0));
 	}
 
 	[StructLayout(LayoutKind.Sequential, Pack = 0x20, Size = 0x40)]
-	private struct CombinedVector256x512<T> where T : unmanaged {
+	private ref struct CombinedVector256x512<T> where T : unmanaged {
 		internal Vector256<T> Data0;
 		internal Vector256<T> Data1;
 
-		internal Vector256<T>* AsPointer =>
-			(Vector256<T>*)Unsafe.AsPointer(ref Unsafe.AsRef(in this));
+		internal readonly Vector256<T>* AsPointer =>
+			(Vector256<T>*)Unsafe.AsPointer(ref Unsafe.AsRef(in Data0));
 
-		internal ref Vector256<T> AtOffset(uint offset) =>
+		[MethodImpl(Runtime.MethodImpl.Inline)]
+		internal readonly ref Vector256<T> AtOffset(uint offset) =>
 			ref AsPointer[offset / 0x20u];
 
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		internal CombinedVector256x512<TOther> As<TOther>() where TOther : unmanaged =>
 			*(CombinedVector256x512<TOther>*)Unsafe.AsPointer(ref Unsafe.AsRef(in Data0));
 	}
 
 	[StructLayout(LayoutKind.Sequential, Pack = 0x40, Size = 0x40)]
-	private ref struct Accumulator {
-		internal fixed ulong Data[8];
+	private readonly struct Accumulator {
+		internal readonly ref CombinedVector128x512<ulong> Data128 => ref *(CombinedVector128x512<ulong>*)Unsafe.AsPointer(ref Unsafe.AsRef(this));
 
-		internal ref CombinedVector128x512<ulong> Data128 => ref Unsafe.As<ulong, CombinedVector128x512<ulong>>(ref Unsafe.AsRef(in Data[0]));
+		internal readonly ref CombinedVector256x512<ulong> Data256 => ref *(CombinedVector256x512<ulong> *)Unsafe.AsPointer(ref Unsafe.AsRef(this));
 
-		internal ref CombinedVector256x512<ulong> Data256 => ref Unsafe.As<ulong, CombinedVector256x512<ulong>>(ref Unsafe.AsRef(in Data[0]));
+		internal readonly ulong* Data => (ulong *)Unsafe.AsPointer(ref Unsafe.AsRef(this));
 
-		internal ulong* Pointer => (ulong *)Unsafe.AsPointer(ref Unsafe.AsRef(in Data[0]));
-
+		[MethodImpl(Runtime.MethodImpl.Inline)]
 		public Accumulator() {
 			switch (VectorSize) {
 				case 256: {
@@ -221,6 +319,7 @@ internal static unsafe partial class XxHash3 {
 	}
 
 	// xxh3_hashLong_64
+	[Pure]
 	//[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static ulong HashLong(byte* data, uint length) {
 		var accumulator = new Accumulator();
@@ -252,19 +351,21 @@ internal static unsafe partial class XxHash3 {
 	}
 
 	// xxh3_merge_accs
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static ulong MergeAccumulators(ref Accumulator accumulator, ulong start) {
 		ulong result = start;
 
-		result += MixAccumulators(accumulator.Pointer + 0x0u, SecretValues64.Secret0B, SecretValues64.Secret13);
-		result += MixAccumulators(accumulator.Pointer + 0x2u, SecretValues64.Secret1B, SecretValues64.Secret23);
-		result += MixAccumulators(accumulator.Pointer + 0x4u, SecretValues64.Secret2B, SecretValues64.Secret33);
-		result += MixAccumulators(accumulator.Pointer + 0x6u, SecretValues64.Secret3B, SecretValues64.Secret43);
+		result += MixAccumulators(accumulator.Data + 0x0u, SecretValues64.Secret0B, SecretValues64.Secret13);
+		result += MixAccumulators(accumulator.Data + 0x2u, SecretValues64.Secret1B, SecretValues64.Secret23);
+		result += MixAccumulators(accumulator.Data + 0x4u, SecretValues64.Secret2B, SecretValues64.Secret33);
+		result += MixAccumulators(accumulator.Data + 0x6u, SecretValues64.Secret3B, SecretValues64.Secret43);
 
 		return Avalanche(result);
 	}
 
 	// xxh3_mix2accs
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static ulong MixAccumulators(ulong* accumulator, ulong secretLo, ulong secretHi) {
 		return Mul128Fold64(
@@ -274,16 +375,18 @@ internal static unsafe partial class XxHash3 {
 	}
 
 	// xxh3_avalanche
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static ulong Avalanche(ulong hash) {
 		hash ^= hash >> 37;
-		hash *= 0x165667919E3779F9UL;
+		hash *= 0x1656_6791_9E37_79F9UL;
 		hash ^= hash >> 0x20;
 
 		return hash;
 	}
 
 	// xxh64_avalanche
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static ulong AvalancheX64(ulong hash) {
 		hash ^= hash >> 33;
@@ -296,6 +399,7 @@ internal static unsafe partial class XxHash3 {
 	}
 
 	// xxh3_rrmxmx
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static ulong RotRotMulXorMulXor(ulong h64, ulong len) {
 		h64 ^= BitOperations.RotateLeft(h64, 49) ^ BitOperations.RotateLeft(h64, 24);
@@ -307,6 +411,7 @@ internal static unsafe partial class XxHash3 {
 	}
 
 	// xxh3_mix16B
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static ulong Mix16(byte* data, byte* secret) {
 		ulong inputLow = LoadLittle64(data);
@@ -318,6 +423,7 @@ internal static unsafe partial class XxHash3 {
 		);
 	}
 
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static ulong Mix16(byte* data, ulong secretLo, ulong secretHi) {
 		ulong inputLow = LoadLittle64(data);
@@ -330,6 +436,7 @@ internal static unsafe partial class XxHash3 {
 	}
 
 	// xxh3_accumulate
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static void Accumulate(ref Accumulator accumulator, byte* data, byte* secret, uint stripeCount) {
 		uint i = 0;
@@ -344,6 +451,7 @@ internal static unsafe partial class XxHash3 {
 	}
 
 	// xxh3_accumulate_512
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static void Accumulate512(ref Accumulator accumulator, byte* data, byte* secret) {
 		if (Avx2.IsSupported && UseAVX2) {
@@ -365,7 +473,7 @@ internal static unsafe partial class XxHash3 {
 	private static void Accumulate512Scalar(ref Accumulator accumulator, byte* data, byte* secret) {
 		PrefetchNonTemporalNext(data);
 		PrefetchNonTemporalNext(secret);
-		PrefetchNext(accumulator.Pointer);
+		PrefetchNext(accumulator.Data);
 
 		AccumulatorBytes.AssertEqual(8u);
 
