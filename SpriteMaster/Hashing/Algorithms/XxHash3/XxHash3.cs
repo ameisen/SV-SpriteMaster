@@ -119,10 +119,12 @@ internal static unsafe partial class XxHash3 {
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static ulong Hash0To16(byte* data, uint length) {
-		if (length > 8) return Hash9To16(data, length);
-		if (length >= 4) return Hash4To8(data, length);
-		if (length > 0) return Hash1To3(data, length);
-		return Avalanche(SecretValues64.Secret38 ^ SecretValues64.Secret40);
+		return length switch {
+			> 8 => Hash9To16(data, length),
+			>= 4 => Hash4To8(data, length),
+			> 0 => Hash1To3(data, length),
+			_ => Avalanche(SecretValues64.Secret38 ^ SecretValues64.Secret40)
+		};
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		static byte* Slice(byte* data, uint offset) =>
