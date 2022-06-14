@@ -1,0 +1,23 @@
+{
+  "runtimeTarget": {
+    "name": "net5.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    "net5.0": {
+      "libxxhash-exp-cli/1.0.0": {
+        "runtime": {
+          "libxxhash-exp-cli.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "libxxhash-exp-cli/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

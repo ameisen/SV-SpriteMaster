@@ -412,7 +412,7 @@ def update_assembly(project)
 
 		line_idx = lines.find_index{ |l| l.strip.start_with?(prefix) }
 		if line_idx == -1 || line_idx.nil?
-			raise "Could not find #{name} attribute in assembly file"
+			raise "Could not find #{name} attribute in assembly file '#{project.assembly}'"
 		end
 		current = lines[line_idx][prefix.length...-suffix.length]
 		if current == new

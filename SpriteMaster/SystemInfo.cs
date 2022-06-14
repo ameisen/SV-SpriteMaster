@@ -4,11 +4,12 @@ using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using SpriteMaster.GL;
 using System;
+using System.Runtime.Intrinsics.X86;
 using System.Text;
 
 namespace SpriteMaster;
 
-internal static class SystemInfo {
+internal static partial class SystemInfo {
 	internal static class Graphics {
 		internal enum Vendors {
 			Unknown = 0,
@@ -164,6 +165,16 @@ internal static class SystemInfo {
 			AppendTabbedLine(1, $"Architecture: {(Environment.Is64BitProcess ? "x64" : "x86")}");
 			AppendTabbedLine(1, $"Number of Cores: {Environment.ProcessorCount}");
 			AppendTabbedLine(1, $"OS Version: {Environment.OSVersion}");
+			AppendTabbedLine(1, "CPU Information");
+			{
+				AppendTabbedLine(2, $"Brand             : {CpuIdentifier.Brand}");
+				AppendTabbedLine(2, $"Microarchitecture : {Microarchitecture}");
+				AppendTabbedLine(2, $"Family            : {CpuIdentifier.Family}");
+				AppendTabbedLine(2, $"Model             : {CpuIdentifier.Model}");
+				AppendTabbedLine(2, $"Stepping          : {CpuIdentifier.Stepping}");
+				AppendTabbedLine(2, $"Type              : {CpuIdentifier.Type}");
+				AppendTabbedLine(2, $"AVX2              : {Avx2.IsSupported} ({(Instructions.Avx2 ? "enabled" : "disabled")})");
+			}
 		}
 		catch {
 			// ignored
