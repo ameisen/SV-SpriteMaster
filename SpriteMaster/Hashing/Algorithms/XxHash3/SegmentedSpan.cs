@@ -1,11 +1,14 @@
 ﻿using Microsoft.Toolkit.HighPerformance;
+using SpriteMaster.Extensions;
 using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace SpriteMaster.Hashing.Algorithms;
 
 internal static partial class XxHash3 {
+	[StructLayout(LayoutKind.Auto)]
 	private readonly ref struct SegmentedSpan {
 		internal readonly ReadOnlySpan2D<byte> Source;
 
@@ -17,99 +20,78 @@ internal static partial class XxHash3 {
 			Source = source;
 		}
 
-		[Pure]
 		[MethodImpl(Inline)]
-		internal readonly ReadOnlySpan<byte> Slice(Span<byte> temp, uint offset, uint length) {
+		internal readonly void CopyTo(Span<byte> span) =>
+			Source.CopyTo(span);
+
+		[MethodImpl(Inline)]
+		internal readonly ReadOnlySpan<byte> Slice(Span<byte> destination, uint offset, uint length) {
+			((uint)destination.Length).AssertGreaterEqual(length);
+
 			uint end = offset + length;
 
 			uint offsetRow = offset / Width;
 			uint endRow = (end - 1U) / Width;
 
-			ReadOnlySpan<byte> result;
-			if (offsetRow == endRow) {
-				result = SliceFast(offset, length, offsetRow);
-			}
-			else {
-				result = SliceSlow(temp, offset, length, offsetRow, endRow);
-			}
+			var result = 
+				offsetRow == endRow ?
+					SliceFast(offset, length, offsetRow) :
+					SliceSlow(destination, offset, length, offsetRow, endRow);
 
-#if DEBUG
+#if !SHIPPING
 			var copySlice = Source.ToArray().AsSpan().Slice((int)offset, (int)length);
-			if (!copySlice.SequenceEqual(result)) {
-				Debugger.Break();
-				throw new Exception("Sequence Mismatch");
-			}
+			copySlice.SequenceEqual(result).AssertTrue();
 #endif
 
 			return result;
 		}
 
 		[MethodImpl(Inline)]
-		internal readonly ReadOnlySpan<byte> SliceTo(Span<byte> destination, uint offset) {
-			uint length = (uint)destination.Length;
-			uint end = offset + length;
+		internal readonly unsafe byte* SlicePointer(Span<byte> destination, uint offset, uint length) =>
+			Slice(destination, offset, length).AsPointerUnsafe();
 
-			uint offsetRow = offset / Width;
-			uint endRow = (end - 1U) / Width;
-			if (offsetRow == endRow) {
-				return SliceFast(destination, offset, offsetRow);
-			}
-			else {
-				return SliceSlow(destination, offset, offsetRow, endRow);
-			}
+		[MethodImpl(Inline)]
+		internal readonly ReadOnlySpan<byte> Slice(Span<byte> destination, uint offset) =>
+			Slice(destination, offset, (uint)destination.Length);
 
-#if DEBUG
-			var copySlice = Source.ToArray().AsSpan().Slice((int)offset, (int)length);
-			if (!copySlice.SequenceEqual(destination)) {
-				Debugger.Break();
-				throw new Exception("Sequence Mismatch");
-			}
+		[MethodImpl(Inline)]
+		internal readonly unsafe byte* SlicePointer(Span<byte> destination, uint offset) =>
+			Slice(destination, offset).AsPointerUnsafe();
+
+		[Pure]
+		[MethodImpl(Inline)]
+		internal readonly ReadOnlySpan<byte> GetAtOffset(uint row, uint offset) {
+#if !SHIPPING
+			return Source.GetRowSpan((int)row).Slice((int)offset);
+#else
+			ref byte value = ref Source.DangerousGetReferenceAt((int)row, (int)offset);
+			return MemoryMarshal.CreateReadOnlySpan(ref value, (int)(Width - offset));
 #endif
 		}
 
 		[Pure]
-		[MethodImpl(Hot)]
-		// The slice crosses multiple rows
-		private readonly ReadOnlySpan<byte> SliceSlow(Span<byte> temp, uint offset, uint length, uint startRow, uint endRow) {
-			// TODO : find a faster way to do this
-			uint rowOffset = offset % Width;
-			uint currentWriteOffset = 0U;
-
-			if (rowOffset != 0U) {
-				uint copyLength = Math.Min(length, Width - rowOffset);
-
-				var rowSpan = Source.GetRowSpan((int)startRow).Slice((int)rowOffset, (int)copyLength);
-				rowSpan.CopyTo(temp.Slice(0, (int)copyLength));
-
-				currentWriteOffset += copyLength;
-				++startRow;
-			}
-
-			for (uint row = startRow; row <= endRow; ++row) {
-				uint copyLength = Math.Min(length - currentWriteOffset, Width);
-
-				var rowSpan = Source.GetRowSpan((int)row).Slice(0, (int)copyLength);
-				rowSpan.CopyTo(temp.Slice((int)currentWriteOffset, (int)copyLength));
-
-				currentWriteOffset += copyLength;
-			}
-
-			return temp;
+		[MethodImpl(Inline)]
+		internal readonly ReadOnlySpan<byte> GetAtOffset(uint row, uint offset, uint length) {
+#if !SHIPPING
+			return Source.GetRowSpan((int)row).Slice((int)offset, (int)length);
+#else
+			ref byte value = ref Source.DangerousGetReferenceAt((int)row, (int)offset);
+			return MemoryMarshal.CreateReadOnlySpan(ref value, (int)length);
+#endif
 		}
 
 		[MethodImpl(Hot)]
 		// The slice crosses multiple rows
-		private readonly ReadOnlySpan<byte> SliceSlow(Span<byte> destination, uint offset, uint startRow, uint endRow) {
+		private readonly ReadOnlySpan<byte> SliceSlow(Span<byte> destination, uint offset, uint length, uint startRow, uint endRow) {
 			// TODO : find a faster way to do this
-			uint length = (uint)destination.Length;
 			uint rowOffset = offset % Width;
 			uint currentWriteOffset = 0U;
 
 			if (rowOffset != 0U) {
 				uint copyLength = Math.Min(length, Width - rowOffset);
 
-				var rowSpan = Source.GetRowSpan((int)startRow).Slice((int)rowOffset, (int)copyLength);
-				rowSpan.CopyTo(destination.Slice(0, (int)copyLength));
+				var rowSpan = GetAtOffset(startRow, rowOffset, copyLength);
+				rowSpan.CopyToUnsafe(destination.SliceUnsafe(0, (int)copyLength));
 
 				currentWriteOffset += copyLength;
 				++startRow;
@@ -118,8 +100,8 @@ internal static partial class XxHash3 {
 			for (uint row = startRow; row <= endRow; ++row) {
 				uint copyLength = Math.Min(length - currentWriteOffset, Width);
 
-				var rowSpan = Source.GetRowSpan((int)row).Slice(0, (int)copyLength);
-				rowSpan.CopyTo(destination.Slice((int)currentWriteOffset, (int)copyLength));
+				var rowSpan = GetAtOffset(row, 0, copyLength);
+				rowSpan.CopyToUnsafe(destination.SliceUnsafe((int)currentWriteOffset, (int)copyLength));
 
 				currentWriteOffset += copyLength;
 			}
@@ -127,29 +109,13 @@ internal static partial class XxHash3 {
 			return destination;
 		}
 
+
 		[Pure]
 		[MethodImpl(Inline)]
 		// The slice is entirely within a row
-		internal readonly ReadOnlySpan<byte> SliceFast(uint offset, uint length, uint row) {
-			var rowSpan = Source.GetRowSpan((int)row);
-			if (length == Width) {
-				return rowSpan;
-			}
+		private readonly ReadOnlySpan<byte> SliceFast(uint offset, uint length, uint row) {
 			uint rowOffset = offset % Width;
-			return rowSpan.Slice((int)rowOffset, (int)length);
-		}
-
-		[MethodImpl(Inline)]
-		// The slice is entirely within a row
-		internal readonly ReadOnlySpan<byte> SliceFast(Span<byte> destination, uint offset, uint row) {
-			uint length = (uint)destination.Length;
-
-			var rowSpan = Source.GetRowSpan((int)row);
-			if (length == Width) {
-				return rowSpan;
-			}
-			uint rowOffset = offset % Width;
-			return rowSpan.Slice((int)rowOffset, (int)length);
+			return GetAtOffset(row, rowOffset, length);
 		}
 	}
 }

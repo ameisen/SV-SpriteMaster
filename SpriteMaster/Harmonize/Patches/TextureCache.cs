@@ -9,7 +9,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using static SpriteMaster.Harmonize.Harmonize;
@@ -27,6 +26,7 @@ internal static class TextureCache {
 	private static readonly Type ModContentManagerType = typeof(StardewModdingAPI.Framework.ModLoading.RewriteFacades.AccessToolsFacade).Assembly.
 		GetType("StardewModdingAPI.Framework.ContentManagers.ModContentManager") ?? throw new NullReferenceException("Could not find 'ModContentManager type");
 
+	[HarmonizeSmapiVersionConditional(Comparator.LessThan, "3.15.0")]
 	[Harmonize(
 		typeof(XTexture2D),
 		"FromStream",
@@ -94,6 +94,7 @@ internal static class TextureCache {
 		}
 	}
 
+	[HarmonizeSmapiVersionConditional(Comparator.LessThan, "3.15.0")]
 	[Harmonize(typeof(XTexture2D), "FromStream", Fixation.Postfix, PriorityLevel.Last, platform: Platform.MonoGame, instance: false)]
 	public static void FromStreamPost(ref XTexture2D? __result, GraphicsDevice? graphicsDevice, Stream? stream, bool __state) {
 		lock (Lock) {
@@ -121,6 +122,7 @@ internal static class TextureCache {
 		}
 	}
 
+	[HarmonizeSmapiVersionConditional(Comparator.LessThan, "3.15.0")]
 	[Harmonize(typeof(XTexture2D), "FromStream", Fixation.Finalizer, PriorityLevel.Last, platform: Platform.MonoGame, instance: false)]
 	public static void FromStreamFinal(ref XTexture2D? __result, GraphicsDevice? graphicsDevice, Stream? stream, bool __state) {
 		lock (Lock) {
@@ -171,6 +173,7 @@ internal static class TextureCache {
 
 	private static readonly ThreadLocal<WeakReference<XTexture2D>> CurrentPremultiplyingTexture = new();
 
+	[HarmonizeSmapiVersionConditional(Comparator.LessThan, "3.15.0")]
 	[Harmonize(
 		typeof(StardewModdingAPI.Framework.ModLoading.RewriteFacades.AccessToolsFacade),
 		"StardewModdingAPI.Framework.ContentManagers.ModContentManager",
@@ -195,6 +198,7 @@ internal static class TextureCache {
 		}
 	}
 
+	[HarmonizeSmapiVersionConditional(Comparator.LessThan, "3.15.0")]
 	[Harmonize(
 		typeof(StardewModdingAPI.Framework.ModLoading.RewriteFacades.AccessToolsFacade),
 		"StardewModdingAPI.Framework.ContentManagers.ModContentManager",

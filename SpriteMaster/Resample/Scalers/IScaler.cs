@@ -1,5 +1,7 @@
 ﻿using SpriteMaster.Types;
 using System;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Resample.Scalers;
 
@@ -29,6 +31,16 @@ internal interface IScaler {
 
 	internal static IScaler Default => new DefaultScaler.Scaler.ScalerInterface();
 
+	[DoesNotReturn]
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	private static T ThrowUnknownScalerTypeException<T>() =>
+		throw new InvalidOperationException($"Unknown Scaler Type: {SMConfig.Resample.Scaler}");
+
+	[DoesNotReturn]
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	private static T ThrowBilinearNotImplementedException<T>() =>
+		throw new NotImplementedException("Bilinear scaling is not implemented");
+
 	internal static IScalerInfo? GetScalerInfo(Scaler scaler) => scaler switch {
 		Scaler.xBRZ => xBRZ.ScalerInfo.Instance,
 #if !SHIPPING
@@ -36,10 +48,10 @@ internal interface IScaler {
 #endif
 		Scaler.EPX =>EPX.ScalerInfo.Instance,
 #if !SHIPPING
-		Resample.Scaler.Bilinear => throw new NotImplementedException("Bilinear scaling is not implemented"),
+		Resample.Scaler.Bilinear => ThrowBilinearNotImplementedException<IScalerInfo>(),
 #endif
 		Scaler.None => null,
-		_ => throw new InvalidOperationException($"Unknown Scaler Type: {SMConfig.Resample.Scaler}")
+		_ => ThrowUnknownScalerTypeException<IScalerInfo>()
 	};
 
 	internal static IScalerInfo? CurrentInfo => GetScalerInfo(SMConfig.Resample.Scaler);
@@ -51,9 +63,9 @@ internal interface IScaler {
 #endif
 		Scaler.EPX => EPX.Scaler.ScalerInterface.Instance,
 #if !SHIPPING
-		Resample.Scaler.Bilinear => throw new NotImplementedException("Bilinear scaling is not implemented"),
+		Resample.Scaler.Bilinear => ThrowBilinearNotImplementedException<IScaler>(),
 #endif
 		Scaler.None => null,
-		_ => throw new InvalidOperationException($"Unknown Scaler Type: {SMConfig.Resample.Scaler}")
+		_ => ThrowUnknownScalerTypeException<IScaler>()
 	};
 }

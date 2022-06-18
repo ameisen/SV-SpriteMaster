@@ -1,9 +1,11 @@
 ﻿using SpriteMaster.Extensions;
 using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace SpriteMaster.Types;
 
+[StructLayout(LayoutKind.Auto)]
 internal readonly struct Limit<T> where T : struct, IComparable<T> {
 	internal readonly T Min { get; init; }
 	internal readonly T Max { get; init; }

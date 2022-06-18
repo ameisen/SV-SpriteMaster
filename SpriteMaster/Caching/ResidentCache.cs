@@ -1,5 +1,6 @@
 ﻿using SpriteMaster.Configuration;
 using SpriteMaster.Types;
+using SpriteMaster.Types.MemoryCache;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Security;
@@ -13,12 +14,12 @@ namespace SpriteMaster.Caching;
 internal static class ResidentCache {
 	internal static bool Enabled => Config.ResidentCache.Enabled;
 
-	private static readonly TypedMemoryCache<ulong, byte[]> Cache = CreateCache();
+	private static readonly AbstractMemoryCache<ulong, byte> Cache = CreateCache();
 
-	private static TypedMemoryCache<ulong, byte[]> CreateCache() => new(
+	private static AbstractMemoryCache<ulong, byte> CreateCache() => AbstractMemoryCache<ulong, byte>.Create(
 		name: "ResidentCache",
-		removalAction: null,
-		maxSize: Config.ResidentCache.MaxSize
+		maxSize: Config.ResidentCache.MaxSize,
+		compressed: true
 	);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
@@ -30,7 +31,7 @@ internal static class ResidentCache {
 		Cache.TryGet(key, out value);
 
 	internal static byte[] Set(ulong key, byte[] value) =>
-		Cache.Set(key, value, size: value.Length * sizeof(byte));
+		Cache.Set(key, value);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static byte[]? Remove(ulong key) =>

@@ -8,6 +8,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using Tomlyn;
 using Tomlyn.Syntax;
@@ -71,6 +72,7 @@ internal static class Serialize {
 
 		internal ParentTraverseEnumerable ParentTraverser => new(this);
 
+		[StructLayout(LayoutKind.Auto)]
 		internal readonly struct ParentTraverseEnumerable : IEnumerable<Category> {
 			private readonly Category Current;
 			

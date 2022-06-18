@@ -3,6 +3,7 @@ using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace SpriteMaster.Core;
@@ -84,6 +85,7 @@ internal static class OnDrawStringImpl {
 	}
 
 	// Ripped from MonoGame SpriteFont.cs
+	[StructLayout(LayoutKind.Auto)]
 	internal readonly ref struct CharSource {
 		private readonly string? String = null;
 		private readonly StringBuilder? Builder = null;

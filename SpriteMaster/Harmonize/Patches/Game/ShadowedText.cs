@@ -3,6 +3,8 @@ using SpriteMaster.Configuration;
 using SpriteMaster.Types;
 using StardewValley;
 using System;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace SpriteMaster.Harmonize.Patches.Game;
@@ -13,6 +15,11 @@ internal static class ShadowedText {
 		LocalizedContentManager.LanguageCode.de => true,
 		_ => false
 	};
+
+	[DoesNotReturn]
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	private static void ThrowNullArgumentException(string name) =>
+		throw new ArgumentNullException(name);
 
 	[Harmonize(
 		typeof(Utility),
@@ -53,7 +60,7 @@ internal static class ShadowedText {
 		*/
 
 		if (text is null) {
-			throw new ArgumentNullException(nameof(text));
+			ThrowNullArgumentException(nameof(text));
 		}
 
 		DrawStrokedText(
@@ -98,7 +105,7 @@ internal static class ShadowedText {
 		}
 
 		if (font is null) {
-			throw new NullReferenceException(nameof(font));
+			ThrowNullArgumentException(nameof(font));
 		}
 
 		if (layerDepth == -1f) {
@@ -158,7 +165,7 @@ internal static class ShadowedText {
 		}
 
 		if (font is null) {
-			throw new NullReferenceException(nameof(font));
+			ThrowNullArgumentException(nameof(font));
 		}
 
 		if (layerDepth == -1f) {
@@ -205,7 +212,7 @@ internal static class ShadowedText {
 		int numShadows
 	) {
 		if (font is null) {
-			throw new NullReferenceException(nameof(font));
+			ThrowNullArgumentException(nameof(font));
 		}
 
 		foreach (var offset in ShadowedStringOffsets) {

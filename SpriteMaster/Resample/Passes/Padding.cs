@@ -163,7 +163,7 @@ internal static class Padding {
 				if (hasPaddingX.X) {
 					WritePaddingX(paddedData, ref xOffset);
 				}
-				data.CopyTo(paddedData, i * spriteSize.Width, xOffset, spriteSize.Width);
+				data.CopyToUnsafe(paddedData, i * spriteSize.Width, xOffset, spriteSize.Width);
 				xOffset += spriteSize.Width;
 				if (hasPaddingX.Y) {
 					WritePaddingX(paddedData, ref xOffset);

@@ -36,7 +36,7 @@ internal sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
 		private readonly SynchronizedTaskScheduler Scheduler;
 
 		public SynchronizedTaskSchedulerDebugView(SynchronizedTaskScheduler scheduler) {
-			Scheduler = scheduler ?? throw new ArgumentNullException(nameof(scheduler));
+			Scheduler = scheduler ?? ThrowHelper.ThrowArgumentNullException<SynchronizedTaskScheduler>(nameof(scheduler));
 		}
 
 		public IEnumerable<Task> ScheduledTasks => Scheduler.GetScheduledTasks();
@@ -159,7 +159,8 @@ internal sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
 		}
 
 		if (DisposeCancellation.IsCancellationRequested) {
-			throw new ObjectDisposedException(GetType().Name);
+			ThrowHelper.ThrowObjectDisposedException(GetType().Name);
+			return;
 		}
 
 		if (task is TextureActionTask actionTask) {

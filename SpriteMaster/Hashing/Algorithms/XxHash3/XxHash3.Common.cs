@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SpriteMaster.Extensions;
+using System;
 using System.Buffers.Binary;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
@@ -62,6 +63,18 @@ internal static unsafe partial class XxHash3 {
 
 	private const uint StripeLength = 64;
 	private const uint AccumulatorBytes = StripeLength / sizeof(ulong);
+	private const uint StripesPerBlock = (SecretLength - StripeLength) / 8U;
+	private const uint BlockLength = StripeLength * StripesPerBlock;
+
+#if !SHIPPING
+	static XxHash3() {
+		StripeLength.AssertEqual(64u);
+		AccumulatorBytes.AssertEqual(8u);
+		StripesPerBlock.AssertEqual(16u);
+		BlockLength.AssertEqual(1024u);
+		SecretSpan.Length.AssertEqual((int)SecretLength);
+	}
+#endif
 
 	// ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
 	private const uint SecretLength = 192;
@@ -152,4 +165,24 @@ internal static unsafe partial class XxHash3 {
 	[MethodImpl(Inline)]
 	private static bool IsAligned(this uint value, uint alignment) =>
 		(value & (alignment - 1U)) == 0U;
+
+	[Pure]
+	[MethodImpl(Inline)]
+	private static T* AsPointerUnsafe<T>(this Span<T> span) where T : unmanaged =>
+		(T*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(span));
+
+	[Pure]
+	[MethodImpl(Inline)]
+	private static T* AsPointerUnsafe<T>(this ReadOnlySpan<T> span) where T : unmanaged =>
+		(T*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(span));
+
+	[Pure]
+	[MethodImpl(Inline)]
+	private static byte* SlicePointer(this ReadOnlySpan<byte> span, uint offset) =>
+		span.SliceUnsafe((int)offset).AsPointerUnsafe();
+
+	[Pure]
+	[MethodImpl(Inline)]
+	private static byte* SlicePointer(this ReadOnlySpan<byte> span, uint offset, uint length) =>
+		span.SliceUnsafe((int)offset, (int)length).AsPointerUnsafe();
 }

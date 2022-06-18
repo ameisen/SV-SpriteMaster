@@ -4,7 +4,7 @@ using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using StardewValley;
 using System;
-
+using System.Runtime.InteropServices;
 using SMDrawState = SpriteMaster.DrawState;
 
 namespace SpriteMaster.Configuration.Preview;
@@ -15,6 +15,7 @@ internal abstract class Scene : IDisposable {
 	protected const int TileSizeRendered = TileSize * 4;
 	protected const int RegionVerticalOffset = -20;
 
+	[StructLayout(LayoutKind.Auto)]
 	private readonly struct CurrentScope : IDisposable {
 		private readonly Scene? PreviousScene;
 
@@ -47,6 +48,7 @@ internal abstract class Scene : IDisposable {
 		}
 	}
 
+	[StructLayout(LayoutKind.Auto)]
 	protected readonly ref struct TempValue<T> {
 		private readonly T? OriginalValue;
 		private readonly Ref<T?> ReferenceValue;
@@ -200,7 +202,8 @@ internal abstract class Scene : IDisposable {
 
 	protected abstract void OnDraw(XSpriteBatch batch, in Override overrideState);
 	protected abstract void OnDrawOverlay(XSpriteBatch batch, in Override overrideState);
-	
+
+	[StructLayout(LayoutKind.Auto)]
 	private readonly ref struct DrawState {
 		internal Viewport Viewport { get; init; }
 		internal SamplerState? SamplerState { get; init; }

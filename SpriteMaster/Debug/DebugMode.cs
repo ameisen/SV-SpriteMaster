@@ -5,6 +5,7 @@ using StardewValley;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace SpriteMaster;
@@ -139,6 +140,7 @@ internal static partial class Debug {
 			}
 		}
 
+		[StructLayout(LayoutKind.Auto)]
 		private readonly struct DrawInfo {
 			internal readonly ManagedSpriteInstance? Instance;
 			internal readonly XTexture2D Texture;

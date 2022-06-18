@@ -162,10 +162,14 @@ internal static class Config {
 		internal static bool ShouldCollectAccountOwnedTextures = CollectAccountOwnedTextures ?? SystemInfo.Graphics.IsIntegrated;
 #pragma warning restore CS0612
 
-		[Attributes.Comment("The amount of free memory required by SM after which it triggers recovery operations")]
-		[Attributes.LimitsInt(1, int.MaxValue)]
+		[Attributes.Comment("The amount of free memory required by SM after which it triggers hard recovery operations")]
+		[Attributes.LimitsInt(1L, int.MaxValue * (long)SizesExt.MiB)]
 		[Attributes.Advanced]
-		internal static int RequiredFreeMemory = 128;
+		internal static long RequiredFreeMemoryHard = SizesExt.AsMiB(128L);
+		[Attributes.Comment("The amount of free memory required by SM after which it triggers soft recovery operations")]
+		[Attributes.LimitsInt(1L, int.MaxValue * (long)SizesExt.MiB)]
+		[Attributes.Advanced]
+		internal static long RequiredFreeMemorySoft = SizesExt.AsGiB(1L);
 		[Attributes.Comment("Hysteresis applied to RequiredFreeMemory")]
 		[Attributes.LimitsReal(1.01, 10.0)]
 		[Attributes.Advanced]
@@ -660,6 +664,8 @@ internal static class Config {
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushResidentCache)]
 		[Attributes.LimitsInt(0, long.MaxValue)]
 		internal static long MaxSize = 0x2_0000_0000L;
+		[Attributes.Comment("The preferred compression algorithm for the resident cache")]
+		internal static Compression.Algorithm Compress = Compression.BestAlgorithm;
 	}
 
 	[Attributes.Advanced]

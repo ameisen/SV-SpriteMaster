@@ -9,7 +9,7 @@ using TeximpNet.Compression;
 
 namespace SpriteMaster.Resample;
 
-[StructLayout(LayoutKind.Sequential)]
+[StructLayout(LayoutKind.Auto)]
 internal readonly struct TextureFormat {
 
 	[MarshalAs(UnmanagedType.I4)]

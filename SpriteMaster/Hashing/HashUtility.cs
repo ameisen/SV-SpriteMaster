@@ -226,6 +226,9 @@ internal static partial class HashUtility {
 	internal static ulong Hash(this Span2D<byte> data) => data.HashXx3();
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
+	internal static ulong Hash(this ReadOnlySpan2D<byte> data) => data.HashXx3();
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static ulong Hash(this Span<byte> data) => data.HashXx3();
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]

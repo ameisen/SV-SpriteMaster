@@ -1,6 +1,7 @@
 ﻿using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
+using SpriteMaster.Types.MemoryCache;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
@@ -10,15 +11,13 @@ namespace SpriteMaster.Caching;
 
 [SMAPIConsole.Stats("suspended-sprite-cache")]
 internal static class SuspendedSpriteCache {
-	private static long TotalCachedSize = 0L;
-	private const double MinTrimPercentage = 0.05;
-	private static readonly TypedMemoryCache<ulong, ManagedSpriteInstance> Cache = new(
+	private static readonly AbstractObjectCache<ulong, ManagedSpriteInstance> Cache = new ObjectCache<ulong, ManagedSpriteInstance>(
 		name: "SuspendedSpriteCache",
 		maxSize: Config.SuspendedCache.MaxCacheSize,
 		removalAction: OnEntryRemoved
 	);
 	private static readonly Condition TrimEvent = new();
-	private static readonly Thread CacheTrimThread = ThreadExt.Run(CacheTrimLoop, background: true, name: "Cache Trim Thread");
+	private static readonly Thread CacheTrimThread = ThreadExt.Run(CacheTrimLoop, background: true, name: "SuspendedSpriteCache Trim Thread");
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private static int Percent75(int value) {
@@ -28,27 +27,6 @@ internal static class SuspendedSpriteCache {
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private static long Percent75(long value) {
 		return (value >> 1) + (value >> 2);
-	}
-
-	private static void TrimSize() {
-		if (Config.SuspendedCache.MaxCacheSize is <= 0 or long.MaxValue) {
-			return;
-		}
-
-		var totalCachedSize = Interlocked.Read(ref TotalCachedSize);
-
-		// How much is needed to be reduced, with an additional safety of 25% or so?
-		var goal = Percent75(Config.SuspendedCache.MaxCacheSize);
-
-		Debug.Trace(
-			$"Trimming (Size) SuspendedSpriteCache: from {totalCachedSize.AsDataSize()} to {goal.AsDataSize()}"
-		);
-
-		while (totalCachedSize > Config.SuspendedCache.MaxCacheSize) {
-			Cache.Trim(1);
-
-			totalCachedSize = Interlocked.Read(ref TotalCachedSize);
-		}
 	}
 
 	private static void TrimCount() {
@@ -73,15 +51,13 @@ internal static class SuspendedSpriteCache {
 		while (true) {
 			TrimEvent.Wait();
 
-			TrimSize();
 			TrimCount();
 		}
 		// ReSharper disable once FunctionNeverReturns
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	private static void OnEntryRemoved(EvictionReason reason, ManagedSpriteInstance element) {
-		Interlocked.Add(ref TotalCachedSize, -element.MemorySize);
+	private static void OnEntryRemoved(EvictionReason reason, ulong key, ManagedSpriteInstance element) {
 		element.Dispose();
 	}
 
@@ -91,11 +67,10 @@ internal static class SuspendedSpriteCache {
 			return;
 		}
 
-		Cache.Set(instance.Hash, instance, size: instance.MemorySize);
-		Interlocked.Add(ref TotalCachedSize, instance.MemorySize);
+		Cache.Set(instance.Hash, instance);
 		Debug.Trace($"SuspendedSpriteCache Size: {Cache.Count.ToString(DrawingColor.LightCoral)}");
 
-		if (Interlocked.Read(ref TotalCachedSize) > Config.SuspendedCache.MaxCacheSize) {
+		if (Cache.Count > Config.SuspendedCache.MaxCacheCount) {
 			TrimEvent.Set();
 		}
 	}
@@ -122,14 +97,13 @@ internal static class SuspendedSpriteCache {
 
 	internal static void Purge() {
 		Cache.Clear();
-		TotalCachedSize = 0L;
 	}
 
 	[SMAPIConsole.StatsMethod]
 	internal static string[] DumpStats() {
 		var statsLines = new List<string> {
 			$"\tTotal Suspended Elements: {Cache.Count}",
-			$"\tTotal Memory Size       : {Interlocked.Read(ref TotalCachedSize).AsDataSize()}"
+			$"\tTotal Memory Size       : {Cache.TotalSize.AsDataSize()}"
 		};
 		return statsLines.ToArray();
 	}

@@ -33,7 +33,7 @@
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Development|x64'">
-	  <DefineConstants>DEBUG;DEVELOPMENT;TRACE</DefineConstants>
+	  <DefineConstants>DEVELOPMENT;TRACE</DefineConstants>
 	  <Optimize>true</Optimize>
 	</PropertyGroup>
 
@@ -111,6 +111,10 @@
 		<Reference Update="Stardew Valley">
 			<Aliases>destination</Aliases>
 		</Reference>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Hashing\Algorithms\XxHash3Exp\" />
 	</ItemGroup>
 
 	<Target Name="PreBuild" BeforeTargets="PreBuildEvent">

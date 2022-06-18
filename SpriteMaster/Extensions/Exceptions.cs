@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 using static SpriteMaster.Runtime;
@@ -23,6 +24,13 @@ internal static class Exceptions {
 	[MethodImpl(MethodImpl.ErrorPath)]
 	internal static void PrintError<T>(this T exception, [CallerMemberName] string caller = null!) where T : Exception => Debug.Error(exception: exception, caller: caller);
 
+	[DoesNotReturn]
 	[MethodImpl(MethodImpl.ErrorPath)]
-	internal static string BuildArgumentException<T>(string name, T? value) => $"'{name}' = '{((value is null) ? "null" : value.GetType().FullName)}'";
+	internal static void ThrowArgumentException(string name, object? value) =>
+		throw new ArgumentException($"'{name}' = '{((value is null) ? "null" : value.GetType().FullName)}'", name);
+
+	[DoesNotReturn]
+	[MethodImpl(MethodImpl.ErrorPath)]
+	internal static TReturn ThrowArgumentException<TReturn>(string name, object? value) =>
+		throw new ArgumentException($"'{name}' = '{((value is null) ? "null" : value.GetType().FullName)}'", name);
 }

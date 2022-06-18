@@ -10,6 +10,7 @@ using SpriteMaster.Types;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using static SpriteMaster.ResourceManager;
@@ -18,7 +19,7 @@ using WeakTexture = System.WeakReference<Microsoft.Xna.Framework.Graphics.Textur
 
 namespace SpriteMaster;
 
-internal sealed class ManagedSpriteInstance : IDisposable {
+internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 	private static readonly ConcurrentLinkedListSlim<WeakInstance> RecentAccessList = new();
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
@@ -698,6 +699,7 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 		}
 	}
 
+	[StructLayout(LayoutKind.Auto)]
 	internal readonly struct CleanupData {
 		internal readonly ManagedSpriteInstance? PreviousSpriteInstance;
 		internal readonly WeakReference<XTexture2D> ReferenceTexture;
@@ -841,4 +843,6 @@ internal sealed class ManagedSpriteInstance : IDisposable {
 
 		return true;
 	}
+
+	public long SizeBytes => (int)MemorySize;
 }

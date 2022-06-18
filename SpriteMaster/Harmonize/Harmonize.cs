@@ -213,12 +213,20 @@ internal static class Harmonize {
 				});
 
 				Parallel.ForEach(type.GetMethods(StaticFlags), method => {
-					ApplyPatches(
-						@this: @this,
-						type: type,
-						method: method,
-						attributes: method.GetCustomAttributes<HarmonizeAttribute>()
-					);
+					var conditionalAttributes = method.GetCustomAttributes<HarmonizeConditionalAttribute>();
+					bool enable = true;
+					foreach (var conditionalAttribute in conditionalAttributes) {
+						enable &= conditionalAttribute.Condition;
+					}
+
+					if (enable) {
+						ApplyPatches(
+							@this: @this,
+							type: type,
+							method: method,
+							attributes: method.GetCustomAttributes<HarmonizeAttribute>()
+						);
+					}
 				});
 			}
 		);

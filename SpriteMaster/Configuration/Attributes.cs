@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Configuration;
 
@@ -54,6 +56,16 @@ internal static class Attributes {
 
 		internal abstract T? GetMin<T>(Type type) where T : unmanaged;
 		internal abstract T? GetMax<T>(Type type) where T : unmanaged;
+
+		[DoesNotReturn]
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		protected void ThrowIsNotAssignableException<TTo, TFrom>() =>
+			throw new InvalidCastException($"{typeof(TTo)} is not assignable from {typeof(TFrom)}");
+
+		[DoesNotReturn]
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		protected TResult ThrowIsNotAssignableException<TTo, TFrom, TResult>() =>
+			throw new InvalidCastException($"{typeof(TTo)} is not assignable from {typeof(TFrom)}");
 	}
 
 	[AttributeUsage(AttributeTargets.Field, AllowMultiple = false, Inherited = true)]
@@ -170,7 +182,7 @@ internal static class Attributes {
 				return (MinValue == TimeSpan.MinValue) ? null : (T)(object)MinValue;
 			}
 
-			throw new InvalidCastException($"{typeof(T)} is not assignable from {typeof(TimeSpan)}");
+			return ThrowIsNotAssignableException<T, TimeSpan, T?>();
 		}
 
 		internal override T? GetMax<T>() {
@@ -178,7 +190,7 @@ internal static class Attributes {
 				return (MaxValue == TimeSpan.MaxValue) ? null : (T)(object)MaxValue;
 			}
 
-			throw new InvalidCastException($"{typeof(T)} is not assignable from {typeof(TimeSpan)}");
+			return ThrowIsNotAssignableException<T, TimeSpan, T?>();
 		}
 
 		internal override T? GetMin<T>(Type type) {
@@ -186,7 +198,7 @@ internal static class Attributes {
 				return (MinValue == TimeSpan.MinValue) ? null : (T)Convert.ChangeType(Convert.ChangeType(MinValue, type), typeof(T));
 			}
 
-			throw new InvalidCastException($"{typeof(T)} is not assignable from {typeof(TimeSpan)}");
+			return ThrowIsNotAssignableException<T, TimeSpan, T?>();
 		}
 
 		internal override T? GetMax<T>(Type type) {
@@ -194,7 +206,7 @@ internal static class Attributes {
 				return (MaxValue == TimeSpan.MaxValue) ? null : (T)Convert.ChangeType(Convert.ChangeType(MaxValue, type), typeof(T));
 			}
 
-			throw new InvalidCastException($"{typeof(T)} is not assignable from {typeof(TimeSpan)}");
+			return ThrowIsNotAssignableException<T, TimeSpan, T?>();
 		}
 
 		internal LimitsTimeSpanAttribute(long min = long.MinValue, long max = long.MaxValue) {

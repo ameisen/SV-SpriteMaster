@@ -8,6 +8,7 @@ using SpriteMaster.Types;
 using SpriteMaster.Types.Interlocking;
 using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace SpriteMaster;
@@ -86,7 +87,7 @@ internal sealed class SpriteInfo : IDisposable {
 		var actualWidth = format.SizeBytes(bounds.Extent.X);
 
 		try {
-			var spriteData = new Span2D<byte>(
+			var spriteData = new ReadOnlySpan2D<byte>(
 				array: data,
 				offset: rawOffset,
 				width: actualWidth,
@@ -101,7 +102,7 @@ internal sealed class SpriteInfo : IDisposable {
 			meta.SetSpriteHash(bounds, hash);
 			return hash;
 		}
-		catch (ArgumentOutOfRangeException) {
+		catch (ArgumentOutOfRangeException ex) {
 			var errorBuilder = new StringBuilder();
 			errorBuilder.AppendLine("SpriteInfo.ReferenceData: arguments out of range");
 			errorBuilder.AppendLine($"Reference: {reference.NormalizedName()}");
@@ -112,16 +113,18 @@ internal sealed class SpriteInfo : IDisposable {
 			errorBuilder.AppendLine($"Format: {format}");
 			errorBuilder.AppendLine($"pitch: {rawStride - actualWidth}");
 			errorBuilder.AppendLine($"referenceDataSize: {data.Length}");
-			Debug.Error(errorBuilder.ToString());
+			Debug.Error(ex, errorBuilder.ToString());
 		}
 		return null;
 	}
+
+
 
 	private InterlockedULong HashInternal = 0;
 	internal ulong Hash {
 		get {
 			if (ReferenceDataInternal is null) {
-				throw new NullReferenceException(nameof(ReferenceDataInternal));
+				return ThrowHelper.ThrowNullReferenceException<ulong>(nameof(ReferenceDataInternal));
 			}
 
 			ulong hash = HashInternal;
@@ -154,6 +157,7 @@ internal sealed class SpriteInfo : IDisposable {
 	internal static bool IsCached(XTexture2D reference) =>
 		reference.Meta().CachedDataNonBlocking is not null;
 
+	[StructLayout(LayoutKind.Auto)]
 	internal readonly ref struct Initializer {
 		internal readonly Bounds Bounds;
 		internal readonly byte[]? ReferenceData;
@@ -161,6 +165,7 @@ internal sealed class SpriteInfo : IDisposable {
 		internal readonly BlendState BlendState;
 		internal readonly SamplerState SamplerState;
 		internal readonly ulong? Hash;
+		internal readonly ulong? DataHash;
 		internal readonly uint ExpectedScale;
 		internal readonly TextureType TextureType;
 		internal readonly Resample.Scaler Scaler;
@@ -212,14 +217,15 @@ internal sealed class SpriteInfo : IDisposable {
 			ReferenceData = refData;
 
 			Hash = null;
+			DataHash = null;
 			if (Config.SuspendedCache.Enabled && animated) {
-				Hash = GetHash();
+				(Hash, DataHash) = GetHash();
 			}
 		}
 
-		private ulong? GetHash() {
+		private readonly (ulong? SpriteHash, ulong? DataHash) GetHash() {
 			if (ReferenceData is null) {
-				return null;
+				return (null, null);
 			}
 
 			var format = Reference.Format.IsCompressed() ? SurfaceFormat.Color : Reference.Format;
@@ -232,7 +238,7 @@ internal sealed class SpriteInfo : IDisposable {
 			var dataHash = GetDataHash(ReferenceData, Reference, Bounds, rawOffset, rawStride);
 
 			if (dataHash is null) {
-				return null;
+				return (null, null);
 			}
 
 			var result = HashUtility.Combine(
@@ -246,7 +252,7 @@ internal sealed class SpriteInfo : IDisposable {
 				Scaler.GetLongHashCode(),
 				ScalerGradient.GetLongHashCode()
 			);
-			return result;
+			return (result, dataHash);
 		}
 	}
 
@@ -265,7 +271,8 @@ internal sealed class SpriteInfo : IDisposable {
 		ScalerGradient = initializer.ScalerGradient;
 
 		if (ReferenceData is null) {
-			throw new ArgumentNullException(nameof(initializer.ReferenceData));
+			ThrowHelper.ThrowArgumentNullException(nameof(initializer.ReferenceData));
+			return;
 		}
 
 		BlendEnabled = initializer.BlendState.AlphaSourceBlend != Blend.One;
@@ -277,6 +284,9 @@ internal sealed class SpriteInfo : IDisposable {
 		IsWater = TextureType == TextureType.Sprite && SpriteOverrides.IsWater(Bounds, Reference);
 		IsFont = !IsWater && TextureType == TextureType.Sprite && SpriteOverrides.IsFont(Reference, Bounds.Extent, ReferenceSize);
 
+		if (initializer.DataHash.HasValue) {
+			SpriteDataHashInternal = initializer.DataHash.Value;
+		}
 		if (initializer.Hash.HasValue) {
 			HashInternal = initializer.Hash.Value;
 		}

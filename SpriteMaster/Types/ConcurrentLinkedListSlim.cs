@@ -247,7 +247,7 @@ internal sealed class ConcurrentLinkedListSlim<T> {
 		}
 	}
 
-	[Conditional("DEBUG"), Conditional("DEVELOPMENT")]
+	[Conditional("DEBUG")]
 	private void CheckNode(NodeRef nodeRef) {
 		try {
 			nodeRef.Index.AssertPositiveOrZero(
@@ -260,7 +260,7 @@ internal sealed class ConcurrentLinkedListSlim<T> {
 		}
 	}
 
-	[Conditional("DEBUG"), Conditional("DEVELOPMENT")]
+	[Conditional("DEBUG")]
 	private void ValidateDebug() {
 		try {
 			Count.AssertPositiveOrZero();

@@ -69,7 +69,7 @@ internal static class PTexture2D {
 #else
 		var byteData = Cacheable(texture) ? data : default;
 
-		var span = byteData.IsEmpty ? default : byteData.Slice(startIndex, elementCount).AsBytes();
+		var span = byteData.IsEmpty ? default : byteData.SliceUnsafe(startIndex, elementCount).AsBytes();
 
 		ManagedSpriteInstance.Purge(
 			reference: texture,
@@ -112,7 +112,7 @@ internal static class PTexture2D {
 				);
 
 				for (int y = 0; y < rect.Height; ++y) {
-					var inSpanRow = inSpan.Slice(inOffset, inRowLength);
+					var inSpanRow = inSpan.SliceUnsafe(inOffset, inRowLength);
 					var cachedSpanRow = cachedSpan.GetRowSpan(y);
 					if (!inSpanRow.SequenceEqual(cachedSpanRow)) {
 						return true;
@@ -200,6 +200,11 @@ internal static class PTexture2D {
 		return true;
 	}
 
+	[DoesNotReturn]
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	private static Span<T> ThrowArgumentOutOfRangeLessThanException<T>(string name, int value, int constraint) =>
+		throw new ArgumentOutOfRangeException(name, $"{value} < {constraint}");
+
 	internal static unsafe Span<T> GetCachedData<T>(
 		XTexture2D __instance,
 		int level,
@@ -225,7 +230,7 @@ internal static class PTexture2D {
 				int numElements = elementCount ?? __instance.Format.SizeBytes(rect.Area) / sizeof(T);
 
 				if (cachedSourceData.Length < numElements * sizeof(T)) {
-					throw new ArgumentException($"{cachedSourceData.Length} < {numElements * sizeof(T)}", nameof(numElements));
+					return ThrowArgumentOutOfRangeLessThanException<T>(nameof(numElements), cachedSourceData.Length, numElements * sizeof(T));
 				}
 
 				if (data.IsEmpty && startIndex == 0) {
@@ -233,13 +238,13 @@ internal static class PTexture2D {
 				}
 
 				if (data.Length < numElements + startIndex) {
-					throw new ArgumentException($"{data.Length} < {numElements + startIndex}", nameof(data));
+					return ThrowArgumentOutOfRangeLessThanException<T>(nameof(data), data.Length, numElements + startIndex);
 				}
 
 				if (rect == __instance.Bounds) {
 					ReadOnlySpan<byte> sourceBytes = cachedSourceData;
 					var source = sourceBytes.Cast<T>();
-					source.CopyTo(data, 0, startIndex, numElements);
+					source.CopyToUnsafe(data, 0, startIndex, numElements);
 
 					return data;
 				}
@@ -252,7 +257,7 @@ internal static class PTexture2D {
 					int sourceOffset = (rect.Top * sourceStride) + rect.Left;
 					int destOffset = startIndex;
 					for (int y = 0; y < rect.Height; ++y) {
-						cachedData.Slice(sourceOffset, destStride).CopyTo(destData.Slice(destOffset, destStride));
+						cachedData.SliceUnsafe(sourceOffset, destStride).CopyToUnsafe(destData.SliceUnsafe(destOffset, destStride));
 						sourceOffset += sourceStride;
 						destOffset += destStride;
 					}

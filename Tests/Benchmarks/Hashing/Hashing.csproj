@@ -27,6 +27,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="LinqFasterer" Version="2.1.0" />
     <PackageReference Include="Microsoft.Toolkit.HighPerformance" Version="7.1.2" />
     <PackageReference Include="murmurhash" Version="1.0.3" />
     <PackageReference Include="System.Data.HashFunction.CityHash" Version="2.0.0" />
@@ -41,5 +42,11 @@
 
 	<ItemGroup>
 		<Publicize Include="System.Provide.CoreLib" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Reference Include="MonoGame.Framework">
+	    <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Stardew Valley\MonoGame.Framework.dll</HintPath>
+	  </Reference>
 	</ItemGroup>
 </Project>

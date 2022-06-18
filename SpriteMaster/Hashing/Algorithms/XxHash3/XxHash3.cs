@@ -24,6 +24,26 @@ internal static unsafe partial class XxHash3 {
 
 	[Pure]
 	[MethodImpl(Inline)]
+	private static ReadOnlySpan2D<TTo> UnsafeCast<TFrom, TTo>(this ReadOnlySpan2D<TFrom> span)
+		where TFrom : unmanaged where TTo : unmanaged {
+		(sizeof(TFrom) & (sizeof(TTo) - 1)).AssertZero();
+
+		int widthBytes = span.Width * sizeof(TFrom);
+		ref TFrom r0 = ref span.DangerousGetReference();
+		ref TFrom r1 = ref span.DangerousGetReferenceAt(1, 0);
+		nint offset = Unsafe.ByteOffset(ref r0, ref r1);
+		int pitch = (int)((offset - widthBytes) / sizeof(TTo));
+
+		return ReadOnlySpan2D<TTo>.DangerousCreate(
+			in Unsafe.As<TFrom, TTo>(ref r0),
+			span.Height,
+			widthBytes / sizeof(TTo),
+			pitch
+		);
+	}
+
+	[Pure]
+	[MethodImpl(Inline)]
 	internal static ulong Hash64<T>(ReadOnlySpan2D<T> data) where T : unmanaged {
 		if (data.TryGetSpan(out var span)) {
 			return Hash64(span.AsBytes());
@@ -31,14 +51,7 @@ internal static unsafe partial class XxHash3 {
 
 		// TODO : there must be a better way to do this...
 
-		ref byte underlyingByte = ref Unsafe.AsRef<byte>(Unsafe.AsPointer(ref data.DangerousGetReference()));
-		int width = data.Width * sizeof(T);
-		var castSpan = Span2D<byte>.DangerousCreate(
-			value: ref underlyingByte,
-			height: data.Height,
-			width: width,
-			pitch: (Span2DReflect<T>.GetStride(data) * sizeof(T)) - width
-		);
+		var castSpan = data.UnsafeCast<T, byte>();
 		return Hash64(castSpan);
 	}
 
@@ -49,7 +62,9 @@ internal static unsafe partial class XxHash3 {
 			return Hash64(span);
 		}
 
-		return Hash64(new SegmentedSpan(data));
+		fixed (byte* _ = data) {
+			return Hash64(new SegmentedSpan(data));
+		}
 	}
 
 	[Pure]
@@ -181,7 +196,7 @@ internal static unsafe partial class XxHash3 {
 	[MethodImpl(Inline)]
 	private static ulong Hash0To16(SegmentedSpan data) {
 		Data16 localData = default;
-		data.Source.CopyTo(localData.Span);
+		data.CopyTo(localData.Span);
 		return Hash0To16(ref localData.Reference, data.Length);
 	}
 
@@ -223,20 +238,20 @@ internal static unsafe partial class XxHash3 {
 		if (length > 0x20) {
 			if (length > 0x40) {
 				if (length > 0x60) {
-					accumulator += Mix16(ref data.Slice(tempBuffer, 0x30, 16).AsRef(), SecretValues64.Secret60, SecretValues64.Secret68);
-					accumulator += Mix16(ref data.Slice(tempBuffer, length - 0x40, 16).AsRef(), SecretValues64.Secret70, SecretValues64.Secret78);
+					accumulator += Mix16(data.SlicePointer(tempBuffer, 0x30), SecretValues64.Secret60, SecretValues64.Secret68);
+					accumulator += Mix16(data.SlicePointer(tempBuffer, length - 0x40), SecretValues64.Secret70, SecretValues64.Secret78);
 				}
 
-				accumulator += Mix16(ref data.Slice(tempBuffer, 0x20, 16).AsRef(), SecretValues64.Secret40, SecretValues64.Secret48);
-				accumulator += Mix16(ref data.Slice(tempBuffer, length - 0x30, 16).AsRef(), SecretValues64.Secret50, SecretValues64.Secret58);
+				accumulator += Mix16(data.SlicePointer(tempBuffer, 0x20), SecretValues64.Secret40, SecretValues64.Secret48);
+				accumulator += Mix16(data.SlicePointer(tempBuffer, length - 0x30), SecretValues64.Secret50, SecretValues64.Secret58);
 			}
 
-			accumulator += Mix16(ref data.Slice(tempBuffer, 0x10, 16).AsRef(), SecretValues64.Secret20, SecretValues64.Secret28);
-			accumulator += Mix16(ref data.Slice(tempBuffer, length - 0x20, 16).AsRef(), SecretValues64.Secret30, SecretValues64.Secret38);
+			accumulator += Mix16(data.SlicePointer(tempBuffer, 0x10), SecretValues64.Secret20, SecretValues64.Secret28);
+			accumulator += Mix16(data.SlicePointer(tempBuffer, length - 0x20), SecretValues64.Secret30, SecretValues64.Secret38);
 		}
 
-		accumulator += Mix16(ref data.Slice(tempBuffer, 0, 16).AsRef(), SecretValues64.Secret00, SecretValues64.Secret08);
-		accumulator += Mix16(ref data.Slice(tempBuffer, length - 0x10, 16).AsRef(), SecretValues64.Secret10, SecretValues64.Secret18);
+		accumulator += Mix16(data.SlicePointer(tempBuffer, 0x00), SecretValues64.Secret00, SecretValues64.Secret08);
+		accumulator += Mix16(data.SlicePointer(tempBuffer, length - 0x10), SecretValues64.Secret10, SecretValues64.Secret18);
 
 		return Avalanche(accumulator);
 	}
@@ -263,16 +278,16 @@ internal static unsafe partial class XxHash3 {
 
 		accumulator = Avalanche(accumulator);
 
-		uint roundCount = (length / 0x10) - 8;
+		uint roundCount = (length / 0x10u) - 8u;
 		// min is 129, thus min roundCount is 8, max is 15
 		// the 8 are handled above.
 
-		var offsetData = data + 0x80;
+		var offsetData = data + 0x80u;
 		for (uint i = 0u; i < roundCount; ++i) {
-			accumulator += Mix16(offsetData + (0x10 * i), secret + (0x10 * i) + 3);
+			accumulator += Mix16(offsetData + (0x10u * i), secret + (0x10u * i) + 3u);
 		}
 
-		accumulator += Mix16(data + (length - 0x10), SecretValues64.Secret77, SecretValues64.Secret7F);
+		accumulator += Mix16(data + (length - 0x10u), SecretValues64.Secret77, SecretValues64.Secret7F);
 
 		return Avalanche(accumulator);
 	}
@@ -290,26 +305,26 @@ internal static unsafe partial class XxHash3 {
 
 		Span<byte> tempBuffer = stackalloc byte[16];
 
-		accumulator += Mix16(ref data.Slice(tempBuffer, 0x00, 16).AsRef(), SecretValues64.Secret00, SecretValues64.Secret08);
-		accumulator += Mix16(ref data.Slice(tempBuffer, 0x10, 16).AsRef(), SecretValues64.Secret10, SecretValues64.Secret18);
-		accumulator += Mix16(ref data.Slice(tempBuffer, 0x20, 16).AsRef(), SecretValues64.Secret20, SecretValues64.Secret28);
-		accumulator += Mix16(ref data.Slice(tempBuffer, 0x30, 16).AsRef(), SecretValues64.Secret30, SecretValues64.Secret38);
-		accumulator += Mix16(ref data.Slice(tempBuffer, 0x40, 16).AsRef(), SecretValues64.Secret40, SecretValues64.Secret48);
-		accumulator += Mix16(ref data.Slice(tempBuffer, 0x50, 16).AsRef(), SecretValues64.Secret50, SecretValues64.Secret58);
-		accumulator += Mix16(ref data.Slice(tempBuffer, 0x60, 16).AsRef(), SecretValues64.Secret60, SecretValues64.Secret68);
-		accumulator += Mix16(ref data.Slice(tempBuffer, 0x70, 16).AsRef(), SecretValues64.Secret70, SecretValues64.Secret78);
+		accumulator += Mix16(data.SlicePointer(tempBuffer, 0x00), SecretValues64.Secret00, SecretValues64.Secret08);
+		accumulator += Mix16(data.SlicePointer(tempBuffer, 0x10), SecretValues64.Secret10, SecretValues64.Secret18);
+		accumulator += Mix16(data.SlicePointer(tempBuffer, 0x20), SecretValues64.Secret20, SecretValues64.Secret28);
+		accumulator += Mix16(data.SlicePointer(tempBuffer, 0x30), SecretValues64.Secret30, SecretValues64.Secret38);
+		accumulator += Mix16(data.SlicePointer(tempBuffer, 0x40), SecretValues64.Secret40, SecretValues64.Secret48);
+		accumulator += Mix16(data.SlicePointer(tempBuffer, 0x50), SecretValues64.Secret50, SecretValues64.Secret58);
+		accumulator += Mix16(data.SlicePointer(tempBuffer, 0x60), SecretValues64.Secret60, SecretValues64.Secret68);
+		accumulator += Mix16(data.SlicePointer(tempBuffer, 0x70), SecretValues64.Secret70, SecretValues64.Secret78);
 
 		accumulator = Avalanche(accumulator);
 
-		uint roundCount = (length / 0x10) - 8;
+		uint roundCount = (length / 0x10u) - 8u;
 		// min is 129, thus min roundCount is 8, max is 15
 		// the 8 are handled above.
 
 		for (uint i = 0u; i < roundCount; ++i) {
-			accumulator += Mix16(ref data.Slice(tempBuffer, 0x80 + (0x10 * i), 16).AsRef(), secret + (0x10 * i) + 3);
+			accumulator += Mix16(data.SlicePointer(tempBuffer, 0x80u + (0x10u * i), 16u), secret + (0x10u * i) + 3u);
 		}
 
-		accumulator += Mix16(ref data.Slice(tempBuffer, length - 0x10, 16).AsRef(), SecretValues64.Secret77, SecretValues64.Secret7F);
+		accumulator += Mix16(data.SlicePointer(tempBuffer, length - 0x10u, 16u), SecretValues64.Secret77, SecretValues64.Secret7F);
 
 		return Avalanche(accumulator);
 	}
@@ -481,7 +496,7 @@ internal static unsafe partial class XxHash3 {
 
 		// TODO : should do this faster, but we only run on systems that support SIMD...
 		Span<byte> tempData = SpanExt.Make<byte>((int)length);
-		data.Source.CopyTo(tempData);
+		data.CopyTo(tempData);
 
 		fixed (byte* ptr = tempData) {
 			return HashLong(ptr, length);
@@ -492,54 +507,24 @@ internal static unsafe partial class XxHash3 {
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	private static ulong HashLongFixed(byte* data, uint length) {
 		if (Avx2.IsSupported && UseAVX2) {
-			return HashLongAvx2(data, length);
+			return Avx2Impl.HashLong(data, length);
 		}
 
 		(Sse2.IsSupported && UseSSE2).AssertTrue();
 
-		return HashLongSse2(data, length);
+		return Sse2Impl.HashLong(data, length);
 	}
 
 	[Pure]
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	private static ulong HashLongFixed(SegmentedSpan data, uint length) {
 		if (Avx2.IsSupported && UseAVX2) {
-			return HashLongAvx2(data, length);
+			return Avx2Impl.HashLong(data, length);
 		}
 
 		(Sse2.IsSupported && UseSSE2).AssertTrue();
 
-		return HashLongSse2(data, length);
-	}
-
-	[MethodImpl(Inline)]
-	private static void StripeCopyTo64(this ReadOnlySpan<byte> source, Span<byte> destination) {
-		if (Avx2.IsSupported && UseAVX2) {
-			StripeCopyTo64Avx2(source, destination);
-			return;
-		}
-
-		if (Sse2.IsSupported && UseSSE2) {
-			StripeCopyTo64Sse2(source, destination);
-			return;
-		}
-
-		StripeCopyTo64Scalar(source, destination);
-	}
-
-	[MethodImpl(Inline)]
-	private static void StripeCopyTo128(this ReadOnlySpan<byte> source, Span<byte> destination) {
-		if (Avx2.IsSupported && UseAVX2) {
-			StripeCopyTo128Avx2(source, destination);
-			return;
-		}
-
-		if (Sse2.IsSupported && UseSSE2) {
-			StripeCopyTo128Sse2(source, destination);
-			return;
-		}
-
-		StripeCopyTo128Scalar(source, destination);
+		return Sse2Impl.HashLong(data, length);
 	}
 
 	[Pure]
@@ -712,16 +697,16 @@ internal static unsafe partial class XxHash3 {
 				PrefetchNonTemporalNext(data + (i * StripeLength) + 0x280);
 				PrefetchNonTemporalNext(data + (i * StripeLength) + 0x200);
 				PrefetchNonTemporalNext(data + (i * StripeLength) + 0x280);
-				Accumulate1024Avx2(accumulator, data + ((i + 0) * StripeLength), secret + ((i + 0) * 8u));
-				Accumulate1024Avx2(accumulator, data + ((i + 2) * StripeLength), secret + ((i + 2) * 8u));
-				Accumulate1024Avx2(accumulator, data + ((i + 4) * StripeLength), secret + ((i + 4) * 8u));
-				Accumulate1024Avx2(accumulator, data + ((i + 6) * StripeLength), secret + ((i + 6) * 8u));
+				Avx2Impl.Accumulate1024(accumulator, data + ((i + 0) * StripeLength), secret + ((i + 0) * 8u));
+				Avx2Impl.Accumulate1024(accumulator, data + ((i + 2) * StripeLength), secret + ((i + 2) * 8u));
+				Avx2Impl.Accumulate1024(accumulator, data + ((i + 4) * StripeLength), secret + ((i + 4) * 8u));
+				Avx2Impl.Accumulate1024(accumulator, data + ((i + 6) * StripeLength), secret + ((i + 6) * 8u));
 			}
 
 			for (; i + 1u < stripeCount; i += 2u) {
 				PrefetchNonTemporalNext(data + (i * StripeLength) + 0x040);
 				PrefetchNonTemporalNext(data + (i * StripeLength) + 0x080);
-				Accumulate1024Avx2(accumulator, data + (i * StripeLength), secret + (i * 8u));
+				Avx2Impl.Accumulate1024(accumulator, data + (i * StripeLength), secret + (i * 8u));
 			}
 		}
 		for (; i < stripeCount; ++i) {
@@ -734,16 +719,16 @@ internal static unsafe partial class XxHash3 {
 	[MethodImpl(Inline)]
 	private static void Accumulate512(ulong* accumulator, byte* data, byte* secret) {
 		if (Avx2.IsSupported && UseAVX2) {
-			Accumulate512Avx2(accumulator, data, secret);
+			Avx2Impl.Accumulate512(accumulator, data, secret);
 		}
 		else if (Sse2.IsSupported && UseSSE2) {
-			Accumulate512Sse2(accumulator, data, secret);
+			Sse2Impl.Accumulate512(accumulator, data, secret);
 		}
 		else if (AdvSimd.IsSupported) {
-			Accumulate512Neon(accumulator, data, secret);
+			NeonImpl.Accumulate512(accumulator, data, secret);
 		}
 		else {
-			Accumulate512Scalar(accumulator, data, secret);
+			ScalarImpl.Accumulate512(accumulator, data, secret);
 		}
 	}
 
@@ -751,16 +736,16 @@ internal static unsafe partial class XxHash3 {
 	[MethodImpl(Inline)]
 	private static void ScrambleAccumulator(ulong* accumulator, byte* secret) {
 		if (Avx2.IsSupported && UseAVX2) {
-			ScrambleAccumulatorAvx2(accumulator, secret);
+			Avx2Impl.ScrambleAccumulator(accumulator, secret);
 		}
 		else if (Sse2.IsSupported && UseSSE2) {
-			ScrambleAccumulatorSse2(accumulator, secret);
+			Sse2Impl.ScrambleAccumulator(accumulator, secret);
 		}
 		else if (AdvSimd.IsSupported) {
-			ScrambleAccumulatorNeon(accumulator, secret);
+			NeonImpl.ScrambleAccumulator(accumulator, secret);
 		}
 		else {
-			ScrambleAccumulatorScalar(accumulator, secret);
+			ScalarImpl.ScrambleAccumulator(accumulator, secret);
 		}
 	}
 

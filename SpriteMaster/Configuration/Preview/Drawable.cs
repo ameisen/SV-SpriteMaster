@@ -1,9 +1,11 @@
 ﻿using SpriteMaster.Hashing;
 using SpriteMaster.Types;
 using System;
+using System.Runtime.InteropServices;
 
 namespace SpriteMaster.Configuration.Preview;
 
+[StructLayout(LayoutKind.Auto)]
 internal readonly struct Drawable {
 	private readonly XTexture2D? Texture = null;
 	private readonly Bounds? Source = null;
@@ -125,6 +127,7 @@ internal readonly struct Drawable {
 	);
 }
 
+[StructLayout(LayoutKind.Auto)]
 internal readonly struct DrawableInstance {
 	private readonly Drawable Drawable;
 	private readonly Vector2I Location;

@@ -86,7 +86,7 @@ internal static partial class SystemInfo {
 		byte ExtendedModelId,
 		byte ExtendedFamilyId
 	) {
-		internal readonly Identifier Identifier = new(ExtendedFamilyId, FamilyId, ExtendedModelId, ModelId, Stepping);
+		internal readonly Identifier Identifier => new(ExtendedFamilyId, FamilyId, ExtendedModelId, ModelId, Stepping);
 
 		internal readonly byte Family => (byte)(ExtendedFamilyId << 4 | FamilyId);
 		internal readonly byte Model => (byte)(ExtendedModelId << 4 | ModelId);

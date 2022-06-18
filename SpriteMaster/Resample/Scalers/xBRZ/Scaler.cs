@@ -108,7 +108,7 @@ internal sealed partial class Scaler {
 			y < blockSize;
 			++y, targetOffset += pitch
 		) {
-			target.Slice(targetOffset, blockSize).Fill(color);
+			target.SliceUnsafe(targetOffset, blockSize).Fill(color);
 		}
 	}
 
@@ -172,7 +172,7 @@ internal sealed partial class Scaler {
 				color32.B /= blockSizeSq;
 				color32.A /= blockSizeSq;
 
-				target.Slice(targetOffset, blockSize)[x] = new((ushort)color32.R, (ushort)color32.G, (ushort)color32.B, (ushort)color32.A);
+				target.SliceUnsafe(targetOffset, blockSize)[x] = new((ushort)color32.R, (ushort)color32.G, (ushort)color32.B, (ushort)color32.A);
 			}
 		}
 	}

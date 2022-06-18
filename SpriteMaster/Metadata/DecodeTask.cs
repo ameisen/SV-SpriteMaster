@@ -1,6 +1,8 @@
 ﻿using SpriteMaster.Metadata;
 using SpriteMaster.Tasking;
 using System;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace SpriteMaster.Resample;
@@ -9,6 +11,11 @@ internal static class DecodeTask {
 	private static readonly TaskFactory Factory = new(ThreadedTaskScheduler.Instance);
 
 	private static void Decode(object? metadata) => DecodeFunction(metadata! as Texture2DMeta);
+
+	[DoesNotReturn]
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	private static void ThrowDecompressionFailureException() =>
+		throw new InvalidOperationException("Compressed data failed to decompress");
 
 	private static void DecodeFunction(Texture2DMeta? metadata) {
 		if (metadata is null) {
@@ -22,7 +29,8 @@ internal static class DecodeTask {
 
 		var uncompressedData = TextureDecode.DecodeBlockCompressedTexture(metadata.Format, metadata.Size, rawData);
 		if (uncompressedData.IsEmpty) {
-			throw new InvalidOperationException("Compressed data failed to decompress");
+			ThrowDecompressionFailureException();
+			return;
 		}
 		metadata.SetCachedDataUnsafe(uncompressedData);
 	}

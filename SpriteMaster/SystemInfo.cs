@@ -4,6 +4,9 @@ using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using SpriteMaster.GL;
 using System;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics.X86;
 using System.Text;
 
@@ -19,6 +22,7 @@ internal static partial class SystemInfo {
 			ATI,
 		}
 
+		[StructLayout(LayoutKind.Auto)]
 		private readonly struct Pattern {
 			internal readonly Vendors Vendor;
 			internal readonly string[] Tokens;
@@ -83,9 +87,24 @@ internal static partial class SystemInfo {
 				DedicatedMemory = null;
 				TotalMemory = null;
 
-				if (ParsePattern(Patterns.Intel)) {
+				bool hasNvidiaExtension = false;
+				bool hasAtiExtension = false;
+				foreach (var extension in MonoGame.OpenGL.GL.Extensions) {
+					switch (extension) {
+						case "GL_NVX_gpu_memory_info":
+							hasNvidiaExtension = true;
+							break;
+						case "GL_ATI_meminfo":
+							hasAtiExtension = true;
+							break;
+					}
+
+					if (hasNvidiaExtension && hasAtiExtension) {
+						break;
+					}
 				}
-				else if (ParsePattern(Patterns.Nvidia)) {
+
+				if ((!DedicatedMemory.HasValue || !TotalMemory.HasValue) && hasNvidiaExtension) {
 					const int DedicatedVidMemNvx = 0x9047;
 					const int TotalAvailableMemoryNvx = 0x9048;
 
@@ -130,10 +149,42 @@ internal static partial class SystemInfo {
 						}
 					}
 				}
-				else if (ParsePattern(Patterns.AMD)) {
+				if ((!DedicatedMemory.HasValue || !TotalMemory.HasValue) && hasAtiExtension) {
 					// https://www.khronos.org/registry/OpenGL/extensions/ATI/ATI_meminfo.txt
+					const int VboFreeMemoryAti = 0x87FB;
+					const int TextureFreeMemoryAti = 0x87FC;
+					const int RenderBufferFreeMemoryAti = 0x87FD;
+
+					unsafe {
+						try {
+							if (GLExt.GetInteger64v is not null) {
+								Span<long> result = stackalloc long[4];
+								GLExt.GetInteger64v(TextureFreeMemoryAti, (long*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(result)));
+								if (MonoGame.OpenGL.GL.GetError() == MonoGame.OpenGL.ErrorCode.NoError) {
+									TotalMemory = DedicatedMemory = (ulong)(result[0] * 1024);
+								}
+							}
+							else {
+								Span<int> result = stackalloc int[4];
+								MonoGame.OpenGL.GL.GetIntegerv(TextureFreeMemoryAti, (int*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(result)));
+								if (MonoGame.OpenGL.GL.GetError() == MonoGame.OpenGL.ErrorCode.NoError) {
+									TotalMemory = DedicatedMemory = (ulong)result[0] * 1024;
+								}
+							}
+						}
+						catch {
+							// ignored
+						}
+					}
 				}
-				else {
+
+				if (
+					!(
+						ParsePattern(Patterns.Intel) ||
+						ParsePattern(Patterns.Nvidia) ||
+						ParsePattern(Patterns.AMD)
+					)
+				) {
 					// I have no idea
 					Vendor = Vendors.Unknown;
 					VendorName = vendor.Split(null, 2).FirstF();

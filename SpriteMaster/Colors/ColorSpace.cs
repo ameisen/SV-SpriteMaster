@@ -3,9 +3,11 @@ using SpriteMaster.Types;
 using SpriteMaster.Types.Fixed;
 using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace SpriteMaster.Colors;
 
+[StructLayout(LayoutKind.Auto)]
 internal readonly struct ColorSpace {
 	internal readonly struct Double3 {
 		internal readonly double R;

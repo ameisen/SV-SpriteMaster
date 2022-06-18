@@ -3,6 +3,7 @@ using SpriteMaster.Types;
 using SpriteMaster.Types.Fixed;
 using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace SpriteMaster.Colors;
 
@@ -258,6 +259,7 @@ internal static class ColorHelpers {
 		}
 	}
 
+	[StructLayout(LayoutKind.Auto)]
 	internal readonly struct YccConfig {
 		internal double LuminanceWeight { get; init; }
 		internal double ChrominanceWeight { get; init; }

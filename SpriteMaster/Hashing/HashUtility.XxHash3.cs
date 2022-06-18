@@ -28,17 +28,12 @@ internal static partial class HashUtility {
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	internal static ulong HashXx3(this Span2D<byte> data) {
-		if (data.Height == 0) {
-			return Constants.Bits64.Default;
-		}
+	internal static ulong HashXx3(this Span2D<byte> data) =>
+		XxHash3.Hash64(data);
 
-		ulong currentHash = data.GetRowSpan(0).HashXx3();
-		for (int i = 1; i < data.Height; ++i) {
-			currentHash = Combine(currentHash, data.GetRowSpan(i).HashXx3());
-		}
-		return currentHash;
-	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static ulong HashXx3(this ReadOnlySpan2D<byte> data) =>
+		XxHash3.Hash64(data);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static ulong HashXx3(this ReadOnlySpan<byte> data) =>

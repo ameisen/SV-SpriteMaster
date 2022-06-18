@@ -118,7 +118,7 @@ internal struct InterlockedBool :
 	public readonly int CompareTo(object? other) => other switch {
 		InterlockedBool interlockedBool => CompareTo(interlockedBool),
 		bool boolValue => CompareTo(boolValue),
-		_ => throw new ArgumentException(other?.GetType().FullName ?? "<null>", nameof(other))
+		_ => ThrowHelper.ThrowArgumentException<int>(other?.GetType().FullName ?? "<null>", nameof(other))
 	};
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]

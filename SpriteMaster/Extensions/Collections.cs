@@ -5,6 +5,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using static SpriteMaster.Runtime;
 
@@ -187,9 +188,15 @@ internal static class Collections {
 	#endregion
 
 	#region TryAt
+
+	[DoesNotReturn]
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	private static T ThrowIndexLessThanZeroException<T, U>(string name, int value, out U? item) =>
+		throw new ArgumentOutOfRangeException(name, $"{value} is less than zero");
+
 	internal static bool TryAt<T>(this List<T> list, int index, out T? item) {
 		if (index < 0) {
-			throw new ArgumentOutOfRangeException(nameof(index), $"{index} is less than zero");
+			return ThrowIndexLessThanZeroException<bool, T>(nameof(index), index, out item);
 		}
 		if (index >= list.Count) {
 			item = default(T);
@@ -202,7 +209,7 @@ internal static class Collections {
 
 	internal static bool TryAt<T>(this IReadOnlyList<T> list, int index, out T? item) {
 		if (index < 0) {
-			throw new ArgumentOutOfRangeException(nameof(index), $"{index} is less than zero");
+			return ThrowIndexLessThanZeroException<bool, T>(nameof(index), index, out item); ;
 		}
 		if (index >= list.Count) {
 			item = default(T);
@@ -215,7 +222,7 @@ internal static class Collections {
 
 	internal static bool TryAt<T>(this T[] array, int index, out T? item) {
 		if (index < 0) {
-			throw new ArgumentOutOfRangeException(nameof(index), $"{index} is less than zero");
+			return ThrowIndexLessThanZeroException<bool, T>(nameof(index), index, out item);
 		}
 		if (index >= array.Length) {
 			item = default(T);

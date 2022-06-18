@@ -2,10 +2,12 @@
 using StardewValley;
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using static SpriteMaster.Harmonize.Patches.Game.Snow;
 
 namespace SpriteMaster.Configuration.Preview;
 
+[StructLayout(LayoutKind.Auto)]
 internal readonly struct WeatherState : IDisposable {
 	// SDV
 	internal List<WeatherDebris>? DebrisWeather { get; init; }

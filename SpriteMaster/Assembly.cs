@@ -14,6 +14,7 @@ global using half = System.Half;
 global using XTilePoint = xTile.Dimensions.Location;
 global using XTileRectangle = xTile.Dimensions.Rectangle;
 global using XTileSize = xTile.Dimensions.Size;
+global using PureAttribute = System.Diagnostics.Contracts.PureAttribute;
 using System;
 using System.Runtime.CompilerServices;
 using System.Security;
@@ -26,7 +27,7 @@ using System.Security;
 [assembly: InternalsVisibleTo("xBRZ")]
 [assembly: InternalsVisibleTo("Hashing")]
 [assembly: SecurityRules(SecurityRuleSet.Level2, SkipVerificationInFullTrust = true)]
-[assembly: ChangeList("901ce11:0.14.1-alpha.3-6-g901ce11")]
+[assembly: ChangeList("7c7f787:0.14.1-alpha.3-7-g7c7f787")]
 [assembly: BuildComputerName("Palatinate")]
 [assembly: FullVersion("0.14.1.3-alpha.3")]
 // [assembly: SuppressUnmanagedCodeSecurity]

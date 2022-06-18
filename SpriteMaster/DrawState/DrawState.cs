@@ -112,7 +112,7 @@ internal static partial class DrawState {
 		}
 
 		if (TriggerCollection.GetAndClear()) {
-			ManagedSpriteInstance.PurgeTextures((Config.Garbage.RequiredFreeMemory * Config.Garbage.RequiredFreeMemoryHysteresis).NearestLong() * 1024 * 1024);
+			ManagedSpriteInstance.PurgeTextures((Config.Garbage.RequiredFreeMemorySoft * Config.Garbage.RequiredFreeMemoryHysteresis).NearestLong());
 			Garbage.Collect(compact: true, blocking: true, background: false);
 		}
 

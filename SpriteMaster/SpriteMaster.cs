@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -30,7 +31,7 @@ public sealed class SpriteMaster : Mod {
 	internal static string AssemblyPath => Self.Helper.DirectoryPath;
 	private const string ConfigName = "config.toml";
 
-	internal readonly MemoryMonitor MemoryMonitor;
+	internal readonly MemoryMonitor.Monitor MemoryMonitor;
 
 	[UsedImplicitly]
 	public SpriteMaster() {
@@ -304,6 +305,7 @@ public sealed class SpriteMaster : Mod {
 		}
 	}
 
+	[StructLayout(LayoutKind.Auto)]
 	private readonly struct WaitWrapper : IDisposable {
 		private readonly object Waiter;
 
@@ -324,7 +326,8 @@ public sealed class SpriteMaster : Mod {
 					condition.Wait();
 					break;
 				default:
-					throw new InvalidOperationException(Waiter.GetType().Name);
+					ThrowHelper.ThrowInvalidOperationException(Waiter.GetType().Name);
+					break;
 			}
 		}
 	}

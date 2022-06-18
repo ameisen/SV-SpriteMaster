@@ -8,11 +8,13 @@ using SpriteMaster.Types.Spans;
 using StardewModdingAPI;
 using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using static Microsoft.Xna.Framework.Graphics.Texture2D;
 
 namespace SpriteMaster.GL;
 
 internal static class Texture2DExt {
+	[StructLayout(LayoutKind.Auto)]
 	private readonly ref struct RebindTexture {
 		private readonly int? PreviousTexture = null;
 
@@ -359,7 +361,7 @@ internal static class Texture2DExt {
 								@this: @this,
 								level: level++,
 								rect: null,
-								data: data.IsEmpty ? default : data.Slice(currentOffset, levelSize),
+								data: data.IsEmpty ? default : data.SliceUnsafe(currentOffset, levelSize),
 								initialized: useStorage,
 								isSet: true
 							)) {
