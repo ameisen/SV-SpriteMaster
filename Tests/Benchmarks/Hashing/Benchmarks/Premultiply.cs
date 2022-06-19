@@ -170,7 +170,7 @@ public class Premultiply : BenchmarkBase<Premultiply.SpriteDataSet, SpriteData[]
 	[ArgumentsSource(nameof(DataSets), Priority = 0)]
 	public void Scalar(in SpriteDataSet dataSet) {
 		foreach (var data in dataSet.Data) {
-			SpriteMaster.Harmonize.Patches.FileCache.ProcessTextureScalar(data.Span.Cast<byte, Color8>());
+			SpriteMaster.Caching.TextureFileCache.ProcessTextureScalar(data.Span.Cast<byte, Color8>());
 		}
 	}
 
@@ -178,7 +178,7 @@ public class Premultiply : BenchmarkBase<Premultiply.SpriteDataSet, SpriteData[]
 	[ArgumentsSource(nameof(DataSets), Priority = 0)]
 	public void Sse2(in SpriteDataSet dataSet) {
 		foreach (var data in dataSet.Data) {
-			SpriteMaster.Harmonize.Patches.FileCache.ProcessTextureSse2(data.Span.Cast<byte, Color8>());
+			SpriteMaster.Caching.TextureFileCache.ProcessTextureSse2(data.Span.Cast<byte, Color8>());
 		}
 	}
 
@@ -186,7 +186,7 @@ public class Premultiply : BenchmarkBase<Premultiply.SpriteDataSet, SpriteData[]
 	[ArgumentsSource(nameof(DataSets), Priority = 0)]
 	public void Sse2Unrolled(in SpriteDataSet dataSet) {
 		foreach (var data in dataSet.Data) {
-			SpriteMaster.Harmonize.Patches.FileCache.ProcessTextureSse2Unrolled(data.Span.Cast<byte, Color8>());
+			SpriteMaster.Caching.TextureFileCache.ProcessTextureSse2Unrolled(data.Span.Cast<byte, Color8>());
 		}
 	}
 
@@ -194,7 +194,7 @@ public class Premultiply : BenchmarkBase<Premultiply.SpriteDataSet, SpriteData[]
 	[ArgumentsSource(nameof(DataSets), Priority = 0)]
 	public void Avx2(in SpriteDataSet dataSet) {
 		foreach (var data in dataSet.Data) {
-			SpriteMaster.Harmonize.Patches.FileCache.ProcessTextureAvx2(data.Span.Cast<byte, Color8>());
+			SpriteMaster.Caching.TextureFileCache.ProcessTextureAvx2(data.Span.Cast<byte, Color8>());
 		}
 	}
 
@@ -202,7 +202,7 @@ public class Premultiply : BenchmarkBase<Premultiply.SpriteDataSet, SpriteData[]
 	[ArgumentsSource(nameof(DataSets), Priority = 0)]
 	public void Avx2Unrolled(in SpriteDataSet dataSet) {
 		foreach (var data in dataSet.Data) {
-			SpriteMaster.Harmonize.Patches.FileCache.ProcessTextureAvx2Unrolled(data.Span.Cast<byte, Color8>());
+			SpriteMaster.Caching.TextureFileCache.ProcessTextureAvx2Unrolled(data.Span.Cast<byte, Color8>());
 		}
 	}
 }
