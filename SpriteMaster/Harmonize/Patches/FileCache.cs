@@ -1,17 +1,15 @@
-﻿using JetBrains.Annotations;
-using Microsoft.Xna.Framework.Graphics.PackedVector;
+﻿using Pastel;
 using SpriteMaster.Extensions;
-using SpriteMaster.Metadata;
 using SpriteMaster.Types;
-using SpriteMaster.Types.Fixed;
+using SpriteMaster.Types.MemoryCache;
 using StardewModdingAPI;
-using StbImageSharp;
 using System;
+using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 using static SpriteMaster.Harmonize.Harmonize;
 
@@ -92,6 +90,11 @@ internal static partial class FileCache {
 		}
 	}
 
+	private static readonly AbstractMemoryCache<string, XColor> Cache =
+		AbstractMemoryCache<string, XColor>.Create(name: "File Cache", compressed: true);
+
+	private static readonly ConcurrentDictionary<string, Vector2I> TextureInfoCache = new();
+
 	[HarmonizeSmapiVersionConditional(Comparator.GreaterThanOrEqual, "3.15.0")]
 	[Harmonize(
 		"StardewModdingAPI.Framework.ContentManagers.ModContentManager",
@@ -108,6 +111,23 @@ internal static partial class FileCache {
 		string path = file.FullName;
 		string resolvedPath = Path.GetFullPath(path);
 
+		if (TextureInfoCache.TryGetValue(resolvedPath, out var cachedSize)) {
+			if (Cache.TryGet(resolvedPath, out var cachedValue)) {
+				__result = new RawTextureData(
+					size: cachedSize,
+					cachedValue
+				);
+
+				if (cachedSize.Area != cachedValue.Length) {
+					Debugger.Break();
+				}
+
+				Debug.Trace($"Loading Texture '{resolvedPath}' from cache.".Pastel(DrawingColor.LightGreen));
+				return false;
+			}
+		}
+
+		Debug.Trace($"Loading Texture '{resolvedPath}' from file.");
 		var rawData = File.ReadAllBytes(resolvedPath);
 		try {
 			var imageResult = Stb.ImageResult.FromMemory(rawData, Stb.ColorComponents.RedGreenBlueAlpha.Value);
@@ -118,8 +138,12 @@ internal static partial class FileCache {
 				
 			XColor[] resultData = data.Convert<byte, XColor>();
 
+			Vector2I resultSize = (Stb.ImageResult.GetWidth(imageResult), Stb.ImageResult.GetHeight(imageResult));
+			TextureInfoCache.AddOrUpdate(resolvedPath, resultSize, (_, _) => resultSize);
+			Cache.Set(resolvedPath, resultData);
+
 			__result = new RawTextureData(
-				size: (Stb.ImageResult.GetWidth(imageResult), Stb.ImageResult.GetHeight(imageResult)),
+				size: resultSize,
 				resultData
 			);
 
@@ -138,7 +162,7 @@ internal static partial class FileCache {
 			ProcessTextureAvx2(data);
 		}
 		else if (Sse2.IsSupported) {
-			ProcessTextureSse2(data);
+			ProcessTextureSse2Unrolled(data);
 		}
 		else {
 			ProcessTextureScalar(data);

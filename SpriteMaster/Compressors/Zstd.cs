@@ -149,7 +149,7 @@ internal static class Zstd {
 		}
 
 		T[] result = GC.AllocateUninitializedArray<T>((int)capacityElements);
-		int length = encoder.Delegator.Wrap(data, result.AsSpan().AsBytes());
+		int length = AlignCount<T>(encoder.Delegator.Wrap(data, result.AsSpan().AsBytes()));
 		if (result.Length != length) {
 			Array.Resize(ref result, length);
 		}
@@ -179,7 +179,7 @@ internal static class Zstd {
 		int capacityElements = AlignCount<T>(size);
 
 		T[] result = GC.AllocateUninitializedArray<T>(capacityElements);
-		int length = decoder.Delegator.Unwrap(data, result.AsSpan().AsBytes());
+		int length = AlignCount<T>(decoder.Delegator.Unwrap(data, result.AsSpan().AsBytes()));
 		if (result.Length != length) {
 			Array.Resize(ref result, length);
 		}

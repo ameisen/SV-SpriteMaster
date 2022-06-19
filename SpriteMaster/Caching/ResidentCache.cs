@@ -38,6 +38,10 @@ internal static class ResidentCache {
 		Cache.Remove(key);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
+	internal static void RemoveFast(ulong key) =>
+		Cache.RemoveFast(key);
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static void Purge() {
 		Cache.Clear();
 	}

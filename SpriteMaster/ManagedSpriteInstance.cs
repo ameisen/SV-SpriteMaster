@@ -755,7 +755,7 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 		IsDisposed = true;
 
 		if (Suspended) {
-			SuspendedSpriteCache.Remove(this);
+			SuspendedSpriteCache.RemoveFast(this);
 			Suspended = false;
 		}
 
@@ -822,16 +822,16 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 		}
 
 		if (IsDisposed || !Suspended) {
-			SuspendedSpriteCache.Remove(this);
+			SuspendedSpriteCache.RemoveFast(this);
 			return false;
 		}
 
 		if (!IsReadyInternal || !Config.SuspendedCache.Enabled) {
-			SuspendedSpriteCache.Remove(this);
+			SuspendedSpriteCache.RemoveFast(this);
 			return false;
 		}
 
-		SuspendedSpriteCache.Remove(this);
+		SuspendedSpriteCache.RemoveFast(this);
 		Suspended = false;
 		Reference.SetTarget(texture);
 

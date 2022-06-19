@@ -60,6 +60,11 @@ internal class MemoryCache<TKey, TValue> : AbstractMemoryCache<TKey, TValue> whe
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
+	internal override void RemoveFast(TKey key) {
+		UnderlyingCache.RemoveFast(key);
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal override ReadOnlySpan<TValue> RemoveSpan(TKey key) {
 		return UnderlyingCache.Remove(key);
 	}

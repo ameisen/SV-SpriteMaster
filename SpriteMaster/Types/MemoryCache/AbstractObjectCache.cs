@@ -97,6 +97,9 @@ internal abstract class AbstractObjectCache<TKey, TValue> : SpriteMasterObject, 
 	internal abstract TValue? Remove(TKey key);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
+	internal abstract void RemoveFast(TKey key);
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal abstract void Trim(int count);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]

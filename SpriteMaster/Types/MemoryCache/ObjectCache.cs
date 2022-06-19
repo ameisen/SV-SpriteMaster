@@ -192,6 +192,23 @@ internal class ObjectCache<TKey, TValue> : AbstractObjectCache<TKey, TValue> whe
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
+	internal override void RemoveFast(TKey key) {
+		TValue? result = default;
+
+		using (CacheLock.Write) {
+			if (Cache.Remove(key, out var entry)) {
+				result = entry.Value;
+				Interlocked.Add(ref CurrentSize, -entry.Size);
+				RecentAccessList.Release(entry.Node);
+			}
+		}
+
+		if (result is not null) {
+			OnEntryRemoved(key, result, EvictionReason.Removed);
+		}
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal override void Trim(int count) {
 		count.AssertPositiveOrZero();
 

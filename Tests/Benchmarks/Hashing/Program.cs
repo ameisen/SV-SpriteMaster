@@ -92,9 +92,9 @@ public class Program {
 				.WithStrategy(coldStart ? RunStrategy.ColdStart : RunStrategy.Throughput);
 		}
 
-		if (typeof(TBenchmark) == typeof(Benchmarks.Premultiply)) {
-			job = job.WithMinIterationCount(60).WithMaxIterationCount(400);
-		}
+		//if (typeof(TBenchmark) == typeof(Benchmarks.Premultiply)) {
+		//	job = job.WithMinIterationCount(60).WithMaxIterationCount(400);
+		//}
 
 		string name = $"{gcType}.{runtime}.{(coldStart ? "cold" : "warm")}";
 

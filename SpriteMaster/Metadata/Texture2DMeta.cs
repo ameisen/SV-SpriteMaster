@@ -405,7 +405,7 @@ internal sealed class Texture2DMeta : IDisposable {
 					using (Lock.Write) {
 						CachedRawDataInternal.SetTarget(null!);
 						CachedDataInternal.SetTarget(null!);
-						ResidentCache.Remove(MetaId);
+						ResidentCache.RemoveFast(MetaId);
 					}
 				}
 				else {
@@ -501,7 +501,7 @@ internal sealed class Texture2DMeta : IDisposable {
 	}
 
 	internal static void Cleanup(in ulong id) {
-		ResidentCache.Remove(id);
+		ResidentCache.RemoveFast(id);
 		if (SpriteDictionaries.Remove(id, out var instances)) {
 			foreach (var instance in instances.Values) {
 				instance.Suspend();

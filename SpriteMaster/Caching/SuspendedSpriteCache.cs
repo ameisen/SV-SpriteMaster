@@ -93,7 +93,13 @@ internal static class SuspendedSpriteCache {
 		return element is not null;
 	}
 
+	internal static void RemoveFast(ulong hash) {
+		Cache.RemoveFast(hash);
+	}
+
 	internal static bool Remove(ManagedSpriteInstance instance) => Remove(instance.Hash);
+
+	internal static void RemoveFast(ManagedSpriteInstance instance) => RemoveFast(instance.Hash);
 
 	internal static void Purge() {
 		Cache.Clear();
