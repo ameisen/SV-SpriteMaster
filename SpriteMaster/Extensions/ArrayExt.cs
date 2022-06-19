@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 namespace SpriteMaster.Extensions;
 
 internal static class ArrayExt {
-	// https://qa.wujigu.com/qa/?qa=545248/c%23-unsafe-value-type-array-to-byte-array-conversions
+	// https://stackoverflow.com/a/3577227/5055153
 	[StructLayout(LayoutKind.Sequential, Pack = 1)]
 	private struct ArrayHeader {
 		public nuint Type;
