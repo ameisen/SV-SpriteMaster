@@ -1,7 +1,6 @@
 ﻿using SpriteMaster.Types;
 using System;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 
 namespace SpriteMaster;
 
@@ -135,6 +134,116 @@ internal static class Contracts {
 	}
 
 	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden]
+	internal static void AssertAligned(this nuint value, nuint alignment, string? message = null, Type? exception = null) {
+		AssertZero(
+			value % alignment,
+			message ?? $"Variable '{value}' is not aligned to '{alignment}'",
+			exception ?? typeof(ArgumentOutOfRangeException)
+		);
+	}
+
+	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden]
+	internal static void AssertAligned(this nint value, nint alignment, string? message = null, Type? exception = null) {
+		AssertZero(
+			value % alignment,
+			message ?? $"Variable '{value}' is not aligned to '{alignment}'",
+			exception ?? typeof(ArgumentOutOfRangeException)
+		);
+	}
+
+	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden]
+	internal static void AssertAligned(this byte value, byte alignment, string? message = null, Type? exception = null) {
+		AssertZero(
+			value % alignment,
+			message ?? $"Variable '{value}' is not aligned to '{alignment}'",
+			exception ?? typeof(ArgumentOutOfRangeException)
+		);
+	}
+
+	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden]
+	internal static void AssertAligned(this sbyte value, sbyte alignment, string? message = null, Type? exception = null) {
+		AssertZero(
+			value % alignment,
+			message ?? $"Variable '{value}' is not aligned to '{alignment}'",
+			exception ?? typeof(ArgumentOutOfRangeException)
+		);
+	}
+
+	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden]
+	internal static void AssertAligned(this short value, short alignment, string? message = null, Type? exception = null) {
+		AssertZero(
+			value % alignment,
+			message ?? $"Variable '{value}' is not aligned to '{alignment}'",
+			exception ?? typeof(ArgumentOutOfRangeException)
+		);
+	}
+
+	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden]
+	internal static void AssertAligned(this ushort value, ushort alignment, string? message = null, Type? exception = null) {
+		AssertZero(
+			value % alignment,
+			message ?? $"Variable '{value}' is not aligned to '{alignment}'",
+			exception ?? typeof(ArgumentOutOfRangeException)
+		);
+	}
+
+	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden]
+	internal static void AssertAligned(this int value, int alignment, string? message = null, Type? exception = null) {
+		AssertZero(
+			value % alignment,
+			message ?? $"Variable '{value}' is not aligned to '{alignment}'",
+			exception ?? typeof(ArgumentOutOfRangeException)
+		);
+	}
+
+	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden]
+	internal static void AssertAligned(this uint value, uint alignment, string? message = null, Type? exception = null) {
+		AssertZero(
+			value % alignment,
+			message ?? $"Variable '{value}' is not aligned to '{alignment}'",
+			exception ?? typeof(ArgumentOutOfRangeException)
+		);
+	}
+
+	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden]
+	internal static void AssertAligned(this long value, long alignment, string? message = null, Type? exception = null) {
+		AssertZero(
+			value % alignment,
+			message ?? $"Variable '{value}' is not aligned to '{alignment}'",
+			exception ?? typeof(ArgumentOutOfRangeException)
+		);
+	}
+
+	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden]
+	internal static void AssertAligned(this ulong value, ulong alignment, string? message = null, Type? exception = null) {
+		AssertZero(
+			value % alignment,
+			message ?? $"Variable '{value}' is not aligned to '{alignment}'",
+			exception ?? typeof(ArgumentOutOfRangeException)
+		);
+	}
+
+	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden]
+	internal static void AssertZero(this nuint value, string? message = null, Type? exception = null) {
+		AssertEqual(
+			value,
+			(nuint)0,
+			message ?? $"Variable '{value}' is not equal to zero",
+			exception ?? typeof(ArgumentOutOfRangeException)
+		);
+	}
+
+	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden]
+	internal static void AssertZero(this nint value, string? message = null, Type? exception = null) {
+		AssertEqual(
+			value,
+			(nint)0,
+			message ?? $"Variable '{value}' is not equal to zero",
+			exception ?? typeof(ArgumentOutOfRangeException)
+		);
+	}
+
+	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden]
 	internal static void AssertZero<T>(this T value, string? message = null, Type? exception = null) where T : IComparable, IComparable<T>, IEquatable<T>, IConvertible {
 		AssertEqual(
 			value,
@@ -145,11 +254,21 @@ internal static class Contracts {
 	}
 
 	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden]
-	internal static void AssertOne<T>(this T value, string? message = null, Type? exception = null) where T : IComparable, IComparable<T>, IEquatable<T>, IConvertible {
-		AssertEqual(
+	internal static void AssertNotZero(this nuint value, string? message = null, Type? exception = null) {
+		AssertNotEqual(
 			value,
-			(T)Convert.ChangeType(1, typeof(T)),
-			message ?? $"Variable '{value}' is not equal to one",
+			(nuint)0,
+			message ?? $"Variable '{value}' is equal to zero",
+			exception ?? typeof(ArgumentOutOfRangeException)
+		);
+	}
+
+	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden]
+	internal static void AssertNotZero(this nint value, string? message = null, Type? exception = null) {
+		AssertNotEqual(
+			value,
+			(nint)0,
+			message ?? $"Variable '{value}' is equal to zero",
 			exception ?? typeof(ArgumentOutOfRangeException)
 		);
 	}
@@ -165,11 +284,41 @@ internal static class Contracts {
 	}
 
 	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden]
+	internal static void AssertPositive(this nint value, string? message = null, Type? exception = null) {
+		AssertGreater(
+			value,
+			(nint)0,
+			message ?? $"Variable '{value}' is not positive",
+			exception ?? typeof(ArgumentOutOfRangeException)
+		);
+	}
+
+	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden]
 	internal static void AssertPositive<T>(this T value, string? message = null, Type? exception = null) where T : IComparable, IComparable<T>, IEquatable<T>, IConvertible {
 		AssertGreater(
 			value,
 			(T)Convert.ChangeType(0, typeof(T)),
 			message ?? $"Variable '{value}' is not positive",
+			exception ?? typeof(ArgumentOutOfRangeException)
+		);
+	}
+
+	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden]
+	internal static void AssertPositiveOrZero(this nuint value, string? message = null, Type? exception = null) {
+		AssertGreaterEqual(
+			value,
+			(nuint)0,
+			message ?? $"Variable '{value}' is not positive or zero",
+			exception ?? typeof(ArgumentOutOfRangeException)
+		);
+	}
+
+	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden]
+	internal static void AssertPositiveOrZero(this nint value, string? message = null, Type? exception = null) {
+		AssertGreaterEqual(
+			value,
+			(nint)0,
+			message ?? $"Variable '{value}' is not positive or zero",
 			exception ?? typeof(ArgumentOutOfRangeException)
 		);
 	}
@@ -185,8 +334,28 @@ internal static class Contracts {
 	}
 
 	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden]
+	internal static void AssertNotNegative(this nuint value, string? message = null, Type? exception = null) {
+		AssertPositiveOrZero(value, message, exception);
+	}
+
+	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden]
+	internal static void AssertNotNegative(this nint value, string? message = null, Type? exception = null) {
+		AssertPositiveOrZero(value, message, exception);
+	}
+
+	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden]
 	internal static void AssertNotNegative<T>(this T value, string? message = null, Type? exception = null) where T : IComparable, IComparable<T>, IEquatable<T>, IConvertible {
 		AssertPositiveOrZero(value, message, exception);
+	}
+
+	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden]
+	internal static void AssertNegative(this nint value, string? message = null, Type? exception = null) {
+		AssertLess(
+			value,
+			(nint)0,
+			message ?? $"Variable '{value}' is not negative",
+			exception ?? typeof(ArgumentOutOfRangeException)
+		);
 	}
 
 	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden]
@@ -200,6 +369,26 @@ internal static class Contracts {
 	}
 
 	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden]
+	internal static void AssertNegativeOrZero(this nuint value, string? message = null, Type? exception = null) {
+		AssertLessEqual(
+			value,
+			(nuint)0,
+			message ?? $"Variable '{value}' is not negative or zero",
+			exception ?? typeof(ArgumentOutOfRangeException)
+		);
+	}
+
+	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden]
+	internal static void AssertNegativeOrZero(this nint value, string? message = null, Type? exception = null) {
+		AssertLessEqual(
+			value,
+			(nint)0,
+			message ?? $"Variable '{value}' is not negative or zero",
+			exception ?? typeof(ArgumentOutOfRangeException)
+		);
+	}
+
+	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden]
 	internal static void AssertNegativeOrZero<T>(this T value, string? message = null, Type? exception = null) where T : IComparable, IComparable<T>, IEquatable<T>, IConvertible {
 		AssertLessEqual(
 			value,
@@ -207,6 +396,16 @@ internal static class Contracts {
 			message ?? $"Variable '{value}' is not negative or zero",
 			exception ?? typeof(ArgumentOutOfRangeException)
 		);
+	}
+
+	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden]
+	internal static void AssertNotPositive(this nuint value, string? message = null, Type? exception = null) {
+		AssertNegativeOrZero(value, message, exception);
+	}
+
+	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden]
+	internal static void AssertNotPositive(this nint value, string? message = null, Type? exception = null) {
+		AssertNegativeOrZero(value, message, exception);
 	}
 
 	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden]

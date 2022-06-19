@@ -92,6 +92,10 @@ public class Program {
 				.WithStrategy(coldStart ? RunStrategy.ColdStart : RunStrategy.Throughput);
 		}
 
+		if (typeof(TBenchmark) == typeof(Benchmarks.Premultiply)) {
+			job = job.WithMinIterationCount(60).WithMaxIterationCount(400);
+		}
+
 		string name = $"{gcType}.{runtime}.{(coldStart ? "cold" : "warm")}";
 
 		config = config.AddJob(job);
@@ -135,6 +139,7 @@ public class Program {
 			_ = ConditionalRun<Benchmarks.Strings>(options, optionPermutation.GCType, optionPermutation.Runtime);
 			_ = ConditionalRun<Benchmarks.Dictionary>(options, optionPermutation.GCType, optionPermutation.Runtime);
 			_ = ConditionalRun<Benchmarks.Sprites>(options, optionPermutation.GCType, optionPermutation.Runtime);
+			_ = ConditionalRun<Benchmarks.Premultiply>(options, optionPermutation.GCType, optionPermutation.Runtime);
 		}
 
 		return 0;

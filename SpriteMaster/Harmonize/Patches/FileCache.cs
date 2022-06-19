@@ -1,206 +1,95 @@
-﻿#if false
-
-using HarmonyLib;
-using Microsoft.Xna.Framework.Graphics;
+﻿using JetBrains.Annotations;
+using Microsoft.Xna.Framework.Graphics.PackedVector;
 using SpriteMaster.Extensions;
+using SpriteMaster.Metadata;
+using SpriteMaster.Types;
+using SpriteMaster.Types.Fixed;
 using StardewModdingAPI;
+using StbImageSharp;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Linq;
-using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
 using static SpriteMaster.Harmonize.Harmonize;
 
 namespace SpriteMaster.Harmonize.Patches;
 
-internal static class FileCache {
-	private static readonly Type? ImageResultType = typeof(XTexture2D).Assembly.GetType("StbImageSharp.ImageResult");
-	private static readonly Type? ColorComponentsType = typeof(XTexture2D).Assembly.GetType("StbImageSharp.ColorComponents");
+using ImageResultObject = Object;
 
-	private static readonly object? ColorComponents_RedGreenBlueAlpha =
-		ColorComponentsType is null ? null : Enum.Parse(ColorComponentsType, "RedGreenBlueAlpha");
-	private static readonly Func<Stream, object, object>? ImageResult_FromStream = ImageResultType?.GetStaticMethod("FromStream")?.CreateDelegate<Func<Stream, object, DuplicateWaitObjectException>>();
-	private static readonly Func<object, int>? ImageResult_GetWidth = ImageResultType?.GetPropertyGetter<object, int>("Width");
-	private static readonly Func<object, int>? ImageResult_GetHeight = ImageResultType?.GetPropertyGetter<object, int>("Height");
-	private static readonly Func<object, byte[]>? ImageResult_GetData = ImageResultType?.GetPropertyGetter<object, byte[]>("Data");
+internal static partial class FileCache {
+	private static class Stb {
+		private const string StbNamespace = "StbImageSharp";
 
-	[MemberNotNullWhen(
-		true,
-		"ImageResultType",
-		"ColorComponentsType",
-		"ColorComponents_RedGreenBlueAlpha",
-		"ImageResult_FromStream",
-		"ImageResult_GetWidth",
-		"ImageResult_GetHeight",
-		"ImageResult_GetData"
-	)]
-	private static bool HasStb { get; } =
-		ImageResultType is not null &&
-		ColorComponentsType is not null &&
-		ColorComponents_RedGreenBlueAlpha is not null &&
-		ImageResult_FromStream is not null &&
-		ImageResult_GetWidth is not null &&
-		ImageResult_GetHeight is not null &&
-		ImageResult_GetData is not null;
+		internal static class ColorComponents {
+			internal static readonly Type? ColorComponentsType =
+				typeof(XTexture2D).Assembly.GetType($"{StbNamespace}.ColorComponents");
 
-	/*
-	[HarmonizeSmapiVersionConditional(Comparator.GreaterThanOrEqual, "3.15.0")]
-	[HarmonizeTranspile(
-		typeof(StardewModdingAPI.Framework.ModLoading.RewriteFacades.AccessToolsFacade),
-		"StardewModdingAPI.Framework.ContentManagers.ModContentManager",
-		"LoadImageFile",
-		argumentTypes: new[] { typeof(IAssetName), typeof(FileInfo) },
-		generic: Generic.Class,
-		genericTypes: new[] { typeof(Texture2D), typeof(IRawTextureData) },
-		instance: true
-	)]
-	public static IEnumerable<CodeInstruction> LoadImageFileTranspiler(
-		IEnumerable<CodeInstruction> instructions,
-		ILGenerator generator
-	) {
-		var preMethod = ((Func<object, IAssetName, FileInfo, Texture2D?>)OnLoadImageFile).Method;
+			internal static readonly int? RedGreenBlueAlpha =
+				EnumExt.Parse<int>(ColorComponentsType, "RedGreenBlueAlpha");
 
-		var codeInstructions = instructions as CodeInstruction[] ?? instructions.ToArray();
-
-		IEnumerable<CodeInstruction> ApplyPatch() {
-			var isNull = generator.DefineLabel();
-
-			yield return new(OpCodes.Ldarg_0);
-			yield return new(OpCodes.Ldarg_1);
-			yield return new(OpCodes.Ldarg_2);
-			yield return new(OpCodes.Call, preMethod);
-			yield return new(OpCodes.Stloc_0);
-			yield return new(OpCodes.Ldloc_0);
-			yield return new(OpCodes.Brfalse_S, isNull);
-			yield return new(OpCodes.Ldloc_0);
-			yield return new(OpCodes.Ret);
-
-			bool first = true;
-			foreach (var instruction in codeInstructions) {
-				if (first) {
-					instruction.labels.Add(isNull);
-					first = false;
-				}
-
-				yield return instruction;
-			}
+			[MemberNotNullWhen(
+				true,
+				nameof(ColorComponentsType),
+				nameof(RedGreenBlueAlpha)
+			)]
+			internal static bool Has { get; } =
+				ColorComponentsType is not null &&
+				RedGreenBlueAlpha is not null;
 		}
 
-		return ApplyPatch(); ;
-	}
-	*/
+		internal static class ImageResult {
+			internal static readonly Type? ImageResultType =
+				typeof(XTexture2D).Assembly.GetType($"{StbNamespace}.ImageResult");
 
-	/*
-	[HarmonizeSmapiVersionConditional(Comparator.GreaterThanOrEqual, "3.15.0")]
-	[HarmonizeTranspile(
-		typeof(StardewModdingAPI.Framework.ModLoading.RewriteFacades.AccessToolsFacade),
-		"StardewModdingAPI.Framework.ContentManagers.ModContentManager",
-		"LoadExact",
-		argumentTypes: new[] { typeof(IAssetName), typeof(bool) },
-		generic: Generic.Class,
-		genericTypes: new[] { typeof(Texture2D) },
-		instance: true
-	)]
-	public static IEnumerable<CodeInstruction> LoadExactTranspiler<T>(
-		IEnumerable<CodeInstruction> instructions,
-		ILGenerator generator
-	) where T : Texture2D {
-		var preMethod = ((Func<object, IAssetName, FileInfo, XTexture2D?>)OnLoadImageFile).Method;
+			internal static readonly Func<byte[], int, object>? FromMemory = ImageResultType
+				?.GetStaticMethod("FromMemory")?.CreateDelegate<Func<byte[], int, object>>();
 
-		var originalTargetMethod =
-			typeof(StardewModdingAPI.Framework.ModLoading.RewriteFacades.AccessToolsFacade).Assembly
-				.GetType("StardewModdingAPI.Framework.ContentManagers.ModContentManager")
-				?.GetInstanceMethod("LoadImageFile")
-				?.MakeGenericMethod(typeof(Texture2D));
+			internal static readonly Func<object, int>? GetWidth =
+				ImageResultType?.GetPropertyGetter<object, int>("Width");
 
-		var codeInstructions = instructions as CodeInstruction[] ?? instructions.ToArray();
+			internal static readonly Func<object, int>? GetHeight =
+				ImageResultType?.GetPropertyGetter<object, int>("Height");
 
-		if (originalTargetMethod is null) {
-			Debug.Error("Could not apply OnLoadImageFile patch: could not find MethodInfo for LoadImageFile");
-			return codeInstructions;
+			internal static readonly Func<object, byte[]>? GetData =
+				ImageResultType?.GetPropertyGetter<object, byte[]>("Data");
+
+			[MemberNotNullWhen(
+				true,
+				nameof(ImageResultType),
+				nameof(FromMemory),
+				nameof(GetWidth),
+				nameof(GetHeight),
+				nameof(GetData)
+			)]
+			internal static bool Has { get; } =
+				ImageResultType is not null &&
+				FromMemory is not null &&
+				GetWidth is not null &&
+				GetHeight is not null &&
+				GetData is not null;
 		}
-
-		bool IsTargetMethodCaller(CodeInstruction instruction) {
-			return
-				instruction.opcode.Value == OpCodes.Call.Value &&
-				ReferenceEquals(instruction.operand, originalTargetMethod);
-		}
-
-		IEnumerable<CodeInstruction> ApplyPatch() {
-			foreach (var instruction in codeInstructions) {
-				if (IsTargetMethodCaller(instruction)) {
-					instruction.operand = preMethod;
-				}
-
-				yield return instruction;
-			}
-		}
-
-		return ApplyPatch();
-	}
-	*/
-
-	/*
-	[HarmonizeSmapiVersionConditional(Comparator.GreaterThanOrEqual, "3.15.0")]
-	[Harmonize(
-		"StardewModdingAPI.Framework.ContentManagers.ModContentManager",
-		"LoadExact",
-		Fixation.Prefix,
-		PriorityLevel.Last,
-		generic: Generic.Class,
-		genericTypes: new[] { typeof(Texture2D), typeof(IRawTextureData), typeof(object) },
-		instance: true
-	)]
-	public static bool OnLoadExact(object __instance, ref object __result, IAssetName assetName, bool useCache) {
-		return true;
-	}
-	*/
-
-	[HarmonizeSmapiVersionConditional(Comparator.GreaterThanOrEqual, "3.15.0")]
-	[HarmonizeTranspile(
-		typeof(StardewModdingAPI.Framework.ModLoading.RewriteFacades.AccessToolsFacade),
-		"StardewModdingAPI.Framework.ContentManagers.ModContentManager",
-		"LoadImageFile",
-		argumentTypes: new[] { typeof(IAssetName), typeof(FileInfo) },
-		generic: Generic.Class,
-		genericTypes: new[] { typeof(Texture2D), typeof(IRawTextureData), typeof(object) },
-		instance: true
-	)]
-	public static IEnumerable<CodeInstruction> OnLoadImageFileTranspiler<T>(
-		IEnumerable<CodeInstruction> instructions,
-		ILGenerator generator
-	) {
-		var preMethod = ((Func<object, IAssetName, FileInfo, object>)OnLoadImageFile).Method;
-
-		var codeInstructions = instructions as CodeInstruction[] ?? instructions.ToArray();
-
-		IEnumerable<CodeInstruction> ApplyPatch() {
-			yield return new(OpCodes.Ldarg_0);
-			yield return new(OpCodes.Ldarg_1);
-			yield return new(OpCodes.Ldarg_2);
-			yield return new(OpCodes.Call, preMethod);
-			yield return new(OpCodes.Ret);
-		}
-
-		return ApplyPatch();
 	}
 
-	/*
-	[HarmonizeSmapiVersionConditional(Comparator.GreaterThanOrEqual, "3.15.0")]
-	[Harmonize(
-		"StardewModdingAPI.Framework.ContentManagers.ModContentManager",
-		"LoadImageFile",
-		Fixation.Prefix,
-		PriorityLevel.Last,
-		generic: Generic.Class,
-		genericTypes: new[] { typeof(Texture2D), typeof(IRawTextureData), typeof(object) },
-		instance: true
-	)]
-	*/
-	public static object OnLoadImageFile(object __instance, IAssetName assetName, FileInfo file) {
-		return null;
+	[StructLayout(LayoutKind.Auto)]
+	private readonly struct RawTextureData : IRawTextureData {
+		private readonly Vector2I Size;
+		private readonly XColor[] Data;
+
+		[Pure]
+		readonly int IRawTextureData.Width => Size.Width;
+		[Pure]
+		readonly int IRawTextureData.Height => Size.Height;
+		[Pure]
+		readonly XColor[] IRawTextureData.Data => Data;
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal RawTextureData(Vector2I size, XColor[] data) {
+			Size = size;
+			Data = data;
+		}
 	}
 
 	[HarmonizeSmapiVersionConditional(Comparator.GreaterThanOrEqual, "3.15.0")]
@@ -212,21 +101,47 @@ internal static class FileCache {
 		instance: true
 	)]
 	public static bool OnLoadRawImageData(object __instance, ref IRawTextureData __result, FileInfo file, bool forRawData) {
-		return true;
+		if (!Stb.ColorComponents.Has || !Stb.ImageResult.Has) {
+			return true;
+		}
+
+		string path = file.FullName;
+		string resolvedPath = Path.GetFullPath(path);
+
+		var rawData = File.ReadAllBytes(resolvedPath);
+		try {
+			var imageResult = Stb.ImageResult.FromMemory(rawData, Stb.ColorComponents.RedGreenBlueAlpha.Value);
+			byte[] data = Stb.ImageResult.GetData(imageResult);
+			var colorData = data.AsSpan<Color8>();
+
+			ProcessTexture(colorData);
+				
+			XColor[] resultData = data.Convert<byte, XColor>();
+
+			__result = new RawTextureData(
+				size: (Stb.ImageResult.GetWidth(imageResult), Stb.ImageResult.GetHeight(imageResult)),
+				resultData
+			);
+
+			return false;
+		}
+		catch (Exception ex) {
+			// If there is an exception, swallow it and just go back to the normal execution path.
+			Debug.Error($"{nameof(OnLoadRawImageData)} exception while processing '{path}'", ex);
+			return true;
+		}
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	private static void PremultiplyAlpha(byte[] data) {
-		var colors = data.AsSpan<XColor>();
-
-		for (int i = 0; i < colors.Length; i++) {
-			var pixel = colors[i];
-			if (pixel.A is (byte.MinValue or byte.MaxValue))
-				continue; // no need to change fully transparent/opaque pixels
-
-			colors[i] = new(pixel.R * pixel.A / byte.MaxValue, pixel.G * pixel.A / byte.MaxValue, pixel.B * pixel.A / byte.MaxValue, pixel.A); // slower version: Color.FromNonPremultiplied(data[i].ToVector4())
+	private static void ProcessTexture(Span<Color8> data) {
+		if (Avx2.IsSupported && Extensions.Simd.Support.Avx2) {
+			ProcessTextureAvx2(data);
+		}
+		else if (Sse2.IsSupported) {
+			ProcessTextureSse2(data);
+		}
+		else {
+			ProcessTextureScalar(data);
 		}
 	}
 }
-
-#endif

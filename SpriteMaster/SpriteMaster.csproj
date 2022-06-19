@@ -94,6 +94,9 @@
 		<Publicize>$(Publicize);MonoGame.Framework:Microsoft.Xna.Framework.Graphics.GraphicsExtensions.GetGLFormat</Publicize>
 		<Publicize>$(Publicize);MonoGame.Framework:Microsoft.Xna.Framework.Graphics.GraphicsExtensions.GetBoundTexture2D</Publicize>
 		<Publicize>$(Publicize);MonoGame.Framework:Microsoft.Xna.Framework.Threading.BlockOnUIThread</Publicize>
+		<Publicize>$(Publicize);MonoGame.Framework:StbImageSharp.ImageResult</Publicize>
+		<Publicize>$(Publicize);MonoGame.Framework:StbImageSharp.StbImage</Publicize>
+		<Publicize>$(Publicize);MonoGame.Framework:StbImageSharp.StbImage.stbi__context</Publicize>
 		<DoNotPublicize>$(DoNotPublicize);MonoGame.Framework:Microsoft.Xna.Framework.Graphics.Texture.Dispose</DoNotPublicize>
 		<DoNotPublicize>$(DoNotPublicize);MonoGame.Framework:Microsoft.Xna.Framework.Graphics.GraphicsResource.Disposing</DoNotPublicize>
 	</PropertyGroup>

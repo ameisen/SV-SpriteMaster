@@ -234,28 +234,6 @@ internal static class Collections {
 	}
 	#endregion
 
-	#region Ranges
-	internal static class ArrayExt {
-		internal static int[] Range(int start, int count, int change = 1) {
-			var result = new int[count];
-			for (int i = 0; count > 0; --count) {
-				result[i++] = start;
-				start += change;
-			}
-			return result;
-		}
-
-		internal static long[] Range(long start, long count, long change = 1) {
-			var result = new long[count];
-			for (int i = 0; count > 0; --count) {
-				result[i++] = start;
-				start += change;
-			}
-			return result;
-		}
-	}
-	#endregion
-
 	#region AddRange
 
 	internal static int AddRange<T>(this HashSet<T> set, IEnumerable<T> collection) {
