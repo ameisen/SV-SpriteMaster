@@ -2,7 +2,6 @@
 using SpriteMaster.Extensions;
 using System;
 using System.Buffers.Binary;
-using System.Diagnostics.Contracts;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -14,14 +13,6 @@ namespace SpriteMaster.Hashing.Algorithms;
 
 // https://github.com/Crauzer/XXHash3.NET/tree/main/XXHash3.NET
 internal static unsafe partial class XxHash3 {
-	private static class Span2DReflect<TSpanElement> where TSpanElement : unmanaged {
-		internal delegate int GetStrideDelegate(ReadOnlySpan2D<TSpanElement> span);
-
-		internal static readonly GetStrideDelegate GetStride =
-			typeof(ReadOnlySpan2D<TSpanElement>).GetFieldGetterDelegate<GetStrideDelegate>("stride") ??
-				throw new NullReferenceException($"{nameof(ReadOnlySpan2D<TSpanElement>)}.stride");
-	}
-
 	[Pure]
 	[MethodImpl(Inline)]
 	private static ReadOnlySpan2D<TTo> UnsafeCast<TFrom, TTo>(this ReadOnlySpan2D<TFrom> span)

@@ -1,4 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
+// ReSharper disable MemberHidesStaticFromOuterClass
+// ReSharper disable AccessToStaticMemberViaDerivedType
 
 namespace SpriteMaster.Hashing.Algorithms;
 

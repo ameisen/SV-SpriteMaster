@@ -1,13 +1,13 @@
-﻿using System;
-using System.Diagnostics.Contracts;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
+// ReSharper disable MemberHidesStaticFromOuterClass
+// ReSharper disable AccessToStaticMemberViaDerivedType
 
 namespace SpriteMaster.Hashing.Algorithms;
 
 internal static unsafe partial class XxHash3 {
-	private static unsafe partial class Avx2Impl {
+	private static partial class Avx2Impl {
 		[Pure]
 		[MethodImpl(Inline)]
 		private static Vector256<T> LoadVector<T>(byte* data) where T : unmanaged =>

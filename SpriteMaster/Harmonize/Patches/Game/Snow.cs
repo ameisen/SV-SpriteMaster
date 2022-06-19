@@ -299,7 +299,7 @@ internal static class Snow {
 		return true;
 	}
 
-	private const int ReferenceScreenArea = 2560 * 1440;
+	private const int ReferenceScreenArea = (2560 * 1440) / 16;
 
 	[Harmonize(
 		typeof(Game1),

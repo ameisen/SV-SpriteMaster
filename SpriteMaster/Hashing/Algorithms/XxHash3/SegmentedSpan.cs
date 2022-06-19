@@ -1,7 +1,6 @@
 ﻿using Microsoft.Toolkit.HighPerformance;
 using SpriteMaster.Extensions;
 using System;
-using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -10,7 +9,7 @@ namespace SpriteMaster.Hashing.Algorithms;
 internal static partial class XxHash3 {
 	[StructLayout(LayoutKind.Auto)]
 	private readonly ref struct SegmentedSpan {
-		internal readonly ReadOnlySpan2D<byte> Source;
+		private readonly ReadOnlySpan2D<byte> Source;
 
 		internal readonly uint Length => (uint)Source.Length;
 		internal readonly uint Width => (uint)Source.Width;
@@ -25,7 +24,7 @@ internal static partial class XxHash3 {
 			Source.CopyTo(span);
 
 		[MethodImpl(Inline)]
-		internal readonly ReadOnlySpan<byte> Slice(Span<byte> destination, uint offset, uint length) {
+		private readonly ReadOnlySpan<byte> Slice(Span<byte> destination, uint offset, uint length) {
 			((uint)destination.Length).AssertGreaterEqual(length);
 
 			uint end = offset + length;

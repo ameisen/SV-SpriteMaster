@@ -663,9 +663,21 @@ internal static class Config {
 		[Attributes.Comment("What is the maximum size of the resident cache?")]
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushResidentCache)]
 		[Attributes.LimitsInt(0, long.MaxValue)]
-		internal static long MaxSize = 0x2_0000_0000L;
+		internal static long MaxSize = SizesExt.AsGiB(2);
 		[Attributes.Comment("The preferred compression algorithm for the resident cache")]
 		internal static Compression.Algorithm Compress = Compression.BestAlgorithm;
+	}
+
+	[Attributes.Advanced]
+	internal static class TextureFileCache {
+		[Attributes.Comment("Should the texture memory cache be enabled?")]
+		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushTextureFileCache)]
+		internal static bool Enabled = DevEnabled && true;
+		private const bool DevEnabled = true;
+		[Attributes.Comment("What is the maximum size of the resident cache?")]
+		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushTextureFileCache)]
+		[Attributes.LimitsInt(0, long.MaxValue)]
+		internal static long MaxSize = SizesExt.AsGiB(1);
 	}
 
 	[Attributes.Advanced]
@@ -676,7 +688,7 @@ internal static class Config {
 		[Attributes.Comment("What is the maximum size (in bytes) to store in suspended sprite cache?")]
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushSuspendedSpriteCache)]
 		[Attributes.LimitsInt(0, long.MaxValue)]
-		internal static long MaxCacheSize = 0x1000_0000L;
+		internal static long MaxCacheSize = SizesExt.AsGiB(2);
 		[Attributes.Comment("What is the maximum number of sprites to store in suspended sprite cache?")]
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushSuspendedSpriteCache)]
 		[Attributes.LimitsInt(0, int.MaxValue)]
@@ -751,10 +763,10 @@ internal static class Config {
 			internal static bool Enabled = true;
 			[Attributes.Comment("Minimum Snow Density")]
 			[Attributes.LimitsInt(1, int.MaxValue)]
-			internal static int MinimumDensity = 1024;
+			internal static int MinimumDensity = 64;
 			[Attributes.Comment("Maximum Snow Density")]
 			[Attributes.LimitsInt(1, int.MaxValue)]
-			internal static int MaximumDensity = 3072;
+			internal static int MaximumDensity = 192;
 			[Attributes.Comment("Maximum Snow Rotation Speed")]
 			[Attributes.LimitsReal(0.0f, 1.0f)]
 			internal static float MaximumRotationSpeed = 1.0f / 60.0f;

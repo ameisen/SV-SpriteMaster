@@ -4,9 +4,9 @@ using SpriteMaster.Types.Fixed;
 using System;
 using System.Runtime.CompilerServices;
 
-namespace SpriteMaster.Harmonize.Patches;
+namespace SpriteMaster.Caching;
 
-internal static partial class FileCache {
+internal static partial class TextureFileCache {
 	[Pure, MustUseReturnValue, MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static byte FixedMultiply(byte a, byte b) {
 		uint value = (uint)a * b;

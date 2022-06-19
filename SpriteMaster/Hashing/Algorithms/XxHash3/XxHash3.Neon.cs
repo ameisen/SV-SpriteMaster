@@ -1,11 +1,13 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.Arm;
+// ReSharper disable MemberHidesStaticFromOuterClass
+// ReSharper disable AccessToStaticMemberViaDerivedType
 
 namespace SpriteMaster.Hashing.Algorithms;
 
 internal static unsafe partial class XxHash3 {
-	private static partial class NeonImpl {
+	private static class NeonImpl {
 		// xxh3_accumulate_512_neon
 		[MethodImpl(Inline)]
 		internal static void Accumulate512(ulong* accumulatorStore, byte* data, byte* secret) {

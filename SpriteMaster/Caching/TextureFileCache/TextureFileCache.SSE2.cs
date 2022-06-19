@@ -5,8 +5,9 @@ using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics.X86;
 using System.Runtime.Intrinsics;
 
-namespace SpriteMaster.Harmonize.Patches;
-internal static partial class FileCache {
+namespace SpriteMaster.Caching;
+
+internal static partial class TextureFileCache {
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static unsafe void ProcessTextureSse2Unrolled(Span<Color8> data) {
 		uint registerElements = (uint)Vector128<uint>.Count * 4U;
