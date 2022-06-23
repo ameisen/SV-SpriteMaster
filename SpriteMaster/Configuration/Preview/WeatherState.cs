@@ -28,7 +28,7 @@ internal readonly struct WeatherState : IDisposable {
 		DebrisWeather = Game1.debrisWeather is null ? null : new(Game1.debrisWeather),
 		GlobalWind = WeatherDebris.globalWind,
 		WindGust = Game1.windGust,
-		RainDrops = Game1.rainDrops.Clone<RainDrop>(),
+		RainDrops = Game1.rainDrops.CloneFast(),
 		IsRaining = Game1.isRaining,
 		IsSnowing = Game1.isSnowing,
 		IsLightning = Game1.isLightning,

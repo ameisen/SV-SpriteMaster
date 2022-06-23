@@ -1,5 +1,5 @@
 ﻿using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Order;
+using Benchmarks.BenchmarkBase.Benchmarks;
 using Microsoft.Toolkit.HighPerformance;
 using Murmur;
 using SpriteMaster.Hashing.Algorithms;
@@ -8,25 +8,14 @@ using System.Data.HashFunction.xxHash;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 
-namespace Hashing.Benchmarks;
-
-[Orderer(SummaryOrderPolicy.Declared, MethodOrderPolicy.Declared)]
-[CsvExporter, HtmlExporter]
-[MinColumn, MaxColumn]
-public abstract class BenchmarkBase {
+namespace Benchmarks.Hashing.Benchmarks;
+public abstract class BenchmarkBaseHashing<TDataType, TBase> : BenchmarkBaseImpl<TDataType, TBase> where TDataType : IDataSet<TBase> {
 	[GlobalSetup]
 	public void AlwaysRunBefore() {
-		System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(XxHash3).TypeHandle);
-		System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(XxHash3Exp).TypeHandle);
+		RuntimeHelpers.RunClassConstructor(typeof(XxHash3).TypeHandle);
+		RuntimeHelpers.RunClassConstructor(typeof(XxHash3Exp).TypeHandle);
 	}
-}
 
-public abstract class BenchmarkBase<TDataType, TBase> : BenchmarkBase where TDataType : IDataSet<TBase> {
-	[JetBrains.Annotations.UsedImplicitly]
-	public static List<TDataType> DataSets { get; protected set; } = new();
-}
-
-public abstract class BenchmarkBaseImpl<TDataType, TBase> : BenchmarkBase<TDataType, TBase> where TDataType : IDataSet<TBase> {
 	private static class Impl {
 		[MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
 		private static ArgumentException ThrowArgumentException() =>

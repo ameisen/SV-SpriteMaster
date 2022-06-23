@@ -56,4 +56,14 @@ internal static class ThrowHelper {
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	internal static void ThrowArgumentException(string message, string paramName) =>
 		throw new ArgumentException(message, paramName);
+
+	[DoesNotReturn]
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	internal static T ThrowNotImplementedException<T>(string message) =>
+		throw new NotImplementedException(message);
+
+	[DoesNotReturn]
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	internal static void ThrowNotImplementedException(string message) =>
+		throw new NotImplementedException(message);
 }

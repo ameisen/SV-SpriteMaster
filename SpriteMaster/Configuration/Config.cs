@@ -2,6 +2,8 @@
 using LinqFasterer;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
+using SpriteMaster.Resample;
+using SpriteMaster.Resample.Encoder;
 using SpriteMaster.Types;
 using StardewModdingAPI;
 using System;
@@ -9,7 +11,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime;
 using System.Text.RegularExpressions;
-using TeximpNet.Compression;
 
 using Root = SpriteMaster;
 
@@ -492,7 +493,7 @@ internal static class Config {
 			private const bool DevEnabled = true;
 			[Attributes.Comment("What quality level should be used?")]
 			[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
-			internal static CompressionQuality Quality = CompressionQuality.Highest;
+			internal static CompressionQuality Quality = CompressionQuality.High;
 			[Attributes.Comment("What alpha deviation threshold should be applied to determine if a sprite's transparency is smooth or mask-like (determines between bc2 and bc3)?")]
 			[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
 			[Attributes.LimitsInt(0, int.MaxValue)]

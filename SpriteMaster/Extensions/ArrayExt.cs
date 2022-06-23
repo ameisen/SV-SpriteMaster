@@ -135,6 +135,20 @@ internal static class ArrayExt {
 		return source.AsReadOnlySpan().Cast<TFrom, TTo>().ToArray();
 	}
 
+	[MustUseReturnValue, MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static T[] Clone<T>(this T[] array) where T : unmanaged {
+		var temp = GC.AllocateUninitializedArray<T>(array.Length);
+		Unsafe.CopyBlock(ref Unsafe.As<T, byte>(ref MemoryMarshal.GetArrayDataReference(temp)), ref Unsafe.As<T, byte>(ref MemoryMarshal.GetArrayDataReference(array)), (uint)(array.LongLength * Unsafe.SizeOf<T>()));
+		return temp;
+	}
+
+	[MustUseReturnValue, MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static T[] CloneFast<T>(this T[] array) where T : unmanaged {
+		var temp = GC.AllocateUninitializedArray<T>(array.Length);
+		Unsafe.CopyBlock(ref Unsafe.As<T, byte>(ref MemoryMarshal.GetArrayDataReference(temp)), ref Unsafe.As<T, byte>(ref MemoryMarshal.GetArrayDataReference(array)), (uint)(array.LongLength * Unsafe.SizeOf<T>()));
+		return temp;
+	}
+
 	[Pure, MustUseReturnValue, MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static int[] Range(int start, int count, int change = 1) {
 		var result = GC.AllocateUninitializedArray<int>(count);

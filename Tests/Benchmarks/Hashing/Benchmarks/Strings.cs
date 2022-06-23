@@ -1,5 +1,7 @@
-﻿namespace Hashing.Benchmarks;
+﻿using Benchmarks.BenchmarkBase.Benchmarks;
 
-public partial class Strings : BenchmarkBaseImpl<DataSet<string>, string> {
+namespace Benchmarks.Hashing.Benchmarks;
+
+public partial class Strings : BenchmarkBaseHashing<DataSet<string>, string> {
 
 }

@@ -41,8 +41,6 @@ internal static class PTexture2D {
 		int elementCount,
 		bool animated
 	) where T : unmanaged {
-		TextureCache.Remove(texture);
-
 		if (!ManagedSpriteInstance.Validate(texture, clean: true)) {
 			return;
 		}

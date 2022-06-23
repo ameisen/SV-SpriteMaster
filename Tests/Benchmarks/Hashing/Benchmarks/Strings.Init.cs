@@ -1,12 +1,13 @@
-﻿using System.Runtime.CompilerServices;
+﻿using Benchmarks.BenchmarkBase.Benchmarks;
+using System.Runtime.CompilerServices;
 using System.Text;
 
-namespace Hashing.Benchmarks;
+namespace Benchmarks.Hashing.Benchmarks;
 
 public partial class Strings {
 	private const int RandSeed = 0x13377113;
-	private static readonly long MinSize = Program.Options.Min;
-	private static readonly long MaxSize = Program.Options.Max;
+	private static readonly long MinSize = Program.CurrentOptions.Min;
+	private static readonly long MaxSize = Program.CurrentOptions.Max;
 
 	private static ReadOnlySpan<char> Chars =>
 		new[] {

@@ -2,7 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace Hashing.Methods;
+namespace Benchmarks.Hashing.Methods;
 
 internal static unsafe class Marvin32Unsafe {
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]

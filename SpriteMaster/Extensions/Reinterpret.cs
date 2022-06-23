@@ -28,6 +28,44 @@ internal static class Reinterpret {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
+	internal static TTo As<TTo>(this bool value) where TTo : unmanaged {
+		if (typeof(TTo) == typeof(bool)) {
+			return (TTo)(object)value;
+		}
+		if (typeof(TTo) == typeof(byte)) {
+			return (TTo)(object)value.ReinterpretAs<byte>();
+		}
+		if (typeof(TTo) == typeof(sbyte)) {
+			return (TTo)(object)value.ReinterpretAs<sbyte>();
+		}
+		if (typeof(TTo) == typeof(ushort)) {
+			return (TTo)(object)(ushort)value.ReinterpretAs<byte>();
+		}
+		if (typeof(TTo) == typeof(short)) {
+			return (TTo)(object)(short)value.ReinterpretAs<sbyte>();
+		}
+		if (typeof(TTo) == typeof(uint)) {
+			return (TTo)(object)(uint)value.ReinterpretAs<byte>();
+		}
+		if (typeof(TTo) == typeof(int)) {
+			return (TTo)(object)(int)value.ReinterpretAs<sbyte>();
+		}
+		if (typeof(TTo) == typeof(ulong)) {
+			return (TTo)(object)(ulong)value.ReinterpretAs<byte>();
+		}
+		if (typeof(TTo) == typeof(long)) {
+			return (TTo)(object)(long)value.ReinterpretAs<sbyte>();
+		}
+		if (typeof(TTo) == typeof(float)) {
+			return (TTo)(object)(float)value.ReinterpretAs<byte>();
+		}
+		if (typeof(TTo) == typeof(double)) {
+			return (TTo)(object)(double)value.ReinterpretAs<sbyte>();
+		}
+		return ThrowHelper.ThrowInvalidOperationException<TTo>($"Cannot convert bool to {typeof(TTo)}");
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static TTo ReinterpretAs<TTo>(this bool value) where TTo : unmanaged =>
 		ReinterpretAsUnsafe<bool, TTo>(value);
 

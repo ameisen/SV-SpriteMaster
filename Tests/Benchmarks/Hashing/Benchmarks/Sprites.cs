@@ -1,13 +1,14 @@
 ﻿using BenchmarkDotNet.Attributes;
+using Benchmarks.BenchmarkBase.Benchmarks;
 using LinqFasterer;
 using Microsoft.Toolkit.HighPerformance;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using System.Numerics;
-using static Hashing.Benchmarks.Sprites;
+using static Benchmarks.Hashing.Benchmarks.Sprites;
 
-namespace Hashing.Benchmarks;
+namespace Benchmarks.Hashing.Benchmarks;
 public class Sprites : BenchmarkBase<SpriteDataSet, ReadOnlyMemory2D<byte>> {
 	private const int RandSeed = 0x13377113;
 
@@ -173,7 +174,7 @@ public class Sprites : BenchmarkBase<SpriteDataSet, ReadOnlyMemory2D<byte>> {
 		}
 
 
-		if (Program.Options.DoValidate) {
+		if (Program.CurrentOptions.DoValidate) {
 			bool error = false;
 			Console.WriteLine("Performing Validation...");
 

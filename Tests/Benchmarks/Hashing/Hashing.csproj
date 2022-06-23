@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <ApplicationIcon>pufferchick_xbrz.ico</ApplicationIcon>
     <TargetFramework>net5.0</TargetFramework>
-    <StartupObject>Hashing.Program</StartupObject>
+    <StartupObject>Benchmarks.Hashing.Program</StartupObject>
 		<TieredCompilation>false</TieredCompilation>
   </PropertyGroup>
 
@@ -39,7 +39,13 @@
 	<PropertyGroup>
 		<InternalsAssemblyNames>System.Private.CoreLib:System.Marvin.ComputeHash32</InternalsAssemblyNames>
 		<SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+		<AssemblyName>Hashing</AssemblyName>
+		<RootNamespace>Benchmarks.Hashing</RootNamespace>
 	</PropertyGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\BenchmarkBase\BenchmarkBase.csproj" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<Publicize Include="System.Provide.CoreLib" />

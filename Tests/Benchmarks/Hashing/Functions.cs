@@ -1,12 +1,8 @@
-﻿using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Running;
-using Microsoft.Toolkit.HighPerformance;
-using System;
-using System.Reflection;
+﻿using Microsoft.Toolkit.HighPerformance;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace Hashing;
+namespace Benchmarks.Hashing;
 
 internal static class Functions {
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]

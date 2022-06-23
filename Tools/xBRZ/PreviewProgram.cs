@@ -1,4 +1,5 @@
 ﻿using SpriteMaster.Configuration;
+using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using System.Drawing.Imaging;
 
@@ -63,7 +64,7 @@ internal static class PreviewProgram {
 		var spriteSize = SpriteSize;
 		var scaledSize = spriteSize * scale;
 
-		var spriteDataArray = SpriteData!.Clone() as Color16[];
+		var spriteDataArray = SpriteData!.CloneFast();
 		var spriteData = spriteDataArray.AsSpan();
 		if (GammaCorrection)
 			SpriteMaster.Resample.Passes.GammaCorrection.Linearize(spriteData, spriteSize);

@@ -1,4 +1,6 @@
-﻿namespace Hashing.Benchmarks;
+﻿using Benchmarks.BenchmarkBase.Benchmarks;
 
-public partial class Buffers : BenchmarkBaseImpl<DataSetArray<byte>, byte[]> {
+namespace Benchmarks.Hashing.Benchmarks;
+
+public partial class Buffers : BenchmarkBaseHashing<DataSetArrayFixed<byte>, byte[]> {
 }

@@ -1,5 +1,4 @@
 ﻿using SpriteMaster.Configuration;
-using TeximpNet.Compression;
 
 namespace SpriteMaster.Resample.Encoder;
 
@@ -8,7 +7,7 @@ internal static class BlockEncoderCommon {
 		(!hasAlpha) ?
 			TextureFormat.WithNoAlpha :
 			(
-				(isPunchthroughAlpha && Config.Resample.BlockCompression.Quality != CompressionQuality.Fastest) ?
+				(isPunchthroughAlpha && Config.Resample.BlockCompression.Quality != CompressionQuality.High) ?
 					TextureFormat.WithPunchthroughAlpha :
 					isMasky ?
 						TextureFormat.WithHardAlpha :

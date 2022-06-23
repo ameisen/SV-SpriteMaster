@@ -197,7 +197,6 @@ internal static class Command {
 		}
 
 		if (options.Flags.HasFlag(Attributes.OptionsAttribute.Flag.FlushTextureCache)) {
-			Harmonize.Patches.TextureCache.Flush(reset: true);
 		}
 		if (options.Flags.HasFlag(Attributes.OptionsAttribute.Flag.FlushSuspendedSpriteCache)) {
 			Caching.SuspendedSpriteCache.Purge();

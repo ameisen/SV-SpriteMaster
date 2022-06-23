@@ -1,17 +1,18 @@
 ﻿using BenchmarkDotNet.Attributes;
+using Benchmarks.BenchmarkBase.Benchmarks;
 using Microsoft.Toolkit.HighPerformance;
 using SpriteMaster.Extensions;
 using System.Numerics;
 using System.Reflection;
 
-namespace Hashing.Benchmarks;
+namespace Benchmarks.Hashing.Benchmarks;
 
 public partial class Buffers {
 	private const int RandSeed = 0x13377113;
-	private static readonly long MinSize = Program.Options.Min;
-	private static readonly long MaxSize = Program.Options.Max;
+	private static readonly long MinSize = Program.CurrentOptions.Min;
+	private static readonly long MaxSize = Program.CurrentOptions.Max;
 
-	private static void Validate<T>(in DataSetArray<T> dataSet) where T : unmanaged {
+	private static void Validate<T>(in DataSetArrayFixed<T> dataSet) where T : unmanaged {
 		var data = dataSet.Data;
 		var span = data.AsSpan().AsBytes();
 
@@ -30,8 +31,8 @@ public partial class Buffers {
 				continue;
 			}
 
-			if (Program.Options.Runners.Count != 0) {
-				if (!Program.Options.Runners.Contains(method.Name)) {
+			if (Program.CurrentOptions.Runners.Count != 0) {
+				if (!Program.CurrentOptions.Runners.Contains(method.Name)) {
 					continue;
 				}
 			}
@@ -57,7 +58,7 @@ public partial class Buffers {
 	static Buffers() {
 		var random = new Random(RandSeed);
 
-		DataSetArray<byte> MakeDataSet(long length) =>
+		DataSetArrayFixed<byte> MakeDataSet(long length) =>
 			new(random, length);
 
 		long start = MinSize;
@@ -66,7 +67,7 @@ public partial class Buffers {
 
 		int requiredSize = (makeEmpty ? 1 : 0) + (BitOperations.Log2((uint)MaxSize) - BitOperations.Log2((uint)MinSize)) + 1;
 
-		var dataSets = new List<DataSetArray<byte>>(requiredSize);
+		var dataSets = new List<DataSetArrayFixed<byte>>(requiredSize);
 
 		if (makeEmpty) {
 			var dataSet = MakeDataSet(start);
@@ -93,7 +94,7 @@ public partial class Buffers {
 			}
 		}
 
-		if (Program.Options.DoValidate) {
+		if (Program.CurrentOptions.DoValidate) {
 			Console.Out.WriteLine("Performing Benchmark Validation");
 
 			foreach (var dataSet in dataSets) {

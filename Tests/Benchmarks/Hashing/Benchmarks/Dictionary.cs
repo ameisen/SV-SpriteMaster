@@ -1,12 +1,13 @@
-﻿using SpriteMaster.Extensions;
+﻿using Benchmarks.BenchmarkBase.Benchmarks;
+using SpriteMaster.Extensions;
 using System.IO.Compression;
 
-namespace Hashing.Benchmarks;
+namespace Benchmarks.Hashing.Benchmarks;
 
-public class Dictionary : BenchmarkBaseImpl<DataSet<string[]>, string[]> {
+public class Dictionary : BenchmarkBaseHashing<DataSet<string[]>, string[]> {
 	static Dictionary() {
 		string[] words;
-		var dictionary = Program.Options?.Dictionary ?? Options.Default.Dictionary;
+		var dictionary = Program.CurrentOptions?.Dictionary ?? Options.Default.Dictionary;
 		try {
 			{
 				using FileStream file = File.OpenRead(dictionary);

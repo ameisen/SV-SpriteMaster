@@ -58,7 +58,7 @@ internal static partial class TextureFileCache {
 			if (Cache.TryGet(resolvedPath, out var cachedValue)) {
 				__result = new RawTextureData(
 					size: cachedSize,
-					copyArray ? (XColor[])cachedValue.Clone() : cachedValue
+					copyArray ? cachedValue.CloneFast() : cachedValue
 				);
 
 				if (cachedSize.Area != cachedValue.Length) {
@@ -87,7 +87,7 @@ internal static partial class TextureFileCache {
 
 			__result = new RawTextureData(
 				size: resultSize,
-				copyArray ? (XColor[])resultData.Clone() : resultData
+				copyArray ? resultData.CloneFast() : resultData
 			);
 
 			return false;

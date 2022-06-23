@@ -91,6 +91,18 @@ internal static class Textures {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
+	internal static int SizeBytes(this SurfaceFormat format, Vector2I dimensions) {
+		if (format.IsBlock()) {
+			Vector2I edge = format.BlockEdge();
+			Vector2I edgeMinusOne = edge - 1;
+			dimensions = (dimensions + edgeMinusOne) & ~edgeMinusOne;
+		}
+
+		var result = SizeBytesLong(format, dimensions.Area);
+		return checked((int)result);
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static bool IsCompressed(this SurfaceFormat format) => format switch {
 		SurfaceFormat.Dxt1 or
 		SurfaceFormat.Dxt1SRgb or

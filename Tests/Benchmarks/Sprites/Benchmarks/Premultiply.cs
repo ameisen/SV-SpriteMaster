@@ -1,106 +1,18 @@
 ﻿using BenchmarkDotNet.Attributes;
-using JetBrains.Annotations;
 using Microsoft.Toolkit.HighPerformance;
 using Microsoft.Xna.Framework;
 using SkiaSharp;
 using SpriteMaster.Types;
-using System.Collections.Concurrent;
-using System.Numerics;
 using System.Runtime.CompilerServices;
-using static Hashing.Benchmarks.Premultiply;
 
-namespace Hashing.Benchmarks;
-public class Premultiply : BenchmarkBase<Premultiply.SpriteDataSet, SpriteData[]> {
-	public class SpriteData : IDisposable {
-		internal readonly string Path;
-		public Memory<byte> Data { get; private set; }
-		public Span<byte> Span => Data.Span;
-		internal object? TempReference = null;
-		internal readonly byte[] Reference;
-		internal SKBitmap Image;
+namespace Benchmarks.Sprites.Benchmarks;
 
-		public void Setup() {
-			TempReference = null;
-			Data = new((byte[])Reference.Clone());
-		}
-
-		public void Cleanup() {
-			TempReference = null;
-		}
-
-		internal SpriteData(string path, ReadOnlyMemory<byte> data, SKBitmap image) {
-			Path = path;
-			Reference = GC.AllocateUninitializedArray<byte>((int)data.Length);
-			data.CopyTo(Reference);
-			Data = new(Reference);
-			Image = image;
-		}
-
-		public void Dispose() {
-			Image?.Dispose();
-		}
-	}
-
-	public readonly struct SpriteDataSet : IDataSet<SpriteData[]> {
-		public readonly SpriteData[] Data { get; }
-
-		private readonly uint Index => (Data.Length == 0) ? 0u : (uint)BitOperations.Log2((uint)Data.Length) + 1u;
-
-		internal SpriteDataSet(ReadOnlySpan<SpriteData> data) {
-			Data = data.ToArray();
-		}
-
-		public override readonly string ToString() => $"{Data.Length}";
-	}
-
-	static Premultiply() {
-		const string ContentRoot = @"D:\Stardew\Reference\Content";
-		const string ModRoot = @"D:\Stardew\root_mods";
-
-		var allImages = new[] { ContentRoot, ModRoot }.SelectMany(dir => Directory.EnumerateFiles(dir, "*.png", SearchOption.AllDirectories)).ToArray();
-
-		ConcurrentBag<SpriteData> allSpriteDatas = new();
-
-
-		Parallel.ForEach(
-			allImages, image => {
-				using FileStream stream = File.OpenRead(image);
-				SKBitmap bitmap = SKBitmap.Decode(stream);
-				if (bitmap is not null) {
-					var data = bitmap.Bytes;
-					allSpriteDatas.Add(new(image, data, bitmap));
-				}
-			}
-		);
-
-		var dataList = allSpriteDatas.OrderBy(sd => sd.Path).ToArray();
-
-		DataSets.Add(new(dataList));
-	}
-
-	[IterationSetup]
-	public void IterationSetup() {
-		foreach (var dataSet in DataSets) {
-			foreach (var data in dataSet.Data) {
-				data.Setup();
-			}
-		}
-	}
-
-	[IterationCleanup]
-	public void IterationCleanup() {
-		foreach (var dataSet in DataSets) {
-			foreach (var data in dataSet.Data) {
-				data.Cleanup();
-			}
-		}
-	}
-
+public class Premultiply : Textures {
 	[Benchmark(Description = "SkiaSharp", Baseline = true)]
 	[ArgumentsSource(nameof(DataSets), Priority = 0)]
 	public void Skia(in SpriteDataSet dataSet) {
 		foreach (var data in dataSet.Data) {
-			var rawPixels = SKPMColor.PreMultiply(data.Image.Pixels);
+			var rawPixels = SKPMColor.PreMultiply(data.Span.Cast<byte, SKColor>().ToArray());
 
 			var pixels = GC.AllocateUninitializedArray<Color>(rawPixels.Length);
 			for (int i = 0; i < pixels.Length; i++) {
@@ -118,7 +30,7 @@ public class Premultiply : BenchmarkBase<Premultiply.SpriteDataSet, SpriteData[]
 	[ArgumentsSource(nameof(DataSets), Priority = 0)]
 	public void SkiaNoCopy(in SpriteDataSet dataSet) {
 		foreach (var data in dataSet.Data) {
-			var rawPixels = SKPMColor.PreMultiply(data.Image.Pixels);
+			var rawPixels = SKPMColor.PreMultiply(data.Span.Cast<byte, SKColor>().ToArray());
 
 			var pixels = rawPixels.AsSpan().Cast<SKPMColor, Color>();
 			for (int i = 0; i < pixels.Length; i++) {
