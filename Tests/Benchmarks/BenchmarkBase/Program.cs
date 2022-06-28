@@ -1,4 +1,5 @@
-﻿using BenchmarkDotNet.Configs;
+﻿using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Diagnosers;
 using BenchmarkDotNet.Diagnostics.Windows;
 using BenchmarkDotNet.Engines;
@@ -9,20 +10,113 @@ using BenchmarkDotNet.Reports;
 using BenchmarkDotNet.Running;
 using JetBrains.Annotations;
 using LinqFasterer;
+using SpriteMaster.Extensions;
 using System.Diagnostics;
+using System.Reflection;
 using System.Text.RegularExpressions;
+using ZstdNet;
 
 namespace Benchmarks.BenchmarkBase;
 
 [PublicAPI]
 public abstract class ProgramBase<TOptions> where TOptions : Options, new() {
+	private const string ArgsEnvVar = @"BENCHIE_ARGS";
 	private static TOptions? CurrentOptionsImpl = null!;
+
+	private static readonly Lazy<byte[]> ZStdDictionary = new(MakeDictionary);
+	private static byte[] MakeDictionary() {
+		var samples = new List<string>();
+
+		void AddSample(string sample, bool enquote = true) {
+			if (enquote) {
+				samples.Add($"\"{sample.ToLowerInvariant()}\"");
+				samples.Add($"\"{sample.ToLowerInvariant()}\",");
+			}
+			else {
+				samples.Add($"{sample.ToLowerInvariant()}");
+			}
+		}
+
+		void AddOption(string sample, bool shortOpt) {
+			foreach (var prefix in shortOpt ? new[] {"-", "/"} : new[] {"--", "/"}) {
+				AddSample($"{prefix}{sample}");
+				AddSample($"\"{prefix}{sample}=", enquote: false);
+			}
+		}
+
+		AddSample("--");
+		foreach (var member in typeof(TOptions).GetFields().Cast<MemberInfo>().Concat(typeof(TOptions).GetProperties().Cast<MemberInfo>())) {
+			if (member.GetCustomAttribute<OptionAttribute>() is not { } option) {
+				continue;
+			}
+
+			AddOption(option.LongOpt, false);
+			if (option.ShortOpt.HasValue) {
+				AddOption($"{option.ShortOpt}", true);
+			}
+		}
+
+		var assembly = typeof(TOptions).Assembly;
+
+		foreach (var type in assembly.GetTypes()
+							.WhereF(
+								type =>
+									!type.IsAbstract &&
+									type.IsAssignableTo(typeof(Benchmarks.BenchmarkBase))
+							)
+						) {
+			AddSample(type.Name);
+		}
+
+		foreach (var type in assembly.GetTypes().Where(type => type.IsAssignableTo(typeof(Benchmarks.BenchmarkBase)))) {
+			foreach (var method in type.GetMethods()) {
+				if (!method.HasAttribute<BenchmarkAttribute>()) {
+					continue;
+				}
+
+				AddSample(method.Name, enquote: true);
+			}
+		}
+
+		var byteSamples = new List<byte[]>(samples.Count);
+		foreach (var sample in samples) {
+			var sampleBytes = System.Text.Encoding.UTF8.GetBytes(sample);
+			byteSamples.Add(sampleBytes);
+		}
+
+		return ZstdNet.DictBuilder.TrainFromBuffer(byteSamples);
+	}
+
+	private static string[] ParsePackedArgs(string? source) {
+		if (source is null) {
+			return Array.Empty<string>();
+		}
+
+		var argBytes = System.Convert.FromBase64String(source);
+		using var decompressor = new ZstdNet.Decompressor(new(ZStdDictionary.Value));
+		var decompressedBytes = decompressor.Unwrap(argBytes);
+		var argsJson = System.Text.Encoding.UTF8.GetString(decompressedBytes);
+
+		if (System.Text.Json.JsonSerializer.Deserialize<string[]>(argsJson) is { } newArgs) {
+			return newArgs;
+		}
+
+		return Array.Empty<string>();
+	}
+
+	private static string MakePackedArgs(string[] args) {
+		var argsJson = System.Text.Json.JsonSerializer.Serialize(args.SelectF(s => s.ToLowerInvariant()).ToArrayF());
+		var jsonBytes = System.Text.Encoding.UTF8.GetBytes(argsJson);
+		using var compressor = new ZstdNet.Compressor(new(ZStdDictionary.Value, compressionLevel: CompressionOptions.MaxCompressionLevel));
+		var compressedBytes = compressor.Wrap(jsonBytes);
+		return System.Convert.ToBase64String(compressedBytes);
+	}
 
 	public static TOptions CurrentOptions {
 		get {
 			if (CurrentOptionsImpl is not {} options) {
-				var argsEnv = Environment.GetEnvironmentVariable("BENCHIE_ARGS") ?? "";
-				var args = argsEnv.Split((string[]?)null, StringSplitOptions.RemoveEmptyEntries);
+				string[] args = ParsePackedArgs(Environment.GetEnvironmentVariable(ArgsEnvVar));
+
 				options = CurrentOptionsImpl = Options.From<TOptions>(args);
 			}
 
@@ -34,29 +128,31 @@ public abstract class ProgramBase<TOptions> where TOptions : Options, new() {
 		return patterns.Select(Options.CreatePattern).Distinct().ToArray();
 	}
 
-	private static ((Summary, IConfig, Job)?, (Summary, IConfig, Job)?)? ConditionalRun(Type benchmarkType, string[] args, Options options, GCType gcType, Runtime runtime) {
+	private readonly record struct RunResult(Summary Summary, IConfig Config, Job Job);
+
+	private static IEnumerable<RunResult> ConditionalRun(Type benchmarkType, string[] args, Options options, OptionPermutation optionPermutation) {
 		if (CurrentOptions.Cold) {
-			return (
-				ConditionalRun(benchmarkType, args, options, gcType, runtime, coldStart: true),
-				ConditionalRun(benchmarkType, args, options, gcType, runtime, coldStart: false)
-			);
+			yield return ConditionalRun(benchmarkType, args, options, optionPermutation, coldStart: true);
 		}
-		else {
-			return (
-				null,
-				ConditionalRun(benchmarkType, args, options, gcType, runtime, coldStart: false)
-			);
-		}
+
+		yield return ConditionalRun(benchmarkType, args, options, optionPermutation, coldStart: false);
 	}
 
-	private static (Summary, IConfig, Job)? ConditionalRun(Type benchmarkType, string[] args, Options options, GCType gcType, Runtime runtime, bool coldStart) {
+	private static RunResult ConditionalRun(Type benchmarkType, string[] args, Options options, in OptionPermutation optionPermutation, bool? coldStart) {
 		var config = DefaultConfig.Instance.WithOptions(ConfigOptions.Default);
 		//if (Debugger.IsAttached) {
 			config = config.WithOptions(ConfigOptions.DisableOptimizationsValidator);
 		//}
 
-		if (options.Runners.Count != 0) {
-			var patterns = CreatePatterns(options.Runners);
+		var runners = options.Runners.ToList();
+		if (options.Reverse) {
+			if (runners.Count != 0) {
+				runners = runners.OrderByF(runner => runner.Reversed()).ToListF();
+			}
+		}
+
+		if (runners.Count != 0) {
+			var patterns = CreatePatterns(runners);
 
 			var filters = patterns.Select(runner =>
 				new NameFilter(runner.IsMatch)
@@ -89,34 +185,33 @@ public abstract class ProgramBase<TOptions> where TOptions : Options, new() {
 
 		//config.AddJob(Job.InProcess);
 
-		Job job;
+		var packedArgs = MakePackedArgs(args);
 
+		Job job;
 		if (Debugger.IsAttached || CurrentOptions.InProcess) {
-			job = Job.InProcess
-				.WithGcServer(gcType == GCType.Server)
-				.WithRuntime(runtime)
-				.WithEnvironmentVariables(
-					new EnvironmentVariable("DOTNET_TieredCompilation", "0"),
-					new EnvironmentVariable("BENCHIE_ARGS", string.Join(" ", args))
-				)
-				.WithStrategy(coldStart ? RunStrategy.ColdStart : RunStrategy.Throughput);
+			job = Job.InProcess;
 		}
 		else {
-			job = Job.Default
-				.WithGcServer(gcType == GCType.Server)
-				.WithRuntime(runtime)
-				.WithEnvironmentVariables(
-					new EnvironmentVariable("DOTNET_TieredCompilation", "0"),
-					new EnvironmentVariable("BENCHIE_ARGS", string.Join(" ", args))
-				)
-				.WithStrategy(coldStart ? RunStrategy.ColdStart : RunStrategy.Throughput);
+			job = Job.Default;
 		}
+
+		job = job
+			.WithGcServer(optionPermutation.Gc == GCType.Server)
+			.WithRuntime(optionPermutation.Runtime)
+			.WithEnvironmentVariables(
+				new EnvironmentVariable("DOTNET_TieredCompilation", optionPermutation.Tiered ? "1" : "0"),
+				new EnvironmentVariable(ArgsEnvVar, packedArgs)
+			)
+			.WithStrategy((coldStart ?? false) ? RunStrategy.ColdStart : RunStrategy.Throughput);
 
 		//if (typeof(TBenchmark) == typeof(Benchmarks.Premultiply)) {
 		//	job = job.WithMinIterationCount(60).WithMaxIterationCount(400);
 		//}
 
-		string name = $"{gcType}.{runtime}.{(coldStart ? "cold" : "warm")}";
+		string name = $"{optionPermutation.Gc}.{optionPermutation.Runtime}";
+		if (coldStart.HasValue) {
+			name = $"{name}.{(coldStart.Value ? "cold" : "warm")}";
+		}
 
 		config = config.AddJob(job);
 		config = config.WithArtifactsPath(Path.Combine(config.ArtifactsPath, name));
@@ -138,10 +233,10 @@ public abstract class ProgramBase<TOptions> where TOptions : Options, new() {
 
 		var summary = BenchmarkRunner.Run(benchmarkType, config);
 
-		return (summary, config, job);
+		return new(summary, config, job);
 	}
 
-	readonly record struct OptionPermutation(GCType GCType, Runtime Runtime);
+	private readonly record struct OptionPermutation(GCType Gc, Runtime Runtime, bool Tiered);
 
 	public static int MainBase(Type rootType, string[] args, Func<Regex, Action<Regex>?>? execCallback = null) {
 		var options = Options.From<TOptions>(args);
@@ -163,7 +258,7 @@ public abstract class ProgramBase<TOptions> where TOptions : Options, new() {
 
 		foreach (var gcType in options.GCTypes) {
 			foreach (var runtime in options.Runtimes) {
-				optionPermutations.Add(new(gcType, runtime));
+				optionPermutations.Add(new(gcType, runtime, Tiered: false));
 			}
 		}
 
@@ -216,10 +311,15 @@ public abstract class ProgramBase<TOptions> where TOptions : Options, new() {
 			externalSet.Value.Invoke();
 		}
 
-		foreach (var optionPermutation in optionPermutations) {
-			foreach (var benchmarkType in matchingBenchmarkTypes) {
-				_ = ConditionalRun(benchmarkType, args, options, optionPermutation.GCType, optionPermutation.Runtime);
+		var results = new List<RunResult>(optionPermutations.Count * matchingBenchmarkTypes.Length);
+		foreach (var benchmarkType in matchingBenchmarkTypes) {
+			foreach (var optionPermutation in optionPermutations) {
+				results.AddRange(ConditionalRun(benchmarkType, args, options, optionPermutation));
 			}
+		}
+
+		foreach (var (summary, config, job) in results) {
+			var s = summary;
 		}
 
 		return 0;

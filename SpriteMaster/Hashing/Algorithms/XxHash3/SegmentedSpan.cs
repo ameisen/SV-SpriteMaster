@@ -37,7 +37,7 @@ internal static partial class XxHash3 {
 					SliceFast(offset, length, offsetRow) :
 					SliceSlow(destination, offset, length, offsetRow, endRow);
 
-#if !SHIPPING
+#if DEBUG
 			var copySlice = Source.ToArray().AsSpan().Slice((int)offset, (int)length);
 			copySlice.SequenceEqual(result).AssertTrue();
 #endif
@@ -60,7 +60,7 @@ internal static partial class XxHash3 {
 		[Pure]
 		[MethodImpl(Inline)]
 		internal readonly ReadOnlySpan<byte> GetAtOffset(uint row, uint offset) {
-#if !SHIPPING
+#if DEBUG
 			return Source.GetRowSpan((int)row).Slice((int)offset);
 #else
 			ref byte value = ref Source.DangerousGetReferenceAt((int)row, (int)offset);
@@ -71,7 +71,7 @@ internal static partial class XxHash3 {
 		[Pure]
 		[MethodImpl(Inline)]
 		internal readonly ReadOnlySpan<byte> GetAtOffset(uint row, uint offset, uint length) {
-#if !SHIPPING
+#if DEBUG
 			return Source.GetRowSpan((int)row).Slice((int)offset, (int)length);
 #else
 			ref byte value = ref Source.DangerousGetReferenceAt((int)row, (int)offset);

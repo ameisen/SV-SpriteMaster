@@ -2,7 +2,6 @@
 using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
-using SpriteMaster.Types.Spans;
 using System;
 
 namespace SpriteMaster.Resample.Passes;

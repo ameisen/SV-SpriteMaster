@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Harmonize.Patches.Game.Pathfinding;
 
@@ -124,18 +123,21 @@ internal static partial class Pathfinding {
 				}
 			}
 			else {
-				var pathDescription = PathfindToNextScheduleLocation(
-					character,
-					character.currentLocation.Name,
-					(int)character.Position.X,
-					(int)character.Position.Y,
-					targetLocation.Name,
-					(int)position.X,
-					(int)position.Y,
-					direction,
-					null,
-					null
-				);
+				SchedulePathDescription? pathDescription;
+				lock (PathLock) {
+					pathDescription = PathfindToNextScheduleLocation(
+						character,
+						character.currentLocation.Name,
+						(int)character.Position.X,
+						(int)character.Position.Y,
+						targetLocation.Name,
+						(int)position.X,
+						(int)position.Y,
+						direction,
+						null,
+						null
+					);
+				}
 
 				if (pathDescription is null) {
 					return true;

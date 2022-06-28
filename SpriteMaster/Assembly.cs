@@ -30,9 +30,9 @@ using System.Security;
 [assembly: InternalsVisibleTo("Arrays")]
 [assembly: InternalsVisibleTo("Sprites")]
 [assembly: SecurityRules(SecurityRuleSet.Level2, SkipVerificationInFullTrust = true)]
-[assembly: ChangeList("4d3e7af:0.15.0-alpha.0-1-g4d3e7af")]
+[assembly: ChangeList("72e530b:0.15.0-alpha.0-2-g72e530b")]
 [assembly: BuildComputerName("Palatinate")]
-[assembly: FullVersion("0.15.0.0-alpha.0")]
+[assembly: FullVersion("0.15.0.1-alpha.1")]
 // [assembly: SuppressUnmanagedCodeSecurity]
 
 [module: CLSCompliant(false)]

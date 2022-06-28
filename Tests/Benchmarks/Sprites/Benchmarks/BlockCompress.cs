@@ -16,7 +16,7 @@ namespace Benchmarks.Sprites.Benchmarks;
 
 using ImpNetCompressionFormat = TeximpNet.Compression.CompressionFormat;
 
-public class BlockCompress : Textures {
+public class BlockCompress : Textures8 {
 	#region TexImpNet
 
 	private static unsafe byte[] TexImpNet(byte[] source, Vector2I dimensions, bool alpha, ImpNetCompressionFormat format, SurfaceFormat surfaceFormat, CompressionQuality quality) {

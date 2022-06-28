@@ -40,6 +40,8 @@ public class CpuDiagnoser : IDiagnoser {
 		internal TimeSpan Duration => End - Start;
 	}
 
+	private readonly Stopwatch RealStopwatch = new();
+	private TimeSpanPair Real;
 	private TimeSpanPair User;
 	private TimeSpanPair Privileged;
 	private TimeSpanPair Total;
@@ -65,11 +67,14 @@ public class CpuDiagnoser : IDiagnoser {
 		switch (signal)
 		{
 			case HostSignal.BeforeActualRun:
+				RealStopwatch.Start();
+				Real.Start = RealStopwatch.Elapsed;
 				User.Start = Process.UserProcessorTime;
 				Privileged.Start = Process.PrivilegedProcessorTime;
 				Total.Start = Process.TotalProcessorTime;
 				break;
 			case HostSignal.AfterActualRun:
+				Real.End = RealStopwatch.Elapsed;
 				User.End = Process.UserProcessorTime;
 				Privileged.End = Process.PrivilegedProcessorTime;
 				Total.End = Process.TotalProcessorTime;
@@ -79,19 +84,21 @@ public class CpuDiagnoser : IDiagnoser {
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static double GetMetricValue(DiagnoserResults results, in TimeSpan duration) {
-		return duration.Ticks * 100.0 / results.TotalOperations;
+		return (duration.Ticks * 100.0) / results.TotalOperations;
 	}
 
 	public IEnumerable<Metric> ProcessResults(DiagnoserResults results) {
-		yield return new(CpuUserMetricDescriptor.Instance, GetMetricValue(results, User.Duration));
-		yield return new(CpuPrivilegedMetricDescriptor.Instance, GetMetricValue(results, Privileged.Duration));
-		yield return new(CpuTotalMetricDescriptor.Instance, GetMetricValue(results, Total.Duration));
+		yield return new(RealMetricDescriptor.Instance, GetMetricValue(results, Real.Duration));
+		yield return new(UserMetricDescriptor.Instance, GetMetricValue(results, User.Duration));
+		yield return new(PrivilegedMetricDescriptor.Instance, GetMetricValue(results, Privileged.Duration));
+		yield return new(TotalMetricDescriptor.Instance, GetMetricValue(results, Total.Duration));
+		yield return new(UsageMetricDescriptor.Instance, (Total.Duration / Real.Duration) * 100.0);
 	}
 
 	public IEnumerable<ValidationError> Validate(ValidationParameters validationParameters) =>
 		Array.Empty<ValidationError>();
 
-	private abstract class MetricDescriptor<TMetricDescriptor> : IMetricDescriptor where TMetricDescriptor : MetricDescriptor<TMetricDescriptor>, new() {
+	private abstract class DurationMetricDescriptor<TMetricDescriptor> : IMetricDescriptor where TMetricDescriptor : DurationMetricDescriptor<TMetricDescriptor>, new() {
 		internal static readonly TMetricDescriptor Instance = new();
 
 		public string Id { get; }
@@ -103,20 +110,41 @@ public class CpuDiagnoser : IDiagnoser {
 		public bool TheGreaterTheBetter => false;
 		public int PriorityInCategory => 1;
 
-		protected MetricDescriptor(string id) {
-			Id = id;
-		}
+		protected DurationMetricDescriptor(string id) => Id = id;
 	}
 
-	private class CpuUserMetricDescriptor : MetricDescriptor<CpuUserMetricDescriptor> {
-		public CpuUserMetricDescriptor() : base("CPU User Time") { }
+	private class RealMetricDescriptor : DurationMetricDescriptor<RealMetricDescriptor> {
+		public RealMetricDescriptor() : base("CPU Real Time") { }
 	}
 
-	private class CpuPrivilegedMetricDescriptor : MetricDescriptor<CpuPrivilegedMetricDescriptor> {
-		public CpuPrivilegedMetricDescriptor() : base("CPU Privileged Time") { }
+	private class UserMetricDescriptor : DurationMetricDescriptor<UserMetricDescriptor> {
+		public UserMetricDescriptor() : base("CPU User Time") { }
 	}
 
-	private class CpuTotalMetricDescriptor : MetricDescriptor<CpuTotalMetricDescriptor> {
-		public CpuTotalMetricDescriptor() : base("CPU Total Time") { }
+	private class PrivilegedMetricDescriptor : DurationMetricDescriptor<PrivilegedMetricDescriptor> {
+		public PrivilegedMetricDescriptor() : base("CPU Privileged Time") { }
+	}
+
+	private class TotalMetricDescriptor : DurationMetricDescriptor<TotalMetricDescriptor> {
+		public TotalMetricDescriptor() : base("CPU Total Time") { }
+	}
+
+	private abstract class PercentageMetricDescriptor<TMetricDescriptor> : IMetricDescriptor where TMetricDescriptor : PercentageMetricDescriptor<TMetricDescriptor>, new() {
+		internal static readonly TMetricDescriptor Instance = new();
+
+		public string Id { get; }
+		public string DisplayName => Id;
+		public string Legend => Id;
+		public string NumberFormat => "0.##";
+		public UnitType UnitType => UnitType.Dimensionless;
+		public string Unit => "%";
+		public bool TheGreaterTheBetter => false;
+		public int PriorityInCategory => 1;
+
+		protected PercentageMetricDescriptor(string id) => Id = id;
+	}
+
+	private class UsageMetricDescriptor : PercentageMetricDescriptor<UsageMetricDescriptor> {
+		public UsageMetricDescriptor() : base("CPU Usage") { }
 	}
 }

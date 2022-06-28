@@ -26,7 +26,7 @@ internal static partial class TextureFileCache {
 
 			switch (alpha.Value) {
 				case 0:
-					data[i].Packed = 0;
+					Unsafe.AsRef(data[i].Packed) = 0;
 					break;
 				case byte.MaxValue:
 					break;

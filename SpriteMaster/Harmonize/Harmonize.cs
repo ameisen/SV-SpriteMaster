@@ -185,10 +185,12 @@ internal static class Harmonize {
 		}
 	}
 
-	private static void ApplyPatches(Harmony @this, Type type, MethodInfo method, IEnumerable<HarmonizeAttribute> attributes) {
+	private static void ApplyPatches(Harmony @this, Type type, MethodInfo method, IEnumerable<HarmonizeAttribute> attributes, bool early) {
 		try {
 			Parallel.ForEach(attributes, attribute => {
-				ApplyPatch(@this, type, method, attribute);
+				if (early == (attribute.ForMod is null)) {
+					ApplyPatch(@this, type, method, attribute);
+				}
 			});
 		}
 		catch (Exception ex) {
@@ -196,20 +198,22 @@ internal static class Harmonize {
 		}
 	}
 
-	internal static void ApplyPatches(this Harmony @this) {
+	internal static void ApplyPatches(this Harmony @this, bool early) {
 		@this.AssertNotNull();
-		Debug.Trace("Applying Patches");
+		Debug.Trace($"Applying Patches ({(early ? "early" : "late")})");
 		var assembly = typeof(Harmonize).Assembly;
 		Parallel.ForEach(
 			assembly.GetTypes(), type => {
 				var typeAttributes = type.GetCustomAttributes<HarmonizeFinalizeCatcherFixedAttribute>();
 				Parallel.ForEach(typeAttributes, attribute => {
-					ApplyPatch(
-						@this: @this,
-						type: type,
-						method: attribute.MethodInfo,
-						attribute: attribute
-					);
+					if (early == (attribute.ForMod is null)) {
+						ApplyPatch(
+							@this: @this,
+							type: type,
+							method: attribute.MethodInfo,
+							attribute: attribute
+						);
+					}
 				});
 
 				Parallel.ForEach(type.GetMethods(StaticFlags), method => {
@@ -224,7 +228,8 @@ internal static class Harmonize {
 							@this: @this,
 							type: type,
 							method: method,
-							attributes: method.GetCustomAttributes<HarmonizeAttribute>()
+							attributes: method.GetCustomAttributes<HarmonizeAttribute>(),
+							early: early
 						);
 					}
 				});

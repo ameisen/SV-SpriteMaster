@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 
 namespace Benchmarks.Sprites.Benchmarks;
 
-public class Premultiply : Textures {
+public class Premultiply : Textures8 {
 	[Benchmark(Description = "SkiaSharp", Baseline = true)]
 	[ArgumentsSource(nameof(DataSets), Priority = 0)]
 	public void Skia(in SpriteDataSet dataSet) {
@@ -61,7 +61,7 @@ public class Premultiply : Textures {
 
 			// Transparent to zero (what XNA and MonoGame do)
 			if (alpha == 0) {
-				data[i].Packed = 0;
+				Unsafe.AsRef(data[i].Packed) = 0;
 				continue;
 			}
 

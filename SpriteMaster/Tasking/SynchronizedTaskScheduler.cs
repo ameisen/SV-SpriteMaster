@@ -1,4 +1,5 @@
 ﻿using SpriteMaster.Configuration;
+using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using System;
 using System.Collections.Generic;
@@ -128,7 +129,7 @@ internal sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
 							var start = watch.Elapsed;
 							InvokeTask(task);
 							var duration = watch.Elapsed - start;
-							Debug.Trace($"Sprite Finished: Est: {estimate.TotalMilliseconds} ms, Act: {duration.TotalMilliseconds} ms  ({task.ActionData.Size} B) (rem: {remainingTime.TotalMilliseconds} ms)");
+							Debug.Trace($"Sprite Finished: ['{task.ActionData.Name}'] Est: {estimate.TotalMilliseconds} ms, Act: {duration.TotalMilliseconds} ms  ({task.ActionData.Size.AsDataSize()}) (rem: {remainingTime.TotalMilliseconds} ms)");
 							TexelAverage.Add(task.ActionData, duration);
 
 							++processed;

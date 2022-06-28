@@ -4,6 +4,7 @@ using SpriteMaster.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -227,13 +228,25 @@ internal class ObjectCache<TKey, TValue> : AbstractObjectCache<TKey, TValue> whe
 				return;
 			}
 
-			for (var i = 0; i < count; i++) {
-				var removeKey = RecentAccessList.RemoveLast();
+			int i = 0;
+			for (; i < count; i++) {
+				TKey? removeKey;
+				if (RecentAccessList.Count != 0) {
+					removeKey = RecentAccessList.RemoveLast();
+				}
+				else if (Cache.Count != 0) {
+					removeKey = Cache.Last().Key;
+				}
+				else {
+					break;
+				}
 				var result = Cache.Remove(removeKey, out var entry);
+				result.AssertTrue();
 				Interlocked.Add(ref CurrentSize, -entry.Size);
 				trimArray[i] = new(removeKey, entry.Value);
-				result.AssertTrue();
 			}
+
+			count = i;
 		}
 
 		ReportTrimmed(trimArray.AsReadOnlySpan(0, count), EvictionReason.Capacity);
@@ -260,11 +273,20 @@ internal class ObjectCache<TKey, TValue> : AbstractObjectCache<TKey, TValue> whe
 				var currentSize = Interlocked.Read(ref CurrentSize);
 
 				while (currentSize >= size) {
-					var removeKey = RecentAccessList.RemoveLast();
+					TKey? removeKey;
+					if (RecentAccessList.Count != 0) {
+						removeKey = RecentAccessList.RemoveLast();
+					}
+					else if (Cache.Count != 0) {
+						removeKey = Cache.Last().Key;
+					}
+					else {
+						break;
+					}
 					var result = Cache.Remove(removeKey, out var entry);
+					result.AssertTrue();
 					currentSize -= entry.Size;
 					trimmed.Add(new(removeKey, entry.Value));
-					result.AssertTrue();
 				}
 
 				CurrentSize = currentSize;

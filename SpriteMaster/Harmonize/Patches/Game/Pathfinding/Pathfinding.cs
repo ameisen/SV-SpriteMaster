@@ -1,4 +1,5 @@
-﻿using LinqFasterer;
+﻿using JetBrains.Annotations;
+using LinqFasterer;
 using Priority_Queue;
 using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
@@ -15,17 +16,18 @@ namespace SpriteMaster.Harmonize.Patches.Game.Pathfinding;
 
 using DoorPair = KeyValuePair<XNA.Point, string>;
 
+[UsedImplicitly]
 internal static partial class Pathfinding {
-	private static readonly Action<List<List<string>>>? RoutesFromLocationToLocationSet = typeof(NPC).GetFieldSetter<List<List<string>>>("routesFromLocationToLocation");
 	private static readonly Dictionary<string, Dictionary<string, List<string>>> FasterRouteMap = new();
 
-	static Pathfinding() {
-		if (RoutesFromLocationToLocationSet is null) {
-			Debug.Warning("Could not find 'NPC.routesFromLocationToLocation'");
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static TResult LockedRun<TResult>(object lockValue, Func<TResult> func) {
+		lock (lockValue) {
+			return func();
 		}
 	}
 
-	private static bool GetTarget(this Warp? warp, Dictionary<string, GameLocation?> locations, [NotNullWhen(true)] out GameLocation? target) {
+	private static bool GetTarget(this Warp? warp, Dictionary<string, GameLocation> locations, [NotNullWhen(true)] out GameLocation? target) {
 		if (warp is null) {
 			target = null;
 			return false;
@@ -91,7 +93,7 @@ internal static partial class Pathfinding {
 		}
 	}
 
-	private static List<string>? Dijkstra(GameLocation start, GameLocation end, Dictionary<string, GameLocation?> locations) {
+	private static List<string>? Dijkstra(GameLocation start, GameLocation end, Dictionary<string, GameLocation> locations) {
 		try {
 			// Get a dummy NPC to pass to the sub-pathfinders to validate routes to warps/doors.
 			NPC? dummyNPC = GetDummyNPC();
@@ -169,13 +171,13 @@ internal static partial class Pathfinding {
 
 				// Check if a given point within a given GameLocation is accessible from our current position.
 				int? GetPointDistance(GameLocation node, Vector2I point) {
-					if (!qLocation.StartPosition.HasValue) {
-						return 0;
-					}
-
 					// The vanilla game doesn't check for valid paths.
 					if (!Config.Extras.Pathfinding.TrueShortestPath) {
 						return 1;
+					}
+
+					if (!qLocation.StartPosition.HasValue) {
+						return 0;
 					}
 
 					var pointPair = new PointPair(qLocation.StartPosition.Value, point);
@@ -196,23 +198,16 @@ internal static partial class Pathfinding {
 					}
 					else {
 						// TODO : this lock really kills performance
-						lock (node) {
+						try {
 							if (node.Name == "Farm") {
-								try {
-									result = FindPathOnFarm(qLocation.StartPosition.Value, point, node, int.MaxValue);
-								}
-								catch {
-									result = null;
-								}
+								result = LockedRun(node, () => FindPathOnFarm(qLocation.StartPosition.Value, point, node, int.MaxValue));
 							}
 							else {
-								try {
-									result = findPathForNPCSchedules(qLocation.StartPosition.Value, point, node, int.MaxValue);
-								}
-								catch {
-									result = null;
-								}
+								result = LockedRun(node, () => findPathForNPCSchedules(qLocation.StartPosition.Value, point, node, int.MaxValue));
 							}
+						}
+						catch {
+							result = null;
 						}
 					}
 					int? count = result?.Count;
@@ -251,12 +246,17 @@ internal static partial class Pathfinding {
 					}
 
 					// Try to find the door's egress position, and process the node.
-					try {
-						var warp = qLocation.Location.getWarpFromDoor(door.Key, dummyNPC);
-						Vector2I? doorEgress = (warp is null) ? null : (warp.TargetX, warp.TargetY);
-						ProcessNeighbor(neighbor, doorIngress, doorEgress, length.Value);
+					if (Config.Extras.Pathfinding.TrueShortestPath) {
+						try {
+							var warp = LockedRun(qLocation, () => qLocation.Location.getWarpFromDoor(door.Key, dummyNPC));
+							Vector2I? doorEgress = (warp is null) ? null : (warp.TargetX, warp.TargetY);
+							ProcessNeighbor(neighbor, doorIngress, doorEgress, length.Value);
+						}
+						catch (Exception) {
+							ProcessNeighbor(neighbor, doorIngress, null, length.Value);
+						}
 					}
-					catch (Exception) {
+					else {
 						ProcessNeighbor(neighbor, doorIngress, null, length.Value);
 					}
 				}
@@ -269,7 +269,7 @@ internal static partial class Pathfinding {
 		return null; // Also no path
 	}
 
-	private static bool ExploreWarpPointsImpl(GameLocation startLocation, List<string> route, ConcurrentBag<List<string>> routeList, Dictionary<string, GameLocation?> locations) {
+	private static bool ExploreWarpPointsImpl(GameLocation startLocation, List<string> route, ConcurrentBag<List<string>> routeList, Dictionary<string, GameLocation> locations) {
 		var foundTargetsSet = new HashSet<string>(locations.Count) { startLocation.Name };
 
 		// Iterate over each location, performing a recursive Dijkstra traversal on each.

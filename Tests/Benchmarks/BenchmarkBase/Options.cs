@@ -73,6 +73,9 @@ public abstract class Options {
 	[Option("validate", "Perform Validation")]
 	public bool DoValidate { get; init; } = false;
 
+	[Option("reverse", "Reverse Runner Order")]
+	public bool Reverse { get; init; } = false;
+
 	public HashSet<GCType> GCTypes { get; } = new();
 
 	public HashSet<Runtime> Runtimes { get; } = new();

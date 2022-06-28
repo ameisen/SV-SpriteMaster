@@ -324,9 +324,9 @@ internal static class Config {
 		internal static bool PremultiplyAlpha = true;
 		[Attributes.Comment("Low pass value that should be filtered when reversing premultiplied alpha.")]
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
-		[Attributes.LimitsInt(0, 65_535)]
+		[Attributes.LimitsInt(ushort.MinValue, ushort.MaxValue)]
 		[Attributes.Advanced]
-		internal static int PremultiplicationLowPass = 1024;
+		internal static ushort PremultiplicationLowPass = 1023;
 		[Attributes.Comment("Use redmean algorithm for perceptual color comparisons?")]
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
 		[Attributes.Advanced]

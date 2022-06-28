@@ -11,7 +11,7 @@ using System.Runtime.CompilerServices;
 namespace Benchmarks.Hashing.Benchmarks;
 public abstract class BenchmarkBaseHashing<TDataType, TBase> : BenchmarkBaseImpl<TDataType, TBase> where TDataType : IDataSet<TBase> {
 	[GlobalSetup]
-	public void AlwaysRunBefore() {
+	public virtual void AlwaysRunBefore() {
 		RuntimeHelpers.RunClassConstructor(typeof(XxHash3).TypeHandle);
 		RuntimeHelpers.RunClassConstructor(typeof(XxHash3Exp).TypeHandle);
 	}

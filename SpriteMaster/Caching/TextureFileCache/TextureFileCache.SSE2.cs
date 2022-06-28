@@ -224,4 +224,104 @@ internal static partial class TextureFileCache {
 			ProcessTextureScalar(data.SliceUnsafe(offset));
 		}
 	}
+
+	/*
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	internal static unsafe void ProcessTextureSse2(Span<Color16> data) {
+		uint registerElements = (uint)Vector128<ulong>.Count;
+		registerElements.AssertEqual((uint)(sizeof(Vector128<ulong>) / sizeof(Color16)));
+
+		uint offset;
+		fixed (Color16* dataPtr16 = data) {
+			ulong* dataPtr = (ulong*)dataPtr16;
+
+			for (offset = 0; offset + (registerElements - 1U) < data.Length; offset += registerElements) {
+				Vector128<ulong> rawColor = Sse2.LoadVector128(dataPtr + offset);
+
+				Vector128<ulong> alphaMask = Vector128.Create(0xFFFF_0000_0000_0000UL);
+				Vector128<ulong> alpha = Sse2.And(rawColor, alphaMask);
+
+				Vector128<uint> lo = Sse2.UnpackLow(rawColor.AsUInt16(), Vector128<ushort>.Zero).AsUInt32();
+				Vector128<uint> hi = Sse2.UnpackHigh(rawColor.AsUInt16(), Vector128<ushort>.Zero).AsUInt32();
+
+				Vector128<ulong> alphaLo, alphaHi;
+				if (Ssse3.IsSupported) {
+					Vector128<byte> alphaShuffle = Vector128.Create(6, 6, 0xFF, 0xFF, 6, 6, 0xFF, 0xFF, 14, 14, 0xFF, 0xFF, 14, 14, 0xFF, 0xFF);
+
+					alphaLo = Ssse3.Shuffle(lo.AsByte(), alphaShuffle).AsUInt64();
+					alphaHi = Ssse3.Shuffle(hi.AsByte(), alphaShuffle).AsUInt64();
+				}
+				else {
+					alphaLo = Sse2.UnpackLow(alpha.AsUInt16(), Vector128<ushort>.Zero).AsUInt64();
+					alphaHi = Sse2.UnpackHigh(alpha.AsUInt16(), Vector128<ushort>.Zero).AsUInt64();
+
+					Vector128<ulong> alphaLo32 = Sse2.ShiftRightLogical(alphaLo, 32);
+					Vector128<ulong> alphaHi32 = Sse2.ShiftRightLogical(alphaHi, 32);
+					alphaLo = Sse2.Or(alphaLo, alphaLo32);
+					alphaHi = Sse2.Or(alphaHi, alphaHi32);
+
+					alphaLo = Sse2.Shuffle(alphaLo.AsUInt32(), 0 | (1 << 2) | 0 | (1 << 6)).AsUInt64();
+					alphaHi = Sse2.Shuffle(alphaHi.AsUInt32(), 0 | (1 << 2) | 0 | (1 << 6)).AsUInt64();
+				}
+
+				Vector128<uint> prodLo;
+				Vector128<uint> prodHi;
+				if (Sse41.IsSupported) {
+					prodLo = Sse41.MultiplyLow(lo, alphaLo.AsUInt32());
+					prodHi = Sse41.MultiplyLow(hi, alphaHi.AsUInt32());
+				}
+				else {
+					//https://stackoverflow.com/a/17268337/5055153
+					{
+						var a13 = Sse2.Shuffle(lo, 0xF5);
+						var b13 = Sse2.Shuffle(alphaLo.AsUInt32(), 0xF5);
+						var prod02 = Sse2.Multiply(lo, alphaLo.AsUInt32());
+						var prod13 = Sse2.Multiply(a13, b13);
+						var prod01 = Sse2.UnpackLow(prod02, prod13);
+						var prod23 = Sse2.UnpackHigh(prod02, prod13);
+						prodLo = Sse2.UnpackLow(prod01.AsUInt64(), prod23.AsUInt64()).AsUInt32();
+					}
+					{
+						var a13 = Sse2.Shuffle(hi, 0xF5);
+						var b13 = Sse2.Shuffle(alphaHi.AsUInt32(), 0xF5);
+						var prod02 = Sse2.Multiply(hi, alphaHi.AsUInt32());
+						var prod13 = Sse2.Multiply(a13, b13);
+						var prod01 = Sse2.UnpackLow(prod02, prod13);
+						var prod23 = Sse2.UnpackHigh(prod02, prod13);
+						prodHi = Sse2.UnpackLow(prod01.AsUInt64(), prod23.AsUInt64()).AsUInt32();
+					}
+
+				}
+
+				Vector128<uint> addend = Vector128.Create(0x0000FFFFU);
+
+				var sumLo = Sse2.Add(prodLo, addend);
+				var sumHi = Sse2.Add(prodHi, addend);
+
+				var shiftLo = Sse2.ShiftRightLogical(sumLo, 16);
+				var shiftHi = Sse2.ShiftRightLogical(sumHi, 16);
+
+				Vector128<ulong> packed;
+				if (Sse41.IsSupported) {
+					Sse41.PackUnsignedSaturate(shiftLo.AsInt32(), shiftHi.AsInt32()).AsUInt64();
+				}
+				else {
+
+				}
+
+				var mask = Vector128.Create(0x0000_FFFF_FFFF_FFFFUL);
+				packed = Sse2.And(packed, mask);
+				packed = Sse2.Or(packed, alpha);
+
+				Sse2.Store(dataPtr + offset, packed);
+			}
+		}
+
+		// This is unlikely to happen, but handle when there are still elements left (the texture size isn't aligned to 4)
+		if (offset < data.Length) {
+			ProcessTextureScalar(data.SliceUnsafe(offset));
+		}
+	}
+	*/
 }

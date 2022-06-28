@@ -22,8 +22,8 @@ public sealed class Quality {
 		internal readonly List<long> Differences = new();
 	}
 
-	private Result ProcessTest(MethodInfo method, Textures.SpriteData data) {
-		var tempDataSet = new Textures.SpriteDataSet(new[] {data});
+	private Result ProcessTest(MethodInfo method, Textures8.SpriteData data) {
+		var tempDataSet = new Textures8.SpriteDataSet(new[] {data});
 
 		{
 			var blockData = new Color8[4 * 4];
@@ -33,9 +33,9 @@ public sealed class Quality {
 
 			var blockDataBytes = blockData.AsSpan().Cast<Color8, byte>().ToArray();
 
-			var blockSpriteData = new Textures.SpriteData("block", new(blockDataBytes), (4, 4));
+			var blockSpriteData = new Textures8.SpriteData("block", new(blockDataBytes), (4, 4));
 
-			var blockDataSet = new Textures.SpriteDataSet(new[] {blockSpriteData});
+			var blockDataSet = new Textures8.SpriteDataSet(new[] {blockSpriteData});
 
 			method.Invoke(BlockCompressInstance, new object[] { blockDataSet });
 		}
@@ -108,7 +108,7 @@ public sealed class Quality {
 
 		ConcurrentDictionary<MethodInfo, ConcurrentBag<Result>> results = new();
 
-		foreach (var dataSet in Textures.DataSets) {
+		foreach (var dataSet in Textures8.DataSets) {
 			foreach (var data in dataSet.Data) {
 				foreach (var method in methods) {
 					var resultList = results.GetOrAdd(method, _ => new());

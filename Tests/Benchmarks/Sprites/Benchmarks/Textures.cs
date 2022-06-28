@@ -4,18 +4,23 @@ using Benchmarks.BenchmarkBase.Benchmarks;
 using LinqFasterer;
 using Microsoft.Toolkit.HighPerformance;
 using SkiaSharp;
-using SpriteMaster;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
+using SpriteMaster;
+using SpriteMaster.Types.Fixed;
+using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Benchmarks.Sprites.Benchmarks;
-
-public class Textures : BenchmarkBase<Textures.SpriteDataSet, Textures.SpriteData[]> {
+public abstract class Textures<TElement> : BenchmarkBase<Textures<TElement>.SpriteDataSet, Textures<TElement>.SpriteData[]> where TElement : unmanaged {
 	private const int RandomSeed = 0x13371337;
 	private const int ShortLength = 50;
+
+	[GlobalSetup]
+	public virtual void AlwaysRunBefore() {
+	}
 
 	private sealed class XorShiftRandom {
 		private ulong State;
@@ -101,10 +106,10 @@ public class Textures : BenchmarkBase<Textures.SpriteDataSet, Textures.SpriteDat
 
 	public class SpriteData {
 		internal readonly string Path;
-		public Memory<byte> Data { get; private set; }
-		public Span<byte> Span => Data.Span;
+		public Memory<TElement> Data { get; private set; }
+		public Span<TElement> Span => Data.Span;
 		internal object? TempReference = null;
-		internal readonly byte[] Reference;
+		internal readonly TElement[] Reference;
 
 		internal readonly Vector2I Size;
 
@@ -117,9 +122,9 @@ public class Textures : BenchmarkBase<Textures.SpriteDataSet, Textures.SpriteDat
 			TempReference = null;
 		}
 
-		internal SpriteData(string path, ReadOnlyMemory<byte> data, Vector2I size) {
+		internal SpriteData(string path, ReadOnlyMemory<TElement> data, Vector2I size) {
 			Path = path;
-			Reference = GC.AllocateUninitializedArray<byte>((int)data.Length);
+			Reference = GC.AllocateUninitializedArray<TElement>((int)data.Length);
 			data.CopyTo(Reference);
 			Data = new(Reference);
 			Size = size;
@@ -150,7 +155,7 @@ public class Textures : BenchmarkBase<Textures.SpriteDataSet, Textures.SpriteDat
 		(16 * 3, 32 * 5)
 	};
 
-	private sealed class LocalSpriteData {
+	private sealed class LocalSpriteData<T> where T : unmanaged {
 		private readonly string Path;
 		private string Name;
 		private readonly XorShiftRandom Rand;
@@ -226,7 +231,13 @@ public class Textures : BenchmarkBase<Textures.SpriteDataSet, Textures.SpriteDat
 				data = bitmap.Bytes;
 			}
 
-			return new(Name, data, size);
+			// Convert from u8 to u16, if necessary
+			if (typeof(TElement) == typeof(ushort) || typeof(TElement) == typeof(short) || typeof(TElement) == typeof(Fixed16)) {
+				var data16 = Color16.Convert(data.AsReadOnlySpan<Color8>()).Cast<Color16, TElement>().ToArray();
+				return new(Name, data16, size);
+			}
+
+			return new(Name, (TElement[])(object)data, size);
 		}
 	}
 
@@ -238,7 +249,7 @@ public class Textures : BenchmarkBase<Textures.SpriteDataSet, Textures.SpriteDat
 
 		string[] roots;
 		if (Program.CurrentOptions.Short) {
-			roots = new[] {Roots[0]};
+			roots = new[] { Roots[0] };
 		}
 		else {
 			roots = Roots;
@@ -249,7 +260,7 @@ public class Textures : BenchmarkBase<Textures.SpriteDataSet, Textures.SpriteDat
 
 		allImages = allImages.ShuffleF(random);
 
-		List<LocalSpriteData> allSpriteDataObjects = new(allImages.Length);
+		List<LocalSpriteData<TElement>> allSpriteDataObjects = new(allImages.Length);
 
 		Console.WriteLine($"Processing Image Data ({allImages.Length})");
 
@@ -257,9 +268,11 @@ public class Textures : BenchmarkBase<Textures.SpriteDataSet, Textures.SpriteDat
 
 		var smallSizes = SmallSizes.ToArray();
 
+		var printStopwatch = Stopwatch.StartNew();
+
 		Parallel.ForEach(
 			allImages, image => {
-				var result = new LocalSpriteData(smallSizes, image);
+				var result = new LocalSpriteData<TElement>(smallSizes, image);
 				ulong count;
 				lock (allSpriteDataObjects) {
 					if (result.Data is not null) {
@@ -270,12 +283,15 @@ public class Textures : BenchmarkBase<Textures.SpriteDataSet, Textures.SpriteDat
 				}
 
 				count *= 1000;
-				
+
 				ulong permille = count / (ulong)allImages.Length;
 				ulong percent = permille / 10;
 				if (Interlocked.Exchange(ref lastPercent, percent) < percent) {
-					if (percent != 0 && (permille % 100) == 0) {
-						Console.WriteLine($"{percent}%...");
+					if ((permille % 100) == 0) {
+						if (printStopwatch.ElapsedMilliseconds >= 500) {
+							Console.WriteLine($"{percent}%...");
+							printStopwatch.Restart();
+						}
 					}
 				}
 			}

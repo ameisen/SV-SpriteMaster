@@ -14,15 +14,17 @@ internal readonly struct Fixed16 : IEquatable<Fixed16>, IEquatable<ushort>, ILon
 	internal static readonly Fixed16 Zero = new((ushort)0);
 	internal static readonly Fixed16 Max = new(ushort.MaxValue);
 
-	internal readonly ushort Value { get; } = 0;
+	internal readonly ushort Value = 0;
 
 	[MethodImpl(MethodImpl.Inline)]
 	internal static ushort FromU8(byte value) => value.Color8To16();
 
 	internal readonly Fixed8 Narrow => Value.Color16to8();
-	internal readonly float Real => (float)Value.ValueToScalar();
+	internal readonly double Real => Value.ValueToScalar();
+	internal readonly float RealF => Value.ValueToScalarF();
 
 	internal static Fixed16 FromReal(float value) => value.ScalarToValue16();
+	internal static Fixed16 FromReal(double value) => value.ScalarToValue16();
 
 	[MethodImpl(MethodImpl.Inline)]
 	internal Fixed16(ushort value) => Value = value;
@@ -131,10 +133,28 @@ internal readonly struct Fixed16 : IEquatable<Fixed16>, IEquatable<ushort>, ILon
 	public static explicit operator Fixed8(Fixed16 value) => new(Fixed8.FromU16(value.Value));
 
 	[MethodImpl(MethodImpl.Inline)]
-	internal static Span<float> ConvertToReal(ReadOnlySpan<Fixed16> values) {
-		var result = SpanExt.Make<float>(values.Length);
+	internal static Span<double> ConvertToReal(ReadOnlySpan<Fixed16> values) {
+		var result = SpanExt.Make<double>(values.Length);
 		for (int i = 0; i < values.Length; ++i) {
 			result[i] = values[i].Real;
+		}
+		return result;
+	}
+
+	[MethodImpl(MethodImpl.Inline)]
+	internal static Span<float> ConvertToRealF(ReadOnlySpan<Fixed16> values) {
+		var result = SpanExt.Make<float>(values.Length);
+		for (int i = 0; i < values.Length; ++i) {
+			result[i] = values[i].RealF;
+		}
+		return result;
+	}
+
+	[MethodImpl(MethodImpl.Inline)]
+	internal static Span<Fixed16> ConvertFromReal(ReadOnlySpan<double> values) {
+		var result = SpanExt.Make<Fixed16>(values.Length);
+		for (int i = 0; i < values.Length; ++i) {
+			result[i] = values[i].ScalarToValue16();
 		}
 		return result;
 	}
