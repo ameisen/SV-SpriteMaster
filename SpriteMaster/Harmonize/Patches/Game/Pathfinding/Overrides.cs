@@ -175,7 +175,7 @@ internal static partial class Pathfinding {
 
 		// Iterate over every location in parallel, and collect all paths to every other location.
 		Parallel.ForEach(Game1.locations, location => {
-			if (Config.Extras.Pathfinding.AllowNPCsOnFarm || location is not Farm && !ReferenceEquals(location, backwoodsLocation)) {
+			if (location is not Farm && !ReferenceEquals(location, backwoodsLocation)) {
 				var route = new List<string>();
 				ExploreWarpPointsImpl(location, route, routeList, locations);
 			}

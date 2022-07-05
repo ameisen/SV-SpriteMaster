@@ -3,7 +3,6 @@ using JetBrains.Annotations;
 using LinqFasterer;
 using SpriteMaster.Caching;
 using SpriteMaster.Configuration;
-using SpriteMaster.Experimental;
 using SpriteMaster.Extensions;
 using SpriteMaster.Harmonize;
 using SpriteMaster.Harmonize.Patches.Game;
@@ -362,7 +361,6 @@ public sealed class SpriteMaster : Mod {
 	private void OnGameLaunched() {
 		var waiters = new WaitWrapper[] {
 			new(Task.Run(CheckMods)),
-			new(Task.Run(Inlining.Reenable)),
 			new(FileCache.Initialized),
 			new(Task.Run(Configuration.GMCM.Setup.Initialize))
 		};

@@ -719,10 +719,6 @@ internal static class Config {
 		[Attributes.Experimental]
 		internal static bool StrokeShadowedText = false;
 
-		[Attributes.Comment("Should Harmony patches have inlining re-enabled?")]
-		[Attributes.Broken]
-		internal static bool HarmonyInlining = false;
-
 		[Attributes.Comment("Should the game's 'parseMasterSchedule' method be fixed and optimized?")]
 		internal static bool FixMasterSchedule = true;
 
@@ -737,16 +733,6 @@ internal static class Config {
 			[Attributes.Comment("Should Location objects be locked during concurrent pathfinding?")]
 			[Attributes.Experimental]
 			internal static bool LockLocationObjects = false;
-
-			[Attributes.Comment("Should NPCs take true shortest paths?")]
-			[Attributes.ChangesBehavior]
-			[Attributes.Experimental]
-			internal static bool TrueShortestPath = false;
-
-			[Attributes.Comment("Allow NPCs onto the farm?")]
-			[Attributes.ChangesBehavior]
-			[Attributes.Broken]
-			internal static bool AllowNPCsOnFarm = false;
 		}
 
 		[Attributes.Comment("Should the default batch sort be replaced with a stable sort?")]
