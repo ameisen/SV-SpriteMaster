@@ -1,5 +1,5 @@
 ﻿using SpriteMaster.Extensions;
-using SpriteMaster.Types;
+using SpriteMaster.Extensions.Reflection;
 using StardewModdingAPI;
 using System;
 using System.Diagnostics;
@@ -49,8 +49,6 @@ internal static partial class Debug {
 		}
 	}
 
-	private static readonly ObjectPool<StringBuilder> StringBuilderPool = new(1);
-
 	private static IMonitor? GetTemporaryMonitor() {
 		object? sCoreInstance = null;
 
@@ -91,7 +89,7 @@ internal static partial class Debug {
 	//[DebuggerStepThrough, DebuggerHidden]
 	private static void DebugWriteStr(string str, LogLevel level) {
 		if (str.Contains("\n\n")) {
-			using var builder = StringBuilderPool.GetSafe();
+			using var builder = ObjectPoolExt.Take<StringBuilder>();
 
 			builder.Value.EnsureCapacity(str.Length);
 

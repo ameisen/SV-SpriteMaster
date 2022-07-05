@@ -3,6 +3,7 @@ using LinqFasterer;
 using Microsoft.Xna.Framework;
 using Pastel;
 using SpriteMaster.Extensions;
+using SpriteMaster.Extensions.Reflection;
 using SpriteMaster.Types;
 using SpriteMaster.Types.Fixed;
 using System;

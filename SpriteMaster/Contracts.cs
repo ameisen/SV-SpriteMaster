@@ -76,6 +76,7 @@ internal static class Contracts {
 	internal static void Assert(bool predicate, string message = "Variable's value is invalid", Type? exception = null, [CallerArgumentExpression("predicate")] string predicateExpression = "") {
 		CheckExceptionType(nameof(exception), exception);
 		if (!predicate) {
+			Debugger.Break();
 			ThrowException(exception ?? typeof(ArgumentException), AppendMessage(message, predicateExpression));
 		}
 	}

@@ -2,8 +2,7 @@
 using LinqFasterer;
 using Microsoft.Toolkit.HighPerformance;
 using Microsoft.Xna.Framework.Graphics;
-using SpriteMaster.Extensions;
-using SpriteMaster.Hashing;
+using SpriteMaster.Extensions.Reflection;
 using SpriteMaster.Types;
 using System.Collections.Concurrent;
 using System.Reflection;

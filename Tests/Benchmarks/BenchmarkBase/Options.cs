@@ -2,8 +2,8 @@
 using BenchmarkDotNet.Environments;
 using JetBrains.Annotations;
 using SpriteMaster.Extensions;
+using SpriteMaster.Extensions.Reflection;
 using System.Globalization;
-using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 

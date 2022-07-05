@@ -227,7 +227,8 @@ internal sealed class Resampler {
 		isGradient = analysis.MaxChannelShades >= Config.Resample.Analysis.MinimumGradientShades && (analysis.GradientDiagonal.Any || analysis.GradientAxial.Any);
 
 		if (isGradient) {
-			foreach (var blacklistPattern in Config.Resample.GradientBlacklistPatterns) {
+			var blacklist = Config.Resample.GradientBlacklistPatterns;
+			foreach (var blacklistPattern in blacklist) {
 				if (blacklistPattern.IsMatch(input.Reference.NormalizedName())) {
 					isGradient = false;
 					break;
@@ -294,11 +295,15 @@ internal sealed class Resampler {
 
 		// Apply recolor
 		if (Config.Resample.Recolor.Enabled) {
+			float rScalar = (float)Config.Resample.Recolor.RScalar;
+			float gScalar = (float)Config.Resample.Recolor.GScalar;
+			float bScalar = (float)Config.Resample.Recolor.BScalar;
+
 			for (int i = 0; i < spriteRawData.Length; ++i) {
 				ref Color16 color = ref spriteRawData[i];
-				float r = Math.Clamp((float)(color.R.RealF * Config.Resample.Recolor.RScalar), 0.0f, 1.0f);
-				float g = Math.Clamp((float)(color.G.RealF * Config.Resample.Recolor.GScalar), 0.0f, 1.0f);
-				float b = Math.Clamp((float)(color.B.RealF * Config.Resample.Recolor.BScalar), 0.0f, 1.0f);
+				float r = Math.Clamp(color.R.RealF * rScalar, 0.0f, 1.0f);
+				float g = Math.Clamp(color.G.RealF * gScalar, 0.0f, 1.0f);
+				float b = Math.Clamp(color.B.RealF * bScalar, 0.0f, 1.0f);
 				color.R = Fixed16.FromReal(r);
 				color.G = Fixed16.FromReal(g);
 				color.B = Fixed16.FromReal(b);
@@ -315,11 +320,12 @@ internal sealed class Resampler {
 
 			// Adjust the scale value so that it is within the preferred dimensional limits
 			if (Config.Resample.Scale) {
+				int preferredMaxDimension = Config.PreferredMaxTextureDimension;
 				var originalScale = scale;
 				scale = 2;
 				for (uint s = originalScale; s > 2U; --s) {
 					var newDimensions = spriteRawExtent * s;
-					if (newDimensions.MaxOf <= Config.PreferredMaxTextureDimension) {
+					if (newDimensions.MaxOf <= preferredMaxDimension) {
 						scale = s;
 						break;
 					}

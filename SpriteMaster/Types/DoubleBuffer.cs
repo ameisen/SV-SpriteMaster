@@ -1,4 +1,4 @@
-﻿using SpriteMaster.Extensions;
+﻿using SpriteMaster.Extensions.Reflection;
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;

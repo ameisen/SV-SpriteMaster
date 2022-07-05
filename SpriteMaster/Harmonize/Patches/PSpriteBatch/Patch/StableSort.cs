@@ -3,7 +3,7 @@ using JetBrains.Annotations;
 using LinqFasterer;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Configuration;
-using SpriteMaster.Extensions;
+using SpriteMaster.Extensions.Reflection;
 using System;
 using System.Collections.Generic;
 using System.Linq;

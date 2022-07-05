@@ -39,24 +39,24 @@ internal static partial class Pathfinding {
 			return false;
 		}
 
-		target = locations.GetValueOrDefault(
+		target = (GameLocation?)locations.GetValueOrDefault(
 			key: warp.TargetName switch {
 				"BoatTunnel" => "IslandSouth",
 				_ => warp.TargetName
 			},
-			defaultValue: null
+			defaultValue: null!
 		);
 		return target is not null;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	private static bool GetTarget(this in DoorPair door, Dictionary<string, GameLocation?> locations, [NotNullWhen(true)] out GameLocation? target) {
-		target = locations.GetValueOrDefault(
+	private static bool GetTarget(this in DoorPair door, Dictionary<string, GameLocation> locations, [NotNullWhen(true)] out GameLocation? target) {
+		target = (GameLocation?)locations.GetValueOrDefault(
 			key: door.Value switch {
 				"BoatTunnel" => "IslandSouth",
 				_ => door.Value
 			},
-			defaultValue: null
+			defaultValue: null!
 		);
 		return target is not null;
 	}
@@ -64,18 +64,16 @@ internal static partial class Pathfinding {
 	private readonly record struct PointPair(Vector2I Start, Vector2I End);
 	private static readonly ConcurrentDictionary<GameLocation, ConcurrentDictionary<PointPair, int?>> CachedPathfindPoints = new();
 
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	private static NPC? GetDummyNPC() {
-		NPC? dummyNPC = null;
-		foreach (var location in Game1.locations) {
-			dummyNPC = location.getCharacters().FirstOrDefaultF(c => c is not null);
-			if (dummyNPC is not null) {
-				break;
+	private static readonly Lazy<NPC?> DummyNpc = new(
+		() => {
+			foreach (var location in Game1.locations) {
+				if (location.getCharacters().FirstOrDefaultF(c => c is not null) is { } dummy) {
+					return dummy;
+				}
 			}
+			return null;
 		}
-
-		return dummyNPC;
-	}
+	);
 
 	private sealed class QueueLocation {
 		internal readonly GameLocation Location;
@@ -85,19 +83,17 @@ internal static partial class Pathfinding {
 
 		internal QueueLocation(GameLocation location) => Location = location;
 
-		internal struct Comparer : IEqualityComparer<QueueLocation> {
+		internal readonly struct Comparer : IEqualityComparer<QueueLocation> {
 			[MethodImpl(Runtime.MethodImpl.Inline)]
-			public bool Equals(QueueLocation? x, QueueLocation? y) => ReferenceEquals(x?.Location, y?.Location);
+			public readonly bool Equals(QueueLocation? x, QueueLocation? y) => ReferenceEquals(x?.Location, y?.Location);
 			[MethodImpl(Runtime.MethodImpl.Inline)]
-			public int GetHashCode(QueueLocation obj) => obj.Location.GetHashCode();
+			public readonly int GetHashCode(QueueLocation obj) => obj.Location.GetHashCode();
 		}
 	}
 
 	private static List<string>? Dijkstra(GameLocation start, GameLocation end, Dictionary<string, GameLocation> locations) {
 		try {
 			// Get a dummy NPC to pass to the sub-pathfinders to validate routes to warps/doors.
-			NPC? dummyNPC = GetDummyNPC();
-
 			var queue = new SimplePriorityQueue<QueueLocation, int>(
 				priorityComparer: (x, y) => x - y,
 				itemEquality: new QueueLocation.Comparer()
@@ -248,7 +244,7 @@ internal static partial class Pathfinding {
 					// Try to find the door's egress position, and process the node.
 					if (Config.Extras.Pathfinding.TrueShortestPath) {
 						try {
-							var warp = LockedRun(qLocation, () => qLocation.Location.getWarpFromDoor(door.Key, dummyNPC));
+							var warp = LockedRun(qLocation, () => qLocation.Location.getWarpFromDoor(door.Key, DummyNpc.Value));
 							Vector2I? doorEgress = (warp is null) ? null : (warp.TargetX, warp.TargetY);
 							ProcessNeighbor(neighbor, doorIngress, doorEgress, length.Value);
 						}

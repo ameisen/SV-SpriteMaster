@@ -1,5 +1,5 @@
 ﻿using JetBrains.Annotations;
-using SpriteMaster.Extensions;
+using SpriteMaster.Extensions.Reflection;
 using SpriteMaster.Types.Interlocking;
 using System;
 using System.Collections.Generic;
@@ -58,7 +58,7 @@ internal abstract class AbstractObjectCache<TKey, TValue> : SpriteMasterObject, 
 			$"Type '{typeof(TValue).FullName}' cannot have its size fetched by '{typeof(AbstractObjectCache<TKey, TValue>).Name}'"
 		);
 
-	[System.Diagnostics.Contracts.Pure]
+	[Pure]
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	protected static long GetSizeBytes(TValue value) {
 		var size = value switch {

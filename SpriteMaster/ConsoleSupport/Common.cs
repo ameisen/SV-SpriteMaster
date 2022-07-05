@@ -1,4 +1,4 @@
-﻿using SpriteMaster.Extensions;
+﻿using SpriteMaster.Extensions.Reflection;
 using System.Collections.Generic;
 using System.Reflection;
 

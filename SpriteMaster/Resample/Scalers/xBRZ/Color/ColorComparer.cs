@@ -4,12 +4,12 @@ using static SpriteMaster.Colors.ColorHelpers;
 
 namespace SpriteMaster.Resample.Scalers.xBRZ.Color;
 
-internal class ColorDist {
-	protected readonly Config Configuration;
+internal sealed class ColorComparer {
+	private readonly Config Configuration;
 	private readonly YccConfig YccConfiguration;
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal ColorDist(Config cfg) {
+	internal ColorComparer(Config cfg) {
 		Configuration = cfg;
 		YccConfiguration = new() {
 			LuminanceWeight = Configuration.LuminanceWeight,
@@ -28,4 +28,7 @@ internal class ColorDist {
 			yccConfig: YccConfiguration
 		);
 	}
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	internal bool IsColorEqual(Color16 color1, Color16 color2) => ColorDistance(color1, color2) < Configuration.EqualColorTolerance;
 }

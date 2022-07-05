@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace SpriteMaster.Extensions;
+namespace SpriteMaster.Extensions.Reflection;
 
 internal static partial class ReflectionExt {
 	[MethodImpl(Runtime.MethodImpl.Inline)]
@@ -26,8 +26,10 @@ internal static partial class ReflectionExt {
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static T RemoveRef<T>(this T type) where T : Type => ((type.IsByRef ? type.GetElementType() : type) as T)!;
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static string GetFullName(this MethodBase method) => method.DeclaringType is null ? method.Name : $"{method.DeclaringType.Name}::{method.Name}";
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static string? GetCurrentMethodName() => MethodBase.GetCurrentMethod()?.GetFullName();
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]

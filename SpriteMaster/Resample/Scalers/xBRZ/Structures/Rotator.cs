@@ -1,7 +1,7 @@
 ﻿using SpriteMaster.Extensions;
+using SpriteMaster.Types;
 using System;
 using System.Runtime.CompilerServices;
-using static SpriteMaster.Extensions.Collections;
 
 namespace SpriteMaster.Resample.Scalers.xBRZ.Structures;
 
@@ -13,7 +13,7 @@ internal static class Rotator {
 	// a = 0, b = 1, c = 2,
 	// d = 3, e = 4, f = 5,
 	// g = 6, h = 7, i = 8;
-	private static readonly int[] RotationsArray = new int[MaxRotations * MaxPositions];
+	private static readonly FixedArray<int> RotationsArray = new(MaxRotations * MaxPositions);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static int Get(int index) => RotationsArray[index];

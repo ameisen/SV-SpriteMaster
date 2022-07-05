@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SpriteMaster.Types.Exceptions;
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
@@ -12,6 +13,7 @@ internal static class ThrowHelper {
 	}
 
 	#region Exception
+
 	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
 	internal static T ThrowException<T>(string message) =>
 		throw new Exception(message);
@@ -27,9 +29,11 @@ internal static class ThrowHelper {
 	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
 	internal static void ThrowException(string message, Exception innerException) =>
 		throw new Exception(message, innerException);
+
 	#endregion
 
 	#region NullReferenceException
+
 	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
 	internal static T ThrowNullReferenceException<T>(string message) =>
 		throw new NullReferenceException(message);
@@ -45,9 +49,11 @@ internal static class ThrowHelper {
 	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
 	internal static void ThrowNullReferenceException(string message, Exception innerException) =>
 		throw new NullReferenceException(message, innerException);
+
 	#endregion
 
 	#region ArgumentNullException
+
 	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
 	internal static T ThrowArgumentNullException<T>(string paramName) =>
 		throw new ArgumentNullException(paramName);
@@ -71,9 +77,11 @@ internal static class ThrowHelper {
 	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
 	internal static void ThrowArgumentNullException(string message, Exception innerException) =>
 		throw new ArgumentNullException(message, innerException);
+
 	#endregion
 
 	#region InvalidOperationException
+
 	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
 	internal static T ThrowInvalidOperationException<T>(string message) =>
 		throw new InvalidOperationException(message);
@@ -89,9 +97,11 @@ internal static class ThrowHelper {
 	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
 	internal static void ThrowInvalidOperationException(string message, Exception innerException) =>
 		throw new InvalidOperationException(message, innerException);
+
 	#endregion
 
 	#region ObjectDisposedException
+
 	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
 	internal static T ThrowObjectDisposedException<T>(string objectName) =>
 		throw new ObjectDisposedException(objectName);
@@ -115,9 +125,11 @@ internal static class ThrowHelper {
 	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
 	internal static void ThrowObjectDisposedException(string message, Exception innerException) =>
 		throw new ObjectDisposedException(message, innerException);
+
 	#endregion
 
 	#region ArgumentException
+
 	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
 	internal static T ThrowArgumentException<T>(string message) =>
 		throw new ArgumentException(message);
@@ -149,9 +161,11 @@ internal static class ThrowHelper {
 	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
 	internal static void ThrowArgumentException(string message, string paramName, Exception innerException) =>
 		throw new ArgumentException(message, paramName, innerException);
+
 	#endregion
 
 	#region ArgumentOutOfRangeException
+
 	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
 	internal static T ThrowArgumentOutOfRangeException<T>(string paramName) =>
 		throw new ArgumentOutOfRangeException(paramName);
@@ -183,9 +197,11 @@ internal static class ThrowHelper {
 	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
 	internal static void ThrowArgumentOutOfRangeException(string message, Exception innerException) =>
 		throw new ArgumentOutOfRangeException(message, innerException);
+
 	#endregion
 
 	#region NotImplementedException
+
 	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
 	internal static T ThrowNotImplementedException<T>(string message) =>
 		throw new NotImplementedException(message);
@@ -193,9 +209,11 @@ internal static class ThrowHelper {
 	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
 	internal static void ThrowNotImplementedException(string message) =>
 		throw new NotImplementedException(message);
+
 	#endregion
 
 	#region NotSupportedException
+
 	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
 	internal static T ThrowNotSupportedException<T>(string message) =>
 		throw new NotSupportedException(message);
@@ -203,5 +221,18 @@ internal static class ThrowHelper {
 	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
 	internal static void ThrowNotSupportedException(string message) =>
 		throw new NotSupportedException(message);
+
+	#endregion
+
+	#region ReversePatchException
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static T ThrowReversePatchException<T>([CallerMemberName] string member = null!) =>
+		throw new ReversePatchException(member);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static void ThrowReversePatchException([CallerMemberName] string member = null!) =>
+		throw new ReversePatchException(member);
+
 	#endregion
 }

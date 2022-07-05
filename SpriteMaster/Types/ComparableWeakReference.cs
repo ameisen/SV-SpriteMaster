@@ -1,4 +1,4 @@
-﻿using SpriteMaster.Extensions;
+﻿using SpriteMaster.Extensions.Reflection;
 using System;
 using System.Reflection;
 using System.Runtime.Serialization;

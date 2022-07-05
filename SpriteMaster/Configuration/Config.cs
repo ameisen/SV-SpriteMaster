@@ -726,6 +726,9 @@ internal static class Config {
 		[Attributes.Comment("Should the game's 'parseMasterSchedule' method be fixed and optimized?")]
 		internal static bool FixMasterSchedule = true;
 
+		[Attributes.Comment("Should the game's 'getSchedule' method be fixed and optimized?")]
+		internal static bool FixGetSchedule = true;
+
 		[Attributes.Advanced]
 		internal static class Pathfinding {
 			[Attributes.Comment("Should NPC Warp Points code be optimized?")]

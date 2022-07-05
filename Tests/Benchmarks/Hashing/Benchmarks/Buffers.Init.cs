@@ -1,7 +1,7 @@
 ﻿using BenchmarkDotNet.Attributes;
 using Benchmarks.BenchmarkBase.Benchmarks;
 using Microsoft.Toolkit.HighPerformance;
-using SpriteMaster.Extensions;
+using SpriteMaster.Extensions.Reflection;
 using System.Numerics;
 using System.Reflection;
 

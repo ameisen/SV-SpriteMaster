@@ -6,7 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
-namespace SpriteMaster.Extensions;
+namespace SpriteMaster.Extensions.Reflection;
 
 internal static partial class ReflectionExt {
 	private const BindingFlags DefaultLookup = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public;
@@ -176,7 +176,7 @@ internal static partial class ReflectionExt {
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	[DynamicallyAccessedMembers(AllFields | AllProperties | AllMethods)]
 	internal static MemberInfo[] GetInstanceMembers(this Type type, string name) =>
-		type.GetMember(name, BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
+		type.GetMember(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	[DynamicallyAccessedMembers(AllFields | AllProperties)]
@@ -187,7 +187,7 @@ internal static partial class ReflectionExt {
 	[DynamicallyAccessedMembers(AllFields | AllProperties)]
 	internal static VariableInfo[] GetInstanceVariables(this Type type, string name) {
 		var members = type.GetInstanceMembers(name);
-		return members.WhereF(member => member is (FieldInfo or PropertyInfo)).SelectF(VariableInfo.From).ToArrayF();
+		return members.WhereF(member => member is (FieldInfo or PropertyInfo)).SelectF(VariableInfo.From).ToArrayF()!;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
@@ -198,7 +198,7 @@ internal static partial class ReflectionExt {
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	[DynamicallyAccessedMembers(AllFields | AllProperties | AllMethods)]
 	internal static MemberInfo[] GetStaticMembers(this Type type, string name) =>
-		type.GetMember(name, BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
+		type.GetMember(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.FlattenHierarchy);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	[DynamicallyAccessedMembers(AllFields | AllProperties)]
@@ -209,7 +209,7 @@ internal static partial class ReflectionExt {
 	[DynamicallyAccessedMembers(AllFields | AllProperties)]
 	internal static VariableInfo[] GetStaticVariables(this Type type, string name) {
 		var members = type.GetStaticMembers(name);
-		return members.WhereF(member => member is (FieldInfo or PropertyInfo)).SelectF(VariableInfo.From).ToArrayF();
+		return members.WhereF(member => member is (FieldInfo or PropertyInfo)).SelectF(VariableInfo.From).ToArrayF()!;
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
@@ -221,7 +221,7 @@ internal static partial class ReflectionExt {
 	[DynamicallyAccessedMembers(AllFields | AllProperties)]
 	internal static VariableInfo? GetInstanceVariable(this Type type, string name) {
 		var members = type.GetInstanceMembers(name);
-		return members.WhereF(member => member is (FieldInfo or PropertyInfo)).SelectF(VariableInfo.From).FirstOrDefaultF();
+		return VariableInfo.From(members.WhereF(member => member is (FieldInfo or PropertyInfo)).FirstOrDefaultF());
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
@@ -233,6 +233,6 @@ internal static partial class ReflectionExt {
 	[DynamicallyAccessedMembers(AllFields | AllProperties)]
 	internal static VariableInfo? GetStaticVariable(this Type type, string name) {
 		var members = type.GetStaticMembers(name);
-		return members.WhereF(member => member is (FieldInfo or PropertyInfo)).SelectF(VariableInfo.From).FirstOrDefaultF();
+		return VariableInfo.From(members.WhereF(member => member is (FieldInfo or PropertyInfo)).FirstOrDefaultF());
 	}
 }

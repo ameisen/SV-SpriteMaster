@@ -1,5 +1,5 @@
 ﻿using SpriteMaster.Configuration;
-using SpriteMaster.Extensions;
+using SpriteMaster.Extensions.Reflection;
 using System;
 using System.Diagnostics;
 using System.Reflection;
