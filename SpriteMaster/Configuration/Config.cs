@@ -422,6 +422,14 @@ internal static class Config {
 			[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
 			[Attributes.LimitsInt(0, int.MaxValue)]
 			internal static int MinimumGradientShades = 2;
+			[Attributes.Comment("Maximum proportion of opaque texels for a sprite to be a gradient?")]
+			[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
+			[Attributes.LimitsReal(0.0, 1.0)]
+			internal static double MaximumGradientOpaqueProportion = 0.95;
+			[Attributes.Comment("Minimum proportion of opaque texels for a sprite to be premultiplied?")]
+			[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
+			[Attributes.LimitsReal(0.0, 1.0)]
+			internal static double MinimumPremultipliedOpaqueProportion = 0.05;
 			[Attributes.Comment("Use redmean algorithm for perceptual color comparisons?")]
 			[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
 			internal static bool UseRedmean = true;
@@ -487,9 +495,7 @@ internal static class Config {
 		internal static class BlockCompression {
 			[Attributes.Comment("Should block compression of sprites be enabled?")]
 			[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
-			internal static bool Enabled = DevEnabled && (!Runtime.IsMacintosh || MacSupported) && true; // I cannot build a proper libnvtt for OSX presently.
-			[Attributes.Ignore]
-			private const bool MacSupported = false;
+			internal static bool Enabled = DevEnabled && true;
 			private const bool DevEnabled = true;
 			[Attributes.Comment("What quality level should be used?")]
 			[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]

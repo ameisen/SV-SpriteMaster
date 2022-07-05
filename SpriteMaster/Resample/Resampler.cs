@@ -1,4 +1,5 @@
 ﻿using LinqFasterer;
+using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Caching;
 using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
@@ -206,6 +207,7 @@ internal sealed class Resampler {
 			);
 		}
 
+		/*
 		if (Config.Debug.Sprite.DumpReference) {
 			Textures.DumpTexture(
 				source: spriteRawData8,
@@ -214,6 +216,7 @@ internal sealed class Resampler {
 				path: MakeDumpPath(modifiers: new[] { "reference", "reduced" })
 			);
 		}
+		*/
 
 		// At this point, rawData includes just the sprite's raw data.
 
@@ -225,6 +228,22 @@ internal sealed class Resampler {
 		);
 
 		isGradient = analysis.MaxChannelShades >= Config.Resample.Analysis.MinimumGradientShades && (analysis.GradientDiagonal.Any || analysis.GradientAxial.Any);
+
+		bool premultiplyAlpha = Config.Resample.PremultiplyAlpha;
+		bool gammaCorrect = Config.Resample.AssumeGammaCorrected;
+
+		double opaqueProportion = (double)analysis.OpaqueCount / spriteRawExtent.Area;
+		if (!isGradient) {
+			if (opaqueProportion <= Config.Resample.Analysis.MinimumPremultipliedOpaqueProportion) {
+				premultiplyAlpha = false;
+				//gammaCorrect = false;
+			}
+		}
+		else {
+			if (opaqueProportion >= Config.Resample.Analysis.MaximumGradientOpaqueProportion) {
+				isGradient = false;
+			}
+		}
 
 		if (isGradient) {
 			var blacklist = Config.Resample.GradientBlacklistPatterns;
@@ -332,8 +351,8 @@ internal sealed class Resampler {
 				}
 			}
 
-			bool premultiplyAlpha = Config.Resample.PremultiplyAlpha && scalerInfo.PremultiplyAlpha;
-			bool gammaCorrect = Config.Resample.AssumeGammaCorrected && scalerInfo.GammaCorrect; // There is no reason to perform this pass with EPX, as EPX does not blend.
+			premultiplyAlpha = premultiplyAlpha && scalerInfo.PremultiplyAlpha;
+			gammaCorrect = gammaCorrect && scalerInfo.GammaCorrect; // There is no reason to perform this pass with EPX, as EPX does not blend.
 
 			bool handlePadding = !directImage;
 
@@ -471,6 +490,7 @@ internal sealed class Resampler {
 		var bitmapData = Color8.ConvertPinned(bitmapDataWide);
 		var resultData = bitmapData.AsBytes();
 
+		/*
 		if (Config.Debug.Sprite.DumpResample) {
 			Textures.DumpTexture(
 				source: bitmapData,
@@ -479,6 +499,7 @@ internal sealed class Resampler {
 				path: MakeDumpPath(analysis: analysis, padding: padding, modifiers: new[] { "resample", "narrowed" })
 			);
 		}
+		*/
 
 		bool doRecompress = true;
 
@@ -574,6 +595,7 @@ internal sealed class Resampler {
 				blockPadding += blockPaddedSize - scaledSizeClamped;
 				scaledSizeClamped = blockPaddedSize;
 
+				/*
 				if (Config.Debug.Sprite.DumpResample) {
 					Textures.DumpTexture(
 						source: uncompressedBitmapData,
@@ -582,6 +604,7 @@ internal sealed class Resampler {
 						path: MakeDumpPath(analysis: analysis, padding: padding, modifiers: new[] { "resample", "blockpadded" })
 					);
 				}
+				*/
 			}
 
 			if (!TextureEncode.Encode(
@@ -766,7 +789,7 @@ internal sealed class Resampler {
 					instance: spriteInstance,
 					reference: input.Reference,
 					dimensions: newSize,
-					format: spriteFormat
+					format: ((SurfaceFormat)spriteFormat)/*.ToSRgb()*/
 				);
 
 				return newTexture;

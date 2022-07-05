@@ -1,5 +1,4 @@
-﻿using SpriteMaster.Configuration;
-using SpriteMaster.Types;
+﻿using SpriteMaster.Types;
 using System;
 using System.Runtime.CompilerServices;
 
@@ -16,11 +15,17 @@ internal static partial class PremultipliedAlpha {
 
 				var alpha = item.A;
 
-				pData->SetRgb(
-					item.R * alpha,
-					item.G * alpha,
-					item.B * alpha
-				);
+				switch (alpha.Value) {
+					case byte.MaxValue:
+						continue;
+					default:
+						pData->SetRgb(
+							item.R * alpha,
+							item.G * alpha,
+							item.B * alpha
+						);
+						break;
+				}
 
 				++pData;
 			}
@@ -29,7 +34,7 @@ internal static partial class PremultipliedAlpha {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private static unsafe void ReverseScalar(Span<Color16> data, Vector2I size) {
-		ushort lowPass = Config.Resample.PremultiplicationLowPass;
+		ushort lowPass = SMConfig.Resample.PremultiplicationLowPass;
 
 		fixed (Color16* pDataRef = data) {
 			Color16* pData = pDataRef;

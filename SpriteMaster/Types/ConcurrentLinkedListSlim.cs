@@ -1,4 +1,6 @@
-﻿using System;
+﻿// #define VALIDATE_CLLSLIM
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -247,7 +249,7 @@ internal sealed class ConcurrentLinkedListSlim<T> {
 		}
 	}
 
-	[Conditional("DEBUG")]
+	[Conditional("VALIDATE_CLLSLIM")]
 	private void CheckNode(NodeRef nodeRef) {
 		try {
 			nodeRef.Index.AssertPositiveOrZero(
@@ -260,7 +262,7 @@ internal sealed class ConcurrentLinkedListSlim<T> {
 		}
 	}
 
-	[Conditional("DEBUG")]
+	[Conditional("VALIDATE_CLLSLIM")]
 	private void ValidateDebug() {
 		try {
 			Count.AssertPositiveOrZero();

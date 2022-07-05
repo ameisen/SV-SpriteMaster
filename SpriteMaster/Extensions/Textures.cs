@@ -1,5 +1,6 @@
 ﻿using Microsoft.Toolkit.HighPerformance;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Graphics.PackedVector;
 using Pastel;
 using SpriteMaster.Resample;
 using SpriteMaster.Tasking;
@@ -101,6 +102,32 @@ internal static class Textures {
 		var result = SizeBytesLong(format, dimensions.Area);
 		return checked((int)result);
 	}
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	internal static SurfaceFormat ToSRgb(this SurfaceFormat format) => format switch {
+		SurfaceFormat.Color => SurfaceFormat.ColorSRgb,
+		SurfaceFormat.Dxt1 => SurfaceFormat.Dxt1SRgb,
+		SurfaceFormat.Dxt3 => SurfaceFormat.Dxt3SRgb,
+		SurfaceFormat.Dxt5 => SurfaceFormat.Dxt5SRgb,
+		SurfaceFormat.Bgr32 => SurfaceFormat.Bgr32SRgb,
+		SurfaceFormat.Bgra32 => SurfaceFormat.Bgra32SRgb,
+		SurfaceFormat.Rgb8Etc2 => SurfaceFormat.Srgb8Etc2,
+		SurfaceFormat.Rgb8A1Etc2 => SurfaceFormat.Srgb8A1Etc2,
+		SurfaceFormat.Rgba8Etc2 => SurfaceFormat.SRgb8A8Etc2,
+	};
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	internal static SurfaceFormat ToLinear(this SurfaceFormat format) => format switch {
+		SurfaceFormat.ColorSRgb => SurfaceFormat.Color,
+		SurfaceFormat.Dxt1SRgb => SurfaceFormat.Dxt1,
+		SurfaceFormat.Dxt3SRgb => SurfaceFormat.Dxt3,
+		SurfaceFormat.Dxt5SRgb => SurfaceFormat.Dxt5,
+		SurfaceFormat.Bgr32SRgb => SurfaceFormat.Bgr32,
+		SurfaceFormat.Bgra32SRgb => SurfaceFormat.Bgra32,
+		SurfaceFormat.Srgb8Etc2 => SurfaceFormat.Rgb8Etc2,
+		SurfaceFormat.Srgb8A1Etc2 => SurfaceFormat.Rgb8A1Etc2,
+		SurfaceFormat.SRgb8A8Etc2 => SurfaceFormat.Rgba8Etc2,
+	};
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static bool IsCompressed(this SurfaceFormat format) => format switch {
