@@ -186,8 +186,7 @@ public class Sprites : BenchmarkBase<SpriteDataSet, ReadOnlyMemory2D<byte>> {
 
 					foreach (var hasher in new TestFunction[] {
 						referenceInstance.Copy,
-						referenceInstance.SegmentedSpan,
-						referenceInstance.SegmentedSpanExperimental
+						referenceInstance.SegmentedSpan
 					}) {
 						ulong hash = hasher(dataSet);
 						if (baseline != hash) {
@@ -247,13 +246,5 @@ public class Sprites : BenchmarkBase<SpriteDataSet, ReadOnlyMemory2D<byte>> {
 		var span = dataSet.Span;
 
 		return SpriteMaster.Hashing.Algorithms.XxHash3.Hash64(span);
-	}
-
-	[Benchmark(Description = "SegmentedSpan (Experimental)")]
-	[ArgumentsSource(nameof(DataSets), Priority = 2)]
-	public ulong SegmentedSpanExperimental(in SpriteDataSet dataSet) {
-		var span = dataSet.Span;
-
-		return SpriteMaster.Hashing.Algorithms.XxHash3Exp.Hash64(span);
 	}
 }

@@ -89,7 +89,7 @@ internal static partial class Debug {
 	//[DebuggerStepThrough, DebuggerHidden]
 	private static void DebugWriteStr(string str, LogLevel level) {
 		if (str.Contains("\n\n")) {
-			using var builder = ObjectPoolExt.Take<StringBuilder>();
+			using var builder = ObjectPoolExt.Take<StringBuilder>(builder => builder.Clear());
 
 			builder.Value.EnsureCapacity(str.Length);
 

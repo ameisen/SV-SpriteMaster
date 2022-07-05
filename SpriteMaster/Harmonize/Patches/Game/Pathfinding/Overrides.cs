@@ -2,13 +2,12 @@
 
 using LinqFasterer;
 using SpriteMaster.Configuration;
-using SpriteMaster.Extensions;
 using SpriteMaster.Extensions.Reflection;
 using SpriteMaster.Types.Reflection;
 using StardewValley;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace SpriteMaster.Harmonize.Patches.Game.Pathfinding;
@@ -17,13 +16,13 @@ internal static partial class Pathfinding {
 	private static readonly VariableInfo? RoutesFromLocationToLocationInfo = typeof(NPC).GetStaticVariable("routesFromLocationToLocation");
 	private static readonly VariableStaticAccessor<List<List<string>>>? RoutesFromLocationToLocation = RoutesFromLocationToLocationInfo?.GetStaticAccessor<List<List<string>>>();
 
-	private static bool RoutesFromLocationToLocationSet(ConcurrentBag<List<string>> routes) {
+	private static bool RoutesFromLocationToLocationSet(List<List<string>> routes) {
 		if (RoutesFromLocationToLocation is not {} accessor) {
 			return false;
 		}
 
 		lock (PathLock) {
-			accessor.Value = routes.ToList();
+			accessor.Value = routes;
 			return true;
 		}
 	}
@@ -54,11 +53,8 @@ internal static partial class Pathfinding {
 		// TODO : Handle the MensLocker/WomensLocker overrides. We effectively will need two more route maps (or one if gender can never be 'neither').
 		// && ((int)this.gender == 0 || !s.Contains<string>("BathHouse_MensLocker", StringComparer.Ordinal)) && ((int)this.gender != 0 || !s.Contains<string>("BathHouse_WomensLocker", StringComparer.Ordinal))
 
-		if (FasterRouteMap.TryGetValue(startingLocation, out var innerRoute)) {
-			if (innerRoute.TryGetValue(endingLocation, out var route) && route.Count != 0) {
-				__result = route;
-				return false;
-			}
+		if (FasterRouteMap.TryGetRoute((startingLocation, endingLocation), (Gender)__instance.Gender, out __result)) {
+			return false;
 		}
 
 		return true;
@@ -142,6 +138,22 @@ internal static partial class Pathfinding {
 		}
 	}
 
+	private readonly struct LocationComparer : IEqualityComparer<GameLocation> {
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public readonly bool Equals(GameLocation? x, GameLocation? y) {
+			if (ReferenceEquals(x, y)) {
+				return true;
+			}
+
+			return x?.Name == y?.Name;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public readonly int GetHashCode(GameLocation obj) {
+			return obj.Name.GetHashCode();
+		}
+	}
+
 	[Harmonize(
 		typeof(NPC),
 		"populateRoutesFromLocationToLocationList",
@@ -150,7 +162,7 @@ internal static partial class Pathfinding {
 		instance: false,
 		critical: false
 	)]
-	public static bool PopulateRoutesFromLocationToLocationList() {
+	public static bool PopulateRoutesFromLocationToLocationListPrefix() {
 		if (!Config.IsUnconditionallyEnabled || !Config.Extras.Pathfinding.OptimizeWarpPoints) {
 			return true;
 		}
@@ -167,9 +179,9 @@ internal static partial class Pathfinding {
 		var referenceRoutes = RoutesFromLocationToLocation!?.Value!;
 #endif
 
-		var routeList = new ConcurrentBag<List<string>>();
-
 		var locations = new Dictionary<string, GameLocation>(Game1.locations.WhereF(location => location is not null).SelectF(location => new KeyValuePair<string, GameLocation>(location.Name, location)));
+
+		var routeList = new RouteList(locations.Count);
 
 		GameLocation? backwoodsLocation = Game1.locations.FirstOrDefaultF(location => location.Name == "Backwoods");
 
@@ -177,23 +189,36 @@ internal static partial class Pathfinding {
 		Parallel.ForEach(Game1.locations, location => {
 			if (location is not Farm && !ReferenceEquals(location, backwoodsLocation)) {
 				var route = new List<string>();
-				ExploreWarpPointsImpl(location, route, routeList, locations);
+				ExploreWarpPointsImpl(location, route, in routeList, locations);
 			}
 		});
 
 		// Set the RoutesFromLocationToLocation list, and also generate a faster 'FasterRouteMap' to perform path lookups.
-		RoutesFromLocationToLocationSet(routeList);
 		FasterRouteMap.Clear();
-		foreach (var route in routeList) {
-			var innerRoutes = FasterRouteMap.GetOrAddDefault(route.FirstF(), () => new());
-			innerRoutes[route.LastF()] = route;
-		}
+		var allRoutes = FasterRouteMap.Add(in routeList);
+		RoutesFromLocationToLocationSet(allRoutes);
 
 #if VALIDATE_ROUTES
-		ValidateRoutes(referenceRoutes, routeList.ToList());
+		ValidateRoutes(referenceRoutes, routeList.General.Concat(routeList.Male).Concat(routeList.Female).ToList());
 #endif
 
 		return false;
+	}
+
+	[Harmonize(
+		typeof(NPC),
+		"populateRoutesFromLocationToLocationList",
+		Harmonize.Fixation.Postfix,
+		Harmonize.PriorityLevel.Last,
+		instance: false,
+		critical: false
+	)]
+	public static void PopulateRoutesFromLocationToLocationListPostfix() {
+		if (!Config.IsUnconditionallyEnabled || !Config.Extras.Pathfinding.OptimizeWarpPoints) {
+			return;
+		}
+
+		UpdateWarpPointsReverse(null);
 	}
 
 	[Harmonize(
@@ -204,7 +229,7 @@ internal static partial class Pathfinding {
 		instance: false,
 		critical: false
 	)]
-	public static bool ExploreWarpPoints(ref bool __result, GameLocation l, List<string> route) {
+	public static bool ExploreWarpPointsPre(ref bool __result, GameLocation l, List<string> route) {
 		if (!Config.IsUnconditionallyEnabled || !Config.Extras.Pathfinding.OptimizeWarpPoints) {
 			return true;
 		}
@@ -216,19 +241,64 @@ internal static partial class Pathfinding {
 #endif
 
 		// RoutesFromLocationToLocation is always a new list when first entering this method
-		var routeList = new ConcurrentBag<List<string>>();
 
 		var locations = new Dictionary<string, GameLocation>(Game1.locations.WhereF(location => location is not null).SelectF(location => new KeyValuePair<string, GameLocation>(location.Name, location)));
 
-		// Single location pathing search.
-		__result = ExploreWarpPointsImpl(l, route, routeList, locations);
+		var routeList = new RouteList(locations.Count);
 
-		RoutesFromLocationToLocationSet(routeList);
-		FasterRouteMap.Clear();
-		foreach (var listedRoute in routeList) {
-			var innerRoutes = FasterRouteMap.GetOrAddDefault(listedRoute.FirstF(), () => new());
-			innerRoutes[listedRoute.LastF()] = listedRoute;
-		}
+		// Single location pathing search.
+		__result = ExploreWarpPointsImpl(l, route, in routeList, locations);
+
+		FasterRouteMap.Clear(l.Name);
+		var allRoutes = FasterRouteMap.Add(in routeList);
+		RoutesFromLocationToLocationSet(allRoutes);
+
 		return false;
+	}
+
+	[Harmonize(
+		typeof(NPC),
+		"exploreWarpPoints",
+		Harmonize.Fixation.Postfix,
+		Harmonize.PriorityLevel.Last,
+		instance: false,
+		critical: false
+	)]
+	public static void ExploreWarpPointsPost(ref bool __result, GameLocation l, List<string> route) {
+		if (!Config.IsUnconditionallyEnabled || !Config.Extras.Pathfinding.OptimizeWarpPoints) {
+			return;
+		}
+
+		UpdateWarpPointsReverse(l);
+		route.Clear();
+	}
+
+	private static void UpdateWarpPointsReverse(GameLocation? l) {
+		if (RoutesFromLocationToLocation is not { HasGetter: true } routes) {
+			return;
+		}
+
+		bool honorGender = SMConfig.Extras.Pathfinding.HonorGenderLocking;
+
+		var gameRoutes = routes.Value;
+
+		foreach (var route in gameRoutes.ReverseF()) {
+			if (l is not null && route[0] != l.Name) {
+				continue;
+			}
+			bool male = honorGender && MaleLocations.AnyF(route.Contains);
+			bool female = honorGender && FemaleLocations.AnyF(route.Contains);
+			switch (male, female) {
+				case (true, false):
+					RouteMap.Add(FasterRouteMap.Male, route, route);
+					break;
+				case (false, true):
+					RouteMap.Add(FasterRouteMap.Female, route, route);
+					break;
+				default:
+					RouteMap.Add(FasterRouteMap.General, route, route);
+					break;
+			}
+		}
 	}
 }

@@ -1,6 +1,7 @@
 ﻿using JetBrains.Annotations;
 using Microsoft.Toolkit.HighPerformance;
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -170,5 +171,27 @@ internal static class ArrayExt {
 			start += change;
 		}
 		return result;
+	}
+
+	[Pure, MustUseReturnValue, MethodImpl(MethodImplOptions.AggressiveOptimization)]
+	internal static bool ContainsFast<T>(this T[] array, T element) {
+		foreach (var item in array) {
+			if (EqualityComparer<T>.Default.Equals(item, element)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	[Pure, MustUseReturnValue, MethodImpl(MethodImplOptions.AggressiveOptimization)]
+	internal static bool ContainsFast<T, TComparer>(this T[] array, T element, TComparer comparer) where TComparer : IEqualityComparer<T> {
+		foreach (var item in array) {
+			if (comparer.Equals(item, element)) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 }

@@ -13,7 +13,6 @@ public abstract class BenchmarkBaseHashing<TDataType, TBase> : BenchmarkBaseImpl
 	[GlobalSetup]
 	public virtual void AlwaysRunBefore() {
 		RuntimeHelpers.RunClassConstructor(typeof(XxHash3).TypeHandle);
-		RuntimeHelpers.RunClassConstructor(typeof(XxHash3Exp).TypeHandle);
 	}
 
 	private static class Impl {

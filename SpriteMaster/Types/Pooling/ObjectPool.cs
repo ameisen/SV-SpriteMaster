@@ -69,6 +69,8 @@ internal sealed class ObjectPool<T> : ISealedObjectPool<T, ObjectPool<T>> where 
 			ThrowHelper.ThrowArgumentNullException($"{nameof(Return)} value {nameof(value)} is null");
 		}
 
+		UntraceAllocation(value);
+
 		if (!Pool.Add(value)) {
 			ThrowHelper.ThrowInvalidOperationException($"Object {value} already exists in {nameof(ObjectPool<T>)}");
 		}
@@ -76,9 +78,9 @@ internal sealed class ObjectPool<T> : ISealedObjectPool<T, ObjectPool<T>> where 
 		UntraceAllocation(value);
 
 		Pool.Add(value);
+#endif
 
 		Interlocked.Decrement(ref AllocatedInternal);
-#endif
 	}
 
 	internal KeyValuePair<T, StackTrace>[] GetAllocationTraces() {

@@ -23,7 +23,7 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 	private static readonly ConcurrentLinkedListSlim<WeakInstance> RecentAccessList = new();
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	private static bool HasLegalFormat(XTexture2D texture) => AllowedFormats.ContainsF(texture.Format);
+	private static bool HasLegalFormat(XTexture2D texture) => AllowedFormats.ContainsFast(texture.Format);
 
 	private static void PurgeInvalidated(XTexture2D texture) {
 		// If somehow it passed validation earlier (like a SetData before a name) make sure no cached data

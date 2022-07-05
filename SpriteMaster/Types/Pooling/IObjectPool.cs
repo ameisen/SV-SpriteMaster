@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Types.Pooling;
 
@@ -17,7 +18,7 @@ internal interface ISealedObjectPool<T, TPool> : IObjectPool<T> where T : class,
 	IPooledObject<T> IObjectPool<T>.GetSafe() => GetSafe();
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal new sealed PooledObject<T, TPool> GetSafe() {
-		return new(Get(), this);
+	internal new sealed PooledObject<T, TPool> GetSafe(Action<T>? clear = null) {
+		return new(Get(), this, clear);
 	}
 }

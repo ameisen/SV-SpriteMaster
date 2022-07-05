@@ -10,6 +10,19 @@ using static SpriteMaster.Runtime;
 namespace SpriteMaster.Extensions;
 
 internal static class Collections {
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static TValue? GetValueOrDefault<TKey, TValue>(
+		this Dictionary<TKey, TValue> dictionary,
+		TKey key,
+		TValue? defaultValue = default
+	) where TKey : notnull {
+		if (dictionary.TryGetValue(key, out var value)) {
+			return value;
+		}
+
+		return defaultValue;
+	}
+
 	#region IsBlank
 	[MethodImpl(MethodImpl.Inline)]
 	internal static bool IsBlank<T>(this IEnumerable<T>? enumerable) => enumerable is null || !enumerable.Any();

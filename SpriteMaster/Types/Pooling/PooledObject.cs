@@ -1,5 +1,5 @@
 ﻿using System;
-
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -11,6 +11,7 @@ internal interface IPooledObject<T> : IDisposable where T : class, new() {
 
 internal interface ISealedPooledObject<T, TPooledObject> : IPooledObject<T> where T : class, new() where TPooledObject : ISealedPooledObject<T, TPooledObject> {
 	T IPooledObject<T>.Value => Value;
+	protected Action<T> Clear { get; }
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	protected void OnDispose(T value);
@@ -26,6 +27,8 @@ internal interface ISealedPooledObject<T, TPooledObject> : IPooledObject<T> wher
 		var value = Value;
 #endif
 
+		Clear(value);
+
 		OnDispose(value);
 	}
 }
@@ -33,12 +36,22 @@ internal interface ISealedPooledObject<T, TPooledObject> : IPooledObject<T> wher
 [StructLayout(LayoutKind.Auto)]
 internal readonly struct PooledObject<T, TPool> : ISealedPooledObject<T, PooledObject<T, TPool>> where T : class, new() where TPool : IObjectPool<T> {
 	public readonly T Value { get; }
+	private readonly Action<T> Clear;
+	Action<T> ISealedPooledObject<T, PooledObject<T, TPool>>.Clear => Clear;
 	private readonly IObjectPool<T> Pool;
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal PooledObject(T value, IObjectPool<T> pool) {
+	internal PooledObject(T value, IObjectPool<T> pool, Action<T>? clear) {
 		Value = value;
 		Pool = pool;
+
+		if (clear is not null) {
+			clear(value);
+			Clear = clear;
+		}
+		else {
+			Clear = _ => { };
+		}
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
@@ -54,11 +67,21 @@ internal readonly struct PooledObject<T, TPool> : ISealedPooledObject<T, PooledO
 [StructLayout(LayoutKind.Auto)]
 internal readonly struct DefaultPooledObject<T> : ISealedPooledObject<T, DefaultPooledObject<T>> where T : class, new() {
 	public readonly T Value { get; }
+	private readonly Action<T> Clear;
+	Action<T> ISealedPooledObject<T, DefaultPooledObject<T>>.Clear => Clear;
 	private static ObjectPool<T> Pool => ObjectPool<T>.Default;
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal DefaultPooledObject(T value) {
+	internal DefaultPooledObject(T value, Action<T>? clear) {
 		Value = value;
+
+		if (clear is not null) {
+			clear(value);
+			Clear = clear;
+		}
+		else {
+			Clear = _ => { };
+		}
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]

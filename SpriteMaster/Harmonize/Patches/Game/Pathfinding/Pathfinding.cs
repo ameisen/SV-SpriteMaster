@@ -1,4 +1,6 @@
 ﻿using JetBrains.Annotations;
+using LinqFasterer;
+using Microsoft.VisualBasic.CompilerServices;
 using Priority_Queue;
 using SpriteMaster.Extensions;
 using StardewValley;
@@ -14,40 +16,37 @@ using DoorPair = KeyValuePair<XNA.Point, string>;
 
 [UsedImplicitly]
 internal static partial class Pathfinding {
-	private static readonly Dictionary<string, Dictionary<string, List<string>>> FasterRouteMap = new();
-
 	private static bool GetTarget(this Warp? warp, Dictionary<string, GameLocation> locations, [NotNullWhen(true)] out GameLocation? target) {
-		if (warp is null) {
+		if (warp?.TargetName is not {} targetName) {
 			target = null;
 			return false;
 		}
 
 		// Warps can never path to "Volcano", and can only path to certain Locations when it's explicitly allowed in the settings.
-		if (warp.TargetName is "Volcano" or "Farm" or "Woods" or "Backwoods" or "Tunnel") {
-			target = null;
-			return false;
+		switch (targetName) {
+			case "Volcano":
+			case "Farm":
+			case "Woods":
+			case "Backwoods":
+			case "Tunnel":
+				target = null;
+				return false;
+			case "BoatTunnel":
+				targetName = "IslandSouth";
+				break;
 		}
 
-		target = (GameLocation?)locations.GetValueOrDefault(
-			key: warp.TargetName switch {
-				"BoatTunnel" => "IslandSouth",
-				_ => warp.TargetName
-			},
-			defaultValue: null!
-		);
-		return target is not null;
+		return locations.TryGetValue(targetName, out target);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private static bool GetTarget(this in DoorPair door, Dictionary<string, GameLocation> locations, [NotNullWhen(true)] out GameLocation? target) {
-		target = (GameLocation?)locations.GetValueOrDefault(
-			key: door.Value switch {
-				"BoatTunnel" => "IslandSouth",
-				_ => door.Value
-			},
-			defaultValue: null!
-		);
-		return target is not null;
+		var targetName = door.Value;
+		if (targetName == "BoatTunnel") {
+			targetName = "IslandSouth";
+		}
+
+		return locations.TryGetValue(targetName, out target);
 	}
 
 	private sealed class QueueLocation {
@@ -65,7 +64,7 @@ internal static partial class Pathfinding {
 		}
 	}
 
-	private static List<string>? Dijkstra(GameLocation start, GameLocation end, Dictionary<string, GameLocation> locations) {
+	private static List<string>? Dijkstra(GameLocation start, GameLocation end, Dictionary<string, GameLocation> locations, string[] filter) {
 		try {
 			// Get a dummy NPC to pass to the sub-pathfinders to validate routes to warps/doors.
 			var queue = new SimplePriorityQueue<QueueLocation, int>(
@@ -80,9 +79,14 @@ internal static partial class Pathfinding {
 			queue.Enqueue(startQueueLocation, 0);
 
 			foreach (var location in Game1.locations) {
+				if (filter.ContainsFast(location.Name)) {
+					continue;
+				}
+
 				var queueLocation = new QueueLocation(location);
+
 				if (queueDataMap.TryAdd(location, queueLocation)) {
-					queue.EnqueueWithoutDuplicates(queueLocation, int.MaxValue);
+					queue.Enqueue(queueLocation, int.MaxValue);
 				}
 			}
 
@@ -112,7 +116,9 @@ internal static partial class Pathfinding {
 
 				// Process a neighboring node and potentially add it to the queue
 				void ProcessNeighbor(GameLocation node) {
-					var dataNode = queueDataMap[node];
+					if (!queueDataMap.TryGetValue(node, out var dataNode)) {
+						return;
+					}
 
 					if (!queue.Contains(dataNode)) {
 						return;
@@ -152,30 +158,88 @@ internal static partial class Pathfinding {
 		return null; // Also no path
 	}
 
-	private static bool ExploreWarpPointsImpl(GameLocation startLocation, List<string> route, ConcurrentBag<List<string>> routeList, Dictionary<string, GameLocation> locations) {
-		var foundTargetsSet = new HashSet<string>(locations.Count) { startLocation.Name };
+	private static bool ExploreWarpPointsImpl(
+		GameLocation startLocation,
+		List<string> route,
+		in RouteList routeList,
+		Dictionary<string, GameLocation> locations
+	) {
+		using var generalFoundDisposable = ObjectPoolExt.Take<HashSet<string>>(s => s.Clear());
+		var generalFound = generalFoundDisposable.Value;
+		generalFound.EnsureCapacity(routeList.Capacity);
+		using var maleFoundDisposable = ObjectPoolExt.Take<HashSet<string>>(s => s.Clear());
+		var maleFound = maleFoundDisposable.Value;
+		maleFound.EnsureCapacity(routeList.Capacity);
+		using var femaleFoundDisposable = ObjectPoolExt.Take<HashSet<string>>(s => s.Clear());
+		var femaleFound = femaleFoundDisposable.Value;
+		femaleFound.EnsureCapacity(routeList.Capacity);
+
+		bool honorGender = SMConfig.Extras.Pathfinding.HonorGenderLocking;
+
+		void AddToRouteList(ConcurrentBag<List<string>> list, HashSet<string> found, List<string> route) {
+			list.Add(route);
+
+			// Repeatedly remove the last element from the route, and add it into the routeList. This allows us to bypass having to recalculate for smaller paths in many cases,
+			// as we've already calculated them.
+			for (int len = route.Count - 1; len >= 2; --len) {
+				if (!found.Add(route[len - 1])) {
+					break;
+				}
+				var subList = route.GetRange(0, len);
+				list.Add(subList);
+			}
+		}
+
+		void AddToRouteListChecked(ConcurrentBag<List<string>> list, HashSet<string> found, List<string> route) {
+			if (!found.Add(route.LastF())) {
+				return;
+			}
+
+			AddToRouteList(list, found, route);
+		}
 
 		// Iterate over each location, performing a recursive Dijkstra traversal on each.
 		foreach (var location in Game1.locations) {
 			// If we've already found a path to this location, there is no reason to process it again.
-			if (!foundTargetsSet.Add(location.Name)) {
+			if (!generalFound.Add(location.Name)) {
 				continue;
 			}
 
-			var result = Dijkstra(startLocation, location, locations);
-			if (result is null) {
+			if (Dijkstra(startLocation, location, locations, Array.Empty<string>()) is not { } result) {
 				continue;
 			}
-			routeList.Add(result);
 
-			// Repeatedly remove the last element from the route, and add it into the routeList. This allows us to bypass having to recalculate for smaller paths in many cases,
-			// as we've already calculated them.
-			for (int len = result.Count - 1; len >= 2; --len) {
-				if (!foundTargetsSet.Add(result[len - 1])) {
+			bool containsMale = honorGender && MaleLocations.AnyF(result.Contains);
+			bool containsFemale = honorGender && FemaleLocations.AnyF(result.Contains);
+			switch (containsMale, containsFemale) {
+				case (true, true): {
+					// Both?!
+					if (Dijkstra(startLocation, location, locations, MaleLocations) is { } femaleResult) {
+						AddToRouteListChecked(routeList.Female, femaleFound, femaleResult);
+					}
+					if (Dijkstra(startLocation, location, locations, FemaleLocations) is { } maleResult) {
+						AddToRouteListChecked(routeList.Male, maleFound, maleResult);
+					}
+				} break;
+				case (true, false): {
+						// Male
+						AddToRouteListChecked(routeList.Male, maleFound, result);
+
+					if (Dijkstra(startLocation, location, locations, MaleLocations) is { } femaleResult) {
+						AddToRouteListChecked(routeList.Female, femaleFound, femaleResult);
+					}
+				} break;
+				case (false, true): {
+						// Female
+						AddToRouteListChecked(routeList.Female, femaleFound, result);
+
+					if (Dijkstra(startLocation, location, locations, FemaleLocations) is { } maleResult) {
+						AddToRouteListChecked(routeList.Male, maleFound, maleResult);
+					}
+				} break;
+				case (false, false):
+					AddToRouteList(routeList.General, generalFound, result);
 					break;
-				}
-				var subList = result.GetRange(0, len);
-				routeList.Add(subList);
 			}
 		}
 

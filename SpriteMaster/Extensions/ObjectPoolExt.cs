@@ -1,16 +1,17 @@
 ﻿using SpriteMaster.Types.Pooling;
+using System;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Extensions;
 
 internal static class ObjectPoolExt {
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	internal static DefaultPooledObject<T> Take<T>() where T : class, new() =>
-		ObjectPoolExt<T>.Take();
+	internal static DefaultPooledObject<T> Take<T>(Action<T>? clear = null) where T : class, new() =>
+		ObjectPoolExt<T>.Take(clear);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	internal static PooledObject<T, TrackingObjectPool<T>> TakeTracked<T>() where T : class, new() =>
-		ObjectPoolExt<T>.TakeTracked();
+	internal static PooledObject<T, TrackingObjectPool<T>> TakeTracked<T>(Action<T>? clear = null) where T : class, new() =>
+		ObjectPoolExt<T>.TakeTracked(clear);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static T Get<T>() where T : class, new() =>
@@ -34,12 +35,12 @@ internal static class ObjectPoolExt<T> where T : class, new() {
 	internal static TrackingObjectPool<T> DefaultTrackingPool => TrackingObjectPool<T>.Default;
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	internal static DefaultPooledObject<T> Take() =>
-		new(DefaultPool.Get());
+	internal static DefaultPooledObject<T> Take(Action<T>? clear = null) =>
+		new(DefaultPool.Get(), clear);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	internal static PooledObject<T, TrackingObjectPool<T>> TakeTracked() =>
-		new(DefaultTrackingPool.Get(), DefaultTrackingPool);
+	internal static PooledObject<T, TrackingObjectPool<T>> TakeTracked(Action<T>? clear = null) =>
+		new(DefaultTrackingPool.Get(), DefaultTrackingPool, clear);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static T Get() =>

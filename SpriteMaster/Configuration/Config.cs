@@ -730,6 +730,9 @@ internal static class Config {
 			[Attributes.Comment("Should NPC Warp Points code be optimized?")]
 			internal static bool OptimizeWarpPoints = true;
 
+			[Attributes.Comment("Should gender-locked locations be honored?")]
+			internal static bool HonorGenderLocking = false;
+
 			[Attributes.Comment("Should Location objects be locked during concurrent pathfinding?")]
 			[Attributes.Experimental]
 			internal static bool LockLocationObjects = false;
