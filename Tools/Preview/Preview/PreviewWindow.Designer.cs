@@ -1,4 +1,4 @@
-﻿namespace xBRZ;
+﻿namespace SpriteMaster.Tools.Preview.Preview;
 
 partial class PreviewWindow {
 	/// <summary>

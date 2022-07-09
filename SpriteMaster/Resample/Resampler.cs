@@ -229,12 +229,15 @@ internal sealed class Resampler {
 
 		isGradient = analysis.MaxChannelShades >= Config.Resample.Analysis.MinimumGradientShades && (analysis.GradientDiagonal.Any || analysis.GradientAxial.Any);
 
+		bool fullPremultiplyAlpha = true;
 		bool premultiplyAlpha = Config.Resample.PremultiplyAlpha;
 		bool gammaCorrect = Config.Resample.AssumeGammaCorrected;
 
 		double opaqueProportion = (double)analysis.OpaqueCount / spriteRawExtent.Area;
 		if (!isGradient) {
 			if (opaqueProportion <= Config.Resample.Analysis.MinimumPremultipliedOpaqueProportion) {
+				fullPremultiplyAlpha = false;
+				// TODO : I want to remove this line, but it's causing a single-line artifact in wet HoeDirt that I haven't resolved yet.
 				premultiplyAlpha = false;
 				//gammaCorrect = false;
 			}
@@ -390,7 +393,7 @@ internal sealed class Resampler {
 				}
 
 				if (premultiplyAlpha) {
-					PremultipliedAlpha.Reverse(spriteRawData, spriteRawExtent);
+					PremultipliedAlpha.Reverse(spriteRawData, spriteRawExtent, fullPremultiplyAlpha);
 				}
 
 				if (Config.Resample.Deposterization.PreEnabled) {
@@ -432,7 +435,7 @@ internal sealed class Resampler {
 				}
 
 				if (premultiplyAlpha) {
-					PremultipliedAlpha.Apply(bitmapDataWide, scaledSize);
+					PremultipliedAlpha.Apply(bitmapDataWide, scaledSize, fullPremultiplyAlpha);
 				}
 
 				if (gammaCorrect && currentGammaState == GammaState.Linear) {
@@ -789,7 +792,7 @@ internal sealed class Resampler {
 					instance: spriteInstance,
 					reference: input.Reference,
 					dimensions: newSize,
-					format: ((SurfaceFormat)spriteFormat)/*.ToSRgb()*/
+					format: spriteFormat
 				);
 
 				return newTexture;

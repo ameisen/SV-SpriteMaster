@@ -6,52 +6,36 @@ using SpriteMaster.Resample.Scalers.xBRZ.Scalers;
 using SpriteMaster.Resample.Scalers.xBRZ.Structures;
 using SpriteMaster.Types;
 using System;
-using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Resample.Scalers.xBRZ;
 
 using PreprocessType = Byte;
 
-internal sealed partial class Scaler {
+internal sealed partial class Scaler : AbstractScaler<Config, Scaler.ValueScale> {
 	private const uint MinScale = 2;
 	private const uint MaxScale = Config.MaxScale;
+
+	internal readonly struct ValueScale : IScale {
+		public readonly uint Minimum => MinScale;
+		public readonly uint Maximum => MaxScale;
+	}
 
 	private static uint ClampScale(uint scale) => Math.Clamp(scale, MinScale, MaxScale);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private static Span<Color16> Apply(
-		Config? config,
+		Config config,
 		uint scaleMultiplier,
 		ReadOnlySpan<Color16> sourceData,
 		Vector2I sourceSize,
 		Span<Color16> targetData,
 		Vector2I targetSize
 	) {
-		if (config is null) {
-			throw new ArgumentNullException(nameof(config));
-		}
-
-		if (sourceSize.X * sourceSize.Y > sourceData.Length) {
-			throw new ArgumentOutOfRangeException(nameof(sourceData));
-		}
-
-		var targetSizeCalculated = sourceSize * scaleMultiplier;
-		if (targetSize != targetSizeCalculated) {
-			throw new ArgumentOutOfRangeException(nameof(targetSize));
-		}
-
-		if (targetData.IsEmpty) {
-			targetData = SpanExt.Make<Color16>(targetSize.Area);
-		}
-		else {
-			if (targetSize.Area > targetData.Length) {
-				throw new ArgumentOutOfRangeException(nameof(targetData));
-			}
-		}
+		Resample.Scalers.Common.ApplyValidate(config, scaleMultiplier, sourceData, sourceSize, ref targetData, targetSize);
 
 		var scalerInstance = new Scaler(
-			configuration: in config,
+			configuration: config,
 			scaleMultiplier: scaleMultiplier,
 			sourceSize: sourceSize,
 			targetSize: targetSize
@@ -63,40 +47,18 @@ internal sealed partial class Scaler {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private Scaler(
-		in Config configuration,
+		Config configuration,
 		uint scaleMultiplier,
 		Vector2I sourceSize,
 		Vector2I targetSize
-	) {
-		if (scaleMultiplier < MinScale || scaleMultiplier > MaxScale) {
-			throw new ArgumentOutOfRangeException(nameof(scaleMultiplier), $"{scaleMultiplier} is not within ({MinScale}, {MaxScale})");
-		}
-		/*
-		if (sourceData is null) {
-			throw new ArgumentNullException(nameof(sourceData));
-		}
-		if (targetData is null) {
-			throw new ArgumentNullException(nameof(targetData));
-		}
-		*/
-		if (sourceSize.X <= 0 || sourceSize.Y <= 0) {
-			throw new ArgumentOutOfRangeException(nameof(sourceSize), $"{nameof(sourceSize)} ({sourceSize}) must not be negative or degenerate");
-		}
-
+	) : base(configuration, scaleMultiplier, sourceSize, targetSize) {
 		Scalerer = scaleMultiplier.ToIScaler(configuration);
-		Configuration = configuration;
 		Comparer = new(Configuration);
-		SourceSize = sourceSize;
-		TargetSize = targetSize;
 	}
 
-	private readonly Config Configuration;
 	private readonly AbstractScaler Scalerer;
 
 	private readonly ColorComparer Comparer;
-
-	private readonly Vector2I SourceSize;
-	private readonly Vector2I TargetSize;
 
 	//fill block with the given color
 	[MethodImpl(Runtime.MethodImpl.Inline)]
@@ -357,12 +319,12 @@ internal sealed partial class Scaler {
 
 			if (stride < 0) {
 				Debug.Warning($"xBRZ GetPixel out of range: stride: {stride}, value clamped");
-				stride = Math.Max(0, stride);
+				stride = 0;
 			}
 
 			if (offset < 0) {
 				Debug.Warning($"xBRZ GetPixel out of range: offset: {offset}, value clamped");
-				offset = Math.Max(0, offset);
+				offset = 0;
 			}
 
 			return src[stride + offset];

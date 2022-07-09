@@ -602,7 +602,7 @@ internal static class Config {
 			[Attributes.Comment("The tolerance for colors to be considered equal - [0, 256)")]
 			[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
 			[Attributes.LimitsInt(0, 255)]
-			internal static int EqualColorTolerance = 20;
+			internal static byte EqualColorTolerance = 20;
 			[Attributes.Comment("The weight provided to luminance as opposed to chrominance when performing color comparisons")]
 			[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
 			[Attributes.LimitsReal(0.0, 10.0)]

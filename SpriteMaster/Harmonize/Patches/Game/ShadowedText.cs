@@ -197,8 +197,6 @@ internal static class ShadowedText {
 		return false;
 	}
 
-	private static readonly Vector2F[] ShadowedStringOffsets = { (-1, -1), (1, -1), (-1, 1), (1, 1) };
-
 	private static void DrawStrokedText(
 		XSpriteBatch b,
 		string? text,
@@ -215,18 +213,20 @@ internal static class ShadowedText {
 			ThrowNullArgumentException(nameof(font));
 		}
 
-		foreach (var offset in ShadowedStringOffsets) {
-			b.DrawString(
-				font,
-				text,
-				position + offset,
-				shadowColor,
-				0f,
-				XVector2.Zero,
-				scale,
-				SpriteEffects.None,
-				layerDepth
-			);
+		for (int y = -1; y <= 1; ++y) {
+			for (int x = -1; x <= 1; ++x) {
+				b.DrawString(
+					font,
+					text,
+					position + (x, y),
+					shadowColor,
+					0f,
+					XVector2.Zero,
+					scale,
+					SpriteEffects.None,
+					layerDepth
+				);
+			}
 		}
 
 		b.DrawString(

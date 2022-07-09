@@ -7,6 +7,7 @@ using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
 using SpriteMaster.Resample;
 using SpriteMaster.Types;
+using SpriteMaster.Types.Interlocking;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
@@ -506,9 +507,10 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 	private readonly uint ReferenceScale;
 	internal ManagedSpriteInstance? PreviousSpriteInstance = null;
 	internal volatile bool Invalidated = false;
-	internal volatile bool Suspended = false;
+	internal readonly InterlockedBool Suspended = false;
 	internal bool NoResample = false;
 	internal readonly bool IsPreview = false;
+	internal readonly object CleanupLock = new();
 
 	internal ulong LastReferencedFrame = DrawState.CurrentFrame;
 
@@ -520,12 +522,7 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 	/// </summary>
 	internal ConcurrentLinkedListSlim<WeakInstance>.NodeRef RecentAccessNode = default;
 
-	private volatile bool IsDisposedInternal = false;
-
-	internal bool IsDisposed {
-		get => IsDisposedInternal;
-		private set => IsDisposedInternal = value;
-	}
+	internal readonly InterlockedBool IsDisposed = false;
 
 	internal static long TotalMemoryUsage = 0U;
 
@@ -735,36 +732,36 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 	}
 
 	public void Dispose() {
-		if (IsDisposed) {
-			return;
-		}
+		lock (CleanupLock) {
+			if (IsDisposed.CompareExchange(true, false) == true) {
+				return;
+			}
 
-		if (PreviousSpriteInstance is not null) {
-			PreviousSpriteInstance.Suspend(true);
-			PreviousSpriteInstance = null;
-		}
+			if (PreviousSpriteInstance is not null) {
+				PreviousSpriteInstance.Suspend(true);
+				PreviousSpriteInstance = null;
+			}
 
-		if (Reference.TryGetTarget(out var reference)) {
-			SpriteMap.Remove(this, reference);
-			reference.Disposing -= OnParentDispose;
-		}
-		if (RecentAccessNode.IsValid) {
-			RecentAccessList.Release(RecentAccessNode);
-			RecentAccessNode = default;
-		}
-		IsDisposed = true;
+			if (Reference.TryGetTarget(out var reference)) {
+				SpriteMap.Remove(this, reference);
+				reference.Disposing -= OnParentDispose;
+			}
 
-		if (Suspended) {
-			SuspendedSpriteCache.RemoveFast(this);
-			Suspended = false;
-		}
+			if (RecentAccessNode.IsValid) {
+				RecentAccessList.Release(RecentAccessNode);
+				RecentAccessNode = default;
+			}
 
-		GC.SuppressFinalize(this);
+			if (Suspended.CompareExchange(false, true) == true) {
+				SuspendedSpriteCache.RemoveFast(this);
+			}
+
+			GC.SuppressFinalize(this);
+		}
 	}
 
 	internal static void Cleanup(in CleanupData data) {
 		Debug.Trace("Cleaning up finalized ManagedSpriteInstance");
-
 		if (data.PreviousSpriteInstance is not null) {
 			data.PreviousSpriteInstance.Suspend(true);
 		}
@@ -786,62 +783,69 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 	}
 
 	internal void Suspend(bool clearChildrenIfDispose = false) {
-		if (IsDisposed || Suspended) {
-			return;
+		lock (CleanupLock) {
+			if (IsDisposed) {
+				return;
+			}
+
+			if (Suspended.CompareExchange(true, false) == true) {
+				return;
+			}
+
+			if (StardewValley.Game1.quit) {
+				return;
+			}
+
+			if (!IsReadyInternal || !Config.SuspendedCache.Enabled) {
+				Dispose(clearChildrenIfDispose);
+				return;
+			}
+
+			// TODO : Handle clearing any reference to _this_
+			PreviousSpriteInstance = null;
+
+			if (RecentAccessNode.IsValid) {
+				RecentAccessList.Release(RecentAccessNode);
+				RecentAccessNode = default;
+			}
+
+			Invalidated = false;
+
+			Reference.SetTarget(null!);
+
+			SuspendedSpriteCache.Add(this);
+
+			Debug.Trace($"Sprite Instance '{Name}' {"Suspended".Pastel(DrawingColor.LightGoldenrodYellow)}");
 		}
-
-		if (StardewValley.Game1.quit) {
-			return;
-		}
-
-		if (!IsReadyInternal || !Config.SuspendedCache.Enabled) {
-			Dispose(clearChildrenIfDispose);
-			return;
-		}
-
-		// TODO : Handle clearing any reference to _this_
-		PreviousSpriteInstance = null;
-
-		if (RecentAccessNode.IsValid) {
-			RecentAccessList.Release(RecentAccessNode);
-			RecentAccessNode = default;
-		}
-		Invalidated = false;
-
-		Reference.SetTarget(null!);
-
-		Suspended = true;
-		SuspendedSpriteCache.Add(this);
-
-		Debug.Trace($"Sprite Instance '{Name}' {"Suspended".Pastel(DrawingColor.LightGoldenrodYellow)}");
 	}
 
 	internal bool Resurrect(XTexture2D texture, ulong spriteMapHash) {
-		if (StardewValley.Game1.quit) {
-			return false;
-		}
+		lock (CleanupLock) {
+			if (StardewValley.Game1.quit) {
+				return false;
+			}
 
-		if (IsDisposed || !Suspended) {
+			if (IsDisposed || Suspended.CompareExchange(false, true) != true) {
+				SuspendedSpriteCache.RemoveFast(this);
+				return false;
+			}
+
+			if (!IsReadyInternal || !Config.SuspendedCache.Enabled) {
+				SuspendedSpriteCache.RemoveFast(this);
+				return false;
+			}
+
 			SuspendedSpriteCache.RemoveFast(this);
-			return false;
+			Reference.SetTarget(texture);
+
+			SpriteMapHash = spriteMapHash;
+			texture.Meta().ReplaceInSpriteInstanceTable(SpriteMapHash, this);
+			SpriteMap.AddReplace(texture, this);
+
+			Debug.Trace($"Sprite Instance '{Name}' {"Resurrected".Pastel(DrawingColor.LightCyan)}");
+
+			return true;
 		}
-
-		if (!IsReadyInternal || !Config.SuspendedCache.Enabled) {
-			SuspendedSpriteCache.RemoveFast(this);
-			return false;
-		}
-
-		SuspendedSpriteCache.RemoveFast(this);
-		Suspended = false;
-		Reference.SetTarget(texture);
-
-		SpriteMapHash = spriteMapHash;
-		texture.Meta().ReplaceInSpriteInstanceTable(SpriteMapHash, this);
-		SpriteMap.AddReplace(texture, this);
-
-		Debug.Trace($"Sprite Instance '{Name}' {"Resurrected".Pastel(DrawingColor.LightCyan)}");
-
-		return true;
 	}
 
 	public long SizeBytes => (int)MemorySize;

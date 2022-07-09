@@ -197,6 +197,10 @@ internal sealed class ConcurrentLinkedListSlim<T> {
 		}
 
 		lock (this) {
+			if (!nodeRef.IsValid) {
+				throw ExceptionMakers.InvalidNodeRef(nameof(nodeRef), nodeRef);
+			}
+
 			NodeRef nodeRefLocal = nodeRef;
 
 			CheckNode(nodeRefLocal);

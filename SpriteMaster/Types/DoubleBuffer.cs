@@ -6,10 +6,10 @@ using System.Threading;
 namespace SpriteMaster.Types;
 
 internal sealed class DoubleBuffer<T> {
-	internal const int StartingIndex = 0;
+	private const uint StartingIndex = 0U;
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	private static uint GetIndex(uint index) => (index & 1U);
+	private static uint GetIndex(uint index) => index & 1U;
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private T GetBuffer(uint index) => (GetIndex(index) == 0U) ? Buffer0 : Buffer1;
@@ -19,7 +19,7 @@ internal sealed class DoubleBuffer<T> {
 	private readonly T Buffer0;
 	private readonly T Buffer1;
 
-	private volatile uint CurrentBufferIndex = StartingIndex;
+	private uint CurrentBufferIndex = StartingIndex;
 
 	internal uint CurrentBuffer => GetIndex(CurrentBufferIndex);
 

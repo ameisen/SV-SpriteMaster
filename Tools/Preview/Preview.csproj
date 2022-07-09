@@ -3,12 +3,15 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <StartupObject>SpriteMaster.Tools.XBRZProgram</StartupObject>
+		<RootNamespace>SpriteMaster.Tools.Preview</RootNamespace>
+    <StartupObject>SpriteMaster.Tools.Preview.Program</StartupObject>
     <ApplicationIcon>pufferchick_xbrz.ico</ApplicationIcon>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 		<UseWPF>true</UseWPF>
 		<UseWindowsForms>true</UseWindowsForms>
 		<Configurations>Debug;Release;Shipping</Configurations>
+		<LangVersion>Preview</LangVersion>
+		<EnablePreviewFeatures>True</EnablePreviewFeatures>
   </PropertyGroup>
 
   <ItemGroup>

@@ -114,6 +114,7 @@ internal static class Textures {
 		SurfaceFormat.Rgb8Etc2 => SurfaceFormat.Srgb8Etc2,
 		SurfaceFormat.Rgb8A1Etc2 => SurfaceFormat.Srgb8A1Etc2,
 		SurfaceFormat.Rgba8Etc2 => SurfaceFormat.SRgb8A8Etc2,
+		_ => format
 	};
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
@@ -127,6 +128,7 @@ internal static class Textures {
 		SurfaceFormat.Srgb8Etc2 => SurfaceFormat.Rgb8Etc2,
 		SurfaceFormat.Srgb8A1Etc2 => SurfaceFormat.Rgb8A1Etc2,
 		SurfaceFormat.SRgb8A8Etc2 => SurfaceFormat.Rgba8Etc2,
+		_ => format
 	};
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]

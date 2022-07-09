@@ -1,7 +1,7 @@
 ﻿using LinqFasterer;
 using System.Text.RegularExpressions;
 
-namespace xBRZ;
+namespace SpriteMaster.Tools.Preview;
 
 internal readonly record struct Argument(string Key, string? Value = null) {
 	internal readonly bool IsCommand => Key[0] is '-' or '/';

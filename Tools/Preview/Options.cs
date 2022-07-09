@@ -1,4 +1,4 @@
-﻿namespace xBRZ;
+﻿namespace SpriteMaster.Tools.Preview;
 
 internal sealed class Options {
 	internal bool Preview { get; init; } = false;

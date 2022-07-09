@@ -28,7 +28,7 @@
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Shipping|x64'">
-	  <DefineConstants>TRACE;SHIPPING</DefineConstants>
+	  <DefineConstants>SHIPPING</DefineConstants>
 	  <Optimize>true</Optimize>
 	</PropertyGroup>
 
@@ -112,6 +112,10 @@
 		<Reference Update="Stardew Valley">
 			<Aliases>destination</Aliases>
 		</Reference>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Resample\Scalers\xBREPX\" />
 	</ItemGroup>
 
 	<Target Name="PreBuild" BeforeTargets="PreBuildEvent">

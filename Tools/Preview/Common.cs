@@ -2,10 +2,10 @@
 using SpriteMaster.Types;
 using System.Drawing.Imaging;
 
-namespace xBRZ;
+namespace SpriteMaster.Tools.Preview;
 
 internal static class Common {
-	internal static readonly SpriteMaster.Colors.ColorSpace ColorSpace = SpriteMaster.Colors.ColorSpace.sRGB_Precise;
+	internal static readonly Colors.ColorSpace ColorSpace = Colors.ColorSpace.sRGB_Precise;
 
 	internal static unsafe Span<Color8> ReadFile(Uri path, out Vector2I size) {
 		Console.WriteLine($"Reading {path}");

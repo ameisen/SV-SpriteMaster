@@ -1,5 +1,4 @@
 ﻿using SpriteMaster.Types;
-using SpriteMaster.Types.Spans;
 using System;
 
 namespace SpriteMaster.Resample.Scalers.xBRZ;
@@ -10,11 +9,11 @@ internal sealed partial class Scaler {
 
 		public IScalerInfo Info => ScalerInfo.Instance;
 
-		public uint MinScale => Scaler.MinScale;
+		uint IScaler.MinScale => Scaler.MinScale;
 
-		public uint MaxScale => Scaler.MaxScale;
+		uint IScaler.MaxScale => Scaler.MaxScale;
 
-		public uint ClampScale(uint scale) => Scaler.ClampScale(scale);
+		uint IScaler.ClampScale(uint scale) => Scaler.ClampScale(scale);
 
 		public Span<Color16> Apply(
 			in Resample.Scalers.Config configuration,

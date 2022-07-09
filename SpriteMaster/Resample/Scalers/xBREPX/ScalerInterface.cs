@@ -1,22 +1,19 @@
 ﻿using SpriteMaster.Types;
 using System;
 
-namespace SpriteMaster.Resample.Scalers.EPX;
+namespace SpriteMaster.Resample.Scalers.xBREPX;
 
 internal sealed partial class Scaler {
 	internal sealed class ScalerInterface : IScaler {
-		internal static readonly ScalerInterface Instance = new(false);
-		internal static readonly ScalerInterface InstanceLegacy = new(true);
+		internal static readonly ScalerInterface Instance = new();
 
-		public IScalerInfo Info => Legacy ? ScalerInfo.InstanceLegacy : ScalerInfo.Instance;
+		public IScalerInfo Info => ScalerInfo.Instance;
 
 		uint IScaler.MinScale => Scaler.MinScale;
 
 		uint IScaler.MaxScale => Scaler.MaxScale;
 
 		uint IScaler.ClampScale(uint scale) => Scaler.ClampScale(scale);
-
-		private readonly bool Legacy;
 
 		public Span<Color16> Apply(
 			in Resample.Scalers.Config configuration,
@@ -34,12 +31,7 @@ internal sealed partial class Scaler {
 			luminanceWeight: SMConfig.Resample.Common.LuminanceWeight,
 			gammaCorrected: gammaCorrected,
 			equalColorTolerance: SMConfig.Resample.Common.EqualColorTolerance,
-			useRedmean: SMConfig.Resample.UseRedmean,
-			smoothCompare: !Legacy
+			useRedmean: SMConfig.Resample.UseRedmean
 		);
-
-		private ScalerInterface(bool legacy) {
-			Legacy = legacy;
-		}
 	}
 }

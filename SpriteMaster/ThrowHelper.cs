@@ -235,4 +235,164 @@ internal static class ThrowHelper {
 		throw new ReversePatchException(member);
 
 	#endregion
+
+	#region UnknownArgumentException
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static T ThrowUnknownArgumentException<TArgument, T>(string paramName, TArgument? value) =>
+		throw new UnknownArgumentException<TArgument>(paramName, value);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static void ThrowUnknownArgumentException<TArgument>(string paramName, TArgument? value) =>
+		throw new UnknownArgumentException<TArgument>(paramName, value);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static T ThrowUnknownArgumentException<TArgument, T>(string paramName, TArgument? value, string message) =>
+		throw new UnknownArgumentException<TArgument>(paramName, value, message);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static void ThrowUnknownArgumentException<TArgument>(string paramName, TArgument? value, string message) =>
+		throw new UnknownArgumentException<TArgument>(paramName, value, message);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static T ThrowUnknownArgumentException<T>(string paramName, object? value) =>
+		throw new UnknownArgumentException(paramName, value);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static void ThrowUnknownArgumentException(string paramName, object? value) =>
+		throw new UnknownArgumentException(paramName, value);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static T ThrowUnknownArgumentException<T>(string paramName, object? value, string message) =>
+		throw new UnknownArgumentException(paramName, value, message);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static void ThrowUnknownArgumentException(string paramName, object? value, string message) =>
+		throw new UnknownArgumentException(paramName, value, message);
+
+	#endregion
+
+	#region UnknownArgumentEnumException
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static T ThrowUnknownArgumentEnumException<TArgument, T>(string paramName, TArgument value) where TArgument : unmanaged, Enum =>
+		throw new UnknownArgumentEnumException<TArgument>(paramName, value);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static void ThrowUnknownArgumentEnumException<TArgument>(string paramName, TArgument value) where TArgument : unmanaged, Enum =>
+		throw new UnknownArgumentEnumException<TArgument>(paramName, value);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static T ThrowUnknownArgumentEnumException<TArgument, T>(string paramName, TArgument value, string message) where TArgument : unmanaged, Enum =>
+		throw new UnknownArgumentEnumException<TArgument>(paramName, value, message);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static void ThrowUnknownArgumentEnumException<TArgument>(string paramName, TArgument value, string message) where TArgument : unmanaged, Enum =>
+		throw new UnknownArgumentEnumException<TArgument>(paramName, value, message);
+
+	#endregion
+
+	#region UnknownEnumException
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static T ThrowUnknownEnumException<TArgument, T>(string varName, TArgument value) where TArgument : unmanaged, Enum =>
+		throw new UnknownEnumException<TArgument>(varName, value);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static void ThrowUnknownEnumException<TArgument>(string varName, TArgument value) where TArgument : unmanaged, Enum =>
+		throw new UnknownEnumException<TArgument>(varName, value);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static T ThrowUnknownEnumException<TArgument, T>(string varName, TArgument value, string message) where TArgument : unmanaged, Enum =>
+		throw new UnknownEnumException<TArgument>(varName, value, message);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static void ThrowUnknownEnumException<TArgument>(string varName, TArgument value, string message) where TArgument : unmanaged, Enum =>
+		throw new UnknownEnumException<TArgument>(varName, value, message);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static T ThrowUnknownEnumException<TArgument, T>(TArgument value) where TArgument : unmanaged, Enum =>
+		throw new UnknownEnumException<TArgument>(value);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static void ThrowUnknownEnumException<TArgument>(TArgument value) where TArgument : unmanaged, Enum =>
+		throw new UnknownEnumException<TArgument>(value);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static T ThrowUnknownEnumException<TArgument, T>(TArgument value, string message) where TArgument : unmanaged, Enum =>
+		throw new UnknownEnumException<TArgument>(value, message);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static void ThrowUnknownEnumException<TArgument>(TArgument value, string message) where TArgument : unmanaged, Enum =>
+		throw new UnknownEnumException<TArgument>(value, message);
+
+	#endregion
+
+	#region UnknownValueException
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static T ThrowUnknownValueException<TArgument, T>(string paramName, TArgument? value) =>
+		throw new UnknownValueException<TArgument>(paramName, value);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static void ThrowUnknownValueException<TArgument>(string paramName, TArgument? value) =>
+		throw new UnknownValueException<TArgument>(paramName, value);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static T ThrowUnknownValueException<TArgument, T>(string paramName, TArgument? value, string message) =>
+		throw new UnknownValueException<TArgument>(paramName, value, message);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static void ThrowUnknownValueException<TArgument>(string paramName, TArgument? value, string message) =>
+		throw new UnknownValueException<TArgument>(paramName, value, message);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static T ThrowUnknownValueException<T>(string paramName, object? value) =>
+		throw new UnknownValueException(paramName, value);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static void ThrowUnknownValueException(string paramName, object? value) =>
+		throw new UnknownValueException(paramName, value);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static T ThrowUnknownValueException<T>(string paramName, object? value, string message) =>
+		throw new UnknownValueException(paramName, value, message);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static void ThrowUnknownValueException(string paramName, object? value, string message) =>
+		throw new UnknownValueException(paramName, value, message);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static T ThrowUnknownValueException<TArgument, T>(TArgument? value) =>
+		throw new UnknownValueException<TArgument>(value);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static void ThrowUnknownValueException<TArgument>(TArgument? value) =>
+		throw new UnknownValueException<TArgument>(value);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static T ThrowUnknownValueException<TArgument, T>(TArgument? value, string message) =>
+		throw new UnknownValueException<TArgument>(value, message);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static void ThrowUnknownValueException<TArgument>(TArgument? value, string message) =>
+		throw new UnknownValueException<TArgument>(value, message);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static T ThrowUnknownValueException<T>(object? value) =>
+		throw new UnknownValueException(value);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static void ThrowUnknownValueException(object? value) =>
+		throw new UnknownValueException(value);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static T ThrowUnknownValueException<T>(object? value, string message) =>
+		throw new UnknownValueException(value, message);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static void ThrowUnknownValueException(object? value, string message) =>
+		throw new UnknownValueException(value, message);
+
+	#endregion
 }

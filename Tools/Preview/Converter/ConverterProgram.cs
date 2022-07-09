@@ -1,28 +1,27 @@
-﻿using SpriteMaster.Configuration;
+﻿using LinqFasterer;
+using SpriteMaster.Configuration;
 using SpriteMaster.Types;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Text;
 
-namespace xBRZ;
+namespace SpriteMaster.Tools.Preview.Converter;
 
-internal static class ConverterProgram {
-	private record struct Job(Uri Path, int Scale);
+internal class ConverterProgram : AbstractProgram {
+	private record struct Job(Uri Path, uint Scale);
 
-	internal static int SubMain(Options options, List<Argument> args) {
-		bool info = true;
+	internal override async Task<int> OnSubMainAsync(Options options, List<Argument> args) {
+		var info = true;
 
-		var jobs = new HashSet<Job>();
 		foreach (var arg in args) {
 			if (arg.IsCommand) {
 				throw new ArgumentException($"Unknown Argument: {arg}");
 			}
 		}
 
-		foreach (var job in options.Paths) {
-			jobs.Add(
-				new(new Uri(job), 6)
-			);
-		}
+		const uint scale = 6;
+
+		var jobs = new HashSet<Job>(options.Paths.SelectF<string, Job>(path => new(new(path), scale)));
 
 		if (info) {
 			Console.WriteLine("Settings:");
@@ -34,13 +33,9 @@ internal static class ConverterProgram {
 				("CenterDirectionBias", Config.Resample.xBRZ.CenterDirectionBias)
 			};
 
-			var maxKeyKength = settings.Select(s => s.Item1.Length).Max();
-			foreach (var setting in settings) {
-				var key = setting.Item1;
-				var value = setting.Item2;
-
-				key = key.PadRight(maxKeyKength);
-				Console.WriteLine($"  {key} : {value}");
+			var maxKeyLength = settings.Select(s => s.Item1.Length).Max();
+			foreach (var (key, value) in settings) {
+				Console.WriteLine($@"  {key.PadRight(maxKeyLength)} : {value}");
 			}
 			Console.WriteLine();
 		}
@@ -50,24 +45,59 @@ internal static class ConverterProgram {
 			return -1;
 		}
 
-		foreach (var job in jobs) {
-			try {
-				ProcessJob(job);
+		void HandleException(Exception? ex, string message, StringBuilder? sb = null, int depth = 0) {
+			sb ??= new();
+
+			if (ex is not null) {
+				sb.AppendLine($"{new(' ', depth * 2)}{message}: {ex}");
 			}
-			catch (Exception ex) {
-				Console.Error.WriteLine(ex.ToString());
+			else {
+				sb.AppendLine($"{new(' ', depth * 2)}{message}");
+			}
+
+			if (ex is AggregateException aggregate) {
+				if (aggregate.InnerExceptions.Count != 0) {
+					int innerDepth = depth + 1;
+					foreach (var innerException in aggregate.InnerExceptions) {
+						HandleException(innerException, message, sb, innerDepth);
+					}
+				}
+			}
+
+			if (depth == 0) {
+				Console.Error.WriteLine(sb.ToString());
 			}
 		}
 
-		return 0;
+		List<Job> faultedJobs = new();
+
+		var tasks = new Task[jobs.Count];
+		int index = 0;
+		foreach (var job in jobs) {
+			tasks[index++] = Task.Run(() => ProcessJob(job)).ContinueWith(
+				(task, j) => {
+					var innerJob = (Job)j!;
+					HandleException(task.Exception, $"Task Failed ({innerJob.Path})");
+					faultedJobs.Add(innerJob);
+				}, job, TaskContinuationOptions.OnlyOnFaulted);
+		}
+
+		try {
+			await Task.WhenAll(tasks);
+		}
+		catch (Exception ex) {
+			HandleException(ex, "Tasks Failed");
+		}
+
+		return faultedJobs.Count == 0 ? 0 : -5;
 	}
 
-	private static unsafe void ProcessJob(in Job job) {
-		Console.WriteLine($"Processing {job.Path}");
+	private static unsafe void ProcessJob(Job job) {
+		Console.Out.WriteLine($"Processing {job.Path}");
 
 		var imageDataNarrow = Common.ReadFile(job.Path, out var imageSize);
 
-		var analysis = SpriteMaster.Resample.Passes.Analysis.AnalyzeLegacy(
+		var analysis = Resample.Passes.Analysis.AnalyzeLegacy(
 			data: imageDataNarrow,
 			bounds: imageSize,
 			wrapped: Vector2B.False
@@ -78,7 +108,7 @@ internal static class ConverterProgram {
 		var originalImageData = imageData;
 
 		// Reverse Alpha-Premultiplication
-		SpriteMaster.Resample.Passes.PremultipliedAlpha.Reverse(imageData, imageSize);
+		Resample.Passes.PremultipliedAlpha.Reverse(imageData, imageSize, true);
 
 		// Linearize
 		//SpriteMaster.Resample.Passes.GammaCorrection.Linearize(imageData, imageSize);
@@ -86,19 +116,19 @@ internal static class ConverterProgram {
 		// TODO : padding?
 		// Padding?
 
-		var scalerConfig = new SpriteMaster.Resample.Scalers.xBRZ.Config(
+		var scalerConfig = new Resample.Scalers.xBRZ.Config(
 			wrapped: Vector2B.False,
 			luminanceWeight: Config.Resample.Common.LuminanceWeight,
-			equalColorTolerance: (uint)Config.Resample.Common.EqualColorTolerance,
+			equalColorTolerance: Config.Resample.Common.EqualColorTolerance,
 			dominantDirectionThreshold: Config.Resample.xBRZ.DominantDirectionThreshold,
 			steepDirectionThreshold: Config.Resample.xBRZ.SteepDirectionThreshold,
 			centerDirectionBias: Config.Resample.xBRZ.CenterDirectionBias
 		);
-		uint scale = 6;
+		uint scale = job.Scale;
 		if (scale != 1) {
 			var targetSize = imageSize * scale;
-			var xBRZInterface = new SpriteMaster.Resample.Scalers.xBRZ.Scaler.ScalerInterface();
-			imageData = xBRZInterface.Apply(
+			var scalerInterface = new Resample.Scalers.xBRZ.Scaler.ScalerInterface();
+			imageData = scalerInterface.Apply(
 				scalerConfig,
 				scaleMultiplier: scale,
 				sourceData: imageData,
@@ -113,7 +143,7 @@ internal static class ConverterProgram {
 		//SpriteMaster.Resample.Passes.GammaCorrection.Delinearize(imageData, imageSize);
 
 		// Alpha-Premultiplication
-		SpriteMaster.Resample.Passes.PremultipliedAlpha.Apply(imageData, imageSize);
+		Resample.Passes.PremultipliedAlpha.Apply(imageData, imageSize, true);
 
 		// Narrow
 		var resampledData = Color8.Convert(imageData);
@@ -123,7 +153,7 @@ internal static class ConverterProgram {
 
 		Bitmap resampledBitmap;
 		fixed (Color8* ptr = resampledData) {
-			int stride = imageSize.Width * sizeof(Color8);
+			var stride = imageSize.Width * sizeof(Color8);
 			resampledBitmap = new Bitmap(imageSize.Width, imageSize.Height, stride, PixelFormat.Format32bppPArgb, (IntPtr)ptr);
 		}
 

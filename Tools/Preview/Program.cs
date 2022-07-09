@@ -1,21 +1,18 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using SpriteMaster.Tools.Preview.Converter;
+using SpriteMaster.Tools.Preview.Preview;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
-using xBRZ;
 
-namespace SpriteMaster.Tools;
+namespace SpriteMaster.Tools.Preview;
 
-public static class XBRZProgram {
+public static class Program {
 	[STAThread]
 	public static int Main(string[] args) {
 		var arguments = LexArgs(args);
 		arguments = ParseArgs(arguments, out var options);
 
-		if (options.Preview) {
-			return PreviewProgram.SubMain(options, arguments);
-		}
-		else {
-			return ConverterProgram.SubMain(options, arguments);
-		}
+		AbstractProgram program = options.Preview ? new PreviewProgram() : new ConverterProgram();
+		return program.SubMain(options, arguments);
 	}
 
 	private static readonly Regex ArgumentPattern = new(@"^(.+)[=:](.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
@@ -61,8 +58,8 @@ public static class XBRZProgram {
 
 	private static List<Argument> ParseArgs(List<Argument> args, out Options options) {
 		bool preview = false;
-		List<string> paths = new();
-		List<Argument> result = new();
+		List<string> paths = new(args.Count);
+		List<Argument> result = new(args.Count);
 
 		foreach (var arg in args) {
 			switch (arg.Key) {
