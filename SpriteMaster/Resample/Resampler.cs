@@ -238,7 +238,7 @@ internal sealed class Resampler {
 			if (opaqueProportion <= Config.Resample.Analysis.MinimumPremultipliedOpaqueProportion) {
 				fullPremultiplyAlpha = false;
 				// TODO : I want to remove this line, but it's causing a single-line artifact in wet HoeDirt that I haven't resolved yet.
-				premultiplyAlpha = false;
+				//premultiplyAlpha = false;
 				//gammaCorrect = false;
 			}
 		}

@@ -6,73 +6,86 @@ namespace SpriteMaster.Resample.Passes;
 
 internal static partial class PremultipliedAlpha {
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	private static unsafe void ApplyScalar(Span<Color16> data, Vector2I size, bool full) {
+	private static void ApplyScalar(Span<Color16> data, Vector2I size, bool full) {
+		if (full) {
+			ApplyScalarFull(data, size);
+		}
+		else {
+			ApplyScalarHighPass(data, size);
+		}
+	}
+
+	private static unsafe void ApplyScalarFull(Span<Color16> data, Vector2I size) {
 		fixed (Color16* pDataRef = data) {
 			Color16* pData = pDataRef;
 
-			if (full) {
-				for (int i = 0; i < data.Length; ++i) {
-					var item = *pData;
+			for (int i = 0; i < data.Length; ++i) {
+				var item = *pData;
 
-					var alpha = item.A;
+				var alpha = item.A;
 
-					switch (alpha.Value) {
-						//case ushort.MaxValue:
-						//	continue;
-						default:
-							pData->SetRgb(
-								item.R * alpha,
-								item.G * alpha,
-								item.B * alpha
-							);
-							break;
-					}
+				pData->SetRgb(
+					item.R * alpha,
+					item.G * alpha,
+					item.B * alpha
+				);
 
-					++pData;
-				}
+				++pData;
 			}
-			else {
-				ushort maxAlpha = 0;
+		}
+	}
 
-				for (int i = 0; i < data.Length; ++i) {
-					var item = *pData;
+	private static unsafe void ApplyScalarHighPass(Span<Color16> data, Vector2I size) {
+		fixed (Color16* pDataRef = data) {
+			Color16* pData = pDataRef;
 
-					maxAlpha = Math.Max(maxAlpha, item.A.Value);
+			ushort maxAlpha = 0;
 
-					++pData;
+			for (int i = 0; i < data.Length; ++i) {
+				var alpha = pData->A.Value;
+
+				if (maxAlpha < alpha) {
+					maxAlpha = alpha;
 				}
 
-				pData = pDataRef;
+				++pData;
+			}
 
-				for (int i = 0; i < data.Length; ++i) {
-					var item = *pData;
+			pData = pDataRef;
 
-					var alpha = item.A;
+			for (int i = 0; i < data.Length; ++i) {
+				var item = *pData;
 
-					switch (alpha.Value) {
-						//case ushort.MaxValue:
-						//	continue;
-						default:
-							if (alpha.Value == maxAlpha) {
-								continue;
-							}
+				var alpha = item.A;
 
-							pData->SetRgb(
-								item.R * alpha,
-								item.G * alpha,
-								item.B * alpha
-							);
-							break;
-					}
-
-					++pData;
+				switch (alpha.Value) {
+					case var _ when alpha.Value == maxAlpha:
+						continue;
+					default:
+						pData->SetRgb(
+							item.R * alpha,
+							item.G * alpha,
+							item.B * alpha
+						);
+						break;
 				}
+
+				++pData;
 			}
 		}
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	private static unsafe void ReverseScalar(Span<Color16> data, Vector2I size, bool full) {
+	private static void ReverseScalar(Span<Color16> data, Vector2I size, bool full) {
+		if (full) {
+			ReverseScalarFull(data, size);
+		}
+		else {
+			ReverseScalarHighPass(data, size);
+		}
+	}
+
+	private static unsafe void ReverseScalarFull(Span<Color16> data, Vector2I size) {
 		ushort lowPass = SMConfig.Resample.PremultiplicationLowPass;
 
 		fixed (Color16* pDataRef = data) {
@@ -86,6 +99,52 @@ internal static partial class PremultipliedAlpha {
 				switch (alpha.Value) {
 					case ushort.MaxValue:
 					case var _ when alpha.Value <= lowPass:
+						continue;
+					default:
+						pData->SetRgb(
+							item.R.ClampedDivide(alpha),
+							item.G.ClampedDivide(alpha),
+							item.B.ClampedDivide(alpha)
+						);
+
+						break;
+				}
+
+				++pData;
+			}
+		}
+	}
+
+	private static unsafe void ReverseScalarHighPass(Span<Color16> data, Vector2I size) {
+		ushort lowPass = SMConfig.Resample.PremultiplicationLowPass;
+
+		fixed (Color16* pDataRef = data) {
+			Color16* pData = pDataRef;
+
+			ushort maxAlpha = 0;
+
+			for (int i = 0; i < data.Length; ++i) {
+				var alpha = pData->A.Value;
+
+				if (maxAlpha < alpha) {
+					maxAlpha = alpha;
+				}
+
+				++pData;
+			}
+
+			pData = pDataRef;
+
+			for (int i = 0; i < data.Length; ++i) {
+				var item = *pData;
+
+				var alpha = item.A;
+
+				switch (alpha.Value) {
+					case ushort.MaxValue:
+					case var _ when alpha.Value <= lowPass:
+						continue;
+					case var _ when alpha.Value == maxAlpha:
 						continue;
 					default:
 						pData->SetRgb(
