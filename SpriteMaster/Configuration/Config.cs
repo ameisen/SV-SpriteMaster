@@ -66,7 +66,7 @@ internal static class Config {
 	[Attributes.GMCMHidden] internal static string ConfigVersion = "";
 
 	[Attributes.Ignore]
-	internal static string ClearConfigBefore = GenerateAssemblyVersionString(0, 14, 0, 0, BuildType.Final, 0);
+	internal static string ClearConfigBefore = GenerateAssemblyVersionString(0, 15, 0, 0, BuildType.Alpha, 4);
 
 	[Attributes.Ignore] internal static bool ForcedDisable = false;
 
