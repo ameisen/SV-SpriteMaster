@@ -201,7 +201,7 @@ internal static class Config {
 	internal static class Debug {
 		internal static class Logging {
 			internal static LogLevel LogLevel = LogLevel.Trace;
-#if !SHIPPING || LOG_MONITOR
+#if (!SHIPPING && !RELEASE) || LOG_MONITOR
 			internal static bool SilenceOtherMods = true;
 			internal static string[] SilencedMods = new[] {
 				"Farm Type Manager",

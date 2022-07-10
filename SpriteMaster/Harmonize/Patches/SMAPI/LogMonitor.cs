@@ -1,4 +1,4 @@
-﻿#if !SHIPPING || LOG_MONITOR
+﻿#if (!SHIPPING && !RELEASE) || LOG_MONITOR
 
 using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
@@ -84,4 +84,4 @@ internal static class LogMonitor {
 	}
 }
 
-#endif // !SHIPPING
+#endif // (!SHIPPING && !RELEASE) || LOG_MONITOR

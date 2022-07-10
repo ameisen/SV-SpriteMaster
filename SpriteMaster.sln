@@ -74,8 +74,8 @@ Global
 		{C270B7AD-DA11-4176-83B9-8998FE58A601}.Release|x64.Build.0 = Release|x64
 		{C270B7AD-DA11-4176-83B9-8998FE58A601}.Release|x86.ActiveCfg = Release|x64
 		{C270B7AD-DA11-4176-83B9-8998FE58A601}.Release|x86.Build.0 = Release|x64
-		{C270B7AD-DA11-4176-83B9-8998FE58A601}.ReleaseUntraced|x64.ActiveCfg = Debug|x64
-		{C270B7AD-DA11-4176-83B9-8998FE58A601}.ReleaseUntraced|x64.Build.0 = Debug|x64
+		{C270B7AD-DA11-4176-83B9-8998FE58A601}.ReleaseUntraced|x64.ActiveCfg = ReleaseUntraced|x64
+		{C270B7AD-DA11-4176-83B9-8998FE58A601}.ReleaseUntraced|x64.Build.0 = ReleaseUntraced|x64
 		{C270B7AD-DA11-4176-83B9-8998FE58A601}.ReleaseUntraced|x86.ActiveCfg = Release|x64
 		{C270B7AD-DA11-4176-83B9-8998FE58A601}.ReleaseUntraced|x86.Build.0 = Release|x64
 		{C270B7AD-DA11-4176-83B9-8998FE58A601}.Shipping|x64.ActiveCfg = Shipping|x64
