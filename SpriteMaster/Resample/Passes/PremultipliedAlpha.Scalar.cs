@@ -19,7 +19,7 @@ internal static partial class PremultipliedAlpha {
 		fixed (Color16* pDataRef = data) {
 			Color16* pData = pDataRef;
 
-			for (int i = 0; i < data.Length; ++i) {
+			for (int i = 0; i < data.Length; ++i, ++pData) {
 				var item = *pData;
 
 				var alpha = item.A;
@@ -29,8 +29,6 @@ internal static partial class PremultipliedAlpha {
 					item.G * alpha,
 					item.B * alpha
 				);
-
-				++pData;
 			}
 		}
 	}
@@ -41,26 +39,24 @@ internal static partial class PremultipliedAlpha {
 
 			ushort maxAlpha = 0;
 
-			for (int i = 0; i < data.Length; ++i) {
+			for (int i = 0; i < data.Length; ++i, ++pData) {
 				var alpha = pData->A.Value;
 
 				if (maxAlpha < alpha) {
 					maxAlpha = alpha;
 				}
-
-				++pData;
 			}
 
 			pData = pDataRef;
 
-			for (int i = 0; i < data.Length; ++i) {
+			for (int i = 0; i < data.Length; ++i, ++pData) {
 				var item = *pData;
 
 				var alpha = item.A;
 
 				switch (alpha.Value) {
 					case var _ when alpha.Value == maxAlpha:
-						continue;
+						break;
 					default:
 						pData->SetRgb(
 							item.R * alpha,
@@ -69,8 +65,6 @@ internal static partial class PremultipliedAlpha {
 						);
 						break;
 				}
-
-				++pData;
 			}
 		}
 	}
@@ -91,7 +85,7 @@ internal static partial class PremultipliedAlpha {
 		fixed (Color16* pDataRef = data) {
 			Color16* pData = pDataRef;
 
-			for (int i = 0; i < data.Length; ++i) {
+			for (int i = 0; i < data.Length; ++i, ++pData) {
 				var item = *pData;
 
 				var alpha = item.A;
@@ -99,18 +93,15 @@ internal static partial class PremultipliedAlpha {
 				switch (alpha.Value) {
 					case ushort.MaxValue:
 					case var _ when alpha.Value <= lowPass:
-						continue;
+						break;
 					default:
 						pData->SetRgb(
 							item.R.ClampedDivide(alpha),
 							item.G.ClampedDivide(alpha),
 							item.B.ClampedDivide(alpha)
 						);
-
 						break;
 				}
-
-				++pData;
 			}
 		}
 	}
@@ -123,19 +114,17 @@ internal static partial class PremultipliedAlpha {
 
 			ushort maxAlpha = 0;
 
-			for (int i = 0; i < data.Length; ++i) {
+			for (int i = 0; i < data.Length; ++i, ++pData) {
 				var alpha = pData->A.Value;
 
 				if (maxAlpha < alpha) {
 					maxAlpha = alpha;
 				}
-
-				++pData;
 			}
 
 			pData = pDataRef;
 
-			for (int i = 0; i < data.Length; ++i) {
+			for (int i = 0; i < data.Length; ++i, ++pData) {
 				var item = *pData;
 
 				var alpha = item.A;
@@ -143,9 +132,8 @@ internal static partial class PremultipliedAlpha {
 				switch (alpha.Value) {
 					case ushort.MaxValue:
 					case var _ when alpha.Value <= lowPass:
-						continue;
 					case var _ when alpha.Value == maxAlpha:
-						continue;
+						break;
 					default:
 						pData->SetRgb(
 							item.R.ClampedDivide(alpha),
@@ -155,8 +143,6 @@ internal static partial class PremultipliedAlpha {
 
 						break;
 				}
-
-				++pData;
 			}
 		}
 	}

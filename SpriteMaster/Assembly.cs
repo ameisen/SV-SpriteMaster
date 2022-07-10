@@ -32,7 +32,7 @@ using System.Security;
 [assembly: InternalsVisibleTo("Strings")]
 [assembly: InternalsVisibleTo("Math")]
 [assembly: SecurityRules(SecurityRuleSet.Level2, SkipVerificationInFullTrust = true)]
-[assembly: ChangeList("e30b533:0.15.0-alpha.2-2-ge30b533")]
+[assembly: ChangeList("2c7b355:0.15.0-alpha.2-3-g2c7b355")]
 [assembly: BuildComputerName("Palatinate")]
 [assembly: FullVersion("0.15.0.2-alpha.2")]
 // [assembly: SuppressUnmanagedCodeSecurity]
