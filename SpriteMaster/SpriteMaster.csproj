@@ -10,7 +10,7 @@
 		<RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
 		<NoWarn>0162;7035</NoWarn>
 		<IgnoreModFilePatterns>$(IgnoreModFilePatterns), \.dll\.config$, ILMerge, runtimes, net452, net450, net45</IgnoreModFilePatterns>
-		<Configurations>Debug;Release;Development;Shipping</Configurations>
+		<Configurations>Debug;Release;Development;Shipping;ReleaseUntraced</Configurations>
 		<EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
 		<RunAnalyzersDuringBuild>False</RunAnalyzersDuringBuild>
 		<PackageProjectUrl>https://github.com/ameisen/SV-SpriteMaster</PackageProjectUrl>
@@ -24,6 +24,11 @@
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
 	  <DefineConstants>TRACE</DefineConstants>
+	  <Optimize>true</Optimize>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseUntraced|x64'">
+	  <DefineConstants>RELEASE</DefineConstants>
 	  <Optimize>true</Optimize>
 	</PropertyGroup>
 
