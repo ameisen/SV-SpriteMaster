@@ -146,8 +146,23 @@ internal static class ArrayExt {
 	[MustUseReturnValue, MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static T[] CloneFast<T>(this T[] array) where T : unmanaged {
 		var temp = GC.AllocateUninitializedArray<T>(array.Length);
-		Unsafe.CopyBlock(ref Unsafe.As<T, byte>(ref MemoryMarshal.GetArrayDataReference(temp)), ref Unsafe.As<T, byte>(ref MemoryMarshal.GetArrayDataReference(array)), (uint)(array.LongLength * Unsafe.SizeOf<T>()));
+		Unsafe.CopyBlock(
+			ref Unsafe.As<T, byte>(ref MemoryMarshal.GetArrayDataReference(temp)), 
+			ref Unsafe.As<T, byte>(ref MemoryMarshal.GetArrayDataReference(array)),
+			(uint)(array.LongLength * Unsafe.SizeOf<T>())
+		);
 		return temp;
+	}
+
+	[MustUseReturnValue, MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static List<T> CloneFast<T>(this List<T> list) where T : unmanaged {
+		var temp = GC.AllocateUninitializedArray<T>(list.Count);
+		Unsafe.CopyBlock(
+			ref Unsafe.As<T, byte>(ref MemoryMarshal.GetArrayDataReference(temp)),
+			ref Unsafe.As<T, byte>(ref MemoryMarshal.GetReference(list.AsSpan())),
+			(uint)(list.Count * Unsafe.SizeOf<T>())
+		);
+		return temp.BeList();
 	}
 
 	[Pure, MustUseReturnValue, MethodImpl(MethodImplOptions.AggressiveInlining)]

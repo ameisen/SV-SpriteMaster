@@ -3,7 +3,6 @@ using LinqFasterer;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using SpriteMaster.Resample;
-using SpriteMaster.Resample.Encoder;
 using SpriteMaster.Types;
 using StardewModdingAPI;
 using System;
@@ -17,13 +16,12 @@ using Root = SpriteMaster;
 namespace SpriteMaster.Configuration;
 
 internal static class Config {
-	internal static readonly string ModuleName = typeof(SMConfig).Namespace?.Split('.').ElementAtOrDefaultF(0) ?? "SpriteMaster";
+	internal static readonly string ModuleName =
+		typeof(SMConfig).Namespace?.Split('.').ElementAtOrDefaultF(0) ?? "SpriteMaster";
 
-	[Attributes.Ignore]
-	internal static string Path { get; private set; } = null!;
+	[Attributes.Ignore] internal static string Path { get; private set; } = null!;
 
-	[Attributes.Ignore]
-	internal static MemoryStream? DefaultConfig = null;
+	[Attributes.Ignore] internal static MemoryStream? DefaultConfig = null;
 
 	internal static void SetPath(string path) => Path = path;
 
@@ -43,7 +41,9 @@ internal static class Config {
 	}
 
 	[Attributes.Ignore]
-	private static string GenerateAssemblyVersionString(int major, int minor, int revision, int build, BuildType type = BuildType.Final, int release = 0) {
+	private static string GenerateAssemblyVersionString(
+		int major, int minor, int revision, int build, BuildType type = BuildType.Final, int release = 0
+	) {
 		switch (type) {
 			case BuildType.Alpha:
 				break;
@@ -63,16 +63,14 @@ internal static class Config {
 		return $"{major}.{minor}.{revision}.{build + release}";
 	}
 
-	[Attributes.GMCMHidden]
-	internal static string ConfigVersion = "";
+	[Attributes.GMCMHidden] internal static string ConfigVersion = "";
+
 	[Attributes.Ignore]
 	internal static string ClearConfigBefore = GenerateAssemblyVersionString(0, 14, 0, 0, BuildType.Final, 0);
 
-	[Attributes.Ignore]
-	internal static bool ForcedDisable = false;
+	[Attributes.Ignore] internal static bool ForcedDisable = false;
 
-	[Attributes.Ignore]
-	internal static bool ToggledEnable = true;
+	[Attributes.Ignore] internal static bool ToggledEnable = true;
 
 	[Attributes.Comment("Should SpriteMaster be enabled? Unsetting this will disable _all_ SpriteMaster functionality.")]
 	[Attributes.MenuName("Enable SpriteMaster")]
@@ -90,18 +88,22 @@ internal static class Config {
 	internal static SButton ToggleButton = SButton.F11;
 
 	[Attributes.Ignore]
-	internal static int ClampDimension = BaseMaxTextureDimension; // this is adjustable by the system itself. The user shouldn't be able to touch it.
+	internal static int
+		ClampDimension =
+			BaseMaxTextureDimension; // this is adjustable by the system itself. The user shouldn't be able to touch it.
+
 	internal const int AbsoluteMaxTextureDimension = 16384;
 	internal const int BaseMaxTextureDimension = 4096;
+
 	[Attributes.Comment("The preferred maximum texture edge length, if allowed by the hardware")]
 	[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
 	[Attributes.LimitsInt(min: 1, max: AbsoluteMaxTextureDimension)]
 	[Attributes.Advanced]
 	internal static int PreferredMaxTextureDimension = 16384;
+
 	internal const bool ClampInvalidBounds = true;
 
-	[Attributes.Retain]
-	[Attributes.GMCMHidden]
+	[Attributes.Retain] [Attributes.GMCMHidden]
 	internal static bool ShowIntroMessage = true;
 
 	internal enum Configuration {
@@ -116,14 +118,22 @@ internal static class Config {
 #elif DEBUG
 			Configuration.Debug;
 #else
-			Configuration.Release;
+		Configuration.Release;
 #endif
 
 	internal const bool IsDebug = BuildConfiguration == Configuration.Debug;
 	internal const bool IsDevelopment = BuildConfiguration == Configuration.Development;
 	internal const bool IsRelease = BuildConfiguration == Configuration.Release;
 
-	[Attributes.Ignore]
+	internal const bool DumpTextures = !IsRelease ||
+#if DUMP_TEXTURES
+		true
+#else
+		false
+#endif
+		;
+
+[Attributes.Ignore]
 	internal static readonly string LocalRootDefault = System.IO.Path.Combine(
 		Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
 		"StardewValley",
@@ -191,8 +201,7 @@ internal static class Config {
 	internal static class Debug {
 		internal static class Logging {
 			internal static LogLevel LogLevel = LogLevel.Trace;
-			internal const bool OwnLogFile = true;
-#if !SHIPPING
+#if !SHIPPING || LOG_MONITOR
 			internal static bool SilenceOtherMods = true;
 			internal static string[] SilencedMods = new[] {
 				"Farm Type Manager",
@@ -213,8 +222,8 @@ internal static class Config {
 		}
 
 		internal static class Sprite {
-			internal const bool DumpReference = !IsRelease;
-			internal const bool DumpResample = !IsRelease;
+			internal const bool DumpReference = DumpTextures;
+			internal const bool DumpResample = DumpTextures;
 		}
 	}
 
@@ -241,7 +250,7 @@ internal static class Config {
 		[Attributes.Comment("How many MSAA samples should be used?")]
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.ResetDisplay | Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
 		[Attributes.LimitsInt(1, 16)]
-		internal static int MSAASamples = 1;
+		internal static int AntialiasingSamples = 1;
 		[Attributes.Comment("Disable the depth buffer (unused in this game)")]
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.ResetDisplay)]
 		[Attributes.Advanced]
@@ -430,9 +439,6 @@ internal static class Config {
 			[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
 			[Attributes.LimitsReal(0.0, 1.0)]
 			internal static double MinimumPremultipliedOpaqueProportion = 0.05;
-			[Attributes.Comment("Use redmean algorithm for perceptual color comparisons?")]
-			[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
-			internal static bool UseRedmean = true;
 		}
 
 		[Attributes.Ignore]
@@ -518,7 +524,7 @@ internal static class Config {
 			@"@^Maps\\.+FogBackground",
 		};
 		[Attributes.Ignore]
-		internal static Regex[] BlacklistPatterns = new Regex[0];
+		internal static Regex[] BlacklistPatterns = Array.Empty<Regex>();
 		[Attributes.Comment("What spritesheets will absolutely not be treated as gradients?")]
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
 		[Attributes.GMCMHidden]
@@ -526,7 +532,7 @@ internal static class Config {
 			@"TerrainFeatures\hoeDirt"
 		};
 		[Attributes.Ignore]
-		internal static Regex[] GradientBlacklistPatterns = new Regex[0];
+		internal static Regex[] GradientBlacklistPatterns = Array.Empty<Regex>();
 
 		[Attributes.Advanced]
 		internal static class Padding {
@@ -790,12 +796,6 @@ internal static class Config {
 		[Attributes.Comment("Should the experimental SMAPI texture cache patch be enabled?")]
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushTextureCache)]
 		internal static bool Enabled = true;
-		[Attributes.Comment("Should the PMA texture cache be enabled?")]
-		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushTextureCache)]
-		internal static bool PMAEnabled = true;
-		[Attributes.Comment("Should the experimental SMAPI texture cache have high memory usage enabled?")]
-		[Attributes.Comment("Unrecommended: This results in the game's texture being retained (and thus loaded faster) but doesn't suspend the resampled sprite instances.")]
-		internal static bool HighMemoryEnabled = false;
 	}
 
 	[Attributes.Advanced]

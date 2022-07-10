@@ -318,16 +318,16 @@ internal sealed class Texture2DMeta : IDisposable {
 								int destOffset = (y * reference.Width) + bounds.Value.Left;
 								var sourceSlice = source.SliceUnsafe(sourceOffset * elementSize, boundsStride);
 								var destSlice = dest.SliceUnsafe(destOffset * elementSize, boundsStride);
-								sourceSlice.CopyToUnsafe(destSlice);
+								sourceSlice.CopyTo(destSlice);
 								sourceOffset += bounds.Value.Width;
 							}
 						}
 						else {
 							//var source = data.Data;
 							//var length = Math.Min(currentData.Length - data.Offset, data.Length);
-							//source.CopyToUnsafe(currentData.AsSpan(data.Offset, length));
+							//source.CopyTo(currentData.AsSpan(data.Offset, length));
 
-							data.Data.CopyToUnsafe(currentData);
+							data.Data.CopyTo(currentData);
 						}
 
 						Hash = 0;

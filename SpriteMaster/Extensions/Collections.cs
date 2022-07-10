@@ -105,11 +105,19 @@ internal static class Collections {
 			GetEnabled;
 	}
 
+	internal static T[] GetInnerArray<T>(this List<T> list) {
+		if (!ListReflectImpl<T>.GetEnabled) {
+			return list.ToArray();
+		}
+
+		return ListReflectImpl<T>.GetItems(list);
+	}
+
 	/// <summary>
 	/// Returns a new List that is constructed from the array.
 	/// </summary>
 	internal static List<T> ToList<T>(this T[] array) {
-		if (ListReflectImpl<T>.SetEnabled) {
+		if (!ListReflectImpl<T>.SetEnabled) {
 			var newList = new List<T>(array.Length);
 			foreach (var item in array) {
 				newList.Add(item);

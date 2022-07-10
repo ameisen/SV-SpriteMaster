@@ -23,22 +23,6 @@ internal static partial class Debug {
 
 	[DebuggerStepThrough, DebuggerHidden]
 	private static void DebugWrite(LogLevel level, string str) {
-		if (LogFile is not null) {
-			try {
-				var prefix = level switch {
-					LogLevel.Debug => 'T',
-					LogLevel.Info => 'I',
-					LogLevel.Warn => 'W',
-					LogLevel.Error => 'E',
-					LogLevel.Alert => 'F',
-					_ => '?',
-				};
-
-				LogFile.Write($"[{prefix}] {str}");
-			}
-			catch { /* ignore errors */ }
-		}
-
 		var originalColor = Console.ForegroundColor;
 		Console.ForegroundColor = level.GetColor();
 		try {

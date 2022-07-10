@@ -41,6 +41,8 @@ public sealed class SpriteMaster : Mod {
 		Self.AssertNull();
 		Self = this;
 
+		DirectoryCleanup.Cleanup();
+
 		Initialize();
 
 		Garbage.EnterNonInteractive();

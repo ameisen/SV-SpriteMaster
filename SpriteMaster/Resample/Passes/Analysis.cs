@@ -157,7 +157,6 @@ internal static class Analysis {
 				for (int x = 1; x < bounds.Width; ++x) {
 					var currColor = data[offset + x];
 
-					//if (Config.Resample.Analysis.UseRedmean)
 					var difference = prevColor.RedmeanDifference(currColor, linear: false, alpha: true);
 
 					if (difference >= Config.Resample.Analysis.MaxGradientColorDifference) {
@@ -176,7 +175,6 @@ internal static class Analysis {
 			for (int y = 1; gradientAxial.Y && y < bounds.Height; ++y) {
 				for (int x = 0; x < bounds.Width; ++x) {
 					var currColor = data[offset + (y * bounds.Width) + x];
-					//if (Config.Resample.Analysis.UseRedmean)
 					var difference = prevColor.RedmeanDifference(currColor, linear: false, alpha: true);
 
 					if (difference >= Config.Resample.Analysis.MaxGradientColorDifference) {

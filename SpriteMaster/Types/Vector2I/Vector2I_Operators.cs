@@ -76,7 +76,7 @@ internal partial struct Vector2I {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static Vector2I operator *(Vector2I lhs, Vector2I rhs) {
-		if (Sse41.IsSupported && UseSIMD) {
+		if (UseSIMD && Extensions.Simd.Support.Sse41) {
 			var lVec = lhs.AsVec128;
 			var rVec = rhs.AsVec128;
 			var res = Sse41.MultiplyLow(lVec, rVec);
@@ -174,7 +174,7 @@ internal partial struct Vector2I {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static Vector2I operator *(Vector2I lhs, int rhs) {
-		if (Sse41.IsSupported && UseSIMD) {
+		if (UseSIMD && Extensions.Simd.Support.Sse41) {
 			var lVec = lhs.AsVec128;
 			var scalar = Vector128.Create(rhs);
 			var res = Sse41.MultiplyLow(lVec, scalar);

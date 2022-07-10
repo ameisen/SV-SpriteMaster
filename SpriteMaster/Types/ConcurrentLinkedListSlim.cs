@@ -153,10 +153,14 @@ internal sealed class ConcurrentLinkedListSlim<T> {
 
 	internal void MoveToFront(NodeRef nodeRef) {
 		if (!nodeRef.IsValid) {
-			throw ExceptionMakers.InvalidNodeRef(nameof(nodeRef), nodeRef);
+			return;
 		}
 
 		lock (this) {
+			if (!nodeRef.IsValid) {
+				return;
+			}
+
 			if (nodeRef == Head) {
 				return;
 			}
@@ -193,12 +197,12 @@ internal sealed class ConcurrentLinkedListSlim<T> {
 
 	internal T? Release(in NodeRef nodeRef) {
 		if (!nodeRef.IsValid) {
-			throw ExceptionMakers.InvalidNodeRef(nameof(nodeRef), nodeRef);
+			return default;
 		}
 
 		lock (this) {
 			if (!nodeRef.IsValid) {
-				throw ExceptionMakers.InvalidNodeRef(nameof(nodeRef), nodeRef);
+				return default;
 			}
 
 			NodeRef nodeRefLocal = nodeRef;

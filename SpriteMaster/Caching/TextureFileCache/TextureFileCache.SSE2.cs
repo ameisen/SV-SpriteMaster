@@ -42,7 +42,7 @@ internal static partial class TextureFileCache {
 				Vector128<uint> alphaLo1, alphaHi1;
 				Vector128<uint> alphaLo2, alphaHi2;
 				Vector128<uint> alphaLo3, alphaHi3;
-				if (Ssse3.IsSupported) {
+				if (Extensions.Simd.Support.Ssse3) {
 					Vector128<byte> alphaShuffle = Vector128.Create(6, 0xFF, 6, 0xFF, 6, 0xFF, 6, 0xFF, 14, 0xFF, 14, 0xFF, 14, 0xFF, 14, 0xFF);
 
 					alphaLo0 = Ssse3.Shuffle(lo0.AsByte(), alphaShuffle).AsUInt32();
@@ -177,7 +177,7 @@ internal static partial class TextureFileCache {
 				Vector128<ushort> hi = Sse2.UnpackHigh(rawColor.AsByte(), Vector128<byte>.Zero).AsUInt16();
 
 				Vector128<uint> alphaLo, alphaHi;
-				if (Ssse3.IsSupported) {
+				if (Extensions.Simd.Support.Ssse3) {
 					Vector128<byte> alphaShuffle = Vector128.Create(6, 0xFF, 6, 0xFF, 6, 0xFF, 6, 0xFF, 14, 0xFF, 14, 0xFF, 14, 0xFF, 14, 0xFF);
 
 					alphaLo = Ssse3.Shuffle(lo.AsByte(), alphaShuffle).AsUInt32();
@@ -246,7 +246,7 @@ internal static partial class TextureFileCache {
 				Vector128<uint> hi = Sse2.UnpackHigh(rawColor.AsUInt16(), Vector128<ushort>.Zero).AsUInt32();
 
 				Vector128<ulong> alphaLo, alphaHi;
-				if (Ssse3.IsSupported) {
+				if (Extensions.Simd.Support.Ssse3) {
 					Vector128<byte> alphaShuffle = Vector128.Create(6, 6, 0xFF, 0xFF, 6, 6, 0xFF, 0xFF, 14, 14, 0xFF, 0xFF, 14, 14, 0xFF, 0xFF);
 
 					alphaLo = Ssse3.Shuffle(lo.AsByte(), alphaShuffle).AsUInt64();
@@ -267,7 +267,7 @@ internal static partial class TextureFileCache {
 
 				Vector128<uint> prodLo;
 				Vector128<uint> prodHi;
-				if (Sse41.IsSupported) {
+				if (Extensions.Simd.Support.Sse41) {
 					prodLo = Sse41.MultiplyLow(lo, alphaLo.AsUInt32());
 					prodHi = Sse41.MultiplyLow(hi, alphaHi.AsUInt32());
 				}
@@ -303,7 +303,7 @@ internal static partial class TextureFileCache {
 				var shiftHi = Sse2.ShiftRightLogical(sumHi, 16);
 
 				Vector128<ulong> packed;
-				if (Sse41.IsSupported) {
+				if (Extensions.Simd.Support.Sse41) {
 					Sse41.PackUnsignedSaturate(shiftLo.AsInt32(), shiftHi.AsInt32()).AsUInt64();
 				}
 				else {

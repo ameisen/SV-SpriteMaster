@@ -240,7 +240,7 @@ internal static class PTexture2D {
 				if (rect == __instance.Bounds) {
 					ReadOnlySpan<byte> sourceBytes = cachedSourceData;
 					var source = sourceBytes.Cast<T>();
-					source.CopyToUnsafe(data, 0, startIndex, numElements);
+					source.CopyTo(data, 0, startIndex, numElements);
 
 					return data;
 				}
@@ -253,7 +253,7 @@ internal static class PTexture2D {
 					int sourceOffset = (rect.Top * sourceStride) + rect.Left;
 					int destOffset = startIndex;
 					for (int y = 0; y < rect.Height; ++y) {
-						cachedData.SliceUnsafe(sourceOffset, destStride).CopyToUnsafe(destData.SliceUnsafe(destOffset, destStride));
+						cachedData.SliceUnsafe(sourceOffset, destStride).CopyTo(destData.SliceUnsafe(destOffset, destStride));
 						sourceOffset += sourceStride;
 						destOffset += destStride;
 					}

@@ -1,19 +1,28 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using SpriteMaster.Harmonize;
+using SpriteMaster.Harmonize.Patches.Game;
 using SpriteMaster.Types;
 using System;
+using System.Runtime.InteropServices;
 using static SpriteMaster.Harmonize.Harmonize;
 
 namespace SpriteMaster.Core;
 
 internal static partial class OnDrawImpl {
 
+	[StructLayout(LayoutKind.Auto)]
 	internal struct DrawInstance {
 		internal readonly Vector2F Position { get; init; }
 		internal readonly float Scale { get; init; }
 		internal readonly float Rotation { get; init; }
-		internal uint ExpectedScale;
+		internal uint ExpectedScale = 0U;
+
+		internal DrawInstance(Snow.SnowWeatherDebris debris) {
+			Position = debris.position;
+			Scale = debris.Scale;
+			Rotation = debris.Rotation;
+		}
 	}
 
 	[Harmonize(typeof(XSpriteBatch), "Draw", fixation: Fixation.Reverse)]

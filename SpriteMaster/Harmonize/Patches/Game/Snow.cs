@@ -16,12 +16,34 @@ using System.Runtime.InteropServices;
 namespace SpriteMaster.Harmonize.Patches.Game;
 
 internal static class Snow {
-	private static Dictionary<Bounds, List<SnowWeatherDebris>> MappedWeatherDebris = new();
+	internal sealed class DebrisMap {
+		internal readonly Dictionary<Bounds, List<SnowWeatherDebris>> Map = new();
+		internal int ListMax = 0;
+
+		internal int Count => Map.Count;
+
+		internal Dictionary<Bounds, List<SnowWeatherDebris>>.ValueCollection Values => Map.Values;
+
+		internal DebrisMap() {
+		}
+
+		internal DebrisMap(DebrisMap map) {
+			Map = new(map.Map);
+			ListMax = map.ListMax;
+		}
+
+		internal void Clear() {
+			Map.Clear();
+			ListMax = 0;
+		}
+	}
+
+	private static DebrisMap MappedWeatherDebris = new();
 	private static List<WeatherDebris> AllWeatherDebris = new();
 
 	[StructLayout(LayoutKind.Auto)]
 	internal readonly struct SnowState {
-		internal Dictionary<Bounds, List<SnowWeatherDebris>> MappedWeatherDebris { get; init; }
+		internal DebrisMap MappedWeatherDebris { get; init; }
 		internal List<WeatherDebris> AllWeatherDebris { get; init; }
 
 		internal static SnowState Backup() => new() {
@@ -59,7 +81,7 @@ internal static class Snow {
 
 	private static readonly Lazy<XTexture2D> FishTexture = new(() => SpriteMaster.Self.Helper.GameContent.Load<XTexture2D>(@"LooseSprites\AquariumFish"));
 
-	public readonly record struct DrawWeatherState(bool Overridden, PrecipitationType? PreviousOverride);
+	public readonly record struct DrawWeatherState(bool Overridden, PrecipitationType? PreviousOverride, bool PreviousSnowValue);
 
 	[Harmonize(
 		typeof(Game1),
@@ -69,7 +91,7 @@ internal static class Snow {
 		critical: false
 	)]
 	public static bool DrawWeather(Game1 __instance, GameTime? time, RenderTarget2D? target_screen, ref DrawWeatherState __state) {
-		__state = new(false, null);
+		__state = new(false, null, false);
 
 		if (!Config.IsEnabled || !Config.Extras.Snow.Enabled) {
 			return true;
@@ -144,7 +166,11 @@ internal static class Snow {
 				else {
 					XTexture2D drawTexture = Game1.mouseCursors;
 
-					foreach (var (source, list) in MappedWeatherDebris) {
+#if USE_MULTIDRAW
+					Span<OnDrawImpl.DrawInstance> instances = stackalloc OnDrawImpl.DrawInstance[MappedWeatherDebris.ListMax];
+#endif
+
+					foreach (var (source, list) in MappedWeatherDebris.Map) {
 #if !USE_MULTIDRAW
 						foreach (SnowWeatherDebris item in list) {
 							Game1.spriteBatch.Draw(
@@ -160,13 +186,10 @@ internal static class Snow {
 							);
 						}
 #else
-						Span<OnDrawImpl.DrawInstance> instances = stackalloc OnDrawImpl.DrawInstance[list.Count];
-						for (int i = 0; i < instances.Length; ++i) {
-							instances[i] = new() {
-								Position = list[i].position,
-								Scale = list[i].Scale,
-								Rotation = list[i].Rotation
-							};
+						for (int i = 0; i < list.Count; ++i) {
+							var debris = list[i];
+
+							instances[i] = new(debris);
 						}
 
 						Game1.spriteBatch.DrawMulti(
@@ -176,7 +199,7 @@ internal static class Snow {
 							origin: XVector2.Zero,
 							effects: SpriteEffects.None,
 							layerDepth: 1E-06F,
-							instances: instances
+							instances: instances[..list.Count]
 						);
 #endif
 					}
@@ -188,9 +211,11 @@ internal static class Snow {
 			Game1.spriteBatch.Begin(batchSortMode, batchBlendState, batchSamplerState);
 		}
 
-		__state = new(true, PrecipitationPatches.PrecipitationOverride);
+		var locationWeather = Game1.netWorldState.Value.GetWeatherForLocation(GameLocation.LocationContext.Default);
+
+		__state = new(true, PrecipitationPatches.PrecipitationOverride, locationWeather.isSnowing.Value);
 		PrecipitationPatches.PrecipitationOverride = PrecipitationType.None;
-		Game1.netWorldState.Value.GetWeatherForLocation(GameLocation.LocationContext.Default).isSnowing.Value = false;
+		locationWeather.isSnowing.Value = false;
 		return true;
 	}
 
@@ -207,7 +232,7 @@ internal static class Snow {
 		}
 
 		PrecipitationPatches.PrecipitationOverride = __state.PreviousOverride;
-		Game1.netWorldState.Value.GetWeatherForLocation(GameLocation.LocationContext.Default).isSnowing.Value = true;
+		Game1.netWorldState.Value.GetWeatherForLocation(GameLocation.LocationContext.Default).isSnowing.Value = __state.PreviousSnowValue;
 	}
 
 	private static float PreviousWind = 0.0f;
@@ -349,8 +374,8 @@ internal static class Snow {
 				scale: (float)Math.Sqrt((Game1.random.NextDouble() * 0.75) + 0.25) * Config.Extras.Snow.MaximumScale
 			);
 
-			if (!MappedWeatherDebris.TryGetValue(debris.sourceRect, out var mappedList)) {
-				MappedWeatherDebris.Add(debris.sourceRect, mappedList = new List<SnowWeatherDebris>());
+			if (!MappedWeatherDebris.Map.TryGetValue(debris.sourceRect, out var mappedList)) {
+				MappedWeatherDebris.Map.Add(debris.sourceRect, mappedList = new List<SnowWeatherDebris>());
 			}
 			mappedList.Add(debris);
 			AllWeatherDebris.Add(debris);
@@ -363,9 +388,13 @@ internal static class Snow {
 			return ((SnowWeatherDebris)d1).Scale.CompareTo(((SnowWeatherDebris)d2).Scale);
 		});
 
+		int listMax = 0;
 		foreach (var mappedList in MappedWeatherDebris.Values) {
 			mappedList.Sort((d1, d2) => d1.Scale.CompareTo(d2.Scale));
+			listMax = Math.Max(listMax, mappedList.Count);
 		}
+
+		MappedWeatherDebris.ListMax = listMax;
 	}
 
 	internal static void OnWindowResized(Vector2I size) {

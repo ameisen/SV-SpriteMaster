@@ -7,7 +7,6 @@ using SpriteMaster.Types;
 using SpriteMaster.Types.Fixed;
 using SpriteMaster.Types.Spans;
 using System;
-using System.Diagnostics.Contracts;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -55,22 +54,6 @@ internal static class SpanExt {
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static void CopyTo<T>(this ReadOnlyPinnedSpan<T> inSpan, Span<T> outSpan, int inOffset, int outOffset, int count) where T : unmanaged =>
 		inSpan.SliceUnsafe(inOffset, count).CopyTo(outSpan.SliceUnsafe(outOffset, count));
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal static void CopyToUnsafe<T>(this Span<T> inSpan, Span<T> outSpan, int inOffset, int outOffset, int count) where T : unmanaged =>
-		inSpan.SliceUnsafe(inOffset, count).CopyToUnsafe(outSpan.SliceUnsafe(outOffset, count));
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal static void CopyToUnsafe<T>(this ReadOnlySpan<T> inSpan, Span<T> outSpan, int inOffset, int outOffset, int count) where T : unmanaged =>
-		inSpan.SliceUnsafe(inOffset, count).CopyToUnsafe(outSpan.SliceUnsafe(outOffset, count));
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal static void CopyToUnsafe<T>(this PinnedSpan<T> inSpan, Span<T> outSpan, int inOffset, int outOffset, int count) where T : unmanaged =>
-		inSpan.SliceUnsafe(inOffset, count).CopyToUnsafe(outSpan.SliceUnsafe(outOffset, count));
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal static void CopyToUnsafe<T>(this ReadOnlyPinnedSpan<T> inSpan, Span<T> outSpan, int inOffset, int outOffset, int count) where T : unmanaged =>
-		inSpan.SliceUnsafe(inOffset, count).CopyToUnsafe(outSpan.SliceUnsafe(outOffset, count));
 
 	[Pure]
 	[MethodImpl(Runtime.MethodImpl.Inline)]
@@ -345,16 +328,6 @@ internal static class SpanExt {
 #else
 		return MemoryMarshal.CreateReadOnlySpan(ref span.DangerousGetReferenceAt(offset), length);
 #endif
-	}
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal static void CopyToUnsafe<T>(this Span<T> source, Span<T> destination) where T : unmanaged {
-		source.CopyTo(destination);
-	}
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal static void CopyToUnsafe<T>(this ReadOnlySpan<T> source, Span<T> destination) where T : unmanaged {
-		source.CopyTo(destination);
 	}
 
 	[Pure, MustUseReturnValue, MethodImpl(Runtime.MethodImpl.Inline)]

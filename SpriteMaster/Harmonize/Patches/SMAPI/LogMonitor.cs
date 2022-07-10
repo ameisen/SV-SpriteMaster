@@ -1,4 +1,6 @@
-﻿using SpriteMaster.Configuration;
+﻿#if !SHIPPING || LOG_MONITOR
+
+using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using SpriteMaster.Extensions.Reflection;
 using StardewModdingAPI;
@@ -10,7 +12,6 @@ using System.Runtime.CompilerServices;
 namespace SpriteMaster.Harmonize.Patches.SMAPI;
 
 internal static class LogMonitor {
-#if !SHIPPING
 	private static readonly HashSet<string> SilencedMods = new();
 
 	private static bool SilencedMod(string? source) {
@@ -45,17 +46,13 @@ internal static class LogMonitor {
 
 		return !SilencedMod(source);
 	}
-#endif
 
 	private static readonly Func<object, StreamWriter?>? GetLogFileStream = typeof(IMonitor).Assembly.GetType("StardewModdingAPI.Framework.Logging.LogFileManager")?.GetFieldGetter<object, StreamWriter>("Stream");
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private static void FlushFileStream(object logFile) {
 		var streamWriter = GetLogFileStream!(logFile);
-		if (streamWriter is null) {
-			return;
-		}
-		streamWriter.Flush();
+		streamWriter?.Flush();
 	}
 
 	[Harmonize(
@@ -86,3 +83,5 @@ internal static class LogMonitor {
 		}
 	}
 }
+
+#endif // !SHIPPING

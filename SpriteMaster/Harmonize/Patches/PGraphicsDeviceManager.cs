@@ -82,7 +82,7 @@ internal static class PGraphicsDeviceManager {
 							return;
 						}
 
-						preferredMultiSampleCount = (Config.DrawState.MSAASamples > 1) ? Config.DrawState.MSAASamples : 0;
+						preferredMultiSampleCount = (Config.DrawState.AntialiasingSamples > 1) ? Config.DrawState.AntialiasingSamples : 0;
 						preferredDepthFormat = device.PresentationParameters.DepthStencilFormat;
 						preferredFormat = device.PresentationParameters.BackBufferFormat;
 					}

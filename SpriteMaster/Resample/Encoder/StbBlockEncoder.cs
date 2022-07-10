@@ -572,7 +572,7 @@ internal static class StbBlockEncoder {
 		// find min/max color
 		uint mn = byte.MaxValue;
 		uint mx = byte.MinValue;
-		if (Sse41.IsSupported && Sse2.IsSupported && Ssse3.IsSupported) {
+		if (Sse2.IsSupported && Extensions.Simd.Support.Sse41 && Extensions.Simd.Support.Ssse3) {
 			var vec0 = Sse2.LoadVector128(src + (0 * 16));
 			var vec1 = Sse2.LoadVector128(src + (1 * 16));
 			var vec2 = Sse2.LoadVector128(src + (2 * 16));
@@ -703,7 +703,7 @@ internal static class StbBlockEncoder {
 		dest += 8;
 		// make a new copy of the data in which alpha is opaque,
 		// because code uses a fast test for color constancy
-		if (Avx2.IsSupported && Extensions.Simd.Support.Avx2) {
+		if (Extensions.Simd.Support.Avx2) {
 			var mask = Vector256.Create(0xFF00_0000U);
 
 			var vec0 = Avx2.LoadVector256((uint*)(src + 0x00));

@@ -236,24 +236,6 @@ internal readonly ref struct ReadOnlyPinnedSpan<T> where T : unmanaged {
 	/// a temporary location before the destination is overwritten.
 	/// </summary>
 	/// <param name="destination">The span to copy items into.</param>
-	/// <exception cref="System.ArgumentException">
-	/// Thrown when the destination Span is shorter than the source Span.
-	/// </exception>
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal void CopyToUnsafe(Span<T> destination) {
-#if !SHIPPING
-		CopyTo(destination);
-#else
-		InnerSpan.CopyToUnsafe(destination);
-#endif
-	}
-
-	/// <summary>
-	/// Copies the contents of this span into destination span. If the source
-	/// and destinations overlap, this method behaves as if the original values in
-	/// a temporary location before the destination is overwritten.
-	/// </summary>
-	/// <param name="destination">The span to copy items into.</param>
 	/// <returns>If the destination span is shorter than the source span, this method
 	/// return false and no data is written to the destination.</returns>
 	[MethodImpl(Runtime.MethodImpl.Inline)]

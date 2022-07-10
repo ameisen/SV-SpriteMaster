@@ -101,10 +101,10 @@ internal static partial class TextureFileCache {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private static void ProcessTexture(Span<Color8> data) {
-		if (Avx2.IsSupported && UseAVX2) {
+		if (UseAvx2) {
 			ProcessTextureAvx2(data);
 		}
-		else if (Sse2.IsSupported && UseSSE2) {
+		else if (UseSse2) {
 			ProcessTextureSse2Unrolled(data);
 		}
 		else {
