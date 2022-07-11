@@ -7,7 +7,6 @@ using SpriteMaster.Types.Reflection;
 using StardewValley;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace SpriteMaster.Harmonize.Patches.Game.Pathfinding;
@@ -135,22 +134,6 @@ internal static partial class Pathfinding {
 			foreach (var (key, routes) in mismatchedRoutes) {
 				Debug.Error($"Route '{key}' mismatch:\n  {string.Join(':', routes.Reference)}\n  {string.Join(':', routes.Calculated)}");
 			}
-		}
-	}
-
-	private readonly struct LocationComparer : IEqualityComparer<GameLocation> {
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public readonly bool Equals(GameLocation? x, GameLocation? y) {
-			if (ReferenceEquals(x, y)) {
-				return true;
-			}
-
-			return x?.Name == y?.Name;
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public readonly int GetHashCode(GameLocation obj) {
-			return obj.Name.GetHashCode();
 		}
 	}
 

@@ -92,21 +92,21 @@ internal static class Contracts {
 	}
 
 	[DebuggerStepThrough, DebuggerHidden, MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static bool EqualityPredicate<T, U>(this T value, U reference)
-		where T : IComparable, IComparable<U>, IEquatable<U>
-		where U : IComparable, IComparable<T>, IEquatable<T> {
+	private static bool EqualityPredicate<TFirst, TSecond>(this TFirst value, TSecond reference)
+		where TFirst : IComparable, IComparable<TSecond>, IEquatable<TSecond>
+		where TSecond : IComparable, IComparable<TFirst>, IEquatable<TFirst> {
 		return true switch {
-			_ when typeof(T) == typeof(string) && typeof(U) == typeof(string) =>
+			_ when typeof(TFirst) == typeof(string) && typeof(TSecond) == typeof(string) =>
 				(string)(object)value == (string)(object)reference,
-			_ when typeof(T) == typeof(U) =>
-				EqualityComparer<T>.Default.Equals(value, (T)(object)reference),
-			_ when typeof(T).IsAssignableFrom(typeof(T)) =>
-				EqualityComparer<T>.Default.Equals(value, (T)(object)reference),
-			_ when typeof(T).IsAssignableTo(typeof(T)) =>
-				EqualityComparer<U>.Default.Equals((U)(object)value, reference),
-			_ when typeof(T).IsSubclassOf(typeof(IEquatable<U>)) =>
+			_ when typeof(TFirst) == typeof(TSecond) =>
+				EqualityComparer<TFirst>.Default.Equals(value, (TFirst)(object)reference),
+			_ when typeof(TFirst).IsAssignableFrom(typeof(TFirst)) =>
+				EqualityComparer<TFirst>.Default.Equals(value, (TFirst)(object)reference),
+			_ when typeof(TFirst).IsAssignableTo(typeof(TFirst)) =>
+				EqualityComparer<TSecond>.Default.Equals((TSecond)(object)value, reference),
+			_ when typeof(TFirst).IsSubclassOf(typeof(IEquatable<TSecond>)) =>
 				value.Equals(reference),
-			_ when typeof(U).IsSubclassOf(typeof(IEquatable<T>)) =>
+			_ when typeof(TSecond).IsSubclassOf(typeof(IEquatable<TFirst>)) =>
 				reference.Equals(value),
 			_ =>
 				value.CompareTo(reference) == 0
@@ -114,24 +114,24 @@ internal static class Contracts {
 	}
 
 	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden]
-	internal static void AssertEqual<T, U>(this T value, U reference, string? message = null, Type? exception = null, [CallerArgumentExpression("value")] string valueExpression = "")
-		where T : IComparable, IComparable<U>, IEquatable<U>
-		where U : IComparable, IComparable<T>, IEquatable<T> {
+	internal static void AssertEqual<TFirst, TSecond>(this TFirst value, TSecond reference, string? message = null, Type? exception = null, [CallerArgumentExpression("value")] string valueExpression = "")
+		where TFirst : IComparable, IComparable<TSecond>, IEquatable<TSecond>
+		where TSecond : IComparable, IComparable<TFirst>, IEquatable<TFirst> {
 		Assert(EqualityPredicate(value, reference), message ?? $"Variable '{value}' is not equal to '{reference}'", exception ?? typeof(ArgumentOutOfRangeException), valueExpression);
 	}
 
 	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden]
-	internal static void AssertNotEqual<T, U>(this T value, U reference, string? message = null, Type? exception = null, [CallerArgumentExpression("value")] string valueExpression = "")
-		where T : IComparable, IComparable<U>, IEquatable<U>
-		where U : IComparable, IComparable<T>, IEquatable<T> {
+	internal static void AssertNotEqual<TFirst, TSecond>(this TFirst value, TSecond reference, string? message = null, Type? exception = null, [CallerArgumentExpression("value")] string valueExpression = "")
+		where TFirst : IComparable, IComparable<TSecond>, IEquatable<TSecond>
+		where TSecond : IComparable, IComparable<TFirst>, IEquatable<TFirst> {
 		Assert(!EqualityPredicate(value, reference), message ?? $"Variable '{value}' is equal to '{reference}'", exception ?? typeof(ArgumentOutOfRangeException), valueExpression);
 	}
 
 	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden]
-	internal static void AssertGreater<T, U>(this T value, U reference, string? message = null, Type? exception = null, [CallerArgumentExpression("value")] string valueExpression = "")
-		where T : IComparable, IComparable<U>
-		where U : IComparable, IComparable<T> {
-		static bool Predicate(T value, U reference) {
+	internal static void AssertGreater<TFirst, TSecond>(this TFirst value, TSecond reference, string? message = null, Type? exception = null, [CallerArgumentExpression("value")] string valueExpression = "")
+		where TFirst : IComparable, IComparable<TSecond>
+		where TSecond : IComparable, IComparable<TFirst> {
+		static bool Predicate(TFirst value, TSecond reference) {
 			return value.CompareTo(reference) > 0;
 		}
 
@@ -139,10 +139,10 @@ internal static class Contracts {
 	}
 
 	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden]
-	internal static void AssertGreaterEqual<T, U>(this T value, U reference, string? message = null, Type? exception = null, [CallerArgumentExpression("value")] string valueExpression = "")
-		where T : IComparable, IComparable<U>
-		where U : IComparable, IComparable<T> {
-		static bool Predicate(T value, U reference) {
+	internal static void AssertGreaterEqual<TFirst, TSecond>(this TFirst value, TSecond reference, string? message = null, Type? exception = null, [CallerArgumentExpression("value")] string valueExpression = "")
+		where TFirst : IComparable, IComparable<TSecond>
+		where TSecond : IComparable, IComparable<TFirst> {
+		static bool Predicate(TFirst value, TSecond reference) {
 			return value.CompareTo(reference) >= 0;
 		}
 
@@ -150,10 +150,10 @@ internal static class Contracts {
 	}
 
 	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden]
-	internal static void AssertLess<T, U>(this T value, U reference, string? message = null, Type? exception = null, [CallerArgumentExpression("value")] string valueExpression = "")
-		where T : IComparable, IComparable<U>
-		where U : IComparable, IComparable<T> {
-		static bool Predicate(T value, U reference) {
+	internal static void AssertLess<TFirst, TSecond>(this TFirst value, TSecond reference, string? message = null, Type? exception = null, [CallerArgumentExpression("value")] string valueExpression = "")
+		where TFirst : IComparable, IComparable<TSecond>
+		where TSecond : IComparable, IComparable<TFirst> {
+		static bool Predicate(TFirst value, TSecond reference) {
 			return value.CompareTo(reference) < 0;
 		}
 
@@ -161,10 +161,10 @@ internal static class Contracts {
 	}
 
 	[Conditional("DEBUG"), DebuggerStepThrough, DebuggerHidden]
-	internal static void AssertLessEqual<T, U>(this T value, U reference, string? message = null, Type? exception = null, [CallerArgumentExpression("value")] string valueExpression = "")
-		where T : IComparable, IComparable<U>
-		where U : IComparable, IComparable<T> {
-		static bool Predicate(T value, U reference) {
+	internal static void AssertLessEqual<TFirst, TSecond>(this TFirst value, TSecond reference, string? message = null, Type? exception = null, [CallerArgumentExpression("value")] string valueExpression = "")
+		where TFirst : IComparable, IComparable<TSecond>
+		where TSecond : IComparable, IComparable<TFirst> {
+		static bool Predicate(TFirst value, TSecond reference) {
 			return value.CompareTo(reference) <= 0;
 		}
 

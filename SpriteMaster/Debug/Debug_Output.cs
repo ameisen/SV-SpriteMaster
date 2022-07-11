@@ -91,7 +91,7 @@ internal static partial class Debug {
 			str = builder.Value.ToString();
 		}
 
-		lock (IOLock) {
+		lock (IoLock) {
 			if (SpriteMaster.Self.Monitor is not {} monitor) {
 				if (TemporaryMonitor is not { } tempMonitor) {
 					tempMonitor = GetTemporaryMonitor();

@@ -57,13 +57,13 @@ internal static class SpanExt {
 
 	[Pure]
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal static PinnedSpan<U> Cast<T, U>(this PinnedSpan<T> span) where T : unmanaged where U : unmanaged =>
-		PinnedSpan<U>.FromInternal(span.ReferenceObject, span.InnerSpan.Cast<T, U>());
+	internal static PinnedSpan<TTo> Cast<TFrom, TTo>(this PinnedSpan<TFrom> span) where TFrom : unmanaged where TTo : unmanaged =>
+		PinnedSpan<TTo>.FromInternal(span.ReferenceObject, span.InnerSpan.Cast<TFrom, TTo>());
 
 	[Pure]
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal static ReadOnlyPinnedSpan<U> Cast<T, U>(this ReadOnlyPinnedSpan<T> span) where T : unmanaged where U : unmanaged =>
-		ReadOnlyPinnedSpan<U>.FromInternal(span.ReferenceObject, span.InnerSpan.Cast<T, U>());
+	internal static ReadOnlyPinnedSpan<TTo> Cast<TFrom, TTo>(this ReadOnlyPinnedSpan<TFrom> span) where TFrom : unmanaged where TTo : unmanaged =>
+		ReadOnlyPinnedSpan<TTo>.FromInternal(span.ReferenceObject, span.InnerSpan.Cast<TFrom, TTo>());
 
 	[Pure]
 	[MethodImpl(Runtime.MethodImpl.Inline)]

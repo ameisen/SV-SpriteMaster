@@ -338,18 +338,18 @@ internal static class Textures {
 		DumpTextureInternal<Color16, ulong, ushort>(path, source, sourceSize, format, adjustGamma, destBounds, swap);
 	}
 
-	private static void DumpTextureInternal<ColorT, RawT, UnderlyingT>(
+	private static void DumpTextureInternal<TColor, TRaw, TUnderlying>(
 		string path,
-		ReadOnlySpan<ColorT> source,
+		ReadOnlySpan<TColor> source,
 		Vector2I sourceSize,
 		SurfaceFormat format,
 		double? adjustGamma = null,
 		Bounds? destBounds = null,
 		(int i0, int i1, int i2, int i3)? swap = null
 	)
-		where ColorT : unmanaged
-		where RawT : unmanaged
-		where UnderlyingT : unmanaged {
+		where TColor : unmanaged
+		where TRaw : unmanaged
+		where TUnderlying : unmanaged {
 		if (format.IsBlock()) {
 			if (destBounds is not null) {
 				throw new ArgumentException($"{nameof(destBounds)} must be null if {nameof(format)} ({format}) is compressed");
@@ -362,13 +362,13 @@ internal static class Textures {
 			}
 		}
 
-		RawT[] subData;
+		TRaw[] subData;
 		Bounds destBound;
 		if (destBounds.HasValue) {
 			destBound = destBounds.Value;
-			subData = GC.AllocateUninitializedArray<RawT>(destBound.Area);
+			subData = GC.AllocateUninitializedArray<TRaw>(destBound.Area);
 			var destSpan = subData.AsSpan();
-			var sourceSpan = source.Cast<ColorT, RawT>();
+			var sourceSpan = source.Cast<TColor, TRaw>();
 			int sourceOffset = (sourceSize.Width * destBound.Top) + destBound.Left;
 			int destOffset = 0;
 			for (int y = 0; y < destBound.Height; ++y) {
@@ -378,12 +378,12 @@ internal static class Textures {
 			}
 		}
 		else {
-			subData = source.Cast<ColorT, RawT>().ToArray();
+			subData = source.Cast<TColor, TRaw>().ToArray();
 			destBound = sourceSize;
 		}
 
 		if (swap is not null) {
-			var swapData = subData.AsSpan<RawT, UnderlyingT>();
+			var swapData = subData.AsSpan<TRaw, TUnderlying>();
 			for (int i = 0; i < swapData.Length; i += 4) {
 				var i0 = swapData[i + swap.Value.i0];
 				var i1 = swapData[i + swap.Value.i1];

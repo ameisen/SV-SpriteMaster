@@ -66,7 +66,7 @@ internal static class Collections {
 	#endregion
 
 	[MethodImpl(MethodImpl.Inline)]
-	internal static V GetOrAddDefault<K, V>(this Dictionary<K, V> dictionary, K key, Func<V> defaultGetter) where K : notnull {
+	internal static TValue GetOrAddDefault<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, TKey key, Func<TValue> defaultGetter) where TKey : notnull {
 		if (dictionary.TryGetValue(key, out var value)) {
 			return value;
 		}
@@ -210,7 +210,7 @@ internal static class Collections {
 
 	[DoesNotReturn]
 	[MethodImpl(MethodImplOptions.NoInlining)]
-	private static T ThrowIndexLessThanZeroException<T, U>(string name, int value, out U? item) =>
+	private static TResult ThrowIndexLessThanZeroException<TResult, TValue>(string name, int value, out TValue? item) =>
 		throw new ArgumentOutOfRangeException(name, $"{value} is less than zero");
 
 	internal static bool TryAt<T>(this List<T> list, int index, out T? item) {

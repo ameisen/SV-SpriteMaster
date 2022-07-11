@@ -17,7 +17,7 @@ internal static partial class Debug {
 		internal const ConsoleColor Fatal = ConsoleColor.Red;
 	}
 
-	private static readonly object IOLock = new();
+	private static readonly object IoLock = new();
 
 	// Logging Stuff
 
