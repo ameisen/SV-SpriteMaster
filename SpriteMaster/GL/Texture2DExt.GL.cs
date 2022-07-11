@@ -78,7 +78,6 @@ internal static class Texture2DExt {
 		}
 	}
 
-
 	internal static unsafe bool SetDataInternal<T>(
 		Texture2D @this,
 		int level,
@@ -86,7 +85,7 @@ internal static class Texture2DExt {
 		ReadOnlyPinnedSpan<T> data,
 		bool initialized = true,
 		bool isSet = false
- 	) where T : unmanaged {
+	) where T : unmanaged {
 		var fixedData = data.Fixed;
 
 		rect ??= (@this.Extent() >> level).Max(1);
@@ -237,7 +236,7 @@ internal static class Texture2DExt {
 	SurfaceFormat format,
 	SurfaceType type,
 	bool shared
-) where T : unmanaged {
+	) where T : unmanaged {
 		if (!Configuration.Config.Extras.OptimizeOpenGL) {
 			return false;
 		}

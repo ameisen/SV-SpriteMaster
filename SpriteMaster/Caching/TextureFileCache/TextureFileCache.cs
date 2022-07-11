@@ -11,7 +11,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Runtime.Intrinsics.X86;
 using System.Threading;
 
 namespace SpriteMaster.Caching;
@@ -78,7 +77,8 @@ internal static partial class TextureFileCache {
 			var colorData = data.AsSpan<Color8>();
 
 			ProcessTexture(colorData);
-				
+
+			// TODO : Horribly unsafe
 			XColor[] resultData = data.Convert<byte, XColor>();
 
 			Vector2I resultSize = imageResult.Size;

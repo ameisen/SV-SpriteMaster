@@ -22,7 +22,7 @@ internal static class SpanExt {
 	[Pure]
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static PinnedSpan<T> MakePinned<T>(int count) where T : unmanaged =>
-		GC.AllocateUninitializedArray<T>(count, pinned: true);
+		new(count);
 
 	[Pure]
 	[MethodImpl(Runtime.MethodImpl.Inline)]

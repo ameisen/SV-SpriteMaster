@@ -11,8 +11,10 @@ using SpriteMaster.Types;
 using SpriteMaster.Types.Fixed;
 using SpriteMaster.Types.Spans;
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace SpriteMaster.Resample;
@@ -504,15 +506,8 @@ internal sealed class Resampler {
 		}
 		*/
 
-		bool doRecompress = true;
-
-		// if the texture was originally compressed, do not recompress it for now. There seems to be a bug in the compressor in these cases.
-		//if (input.Reference.Format.IsCompressed()) {
-		//	doRecompress = false;
-		//}
-
 		// TODO : For some reason, block compression gives incorrect results with EPX. I need to investigate this at some point.
-		if (Config.Resample.BlockCompression.Enabled && doRecompress && scaledSizeClamped.MinOf >= 4 && (scalerInfo?.BlockCompress ?? true)) {
+		if (Config.Resample.BlockCompression.Enabled && scaledSizeClamped.MinOf >= 4 && (scalerInfo?.BlockCompress ?? true)) {
 			// TODO : We can technically allocate the block padding before the scaling phase, and pass it a stride
 			// so it will just ignore the padding areas. That would be more efficient than this.
 
@@ -526,17 +521,15 @@ internal sealed class Resampler {
 			{
 				const int maxShades = byte.MaxValue + 1;
 
-				Span<int> alpha = stackalloc int[maxShades];
-				Span<int> blue = stackalloc int[maxShades];
-				Span<int> green = stackalloc int[maxShades];
-				Span<int> red = stackalloc int[maxShades];
-				for (int i = 0; i < maxShades; ++i) {
-					alpha[i] = 0;
-					blue[i] = 0;
-					green[i] = 0;
-					red[i] = 0;
-				}
-				
+				int* alpha = stackalloc int[maxShades];
+				Unsafe.InitBlockUnaligned(alpha, 0, sizeof(int) * maxShades);
+				int* blue = stackalloc int[maxShades];
+				Unsafe.InitBlockUnaligned(blue, 0, sizeof(int) * maxShades);
+				int* green = stackalloc int[maxShades];
+				Unsafe.InitBlockUnaligned(green, 0, sizeof(int) * maxShades);
+				int* red = stackalloc int[maxShades];
+				Unsafe.InitBlockUnaligned(red, 0, sizeof(int) * maxShades);
+
 				for (int i = 0; i < bitmapData.Length; ++i) {
 					var color = bitmapData[i];
 					alpha[color.A.Value]++;
@@ -574,24 +567,29 @@ internal sealed class Resampler {
 				for (y = 0; y < scaledSizeClamped.Y; ++y) {
 					var newBufferOffset = y * blockPaddedSize.X;
 					var bitmapOffset = y * scaledSizeClamped.X;
-					int x;
-					for (x = 0; x < scaledSizeClamped.X; ++x) {
-						spanDst[newBufferOffset + x] = spanSrc[bitmapOffset + x];
-					}
-					// Extent X across
-					int lastX = x - 1;
-					for (; x < blockPaddedSize.X; ++x) {
-						spanDst[newBufferOffset + x] = spanSrc[bitmapOffset + lastX];
-					}
+
+					int rowSize = scaledSizeClamped.X;
+
+					spanSrc.SliceUnsafe(bitmapOffset, rowSize).CopyTo(
+						spanDst.SliceUnsafe(newBufferOffset, rowSize)
+					);
+
+					// Extend X across
+					spanDst.SliceUnsafe(newBufferOffset + rowSize, blockPaddedSize.X - rowSize).Fill(
+						spanSrc[bitmapOffset + rowSize - 1]
+					);
 				}
 				// Extend existing data
 				var lastY = y - 1;
 				var sourceOffset = lastY * blockPaddedSize.X;
 				for (; y < blockPaddedSize.Y; ++y) {
 					int newBufferOffset = y * blockPaddedSize.X;
-					for (int x = 0; x < blockPaddedSize.X; ++x) {
-						spanDst[newBufferOffset + x] = spanDst[sourceOffset + x];
-					}
+
+					int padSize = blockPaddedSize.X;
+
+					spanDst.SliceUnsafe(sourceOffset, padSize).CopyTo(
+						spanDst.SliceUnsafe(newBufferOffset, padSize)
+					);
 				}
 
 				uncompressedBitmapData = spanDst;
@@ -782,7 +780,7 @@ internal sealed class Resampler {
 			spriteInstance.UnpaddedSize = newSize - (spriteInstance.Padding.Sum + spriteInstance.BlockPadding);
 			spriteInstance.InnerRatio = (Vector2F)newSize / (Vector2F)spriteInstance.UnpaddedSize;
 
-			ManagedTexture2D? CreateTexture(ReadOnlyPinnedSpan<byte>.FixedSpan data) {
+			static ManagedTexture2D? CreateTexture(SpriteInfo input, ManagedSpriteInstance spriteInstance, Vector2I newSize, TextureFormat spriteFormat, ReadOnlyPinnedSpan<byte>.FixedSpan data) {
 				if (input.Reference.GraphicsDevice.IsDisposed) {
 					return null;
 				}
@@ -807,7 +805,14 @@ internal sealed class Resampler {
 					bitmapDataArray = bitmapData.ToArray();
 				}
 
-				void SyncCallFixed(ReadOnlyPinnedSpan<byte>.FixedSpan data) {
+				static void SyncCallFixed(
+					SpriteInfo input,
+					Vector2I newSize,
+					TextureFormat spriteFormat,
+					Texture2D reference,
+					ManagedSpriteInstance spriteInstance,
+					ReadOnlyPinnedSpan<byte>.FixedSpan data
+				) {
 					if (reference.IsDisposed) {
 						return;
 					}
@@ -816,7 +821,7 @@ internal sealed class Resampler {
 					}
 					ManagedTexture2D? newTexture = null;
 					try {
-						newTexture = CreateTexture(data);
+						newTexture = CreateTexture(input, spriteInstance, newSize, spriteFormat, data);
 						spriteInstance.Texture = newTexture;
 						spriteInstance.Finish();
 					}
@@ -827,7 +832,14 @@ internal sealed class Resampler {
 					}
 				}
 
-				void SyncCallArray() {
+				static void SyncCallArray(
+					SpriteInfo input,
+					Vector2I newSize,
+					TextureFormat spriteFormat,
+					Texture2D reference,
+					ManagedSpriteInstance spriteInstance,
+					byte[] array
+				) {
 					if (reference.IsDisposed) {
 						return;
 					}
@@ -836,9 +848,9 @@ internal sealed class Resampler {
 					}
 
 					unsafe {
-						fixed (byte* ptr = bitmapDataArray) {
-							var pinnedSpan = new ReadOnlyPinnedSpan<byte>(bitmapDataArray, ptr, bitmapDataArray.Length);
-							SyncCallFixed(pinnedSpan.Fixed);
+						fixed (byte* ptr = array) {
+							var pinnedSpan = new ReadOnlyPinnedSpan<byte>(array, ptr, array.Length);
+							SyncCallFixed(input, newSize, spriteFormat, reference, spriteInstance, pinnedSpan.Fixed);
 						}
 					}
 				}
@@ -846,13 +858,13 @@ internal sealed class Resampler {
 				if (bitmapDataArray is null) {
 					var fixedData = pinnedBitmapData.Fixed;
 					SynchronizedTaskScheduler.Instance.QueueDeferred(
-						() => SyncCallFixed(fixedData),
+						() => SyncCallFixed(input, newSize, spriteFormat, reference, spriteInstance, fixedData),
 						new(input.Reference.NormalizedName(), bitmapData.Length)
 					);
 				}
 				else {
 					SynchronizedTaskScheduler.Instance.QueueDeferred(
-						SyncCallArray,
+						() => SyncCallArray(input, newSize, spriteFormat, reference, spriteInstance, bitmapDataArray),
 						new(input.Reference.NormalizedName(), bitmapData.Length)
 					);
 				}
@@ -867,14 +879,14 @@ internal sealed class Resampler {
 						unsafe {
 							fixed (byte* ptr = asArray) {
 								var pinnedSpan = new ReadOnlyPinnedSpan<byte>(asArray, ptr, asArray.Length);
-								newTexture = CreateTexture(pinnedSpan.Fixed);
+								newTexture = CreateTexture(input, spriteInstance, newSize, spriteFormat, pinnedSpan.Fixed);
 							}
 						}
 					}
 					else {
-
+						newTexture = CreateTexture(input, spriteInstance, newSize, spriteFormat, pinnedBitmapData.Fixed);
 					}
-					newTexture = CreateTexture(pinnedBitmapData.Fixed);
+
 					if (!isAsync) {
 						return newTexture;
 					}

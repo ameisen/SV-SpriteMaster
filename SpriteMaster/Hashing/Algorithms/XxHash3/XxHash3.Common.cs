@@ -16,8 +16,8 @@ internal static unsafe partial class XxHash3 {
 
 	private const bool UseAvx512 = Extensions.Simd.Support.Avx512;
 	internal static readonly bool UseAvx2 = true && Extensions.Simd.Support.Avx2;
-	internal static readonly bool UseSse2 = true && Sse2.IsSupported;
-	internal static readonly bool UseNeon = true && AdvSimd.IsSupported;
+	internal static readonly bool UseSse2 = Extensions.Simd.Support.Enabled && Sse2.IsSupported;
+	internal static readonly bool UseNeon = Extensions.Simd.Support.Enabled && AdvSimd.IsSupported;
 
 	private static readonly int VectorSize =
 		UseAvx512 ? 512 :

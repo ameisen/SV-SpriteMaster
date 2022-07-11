@@ -2,7 +2,6 @@
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 // ReSharper disable UnusedMember.Global
@@ -25,25 +24,8 @@ internal readonly ref struct ReadOnlyPinnedSpan<T> where T : unmanaged {
 	/// <param name="array">The target array.</param>
 	/// <remarks>Returns default when <paramref name="array"/> is null.</remarks>
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal ReadOnlyPinnedSpan(T[]? array) :
+	private ReadOnlyPinnedSpan(T[]? array) :
 		this(array!, new(array)) {
-	}
-
-	/// <summary>
-	/// Creates a new read-only span over the portion of the target array beginning
-	/// at 'start' index and ending at 'end' index (exclusive).
-	/// </summary>
-	/// <param name="array">The target array.</param>
-	/// <param name="start">The index at which to begin the read-only span.</param>
-	/// <param name="length">The number of items in the read-only span.</param>
-	/// <remarks>Returns default when <paramref name="array"/> is null.</remarks>
-	/// <exception cref="System.ArgumentOutOfRangeException">
-	/// Thrown when the specified <paramref name="start"/> or end index is not in the range (&lt;0 or &gt;Length).
-	/// </exception>
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal ReadOnlyPinnedSpan(T[] array, int start, int length) :
-		this(array, new(array, start, length)
-	) {
 	}
 
 	/// <summary>
@@ -78,6 +60,7 @@ internal readonly ref struct ReadOnlyPinnedSpan<T> where T : unmanaged {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private ReadOnlyPinnedSpan(object refObject, ReadOnlySpan<T> span) {
+		PinnedSpanCommon.CheckPinnedWeak(refObject);
 		ReferenceObject = refObject;
 		InnerSpan = span;
 	}
@@ -183,13 +166,6 @@ internal readonly ref struct ReadOnlyPinnedSpan<T> where T : unmanaged {
 #pragma warning disable CS0809 // Obsolete member overrides non-obsolete member
 	public override int GetHashCode() => InnerSpan.GetHashCode();
 #pragma warning restore CS0809 // Obsolete member overrides non-obsolete member
-
-	/// <summary>
-	/// Defines an implicit conversion of an array to a <see cref="ReadOnlyPinnedSpan{T}"/>
-	/// </summary>
-	[Pure]
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	public static implicit operator ReadOnlyPinnedSpan<T>(T[]? array) => new(array);
 
 	/// <summary>Gets an enumerator for this span.</summary>
 	[Pure]
