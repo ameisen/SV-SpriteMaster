@@ -283,6 +283,9 @@ internal static class Serialize {
 								case uint:
 									field.SetValue(null, (uint?)((IntegerValueSyntax?)value.Value)?.Value);
 									break;
+								case long:
+									field.SetValue(null, (long?)((IntegerValueSyntax?)value.Value)?.Value);
+									break;
 								case ulong:
 									field.SetValue(null, (ulong?)((IntegerValueSyntax?)value.Value)?.Value);
 									break;
@@ -485,6 +488,9 @@ internal static class Serialize {
 					break;
 				case uint v:
 					value = new IntegerValueSyntax(v);
+					break;
+				case long v:
+					value = new IntegerValueSyntax((long)v);
 					break;
 				case ulong v:
 					value = new IntegerValueSyntax((long)v);

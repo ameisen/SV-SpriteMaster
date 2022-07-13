@@ -59,6 +59,7 @@ internal static class GLExt {
 			errorList.Add(error);
 		}
 
+		Debugger.Break();
 		throw new MonoGameGLException($"GL.GetError() returned '{string.Join(", ", errorList)}'");
 	}
 

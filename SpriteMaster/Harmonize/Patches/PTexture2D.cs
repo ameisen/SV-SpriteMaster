@@ -293,7 +293,6 @@ internal static class PTexture2D {
 		return false;
 	}
 
-
 	// XTexture2D __instance, int level, int arraySlice, ref XRectangle rect, T[] data, int startIndex, int elementCount
 	[HarmonizeTranspile(
 		type: typeof(XTexture2D),

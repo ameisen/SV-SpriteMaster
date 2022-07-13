@@ -7,6 +7,7 @@ using SpriteMaster.Types;
 using SpriteMaster.Types.Spans;
 using StardewModdingAPI;
 using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using static Microsoft.Xna.Framework.Graphics.Texture2D;
@@ -83,13 +84,12 @@ internal static class Texture2DExt {
 		int level,
 		Bounds? rect,
 		ReadOnlyPinnedSpan<T> data,
-		bool initialized = true,
+		bool initialized = false,
 		bool isSet = false
 	) where T : unmanaged {
 		var fixedData = data.Fixed;
 
 		rect ??= (@this.Extent() >> level).Max(1);
-
 
 		int layerSize = fixedData.IsEmpty ? @this.Format.SizeBytes(rect.Value.Area) : fixedData.Length * sizeof(T);
 
@@ -182,20 +182,6 @@ internal static class Texture2DExt {
 
 					GLExt.CheckError();
 
-					if (@this is not InternalTexture2D) {
-						PTexture2D.OnPlatformSetDataPost(
-							__instance: @this,
-							level: level,
-							arraySlice: 0,
-							rect: rect.Value,
-							data: fixedData.Array,
-							startIndex: 0,
-							elementCount: fixedData.Length
-						);
-					}
-
-					GLExt.CheckError();
-
 					if (!initialized && glMeta is not null) {
 						glMeta.Flags |= Texture2DGLMeta.Flag.Initialized;
 					}
@@ -214,6 +200,20 @@ internal static class Texture2DExt {
 				}
 			}
 		);
+
+		if (success) {
+			if (@this is not InternalTexture2D) {
+				PTexture2D.OnPlatformSetDataPostInternal<T>(
+					__instance: @this,
+					level: level,
+					arraySlice: 0,
+					rect: rect.Value,
+					data: fixedData.AsSpan,
+					startIndex: 0,
+					elementCount: fixedData.Length
+				);
+			}
+		}
 
 		return success;
 	}
@@ -252,7 +252,7 @@ internal static class Texture2DExt {
 			// Use glTexStorage2D if it's available.
 			// Presently, since we are not yet overriding 'SetData' to use glMeowTexSubImage2D,
 			// only use it if we are populating the texture now
-			bool useStorage = GLExt.TexStorage2D is not null;
+			bool useStorage = GLExt.TexStorage2D is not null && Configuration.Config.Extras.UseTexStorage;
 			bool buildLayers = !dataIn.IsEmpty || !useStorage;
 
 			// Calculate the number of texture levels
@@ -368,10 +368,10 @@ internal static class Texture2DExt {
 								return;
 							}
 
-							currentOffset += levelSize;
-
 							if (levelDimensions == (1, 1) || !mipmap)
 								break;
+
+							currentOffset += levelSize;
 
 							levelDimensions >>= 1;
 							levelDimensions = levelDimensions.Min(1);
@@ -403,7 +403,7 @@ internal static class Texture2DExt {
 		Bounds targetArea,
 		PatchMode patchMode
 	) {
-		if (!Configuration.Config.Extras.OptimizeOpenGL) {
+		if (!Configuration.Config.Extras.OptimizeOpenGL || !Configuration.Config.Extras.UseCopyTexture) {
 			return false;
 		}
 

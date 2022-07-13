@@ -14,9 +14,9 @@ namespace SpriteMaster.Caching;
 internal static class ResidentCache {
 	internal static bool Enabled => Config.ResidentCache.Enabled;
 
-	private static readonly AbstractMemoryCache<ulong, byte> Cache = CreateCache();
+	private static readonly IMemoryCache<ulong, byte> Cache = CreateCache();
 
-	private static AbstractMemoryCache<ulong, byte> CreateCache() => AbstractMemoryCache<ulong, byte>.Create(
+	private static IMemoryCache<ulong, byte> CreateCache() => AbstractMemoryCache<ulong, byte>.Create(
 		name: "ResidentCache",
 		maxSize: Config.ResidentCache.MaxSize,
 		compressed: true

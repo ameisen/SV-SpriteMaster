@@ -395,4 +395,56 @@ internal static class ThrowHelper {
 		throw new UnknownValueException(value, message);
 
 	#endregion
+
+	#region InvalidTypeParameterException
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static T ThrowInvalidTypeParameterException<T>() =>
+		throw new InvalidTypeParameterException();
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static void ThrowInvalidTypeParameterException() =>
+		throw new InvalidTypeParameterException();
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static T ThrowInvalidTypeParameterException<T>(Type type) =>
+		throw new InvalidTypeParameterException(type);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static void ThrowInvalidTypeParameterException(Type type) =>
+		throw new InvalidTypeParameterException(type);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static T ThrowInvalidTypeParameterException<T>(string message) =>
+		throw new InvalidTypeParameterException(message);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static void ThrowInvalidTypeParameterException(string message) =>
+		throw new InvalidTypeParameterException(message);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static T ThrowInvalidTypeParameterException<T>(string message, Type type) =>
+		throw new InvalidTypeParameterException(message, type);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static void ThrowInvalidTypeParameterException(string message, Type type) =>
+		throw new InvalidTypeParameterException(message, type);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static T ThrowInvalidTypeParameterException<T>(string message, Exception innerException) =>
+		throw new InvalidTypeParameterException(message, innerException);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static void ThrowInvalidTypeParameterException(string message, Exception innerException) =>
+		throw new InvalidTypeParameterException(message, innerException);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static T ThrowInvalidTypeParameterException<T>(string message, Type type, Exception innerException) =>
+		throw new InvalidTypeParameterException(message, type, innerException);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static void ThrowInvalidTypeParameterException(string message, Type type, Exception innerException) =>
+		throw new InvalidTypeParameterException(message, type, innerException);
+
+	#endregion
 }

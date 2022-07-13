@@ -37,7 +37,7 @@ internal static partial class TextureFileCache {
 		}
 	}
 
-	private static readonly AbstractMemoryCache<string, XColor> Cache =
+	private static readonly IMemoryCache<string, XColor> Cache =
 		AbstractMemoryCache<string, XColor>.Create(name: "File Cache", maxSize: SMConfig.TextureFileCache.MaxSize, compressed: true);
 
 	private static readonly ConcurrentDictionary<string, Vector2I> TextureInfoCache = new();
@@ -116,6 +116,6 @@ internal static partial class TextureFileCache {
 		var newCache = AbstractMemoryCache<string, XColor>.Create(name: "File Cache", maxSize: SMConfig.TextureFileCache.MaxSize, compressed: true);
 		var oldCache = Interlocked.Exchange(ref Unsafe.AsRef(Cache), newCache);
 		TextureInfoCache.Clear();
-		oldCache?.DisposeAsync();
+		oldCache?.Dispose();
 	}
 }

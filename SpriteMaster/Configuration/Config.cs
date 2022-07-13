@@ -690,7 +690,7 @@ internal static class Config {
 		[Attributes.Comment("What is the maximum size of the resident cache?")]
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushTextureFileCache)]
 		[Attributes.LimitsInt(0, long.MaxValue)]
-		internal static long MaxSize = SizesExt.AsGiB(1);
+		internal static long MaxSize = SizesExt.AsGiB(2);
 	}
 
 	[Attributes.Advanced]
@@ -701,11 +701,7 @@ internal static class Config {
 		[Attributes.Comment("What is the maximum size (in bytes) to store in suspended sprite cache?")]
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushSuspendedSpriteCache)]
 		[Attributes.LimitsInt(0, long.MaxValue)]
-		internal static long MaxCacheSize = SizesExt.AsGiB(2);
-		[Attributes.Comment("What is the maximum number of sprites to store in suspended sprite cache?")]
-		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushSuspendedSpriteCache)]
-		[Attributes.LimitsInt(0, int.MaxValue)]
-		internal static int MaxCacheCount = 2_000;
+		internal static long MaxCacheSize = SizesExt.AsGiB(4);
 	}
 
 	[Attributes.Advanced]
@@ -763,6 +759,10 @@ internal static class Config {
 		internal static bool EnableDirtDrawOptimizations = false;
 		[Attributes.Comment("Should low-level OpenGL optimizations be performed?")]
 		internal static bool OptimizeOpenGL = true;
+		[Attributes.Comment("Should glCopyTexture by used?")]
+		internal static bool UseCopyTexture = false;
+		[Attributes.Comment("Should glTexStorage be used?")]
+		internal const bool UseTexStorage = true;
 		internal static class Snow {
 			[Attributes.Comment("Should custom snowfall be used during snowstorms?")]
 			internal static bool Enabled = true;

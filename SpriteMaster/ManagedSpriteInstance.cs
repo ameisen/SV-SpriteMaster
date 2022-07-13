@@ -560,8 +560,7 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 
 		lock (RecentAccessList) {
 			long totalPurge = 0;
-			while (purgeTotalBytes > 0 && RecentAccessList.Count > 0) {
-				var lastInstance = RecentAccessList.RemoveLast();
+			while (purgeTotalBytes > 0 && RecentAccessList.TryRemoveLast(out var lastInstance)) {
 				if (lastInstance.TryGet(out var target)) {
 					var textureSize = target.MemorySize;
 					Debug.Trace($"Purging {target.NormalizedName()} ({textureSize.AsDataSize()})");
@@ -746,7 +745,7 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 		}
 
 		if (RecentAccessNode.IsValid) {
-			RecentAccessList.Release(RecentAccessNode);
+			RecentAccessList.Release(ref RecentAccessNode);
 			RecentAccessNode = default;
 		}
 
@@ -768,7 +767,7 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 		}
 
 		if (data.RecentAccessNode.IsValid) {
-			RecentAccessList.Release(data.RecentAccessNode);
+			RecentAccessList.Release(ref Unsafe.AsRef(data.RecentAccessNode));
 		}
 	}
 
@@ -801,7 +800,7 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 		PreviousSpriteInstance = null;
 
 		if (RecentAccessNode.IsValid) {
-			RecentAccessList.Release(RecentAccessNode);
+			RecentAccessList.Release(ref RecentAccessNode);
 			RecentAccessNode = default;
 		}
 
