@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using MonoGame.OpenGL;
 using SpriteMaster.Extensions;
 using SpriteMaster.Harmonize.Patches;
+using SpriteMaster.Metadata;
 using SpriteMaster.Types;
 using SpriteMaster.Types.Spans;
 using StardewModdingAPI;
@@ -11,6 +12,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using static Microsoft.Xna.Framework.Graphics.Texture2D;
+using static SpriteMaster.SpriteInfo;
 
 namespace SpriteMaster.GL;
 
@@ -415,6 +417,37 @@ internal static class Texture2DExt {
 			return false;
 		}
 
+		if (!source.TryMeta(out var meta) || !meta.HasCachedData) {
+			return false;
+		}
+
+		{
+			var glMeta = Texture2DGLMeta.Get(source);
+			if (!glMeta.Flags.HasFlag(Texture2DGLMeta.Flag.Initialized)) {
+				return false;
+			}
+		}
+
+		{
+			var glMeta = Texture2DGLMeta.Get(target);
+			if (!glMeta.Flags.HasFlag(Texture2DGLMeta.Flag.Initialized)) {
+				return false;
+			}
+		}
+
+		// We have to perform an internal SetData to make sure SM's caches are kept intact
+		var cachedData = PTexture2D.GetCachedData<byte>(
+			__instance: source,
+			level: 0,
+			arraySlice: 0,
+			rect: sourceArea,
+			data: default
+		);
+
+		if (cachedData.IsEmpty) {
+			return false;
+		}
+
 		GLExt.CheckError();
 		GLExt.CopyImageSubData(
 			(uint)source.glTexture,
@@ -434,15 +467,6 @@ internal static class Texture2DExt {
 			1u
 		);
 		GLExt.CheckError();
-
-		// We have to perform an internal SetData to make sure SM's caches are kept intact
-		var cachedData = PTexture2D.GetCachedData<byte>(
-			__instance: source,
-			level: 0,
-			arraySlice: 0,
-			rect: sourceArea,
-			data: default
-		);
 
 		PTexture2D.OnPlatformSetDataPostInternal<byte>(
 			__instance: target,

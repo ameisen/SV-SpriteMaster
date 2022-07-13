@@ -221,7 +221,7 @@ internal static class PTexture2D {
 			if (
 				level == 0 &&
 				arraySlice == 0 &&
-				__instance.TryMeta(out var sourceMeta) && sourceMeta.CachedData is { } cachedSourceData
+				__instance.TryMeta(out var sourceMeta) && sourceMeta.HasCachedData && sourceMeta.CachedData is { } cachedSourceData
 			) {
 				int numElements = elementCount ?? __instance.Format.SizeBytes(rect.Area) / sizeof(T);
 
@@ -246,8 +246,8 @@ internal static class PTexture2D {
 				}
 				if (__instance.Bounds.Contains(rect)) {
 					// We need a subcopy
-					var cachedData = cachedSourceData.AsReadOnlySpan<T>();
-					var destData = data;
+					var cachedData = cachedSourceData.AsReadOnlySpan<T>().Cast<T, uint>();
+					var destData = data.Cast<T, uint>();
 					int sourceStride = __instance.Width;
 					int destStride = rect.Width;
 					int sourceOffset = (rect.Top * sourceStride) + rect.Left;

@@ -760,7 +760,7 @@ internal static class Config {
 		[Attributes.Comment("Should low-level OpenGL optimizations be performed?")]
 		internal static bool OptimizeOpenGL = true;
 		[Attributes.Comment("Should glCopyTexture by used?")]
-		internal static bool UseCopyTexture = false;
+		internal static bool UseCopyTexture = true;
 		[Attributes.Comment("Should glTexStorage be used?")]
 		internal const bool UseTexStorage = true;
 		internal static class Snow {
