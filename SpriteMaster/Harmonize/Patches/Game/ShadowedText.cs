@@ -22,7 +22,7 @@ internal static class ShadowedText {
 		throw new ArgumentNullException(name);
 
 	[Harmonize(
-		typeof(Utility),
+		typeof(StardewValley.Utility),
 		"drawTextWithShadow",
 		Harmonize.Fixation.Prefix,
 		Harmonize.PriorityLevel.Last,
@@ -80,7 +80,7 @@ internal static class ShadowedText {
 	}
 
 	[Harmonize(
-		typeof(Utility),
+		typeof(StardewValley.Utility),
 		"drawTextWithShadow",
 		Harmonize.Fixation.Prefix,
 		Harmonize.PriorityLevel.Last,
@@ -140,7 +140,7 @@ internal static class ShadowedText {
 	}
 
 	[Harmonize(
-		typeof(Utility),
+		typeof(StardewValley.Utility),
 		"drawTextWithColoredShadow",
 		Harmonize.Fixation.Prefix,
 		Harmonize.PriorityLevel.Last,

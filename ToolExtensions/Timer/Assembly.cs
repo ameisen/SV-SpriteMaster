@@ -10,7 +10,7 @@ using System.Security;
 [assembly: SecurityRules(SecurityRuleSet.Level2, SkipVerificationInFullTrust = true)]
 [assembly: ChangeList("aaf559a:0.15.0-alpha.5-3-gaaf559a")]
 [assembly: BuildComputerName("Palatinate")]
-[assembly: FullVersion("0.15.0.5-alpha.5")]
+[assembly: FullVersion("0.15.0.6-alpha.6")]
 // [assembly: SuppressUnmanagedCodeSecurity]
 
 [module: CLSCompliant(false)]
