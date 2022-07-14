@@ -309,7 +309,7 @@ internal readonly ref struct ReadOnlyPinnedSpan<T> where T : unmanaged {
 	[StructLayout(LayoutKind.Auto)]
 	internal unsafe readonly struct FixedSpan {
 		private readonly object ReferenceObject;
-		internal readonly void* Pointer;
+		internal readonly T* Pointer;
 		internal readonly int Length;
 
 		internal bool IsEmpty => Pointer is null || Length == 0;
@@ -317,7 +317,7 @@ internal readonly ref struct ReadOnlyPinnedSpan<T> where T : unmanaged {
 		internal FixedSpan(ReadOnlyPinnedSpan<T> span) {
 			// TODO : is a branch needed for IsEmpty?
 			ReferenceObject = span.ReferenceObject;
-			Pointer = Unsafe.AsPointer(ref span.GetPinnableReferenceUnsafe());
+			Pointer = (T*)Unsafe.AsPointer(ref span.GetPinnableReferenceUnsafe());
 			Length = span.Length;
 		}
 

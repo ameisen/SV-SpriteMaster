@@ -45,13 +45,13 @@ internal static class Texture2DExt {
 		}
 	}
 
-	private sealed class Texture2DGLMeta : IDisposable {
-		private static readonly ConditionalWeakTable<Texture2D, Texture2DGLMeta> Map = new();
+	internal sealed class Texture2DOpenGlMeta : IDisposable {
+		private static readonly ConditionalWeakTable<Texture2D, Texture2DOpenGlMeta> Map = new();
 
 		[MethodImpl(Runtime.MethodImpl.Inline)]
-		internal static bool TryGet(Texture2D texture, out Texture2DGLMeta meta) => Map.TryGetValue(texture, out meta!);
+		internal static bool TryGet(Texture2D texture, out Texture2DOpenGlMeta meta) => Map.TryGetValue(texture, out meta!);
 		[MethodImpl(Runtime.MethodImpl.Inline)]
-		internal static Texture2DGLMeta Get(Texture2D texture) => Map.GetValue(texture, t => new(t));
+		internal static Texture2DOpenGlMeta Get(Texture2D texture) => Map.GetValue(texture, t => new(t));
 
 		[Flags]
 		internal enum Flag {
@@ -62,11 +62,11 @@ internal static class Texture2DExt {
 		internal Flag Flags = Flag.Initialized;
 
 		[MethodImpl(Runtime.MethodImpl.Inline)]
-		private Texture2DGLMeta(Texture2D texture) {
+		private Texture2DOpenGlMeta(Texture2D texture) {
 			texture.Disposing += (_, _) => Dispose();
 		}
 
-		~Texture2DGLMeta() {
+		~Texture2DOpenGlMeta() {
 
 		}
 
@@ -81,7 +81,37 @@ internal static class Texture2DExt {
 		}
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static Texture2DOpenGlMeta GetGlMeta<TTexture>(this TTexture texture) where TTexture : Texture2D {
+		if (texture is InternalTexture2D internalTexture) {
+			return internalTexture.GlMeta;
+		}
+		return Texture2DOpenGlMeta.Get(texture);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static unsafe bool SetDataInternal<T>(
+		Texture2D @this,
+		int level,
+		Bounds? rect,
+		ReadOnlySpan<T> data,
+		bool initialized = false,
+		bool isSet = false
+	) where T : unmanaged {
+		fixed (T* dataPtr = data) {
+			return SetDataInternal(
+				@this,
+				level,
+				rect,
+				new PointerSpan<T>(dataPtr, data.Length),
+				initialized,
+				isSet
+			);
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static bool SetDataInternal<T>(
 		Texture2D @this,
 		int level,
 		Bounds? rect,
@@ -89,11 +119,27 @@ internal static class Texture2DExt {
 		bool initialized = false,
 		bool isSet = false
 	) where T : unmanaged {
-		var fixedData = data.Fixed;
+		return SetDataInternal(
+			@this,
+			level,
+			rect,
+			(PointerSpan<T>)data,
+			initialized,
+			isSet
+		);
+	}
 
+	internal static unsafe bool SetDataInternal<T>(
+		Texture2D @this,
+		int level,
+		Bounds? rect,
+		PointerSpan<T> data,
+		bool initialized = false,
+		bool isSet = false
+	) where T : unmanaged {
 		rect ??= (@this.Extent() >> level).Max(1);
 
-		int layerSize = fixedData.IsEmpty ? @this.Format.SizeBytes(rect.Value.Area) : fixedData.Length * sizeof(T);
+		int layerSize = data.IsEmpty ? @this.Format.SizeBytes(rect.Value.Area) : data.Length * sizeof(T);
 
 		bool success = true;
 		Threading.BlockOnUIThread(
@@ -101,15 +147,15 @@ internal static class Texture2DExt {
 				try {
 					GLExt.CheckError();
 
-					Texture2DGLMeta? glMeta = null;
+					Texture2DOpenGlMeta? glMeta = null;
 					if (!initialized) {
 						/*
 						// If the texture lacks a glMeta, it was not constructed by us and is thus always initialized
 						// by the underlying MonoGame constructor.
 .						// The default Flags value for us is Initialized.
 						*/
-						glMeta = Texture2DGLMeta.Get(@this);
-						initialized = glMeta.Flags.HasFlag(Texture2DGLMeta.Flag.Initialized);
+						glMeta = @this.GetGlMeta();
+						initialized = glMeta.Flags.HasFlag(Texture2DOpenGlMeta.Flag.Initialized);
 					}
 
 					using var reboundTexture = isSet ? default : new RebindTexture(@this.glTexture);
@@ -130,7 +176,7 @@ internal static class Texture2DExt {
 								rect.Value.Height,
 								@this.glInternalFormat,
 								layerSize,
-								(IntPtr)fixedData.Pointer
+								data
 							);
 							GLExt.CheckError();
 
@@ -144,7 +190,7 @@ internal static class Texture2DExt {
 								rect.Value.Height,
 								0,
 								layerSize,
-								(IntPtr)fixedData.Pointer
+								data
 							);
 							GLExt.CheckError();
 						}
@@ -160,7 +206,7 @@ internal static class Texture2DExt {
 								rect.Value.Height,
 								@this.glFormat,
 								@this.glType,
-								(IntPtr)fixedData.Pointer
+								data
 							);
 							GLExt.CheckError();
 
@@ -175,7 +221,7 @@ internal static class Texture2DExt {
 								0,
 								@this.glFormat,
 								@this.glType,
-								(IntPtr)fixedData.Pointer
+								data
 							);
 							GLExt.CheckError();
 
@@ -185,7 +231,7 @@ internal static class Texture2DExt {
 					GLExt.CheckError();
 
 					if (!initialized && glMeta is not null) {
-						glMeta.Flags |= Texture2DGLMeta.Flag.Initialized;
+						glMeta.Flags |= Texture2DOpenGlMeta.Flag.Initialized;
 					}
 				}
 				catch (MonoGameGLException ex) {
@@ -210,9 +256,9 @@ internal static class Texture2DExt {
 					level: level,
 					arraySlice: 0,
 					rect: rect.Value,
-					data: fixedData.AsSpan,
+					data: data.AsSpan,
 					startIndex: 0,
-					elementCount: fixedData.Length
+					elementCount: data.Length
 				);
 			}
 		}
@@ -339,10 +385,10 @@ internal static class Texture2DExt {
 						);
 						GLExt.CheckError();
 
-						Texture2DGLMeta.Get(@this).Flags |= Texture2DGLMeta.Flag.Initialized;
+						@this.GetGlMeta().Flags |= Texture2DOpenGlMeta.Flag.Initialized;
 					}
 					else {
-						Texture2DGLMeta.Get(@this).Flags &= ~Texture2DGLMeta.Flag.Initialized;
+						@this.GetGlMeta().Flags &= ~Texture2DOpenGlMeta.Flag.Initialized;
 					}
 
 					if (buildLayers) {
@@ -421,18 +467,12 @@ internal static class Texture2DExt {
 			return false;
 		}
 
-		{
-			var glMeta = Texture2DGLMeta.Get(source);
-			if (!glMeta.Flags.HasFlag(Texture2DGLMeta.Flag.Initialized)) {
-				return false;
-			}
+		if (!source.GetGlMeta().Flags.HasFlag(Texture2DOpenGlMeta.Flag.Initialized)) {
+			return false;
 		}
 
-		{
-			var glMeta = Texture2DGLMeta.Get(target);
-			if (!glMeta.Flags.HasFlag(Texture2DGLMeta.Flag.Initialized)) {
-				return false;
-			}
+		if (!target.GetGlMeta().Flags.HasFlag(Texture2DOpenGlMeta.Flag.Initialized)) {
+			return false;
 		}
 
 		// We have to perform an internal SetData to make sure SM's caches are kept intact
