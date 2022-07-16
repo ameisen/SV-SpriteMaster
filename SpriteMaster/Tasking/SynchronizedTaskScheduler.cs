@@ -4,7 +4,6 @@ using SpriteMaster.Types;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,12 +15,7 @@ namespace SpriteMaster.Tasking;
 internal sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
 	internal static readonly SynchronizedTaskScheduler Instance = new();
 
-	internal static readonly Func<bool>? IsUiThread = typeof(XTexture2D).Assembly.GetType(
-		"Microsoft.Xna.Framework.Threading"
-	)?.GetMethod(
-		"IsOnUIThread",
-		BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static
-	)?.CreateDelegate<Func<bool>>();
+	private static bool IsMainThread => ThreadingExt.IsMainThread;
 
 	internal sealed class TextureActionTask : Task {
 		internal readonly TextureAction ActionData;
@@ -198,7 +192,7 @@ internal sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
 		task.Start(this);
 	}
 
-	protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued) => (IsUiThread?.Invoke() ?? false) && TryExecuteTask(task);
+	protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued) => IsMainThread && TryExecuteTask(task);
 
 	protected override IEnumerable<Task> GetScheduledTasks() {
 		var immediate = PendingImmediate.Both;

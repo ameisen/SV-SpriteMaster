@@ -63,4 +63,19 @@ internal static partial class ReflectionExt {
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	[Obsolete("Non-performant: is uncached/non-delegate")]
 	internal static T? InvokeMethod<T>(this object obj, MethodInfo method, params object[] args) => (T?)method.Invoke(obj, args);
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	internal static Type? GetTypeExt(string typeName) {
+		if (Type.GetType(typeName) is { } localType) {
+			return localType;
+		}
+
+		foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies()) {
+			if (assembly.GetType(typeName) is { } type) {
+				return type;
+			}
+		}
+
+		return null;
+	}
 }

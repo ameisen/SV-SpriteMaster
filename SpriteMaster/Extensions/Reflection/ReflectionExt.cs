@@ -134,6 +134,12 @@ internal static partial class ReflectionExt {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	[DynamicallyAccessedMembers(AllMethods)]
+	internal static MethodInfo[] GetStaticMethods(this Type type) {
+		return type.GetMethods(ShallowStaticFlags);
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	[DynamicallyAccessedMembers(AllMethods)]
 	internal static MethodInfo? GetStaticMethod(this Type type, string name) {
 		return type.GetMethod(name, ShallowStaticFlags);
 	}
@@ -142,6 +148,12 @@ internal static partial class ReflectionExt {
 	[DynamicallyAccessedMembers(AllMethods)]
 	internal static IList<MethodInfo> GetInstanceMethods(this Type type, string name) {
 		return type.GetMethods(name, ShallowInstanceFlags);
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	[DynamicallyAccessedMembers(AllMethods)]
+	internal static MethodInfo[] GetInstanceMethods(this Type type) {
+		return type.GetMethods(ShallowInstanceFlags);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]

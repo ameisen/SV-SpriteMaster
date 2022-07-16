@@ -1,5 +1,7 @@
 ﻿using JetBrains.Annotations;
 using LinqFasterer;
+using SpriteMaster.Extensions;
+using SpriteMaster.Extensions.Reflection;
 using System;
 using System.Reflection;
 using static SpriteMaster.Harmonize.Harmonize;
@@ -49,7 +51,7 @@ internal class HarmonizeAttribute : Attribute {
 		}
 
 		try {
-			return AppDomain.CurrentDomain.GetAssemblies().SingleF(assembly => assembly.GetName().Name == name);
+			return AssemblyExt.GetAssembly(name);
 		}
 		catch {
 			Debug.ConditionalError(critical, $"Assembly Not Found For Harmonize: {name}");
@@ -83,18 +85,7 @@ internal class HarmonizeAttribute : Attribute {
 		assembly is null ? null : ResolveType(assembly.GetType(type[0], true), type, offset + 1);
 
 	private static Type? ResolveType(string type) {
-		if (Type.GetType(type) is {} globalType) {
-			return globalType;
-		}
-
-		var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-		foreach (var assembly in assemblies) {
-			if (assembly.GetType(type) is {} assemblyType) {
-				return assemblyType;
-			}
-		}
-
-		return null;
+		return ReflectionExt.GetTypeExt(type);
 	}
 
 	private HarmonizeAttribute(

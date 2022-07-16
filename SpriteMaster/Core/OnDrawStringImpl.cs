@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
+using SpriteMaster.Extensions.Reflection;
 using SpriteMaster.Types;
 using System;
 using System.Collections;
@@ -15,10 +16,8 @@ internal static class OnDrawStringImpl {
 	private const bool Stop = false;
 
 	private delegate bool TryGetGlyphIndexDelegate(SpriteFont font, char c, out int index);
-	private static readonly TryGetGlyphIndexDelegate? TryGetGlyphIndexFunc = typeof(SpriteFont).GetMethod(
-		"TryGetGlyphIndex",
-		System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public
-	)?.CreateDelegate<TryGetGlyphIndexDelegate>();
+	private static readonly TryGetGlyphIndexDelegate? TryGetGlyphIndexFunc = typeof(SpriteFont).GetInstanceMethod("TryGetGlyphIndex")?.CreateDelegate<TryGetGlyphIndexDelegate>();
+
 
 	private static readonly ConditionalWeakTable<SpriteFont, Dictionary<char, int?>> GlyphIndexCache = new();
 	private static bool TryGetGlyphIndexCached(this SpriteFont font, char c, out int index) {

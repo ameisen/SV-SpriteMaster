@@ -8,39 +8,66 @@ using SpriteMaster.Types;
 using SpriteMaster.Types.Spans;
 using StardewModdingAPI;
 using System;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using static Microsoft.Xna.Framework.Graphics.Texture2D;
-using static SpriteMaster.SpriteInfo;
 
 namespace SpriteMaster.GL;
 
 internal static class Texture2DExt {
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static int GetCurrentBoundTexture2D() {
+		const int TextureBinding2D = 0x8069;
+
+		int result = 0;
+		unsafe {
+			MonoGame.OpenGL.GL.GetIntegerv(TextureBinding2D, &result);
+			GLExt.CheckError();
+		}
+
+		return result;
+	}
+
 	[StructLayout(LayoutKind.Auto)]
-	private readonly ref struct RebindTexture {
-		private readonly int? PreviousTexture = null;
+	private readonly ref struct TextureBinder {
+		private readonly int PreviousTexture;
+		private readonly int CurrentTexture;
 
 		[MethodImpl(Runtime.MethodImpl.Inline)]
-		internal RebindTexture(int texture) {
-			var currentTexture = GraphicsExtensions.GetBoundTexture2D();
-			if (texture == currentTexture) {
-				PreviousTexture = null;
+		internal TextureBinder(int texture) {
+			var boundTexture = GetCurrentBoundTexture2D();
+			PreviousTexture = boundTexture;
+			CurrentTexture = texture;
+			if (texture == boundTexture) {
+				return;
 			}
-			else {
-				PreviousTexture = currentTexture;
-				MonoGame.OpenGL.GL.BindTexture(TextureTarget.Texture2D, texture);
-				GLExt.CheckError();
+
+			MonoGame.OpenGL.GL.BindTexture(TextureTarget.Texture2D, texture);
+			GLExt.CheckError();
+		}
+
+		[MethodImpl(Runtime.MethodImpl.Inline)]
+		internal TextureBinder(Func<int> textureFactory) {
+			var boundTexture = GetCurrentBoundTexture2D();
+			PreviousTexture = boundTexture;
+
+			var texture = textureFactory();
+			CurrentTexture = texture;
+			if (texture == boundTexture) {
+				return;
 			}
+
+			MonoGame.OpenGL.GL.BindTexture(TextureTarget.Texture2D, texture);
+			GLExt.CheckError();
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Inline)]
 		internal void Dispose() {
-			if (!PreviousTexture.HasValue) {
+			if (PreviousTexture == CurrentTexture) {
 				return;
 			}
 
-			MonoGame.OpenGL.GL.BindTexture(TextureTarget.Texture2D, PreviousTexture.Value);
+			MonoGame.OpenGL.GL.BindTexture(TextureTarget.Texture2D, PreviousTexture);
 			GLExt.CheckError();
 		}
 	}
@@ -142,7 +169,7 @@ internal static class Texture2DExt {
 		int layerSize = data.IsEmpty ? @this.Format.SizeBytes(rect.Value.Area) : data.Length * sizeof(T);
 
 		bool success = true;
-		Threading.BlockOnUIThread(
+		ThreadingExt.ExecuteOnMainThread(
 			() => {
 				try {
 					GLExt.CheckError();
@@ -158,7 +185,7 @@ internal static class Texture2DExt {
 						initialized = glMeta.Flags.HasFlag(Texture2DOpenGlMeta.Flag.Initialized);
 					}
 
-					using var reboundTexture = isSet ? default : new RebindTexture(@this.glTexture);
+					using var reboundTexture = new TextureBinder(@this.glTexture);
 
 					if (!isSet) {
 						MonoGame.OpenGL.GL.PixelStore(PixelStoreParameter.UnpackAlignment, Math.Min(@this.Format.GetSize(), 8));
@@ -276,14 +303,25 @@ internal static class Texture2DExt {
 		_ => (GLExt.SizedInternalFormat)format
 	};
 
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	internal static int GenerateTexture(Texture2D @this) {
+		int texture = @this.glTexture;
+		if (texture < 0) {
+			@this.GenerateGLTextureIfRequired();
+			texture = @this.glTexture;
+		}
+
+		return texture;
+	}
+
 	internal static bool Construct<T>(
-	Texture2D @this,
-	ReadOnlyPinnedSpan<T>.FixedSpan dataIn,
-	Vector2I size,
-	bool mipmap,
-	SurfaceFormat format,
-	SurfaceType type,
-	bool shared
+		Texture2D @this,
+		ReadOnlyPinnedSpan<T>.FixedSpan dataIn,
+		Vector2I size,
+		bool mipmap,
+		SurfaceFormat format,
+		SurfaceType type,
+		bool shared
 	) where T : unmanaged {
 		if (!Configuration.Config.Extras.OptimizeOpenGL) {
 			return false;
@@ -350,7 +388,7 @@ internal static class Texture2DExt {
 			};
 
 			bool success = true;
-			Threading.BlockOnUIThread(
+			ThreadingExt.ExecuteOnMainThread(
 				() => {
 					GLExt.EnableDebugging();
 
@@ -362,7 +400,7 @@ internal static class Texture2DExt {
 
 					GLExt.CheckError();
 
-					@this.GenerateGLTextureIfRequired();
+					using var reboundTexture = new TextureBinder(() => GenerateTexture(@this));
 
 					GLExt.CheckError();
 
@@ -371,8 +409,6 @@ internal static class Texture2DExt {
 						// Using glTexStorage and glMeowTexSubImage2D to populate textures is more efficient,
 						// as the way that MonoGame normally does it requires the texture to be kept largely in flux,
 						// and also requires it to be discarded a significant number of times.
-
-						GLExt.CheckError();
 
 						var sizedFormat = GetSizedFormat(@this.glInternalFormat);
 
@@ -416,7 +452,7 @@ internal static class Texture2DExt {
 								return;
 							}
 
-							if (levelDimensions == (1, 1) || !mipmap)
+							if (!mipmap || levelDimensions == (1, 1))
 								break;
 
 							currentOffset += levelSize;
@@ -488,25 +524,31 @@ internal static class Texture2DExt {
 			return false;
 		}
 
-		GLExt.CheckError();
-		GLExt.CopyImageSubData(
-			(uint)source.glTexture,
-			TextureTarget.Texture2D,
-			0,
-			sourceArea.X,
-			sourceArea.Y,
-			0,
-			(uint)target.glTexture,
-			TextureTarget.Texture2D,
-			0,
-			targetArea.X,
-			targetArea.Y,
-			0,
-			(uint)sourceArea.Width,
-			(uint)sourceArea.Height,
-			1u
+		ThreadingExt.ExecuteOnMainThread(
+			() => {
+				using var reboundTexture = new TextureBinder(0);
+
+				GLExt.CheckError();
+				GLExt.CopyImageSubData(
+					(uint)source.glTexture,
+					TextureTarget.Texture2D,
+					0,
+					sourceArea.X,
+					sourceArea.Y,
+					0,
+					(uint)target.glTexture,
+					TextureTarget.Texture2D,
+					0,
+					targetArea.X,
+					targetArea.Y,
+					0,
+					(uint)sourceArea.Width,
+					(uint)sourceArea.Height,
+					1u
+				);
+				GLExt.CheckError();
+			}
 		);
-		GLExt.CheckError();
 
 		PTexture2D.OnPlatformSetDataPostInternal<byte>(
 			__instance: target,

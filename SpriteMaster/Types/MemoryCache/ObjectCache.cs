@@ -388,15 +388,11 @@ internal class ObjectCache<TKey, TValue> : AbstractObjectCache<TKey, TValue>
 		ThreadCancelSource.Cancel();
 		TrimEvent.Set();
 
-		using (CacheLock.Write) {
-			Clear();
-		}
+		Clear();
 
 		TrimThread.Join();
 
-		using (CacheLock.Write) {
-			Clear();
-		}
+		Clear();
 		CacheLock.Dispose();
 
 		ThreadCancelSource.Dispose();

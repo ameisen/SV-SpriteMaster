@@ -11,27 +11,41 @@ internal static class PrecipitationPatches {
 	[SMHarmonize.Harmonize(
 		typeof(Game1),
 		"IsSnowingHere",
+		SMHarmonize.Harmonize.Fixation.Reverse,
+		instance: false,
+		critical: false
+	)]
+	public static bool IsSnowingHereReverse(GameLocation? location) {
+		ThrowHelper.ThrowReversePatchException();
+		return false;
+	}
+
+	public static bool IsSnowingHereExt(GameLocation? location = null) {
+		if (Precipitation != PrecipitationType.Snow) {
+			if (Scene.Current is null) {
+				return IsSnowingHereReverse(location);
+			}
+
+			return false;
+		}
+
+		if (ReferenceEquals(location, Scene.SceneLocation.Value) || location is null) {
+			return true;
+		}
+
+		return IsSnowingHereReverse(location);
+	}
+
+	[SMHarmonize.Harmonize(
+		typeof(Game1),
+		"IsSnowingHere",
 		SMHarmonize.Harmonize.Fixation.Prefix,
 		SMHarmonize.Harmonize.PriorityLevel.Last,
 		instance: false,
 		critical: false
 	)]
 	public static bool IsSnowingHere(ref bool __result, GameLocation? location) {
-		if (Precipitation != PrecipitationType.Snow) {
-			if (Scene.Current is null) {
-				return true;
-			}
-
-			__result = false;
-			return false;
-		}
-
-		if (ReferenceEquals(location, Scene.SceneLocation.Value) || location is null) {
-			__result = true;
-			return false;
-		}
-
-		return true;
+		return false;
 	}
 
 	[SMHarmonize.Harmonize(

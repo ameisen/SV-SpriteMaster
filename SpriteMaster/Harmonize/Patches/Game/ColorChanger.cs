@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 namespace SpriteMaster.Harmonize.Patches.Game;
 
 internal static class ColorChanger {
-	private static readonly VariableStaticAccessor<XColor[]?>? ColorChangerBuffer = Type.GetType("StardewValley.ColorChanger")?.GetStaticVariable("_buffer")?.GetStaticAccessor<XColor[]?>();
+	private static readonly VariableStaticAccessor<XColor[]?>? ColorChangerBuffer = ReflectionExt.GetTypeExt("StardewValley.ColorChanger")?.GetStaticVariable("_buffer")?.GetStaticAccessor<XColor[]?>();
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static XColor[] GetBuffer(int length) {

@@ -36,24 +36,26 @@ internal static partial class Debug {
 	private static IMonitor? GetTemporaryMonitor() {
 		object? sCoreInstance = null;
 
-		if (Type.GetType("StardewModdingAPI.Framework.Score")?.GetStaticVariable("Instance") is not {} instanceInfo) {
+		if (ReflectionExt.GetTypeExt("StardewModdingAPI.Framework.SCore")?.GetStaticVariable("Instance") is not {} instanceInfo) {
 			return null;
 		}
 		sCoreInstance = instanceInfo.GetValue(null);
 
-		if (Type.GetType("StardewModdingAPI.Framework.Logging.LogManager") is not {} logManagerType) {
+		if (ReflectionExt.GetTypeExt("StardewModdingAPI.Framework.Logging.LogManager") is not {} logManagerType) {
 			return null;
 		}
 
 		if (logManagerType.GetMethod(
 			"GetMonitor",
-			BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy, null,
-			new Type[] {typeof(string)}, null
+			BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy,
+			null,
+			new [] {typeof(string)},
+			null
 		) is not { } getMonitorInfo) {
 			return null;
 		}
 
-		if (sCoreInstance is null || Type.GetType("StardewModdingAPI.Framework.Score")?.GetInstanceVariable("LogManager") is not {} logManagerInfo) {
+		if (sCoreInstance is null || ReflectionExt.GetTypeExt("StardewModdingAPI.Framework.SCore")?.GetInstanceVariable("LogManager") is not {} logManagerInfo) {
 			return null;
 		}
 

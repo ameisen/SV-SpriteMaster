@@ -673,11 +673,6 @@ internal sealed class Resampler {
 		return null;
 	}
 
-	internal static readonly Action<XTexture2D, int, byte[], int, int>? PlatformSetData = typeof(XTexture2D).GetMethods(
-		BindingFlags.Instance | BindingFlags.NonPublic
-	).SingleF(m => m.Name == "PlatformSetData" && m.GetParameters().Length == 4).MakeGenericMethod(typeof(byte))
-		.CreateDelegate<Action<XTexture2D, int, byte[], int, int>>();
-
 	private static ManagedTexture2D? UpscaleInternal(ManagedSpriteInstance spriteInstance, ref uint scale, SpriteInfo input, ulong hash, ref Vector2B wrapped, bool async, out ResampleStatus result) {
 		var spriteFormat = TextureFormat.Color;
 

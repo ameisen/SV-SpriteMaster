@@ -3,6 +3,7 @@ using JetBrains.Annotations;
 using LinqFasterer;
 using SpriteMaster.Caching;
 using SpriteMaster.Configuration;
+using SpriteMaster.Experimental;
 using SpriteMaster.Extensions;
 using SpriteMaster.Harmonize;
 using SpriteMaster.Harmonize.Patches.Game;
@@ -40,6 +41,8 @@ public sealed class SpriteMaster : Mod {
 	public SpriteMaster() {
 		Self.AssertNull();
 		Self = this;
+
+		_ = ThreadingExt.IsMainThread;
 
 		DirectoryCleanup.Cleanup();
 
@@ -412,10 +415,13 @@ public sealed class SpriteMaster : Mod {
 		}
 
 		instance.ApplyPatches(early);
+
+		Inlining.Reenable();
 	}
 
 
 	private static void OnButtonPressed(object? _, ButtonPressedEventArgs args) {
+
 		if (args.Button == Config.ToggleButton) {
 			Config.ToggledEnable = !Config.ToggledEnable;
 		}

@@ -1,17 +1,8 @@
-﻿using Microsoft.Xna.Framework.Graphics;
-using System;
-using System.Diagnostics;
-using System.Reflection;
+﻿using System.Diagnostics;
 
 namespace SpriteMaster;
 
 internal static partial class DrawState {
-
-	private static readonly Func<SamplerState, SamplerState> SamplerStateClone =
-		typeof(SamplerState).GetMethod("Clone", BindingFlags.Instance | BindingFlags.NonPublic)?.
-			CreateDelegate<Func<SamplerState, SamplerState>>() ??
-				throw new NullReferenceException(nameof(SamplerStateClone));
-
 	[Conditional("DEBUG")]
 	private static void CheckStates() {
 		/*

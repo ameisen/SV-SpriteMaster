@@ -708,8 +708,6 @@ internal static class Config {
 	internal static class SMAPI {
 		[Attributes.Comment("Should the ApplyPatch method be patched?")]
 		internal static bool ApplyPatchEnabled = true;
-		[Attributes.Comment("Should ApplyPatch pin temporary memory?")]
-		internal static bool ApplyPatchPinMemory = false;
 		[Attributes.Comment("Should 'GetData' be patched to use SM caches?")]
 		internal static bool ApplyGetDataPatch = true;
 	}
@@ -740,10 +738,6 @@ internal static class Config {
 
 			[Attributes.Comment("Should gender-locked locations be honored?")]
 			internal static bool HonorGenderLocking = false;
-
-			[Attributes.Comment("Should Location objects be locked during concurrent pathfinding?")]
-			[Attributes.Experimental]
-			internal static bool LockLocationObjects = false;
 		}
 
 		[Attributes.Comment("Should the default batch sort be replaced with a stable sort?")]
@@ -789,13 +783,6 @@ internal static class Config {
 			[Attributes.MenuName("Disable PyTK Mitigation")]
 			internal static bool DisablePyTKMitigation = true;
 		}
-	}
-
-	[Attributes.Advanced]
-	internal static class TextureCache {
-		[Attributes.Comment("Should the experimental SMAPI texture cache patch be enabled?")]
-		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushTextureCache)]
-		internal static bool Enabled = true;
 	}
 
 	[Attributes.Advanced]
