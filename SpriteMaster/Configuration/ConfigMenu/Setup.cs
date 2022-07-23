@@ -1,4 +1,5 @@
 ﻿using GenericModConfigMenu;
+using LinqFasterer;
 using SpriteMaster.Configuration.Preview;
 using SpriteMaster.Extensions;
 using SpriteMaster.Extensions.Reflection;
@@ -6,12 +7,12 @@ using SpriteMaster.Types;
 using StardewModdingAPI;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 using SMMetadata = SpriteMaster.Metadata.Metadata;
 
-namespace SpriteMaster.Configuration.GMCM;
+namespace SpriteMaster.Configuration.ConfigMenu;
 
 internal static class Setup {
 	private const int DefaultPreviewHeight = 400;
@@ -20,8 +21,7 @@ internal static class Setup {
 
 	private static volatile bool Initialized = false;
 
-	private static IGenericModConfigMenuApi? ConfigAPI = null;
-	private static readonly Dictionary<string, FieldInfo> FieldMap = new();
+	private static IGenericModConfigMenuApi? ConfigApi = null;
 	private static Override PreviewOverride = new();
 	private static bool IsMenuOpened = false;
 	private static bool DisposeNextClick = false;
@@ -31,25 +31,25 @@ internal static class Setup {
 
 	internal static void Initialize() {
 		if (Initialized) {
-			throw new Exception("GMCM already initialized");
+			ThrowHelper.ThrowInvalidOperationException("GMCM already initialized");
 		}
 		Initialized = true;
 
 		// https://github.com/spacechase0/StardewValleyMods/tree/develop/GenericModConfigMenu#for-c-mod-authors
 
-		ConfigAPI = SpriteMaster.Self.Helper.ModRegistry.GetApi<IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu");
-		if (ConfigAPI is null) {
+		if (SpriteMaster.Self.Helper.ModRegistry.GetApi<IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu") is not {} configApi) {
 			Debug.Trace("Could not acquire GenericModConfigMenu interface");
 			return;
 		}
+		ConfigApi = configApi;
 
-		ConfigAPI.Register(
+		configApi.Register(
 			mod: SpriteMaster.Self.ModManifest,
 			reset: Reset,
 			save: Save
 		);
 
-		ConfigAPI.OnFieldChanged(
+		configApi.OnFieldChanged(
 			SpriteMaster.Self.ModManifest,
 			OnValueChange
 		);
@@ -59,7 +59,7 @@ internal static class Setup {
 			category: Serialize.Root,
 			advanced: false,
 			manifest: SpriteMaster.Self.ModManifest,
-			config: ConfigAPI
+			config: configApi
 		);
 
 		ProcessCategory(
@@ -67,18 +67,16 @@ internal static class Setup {
 			category: Serialize.Root,
 			advanced: true,
 			manifest: SpriteMaster.Self.ModManifest,
-			config: ConfigAPI
+			config: configApi
 		);
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static void ForceOpen() {
-		if (ConfigAPI is null) {
-			return;
-		}
-
-		ConfigAPI.OpenModMenu(SpriteMaster.Self.ModManifest);
+		ConfigApi?.OpenModMenu(SpriteMaster.Self.ModManifest);
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static void Reset() {
 		if (Config.DefaultConfig is null) {
 			return;
@@ -88,21 +86,24 @@ internal static class Setup {
 		Config.DefaultConfig.Position = 0;
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static void Save() {
 		Serialize.Save(Config.Path);
 	}
 
 	private static bool IsAdvanced(Type type) {
-		bool isAdvancedField = type.HasAttribute<Attributes.AdvancedAttribute>();
-		if (isAdvancedField) {
-			return true;
-		}
+		while (true) {
+			bool isAdvancedField = type.HasAttribute<Attributes.AdvancedAttribute>();
+			if (isAdvancedField) {
+				return true;
+			}
 
-		if (type.DeclaringType is null) {
-			return false;
-		}
+			if (type.DeclaringType is null) {
+				return false;
+			}
 
-		return IsAdvanced(type.DeclaringType);
+			type = type.DeclaringType;
+		}
 	}
 
 	private static bool IsAdvanced(FieldInfo field) {
@@ -137,19 +138,21 @@ internal static class Setup {
 	}
 
 	private static bool Hidden(Type? type, bool advanced) {
-		if (type is null) {
-			return false;
-		}
+		while (true) {
+			if (type is null) {
+				return false;
+			}
 
-		if (type.HasAttribute<Attributes.GMCMHiddenAttribute>()) {
-			return true;
-		}
+			if (type.HasAttribute<Attributes.GMCMHiddenAttribute>()) {
+				return true;
+			}
 
-		if (!advanced && type.HasAttribute<Attributes.AdvancedAttribute>()) {
-			return true;
-		}
+			if (!advanced && type.HasAttribute<Attributes.AdvancedAttribute>()) {
+				return true;
+			}
 
-		return Hidden(type.DeclaringType, advanced);
+			type = type.DeclaringType;
+		}
 	}
 
 	private static readonly string[][] Prefixes = {
@@ -170,7 +173,7 @@ internal static class Setup {
 	/// <exception cref="ArgumentOutOfRangeException"></exception>
 	private static long SizeOrder(long value, int order) {
 		if (order < 0) {
-			throw new ArgumentOutOfRangeException(nameof(order), "parameter must not be negative");
+			ThrowHelper.ThrowArgumentOutOfRangeException(nameof(order), order, "parameter must not be negative");
 		}
 
 		// 1024^1 = (1024 << 0)
@@ -181,14 +184,15 @@ internal static class Setup {
 
 	private static string FormatLong(long value) {
 		string? Magnitude(int order, bool force = false) {
-			if (force || value < SizeOrder(1024, order + 1)) {
-				// This uses doubles because we want to get a fraction
-				var divisor = SizeOrder(1024, order);
-				var dValue = (double)value / divisor;
-				var prefix = Prefixes[Math.Min(order, Prefixes.Length - 1)][0];
-				return $"{dValue:0.##} {prefix}";
+			if (!force && value >= SizeOrder(1024, order + 1)) {
+				return null;
 			}
-			return null;
+
+			// This uses doubles because we want to get a fraction
+			var divisor = SizeOrder(1024, order);
+			var dValue = (double)value / divisor;
+			var prefix = Prefixes[Math.Min(order, Prefixes.Length - 1)][0];
+			return $"{dValue:0.##} {prefix}";
 		}
 		return
 			Magnitude(0) ??
@@ -203,10 +207,12 @@ internal static class Setup {
 		(int Order, string Prefix)? prefixResult = null;
 		for (int i = 0; (prefixResult?.Order ?? 0) == 0 && i < Prefixes.Length; ++i) {
 			foreach (var p in Prefixes[i]) {
-				if (value.EndsWith(p, StringComparison.InvariantCultureIgnoreCase)) {
-					prefixResult = (i, p);
-					break;
+				if (!value.EndsWith(p, StringComparison.InvariantCultureIgnoreCase)) {
+					continue;
 				}
+
+				prefixResult = (i, p);
+				break;
 			}
 		}
 
@@ -214,7 +220,7 @@ internal static class Setup {
 			return long.Parse(value);
 		}
 
-		value = value.Substring(0, value.Length - prefixResult.Value.Prefix.Length);
+		value = value[..^prefixResult.Value.Prefix.Length];
 
 		long resultValue;
 
@@ -228,8 +234,8 @@ internal static class Setup {
 			realValue *= SizeOrder(1024, prefixResult.Value.Order);
 			resultValue = realValue.RoundToLong();
 		}
-		else {
-			throw new FormatException($"Could not parse '{value}' as a numeric value");
+		else { 
+			return ThrowHelper.ThrowFormatException<long>($"Could not parse '{value}' as a numeric value");
 		}
 
 		return resultValue;
@@ -252,36 +258,31 @@ internal static class Setup {
 	}
 
 	private static string FormatName(string name) {
-		var result = new StringBuilder();
+		using var result = ObjectPoolExt.Take<StringBuilder>(builder => builder.Clear());
 
 		char prevC = ' ';
 		for (int i = 0; i < name.Length; ++i) {
 			char c = name[i];
 			if (i != 0 && char.IsUpper(c) && !char.IsUpper(prevC)) {
-				result.Append(' ');
+				result.Value.Append(' ');
 			}
-			result.Append(c);
+			result.Value.Append(c);
 			prevC = c;
 		}
 
-		return result.ToString();
+		return result.Value.ToString();
 	}
 
-	private static int ExtractCombinedEnum(Type enumType, string combinedName) {
+	private static T ExtractCombinedEnum<T>(Type enumType, string combinedName) where T : unmanaged {
 		int splitOffset = combinedName.IndexOf('/');
 		if (splitOffset != -1) {
-			combinedName = combinedName.Substring(0, splitOffset);
+			combinedName = combinedName[..splitOffset];
 		}
-		return (int)Enum.Parse(enumType, combinedName);
+		return (T)Enum.Parse(enumType, combinedName);
 	}
 
-	private static T ExtractCombinedEnum<T>(string combinedName) where T : struct, Enum {
-		int splitOffset = combinedName.IndexOf('/');
-		if (splitOffset != -1) {
-			combinedName = combinedName.Substring(0, splitOffset);
-		}
-		return Enum.Parse<T>(combinedName);
-	}
+	private static T ExtractCombinedEnum<T>(string combinedName) where T : unmanaged, Enum =>
+		ExtractCombinedEnum<T>(typeof(T), combinedName);
 
 	private static string GetFieldName(FieldInfo field) {
 		var attribute = field.GetCustomAttribute<Attributes.MenuNameAttribute>();
@@ -295,30 +296,28 @@ internal static class Setup {
 
 		var comments = field.GetCustomAttributes<Attributes.CommentAttribute>();
 		string? comment = null;
-		var commentAttributes = comments as Attributes.CommentAttribute[] ?? comments.ToArray();
-		if (commentAttributes.Any()) {
+		var commentAttributes = comments.AsArray();
+		if (commentAttributes.Length != 0) {
 			comment = string.Join(
 				Environment.NewLine,
-				commentAttributes.Select(attr => attr.Message)
+				commentAttributes.SelectF(attr => attr.Message)
 			);
 		}
 
 		var fieldType = field.FieldType;
 		var fieldId = $"{field.ReflectedType?.FullName ?? "unknown"}.{field.Name}";
-		Func<string> fieldName = () => GetFieldName(field);
+		string FieldName() => GetFieldName(field);
 		Func<string>? tooltip = null;
 		if (comment is not null) {
 			tooltip = () => comment;
 		}
-
-		FieldMap[fieldId] = field;
 
 		if (fieldType == typeof(bool)) {
 			config.AddBoolOption(
 				mod: manifest,
 				getValue: () => Command.GetValue<bool>(field),
 				setValue: value => Command.SetValue(field, value),
-				name: fieldName,
+				name: FieldName,
 				tooltip: tooltip,
 				fieldId: fieldId
 			);
@@ -330,7 +329,7 @@ internal static class Setup {
 				mod: manifest,
 				getValue: () => Command.GetValue<int>(field),
 				setValue: value => Command.SetValue(field, value),
-				name: fieldName,
+				name: FieldName,
 				tooltip: tooltip,
 				min: limitAttribute?.GetMin<int>(fieldType),
 				max: limitAttribute?.GetMax<int>(fieldType),
@@ -346,10 +345,10 @@ internal static class Setup {
 				mod: manifest,
 				getValue: () => Command.GetValue<float>(field),
 				setValue: value => Command.SetValue(field, value),
-				name: fieldName,
+				name: FieldName,
 				tooltip: tooltip,
-				min: limitAttribute?.GetMin<float>(),
-				max: limitAttribute?.GetMax<float>(),
+				min: limitAttribute?.GetMin<float>() ?? float.MinValue,
+				max: limitAttribute?.GetMax<float>() ?? float.MaxValue,
 				interval: null,
 				formatValue: null,
 				fieldId: fieldId
@@ -362,10 +361,10 @@ internal static class Setup {
 				mod: manifest,
 				getValue: () => (float)Command.GetValue<double>(field),
 				setValue: value => Command.SetValue<double>(field, value),
-				name: fieldName,
+				name: FieldName,
 				tooltip: tooltip,
-				min: limitAttribute?.GetMin<float>(typeof(double)),
-				max: limitAttribute?.GetMax<float>(typeof(double)),
+				min: limitAttribute?.GetMin<float>(typeof(double)) ?? float.MinValue,
+				max: limitAttribute?.GetMax<float>(typeof(double)) ?? float.MaxValue,
 				interval: null,
 				formatValue: null,
 				fieldId: fieldId
@@ -376,7 +375,7 @@ internal static class Setup {
 				mod: manifest,
 				getValue: () => Command.GetValue<string>(field),
 				setValue: value => Command.SetValue<string>(field, value),
-				name: fieldName,
+				name: FieldName,
 				tooltip: tooltip,
 				allowedValues: null,
 				formatAllowedValue: null,
@@ -388,7 +387,7 @@ internal static class Setup {
 				mod: manifest,
 				getValue: () => Command.GetValue<SButton>(field),
 				setValue: value => Command.SetValue(field, value),
-				name: fieldName,
+				name: FieldName,
 				tooltip: tooltip,
 				fieldId: fieldId
 			);
@@ -404,10 +403,10 @@ internal static class Setup {
 			config.AddTextOption(
 				mod: manifest,
 				getValue: () => enumMap[Command.GetValue<int>(field)],
-				setValue: value => Command.SetValue(field, ExtractCombinedEnum(fieldType, value)),
-				name: fieldName,
+				setValue: value => Command.SetValue(field, ExtractCombinedEnum<int>(fieldType, value)),
+				name: FieldName,
 				tooltip: tooltip,
-				allowedValues: enumMap.Values.ToArray(),
+				allowedValues: enumMap.Values.AsArray(),
 				formatAllowedValue: null,
 				fieldId: fieldId
 			);
@@ -426,7 +425,7 @@ internal static class Setup {
 						limitAttribute?.MaxValue ?? long.MaxValue
 					)
 				),
-				name: fieldName,
+				name: FieldName,
 				tooltip: tooltip,
 				allowedValues: null,
 				formatAllowedValue: null,
@@ -487,14 +486,15 @@ internal static class Setup {
 			return null;
 		}
 
-		var names = new List<string> { category.Name };
+		using var names = ObjectPoolExt.Take<List<string>>(list => list.Clear());
+		names.Value.Add(category.Name);
 		foreach (var currentCategory in category.ParentTraverser) {
 			if (!currentCategory.Name.IsBlank()) {
-				names.Add(currentCategory.Name);
+				names.Value.Add(currentCategory.Name);
 			}
 		}
 
-		names.Reverse();
+		names.Value.Reverse();
 
 		return string.Join('.', names);
 	}
@@ -537,7 +537,7 @@ internal static class Setup {
 			return;
 		}
 
-		var cursorPosition = (Vector2I)((Vector2F)args.Cursor.ScreenPixels);
+		var cursorPosition = (Vector2I)(Vector2F)args.Cursor.ScreenPixels;
 		if (!PreviewScene.Region.Contains(cursorPosition)) {
 			return;
 		}

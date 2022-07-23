@@ -1,16 +1,13 @@
 ﻿using SpriteMaster.Configuration;
-using SpriteMaster.Types;
 using SpriteMaster.Types.MemoryCache;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using System.Security;
 
 namespace SpriteMaster.Caching;
 
 /// <summary>
 /// Used to cache original texture data so it doesn't need to perform blocking fetches as often
 /// </summary>
-[SuppressUnmanagedCodeSecurity]
 internal static class ResidentCache {
 	internal static bool Enabled => Config.ResidentCache.Enabled;
 

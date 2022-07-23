@@ -18,7 +18,6 @@ using System.Threading.Tasks;
 
 namespace SpriteMaster.Caching;
 
-[SuppressUnmanagedCodeSecurity]
 internal static class FileCache {
 	private const string TextureCacheName = "TextureCache";
 	private const string JunctionCacheName = $"{TextureCacheName}_Current";

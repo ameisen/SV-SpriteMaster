@@ -17,9 +17,9 @@ internal static class ArrayExt {
 
 	[Pure, MustUseReturnValue, MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static unsafe ref ArrayHeader GetHeaderRef<T>(T[] array) where T : unmanaged {
-		ref T element = ref MemoryMarshal.GetArrayDataReference(array);
-		ref T headerOffset = ref Unsafe.SubtractByteOffset(ref element, (IntPtr)sizeof(ArrayHeader));
-		return ref Unsafe.As<T, ArrayHeader>(ref headerOffset);
+		ref ArrayHeader element = ref Unsafe.As<T, ArrayHeader>(ref MemoryMarshal.GetArrayDataReference(array));
+		ref ArrayHeader header = ref Unsafe.Subtract(ref element, 1);
+		return ref header;
 	}
 
 	[Pure, MustUseReturnValue, MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -447,4 +447,25 @@ internal static class ThrowHelper {
 		throw new InvalidTypeParameterException(message, type, innerException);
 
 	#endregion
+
+	#region FormatException
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static T ThrowFormatException<T>(string message) =>
+		throw new FormatException(message);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static void ThrowFormatException(string message) =>
+		throw new FormatException(message);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static T ThrowFormatException<T>(string message, Exception innerException) =>
+		throw new FormatException(message, innerException);
+
+	[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+	internal static void ThrowFormatException(string message, Exception innerException) =>
+		throw new FormatException(message, innerException);
+
+	#endregion
+
 }

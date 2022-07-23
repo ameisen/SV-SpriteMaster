@@ -5,7 +5,7 @@ using Pastel;
 using SpriteMaster.Resample;
 using SpriteMaster.Tasking;
 using SpriteMaster.Types;
-
+using SpriteMaster.Types.Spans;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
@@ -398,22 +398,25 @@ internal static class Textures {
 
 		SynchronizedTaskScheduler.Instance.QueueImmediate(() => {
 			try {
-				using var dumpTexture = new DumpTexture2D(
-					StardewValley.Game1.graphics.GraphicsDevice,
-					destBound.Width,
-					destBound.Height,
-					mipmap: false,
-					format: format
-				) {
-					Name = "Dump Texture"
-				};
+				unsafe {
+					fixed (TRaw* subDataPtr = subData) {
+						using var dumpTexture = new DumpTexture2D(
+							new ReadOnlyPinnedSpan<byte>(subData, (byte*)subDataPtr, subData.Length * sizeof(TRaw)).Fixed,
+							StardewValley.Game1.graphics.GraphicsDevice,
+							destBound.Width,
+							destBound.Height,
+							mipmap: false,
+							format: format
+						) {Name = "Dump Texture"};
 
-				dumpTexture.SetData(subData);
-				if (Path.GetDirectoryName(path) is { } directory) {
-					Directory.CreateDirectory(directory);
+						if (Path.GetDirectoryName(path) is { } directory) {
+							Directory.CreateDirectory(directory);
+						}
+
+						using var dumpFile = File.Create(path);
+						dumpTexture.SaveAsPng(dumpFile, destBound.Width, destBound.Height);
+					}
 				}
-				using var dumpFile = File.Create(path);
-				dumpTexture.SaveAsPng(dumpFile, destBound.Width, destBound.Height);
 			}
 			catch (Exception ex) {
 				Debug.Warning(ex);

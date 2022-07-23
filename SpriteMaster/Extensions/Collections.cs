@@ -23,6 +23,10 @@ internal static class Collections {
 		return defaultValue;
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static T[] AsArray<T>(this IEnumerable<T> enumerable) =>
+		enumerable as T[] ?? enumerable.ToArray();
+
 	#region IsBlank
 	[MethodImpl(MethodImpl.Inline)]
 	internal static bool IsBlank<T>(this IEnumerable<T>? enumerable) => enumerable is null || !enumerable.Any();
@@ -108,6 +112,14 @@ internal static class Collections {
 	internal static T[] GetInnerArray<T>(this List<T> list) {
 		if (!ListReflectImpl<T>.GetEnabled) {
 			return list.ToArray();
+		}
+
+		return ListReflectImpl<T>.GetItems(list);
+	}
+
+	internal static T[]? GetInnerArrayUnsafe<T>(this List<T> list) {
+		if (!ListReflectImpl<T>.GetEnabled) {
+			return null;
 		}
 
 		return ListReflectImpl<T>.GetItems(list);

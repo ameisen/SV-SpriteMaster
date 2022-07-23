@@ -1,5 +1,5 @@
-﻿using StardewValley;
-
+﻿using SpriteMaster.Types.Exceptions;
+using StardewValley;
 using SMHarmonize = SpriteMaster.Harmonize;
 
 namespace SpriteMaster.Configuration.Preview;
@@ -11,13 +11,17 @@ internal static class PrecipitationPatches {
 	[SMHarmonize.Harmonize(
 		typeof(Game1),
 		"IsSnowingHere",
-		SMHarmonize.Harmonize.Fixation.Reverse,
+		SMHarmonize.Harmonize.Fixation.ReversePatched,
 		instance: false,
 		critical: false
 	)]
 	public static bool IsSnowingHereReverse(GameLocation? location) {
-		ThrowHelper.ThrowReversePatchException();
-		return false;
+		try {
+			throw new ReversePatchException();
+		}
+		catch {
+			throw new ReversePatchException();
+		}
 	}
 
 	public static bool IsSnowingHereExt(GameLocation? location = null) {

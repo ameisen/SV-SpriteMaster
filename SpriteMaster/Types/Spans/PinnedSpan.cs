@@ -330,12 +330,12 @@ internal readonly ref struct PinnedSpan<T> where T : unmanaged {
 	[StructLayout(LayoutKind.Auto)]
 	internal unsafe readonly struct FixedSpan {
 		private readonly object ReferenceObject;
-		private readonly void* Pointer;
-		private readonly int Length;
+		internal readonly T* Pointer;
+		internal readonly int Length;
 
 		internal FixedSpan(PinnedSpan<T> span) {
 			ReferenceObject = span.ReferenceObject;
-			Pointer = Unsafe.AsPointer(ref span.GetPinnableReferenceUnsafe());
+			Pointer = (T*)Unsafe.AsPointer(ref span.GetPinnableReferenceUnsafe());
 			Length = span.Length;
 		}
 

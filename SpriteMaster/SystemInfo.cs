@@ -114,9 +114,9 @@ internal static partial class SystemInfo {
 								// Flush the error buffer
 							}
 
-							if (GLExt.GetInteger64v is not null) {
+							if (GLExt.GetInteger64v.Enabled) {
 								long result = 0;
-								GLExt.GetInteger64v(DedicatedVidMemNvx, &result);
+								GLExt.GetInteger64v.Function(DedicatedVidMemNvx, &result);
 								if (MonoGame.OpenGL.GL.GetError() == MonoGame.OpenGL.ErrorCode.NoError) {
 									DedicatedMemory = (ulong)(result * 1024);
 								}
@@ -129,9 +129,9 @@ internal static partial class SystemInfo {
 								}
 							}
 
-							if (GLExt.GetInteger64v is not null) {
+							if (GLExt.GetInteger64v.Enabled) {
 								long result = 0;
-								GLExt.GetInteger64v(TotalAvailableMemoryNvx, &result);
+								GLExt.GetInteger64v.Function(TotalAvailableMemoryNvx, &result);
 								if (MonoGame.OpenGL.GL.GetError() == MonoGame.OpenGL.ErrorCode.NoError) {
 									TotalMemory = (ulong)(result * 1024);
 								}
@@ -157,9 +157,9 @@ internal static partial class SystemInfo {
 
 					unsafe {
 						try {
-							if (GLExt.GetInteger64v is not null) {
+							if (GLExt.GetInteger64v.Enabled) {
 								Span<long> result = stackalloc long[4];
-								GLExt.GetInteger64v(TextureFreeMemoryAti, (long*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(result)));
+								GLExt.GetInteger64v.Function(TextureFreeMemoryAti, (long*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(result)));
 								if (MonoGame.OpenGL.GL.GetError() == MonoGame.OpenGL.ErrorCode.NoError) {
 									TotalMemory = DedicatedMemory = (ulong)(result[0] * 1024);
 								}
@@ -230,8 +230,8 @@ internal static partial class SystemInfo {
 				{
 					var sets = new InstructionSetRecord[] {
 						new("SSSE3", Ssse3.IsSupported, Extensions.Simd.Support.Ssse3),
-						new("SSE4.1", Ssse3.IsSupported, Extensions.Simd.Support.Sse41),
-						new("BMI2", Ssse3.IsSupported, Extensions.Simd.Support.Bmi2),
+						new("SSE4.1", Sse41.IsSupported, Extensions.Simd.Support.Sse41),
+						new("BMI2", Bmi2.IsSupported, Extensions.Simd.Support.Bmi2),
 						new("AVX2", Avx2.IsSupported, Extensions.Simd.Support.Avx2),
 					};
 

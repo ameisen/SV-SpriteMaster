@@ -12,7 +12,9 @@ internal unsafe readonly struct PointerSpan<T> where T : unmanaged {
 
 	internal readonly bool IsEmpty => Pointer is null;
 
-	internal readonly ReadOnlySpan<T> AsSpan => new(Pointer, Length);
+	internal readonly ReadOnlySpan<T> AsReadOnlySpan => new(Pointer, Length);
+
+	internal readonly Span<T> AsSpan => new(Pointer, Length);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public PointerSpan() {
@@ -30,9 +32,14 @@ internal unsafe readonly struct PointerSpan<T> where T : unmanaged {
 	public static implicit operator PointerSpan<T>(ReadOnlyPinnedSpan<T>.FixedSpan fixedSpan) => new(fixedSpan.Pointer, fixedSpan.Length);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static implicit operator IntPtr(PointerSpan<T> pointerSpan) => (IntPtr)pointerSpan.Pointer;
+	public static implicit operator PointerSpan<T>(PinnedSpan<T> pinnedSpan) => new(pinnedSpan.GetPointer(), pinnedSpan.Length);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static implicit operator PointerSpan<T>(PinnedSpan<T>.FixedSpan fixedSpan) => new(fixedSpan.Pointer, fixedSpan.Length);
+
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static implicit operator T*(PointerSpan<T> pointerSpan) => pointerSpan.Pointer;
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static implicit operator nuint(PointerSpan<T> pointerSpan) => (nuint)pointerSpan.Pointer;
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static implicit operator nint(PointerSpan<T> pointerSpan) => (nint)pointerSpan.Pointer;
 }

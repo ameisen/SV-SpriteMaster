@@ -8,6 +8,8 @@ using SpriteMaster.Core;
 using SpriteMaster.Extensions;
 using SpriteMaster.Extensions.Reflection;
 using SpriteMaster.Types;
+using SpriteMaster.Types.Exceptions;
+using SpriteMaster.Types.Pooling;
 using StardewValley;
 using StardewValley.Locations;
 using System;
@@ -35,7 +37,7 @@ internal static class Snow {
 
 		internal Dictionary<Bounds, List<SnowWeatherDebris>>.ValueCollection Values => Map.Values;
 
-		internal DebrisMap() {
+		public DebrisMap() {
 		}
 
 		internal DebrisMap(DebrisMap map) {
@@ -46,6 +48,15 @@ internal static class Snow {
 		internal void Clear() {
 			Map.Clear();
 			ListMax = 0;
+		}
+
+		internal void CloneFrom(DebrisMap map) {
+			Map.EnsureCapacity(map.Map.Count);
+			foreach (var item in map.Map) {
+				Map.Add(item.Key, item.Value);
+			}
+
+			ListMax = map.ListMax;
 		}
 	}
 
@@ -68,15 +79,16 @@ internal static class Snow {
 		}
 	}
 
+	[MethodImpl(MethodImplOptions.NoInlining)]
 	[Harmonize(
-		typeof(StardewValley.WeatherDebris),
+		typeof(WeatherDebris),
 		".ctor",
 		Harmonize.Fixation.Reverse,
 		Harmonize.PriorityLevel.First,
 		critical: false
 	)]
 	public static void WeatherDebrisReverse(WeatherDebris __instance, Vector2 position, int which, float rotationVelocity, float dx, float dy) {
-		ThrowHelper.ThrowReversePatchException();
+		throw new ReversePatchException();
 	}
 
 	/*
@@ -154,6 +166,7 @@ internal static class Snow {
 		Harmonize.PriorityLevel.Last,
 		critical: false
 	)]
+	// ReSharper disable once RedundantAssignment
 	public static bool DrawWeatherPre(Game1 __instance, GameTime time, RenderTarget2D target_screen, ref DrawWeatherState __state) {
 		__state = new(Ran: false);
 
@@ -189,8 +202,8 @@ internal static class Snow {
 			if (__instance.takingMapScreenshot) {
 				XTexture2D drawTexture = IsPuffersnow ? FishTexture.Value : Game1.mouseCursors;
 
-				foreach (var _item in AllWeatherDebris) {
-					var item = (SnowWeatherDebris)_item;
+				foreach (var weatherDebris in AllWeatherDebris) {
+					var item = (SnowWeatherDebris)weatherDebris;
 					var position = new XVector2(
 						Game1.random.Next(Game1.viewport.Width - item.ReferenceSourceRect.Width * 3),
 						Game1.random.Next(Game1.viewport.Height - item.ReferenceSourceRect.Height * 3)

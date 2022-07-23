@@ -5,6 +5,7 @@ using SpriteMaster.Caching;
 using SpriteMaster.Configuration;
 using SpriteMaster.Experimental;
 using SpriteMaster.Extensions;
+using SpriteMaster.GL;
 using SpriteMaster.Harmonize;
 using SpriteMaster.Harmonize.Patches.Game;
 using SpriteMaster.Metadata;
@@ -45,6 +46,8 @@ public sealed class SpriteMaster : Mod {
 		_ = ThreadingExt.IsMainThread;
 
 		DirectoryCleanup.Cleanup();
+
+		GLExt.EnableDebugging();
 
 		Initialize();
 
@@ -254,7 +257,7 @@ public sealed class SpriteMaster : Mod {
 			return;
 		}
 
-		Configuration.GMCM.Setup.ForceOpen();
+		Configuration.ConfigMenu.Setup.ForceOpen();
 
 		Helper.Events.GameLoop.UpdateTicked -= OnUpdateTicked;
 	}
@@ -367,7 +370,7 @@ public sealed class SpriteMaster : Mod {
 		var waiters = new WaitWrapper[] {
 			new(Task.Run(CheckMods)),
 			new(FileCache.Initialized),
-			new(Task.Run(Configuration.GMCM.Setup.Initialize))
+			new(Task.Run(Configuration.ConfigMenu.Setup.Initialize))
 		};
 
 		foreach (var waiter in waiters) {

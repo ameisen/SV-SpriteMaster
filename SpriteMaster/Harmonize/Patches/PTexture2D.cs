@@ -123,9 +123,12 @@ internal static class PTexture2D {
 		return true;
 	}
 
-	internal static readonly Action<XTexture2D, int, int, bool, SurfaceFormat, SurfaceType, bool>? PlatformConstruct =
-		typeof(XTexture2D).GetInstanceMethod("PlatformConstruct")
-			?.CreateDelegate<Action<XTexture2D, int, int, bool, SurfaceFormat, SurfaceType, bool>>();
+	internal delegate void PlatformConstructDelegate(
+		XTexture2D instance, int width, int height, bool mipmap, SurfaceFormat format,
+		SurfaceType type, bool shared
+	);
+
+	internal static readonly PlatformConstructDelegate? PlatformConstruct = typeof(XTexture2D).GetInstanceDelegate<PlatformConstructDelegate>("PlatformConstruct");
 
 	[Harmonize(".ctor", Fixation.Prefix, PriorityLevel.Last)]
 	public static void OnConstructTexture2D(
@@ -192,8 +195,8 @@ internal static class PTexture2D {
 		if (data.Length != 0 && !GetCachedData<T>(__instance, level, arraySlice, rect, data, startIndex, elementCount).IsEmpty) {
 			return false;
 		}
-
-		return true;
+		
+		return !(arraySlice == 0 && GL.Texture2DExt.GetDataInternal(__instance, level, rect, data.AsSpan())); ;
 	}
 
 	[DoesNotReturn]

@@ -144,6 +144,19 @@ internal static partial class ReflectionExt {
 		return type.GetMethod(name, ShallowStaticFlags);
 	}
 
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	[DynamicallyAccessedMembers(AllFields)]
+	internal static FieldInfo? GetStaticField(this Type type, string name) {
+		return type.GetField(name, ShallowStaticFlags);
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	[DynamicallyAccessedMembers(AllMethods)]
+	internal static TDelegate? GetStaticDelegate<TDelegate>(this Type type, string name) where TDelegate : Delegate {
+		return type.GetMethod(name, ShallowStaticFlags)?.CreateDelegate<TDelegate>();
+	}
+
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	[DynamicallyAccessedMembers(AllMethods)]
 	internal static IList<MethodInfo> GetInstanceMethods(this Type type, string name) {
@@ -160,6 +173,12 @@ internal static partial class ReflectionExt {
 	[DynamicallyAccessedMembers(AllMethods)]
 	internal static MethodInfo? GetInstanceMethod(this Type type, string name) {
 		return type.GetMethod(name, ShallowInstanceFlags);
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	[DynamicallyAccessedMembers(AllMethods)]
+	internal static TDelegate? GetInstanceDelegate<TDelegate>(this Type type, string name) where TDelegate : Delegate {
+		return type.GetMethod(name, ShallowInstanceFlags)?.CreateDelegate<TDelegate>();
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]

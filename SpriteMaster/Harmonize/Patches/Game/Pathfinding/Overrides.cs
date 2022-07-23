@@ -60,6 +60,7 @@ internal static partial class Pathfinding {
 	}
 
 #if VALIDATE_ROUTES
+	[MethodImpl(MethodImplOptions.NoInlining)]
 	[Harmonize(
 		typeof(NPC),
 		"populateRoutesFromLocationToLocationList",
@@ -68,7 +69,7 @@ internal static partial class Pathfinding {
 		critical: false
 	)]
 	public static void PopulateRoutesFromLocationToLocationListReverse() {
-		ThrowHelper.ThrowReversePatchException();
+		throw new ReversePatchException();
 	}
 
 	private static bool RealPopulate = false;

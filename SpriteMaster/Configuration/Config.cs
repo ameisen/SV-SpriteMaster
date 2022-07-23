@@ -487,13 +487,13 @@ internal static class Config {
 			[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
 			internal static bool Enabled = false;
 			[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
-			[Attributes.LimitsReal(0, double.MaxValue)]
+			[Attributes.LimitsReal(0, 10.0)]
 			internal static double RScalar = 0.897642;
 			[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
-			[Attributes.LimitsReal(0, double.MaxValue)]
+			[Attributes.LimitsReal(0, 10.0)]
 			internal static double GScalar = 0.998476;
 			[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
-			[Attributes.LimitsReal(0, double.MaxValue)]
+			[Attributes.LimitsReal(0, 10.0)]
 			internal static double BScalar = 1.18365;
 		}
 
@@ -753,6 +753,10 @@ internal static class Config {
 		internal static bool EnableDirtDrawOptimizations = false;
 		[Attributes.Comment("Should low-level OpenGL optimizations be performed?")]
 		internal static bool OptimizeOpenGL = true;
+		[Attributes.Comment("Should Texture2D.SetData be optimized?")]
+		internal static bool OptimizeTexture2DSetData = true;
+		[Attributes.Comment("Should Texture2D.GetData be optimized?")]
+		internal static bool OptimizeTexture2DGetData = true;
 		[Attributes.Comment("Should glCopyTexture by used?")]
 		internal static bool UseCopyTexture = true;
 		[Attributes.Comment("Should glTexStorage be used?")]

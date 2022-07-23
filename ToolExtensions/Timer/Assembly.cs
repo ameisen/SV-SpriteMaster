@@ -8,10 +8,9 @@ using System.Security;
 [assembly: AllowPartiallyTrustedCallers]
 [assembly: SecurityTransparent]
 [assembly: SecurityRules(SecurityRuleSet.Level2, SkipVerificationInFullTrust = true)]
-[assembly: ChangeList("bc4eabe:0.15.0-alpha.7")]
+[assembly: ChangeList("8b78e55:0.15.0-alpha.7-1-g8b78e55")]
 [assembly: BuildComputerName("Palatinate")]
-[assembly: FullVersion("0.15.0.7-alpha.7")]
-// [assembly: SuppressUnmanagedCodeSecurity]
+[assembly: FullVersion("0.15.0.101-beta.1")]
 
 [module: CLSCompliant(false)]
 [module: SkipLocalsInit]
