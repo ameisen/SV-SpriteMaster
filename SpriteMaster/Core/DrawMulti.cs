@@ -30,13 +30,25 @@ internal static partial class OnDrawImpl {
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[Harmonize(typeof(XSpriteBatch), "Draw", fixation: Fixation.Reverse)]
 	public static void RawDraw(XSpriteBatch __instance, XTexture2D texture, XVector2 position, XRectangle? sourceRectangle, XColor color, float rotation, XVector2 origin, float scale, SpriteEffects effects, float layerDepth) {
-		throw new ReversePatchException();
+		Harmonize.Patches.PSpriteBatch.Patch.Draw.IsReverse.Value = true;
+		try {
+			__instance.Draw(texture, position, sourceRectangle, color, rotation, origin, scale, effects, layerDepth);
+		}
+		finally {
+			Harmonize.Patches.PSpriteBatch.Patch.Draw.IsReverse.Value = false;
+		}
 	}
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	[Harmonize(typeof(XSpriteBatch), "Draw", fixation: Fixation.Reverse)]
 	public static void RawDraw(XSpriteBatch __instance, XTexture2D texture, XVector2 position, XRectangle? sourceRectangle, XColor color, float rotation, XVector2 origin, XVector2 scale, SpriteEffects effects, float layerDepth) {
-		throw new ReversePatchException();
+		Harmonize.Patches.PSpriteBatch.Patch.Draw.IsReverse.Value = true;
+		try {
+			__instance.Draw(texture, position, sourceRectangle, color, rotation, origin, scale, effects, layerDepth);
+		}
+		finally {
+			Harmonize.Patches.PSpriteBatch.Patch.Draw.IsReverse.Value = false;
+		}
 	}
 
 	internal static void DrawMulti(

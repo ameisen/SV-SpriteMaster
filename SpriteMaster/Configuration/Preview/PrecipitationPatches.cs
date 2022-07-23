@@ -1,5 +1,7 @@
 ﻿using SpriteMaster.Types.Exceptions;
 using StardewValley;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using SMHarmonize = SpriteMaster.Harmonize;
 
 namespace SpriteMaster.Configuration.Preview;
@@ -8,6 +10,10 @@ internal static class PrecipitationPatches {
 	private static PrecipitationType Precipitation => PrecipitationOverride ?? Scene.Current?.Precipitation ?? PrecipitationType.None;
 	internal static PrecipitationType? PrecipitationOverride = null;
 
+	// This is here because the M1 seems to have issues with reverse patches.
+	internal static readonly ThreadLocal<bool> IsReverse = new(false);
+
+	[MethodImpl(MethodImplOptions.NoInlining)]
 	[SMHarmonize.Harmonize(
 		typeof(Game1),
 		"IsSnowingHere",
@@ -17,10 +23,11 @@ internal static class PrecipitationPatches {
 	)]
 	public static bool IsSnowingHereReverse(GameLocation? location) {
 		try {
-			throw new ReversePatchException();
+			IsReverse.Value = true;
+			return Game1.IsSnowingHere(location);
 		}
-		catch {
-			throw new ReversePatchException();
+		finally {
+			IsReverse.Value = false;
 		}
 	}
 
@@ -49,7 +56,7 @@ internal static class PrecipitationPatches {
 		critical: false
 	)]
 	public static bool IsSnowingHere(ref bool __result, GameLocation? location) {
-		return false;
+		return IsReverse.Value;
 	}
 
 	[SMHarmonize.Harmonize(
