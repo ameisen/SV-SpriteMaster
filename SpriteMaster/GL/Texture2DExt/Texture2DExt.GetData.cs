@@ -198,9 +198,10 @@ internal static partial class Texture2DExt {
 
 		bool usedStorage = @this.GetGlMeta().Flags.HasFlag(Texture2DOpenGlMeta.Flag.Storage);
 
-
-
 		try {
+			// Flush errors
+			GLExt.SwallowOrReportErrors();
+
 			GLExt.Checked(() => OGL.BindTexture(TextureTarget.Texture2D, @this.glTexture));
 			GLExt.Checked(() => OGL.PixelStore(PixelStoreParameter.PackAlignment, Math.Min(sizeof(T), 8)));
 

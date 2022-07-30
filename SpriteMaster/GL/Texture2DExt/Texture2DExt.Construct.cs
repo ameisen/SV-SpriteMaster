@@ -242,11 +242,11 @@ internal static partial class Texture2DExt {
 							StorageEnabled = false;
 							buildLayers = !dataIn.IsEmpty;
 
-							GLExt.Checked(() => MonoGame.OpenGL.GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureBaseLevel, 0));
+							//GLExt.Checked(() => MonoGame.OpenGL.GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureBaseLevel, 0));
 
-							if (@this.GraphicsDevice.GraphicsCapabilities.SupportsTextureMaxLevel) {
-								GLExt.Checked(() => MonoGame.OpenGL.GL.TexParameter(TextureTarget.Texture2D, SamplerState.TextureParameterNameTextureMaxLevel, (@this.LevelCount > 0) ? @this.LevelCount - 1 : 1000));
-							}
+							//if (@this.GraphicsDevice.GraphicsCapabilities.SupportsTextureMaxLevel) {
+							//	GLExt.Checked(() => MonoGame.OpenGL.GL.TexParameter(TextureTarget.Texture2D, SamplerState.TextureParameterNameTextureMaxLevel, (@this.LevelCount > 0) ? @this.LevelCount - 1 : 1000));
+							//}
 						}
 					}
 
@@ -270,7 +270,7 @@ internal static partial class Texture2DExt {
 								@this: @this,
 								level: level++,
 								rect: null,
-								data: data.IsEmpty ? default : data.SliceUnsafe(currentOffset, levelSize),
+								data: data.IsEmpty ? default : data.Slice(currentOffset, levelSize),
 								initialized: useStorage,
 								isSet: true
 							)) {

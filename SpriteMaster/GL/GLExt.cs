@@ -80,6 +80,15 @@ internal static unsafe class GLExt {
 	}
 
 	[DebuggerHidden, MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static void SwallowOrReportErrors() {
+#if GL_DEBUG || CONTRACTS_FULL || DEBUG
+		CheckError();
+#else
+		AlwaysSwallowErrors();
+#endif
+	}
+
+	[DebuggerHidden, MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static void AlwaysSwallowErrors() {
 		while ((ErrorCode)MonoGame.OpenGL.GL.GetError() != ErrorCode.NoError) {
 			// Do Nothing

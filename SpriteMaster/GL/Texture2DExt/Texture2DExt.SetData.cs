@@ -70,7 +70,9 @@ internal static partial class Texture2DExt {
 		ThreadingExt.ExecuteOnMainThread(
 			() => {
 				try {
-					GLExt.CheckError("SetDataInternal Entry");
+					// Flush errors
+					GLExt.SwallowOrReportErrors();
+
 
 					Texture2DOpenGlMeta? glMeta = null;
 					if (!initialized) {

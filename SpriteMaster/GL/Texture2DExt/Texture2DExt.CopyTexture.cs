@@ -27,6 +27,13 @@ internal static partial class Texture2DExt {
 			return false;
 		}
 
+		if (
+			target.glFormat is PixelFormat.CompressedTextureFormats ||
+			source.glFormat is PixelFormat.CompressedTextureFormats
+		) {
+			return false;
+		}
+
 		if (!source.TryMeta(out var meta) || !meta.HasCachedData) {
 			return false;
 		}
@@ -58,7 +65,9 @@ internal static partial class Texture2DExt {
 			() => {
 				using var reboundTexture = new TextureBinder(0);
 
-				GLExt.AlwaysCheckError();
+				// Flush errors
+				GLExt.SwallowOrReportErrors();
+
 				try {
 					GLExt.AlwaysChecked(
 						() => GLExt.CopyImageSubData.Function(
