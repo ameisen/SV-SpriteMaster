@@ -82,6 +82,12 @@ internal static class Draw {
 			return true;
 		}
 
+		// This is a non-padded codepath, which means that the preprocessing path must have already been hit.
+		// We don't want to run it if a managed texture could not be found.
+		if (__state is null) {
+			return true;
+		}
+
 		return __instance.OnDraw(
 			texture: ref texture,
 			destination: ref destinationRectangle,
