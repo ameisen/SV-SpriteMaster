@@ -65,7 +65,7 @@ internal static class PTexture2D {
 #else
 		var byteData = Cacheable(texture) ? data : default;
 
-		var span = byteData.IsEmpty ? default : byteData.SliceUnsafe(startIndex, elementCount).AsBytes();
+		var span = byteData.IsEmpty ? default : byteData.Slice(startIndex, elementCount).AsBytes();
 
 		ManagedSpriteInstance.Purge(
 			reference: texture,
@@ -108,7 +108,7 @@ internal static class PTexture2D {
 				);
 
 				for (int y = 0; y < rect.Height; ++y) {
-					var inSpanRow = inSpan.SliceUnsafe(inOffset, inRowLength);
+					var inSpanRow = inSpan.Slice(inOffset, inRowLength);
 					var cachedSpanRow = cachedSpan.GetRowSpan(y);
 					if (!inSpanRow.SequenceEqual(cachedSpanRow)) {
 						return true;
@@ -269,7 +269,7 @@ internal static class PTexture2D {
 					int sourceOffset = (rect.Top * sourceStride) + rect.Left;
 					int destOffset = startIndex;
 					for (int y = 0; y < rect.Height; ++y) {
-						cachedData.SliceUnsafe(sourceOffset, destStride).CopyTo(destData.SliceUnsafe(destOffset, destStride));
+						cachedData.Slice(sourceOffset, destStride).CopyTo(destData.Slice(destOffset, destStride));
 						sourceOffset += sourceStride;
 						destOffset += destStride;
 					}

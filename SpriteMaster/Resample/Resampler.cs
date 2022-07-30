@@ -112,7 +112,7 @@ internal sealed class Resampler {
 					return $"{vec.X.ToInt()}{vec.Y.ToInt()}";
 				}
 
-				dumpPath.Append($"-wrap[{SimplifyBools(analysis.Value.Wrapped)}]-repeat[{SimplifyBools(analysis.Value.RepeatX)},{SimplifyBools(analysis.Value.RepeatY)}]");
+				dumpPath.Append($"-wrap[{SimplifyBools(analysis.Value.Wrapped)}]-repeat[{SimplifyBools(analysis.Value.Repeat.Horizontal)},{SimplifyBools(analysis.Value.Repeat.Vertical)}]");
 			}
 			if (padding.HasValue) {
 				dumpPath.Append($"-pad[{padding.Value.X},{padding.Value.Y}]");
@@ -570,12 +570,12 @@ internal sealed class Resampler {
 
 					int rowSize = scaledSizeClamped.X;
 
-					spanSrc.SliceUnsafe(bitmapOffset, rowSize).CopyTo(
-						spanDst.SliceUnsafe(newBufferOffset, rowSize)
+					spanSrc.Slice(bitmapOffset, rowSize).CopyTo(
+						spanDst.Slice(newBufferOffset, rowSize)
 					);
 
 					// Extend X across
-					spanDst.SliceUnsafe(newBufferOffset + rowSize, blockPaddedSize.X - rowSize).Fill(
+					spanDst.Slice(newBufferOffset + rowSize, blockPaddedSize.X - rowSize).Fill(
 						spanSrc[bitmapOffset + rowSize - 1]
 					);
 				}
@@ -587,8 +587,8 @@ internal sealed class Resampler {
 
 					int padSize = blockPaddedSize.X;
 
-					spanDst.SliceUnsafe(sourceOffset, padSize).CopyTo(
-						spanDst.SliceUnsafe(newBufferOffset, padSize)
+					spanDst.Slice(sourceOffset, padSize).CopyTo(
+						spanDst.Slice(newBufferOffset, padSize)
 					);
 				}
 
