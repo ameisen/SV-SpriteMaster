@@ -1,4 +1,6 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+﻿// #define DO_UNNEEDED_PATCHES
+
+using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Configuration;
 using SpriteMaster.Core;
 using System.Diagnostics.CodeAnalysis;
@@ -79,12 +81,6 @@ internal static class Draw {
 		}
 
 		if (IsReverse.Value) {
-			return true;
-		}
-
-		// This is a non-padded codepath, which means that the preprocessing path must have already been hit.
-		// We don't want to run it if a managed texture could not be found.
-		if (__state is null) {
 			return true;
 		}
 
@@ -215,6 +211,7 @@ internal static class Draw {
 		);
 	}
 
+#if DO_UNNEEDED_PATCHES
 	[Harmonize("Draw", priority: Harmonize.PriorityLevel.First)]
 	public static bool OnDraw(XSpriteBatch __instance, XTexture2D? texture, XVector2 position, XRectangle? sourceRectangle, XColor color, float rotation, XVector2 origin, float scale, SpriteEffects effects, float layerDepth) {
 		return ForwardDraw(
@@ -230,6 +227,7 @@ internal static class Draw {
 			layerDepth: layerDepth
 		);
 	}
+#endif
 
 	[Harmonize("Draw", priority: Harmonize.PriorityLevel.First)]
 	public static bool OnDraw(XSpriteBatch __instance, XTexture2D? texture, XVector2 position, XRectangle? sourceRectangle, XColor color) {

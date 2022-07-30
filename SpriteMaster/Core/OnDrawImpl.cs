@@ -159,7 +159,7 @@ internal static partial class OnDrawImpl {
 			}
 
 			if (!spriteInstance.Padding.IsZero) {
-				Debug.Trace($"Non-padded Draw Implementation path taken for padded sprite! ({nameof(__state)} is null)");
+				return Continue;
 			}
 
 			if (spriteInstance.TexType == TextureType.SlicedImage) {
