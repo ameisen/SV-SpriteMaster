@@ -39,11 +39,12 @@ internal static class StableSort {
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static KeyType<TKey>[] Get(int length) {
-			if (KeyList.Length < length) {
-				KeyList = GC.AllocateUninitializedArray<KeyType<TKey>>(length);
+			var keyList = KeyList;
+			if (keyList.Length < length) {
+				KeyList = keyList = GC.AllocateUninitializedArray<KeyType<TKey>>(length);
 			}
 
-			return KeyList;
+			return keyList;
 		}
 	}
 
@@ -54,7 +55,7 @@ internal static class StableSort {
 		int requiredLength = length + index;
 		var keyList = TypedImpl<TKey>.Get(requiredLength);
 
-		for (int i = index; i < keyList.Length; ++i) {
+		for (int i = index; i < requiredLength; ++i) {
 			keyList[i] = new(Key: sortKeyGetter.Invoke(array[i]), Index: i);
 		}
 
