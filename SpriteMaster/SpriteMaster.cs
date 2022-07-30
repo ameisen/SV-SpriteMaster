@@ -1,6 +1,7 @@
 ﻿using HarmonyLib;
 using JetBrains.Annotations;
 using LinqFasterer;
+using Microsoft.Xna.Framework.Input;
 using SpriteMaster.Caching;
 using SpriteMaster.Configuration;
 using SpriteMaster.Experimental;
@@ -426,7 +427,14 @@ public sealed class SpriteMaster : Mod {
 	private static void OnButtonPressed(object? _, ButtonPressedEventArgs args) {
 
 		if (args.Button == Config.ToggleButton) {
-			Config.ToggledEnable = !Config.ToggledEnable;
+			var keyboardState = Game1.GetKeyboardState();
+			var control = keyboardState.IsKeyDown(Keys.LeftControl) || keyboardState.IsKeyDown(Keys.RightControl);
+			if (control) {
+				Config.ToggledEnable = !Config.ToggledEnable;
+			}
+			else {
+				Config.Resample.ToggledEnable = !Config.Resample.ToggledEnable;
+			}
 		}
 	}
 }

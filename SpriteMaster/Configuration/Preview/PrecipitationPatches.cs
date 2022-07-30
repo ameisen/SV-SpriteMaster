@@ -60,7 +60,7 @@ internal static class PrecipitationPatches {
 			return true;
 		}
 
-		if (!SMConfig.IsEnabled || !SMConfig.Extras.Snow.Enabled) {
+		if (!SMConfig.IsEnabled || !SMConfig.Extras.Snow.IsEnabled) {
 			if (Precipitation == PrecipitationType.Snow) {
 				__result = true;
 				return false;

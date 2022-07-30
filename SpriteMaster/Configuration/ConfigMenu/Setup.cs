@@ -588,7 +588,7 @@ internal static class Setup {
 			}
 		}
 
-		PreviewScene.Tick();
+		PreviewScene.Tick(in PreviewOverride);
 		PreviewScene.Draw(batch, in PreviewOverride);
 	}
 

@@ -170,7 +170,7 @@ internal static class Snow {
 	public static bool DrawWeatherPre(Game1 __instance, GameTime time, RenderTarget2D target_screen, ref DrawWeatherState __state) {
 		__state = new(Ran: false);
 
-		if (!Config.IsEnabled || !Config.Extras.Snow.Enabled) {
+		if (!Config.IsEnabled || !Config.Extras.Snow.IsEnabled) {
 			return true;
 		}
 
@@ -332,7 +332,7 @@ internal static class Snow {
 	public static bool UpdateWeatherPre(GameTime time, ref bool __state) {
 		__state = true;
 
-		if (!Config.IsEnabled || !Config.Extras.Snow.Enabled) {
+		if (!Config.IsEnabled || !Config.Extras.Snow.IsEnabled) {
 			return true;
 		}
 
@@ -395,7 +395,7 @@ internal static class Snow {
 		critical: false
 	)]
 	public static bool UpdateRainDropPositionForPlayerMovement(int direction, bool overrideConstraints, float speed) {
-		if (!Config.IsEnabled || !Config.Extras.Snow.Enabled) {
+		if (!Config.IsEnabled || !Config.Extras.Snow.IsEnabled) {
 			return true;
 		}
 
@@ -435,7 +435,7 @@ internal static class Snow {
 		critical: false
 	)]
 	public static bool PopulateDebrisWeatherArray() {
-		if (!Config.IsEnabled || !Config.Extras.Snow.Enabled) {
+		if (!Config.IsEnabled || !Config.Extras.Snow.IsEnabled) {
 			return true;
 		}
 
@@ -449,7 +449,7 @@ internal static class Snow {
 	}
 
 	internal static void PopulateWeather(Vector2I screenSize) {
-		if (!Config.IsEnabled || !Config.Extras.Snow.Enabled) {
+		if (!Config.IsEnabled || !Config.Extras.Snow.IsEnabled) {
 			return;
 		}
 
@@ -498,7 +498,7 @@ internal static class Snow {
 	}
 
 	internal static void OnWindowResized(Vector2I size) {
-		if (!Config.IsEnabled || !Config.Extras.Snow.Enabled) {
+		if (!Config.IsEnabled || !Config.Extras.Snow.IsEnabled) {
 			return;
 		}
 

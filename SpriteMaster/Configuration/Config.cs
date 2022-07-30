@@ -269,6 +269,9 @@ internal static class Config {
 	internal readonly record struct TextureRef(string Texture, Bounds Bounds);
 
 	internal static class Resample {
+		[Attributes.Ignore]
+		internal static bool ToggledEnable = true;
+
 		[Attributes.Comment("Should resampling be enabled?")]
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
 		[Attributes.MenuName("Enable Resampling")]
@@ -277,7 +280,7 @@ internal static class Config {
 
 		[Attributes.Ignore]
 #pragma warning disable CS0618 // Type or member is obsolete
-		internal static bool IsEnabled => Preview.Override.Instance?.ResampleEnabled ?? Enabled;
+		internal static bool IsEnabled => Preview.Override.Instance?.ResampleEnabled ?? (Enabled && ToggledEnable);
 #pragma warning restore CS0618 // Type or member is obsolete
 
 		[Attributes.Comment("Should resampling be enabled for normal sprites?")]
@@ -762,7 +765,16 @@ internal static class Config {
 		[Attributes.Comment("Should glTexStorage be used?")]
 		internal const bool UseTexStorage = true;
 		internal static class Snow {
+			[Attributes.Ignore]
+			internal static bool ToggledEnable => Resample.ToggledEnable;
+
+			[Attributes.Ignore]
+#pragma warning disable CS0618 // Type or member is obsolete
+			internal static bool IsEnabled => Preview.Override.Instance?.ResampleEnabled ?? (Enabled && ToggledEnable);
+#pragma warning restore CS0618 // Type or member is obsolete
+
 			[Attributes.Comment("Should custom snowfall be used during snowstorms?")]
+			[Obsolete($"Use {nameof(IsEnabled)}")]
 			internal static bool Enabled = true;
 			[Attributes.Comment("Minimum Snow Density")]
 			[Attributes.LimitsInt(1, int.MaxValue)]
