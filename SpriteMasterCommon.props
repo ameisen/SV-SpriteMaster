@@ -34,7 +34,8 @@
 		<ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
 		<!--<Deterministic>True</Deterministic>-->
 		<PublishTrimmed>true</PublishTrimmed>
-		<TrimMode>CopyUsed</TrimMode>
+		<TrimMode>Link</TrimMode>
+		<PublishReadyToRun>True</PublishReadyToRun>
 		
 		<BundleExtraAssemblies>System, ThirdParty</BundleExtraAssemblies>
 		<IgnoreModFilePatterns Condition="'$(IgnoreModFilePatterns)'!=''">$(IgnoreModFilePatterns), _§ENTINEL¶_</IgnoreModFilePatterns>

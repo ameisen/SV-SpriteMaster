@@ -159,6 +159,7 @@ internal static partial class OnDrawImpl {
 			}
 
 			if (!spriteInstance.Padding.IsZero) {
+				ResetLastDrawCache();
 				return Continue;
 			}
 
