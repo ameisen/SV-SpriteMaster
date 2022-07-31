@@ -151,9 +151,13 @@ internal static partial class SystemInfo {
 				}
 				if ((!DedicatedMemory.HasValue || !TotalMemory.HasValue) && hasAtiExtension) {
 					// https://www.khronos.org/registry/OpenGL/extensions/ATI/ATI_meminfo.txt
+					// ReSharper disable InconsistentNaming
+					// ReSharper disable UnusedVariable
 					const int VboFreeMemoryAti = 0x87FB;
 					const int TextureFreeMemoryAti = 0x87FC;
 					const int RenderBufferFreeMemoryAti = 0x87FD;
+					// ReSharper restore InconsistentNaming
+					// ReSharper restore UnusedVariable
 
 					unsafe {
 						try {

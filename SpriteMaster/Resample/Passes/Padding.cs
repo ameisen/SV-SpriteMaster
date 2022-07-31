@@ -222,12 +222,7 @@ internal static class Padding {
 			for (int x = 0; x < spriteSize.Width + widthAdd; ++x) {
 				int offset = startingOffset.X + xOffset + x;
 
-				try {
-					paddedData[yDstOffset + offset] = paddedData[ySrcOffset + offset] with {A = 128};
-				}
-				catch (Exception ex) {
-					ex = ex;
-				}
+				paddedData[yDstOffset + offset] = paddedData[ySrcOffset + offset] with {A = 128};
 			}
 		}
 
