@@ -122,7 +122,7 @@ internal static class Padding {
 		uint scale,
 		SpriteInfo input,
 		bool forcePadding,
-		in Analysis.LegacyResults analysis,
+		scoped in Analysis.LegacyResults analysis,
 		out PaddingQuad padding,
 		out Vector2I paddedSize
 	) {

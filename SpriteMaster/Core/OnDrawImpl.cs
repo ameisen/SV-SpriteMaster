@@ -85,7 +85,7 @@ internal static partial class OnDrawImpl {
 
 			if ((destinationBounds.Invert.X || destinationBounds.Invert.Y) && DrawState.CurrentRasterizerState.CullMode == CullMode.CullCounterClockwiseFace) {
 				// Winding order is invalid
-				Debug.Trace("Winding Order Error");
+				//Debug.Trace("Winding Order Error");
 				return Stop;
 			}
 			if (destinationBounds.Invert.X) {

@@ -447,6 +447,7 @@ internal sealed class Texture2DMeta : IDisposable {
 							CachedDataInternal.SetTarget(null!);
 							DecodeTask.Dispatch(this);
 						}
+						Flags |= TextureFlag.Populated;
 					}
 				}
 			}
@@ -460,6 +461,10 @@ internal sealed class Texture2DMeta : IDisposable {
 		[MethodImpl(Runtime.MethodImpl.Inline)]
 		get {
 			using (Lock.Read) {
+				if (!Flags.HasFlag(TextureFlag.Populated)) {
+					return null;
+				}
+
 				if (!CachedDataInternal.TryGetTarget(out var target) && !IsCompressed) {
 					// Attempt to pull the value out of the cache if the cache is a compressed cache.
 					target = ResidentCache.Get(MetaId);

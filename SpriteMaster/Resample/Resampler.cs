@@ -14,6 +14,7 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 
 namespace SpriteMaster.Resample;
 
@@ -98,6 +99,13 @@ internal sealed class Resampler {
 
 		internal static NewTextureResult FromFailure(ResampleStatus status) => new(status);
 	}
+
+	private static readonly object TexelsLock = new();
+	private static ulong OriginalTexels = 0;
+	private static ulong BeforeTexels = 0;
+	private static ulong AfterTexels = 0;
+	private static ulong AfterAfterTexels = 0;
+	private static ulong CompressedSize = 0;
 
 	private static unsafe NewTextureResult CreateNewTexture(
 		ManagedSpriteInstance texture,
@@ -213,6 +221,8 @@ internal sealed class Resampler {
 				newExtent: out spriteRawExtent
 			);
 		}
+
+		int originalTexels = spriteRawExtent.Area;
 
 		/*
 		if (Config.Debug.Sprite.DumpReference) {
@@ -507,6 +517,10 @@ internal sealed class Resampler {
 		}
 		*/
 
+		int beforeTexels = scaledSize.Area;
+
+		Vector2I blockPadding = default;
+
 		// TODO : ref optimize
 		if (Config.Resample.TrimExcessTransparency) {
 			// Detect transparent rows/columns
@@ -624,16 +638,41 @@ internal sealed class Resampler {
 				}
 			}
 
-			counts.End.X = 0;
-			counts.End.Y = 0;
-
 			if (!counts.Start.IsZero || !counts.End.IsZero) {
 				if (counts.End.X == 0) {
 					counts.End.X = scaledSize.X;
 				}
+				else /*if ((scaledSize.X - counts.Start.X - (scaledSize.X - counts.End.X)) % 4 != 0)*/ {
+					counts.End.X++;
+				}
 				if (counts.End.Y == 0) {
 					counts.End.Y = scaledSize.Y;
 				}
+				else /*if ((scaledSize.Y - counts.Start.Y - (scaledSize.Y - counts.End.Y)) % 4 != 0)*/ {
+					counts.End.Y++;
+				}
+
+				/*
+				if (counts.Start.X != 0) {
+					counts.Start.X--;
+				}
+
+				if (counts.Start.Y != 0) {
+					counts.Start.Y--;
+				}
+				*/
+
+				Vector2F xPadding = (counts.Start.X, 0);
+				Vector2F yPadding = (counts.Start.Y, 0);
+
+				padding.X -= xPadding;
+				padding.Y -= yPadding;
+
+				//blockPadding.X = -(scaledSize.X - counts.End.X);
+				//blockPadding.Y = -(scaledSize.Y - counts.End.Y);
+
+				padding.X.Y += -(scaledSize.X - counts.End.X);
+				padding.Y.Y += -(scaledSize.Y - counts.End.Y);
 
 				if (counts.Start.X == 0 && counts.End.X == scaledSize.X) {
 					// If we're only reducing it in height, that makes this far simpler.
@@ -642,7 +681,6 @@ internal sealed class Resampler {
 					bitmapData.Slice(offset, extent).CopyTo(bitmapData.Slice(0, extent));
 					bitmapData = bitmapData.Slice(0, extent);
 					scaledSize -= (0, counts.Start.Y + (scaledSize.Y - counts.End.Y));
-					padding.Y -= (counts.Start.Y, 0);
 				}
 				else {
 					// Source and target technically overlap, but there's no contention because we never read somewhere we wrote to. We are always at the same point or ahead.
@@ -665,15 +703,13 @@ internal sealed class Resampler {
 
 					bitmapData = bitmapData.Slice(0, targetWidth * targetHeight);
 					scaledSize -= (counts.Start.X + (scaledSize.X - counts.End.X), counts.Start.Y + (scaledSize.Y - counts.End.Y));
-					padding.X -= (counts.Start.X, 0);
-					padding.Y -= (counts.Start.Y, 0);
 				}
 			}
 		}
 
-		var resultData = bitmapData.AsBytes();
+		int afterTexels = scaledSize.Area;
 
-		Vector2I blockPadding = default;
+		var resultData = bitmapData.AsBytes();
 
 		// TODO : For some reason, block compression gives incorrect results with EPX. I need to investigate this at some point.
 		if (Config.Resample.BlockCompression.Enabled && scaledSize.MinOf >= 4 && (scalerInfo?.BlockCompress ?? true)) {
@@ -723,6 +759,7 @@ internal sealed class Resampler {
 
 			ReadOnlySpan<Color8> uncompressedBitmapData = bitmapData;
 			var originalScaledSizeClamped = scaledSize;
+			Vector2I originalBlockPadding = blockPadding;
 
 			if (!Decoder.BlockDecoderCommon.IsBlockMultiple(scaledSize)) {
 				var blockPaddedSize = scaledSize + 3 & ~3;
@@ -761,7 +798,7 @@ internal sealed class Resampler {
 				}
 
 				uncompressedBitmapData = spanDst;
-				blockPadding = blockPaddedSize - scaledSize;
+				blockPadding += blockPaddedSize - scaledSize;
 				scaledSize = blockPaddedSize;
 
 				/*
@@ -789,9 +826,22 @@ internal sealed class Resampler {
 					result: out resultData
 				)) {
 				resultData = bitmapData.AsBytes();
-				blockPadding = default;
+				blockPadding = originalBlockPadding;
 				scaledSize = originalScaledSizeClamped;
 			}
+		}
+
+		int afterAfterTexels = scaledSize.Area;
+		int compressedSize = resultData.Length;
+
+		lock (TexelsLock) {
+			ulong originalTexelsValue = OriginalTexels += (uint)originalTexels;
+			ulong beforeTexelsValue = BeforeTexels += (uint)beforeTexels;
+			ulong afterTexelsValue = AfterTexels += (uint)afterTexels;
+			ulong afterAfterTexelsValue = AfterAfterTexels += (uint)afterAfterTexels;
+			ulong compressedSizeValue = CompressedSize += (uint)compressedSize;
+
+			Debug.Info($"Sizes : {originalTexelsValue * 4} :: {beforeTexelsValue * 4} :: {afterTexelsValue * 4} :: {afterAfterTexelsValue * 4} :: {compressedSizeValue}");
 		}
 
 		return new() {

@@ -746,7 +746,7 @@ internal static class Config {
 			internal static bool OptimizeWarpPoints = true;
 
 			[Attributes.Comment("Should gender-locked locations be honored?")]
-			internal static bool HonorGenderLocking = false;
+			internal static bool HonorGenderLocking = true;
 		}
 
 		[Attributes.Comment("Should the default batch sort be replaced with a stable sort?")]
@@ -800,7 +800,7 @@ internal static class Config {
 		}
 		internal static class ModPatches {
 			[Attributes.Comment("Patch CustomNPCFixes in order to improve load times?")]
-			internal static bool PatchCustomNPCFixes = false;
+			internal static bool PatchCustomNPCFixes = true;
 			[Attributes.Comment("Disable unnecessary PyTK mitigation for SpriteMaster?")]
 			[Attributes.MenuName("Disable PyTK Mitigation")]
 			internal static bool DisablePyTKMitigation = true;

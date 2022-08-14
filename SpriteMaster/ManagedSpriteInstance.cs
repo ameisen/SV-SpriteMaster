@@ -392,8 +392,20 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 			animated: texture.Meta().IsAnimated(source)
 		);
 
+		if (currentInstance is not null && currentInstance.SpriteInfoHash == spriteInfoInitializer.Hash) {
+			if (textureChain) {
+				currentInstance.Invalidated = false;
+				SpriteMap.AddReplace(texture, currentInstance);
+			}
+
+			return currentInstance;
+		}
+
 		// Check for a suspended sprite instance that happens to match.
 		if (TryResurrect(in spriteInfoInitializer, out var resurrectedInstance)) {
+			if (currentInstance is not null && currentInstance != resurrectedInstance) {
+				currentInstance.Suspend();
+			}
 			return resurrectedInstance;
 		}
 
@@ -495,6 +507,7 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 
 	internal readonly WeakTexture Reference;
 	internal readonly Bounds OriginalSourceRectangle;
+	internal readonly ulong SpriteInfoHash = 0U;
 	internal readonly ulong Hash = 0U;
 
 	internal PaddingQuad Padding = PaddingQuad.Zero;
@@ -608,6 +621,7 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 		};
 
 		// TODO store the HD Texture in _this_ object instead. Will confuse things like subtexture updates, though.
+		SpriteInfoHash = spriteInfo.Hash;
 		Hash = GetHash(spriteInfo, textureType);
 		Texture = Resampler.Upscale(
 			spriteInstance: this,
@@ -729,6 +743,12 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 		Dispose();
 	}
 
+	internal void DisposeSuspended() {
+		if (Suspended.CompareExchange(false, true) == true) {
+			Dispose();
+		}
+	}
+
 	public void Dispose() {
 		if (IsDisposed.CompareExchange(true, false) == true) {
 			return;
@@ -828,7 +848,7 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 			return false;
 		}
 
-		SuspendedSpriteCache.RemoveFast(this);
+		SuspendedSpriteCache.Resurrect(this);
 		Reference.SetTarget(texture);
 
 		SpriteMapHash = spriteMapHash;
