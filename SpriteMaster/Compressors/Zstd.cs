@@ -5,7 +5,6 @@ using Pastel;
 using SpriteMaster.Extensions;
 using System;
 using System.Runtime.CompilerServices;
-using System.Text;
 using static SpriteMaster.Runtime;
 
 namespace SpriteMaster.Compressors;

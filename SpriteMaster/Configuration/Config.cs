@@ -12,6 +12,7 @@ using System.Runtime;
 using System.Text.RegularExpressions;
 
 using Root = SpriteMaster;
+// ReSharper disable MemberHidesStaticFromOuterClass
 
 namespace SpriteMaster.Configuration;
 
@@ -169,9 +170,9 @@ internal static class Config {
 		[Obsolete($"Use {nameof(ShouldCollectAccountOwnedTextures)}")]
 		internal static bool? CollectAccountOwnedTextures = null;
 
-#pragma warning disable CS0612
+#pragma warning disable CS0618
 		internal static bool ShouldCollectAccountOwnedTextures = CollectAccountOwnedTextures ?? SystemInfo.Graphics.IsIntegrated;
-#pragma warning restore CS0612
+#pragma warning restore CS0618
 
 		[Attributes.Comment("The amount of free memory required by SM after which it triggers hard recovery operations")]
 		[Attributes.LimitsInt(1L, int.MaxValue * (long)SizesExt.MiB)]
@@ -306,6 +307,11 @@ internal static class Config {
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
 		[Attributes.Advanced]
 		internal static bool EnableDynamicScale = true;
+
+		[Attributes.Comment("Should excess transparent rows/colums be trimmed?")]
+		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
+		[Attributes.Advanced]
+		internal static bool TrimExcessTransparency = true;
 		[Attributes.Comment("Should we assume that input sprites are gamma corrected?")]
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
 		[Attributes.Advanced]

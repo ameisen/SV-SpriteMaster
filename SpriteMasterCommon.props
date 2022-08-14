@@ -9,6 +9,7 @@
 		<NeutralLanguage>en-US</NeutralLanguage>
 		<Copyright>mkuklinski</Copyright>
 
+		<EnableModZip>false</EnableModZip>
 		<Version>0.15.0-beta.2</Version>
 		<AssemblyVersion>0.15.0.*</AssemblyVersion>
 		<FileVersion>0.15.0.102</FileVersion>
@@ -23,9 +24,10 @@
 		<ErrorReport>prompt</ErrorReport>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 		<AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
-		<ApplicationIcon>$(SolutionDir)pufferchick_xbrz.ico</ApplicationIcon>
+		<!--<ApplicationIcon>$(SolutionDir)pufferchick_xbrz.ico</ApplicationIcon>-->
 		<DebugSymbols>true</DebugSymbols>
-		<DebugType>portable</DebugType>
+		<DebugType>embedded</DebugType>
+		<EmbedAllSources>true</EmbedAllSources>
 		<OutputPath>bin\$(Configuration)\</OutputPath>
 		<BaseAddress>285736960</BaseAddress>
 		<Deterministic>false</Deterministic>
@@ -36,6 +38,12 @@
 		<PublishTrimmed>true</PublishTrimmed>
 		<TrimMode>Link</TrimMode>
 		<PublishReadyToRun>True</PublishReadyToRun>
+		<IsTrimmable>True</IsTrimmable>
+		<EnableUnsafeUTF7Encoding>false</EnableUnsafeUTF7Encoding>
+		<EventSourceSupport>false</EventSourceSupport>
+		<HttpActivityPropagationSupport>false</HttpActivityPropagationSupport>
+		<InvariantGlobalization>true</InvariantGlobalization>
+		<MetadataUpdaterSupport>false</MetadataUpdaterSupport>
 		
 		<BundleExtraAssemblies>System, ThirdParty</BundleExtraAssemblies>
 		<IgnoreModFilePatterns Condition="'$(IgnoreModFilePatterns)'!=''">$(IgnoreModFilePatterns), _§ENTINEL¶_</IgnoreModFilePatterns>
@@ -47,6 +55,7 @@
 		<IgnoreModFilePatterns>$(IgnoreModFilePatterns), .*32.*</IgnoreModFilePatterns>
 		<IgnoreModFilePatterns>$(IgnoreModFilePatterns), .*/x86/.*</IgnoreModFilePatterns>
 		<IgnoreModFilePatterns>$(IgnoreModFilePatterns), JetBrains.Annotations.dll</IgnoreModFilePatterns>
+		<IgnoreModFilePatterns>$(IgnoreModFilePatterns), libzstd.dll</IgnoreModFilePatterns>
 	</PropertyGroup>
 	
   <ItemGroup>

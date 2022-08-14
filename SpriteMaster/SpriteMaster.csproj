@@ -17,9 +17,14 @@
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<RepositoryUrl>https://github.com/ameisen/SV-SpriteMaster</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
-		<IsPublishable>False</IsPublishable>
+		<IsPublishable>True</IsPublishable>
 		<Nullable>enable</Nullable>
 		<Platforms>x64</Platforms>
+		<DebugSymbols>true</DebugSymbols>
+		<DebugType>embedded</DebugType>
+		<EmbedAllSources>false</EmbedAllSources>
+		
+		<RestoreAdditionalProjectSources>$(RestoreSources);$(SolutionDir)Ext\SMAPI\src\SMAPI.ModBuildConfig\bin\Release;https://api.nuget.org/v3/index.json</RestoreAdditionalProjectSources>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -71,7 +76,7 @@
 		<PackageReference Include="Microsoft.Toolkit.HighPerformance" Version="7.1.2" />
 		<PackageReference Include="OptimizedPriorityQueue" Version="5.1.0" />
 		<PackageReference Include="Pastel" Version="3.0.1" />
-		<PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.0.1" />
+		<PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.0.1-sm" />
 		<PackageReference Include="Tomlyn" Version="0.15.0" />
 		<PackageReference Include="ZstdNet" Version="1.4.5" />
 	</ItemGroup>
@@ -131,5 +136,14 @@
 	<Target Name="PreBuild" BeforeTargets="PreBuildEvent">
 	  <Exec Command="$(SolutionDir)SetVersion.rb -q" WorkingDirectory="$(SolutionDir)" />
 	</Target>
+	
+	<Target Name="ConfigureTrimming" BeforeTargets="PrepareForILLink">
+		<ItemGroup>
+			<ManagedAssemblyToLink Condition="'%(Filename)' == 'SpriteMaster'">
+				<IsTrimmable>true</IsTrimmable>
+			</ManagedAssemblyToLink>
+		</ItemGroup>
+	</Target>
+
 
 </Project>

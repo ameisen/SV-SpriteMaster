@@ -152,12 +152,10 @@ internal static partial class SystemInfo {
 				if ((!DedicatedMemory.HasValue || !TotalMemory.HasValue) && hasAtiExtension) {
 					// https://www.khronos.org/registry/OpenGL/extensions/ATI/ATI_meminfo.txt
 					// ReSharper disable InconsistentNaming
-					// ReSharper disable UnusedVariable
-					const int VboFreeMemoryAti = 0x87FB;
+					//const int VboFreeMemoryAti = 0x87FB;
 					const int TextureFreeMemoryAti = 0x87FC;
-					const int RenderBufferFreeMemoryAti = 0x87FD;
+					//const int RenderBufferFreeMemoryAti = 0x87FD;
 					// ReSharper restore InconsistentNaming
-					// ReSharper restore UnusedVariable
 
 					unsafe {
 						try {
@@ -194,6 +192,19 @@ internal static partial class SystemInfo {
 					VendorName = vendor.Split(null, 2).FirstF();
 					IsIntegrated = true;
 				}
+
+				switch (Vendor) {
+					case Vendors.AMD:
+						if (description.Contains("Vega")) {
+							IsIntegrated = true;
+						}
+						break;
+					case Vendors.Intel:
+						if (description.Contains("Arc")) {
+							IsIntegrated = false;
+						}
+						break;
+				}
 			}
 			catch {
 				// ignored
@@ -221,7 +232,11 @@ internal static partial class SystemInfo {
 		try {
 			AppendTabbedLine(1, $"Architecture: {(Environment.Is64BitProcess ? "x64" : "x86")}");
 			AppendTabbedLine(1, $"Number of Cores: {Environment.ProcessorCount}");
-			AppendTabbedLine(1, $"OS Version: {Environment.OSVersion}");
+			var osVersion = Environment.OSVersion.ToString();
+			if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
+				osVersion = osVersion.Replace("Unix", "Linux");
+			}
+			AppendTabbedLine(1, $"OS Version: {osVersion}");
 			AppendTabbedLine(1, "CPU Information");
 			{
 				AppendTabbedLine(2, $"Brand             : {CpuIdentifier.Brand}");
@@ -261,6 +276,7 @@ internal static partial class SystemInfo {
 		}
 
 		try {
+			GC.Collect(int.MaxValue, GCCollectionMode.Forced, blocking: true, compacting: true);
 			var memoryInfo = GC.GetGCMemoryInfo();
 			AppendTabbedLine(1, $"Total Committed Memory: {memoryInfo.TotalCommittedBytes.AsDataSize()}");
 			AppendTabbedLine(1, $"Total Available Memory: {memoryInfo.TotalAvailableMemoryBytes.AsDataSize()}");
@@ -270,7 +286,7 @@ internal static partial class SystemInfo {
 		}
 
 		try {
-			AppendTabbedLine(1, "\tGraphics Adapter");
+			AppendTabbedLine(1, "Graphics Adapter");
 			AppendTabbedLine(2, $"Description    : {Graphics.Description}");
 			AppendTabbedLine(2, $"Vendor         : {Graphics.VendorName}");
 			AppendTabbedLine(2, $"Dedicated      : {Graphics.IsDedicated}");

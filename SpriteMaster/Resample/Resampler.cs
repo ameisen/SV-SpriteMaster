@@ -11,8 +11,6 @@ using SpriteMaster.Types;
 using SpriteMaster.Types.Fixed;
 using SpriteMaster.Types.Spans;
 using System;
-using System.Collections.Generic;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -79,29 +77,39 @@ internal sealed class Resampler {
 
 	//internal static readonly ArrayPool<Color16> ResamplerArrayPool = ArrayPool<Color16>.Shared;
 
-	private static unsafe ReadOnlyPinnedSpan<byte> CreateNewTexture(
+	[StructLayout(LayoutKind.Auto)]
+	private readonly ref struct NewTextureResult {
+		internal readonly ResampleStatus Status { get; init; } = default;
+		internal readonly ReadOnlyPinnedSpan<byte> Data { get; init; } = default;
+		internal readonly Vector2B Wrapped { get; init; } = default;
+		internal readonly uint Scale { get; init; } = default;
+		internal readonly Vector2I Size { get; init; } = default;
+		internal readonly TextureFormat Format { get; init; } = default;
+		internal readonly PaddingQuad Padding { get; init; } = default;
+		internal readonly Vector2I BlockPadding { get; init; } = default;
+		internal readonly IScalerInfo? ScalerInfo { get; init; } = default;
+		internal readonly bool IsGradient { get; init; } = default;
+
+		public NewTextureResult() { }
+
+		private NewTextureResult(ResampleStatus status) {
+			Status = status;
+		}
+
+		internal static NewTextureResult FromFailure(ResampleStatus status) => new(status);
+	}
+
+	private static unsafe NewTextureResult CreateNewTexture(
 		ManagedSpriteInstance texture,
 		bool async,
 		SpriteInfo input,
 		string hashString,
-		ref Vector2B wrapped,
-		ref uint scale,
-		out Vector2I size,
-		out TextureFormat format,
-		out PaddingQuad padding,
-		out Vector2I blockPadding,
-		out IScalerInfo? scalerInfo,
-		out bool isGradient,
-		out ResampleStatus result
+		Vector2B wrapped,
+		uint scale
 	) {
 		if (input.ReferenceData is null) {
 			throw new ArgumentNullException(nameof(input.ReferenceData));
 		}
-
-		scalerInfo = null;
-		padding = PaddingQuad.Zero;
-		blockPadding = Vector2I.Zero;
-		isGradient = false;
 
 		string MakeDumpPath(in Analysis.LegacyResults? analysis = null, PaddingQuad? padding = null, string? subPath = null, string[]? modifiers = null) {
 			var normalizedName = input.Reference.NormalizedName().Replace('\\', '.');
@@ -184,10 +192,7 @@ internal sealed class Resampler {
 
 		if (blockSize == Math.Max(inputBounds.Width, inputBounds.Height)) {
 			if (!Config.Resample.Recolor.Enabled) {
-				result = ResampleStatus.DisabledSolid;
-				size = default;
-				format = default;
-				return PinnedSpan<byte>.Empty;
+				return NewTextureResult.FromFailure(ResampleStatus.DisabledSolid);
 			}
 		}
 
@@ -229,7 +234,7 @@ internal sealed class Resampler {
 			wrapped: input.Wrapped
 		);
 
-		isGradient = analysis.MaxChannelShades >= Config.Resample.Analysis.MinimumGradientShades && (analysis.GradientDiagonal.Any || analysis.GradientAxial.Any);
+		bool isGradient = analysis.MaxChannelShades >= Config.Resample.Analysis.MinimumGradientShades && (analysis.GradientDiagonal.Any || analysis.GradientAxial.Any);
 
 		bool fullPremultiplyAlpha = true;
 		bool premultiplyAlpha = Config.Resample.PremultiplyAlpha;
@@ -278,10 +283,7 @@ internal sealed class Resampler {
 			!Config.Resample.IsEnabled ||
 			scalerType == Scaler.None
 		) {
-			result = isGradient ? ResampleStatus.DisabledGradient : ResampleStatus.Disabled;
-			size = default;
-			format = default;
-			return PinnedSpan<byte>.Empty;
+			return NewTextureResult.FromFailure(isGradient ? ResampleStatus.DisabledGradient : ResampleStatus.Disabled);
 		}
 
 		if (analysis.MaxChannelShades <= 1) {
@@ -295,10 +297,7 @@ internal sealed class Resampler {
 				);
 			}
 			if (!Config.Resample.Recolor.Enabled) {
-				result = ResampleStatus.DisabledSolid;
-				size = default;
-				format = default;
-				return PinnedSpan<byte>.Empty;
+				return NewTextureResult.FromFailure(ResampleStatus.DisabledSolid);
 			}
 		}
 
@@ -312,7 +311,6 @@ internal sealed class Resampler {
 		}
 
 		var scaledSize = resamplingAllowed ? spriteRawExtent * scale : spriteRawExtent;
-		var scaledSizeClamped = scaledSize.Min(Config.ClampDimension);
 
 		// Widen data.
 		var spriteRawData = Color16.Convert(spriteRawData8);
@@ -336,7 +334,9 @@ internal sealed class Resampler {
 
 		Span<Color16> bitmapDataWide = spriteRawData;
 
-		scalerInfo = Scalers.IScaler.GetScalerInfo(scalerType);
+		var scalerInfo = Scalers.IScaler.GetScalerInfo(scalerType);
+
+		PaddingQuad padding = default;
 
 		if (scalerInfo is not null) {
 			scale *= (uint)blockSize;
@@ -382,7 +382,6 @@ internal sealed class Resampler {
 			}
 
 			scaledSize = spriteRawExtent * scale;
-			scaledSizeClamped = scaledSize.Min(Config.ClampDimension);
 
 			bitmapDataWide = SpanExt.Make<Color16>(scaledSize.Area);
 
@@ -474,18 +473,21 @@ internal sealed class Resampler {
 			);
 		}
 
-		if (scaledSize != scaledSizeClamped) {
-			if (scaledSize.Width < scaledSizeClamped.Width || scaledSize.Height < scaledSizeClamped.Height) {
-				throw new Exception($"Resampled texture size {scaledSize} is smaller than expected {scaledSizeClamped}");
-			}
+		{
+			var scaledSizeClamped = scaledSize.Min(Config.ClampDimension);
+			if (scaledSize != scaledSizeClamped) {
+				if (scaledSize.Width < scaledSizeClamped.Width || scaledSize.Height < scaledSizeClamped.Height) {
+					throw new Exception($"Resampled texture size {scaledSize} is smaller than expected {scaledSizeClamped}");
+				}
 
-			Debug.Trace($"Sprite {texture.NormalizedName()} requires rescaling");
-			// This should be incredibly rare - we very rarely need to scale back down.
-			// I don't actually have a solution for this case.
-			scaledSizeClamped = scaledSize;
+				Debug.Trace($"Sprite {texture.NormalizedName()} requires rescaling");
+				// This should be incredibly rare - we very rarely need to scale back down.
+				// I don't actually have a solution for this case.
+				//scaledSizeClamped = scaledSize;
+			}
 		}
 
-		format = TextureFormat.Color;
+		TextureFormat format = TextureFormat.Color;
 
 		if (currentGammaState != initialGammaState) {
 			throw new Exception("Gamma State Mismatch");
@@ -493,7 +495,6 @@ internal sealed class Resampler {
 
 		// Narrow
 		var bitmapData = Color8.ConvertPinned(bitmapDataWide);
-		var resultData = bitmapData.AsBytes();
 
 		/*
 		if (Config.Debug.Sprite.DumpResample) {
@@ -506,8 +507,176 @@ internal sealed class Resampler {
 		}
 		*/
 
+		// TODO : ref optimize
+		if (Config.Resample.TrimExcessTransparency) {
+			// Detect transparent rows/columns
+			(Vector2I Start, Vector2I End) counts = (default, default);
+
+			// Rows
+
+			// From Start
+			{
+				bool anyTransparent = false;
+				for (int y = 0; y < scaledSize.Y; ++y) {
+					int offset = scaledSize.X * y;
+
+					bool allTransparent = true;
+					for (int x = 0; x < scaledSize.X; ++x) {
+						if (bitmapData[offset + x].A != 0) {
+							allTransparent = false;
+							break;
+						}
+					}
+
+					if (!allTransparent) {
+						counts.Start.Y = y;
+						break;
+					}
+
+					anyTransparent = true;
+				}
+
+				if (anyTransparent && counts.Start.Y == 0) {
+					// the entire texture is somehow transparent?
+					return NewTextureResult.FromFailure(ResampleStatus.DisabledSolid);
+				}
+			}
+
+			// From End
+			{
+				bool anyTransparent = false;
+				for (int y = scaledSize.Y - 1; y >= 0; --y) {
+					int offset = scaledSize.X * y;
+
+					bool allTransparent = true;
+					for (int x = 0; x < scaledSize.X; ++x) {
+						if (bitmapData[offset + x].A != 0) {
+							allTransparent = false;
+							break;
+						}
+					}
+
+					if (!allTransparent) {
+						counts.End.Y = y;
+						break;
+					}
+
+					anyTransparent = true;
+				}
+
+				if (anyTransparent && counts.End.Y == 0) {
+					// the entire texture is somehow transparent?
+					return NewTextureResult.FromFailure(ResampleStatus.DisabledSolid);
+				}
+			}
+
+			// Columns
+
+			// From Start
+			{
+				bool anyTransparent = false;
+				for (int x = 0; x < scaledSize.X; ++x) {
+					bool allTransparent = true;
+					for (int y = 0; y < scaledSize.Y; ++y) {
+						if (bitmapData[(y * scaledSize.X) + x].A != 0) {
+							allTransparent = false;
+							break;
+						}
+					}
+
+					if (!allTransparent) {
+						counts.Start.X = x;
+						break;
+					}
+
+					anyTransparent = true;
+				}
+
+				if (anyTransparent && counts.Start.X == 0) {
+					// the entire texture is somehow transparent?
+					return NewTextureResult.FromFailure(ResampleStatus.DisabledSolid);
+				}
+			}
+
+			// From End
+			{
+				bool anyTransparent = false;
+				for (int x = scaledSize.X - 1; x >= 0; --x) {
+					bool allTransparent = true;
+					for (int y = 0; y < scaledSize.Y; ++y) {
+						if (bitmapData[(y * scaledSize.X) + x].A != 0) {
+							allTransparent = false;
+							break;
+						}
+					}
+
+					if (!allTransparent) {
+						counts.End.X = x;
+						break;
+					}
+
+					anyTransparent = true;
+				}
+
+				if (anyTransparent && counts.End.X == 0) {
+					// the entire texture is somehow transparent?
+					return NewTextureResult.FromFailure(ResampleStatus.DisabledSolid);
+				}
+			}
+
+			counts.End.X = 0;
+			counts.End.Y = 0;
+
+			if (!counts.Start.IsZero || !counts.End.IsZero) {
+				if (counts.End.X == 0) {
+					counts.End.X = scaledSize.X;
+				}
+				if (counts.End.Y == 0) {
+					counts.End.Y = scaledSize.Y;
+				}
+
+				if (counts.Start.X == 0 && counts.End.X == scaledSize.X) {
+					// If we're only reducing it in height, that makes this far simpler.
+					int offset = counts.Start.Y * scaledSize.X;
+					int extent = (counts.End.Y - counts.Start.Y) * scaledSize.X;
+					bitmapData.Slice(offset, extent).CopyTo(bitmapData.Slice(0, extent));
+					bitmapData = bitmapData.Slice(0, extent);
+					scaledSize -= (0, counts.Start.Y + (scaledSize.Y - counts.End.Y));
+					padding.Y -= (counts.Start.Y, 0);
+				}
+				else {
+					// Source and target technically overlap, but there's no contention because we never read somewhere we wrote to. We are always at the same point or ahead.
+					int targetWidth = counts.End.X - counts.Start.X;
+					int targetHeight = counts.End.Y - counts.Start.Y;
+
+					int sourceStride = scaledSize.X;
+					int targetStride = targetWidth;
+
+					int sourceOffset = (counts.Start.Y * sourceStride) + counts.Start.X;
+					int targetOffset = 0;
+
+					for (int y = 0; y < targetHeight; ++y) {
+						var sourceSlice = bitmapData.Slice(sourceOffset, targetWidth);
+						var targetSlice = bitmapData.Slice(targetOffset, targetWidth);
+						sourceSlice.CopyTo(targetSlice);
+						sourceOffset += sourceStride;
+						targetOffset += targetStride;
+					}
+
+					bitmapData = bitmapData.Slice(0, targetWidth * targetHeight);
+					scaledSize -= (counts.Start.X + (scaledSize.X - counts.End.X), counts.Start.Y + (scaledSize.Y - counts.End.Y));
+					padding.X -= (counts.Start.X, 0);
+					padding.Y -= (counts.Start.Y, 0);
+				}
+			}
+		}
+
+		var resultData = bitmapData.AsBytes();
+
+		Vector2I blockPadding = default;
+
 		// TODO : For some reason, block compression gives incorrect results with EPX. I need to investigate this at some point.
-		if (Config.Resample.BlockCompression.Enabled && scaledSizeClamped.MinOf >= 4 && (scalerInfo?.BlockCompress ?? true)) {
+		if (Config.Resample.BlockCompression.Enabled && scaledSize.MinOf >= 4 && (scalerInfo?.BlockCompress ?? true)) {
 			// TODO : We can technically allocate the block padding before the scaling phase, and pass it a stride
 			// so it will just ignore the padding areas. That would be more efficient than this.
 
@@ -553,22 +722,21 @@ internal sealed class Resampler {
 			}
 
 			ReadOnlySpan<Color8> uncompressedBitmapData = bitmapData;
-			var originalScaledSizeClamped = scaledSizeClamped;
-			var originalBlockPadding = blockPadding;
+			var originalScaledSizeClamped = scaledSize;
 
-			if (!Decoder.BlockDecoderCommon.IsBlockMultiple(scaledSizeClamped)) {
-				var blockPaddedSize = scaledSizeClamped + 3 & ~3;
+			if (!Decoder.BlockDecoderCommon.IsBlockMultiple(scaledSize)) {
+				var blockPaddedSize = scaledSize + 3 & ~3;
 
 				var spanDst = SpanExt.Make<Color8>(blockPaddedSize.Area);
 				var spanSrc = bitmapData;
 
 				int y;
 				// Copy data
-				for (y = 0; y < scaledSizeClamped.Y; ++y) {
+				for (y = 0; y < scaledSize.Y; ++y) {
 					var newBufferOffset = y * blockPaddedSize.X;
-					var bitmapOffset = y * scaledSizeClamped.X;
+					var bitmapOffset = y * scaledSize.X;
 
-					int rowSize = scaledSizeClamped.X;
+					int rowSize = scaledSize.X;
 
 					spanSrc.Slice(bitmapOffset, rowSize).CopyTo(
 						spanDst.Slice(newBufferOffset, rowSize)
@@ -593,8 +761,8 @@ internal sealed class Resampler {
 				}
 
 				uncompressedBitmapData = spanDst;
-				blockPadding += blockPaddedSize - scaledSizeClamped;
-				scaledSizeClamped = blockPaddedSize;
+				blockPadding = blockPaddedSize - scaledSize;
+				scaledSize = blockPaddedSize;
 
 				/*
 				if (Config.Debug.Sprite.DumpResample) {
@@ -611,7 +779,7 @@ internal sealed class Resampler {
 			if (!TextureEncode.Encode(
 					data: uncompressedBitmapData,
 					format: ref format,
-					dimensions: scaledSizeClamped,
+					dimensions: scaledSize,
 					hasAlpha: hasAlpha,
 					isPunchthroughAlpha: isPunchThroughAlpha,
 					isMasky: isMasky,
@@ -621,14 +789,23 @@ internal sealed class Resampler {
 					result: out resultData
 				)) {
 				resultData = bitmapData.AsBytes();
-				blockPadding = originalBlockPadding;
-				scaledSizeClamped = originalScaledSizeClamped;
+				blockPadding = default;
+				scaledSize = originalScaledSizeClamped;
 			}
 		}
 
-		size = scaledSizeClamped;
-		result = ResampleStatus.Success;
-		return resultData;
+		return new() {
+			Status = ResampleStatus.Success,
+			Data = resultData,
+			Wrapped = wrapped,
+			Scale = scale,
+			Size = scaledSize,
+			Format = format,
+			Padding = padding,
+			BlockPadding = blockPadding,
+			ScalerInfo = scalerInfo,
+			IsGradient = isGradient
+		};
 	}
 
 	internal static ManagedTexture2D? Upscale(ManagedSpriteInstance spriteInstance, ref uint scale, SpriteInfo input, ulong hash, ref Vector2B wrapped, bool async) {
@@ -728,21 +905,24 @@ internal sealed class Resampler {
 				bool isGradient = false;
 
 				try {
-					bitmapData = pinnedBitmapData = CreateNewTexture(
-						async: async,
+					var newTextureResult = CreateNewTexture(
 						texture: spriteInstance,
+						async: async,
 						input: input,
 						hashString: hashString,
-						wrapped: ref wrapped,
-						scale: ref scale,
-						size: out newSize,
-						format: out spriteFormat,
-						padding: out spriteInstance.Padding,
-						blockPadding: out spriteInstance.BlockPadding,
-						scalerInfo: out spriteInstance.ScalerInfo,
-						isGradient: out isGradient,
-						result: out result
+						wrapped: wrapped,
+						scale: scale
 					);
+					bitmapData = pinnedBitmapData = newTextureResult.Data;
+					wrapped = newTextureResult.Wrapped;
+					scale = newTextureResult.Scale;
+					newSize = newTextureResult.Size;
+					spriteFormat = newTextureResult.Format;
+					spriteInstance.Padding = newTextureResult.Padding;
+					spriteInstance.BlockPadding = newTextureResult.BlockPadding;
+					spriteInstance.ScalerInfo = newTextureResult.ScalerInfo;
+					isGradient = newTextureResult.IsGradient;
+					result = newTextureResult.Status;
 
 					if (result is (ResampleStatus.DisabledGradient or ResampleStatus.DisabledSolid or ResampleStatus.Disabled)) {
 						return null;
