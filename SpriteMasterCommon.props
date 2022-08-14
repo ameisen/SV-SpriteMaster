@@ -55,7 +55,6 @@
 		<IgnoreModFilePatterns>$(IgnoreModFilePatterns), .*32.*</IgnoreModFilePatterns>
 		<IgnoreModFilePatterns>$(IgnoreModFilePatterns), .*/x86/.*</IgnoreModFilePatterns>
 		<IgnoreModFilePatterns>$(IgnoreModFilePatterns), JetBrains.Annotations.dll</IgnoreModFilePatterns>
-		<IgnoreModFilePatterns>$(IgnoreModFilePatterns), libzstd.dll</IgnoreModFilePatterns>
 	</PropertyGroup>
 	
   <ItemGroup>
