@@ -27,23 +27,11 @@
 		<!--<ApplicationIcon>$(SolutionDir)pufferchick_xbrz.ico</ApplicationIcon>-->
 		<DebugSymbols>true</DebugSymbols>
 		<DebugType>embedded</DebugType>
-		<EmbedAllSources>true</EmbedAllSources>
 		<OutputPath>bin\$(Configuration)\</OutputPath>
-		<BaseAddress>285736960</BaseAddress>
 		<Deterministic>false</Deterministic>
 		<RunAnalyzersDuringLiveAnalysis>false</RunAnalyzersDuringLiveAnalysis>
 		<RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
 		<ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
-		<!--<Deterministic>True</Deterministic>-->
-		<PublishTrimmed>true</PublishTrimmed>
-		<TrimMode>Link</TrimMode>
-		<PublishReadyToRun>True</PublishReadyToRun>
-		<IsTrimmable>True</IsTrimmable>
-		<EnableUnsafeUTF7Encoding>false</EnableUnsafeUTF7Encoding>
-		<EventSourceSupport>false</EventSourceSupport>
-		<HttpActivityPropagationSupport>false</HttpActivityPropagationSupport>
-		<InvariantGlobalization>true</InvariantGlobalization>
-		<MetadataUpdaterSupport>false</MetadataUpdaterSupport>
 		
 		<BundleExtraAssemblies>System, ThirdParty</BundleExtraAssemblies>
 		<IgnoreModFilePatterns Condition="'$(IgnoreModFilePatterns)'!=''">$(IgnoreModFilePatterns), _§ENTINEL¶_</IgnoreModFilePatterns>

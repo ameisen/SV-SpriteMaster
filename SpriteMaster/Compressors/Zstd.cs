@@ -3,6 +3,7 @@ using LinqFasterer;
 using Microsoft.Toolkit.HighPerformance;
 using Pastel;
 using SpriteMaster.Extensions;
+using SpriteMaster.Harmonize;
 using System;
 using System.Runtime.CompilerServices;
 using static SpriteMaster.Runtime;
@@ -11,6 +12,17 @@ namespace SpriteMaster.Compressors;
 // TODO : Implement a continual training dictionary so each stream doesn't require its own dictionary for in-memory compression.
 //[HarmonizeFinalizeCatcher<ZstdNet.Compressor, DllNotFoundException>(critical: false)]
 internal static class Zstd {
+	[Harmonize(
+		"ZstdNet.ExternMethods",
+		"SetWinDllDirectory",
+		priority: Harmonize.Harmonize.PriorityLevel.First,
+		instance: false,
+		critical: true
+	)]
+	public static bool SetWinDllDirectory() {
+		return false;
+	}
+
 	private sealed class Compressor : IDisposable {
 		internal readonly ZstdNet.Compressor Delegator;
 

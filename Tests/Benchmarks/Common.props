@@ -4,8 +4,8 @@
 
 	<PropertyGroup>
 		<OutputPath>.\bin\</OutputPath>
-		<BaseIntermediateOutputPath>.\obj\</BaseIntermediateOutputPath>
-		<IntermediateOutputPath>$(BaseIntermediateOutputPath)$(Configuration)\</IntermediateOutputPath>
+		<!--<BaseIntermediateOutputPath>.\obj\</BaseIntermediateOutputPath>-->
+		<!--<IntermediateOutputPath>$(BaseIntermediateOutputPath)$(Configuration)\</IntermediateOutputPath>-->
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
 		<TieredCompilation>false</TieredCompilation>
