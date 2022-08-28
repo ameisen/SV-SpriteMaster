@@ -65,26 +65,38 @@ internal sealed class Texture2DMeta : IDisposable {
 	}
 
 	internal void ClearSpriteHashes(bool animated = false) {
+		var conditionalFlag = SpriteFlag.Animated.ConditionalFlag(animated);
+
 		foreach (var pair in SpriteDataMap) {
 			var spriteData = pair.Value;
 			spriteData.Hash = null;
-			if (animated) {
-				spriteData.Flags |= SpriteFlag.Animated;
-			}
+			spriteData.Flags |= conditionalFlag;
 		}
 	}
 
 	internal void ClearSpriteInstanceTable(bool allowSuspend = false) {
 		using (Lock.Write) {
-			foreach (var spriteInstance in SpriteInstanceTable.Values) {
-				if (allowSuspend) {
-					spriteInstance.Suspend();
-				}
-				else {
-					spriteInstance.Dispose();
-				}
+			if (allowSuspend) {
+				SuspendSpriteInstanceTable();
+			}
+			else {
+				DisposeSpriteInstanceTable();
 			}
 			SpriteInstanceTable.Clear();
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private void SuspendSpriteInstanceTable() {
+		foreach (var spriteInstance in SpriteInstanceTable.Values) {
+			spriteInstance.Suspend();
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private void DisposeSpriteInstanceTable() {
+		foreach (var spriteInstance in SpriteInstanceTable.Values) {
+			spriteInstance.Dispose();
 		}
 	}
 
@@ -93,10 +105,10 @@ internal sealed class Texture2DMeta : IDisposable {
 			if (SpriteInstanceTable.Remove(key, out instance)) {
 				return true;
 			}
-
-			instance = null;
-			return false;
 		}
+
+		instance = null;
+		return false;
 	}
 
 	internal void ReplaceInSpriteInstanceTable(ulong key, ManagedSpriteInstance instance) {
@@ -115,13 +127,15 @@ internal sealed class Texture2DMeta : IDisposable {
 		SpriteDataMap.GetOrAdd(bounds, _ => new()).Flags |= SpriteFlag.NoResample;
 	}
 
-	internal bool IsNoResample(Bounds bounds) {
-		return SpriteDataMap.TryGetValue(bounds, out var data) && data.Flags.HasFlag(SpriteFlag.NoResample);
-	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private bool SpriteHasFlag(Bounds bounds, SpriteFlag flag) =>
+		SpriteDataMap.TryGetValue(bounds, out var data) && data.Flags.HasFlag(flag);
 
-	internal bool IsAnimated(Bounds bounds) {
-		return SpriteDataMap.TryGetValue(bounds, out var data) && data.Flags.HasFlag(SpriteFlag.Animated);
-	}
+	internal bool IsNoResample(Bounds bounds) =>
+		SpriteHasFlag(bounds, SpriteFlag.NoResample);
+
+	internal bool IsAnimated(Bounds bounds) =>
+		SpriteHasFlag(bounds, SpriteFlag.Animated);
 
 	private readonly Dictionary<Bounds, Config.TextureRef?> SlicedCache = new();
 
@@ -154,14 +168,18 @@ internal sealed class Texture2DMeta : IDisposable {
 	private string? NormalizedNameInternal = null;
 	private string? NormalizedName {
 		get {
-			if (NormalizedNameInternal is not null) {
-				return NormalizedNameInternal;
+			if (NormalizedNameInternal is {} normalizedName) {
+				return normalizedName;
 			}
 
 			if (Owner.TryGetTarget(out var owner)) {
-				NormalizedNameInternal = owner.NormalizedNameOrNull();
+				normalizedName = NormalizedNameInternal = owner.NormalizedNameOrNull();
 			}
-			return NormalizedNameInternal;
+			else {
+				normalizedName = null;
+			}
+
+			return normalizedName;
 		}
 	}
 
@@ -211,7 +229,8 @@ internal sealed class Texture2DMeta : IDisposable {
 			}
 
 			using (Lock.Read) {
-				return Flags.HasFlag(TextureFlag.Populated) && CachedDataInternal.TryGetTarget(out _);
+				bool isPopulated = Flags.HasFlag(TextureFlag.Populated);
+				return isPopulated && CachedDataInternal.TryGetTarget(out _);
 			}
 		}
 	}
@@ -230,11 +249,7 @@ internal sealed class Texture2DMeta : IDisposable {
 
 		using (Lock.Read) {
 			foreach (var dataPair in SpriteDataMap) {
-				if (!dataPair.Key.Overlaps(bounds.Value)) {
-					continue;
-				}
-
-				if (dataPair.Value.Flags.HasFlag(SpriteFlag.Animated)) {
+				if (dataPair.Value.Flags.HasFlag(SpriteFlag.Animated) && dataPair.Key.Overlaps(bounds.Value)) {
 					return true;
 				}
 			}
@@ -385,23 +400,6 @@ internal sealed class Texture2DMeta : IDisposable {
 		}
 	}
 
-	internal static readonly byte[] BlockedSentinel = { 0xFF };
-
-	internal byte[]? CachedDataNonBlocking {
-		[MethodImpl(Runtime.MethodImpl.Inline)]
-		get {
-			if (!Config.ResidentCache.Enabled) {
-				return null;
-			}
-
-			using (var locked = Lock.TryRead) if (locked) {
-				CachedRawDataInternal.TryGetTarget(out var target);
-				return target;
-			}
-			return BlockedSentinel;
-		}
-	}
-
 	internal byte[]? CachedRawData {
 		[MethodImpl(Runtime.MethodImpl.Inline)]
 		get {
@@ -471,6 +469,30 @@ internal sealed class Texture2DMeta : IDisposable {
 				}
 				return target;
 			}
+		}
+	}
+
+	internal static readonly byte[] BlockedSentinel = { 0xFF };
+
+	internal byte[]? CachedDataNonBlocking {
+		[MethodImpl(Runtime.MethodImpl.Inline)]
+		get {
+			if (!Config.ResidentCache.Enabled) {
+				return null;
+			}
+
+			using (var locked = Lock.TryRead) if (locked) {
+				if (!Flags.HasFlag(TextureFlag.Populated)) {
+					return null;
+				}
+
+				if (!CachedDataInternal.TryGetTarget(out var target) && !IsCompressed) {
+					// Attempt to pull the value out of the cache if the cache is a compressed cache.
+					target = ResidentCache.Get(MetaId);
+				}
+				return target;
+			}
+			return BlockedSentinel;
 		}
 	}
 

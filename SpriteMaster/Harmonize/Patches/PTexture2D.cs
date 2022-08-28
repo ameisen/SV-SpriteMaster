@@ -16,6 +16,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using static Microsoft.Xna.Framework.Graphics.Texture2D;
 using static SpriteMaster.Harmonize.Harmonize;
 
@@ -176,6 +177,8 @@ internal static class PTexture2D {
 		}
 	}
 
+	private static readonly ThreadLocal<bool> IsInnerGetData = new(false);
+
 	// private void PlatformGetData<T>(int level, int arraySlice, Rectangle rect, T[] data, int startIndex, int elementCount) where T : struct
 
 	[Harmonize("PlatformGetData", Fixation.Prefix, PriorityLevel.Last, Generic.Struct)]
@@ -192,10 +195,36 @@ internal static class PTexture2D {
 			return true;
 		}
 
-		if (data.Length != 0 && !GetCachedData<T>(__instance, level, arraySlice, rect, data, startIndex, elementCount).IsEmpty) {
-			return false;
+		if (!IsInnerGetData.Value && data.Length != 0) {
+			if (!GetCachedData<T>(__instance, level, arraySlice, rect, data, startIndex, elementCount).IsEmpty) {
+				return false;
+			}
+
+			// Upon cache read failure, instead of doing a subtexture read, do a full read and use the data to repopulate the cache.
+			if (!__instance.Format.IsBlock()) {
+				try {
+					IsInnerGetData.Value = true;
+
+					var fullBounds = __instance.Bounds;
+					var recacheData = GC.AllocateUninitializedArray<byte>(__instance.Format.SizeBytes(fullBounds.Width * fullBounds.Height));
+					try {
+						__instance.PlatformGetData(level, arraySlice, fullBounds, recacheData, 0, recacheData.Length);
+						_ = OnPlatformSetDataPre(__instance, level, arraySlice, fullBounds, recacheData, 0, recacheData.Length);
+
+						if (!GetCachedData<T>(__instance, level, arraySlice, rect, data, startIndex, elementCount).IsEmpty) {
+							return false;
+						}
+					}
+					catch {
+						// Swallow Exception
+					}
+				}
+				finally {
+					IsInnerGetData.Value = false;
+				}
+			}
 		}
-		
+
 		return !(arraySlice == 0 && GL.Texture2DExt.GetDataInternal(__instance, level, rect, data.AsSpan())); ;
 	}
 
@@ -494,6 +523,11 @@ internal static class PTexture2D {
 		}
 
 		var span = data.AsReadOnlySpan().Slice(startIndex, elementCount);
+
+		if (IsInnerGetData.Value) {
+			return false;
+		}
+
 		return !(arraySlice == 0 && GL.Texture2DExt.SetDataInternal(__instance, level, rect, span));
 	}
 

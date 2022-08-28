@@ -143,7 +143,7 @@ internal static partial class Texture2DExt {
 		SurfaceType type,
 		bool shared
 	) where T : unmanaged {
-		if (!Configuration.Config.Extras.OptimizeOpenGL) {
+		if (!Configuration.Config.Extras.OpenGL.Enabled) {
 			return false;
 		}
 
@@ -161,7 +161,7 @@ internal static partial class Texture2DExt {
 			bool useStorage =
 				StorageEnabled &&
 				(GLExt.TexStorage2D.Enabled || GLExt.TextureStorage2D.Enabled || GLExt.TexStorage2DExt.Enabled || GLExt.TextureStorage2DExt.Enabled) &&
-				Configuration.Config.Extras.UseTexStorage;
+				SMConfig.Extras.OpenGL.UseTexStorage;
 			bool buildLayers = !dataIn.IsEmpty || !useStorage;
 
 			// Calculate the number of texture levels

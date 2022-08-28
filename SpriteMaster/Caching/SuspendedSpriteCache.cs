@@ -16,6 +16,8 @@ internal static class SuspendedSpriteCache {
 		removalAction: OnEntryRemoved
 	);
 
+	internal static long Size => Cache.SizeBytes;
+
 	private static readonly ThreadLocal<bool> Resurrecting = new(false);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]

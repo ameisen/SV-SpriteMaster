@@ -47,6 +47,6 @@ public partial class CloneBuffers {
 			}
 		}
 
-		DataSets.AddRange(dataSets);
+		DefaultDataSetsStatic.AddRange(dataSets);
 	}
 }

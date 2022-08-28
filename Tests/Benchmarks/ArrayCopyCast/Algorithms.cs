@@ -64,11 +64,13 @@ public class Algorithms {
 	}
 	*/
 
+	/*
 	[Benchmark(Description = "xxHash3")]
 	[ArgumentsSource(nameof(DataSets), Priority = 0)]
 	public ulong xxHash3Ptr(DataSet<byte> dataSet) {
 		return SpriteMaster.Hashing.XXHash3.Hash64(dataSet.Data);
 	}
+	*/
 
 	static readonly System.Data.HashFunction.xxHash.xxHashConfig xxHashConfig = new() { HashSizeInBits = 64 };
 	[Benchmark(Description = "xxHash")]

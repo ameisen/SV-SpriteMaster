@@ -27,7 +27,7 @@ public class Dictionary : BenchmarkBaseHashing<DataSet<string[]>, string[]> {
 		}
 
 		void AddSet(in DataSet<string[]> dataSet) {
-			DataSets.Add(dataSet);
+			DefaultDataSetsStatic.Add(dataSet);
 		}
 
 		AddSet(new(words));

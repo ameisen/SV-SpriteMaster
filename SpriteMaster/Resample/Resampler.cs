@@ -877,7 +877,7 @@ internal sealed class Resampler {
 						return resultTexture;
 					}
 
-					Debug.Trace($"Skipping resample of {spriteInstance.Name} {input.Bounds}: NoResample");
+					Debug.Trace($"Skipping resample of {spriteInstance.Name} {input.Bounds}: {result}");
 					spriteInstance.NoResample = true;
 					if (input.Reference is { } texture) {
 						texture.Meta().AddNoResample(input.Bounds);
@@ -1082,16 +1082,18 @@ internal sealed class Resampler {
 
 				if (bitmapDataArray is null) {
 					var fixedData = pinnedBitmapData.Fixed;
-					SynchronizedTaskScheduler.Instance.QueueDeferred(
+					spriteInstance.DeferredTask.SetTarget(SynchronizedTaskScheduler.Instance.QueueDeferred(
 						() => SyncCallFixed(input, newSize, spriteFormat, reference, spriteInstance, fixedData),
-						new(input.Reference.NormalizedName(), bitmapData.Length)
-					);
+						new(input.Reference.NormalizedName(), bitmapData.Length, new(reference), input.Bounds),
+						priority: input.IsAnimated ? SynchronizedTaskScheduler.Priority.High : SynchronizedTaskScheduler.Priority.Normal
+					)!);
 				}
 				else {
-					SynchronizedTaskScheduler.Instance.QueueDeferred(
+					spriteInstance.DeferredTask.SetTarget(SynchronizedTaskScheduler.Instance.QueueDeferred(
 						() => SyncCallArray(input, newSize, spriteFormat, reference, spriteInstance, bitmapDataArray),
-						new(input.Reference.NormalizedName(), bitmapData.Length)
-					);
+						new(input.Reference.NormalizedName(), bitmapData.Length, new(reference), input.Bounds),
+						priority: input.IsAnimated ? SynchronizedTaskScheduler.Priority.High : SynchronizedTaskScheduler.Priority.Normal
+					)!);
 				}
 				return null;
 			}

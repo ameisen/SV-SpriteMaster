@@ -1,4 +1,5 @@
-﻿using FastExpressionCompiler.LightExpression;
+﻿#if false
+using FastExpressionCompiler.LightExpression;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions.Reflection;
 using SpriteMaster.Types;
@@ -115,3 +116,4 @@ internal static class GLTexture {
 		return newObj;
 	}
 }
+#endif

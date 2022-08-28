@@ -113,7 +113,7 @@ internal static class StableSort {
 		"DrawBatch",
 		argumentTypes: new [] { typeof(SpriteSortMode), typeof(Effect) }
 	)]
-	public static IEnumerable<CodeInstruction> SpriteBatcherTranspiler(IEnumerable<CodeInstruction> instructions) {
+	public static IEnumerable<CodeInstruction> DrawBatchTranspiler(IEnumerable<CodeInstruction> instructions) {
 		if (SpriteBatchItemType is null) {
 			Debug.Error($"Could not apply SpriteBatcher stable sorting patch: {nameof(SpriteBatchItemType)} was null");
 			return instructions;

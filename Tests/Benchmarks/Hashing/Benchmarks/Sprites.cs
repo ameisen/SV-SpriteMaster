@@ -109,7 +109,7 @@ public class Sprites : BenchmarkBase<SpriteDataSet, ReadOnlyMemory2D<byte>> {
 					pitch: rawStride - actualWidth
 				)
 			);
-			DataSets.Add(set);
+			DefaultDataSetsStatic.Add(set);
 		}
 	}
 
@@ -170,7 +170,7 @@ public class Sprites : BenchmarkBase<SpriteDataSet, ReadOnlyMemory2D<byte>> {
 				tempOuterSize.Y = NextPower2(size.Y + 1);
 			}
 
-			DataSets.Add(MakeUnalignedSprite(random, tempOuterSize, size));
+			DefaultDataSetsStatic.Add(MakeUnalignedSprite(random, tempOuterSize, size));
 		}
 
 
@@ -180,7 +180,7 @@ public class Sprites : BenchmarkBase<SpriteDataSet, ReadOnlyMemory2D<byte>> {
 
 			var referenceInstance = new Sprites();
 
-			foreach (var dataSet in DataSets) {
+			foreach (var dataSet in DefaultDataSetsStatic) {
 				try {
 					ulong baseline = referenceInstance.Baseline(dataSet);
 

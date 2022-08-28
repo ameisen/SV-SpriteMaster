@@ -102,7 +102,7 @@ public partial class Buffers {
 			}
 		}
 
-		DataSets.AddRange(dataSets);
+		DefaultDataSetsStatic.AddRange(dataSets);
 	}
 
 	private static void SetBoolField(Type type, string name, bool value) {

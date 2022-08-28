@@ -10,6 +10,7 @@ using SpriteMaster.GL;
 using SpriteMaster.Harmonize;
 using SpriteMaster.Harmonize.Patches.Game;
 using SpriteMaster.Metadata;
+using SpriteMaster.Tasking;
 using SpriteMaster.Types;
 using StardewModdingAPI;
 using StardewModdingAPI.Enums;
@@ -152,6 +153,7 @@ public sealed class SpriteMaster : Mod {
 
 		Helper.Events.Input.ButtonPressed += OnButtonPressed;
 
+		gameLoop.DayEnding += OnDayEnded;
 		gameLoop.DayStarted += OnDayStarted;
 		// GC after major events
 		gameLoop.SaveLoaded += (_, _) => {
@@ -166,7 +168,7 @@ public sealed class SpriteMaster : Mod {
 		gameLoop.SaveCreated += (_, _) => OnSaveFinish();
 		gameLoop.Saved += (_, _) => OnSaveFinish();
 		Helper.Events.Display.WindowResized += (_, args) => OnWindowResized(args);
-		Helper.Events.Player.Warped += (_, _) => ForceGarbageCollectConcurrent();
+		Helper.Events.Player.Warped += OnWarp;
 		Helper.Events.Specialized.LoadStageChanged += (_, args) => {
 			switch (args.NewStage) {
 				case LoadStage.SaveLoadedBasicInfo:
@@ -270,15 +272,25 @@ public sealed class SpriteMaster : Mod {
 		Snow.OnWindowResized(args.NewSize);
 	}
 
+	private void OnWarp(object? _, WarpedEventArgs args) {
+		if (Config.AsyncScaling.FlushSynchronizedTasksOnWarp) {
+			SynchronizedTaskScheduler.Instance.FlushPendingTasks();
+		}
+
+		ForceGarbageCollectConcurrent();
+	}
+
 	private void OnMenuChanged(object? _, MenuChangedEventArgs args) {
 		//_ = _;
 	}
 
 	private void OnSaveStart() {
+		SynchronizedTaskScheduler.Instance.FlushPendingTasks();
 		Garbage.EnterNonInteractive();
 	}
 
 	private void OnSaveFinish() {
+		SynchronizedTaskScheduler.Instance.FlushPendingTasks();
 		ForceGarbageCollect();
 		Garbage.EnterInteractive();
 	}
@@ -383,9 +395,15 @@ public sealed class SpriteMaster : Mod {
 		ManagedSpriteInstance.ClearTimers();
 	}
 
+	private static void OnDayEnded(object? _, DayEndingEventArgs _1) {
+		SynchronizedTaskScheduler.Instance.FlushPendingTasks();
+	}
+
 	// SMAPI/CP won't do this, so we do. Purge the cached textures for the previous season on a season change.
 	private static void OnDayStarted(object? _, DayStartedEventArgs _1) {
 		Snow.PopulateDebrisWeatherArray();
+
+		SynchronizedTaskScheduler.Instance.FlushPendingTasks();
 
 		// Do a full GC at the start of each day
 		Garbage.Collect(compact: true, blocking: true, background: false);

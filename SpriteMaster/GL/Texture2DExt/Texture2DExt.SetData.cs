@@ -58,7 +58,7 @@ internal static partial class Texture2DExt {
 		bool initialized = false,
 		bool isSet = false
 	) where T : unmanaged {
-		if (!SMConfig.Extras.OptimizeTexture2DSetData) {
+		if (!SMConfig.Extras.OpenGL.OptimizeTexture2DSetData) {
 			return false;
 		}
 

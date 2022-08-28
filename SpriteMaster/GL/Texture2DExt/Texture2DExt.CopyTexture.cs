@@ -15,7 +15,7 @@ internal static partial class Texture2DExt {
 		Bounds targetArea,
 		PatchMode patchMode
 	) {
-		if (!Configuration.Config.Extras.OptimizeOpenGL || !Configuration.Config.Extras.UseCopyTexture) {
+		if (!Configuration.Config.Extras.OpenGL.Enabled || !SMConfig.Extras.OpenGL.UseCopyTexture) {
 			return false;
 		}
 

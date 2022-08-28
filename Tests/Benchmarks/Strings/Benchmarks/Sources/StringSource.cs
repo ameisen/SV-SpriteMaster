@@ -32,6 +32,6 @@ public abstract class StringSource : BenchmarkBase<DataSet<StringSource.StringDa
 		for (var i = 0; i < set.Count; ++i) {
 			newStringData[i] = new(rand, DeIntern(set[i]));
 		}
-		DataSets.Add(new(newStringData));
+		DefaultDataSetsStatic.Add(new(newStringData));
 	}
 }

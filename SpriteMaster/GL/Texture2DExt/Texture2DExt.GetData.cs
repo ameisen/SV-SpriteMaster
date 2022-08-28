@@ -115,7 +115,7 @@ internal static partial class Texture2DExt {
 	) where T : unmanaged {
 		ThreadingExt.EnsureMainThread();
 
-		if (!SMConfig.Extras.OptimizeTexture2DGetData) {
+		if (!SMConfig.Extras.OpenGL.OptimizeTexture2DGetData) {
 			return false;
 		}
 
