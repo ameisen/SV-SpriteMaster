@@ -461,12 +461,12 @@ internal static class Setup {
 				PreviewOverride.ResampleSprites = (bool)value;
 				SMMetadata.FlushValidations();
 				break;
-			case "SpriteMaster.Configuration.Config+Resample.EnabledText":
-				PreviewOverride.ResampleText = (bool)value;
+			case "SpriteMaster.Configuration.Config+Resample.EnabledLargeText":
+				PreviewOverride.ResampleLargeText = (bool)value;
 				SMMetadata.FlushValidations();
 				break;
-			case "SpriteMaster.Configuration.Config+Resample.EnabledBasicText":
-				PreviewOverride.ResampleBasicText = (bool)value;
+			case "SpriteMaster.Configuration.Config+Resample.EnabledSmallText":
+				PreviewOverride.ResampleSmallText = (bool)value;
 				SMMetadata.FlushValidations();
 				break;
 			default:

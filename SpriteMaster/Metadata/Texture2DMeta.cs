@@ -33,6 +33,8 @@ internal sealed class Texture2DMeta : IDisposable {
 	internal enum TextureFlag : uint {
 		None				= 0U,
 		Populated		= 1U << 0,
+		IsLargeFont = 1U << 1,
+		IsSmallFont = 1U << 2,
 	}
 
 	// Class and not a struct because we want to avoid a plethora of dictionary accesses to mutate them.

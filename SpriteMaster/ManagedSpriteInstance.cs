@@ -4,14 +4,18 @@ using Pastel;
 using SpriteMaster.Caching;
 using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
+using SpriteMaster.Extensions.Reflection;
 using SpriteMaster.Metadata;
 using SpriteMaster.Resample;
 using SpriteMaster.Tasking;
 using SpriteMaster.Types;
 using SpriteMaster.Types.Interlocking;
+using StardewValley;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -40,11 +44,32 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 
 	internal static ulong? GetHash(in SpriteInfo.Initializer info, TextureType type) => Resampler.GetHash(in info, type);
 
+	private static readonly Type? PyTKMappedTexture2DType = ReflectionExt.GetTypeExt("PyTK.Types.MappedTexture2D");
+	private static readonly Type? PyTKScaledTexture2DType = ReflectionExt.GetTypeExt("PyTK.Types.ScaledTexture2D");
+
+	private static readonly Func<object, Dictionary<XRectangle?, Texture2D>>? GetTextureMap = PyTKMappedTexture2DType?.GetMemberGetter<object, Dictionary<XRectangle?, Texture2D>>("Map");
+	private static readonly Func<object, Texture2D>? GetScaledTextureUnderlying = PyTKScaledTexture2DType?.GetMemberGetter<object, Texture2D>("STexture");
+
+	private static XTexture2D GetUnderlyingTexture(XTexture2D texture) {
+		if (GetTextureMap is not null && PyTKMappedTexture2DType is { } mappedTexture2DType && texture.GetType().IsAssignableTo(mappedTexture2DType)) {
+			if (GetTextureMap(texture) is {} map) {
+				return map.FirstOrDefault().Value ?? texture;
+			}
+		}
+		if (GetScaledTextureUnderlying is not null && PyTKScaledTexture2DType is { } scaledTexture2DType && texture.GetType().IsAssignableTo(scaledTexture2DType)) {
+			return GetScaledTextureUnderlying(texture) ?? texture;
+		}
+
+		return texture;
+	}
+
 	internal static bool Validate(XTexture2D texture, bool clean = false) {
 		var meta = texture.Meta();
 		if (meta.Validation.HasValue) {
 			return meta.Validation.Value;
 		}
+
+		texture = GetUnderlyingTexture(texture);
 
 		if (texture is InternalTexture2D) {
 			if (!meta.TracePrinted) {
@@ -66,7 +91,7 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 		) {
 			if (!meta.TracePrinted) {
 				meta.TracePrinted = true;
-				Debug.Trace($"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Is System Render Target");
+				//Debug.Trace($"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Is System Render Target");
 			}
 			meta.Validation = false;
 			if (clean) {
@@ -148,8 +173,71 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 			return false;
 		}
 
-		bool isText = false;
-		bool isBasicText = false;
+		bool disableValidation = false;
+
+		bool IsLargeFont(Texture2D texture) {
+			if (
+				texture.NormalizedName().StartsWith(@"Fonts\") &&
+				(
+					!texture.NormalizedName().Contains("Small") ||
+					!texture.NormalizedName().Contains("tiny")
+				)
+			) {
+				return true;
+			}
+
+			if (Game1.dialogueFont is null) {
+				disableValidation = true;
+			}
+			else if (texture == Game1.dialogueFont.Texture) {
+				return true;
+			}
+
+			return false;
+		}
+
+		var isText = texture.Format == SurfaceFormat.Dxt3;
+		var isLargeText = isText && IsLargeFont(texture);
+		var isSmallText = isText && !isLargeText;
+
+		if (isLargeText) {
+			meta.Flags |= Texture2DMeta.TextureFlag.IsLargeFont;
+		}
+		else {
+			meta.Flags &= ~Texture2DMeta.TextureFlag.IsLargeFont;
+		}
+
+		if (isSmallText) {
+			meta.Flags |= Texture2DMeta.TextureFlag.IsSmallFont;
+		}
+		else {
+			meta.Flags &= ~Texture2DMeta.TextureFlag.IsSmallFont;
+		}
+
+		if (!(Configuration.Preview.Override.Instance?.ResampleLargeText ?? Config.Resample.EnabledLargeText) && isLargeText) {
+			if (!meta.TracePrinted) {
+				meta.TracePrinted = true;
+				Debug.Trace($"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Is Font (and text resampling is disabled)");
+			}
+			meta.Validation = false;
+			if (clean) {
+				PurgeInvalidated(texture);
+			}
+			return false;
+		}
+		if (!(Configuration.Preview.Override.Instance?.ResampleSmallText ?? Config.Resample.EnabledSmallText) && isSmallText) {
+			// The only BC2 texture that I've _ever_ seen is the internal font
+
+			if (!meta.TracePrinted) {
+				meta.TracePrinted = true;
+				Debug.Trace($"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Is Basic Font (and basic text resampling is disabled)");
+			}
+			meta.Validation = false;
+			if (clean) {
+				PurgeInvalidated(texture);
+			}
+			return false;
+		}
 
 		if (!texture.Anonymous()) {
 			foreach (var blacklistPattern in Config.Resample.BlacklistPatterns) {
@@ -167,37 +255,9 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 				}
 				return false;
 			}
-
-			isText = texture.NormalizedName().StartsWith(@"Fonts\");
-			isBasicText = texture.Format == SurfaceFormat.Dxt3;
-
-			if (!(Configuration.Preview.Override.Instance?.ResampleText ?? Config.Resample.EnabledText) && isText) {
-				if (!meta.TracePrinted) {
-					meta.TracePrinted = true;
-					Debug.Trace($"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Is Font (and text resampling is disabled)");
-				}
-				meta.Validation = false;
-				if (clean) {
-					PurgeInvalidated(texture);
-				}
-				return false;
-			}
-			if (!(Configuration.Preview.Override.Instance?.ResampleBasicText ?? Config.Resample.EnabledBasicText) && isBasicText) {
-				// The only BC2 texture that I've _ever_ seen is the internal font
-
-				if (!meta.TracePrinted) {
-					meta.TracePrinted = true;
-					Debug.Trace($"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Is Basic Font (and basic text resampling is disabled)");
-				}
-				meta.Validation = false;
-				if (clean) {
-					PurgeInvalidated(texture);
-				}
-				return false;
-			}
 		}
 
-		if (!(Configuration.Preview.Override.Instance?.ResampleSprites ?? Config.Resample.EnabledSprites) && !isText && !isBasicText) {
+		if (!(Configuration.Preview.Override.Instance?.ResampleSprites ?? Config.Resample.EnabledSprites) && !isLargeText && !isSmallText) {
 			if (!meta.TracePrinted) {
 				meta.TracePrinted = true;
 				Debug.Trace(
@@ -213,8 +273,7 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 			return false;
 		}
 
-
-		if (!texture.Anonymous()) {
+		if (!disableValidation && (isText || !texture.Anonymous())) {
 			meta.Validation = true;
 		}
 

@@ -289,10 +289,10 @@ internal static class Config {
 		internal static bool EnabledSprites = true;
 		[Attributes.Comment("Should resampling be enabled for regular text?")]
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
-		internal static bool EnabledText = true;
-		[Attributes.Comment("Should resampling be enabled for 'basic' text?")]
+		internal static bool EnabledLargeText = true;
+		[Attributes.Comment("Should resampling be enabled for small text?")]
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
-		internal static bool EnabledBasicText = true;
+		internal static bool EnabledSmallText = true;
 		[Attributes.Comment("Should the texture be scale-adjusted if its scaled dimensions are outside preferred dimensional limits?")]
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllInternalCaches)]
 		[Attributes.Advanced]

@@ -8,8 +8,8 @@ internal class Override {
 	internal Resample.Scaler Scaler = Resample.Scaler.None;
 	internal Resample.Scaler ScalerGradient = Resample.Scaler.None;
 	internal bool ResampleSprites = false;
-	internal bool ResampleText = false;
-	internal bool ResampleBasicText = false;
+	internal bool ResampleLargeText = false;
+	internal bool ResampleSmallText = false;
 
 	// draw state
 	internal bool SetLinearUnresampled = false;
@@ -22,8 +22,8 @@ internal class Override {
 		Scaler = Config.Resample.Scaler,
 		ScalerGradient = Config.Resample.ScalerGradient,
 		ResampleSprites = Config.Resample.EnabledSprites,
-		ResampleText = Config.Resample.EnabledText,
-		ResampleBasicText = Config.Resample.EnabledBasicText,
+		ResampleLargeText = Config.Resample.EnabledLargeText,
+		ResampleSmallText = Config.Resample.EnabledSmallText,
 
 		SetLinearUnresampled = Config.DrawState.SetLinearUnresampled,
 		SetLinear = Config.DrawState.SetLinear
