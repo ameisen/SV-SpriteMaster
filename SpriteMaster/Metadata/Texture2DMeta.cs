@@ -9,6 +9,7 @@ using SpriteMaster.Types.Interlocking;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -187,24 +188,29 @@ internal sealed class Texture2DMeta : IDisposable {
 
 	/// <summary>The current (static) ID, incremented every time a new <see cref="Texture2DMeta"/> is created.</summary>
 	private static ulong CurrentId = 0U;
-	/// <summary>Whenever a new <see cref="Texture2DMeta"/> is created, <see cref="CurrentId"/> is incremented and this is set to that.</summary>
-	private readonly ulong MetaId = Interlocked.Increment(ref CurrentId);
+
 
 	internal readonly SharedLock Lock = new(LockRecursionPolicy.SupportsRecursion);
+	internal readonly WeakReference<XTexture2D> Owner;
+	// TODO : this presently is not thread-safe.
+	private readonly WeakReference<byte[]> CachedDataInternal = new(null!);
+	private readonly WeakReference<byte[]> CachedRawDataInternal = new(null!);
+
+	/// <summary>Whenever a new <see cref="Texture2DMeta"/> is created, <see cref="CurrentId"/> is incremented and this is set to that.</summary>
+	private readonly ulong MetaId = Interlocked.Increment(ref CurrentId);
+	internal long Revision { get; private set; } = 0;
+	internal InterlockedULong LastAccessFrame { get; private set; } = DrawState.CurrentFrame;
+	internal InterlockedULong Hash { get; private set; } = 0;
+	internal readonly Vector2I Size;
+	internal readonly uint ExpectedByteSizeRaw;
+	internal readonly uint ExpectedByteSize;
+	internal ReportOnceErrors ReportedErrors = 0;
+	internal readonly SurfaceFormat Format;
 
 	internal volatile bool TracePrinted = false;
-
 	internal bool? Validation = null;
 	internal bool IsSystemRenderTarget = false;
 	internal readonly bool IsCompressed = false;
-	internal ReportOnceErrors ReportedErrors = 0;
-	internal long Revision { get; private set; } = 0;
-	internal readonly SurfaceFormat Format;
-	internal readonly Vector2I Size;
-	internal readonly WeakReference<XTexture2D> Owner;
-
-	internal InterlockedULong LastAccessFrame { get; private set; } = DrawState.CurrentFrame;
-	internal InterlockedULong Hash { get; private set; } = 0;
 
 	internal void IncrementRevision() => ++Revision;
 
@@ -217,11 +223,15 @@ internal sealed class Texture2DMeta : IDisposable {
 		if (!texture.Anonymous()) {
 			SpriteDataMap = GlobalSpriteDataMaps.GetOrAdd(texture.NormalizedName(), _ => new());
 		}
-	}
 
-	// TODO : this presently is not thread-safe.
-	private readonly WeakReference<byte[]> CachedDataInternal = new(null!);
-	private readonly WeakReference<byte[]> CachedRawDataInternal = new(null!);
+		ExpectedByteSizeRaw = (uint)texture.Format.SizeBytes(Size);
+		if (Format.IsBlock() || Format.IsCompressed()) {
+			ExpectedByteSize = (uint)SurfaceFormat.Color.SizeBytes(Size);
+		}
+		else {
+			ExpectedByteSize = ExpectedByteSizeRaw;
+		}
+	}
 
 	internal bool HasCachedData {
 		[MethodImpl(Runtime.MethodImpl.Inline)]
@@ -402,6 +412,15 @@ internal sealed class Texture2DMeta : IDisposable {
 		}
 	}
 
+	private void InvalidateCachedRawData() {
+		using (Lock.Write) {
+			CachedRawDataInternal.SetTarget(null!);
+			CachedDataInternal.SetTarget(null!);
+			ResidentCache.RemoveFast(MetaId);
+			Flags &= ~TextureFlag.Populated;
+		}
+	}
+
 	internal byte[]? CachedRawData {
 		[MethodImpl(Runtime.MethodImpl.Inline)]
 		get {
@@ -429,14 +448,19 @@ internal sealed class Texture2DMeta : IDisposable {
 				//	return;
 				//}
 				if (value is null) {
-					using (Lock.Write) {
-						CachedRawDataInternal.SetTarget(null!);
-						CachedDataInternal.SetTarget(null!);
-						ResidentCache.RemoveFast(MetaId);
-						Flags &= ~TextureFlag.Populated;
-					}
+					InvalidateCachedRawData();
 				}
 				else {
+					if (ExpectedByteSizeRaw != (uint)value.Length) {
+						Console.Error.WriteLine($"Cached Raw Data length mismatch: {ExpectedByteSizeRaw} != {value.Length}");
+						if (Debugger.IsAttached) {
+							Debugger.Break();
+						}
+						Debug.Error(Environment.StackTrace);
+						InvalidateCachedRawData();
+						return;
+					}
+
 					using (Lock.Write) {
 						ResidentCache.Set(MetaId, value);
 						CachedRawDataInternal.SetTarget(value);
@@ -500,6 +524,19 @@ internal sealed class Texture2DMeta : IDisposable {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal void SetCachedDataUnsafe(Span<byte> data) {
+		if (ExpectedByteSize != (uint)data.Length) {
+			Console.Error.WriteLine($"Cached Data length mismatch: {ExpectedByteSize} != {data.Length}");
+			if (Debugger.IsAttached) {
+				Debugger.Break();
+			}
+			Debug.Error(Environment.StackTrace);
+			using (Lock.Write) {
+				CachedDataInternal.SetTarget(null!);
+			}
+
+			return;
+		}
+
 		using (Lock.Write) {
 			CachedDataInternal.SetTarget(data.ToArray());
 		}

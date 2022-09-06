@@ -1,5 +1,9 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
+using SpriteMaster.Extensions.Reflection;
+using System;
+using System.ComponentModel.Design;
 using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using static SpriteMaster.Harmonize.Harmonize;
 
 namespace SpriteMaster.Harmonize.Patches;
@@ -24,6 +28,11 @@ internal static class PGraphicsDevice {
 
 	#endregion
 
+	[Harmonize(typeof(Microsoft.Xna.Framework.Game), "BeginDraw", fixation: Fixation.Prefix, priority: PriorityLevel.First)]
+	public static void OnBeginDraw(Microsoft.Xna.Framework.Game __instance) {
+		DrawState.OnBeginDraw();
+	}
+
 	#region Reset
 
 	[Harmonize("Reset", fixation: Fixation.Postfix, priority: PriorityLevel.Last)]
@@ -33,7 +42,33 @@ internal static class PGraphicsDevice {
 
 	#endregion
 
+	[Harmonize("SetVertexAttributeArray", fixation: Fixation.Prefix, priority: PriorityLevel.Last)]
+	public static bool OnSetVertexAttributeArray(GraphicsDevice __instance, bool[] attrs) {
+		return !GL.GraphicsDeviceExt.SetVertexAttributeArray(
+			__instance,
+			attrs
+		);
+	}
+
 	#region OnPlatformDrawUserIndexedPrimitives
+
+	private static class VertexDeclarationClass<T> where T : struct {
+		internal static readonly VertexDeclaration Value;
+
+		static VertexDeclarationClass() {
+			if (
+				ReflectionExt.GetTypeExt("Microsoft.Xna.Framework.Graphics.VertexDeclarationCache")
+					?.MakeGenericType(new[] {typeof(T)})
+					?.GetProperty("VertexDeclaration", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
+					?.GetValue(null) is VertexDeclaration declaration
+			) {
+				Value = declaration;
+			}
+			else {
+				Value = VertexDeclaration.FromType(typeof(T));
+			}
+		}
+	}
 
 	[Harmonize(
 		"DrawUserIndexedPrimitives",
@@ -69,6 +104,36 @@ internal static class PGraphicsDevice {
 		"DrawUserIndexedPrimitives",
 		Fixation.Prefix,
 		PriorityLevel.Last,
+		generic: Generic.Struct,
+		genericConstraints: new[] { typeof(IVertexType) }
+	)]
+	public static unsafe bool OnDrawUserIndexedPrimitives<T>(
+		GraphicsDevice __instance,
+		PrimitiveType primitiveType,
+		T[] vertexData,
+		int vertexOffset,
+		int numVertices,
+		short[] indexData,
+		int indexOffset,
+		int primitiveCount
+	) where T : unmanaged {
+		return !GL.GraphicsDeviceExt.DrawUserIndexedPrimitives(
+			__instance,
+			primitiveType,
+			vertexData,
+			vertexOffset,
+			numVertices,
+			indexData,
+			indexOffset,
+			primitiveCount,
+			VertexDeclarationClass<T>.Value
+		);
+	}
+
+	[Harmonize(
+		"DrawUserIndexedPrimitives",
+		Fixation.Prefix,
+		PriorityLevel.Last,
 		generic: Generic.Struct
 	)]
 	public static unsafe bool OnDrawUserIndexedPrimitives<T>(
@@ -95,7 +160,35 @@ internal static class PGraphicsDevice {
 		);
 	}
 
-	
+	[Harmonize(
+		"DrawUserIndexedPrimitives",
+		Fixation.Prefix,
+		PriorityLevel.Last,
+		generic: Generic.Struct,
+		genericConstraints: new[] { typeof(IVertexType) }
+	)]
+	public static unsafe bool OnDrawUserIndexedPrimitives<T>(
+		GraphicsDevice __instance,
+		PrimitiveType primitiveType,
+		T[] vertexData,
+		int vertexOffset,
+		int numVertices,
+		int[] indexData,
+		int indexOffset,
+		int primitiveCount
+	) where T : unmanaged {
+		return !GL.GraphicsDeviceExt.DrawUserIndexedPrimitives(
+			__instance,
+			primitiveType,
+			vertexData,
+			vertexOffset,
+			numVertices,
+			indexData,
+			indexOffset,
+			primitiveCount,
+			VertexDeclarationClass<T>.Value
+		);
+	}
 
 	#endregion
 }

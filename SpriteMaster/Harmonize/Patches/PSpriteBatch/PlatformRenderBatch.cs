@@ -89,6 +89,7 @@ internal static class PlatformRenderBatch {
 
 	internal readonly record struct States(SamplerState? SamplerState, BlendState? BlendState);
 
+	/*
 	[HarmonizeTranspile(
 		type: typeof(SpriteBatcher),
 		"FlushVertexArray",
@@ -133,6 +134,7 @@ internal static class PlatformRenderBatch {
 
 		return result;
 	}
+	*/
 
 	[Harmonize(
 		"Microsoft.Xna.Framework.Graphics",
@@ -242,6 +244,9 @@ internal static class PlatformRenderBatch {
 	)]
 	public static bool OnEnsureArrayCapacity(SpriteBatcher __instance, int numBatchItems) {
 		if (!Config.IsEnabled || !EnsureArrayCapacityEnabled) {
+			if (__instance._index == GL.GraphicsDeviceExt.SpriteBatcherValues.Indices16) {
+				__instance._index = null;
+			}
 			return true;
 		}
 
@@ -251,14 +256,12 @@ internal static class PlatformRenderBatch {
 
 			return false;
 		}
-		catch (MemberAccessException ex) {
+		catch (Exception ex) when (ex is MemberAccessException or InvalidCastException) {
 			Debug.Error($"Disabling {nameof(OnEnsureArrayCapacity)} patch", ex);
 			EnsureArrayCapacityEnabled = false;
-			return true;
-		}
-		catch (InvalidCastException ex) {
-			Debug.Error($"Disabling {nameof(OnEnsureArrayCapacity)} patch", ex);
-			EnsureArrayCapacityEnabled = false;
+			if (__instance._index == GL.GraphicsDeviceExt.SpriteBatcherValues.Indices16) {
+				__instance._index = null;
+			}
 			return true;
 		}
 	}
@@ -272,7 +275,7 @@ internal static class PlatformRenderBatch {
 	private static void EnsureVertexCapacity(SpriteBatcher @this, int numBatchItems) {
 		int neededCapacity = numBatchItems << 2;
 		if (@this._vertexArray is null || @this._vertexArray.Length < neededCapacity) {
-			@this._vertexArray = GC.AllocateUninitializedArray<VertexPositionColorTexture>(neededCapacity);
+			@this._vertexArray = GC.AllocateUninitializedArray<VertexPositionColorTexture>(neededCapacity, pinned: true);
 		}
 	}
 }

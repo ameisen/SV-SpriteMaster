@@ -23,6 +23,7 @@ internal class HarmonizeAttribute : Attribute {
 	internal readonly string? ForMod;
 	internal readonly Type[]? ArgumentTypes;
 	internal readonly Type[]? GenericTypes;
+	internal readonly Type[]? GenericConstraints;
 
 	private static Lazy<Type?> AsLazy(Func<Type?> factory) => new(factory);
 	private static Lazy<Type?> AsLazy(Type? value) => new(value);
@@ -99,7 +100,8 @@ internal class HarmonizeAttribute : Attribute {
 		Platform platform = Platform.All,
 		string? forMod = null,
 		Type[]? argumentTypes = null,
-		Type[]? genericTypes = null
+		Type[]? genericTypes = null,
+		Type[]? genericConstraints = null
 	) {
 		_lazyType = type;
 		Name = method;
@@ -112,6 +114,7 @@ internal class HarmonizeAttribute : Attribute {
 		ForMod = forMod;
 		ArgumentTypes = argumentTypes;
 		GenericTypes = genericTypes;
+		GenericConstraints = genericConstraints;
 	}
 
 	internal HarmonizeAttribute(
@@ -125,7 +128,8 @@ internal class HarmonizeAttribute : Attribute {
 		Platform platform = Platform.All,
 		string? forMod = null,
 		Type[]? argumentTypes = null,
-		Type[]? genericTypes = null
+		Type[]? genericTypes = null,
+		Type[]? genericConstraints = null
 	) : this(
 		type: AsLazy(type),
 		method: method,
@@ -137,8 +141,9 @@ internal class HarmonizeAttribute : Attribute {
 		platform: platform,
 		forMod: forMod,
 		argumentTypes: argumentTypes,
-		genericTypes: genericTypes
-		){
+		genericTypes: genericTypes,
+		genericConstraints: genericConstraints
+		) {
 	}
 
 	internal HarmonizeAttribute(
@@ -153,7 +158,8 @@ internal class HarmonizeAttribute : Attribute {
 		Platform platform = Platform.All,
 		string? forMod = null,
 		Type[]? argumentTypes = null,
-		Type[]? genericTypes = null
+		Type[]? genericTypes = null,
+		Type[]? genericConstraints = null
 	) :
 		this(
 			type: AsLazy(() => CheckPlatform(platform) ? GetAssembly(assembly, critical: critical, forMod: forMod)?.GetType(type, true) : null),
@@ -166,7 +172,8 @@ internal class HarmonizeAttribute : Attribute {
 			platform: platform,
 			forMod: forMod,
 			argumentTypes: argumentTypes,
-			genericTypes: genericTypes
+			genericTypes: genericTypes,
+			genericConstraints: genericConstraints
 		) { }
 
 	internal HarmonizeAttribute(
@@ -181,7 +188,8 @@ internal class HarmonizeAttribute : Attribute {
 		Platform platform = Platform.All,
 		string? forMod = null,
 		Type[]? argumentTypes = null,
-		Type[]? genericTypes = null
+		Type[]? genericTypes = null,
+		Type[]? genericConstraints = null
 	) :
 		this(
 			type: AsLazy(() => CheckPlatform(platform) ? parent.Assembly.GetType(type, true) : null),
@@ -194,7 +202,8 @@ internal class HarmonizeAttribute : Attribute {
 			platform: platform,
 			forMod: forMod,
 			argumentTypes: argumentTypes,
-			genericTypes: genericTypes
+			genericTypes: genericTypes,
+			genericConstraints: genericConstraints
 		) { }
 
 	internal HarmonizeAttribute(
@@ -208,7 +217,8 @@ internal class HarmonizeAttribute : Attribute {
 		Platform platform = Platform.All,
 		string? forMod = null,
 		Type[]? argumentTypes = null,
-		Type[]? genericTypes = null
+		Type[]? genericTypes = null,
+		Type[]? genericConstraints = null
 	) :
 		this(
 			type: AsLazy(() => CheckPlatform(platform) ? ResolveType(type) : null),
@@ -221,7 +231,8 @@ internal class HarmonizeAttribute : Attribute {
 			platform: platform,
 			forMod: forMod,
 			argumentTypes: argumentTypes,
-			genericTypes: genericTypes
+			genericTypes: genericTypes,
+			genericConstraints: genericConstraints
 		) { }
 
 	internal HarmonizeAttribute(
@@ -236,7 +247,8 @@ internal class HarmonizeAttribute : Attribute {
 		Platform platform = Platform.All,
 		string? forMod = null,
 		Type[]? argumentTypes = null,
-		Type[]? genericTypes = null
+		Type[]? genericTypes = null,
+		Type[]? genericConstraints = null
 	) :
 		this(
 			type: AsLazy(() => CheckPlatform(platform) ? ResolveType(parent.Assembly, type) : null),
@@ -249,7 +261,8 @@ internal class HarmonizeAttribute : Attribute {
 			platform: platform,
 			forMod: forMod,
 			argumentTypes: argumentTypes,
-			genericTypes: genericTypes
+			genericTypes: genericTypes,
+			genericConstraints: genericConstraints
 		) { }
 
 	internal HarmonizeAttribute(
@@ -264,7 +277,8 @@ internal class HarmonizeAttribute : Attribute {
 		Platform platform = Platform.All,
 		string? forMod = null,
 		Type[]? argumentTypes = null,
-		Type[]? genericTypes = null
+		Type[]? genericTypes = null,
+		Type[]? genericConstraints = null
 	) :
 		this(
 			type: AsLazy(() => CheckPlatform(platform) ? ResolveType(GetAssembly(assembly, critical: critical, forMod: forMod), type) : null),
@@ -277,7 +291,8 @@ internal class HarmonizeAttribute : Attribute {
 			platform: platform,
 			forMod: forMod,
 			argumentTypes: argumentTypes,
-			genericTypes: genericTypes
+			genericTypes: genericTypes,
+			genericConstraints: genericConstraints
 		) { }
 
 	internal HarmonizeAttribute(
@@ -290,7 +305,8 @@ internal class HarmonizeAttribute : Attribute {
 		Platform platform = Platform.All,
 		string? forMod = null,
 		Type[]? argumentTypes = null,
-		Type[]? genericTypes = null
+		Type[]? genericTypes = null,
+		Type[]? genericConstraints = null
 	) :
 		this(
 			type: (Type?)null,
@@ -303,7 +319,8 @@ internal class HarmonizeAttribute : Attribute {
 			platform: platform,
 			forMod: forMod,
 			argumentTypes: argumentTypes,
-			genericTypes: genericTypes
+			genericTypes: genericTypes,
+			genericConstraints: genericConstraints
 		) { }
 
 	internal HarmonizeAttribute(
@@ -315,7 +332,8 @@ internal class HarmonizeAttribute : Attribute {
 		Platform platform = Platform.All,
 		string? forMod = null,
 		Type[]? argumentTypes = null,
-		Type[]? genericTypes = null
+		Type[]? genericTypes = null,
+		Type[]? genericConstraints = null
 	) :
 		this(
 			type: (Type?)null,
@@ -328,6 +346,7 @@ internal class HarmonizeAttribute : Attribute {
 			platform: platform,
 			forMod: forMod,
 			argumentTypes: argumentTypes,
-			genericTypes: genericTypes
+			genericTypes: genericTypes,
+			genericConstraints: genericConstraints
 		) { }
 }

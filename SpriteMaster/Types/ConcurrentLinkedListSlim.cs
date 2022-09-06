@@ -1,6 +1,4 @@
-﻿// #define VALIDATE_CLLSLIM
-
-using JetBrains.Annotations;
+﻿using JetBrains.Annotations;
 using Microsoft.Toolkit.HighPerformance;
 using System;
 using System.Collections.Generic;

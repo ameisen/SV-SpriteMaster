@@ -100,13 +100,6 @@ internal sealed class Resampler {
 		internal static NewTextureResult FromFailure(ResampleStatus status) => new(status);
 	}
 
-	private static readonly object TexelsLock = new();
-	private static ulong OriginalTexels = 0;
-	private static ulong BeforeTexels = 0;
-	private static ulong AfterTexels = 0;
-	private static ulong AfterAfterTexels = 0;
-	private static ulong CompressedSize = 0;
-
 	private static unsafe NewTextureResult CreateNewTexture(
 		ManagedSpriteInstance texture,
 		bool async,
@@ -833,16 +826,6 @@ internal sealed class Resampler {
 
 		int afterAfterTexels = scaledSize.Area;
 		int compressedSize = resultData.Length;
-
-		lock (TexelsLock) {
-			ulong originalTexelsValue = OriginalTexels += (uint)originalTexels;
-			ulong beforeTexelsValue = BeforeTexels += (uint)beforeTexels;
-			ulong afterTexelsValue = AfterTexels += (uint)afterTexels;
-			ulong afterAfterTexelsValue = AfterAfterTexels += (uint)afterAfterTexels;
-			ulong compressedSizeValue = CompressedSize += (uint)compressedSize;
-
-			Debug.Info($"Sizes : {originalTexelsValue * 4} :: {beforeTexelsValue * 4} :: {afterTexelsValue * 4} :: {afterAfterTexelsValue * 4} :: {compressedSizeValue}");
-		}
 
 		return new() {
 			Status = ResampleStatus.Success,

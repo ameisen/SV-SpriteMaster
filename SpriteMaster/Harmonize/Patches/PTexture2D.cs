@@ -201,27 +201,25 @@ internal static class PTexture2D {
 			}
 
 			// Upon cache read failure, instead of doing a subtexture read, do a full read and use the data to repopulate the cache.
-			if (!__instance.Format.IsBlock()) {
+			try {
+				IsInnerGetData.Value = true;
+
+				var fullBounds = __instance.Bounds;
+				var recacheData = GC.AllocateUninitializedArray<byte>(__instance.Format.SizeBytes(fullBounds.Width * fullBounds.Height));
 				try {
-					IsInnerGetData.Value = true;
+					__instance.PlatformGetData(level, arraySlice, fullBounds, recacheData, 0, recacheData.Length);
+					_ = OnPlatformSetDataPre(__instance, level, arraySlice, fullBounds, recacheData, 0, recacheData.Length);
 
-					var fullBounds = __instance.Bounds;
-					var recacheData = GC.AllocateUninitializedArray<byte>(__instance.Format.SizeBytes(fullBounds.Width * fullBounds.Height));
-					try {
-						__instance.PlatformGetData(level, arraySlice, fullBounds, recacheData, 0, recacheData.Length);
-						_ = OnPlatformSetDataPre(__instance, level, arraySlice, fullBounds, recacheData, 0, recacheData.Length);
-
-						if (!GetCachedData<T>(__instance, level, arraySlice, rect, data, startIndex, elementCount).IsEmpty) {
-							return false;
-						}
-					}
-					catch {
-						// Swallow Exception
+					if (!GetCachedData<T>(__instance, level, arraySlice, rect, data, startIndex, elementCount).IsEmpty) {
+						return false;
 					}
 				}
-				finally {
-					IsInnerGetData.Value = false;
+				catch {
+					// Swallow Exception
 				}
+			}
+			finally {
+				IsInnerGetData.Value = false;
 			}
 		}
 

@@ -145,10 +145,6 @@ internal sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
 	}
 
 	internal void Dispatch(TimeSpan remainingTime) {
-		if (!Config.IsEnabled) {
-			return;
-		}
-
 		try {
 			DispatchInternal(remainingTime);
 		}
@@ -185,11 +181,6 @@ internal sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
 					pendingActions.Clear();
 				}
 			}
-		}
-
-		if (!Config.AsyncScaling.Enabled) {
-			// ReSharper disable once HeuristicUnreachableCode
-			return;
 		}
 
 		var (pendingLoads, nextPendingLoads) = PendingDeferred.Both;
@@ -286,10 +277,6 @@ internal sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
 	}
 
 	internal void QueueTask(Task task, Priority priority) {
-		if (!Config.IsEnabled) {
-			return;
-		}
-
 		if (DisposeCancellation.IsCancellationRequested) {
 			ThrowHelper.ThrowObjectDisposedException(GetType().Name);
 			return;
@@ -372,20 +359,12 @@ internal sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal void QueueImmediate(Action action) {
-		if (!Config.IsEnabled) {
-			return;
-		}
-
 		var task = new Task(action);
 		task.Start(this);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal TextureActionTask? QueueDeferred(Action action, TextureAction actionData, Priority priority = Priority.Normal) {
-		if (!Config.IsEnabled) {
-			return null;
-		}
-
 		var task = new TextureActionTask(action, actionData, priority);
 		task.Start(this);
 		return task;

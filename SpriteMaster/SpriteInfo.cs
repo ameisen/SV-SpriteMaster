@@ -7,6 +7,8 @@ using SpriteMaster.Metadata;
 using SpriteMaster.Types;
 using SpriteMaster.Types.Interlocking;
 using System;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -194,6 +196,33 @@ internal sealed class SpriteInfo : IDisposable {
 		internal readonly bool IsPreview => Flags.HasFlag(SpriteFlags.Preview);
 		internal readonly bool WasCached => Flags.HasFlag(SpriteFlags.WasCached);
 
+		internal class InitializationException : Exception {
+			internal InitializationException(string message) : base(message) {
+
+			}
+
+			internal InitializationException(string message, Exception innerException) : base(message, innerException) {
+
+			}
+		}
+
+		internal sealed class DataMismatchException : InitializationException {
+			private static string MakeMessage(uint actual, uint expected) =>
+				$"Data Array size mismatch: actual {actual:N0} != expected {expected:N0}";
+
+			internal DataMismatchException(uint actual, uint expected) : base(MakeMessage(actual, expected)) {
+
+			}
+
+			internal DataMismatchException(uint actual, uint expected, Exception innerException) : base(MakeMessage(actual, expected), innerException) {
+
+			}
+
+			[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+			internal static void Throw(uint actual, uint expected) =>
+				throw new DataMismatchException(actual, expected);
+		}
+
 		internal Initializer(XTexture2D reference, Bounds dimensions, uint expectedScale, TextureType textureType) {
 			var flags = SpriteFlags.None;
 
@@ -236,6 +265,20 @@ internal sealed class SpriteInfo : IDisposable {
 			}
 			else {
 				flags |= SpriteFlags.WasCached;
+			}
+
+			if (refData is not null && reference.Format == SurfaceFormat.Color) {
+				uint refDataLen = (uint)refData.Length;
+				uint expectedLength = refMeta.ExpectedByteSize;
+				if (refDataLen != expectedLength) {
+					Debug.Error($"Texture cached data size mismatch: {refDataLen} != {expectedLength}");
+					if (Debugger.IsAttached) {
+						Debugger.Break();
+					}
+
+					refMeta.CachedRawData = null;
+					DataMismatchException.Throw(refDataLen, expectedLength);
+				}
 			}
 
 			ReferenceData = refData;

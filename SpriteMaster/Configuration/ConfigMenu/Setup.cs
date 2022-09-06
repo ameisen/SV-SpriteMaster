@@ -89,6 +89,7 @@ internal static class Setup {
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static void Save() {
 		Serialize.Save(Config.Path);
+		Serialize.RefreshHash();
 	}
 
 	private static bool IsAdvanced(Type type) {

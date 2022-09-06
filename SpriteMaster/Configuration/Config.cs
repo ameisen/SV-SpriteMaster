@@ -26,6 +26,15 @@ internal static class Config {
 
 	internal static void SetPath(string path) => Path = path;
 
+	internal delegate void OnConfigChangedDelegate();
+
+	[Attributes.Ignore]
+	internal static event OnConfigChangedDelegate? ConfigChanged;
+
+	internal static void OnConfigChanged() {
+		ConfigChanged?.Invoke();
+	}
+
 	internal const bool IgnoreConfig = false ||
 #if DEBUG
 		true;
@@ -200,6 +209,18 @@ internal static class Config {
 
 	[Attributes.Advanced]
 	internal static class Debug {
+		[Attributes.Comment("Should a frametime counter be displayed?")]
+		[Attributes.Advanced]
+		internal static bool DisplayFrameTime =
+#if !SHIPPING
+	true;
+#else
+	false;
+#endif
+
+		[Attributes.Ignore]
+		internal const bool TestZoomedOutOverMax = false;
+
 		internal static class Logging {
 			internal static LogLevel LogLevel = LogLevel.Trace;
 #if (!SHIPPING && !RELEASE) || LOG_MONITOR

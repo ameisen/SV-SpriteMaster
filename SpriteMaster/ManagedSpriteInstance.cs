@@ -6,6 +6,7 @@ using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using SpriteMaster.Extensions.Reflection;
 using SpriteMaster.Metadata;
+using SpriteMaster.Mitigations.PyTK;
 using SpriteMaster.Resample;
 using SpriteMaster.Tasking;
 using SpriteMaster.Types;
@@ -44,32 +45,13 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 
 	internal static ulong? GetHash(in SpriteInfo.Initializer info, TextureType type) => Resampler.GetHash(in info, type);
 
-	private static readonly Type? PyTKMappedTexture2DType = ReflectionExt.GetTypeExt("PyTK.Types.MappedTexture2D");
-	private static readonly Type? PyTKScaledTexture2DType = ReflectionExt.GetTypeExt("PyTK.Types.ScaledTexture2D");
-
-	private static readonly Func<object, Dictionary<XRectangle?, Texture2D>>? GetTextureMap = PyTKMappedTexture2DType?.GetMemberGetter<object, Dictionary<XRectangle?, Texture2D>>("Map");
-	private static readonly Func<object, Texture2D>? GetScaledTextureUnderlying = PyTKScaledTexture2DType?.GetMemberGetter<object, Texture2D>("STexture");
-
-	private static XTexture2D GetUnderlyingTexture(XTexture2D texture) {
-		if (GetTextureMap is not null && PyTKMappedTexture2DType is { } mappedTexture2DType && texture.GetType().IsAssignableTo(mappedTexture2DType)) {
-			if (GetTextureMap(texture) is {} map) {
-				return map.FirstOrDefault().Value ?? texture;
-			}
-		}
-		if (GetScaledTextureUnderlying is not null && PyTKScaledTexture2DType is { } scaledTexture2DType && texture.GetType().IsAssignableTo(scaledTexture2DType)) {
-			return GetScaledTextureUnderlying(texture) ?? texture;
-		}
-
-		return texture;
-	}
-
 	internal static bool Validate(XTexture2D texture, bool clean = false) {
 		var meta = texture.Meta();
 		if (meta.Validation.HasValue) {
 			return meta.Validation.Value;
 		}
 
-		texture = GetUnderlyingTexture(texture);
+		texture = texture.GetUnderlyingTexture(out bool hasUnderlying);
 
 		if (texture is InternalTexture2D) {
 			if (!meta.TracePrinted) {
@@ -465,12 +447,29 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 		// TODO : break this up somewhat so that we can delay hashing for things by _one_ frame (still deterministic, but offset so we can parallelize the work).
 		// Presently, this cannot be done because the initializer is a 'ref struct' and is used immediately. If we want to check the suspended cache, it needs to be jammed away
 		// so the hashing can be performed before the next frame.
-		SpriteInfo.Initializer spriteInfoInitializer = new(
-			reference: texture,
-			dimensions: source,
-			expectedScale: expectedScale,
-			textureType: textureType
-		);
+		SpriteInfo.Initializer spriteInfoInitializer;
+
+		try {
+			spriteInfoInitializer = new(
+				reference: texture,
+				dimensions: source,
+				expectedScale: expectedScale,
+				textureType: textureType
+			);
+		}
+		catch (SpriteInfo.Initializer.DataMismatchException ex) {
+#if SHIPPING
+			Debug.Trace(
+#else
+			Debug.Error(
+#endif
+				$"Data Mismatch Exception when attempting to initialize SpriteInfo for {GetNameString()}",
+				ex
+			);
+
+			allowCache = false;
+			return currentInstance;
+		}
 
 		void RestorePriority(ManagedSpriteInstance? instance) {
 			if (instance is not null && !instance.IsReady && instance.DeferredTask.TryGetTarget(out var task)) {
@@ -501,11 +500,24 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 			return resurrectedInstance;
 		}
 
-		// If there was a previous instance, return that for now.
-		if (!textureChain && currentInstance is not null) {
-			// It can be a previous sprite instance instead, so don't cache.
-			allowCache = false;
-			return currentInstance;
+		var currentRevision = textureMeta.Revision;
+		// Check if there is already an in-flight task for this instance.
+		// TODO : this logic feels duplicated - we can already query for the Instance, and it already holds a WeakReference to the task...
+		if (textureMeta.InFlightTasks.TryGetValue(source, out var inFlightTask) && inFlightTask.Revision == currentRevision) {
+			if (
+				inFlightTask.ResampleTask.Status != TaskStatus.WaitingToRun &&
+				currentInstance is not null &&
+				(currentInstance.IsReady ||
+				(currentInstance.DeferredTask.TryGetTarget(out var deferredTask) && !deferredTask.IsCompleted))
+			) {
+				allowCache = false;
+				return currentInstance;
+			}
+
+			if (!inFlightTask.ResampleTask.IsCompleted) {
+				allowCache = false;
+				return null;
+			}
 		}
 
 		if (useStalling && DrawState.PushedUpdateWithin(0)) {
@@ -540,29 +552,21 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 		DrawState.IsUpdatedThisFrame = true;
 
 		try {
-			bool doDispatch = true;
-			var currentRevision = textureMeta.Revision;
+			var resampleTask = ResampleTask.Dispatch(
+				spriteInfo: new(spriteInfoInitializer),
+				async: useAsync,
+				previousInstance: currentInstance
+			);
+			textureMeta.InFlightTasks[source] = new(currentRevision, resampleTask);
 
-			// Check if there is already an in-flight task for this instance.
-			// TODO : this logic feels duplicated - we can already query for the Instance, and it already holds a WeakReference to the task...
-			if (textureMeta.InFlightTasks.TryGetValue(source, out var inFlightTask)) {
-				doDispatch = inFlightTask.Revision != currentRevision || inFlightTask.ResampleTask.Status != TaskStatus.WaitingToRun;
-			}
-
-			Task<ManagedSpriteInstance> resampleTask;
-			if (doDispatch) {
-				resampleTask = ResampleTask.Dispatch(
-					spriteInfo: new(spriteInfoInitializer),
-					async: useAsync,
-					previousInstance: currentInstance
-				);
-				textureMeta.InFlightTasks[source] = new(currentRevision, resampleTask);
+			ManagedSpriteInstance? result;
+			if (resampleTask.IsCompletedSuccessfully) {
+				result = resampleTask.Result;
 			}
 			else {
-				return null;
+				result = currentInstance;
+				allowCache = false;
 			}
-
-			var result = resampleTask.IsCompletedSuccessfully ? resampleTask.Result : currentInstance;
 
 			if (useAsync) {
 				// It adds itself to the relevant maps.
@@ -829,6 +833,7 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 		internal readonly ManagedSpriteInstance? PreviousSpriteInstance;
 		internal readonly WeakReference<XTexture2D> ReferenceTexture;
 		internal readonly ConcurrentLinkedListSlim<WeakInstance>.NodeRef RecentAccessNode;
+		internal readonly object CleanupLock;
 		internal readonly ulong MapHash;
 
 		internal CleanupData(ManagedSpriteInstance instance) {
@@ -836,6 +841,7 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 			ReferenceTexture = instance.Reference;
 			RecentAccessNode = instance.RecentAccessNode;
 			instance.RecentAccessNode = default;
+			CleanupLock = instance.CleanupLock;
 			MapHash = instance.SpriteMapHash;
 		}
 	}
@@ -865,45 +871,50 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 		}
 	}
 
+	private readonly object CleanupLock = new();
 	public void Dispose() {
-		if (IsDisposed.CompareExchange(true, false) == true) {
-			return;
-		}
+		lock (CleanupLock) {
+			if (IsDisposed.CompareExchange(true, false) == true) {
+				return;
+			}
 
-		if (PreviousSpriteInstance is not null) {
-			PreviousSpriteInstance.Suspend(true);
-			PreviousSpriteInstance = null;
-		}
+			if (PreviousSpriteInstance is not null) {
+				PreviousSpriteInstance.Suspend(true);
+				PreviousSpriteInstance = null;
+			}
 
-		if (Reference.TryGetTarget(out var reference)) {
-			SpriteMap.Remove(this, reference);
-			reference.Disposing -= OnParentDispose;
-		}
+			if (Reference.TryGetTarget(out var reference)) {
+				SpriteMap.Remove(this, reference);
+				reference.Disposing -= OnParentDispose;
+			}
 
-		if (RecentAccessNode.IsValid) {
-			RecentAccessList.Release(ref RecentAccessNode);
-			RecentAccessNode = default;
-		}
+			if (RecentAccessNode.IsValid) {
+				RecentAccessList.Release(ref RecentAccessNode);
+				RecentAccessNode = default;
+			}
 
-		if (Suspended.CompareExchange(false, true) == true) {
-			SuspendedSpriteCache.RemoveFast(this);
-		}
+			if (Suspended.CompareExchange(false, true) == true) {
+				SuspendedSpriteCache.RemoveFast(this);
+			}
 
-		GC.SuppressFinalize(this);
+			GC.SuppressFinalize(this);
+		}
 	}
 
 	internal static void Cleanup(in CleanupData data) {
 		Debug.Trace("Cleaning up finalized ManagedSpriteInstance");
-		if (data.PreviousSpriteInstance is not null) {
-			data.PreviousSpriteInstance.Suspend(true);
-		}
+		lock (data.CleanupLock) {
+			if (data.PreviousSpriteInstance is not null) {
+				data.PreviousSpriteInstance.Suspend(true);
+			}
 
-		if (data.ReferenceTexture.TryGetTarget(out var reference)) {
-			SpriteMap.Remove(data, reference);
-		}
+			if (data.ReferenceTexture.TryGetTarget(out var reference)) {
+				SpriteMap.Remove(data, reference);
+			}
 
-		if (data.RecentAccessNode.IsValid) {
-			RecentAccessList.Release(ref Unsafe.AsRef(data.RecentAccessNode));
+			if (data.RecentAccessNode.IsValid) {
+				RecentAccessList.Release(ref Unsafe.AsRef(data.RecentAccessNode));
+			}
 		}
 	}
 
@@ -915,61 +926,65 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 	}
 
 	internal void Suspend(bool clearChildrenIfDispose = false) {
-		if (IsDisposed) {
-			return;
+		lock (CleanupLock) {
+			if (IsDisposed) {
+				return;
+			}
+
+			if (Suspended.CompareExchange(true, false) == true) {
+				return;
+			}
+
+			if (StardewValley.Game1.quit) {
+				return;
+			}
+
+			if (!IsLoaded || !Config.SuspendedCache.Enabled) {
+				Dispose(clearChildrenIfDispose);
+				return;
+			}
+
+			// TODO : Handle clearing any reference to _this_
+			PreviousSpriteInstance = null;
+
+			if (RecentAccessNode.IsValid) {
+				RecentAccessList.Release(ref RecentAccessNode);
+				RecentAccessNode = default;
+			}
+
+			Invalidated = false;
+
+			Reference.SetTarget(null!);
+
+			SuspendedSpriteCache.Add(this);
 		}
-
-		if (Suspended.CompareExchange(true, false) == true) {
-			return;
-		}
-
-		if (StardewValley.Game1.quit) {
-			return;
-		}
-
-		if (!IsLoaded || !Config.SuspendedCache.Enabled) {
-			Dispose(clearChildrenIfDispose);
-			return;
-		}
-
-		// TODO : Handle clearing any reference to _this_
-		PreviousSpriteInstance = null;
-
-		if (RecentAccessNode.IsValid) {
-			RecentAccessList.Release(ref RecentAccessNode);
-			RecentAccessNode = default;
-		}
-
-		Invalidated = false;
-
-		Reference.SetTarget(null!);
-
-		SuspendedSpriteCache.Add(this);
 
 		Debug.Trace($"Sprite Instance '{Name}' {"Suspended".Pastel(DrawingColor.LightGoldenrodYellow)}");
 	}
 
 	internal bool Resurrect(XTexture2D texture, ulong spriteMapHash) {
-		if (StardewValley.Game1.quit) {
-			return false;
+		lock (CleanupLock) {
+			if (StardewValley.Game1.quit) {
+				return false;
+			}
+
+			if (IsDisposed || Suspended.CompareExchange(false, true) != true) {
+				SuspendedSpriteCache.RemoveFast(this);
+				return false;
+			}
+
+			if (!IsLoaded || !Config.SuspendedCache.Enabled) {
+				SuspendedSpriteCache.RemoveFast(this);
+				return false;
+			}
+
+			SuspendedSpriteCache.Resurrect(this);
+			Reference.SetTarget(texture);
+
+			SpriteMapHash = spriteMapHash;
+			texture.Meta().ReplaceInSpriteInstanceTable(SpriteMapHash, this);
+			SpriteMap.AddReplace(texture, this);
 		}
-
-		if (IsDisposed || Suspended.CompareExchange(false, true) != true) {
-			SuspendedSpriteCache.RemoveFast(this);
-			return false;
-		}
-
-		if (!IsLoaded || !Config.SuspendedCache.Enabled) {
-			SuspendedSpriteCache.RemoveFast(this);
-			return false;
-		}
-
-		SuspendedSpriteCache.Resurrect(this);
-		Reference.SetTarget(texture);
-
-		SpriteMapHash = spriteMapHash;
-		texture.Meta().ReplaceInSpriteInstanceTable(SpriteMapHash, this);
-		SpriteMap.AddReplace(texture, this);
 
 		Debug.Trace($"Sprite Instance '{Name}' {"Resurrected".Pastel(DrawingColor.LightCyan)}");
 
