@@ -53,13 +53,10 @@ internal static class Textures {
 	internal static XTexture2D GetUnderlyingTexture(this XTexture2D texture, out bool hasUnderlying) {
 		bool hadUnderlying = false;
 
-		OptionalDisposable<DefaultPooledObject<HashSet<XTexture2D>>> seenSet = default;
-		
+		using var seenSet = ObjectPoolExt.TakeLazy<HashSet<XTexture2D>>();
+
 		while (texture.ParseTexture() is {} parsedTexture) {
-			if (!seenSet.HasValue) {
-				seenSet.Value = ObjectPoolExt.Take<HashSet<XTexture2D>>(set => set.Clear());
-			}
-			if (!seenSet.Value.Value.Add(parsedTexture)) {
+			if (!seenSet.Value.Add(parsedTexture)) {
 				break;
 			}
 			texture = parsedTexture;

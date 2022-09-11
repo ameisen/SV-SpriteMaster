@@ -65,7 +65,7 @@ internal sealed class SpriteInfo : IDisposable {
 				return null;
 			}
 
-			var result = GetDataHash(ReferenceDataInternal, Reference, Bounds, RawOffset, RawStride);
+			var result = GetDataHash(ReferenceDataInternal, Reference, Bounds, RawOffset, RawStride, doThrow: false);
 			if (result.HasValue) {
 				SpriteDataHashInternal = result.Value;
 				return result;
@@ -93,7 +93,7 @@ internal sealed class SpriteInfo : IDisposable {
 		}
 	}
 
-	private static ulong? GetDataHash(byte[] data, XTexture2D reference, Bounds bounds, int rawOffset, int rawStride) {
+	private static ulong? GetDataHash(byte[] data, XTexture2D reference, Bounds bounds, int rawOffset, int rawStride, bool doThrow) {
 		var meta = reference.Meta();
 
 		if (meta.TryGetSpriteHash(bounds, out ulong hash)) {
@@ -131,6 +131,17 @@ internal sealed class SpriteInfo : IDisposable {
 			errorBuilder.AppendLine($"pitch: {rawStride - actualWidth}");
 			errorBuilder.AppendLine($"referenceDataSize: {data.Length}");
 			Debug.Error(ex, errorBuilder.ToString());
+
+			if (doThrow) {
+				throw;
+			}
+			else {
+				if (Debugger.IsAttached) {
+					Debugger.Break();
+				}
+
+				reference.Meta().CachedRawData = null;
+			}
 		}
 		return null;
 	}
@@ -221,6 +232,10 @@ internal sealed class SpriteInfo : IDisposable {
 			[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
 			internal static void Throw(uint actual, uint expected) =>
 				throw new DataMismatchException(actual, expected);
+
+			[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+			internal static void Throw(uint actual, uint expected, Exception innerException) =>
+				throw new DataMismatchException(actual, expected, innerException);
 		}
 
 		internal Initializer(XTexture2D reference, Bounds dimensions, uint expectedScale, TextureType textureType) {
@@ -267,17 +282,27 @@ internal sealed class SpriteInfo : IDisposable {
 				flags |= SpriteFlags.WasCached;
 			}
 
-			if (refData is not null && reference.Format == SurfaceFormat.Color) {
+			[DoesNotReturn, MethodImpl(MethodImplOptions.NoInlining)]
+			void ThrowMismatchException(uint actualLength, uint expectedLength, Exception? innerException = null) {
+				Debug.Error($"Texture cached data size mismatch: {actualLength} != {expectedLength}");
+				if (Debugger.IsAttached) {
+					Debugger.Break();
+				}
+
+				refMeta.CachedRawData = null;
+				if (innerException is not null) {
+					DataMismatchException.Throw(actualLength, expectedLength, innerException);
+				}
+				else {
+					DataMismatchException.Throw(actualLength, expectedLength);
+				}
+			}
+
+			if (refData is not null) {
 				uint refDataLen = (uint)refData.Length;
 				uint expectedLength = refMeta.ExpectedByteSize;
 				if (refDataLen != expectedLength) {
-					Debug.Error($"Texture cached data size mismatch: {refDataLen} != {expectedLength}");
-					if (Debugger.IsAttached) {
-						Debugger.Break();
-					}
-
-					refMeta.CachedRawData = null;
-					DataMismatchException.Throw(refDataLen, expectedLength);
+					ThrowMismatchException(refDataLen, expectedLength);
 				}
 			}
 
@@ -299,14 +324,24 @@ internal sealed class SpriteInfo : IDisposable {
 			if (refMeta.IsAnimated(dimensions)) {
 				flags |= SpriteFlags.Animated;
 				if (Config.SuspendedCache.Enabled) {
-					(Hash, DataHash) = GetHash(flags);
+					try {
+						(Hash, DataHash) = GetHash(flags, doThrow: true);
+					}
+					catch (ArgumentOutOfRangeException ex) {
+						Hash = null;
+						DataHash = null;
+
+						uint refDataLen = (uint)(refData?.Length ?? 0);
+						uint expectedLength = refMeta.ExpectedByteSize;
+						ThrowMismatchException(refDataLen, expectedLength, ex);
+					}
 				}
 			}
 
 			Flags = flags;
 		}
 
-		private readonly (ulong? SpriteHash, ulong? DataHash) GetHash(SpriteFlags flags) {
+		private readonly (ulong? SpriteHash, ulong? DataHash) GetHash(SpriteFlags flags, bool doThrow) {
 			if (ReferenceData is null) {
 				return (null, null);
 			}
@@ -315,7 +350,7 @@ internal sealed class SpriteInfo : IDisposable {
 			int rawStride = format.SizeBytes(Reference.Width);
 			int rawOffset = (rawStride * Bounds.Top) + format.SizeBytes(Bounds.Left);
 
-			var dataHash = GetDataHash(ReferenceData, Reference, Bounds, rawOffset, rawStride);
+			var dataHash = GetDataHash(ReferenceData, Reference, Bounds, rawOffset, rawStride, doThrow);
 
 			if (dataHash is null) {
 				return (null, null);

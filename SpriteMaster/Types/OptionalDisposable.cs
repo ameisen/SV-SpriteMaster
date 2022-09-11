@@ -7,7 +7,7 @@ internal ref struct OptionalDisposable<T> where T : IDisposable {
 	internal T? Value = default;
 
 	internal readonly bool HasValue =>
-		EqualityComparer<T?>.Default.Equals(Value, default);
+		!EqualityComparer<T?>.Default.Equals(Value, default);
 
 	public OptionalDisposable() {
 	}

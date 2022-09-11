@@ -52,26 +52,8 @@ internal static class PGraphicsDevice {
 
 	#region OnPlatformDrawUserIndexedPrimitives
 
-	private static class VertexDeclarationClass<T> where T : struct {
-		internal static readonly VertexDeclaration Value;
-
-		static VertexDeclarationClass() {
-			if (
-				ReflectionExt.GetTypeExt("Microsoft.Xna.Framework.Graphics.VertexDeclarationCache")
-					?.MakeGenericType(new[] {typeof(T)})
-					?.GetProperty("VertexDeclaration", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
-					?.GetValue(null) is VertexDeclaration declaration
-			) {
-				Value = declaration;
-			}
-			else {
-				Value = VertexDeclaration.FromType(typeof(T));
-			}
-		}
-	}
-
 	[Harmonize(
-		"DrawUserIndexedPrimitives",
+		"PlatformDrawUserIndexedPrimitives",
 		Fixation.Prefix,
 		PriorityLevel.Last,
 		generic: Generic.Struct
@@ -101,37 +83,7 @@ internal static class PGraphicsDevice {
 	}
 
 	[Harmonize(
-		"DrawUserIndexedPrimitives",
-		Fixation.Prefix,
-		PriorityLevel.Last,
-		generic: Generic.Struct,
-		genericConstraints: new[] { typeof(IVertexType) }
-	)]
-	public static unsafe bool OnDrawUserIndexedPrimitives<T>(
-		GraphicsDevice __instance,
-		PrimitiveType primitiveType,
-		T[] vertexData,
-		int vertexOffset,
-		int numVertices,
-		short[] indexData,
-		int indexOffset,
-		int primitiveCount
-	) where T : unmanaged {
-		return !GL.GraphicsDeviceExt.DrawUserIndexedPrimitives(
-			__instance,
-			primitiveType,
-			vertexData,
-			vertexOffset,
-			numVertices,
-			indexData,
-			indexOffset,
-			primitiveCount,
-			VertexDeclarationClass<T>.Value
-		);
-	}
-
-	[Harmonize(
-		"DrawUserIndexedPrimitives",
+		"PlatformDrawUserIndexedPrimitives",
 		Fixation.Prefix,
 		PriorityLevel.Last,
 		generic: Generic.Struct
@@ -157,36 +109,6 @@ internal static class PGraphicsDevice {
 			indexOffset,
 			primitiveCount,
 			vertexDeclaration
-		);
-	}
-
-	[Harmonize(
-		"DrawUserIndexedPrimitives",
-		Fixation.Prefix,
-		PriorityLevel.Last,
-		generic: Generic.Struct,
-		genericConstraints: new[] { typeof(IVertexType) }
-	)]
-	public static unsafe bool OnDrawUserIndexedPrimitives<T>(
-		GraphicsDevice __instance,
-		PrimitiveType primitiveType,
-		T[] vertexData,
-		int vertexOffset,
-		int numVertices,
-		int[] indexData,
-		int indexOffset,
-		int primitiveCount
-	) where T : unmanaged {
-		return !GL.GraphicsDeviceExt.DrawUserIndexedPrimitives(
-			__instance,
-			primitiveType,
-			vertexData,
-			vertexOffset,
-			numVertices,
-			indexData,
-			indexOffset,
-			primitiveCount,
-			VertexDeclarationClass<T>.Value
 		);
 	}
 

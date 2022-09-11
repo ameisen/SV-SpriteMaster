@@ -4,7 +4,6 @@ using Pastel;
 using SpriteMaster.Caching;
 using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
-using SpriteMaster.Extensions.Reflection;
 using SpriteMaster.Metadata;
 using SpriteMaster.Mitigations.PyTK;
 using SpriteMaster.Resample;
@@ -13,10 +12,8 @@ using SpriteMaster.Types;
 using SpriteMaster.Types.Interlocking;
 using StardewValley;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -51,212 +48,209 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 			return meta.Validation.Value;
 		}
 
+		var topTexture = texture;
 		texture = texture.GetUnderlyingTexture(out bool hasUnderlying);
 
-		if (texture is InternalTexture2D) {
-			if (!meta.TracePrinted) {
-				meta.TracePrinted = true;
-				Debug.Trace($"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Is Internal Texture");
-			}
-			meta.Validation = false;
-			if (clean) {
-				PurgeInvalidated(texture);
-			}
-			return false;
-		}
-
-		if (texture is RenderTarget2D && (
-				StardewValley.GameRunner.instance.gameInstances.AnyF(game => texture == game.screen || texture == game.uiScreen) ||
-				texture.Name is ("UI Screen" or "Screen") ||
-				meta.IsSystemRenderTarget
-			)
-		) {
-			if (!meta.TracePrinted) {
-				meta.TracePrinted = true;
-				//Debug.Trace($"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Is System Render Target");
-			}
-			meta.Validation = false;
-			if (clean) {
-				PurgeInvalidated(texture);
-			}
-			return false;
-		}
-
-		// For now, render targets are disabled. General ones _can_ be made to work - they need to be invalidated once they are bound to a render target slot,
-		// and a hold set on using them until they are no longer bound to a render target slot. Or on clear calls. If the render target is not a persist-type,
-		// it should be processed _immediately_. If it is, it should be processed synchronously on first use.
-		if (texture is RenderTarget2D) {
-			if (!meta.TracePrinted) {
-				meta.TracePrinted = true;
-				Debug.Trace($"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Is Render Target");
-			}
-			meta.Validation = false;
-			if (clean) {
-				PurgeInvalidated(texture);
-			}
-			return false;
-		}
-
-		if (Math.Max(texture.Width, texture.Height) <= Config.Resample.MinimumTextureDimensions) {
-			if (!meta.TracePrinted) {
-				meta.TracePrinted = true;
-				Debug.Trace($"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Is Too Small: ({texture.Extent().ToString(DrawingColor.Orange)} <= {Config.Resample.MinimumTextureDimensions.ToString(DrawingColor.Orange)})");
-			}
-			meta.Validation = false;
-			if (clean) {
-				PurgeInvalidated(texture);
-			}
-			return false;
-		}
-
-		if (texture.Area() == 0) {
-			if (!meta.TracePrinted) {
-				meta.TracePrinted = true;
-				Debug.Trace($"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Zero Area (Degenerate)");
-			}
-			meta.Validation = false;
-			if (clean) {
-				PurgeInvalidated(texture);
-			}
-			return false;
-		}
-
-		// TODO pComPtr check?
-		if (texture.IsDisposed || texture.GraphicsDevice.IsDisposed) {
-			if (!meta.TracePrinted) {
-				meta.TracePrinted = true;
-				Debug.Trace($"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Is Zombie");
-			}
-			meta.Validation = false;
-			if (clean) {
-				PurgeInvalidated(texture);
-			}
-			return false;
-		}
-
-		if (texture.LevelCount > 1) {
-			if (!meta.TracePrinted) {
-				meta.TracePrinted = true;
-				Debug.Trace($"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Multi-Level Textures Unsupported: {texture.LevelCount.ToString(DrawingColor.Orange)} levels");
-			}
-			meta.Validation = false;
-			return false;
-		}
-
-		if (!HasLegalFormat(texture)) {
-			if (!meta.TracePrinted) {
-				meta.TracePrinted = true;
-				Debug.Trace($"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Format Unsupported: {texture.Format.ToString(DrawingColor.Orange)}");
-			}
-			meta.Validation = false;
-			if (clean) {
-				PurgeInvalidated(texture);
-			}
-			return false;
-		}
-
-		bool disableValidation = false;
-
-		bool IsLargeFont(Texture2D texture) {
-			if (
-				texture.NormalizedName().StartsWith(@"Fonts\") &&
-				(
-					!texture.NormalizedName().Contains("Small") ||
-					!texture.NormalizedName().Contains("tiny")
-				)
-			) {
-				return true;
-			}
-
-			if (Game1.dialogueFont is null) {
-				disableValidation = true;
-			}
-			else if (texture == Game1.dialogueFont.Texture) {
-				return true;
-			}
-
-			return false;
-		}
-
-		var isText = texture.Format == SurfaceFormat.Dxt3;
-		var isLargeText = isText && IsLargeFont(texture);
-		var isSmallText = isText && !isLargeText;
-
-		if (isLargeText) {
-			meta.Flags |= Texture2DMeta.TextureFlag.IsLargeFont;
-		}
-		else {
-			meta.Flags &= ~Texture2DMeta.TextureFlag.IsLargeFont;
-		}
-
-		if (isSmallText) {
-			meta.Flags |= Texture2DMeta.TextureFlag.IsSmallFont;
-		}
-		else {
-			meta.Flags &= ~Texture2DMeta.TextureFlag.IsSmallFont;
-		}
-
-		if (!(Configuration.Preview.Override.Instance?.ResampleLargeText ?? Config.Resample.EnabledLargeText) && isLargeText) {
-			if (!meta.TracePrinted) {
-				meta.TracePrinted = true;
-				Debug.Trace($"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Is Font (and text resampling is disabled)");
-			}
-			meta.Validation = false;
-			if (clean) {
-				PurgeInvalidated(texture);
-			}
-			return false;
-		}
-		if (!(Configuration.Preview.Override.Instance?.ResampleSmallText ?? Config.Resample.EnabledSmallText) && isSmallText) {
-			// The only BC2 texture that I've _ever_ seen is the internal font
-
-			if (!meta.TracePrinted) {
-				meta.TracePrinted = true;
-				Debug.Trace($"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Is Basic Font (and basic text resampling is disabled)");
-			}
-			meta.Validation = false;
-			if (clean) {
-				PurgeInvalidated(texture);
-			}
-			return false;
-		}
-
-		if (!texture.Anonymous()) {
-			foreach (var blacklistPattern in Config.Resample.BlacklistPatterns) {
-				if (!blacklistPattern.IsMatch(texture.NormalizedName())) {
-					continue;
+		bool InnerValidate() {
+			if (texture is InternalTexture2D) {
+				if (!meta.TracePrinted) {
+					meta.TracePrinted = true;
+					Debug.Trace($"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Is Internal Texture");
 				}
+
+				return false;
+			}
+
+			if (texture is RenderTarget2D && (
+						StardewValley.GameRunner.instance.gameInstances.AnyF(
+							game => texture == game.screen || texture == game.uiScreen || topTexture == game.screen || topTexture == game.uiScreen
+						) ||
+						texture.Name is ("UI Screen" or "Screen") ||
+						meta.IsSystemRenderTarget
+					)
+				) {
+				if (!meta.TracePrinted) {
+					meta.TracePrinted = true;
+					//Debug.Trace($"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Is System Render Target");
+				}
+
+				return false;
+			}
+
+			// For now, render targets are disabled. General ones _can_ be made to work - they need to be invalidated once they are bound to a render target slot,
+			// and a hold set on using them until they are no longer bound to a render target slot. Or on clear calls. If the render target is not a persist-type,
+			// it should be processed _immediately_. If it is, it should be processed synchronously on first use.
+			if (texture is RenderTarget2D) {
+				if (!meta.TracePrinted) {
+					meta.TracePrinted = true;
+					Debug.Trace($"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Is Render Target");
+				}
+
+				return false;
+			}
+
+			if (Math.Max(topTexture.Width, topTexture.Height) <= Config.Resample.MinimumTextureDimensions) {
+				if (!meta.TracePrinted) {
+					meta.TracePrinted = true;
+					Debug.Trace(
+						$"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Is Too Small: ({topTexture.Extent().ToString(DrawingColor.Orange)} <= {Config.Resample.MinimumTextureDimensions.ToString(DrawingColor.Orange)})"
+					);
+				}
+
+				return false;
+			}
+
+			if (topTexture.Area() == 0) {
+				if (!meta.TracePrinted) {
+					meta.TracePrinted = true;
+					Debug.Trace(
+						$"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Zero Area (Degenerate)"
+					);
+				}
+
+				return false;
+			}
+
+			// TODO pComPtr check?
+			if (topTexture.IsDisposed || topTexture.GraphicsDevice.IsDisposed) {
+				if (!meta.TracePrinted) {
+					meta.TracePrinted = true;
+					Debug.Trace($"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Is Zombie");
+				}
+
+				return false;
+			}
+
+			if (topTexture.LevelCount > 1) {
+				if (!meta.TracePrinted) {
+					meta.TracePrinted = true;
+					Debug.Trace(
+						$"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Multi-Level Textures Unsupported: {topTexture.LevelCount.ToString(DrawingColor.Orange)} levels"
+					);
+				}
+
+				return false;
+			}
+
+			if (!HasLegalFormat(topTexture)) {
+				if (!meta.TracePrinted) {
+					meta.TracePrinted = true;
+					Debug.Trace(
+						$"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Format Unsupported: {topTexture.Format.ToString(DrawingColor.Orange)}"
+					);
+				}
+
+				return false;
+			}
+
+			bool disableValidation = false;
+
+			bool IsLargeFont() {
+				if (
+					texture.NormalizedName().StartsWith(@"Fonts\") &&
+					(
+						!texture.NormalizedName().Contains("Small") ||
+						!texture.NormalizedName().Contains("tiny")
+					)
+				) {
+					return true;
+				}
+
+				if (Game1.dialogueFont is null) {
+					disableValidation = true;
+				}
+				else if (texture == Game1.dialogueFont.Texture || topTexture == Game1.dialogueFont.Texture) {
+					return true;
+				}
+
+				return false;
+			}
+
+			var isText = texture.Format == SurfaceFormat.Dxt3 || topTexture.Format == SurfaceFormat.Dxt3;
+			var isLargeText = isText && IsLargeFont();
+			var isSmallText = isText && !isLargeText;
+
+			if (isLargeText) {
+				meta.Flags |= Texture2DMeta.TextureFlag.IsLargeFont;
+			}
+			else {
+				meta.Flags &= ~Texture2DMeta.TextureFlag.IsLargeFont;
+			}
+
+			if (isSmallText) {
+				meta.Flags |= Texture2DMeta.TextureFlag.IsSmallFont;
+			}
+			else {
+				meta.Flags &= ~Texture2DMeta.TextureFlag.IsSmallFont;
+			}
+
+			if (!(Configuration.Preview.Override.Instance?.ResampleLargeText ?? Config.Resample.EnabledLargeText) &&
+					isLargeText) {
+				if (!meta.TracePrinted) {
+					meta.TracePrinted = true;
+					Debug.Trace(
+						$"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Is Font (and text resampling is disabled)"
+					);
+				}
+
+				return false;
+			}
+
+			if (!(Configuration.Preview.Override.Instance?.ResampleSmallText ?? Config.Resample.EnabledSmallText) &&
+					isSmallText) {
+				// The only BC2 texture that I've _ever_ seen is the internal font
 
 				if (!meta.TracePrinted) {
 					meta.TracePrinted = true;
-					Debug.Trace($"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Is Blacklisted ({blacklistPattern})");
+					Debug.Trace(
+						$"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Is Basic Font (and basic text resampling is disabled)"
+					);
 				}
-				meta.Validation = false;
-				if (clean) {
-					PurgeInvalidated(texture);
-				}
+
 				return false;
 			}
-		}
 
-		if (!(Configuration.Preview.Override.Instance?.ResampleSprites ?? Config.Resample.EnabledSprites) && !isLargeText && !isSmallText) {
-			if (!meta.TracePrinted) {
-				meta.TracePrinted = true;
-				Debug.Trace(
-					$"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Is Sprite (and sprite resampling is disabled)"
-				);
+			if (!texture.Anonymous()) {
+				foreach (var blacklistPattern in Config.Resample.BlacklistPatterns) {
+					if (!blacklistPattern.IsMatch(texture.NormalizedName())) {
+						continue;
+					}
+
+					if (!meta.TracePrinted) {
+						meta.TracePrinted = true;
+						Debug.Trace(
+							$"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Is Blacklisted ({blacklistPattern})"
+						);
+					}
+
+					return false;
+				}
 			}
 
+			if (!(Configuration.Preview.Override.Instance?.ResampleSprites ?? Config.Resample.EnabledSprites) &&
+					!isLargeText && !isSmallText) {
+				if (!meta.TracePrinted) {
+					meta.TracePrinted = true;
+					Debug.Trace(
+						$"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Is Sprite (and sprite resampling is disabled)"
+					);
+				}
+
+				return false;
+			}
+
+			if (!disableValidation && (isText || !texture.Anonymous())) {
+				meta.Validation = true;
+			}
+
+			return true;
+		}
+
+		if (!InnerValidate()) {
 			meta.Validation = false;
 			if (clean) {
-				PurgeInvalidated(texture);
+				PurgeInvalidated(topTexture);
 			}
-
-			return false;
-		}
-
-		if (!disableValidation && (isText || !texture.Anonymous())) {
-			meta.Validation = true;
 		}
 
 		return true;

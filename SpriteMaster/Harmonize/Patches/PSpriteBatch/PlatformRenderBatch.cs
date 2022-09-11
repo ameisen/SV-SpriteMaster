@@ -273,7 +273,7 @@ internal static class PlatformRenderBatch {
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static void EnsureVertexCapacity(SpriteBatcher @this, int numBatchItems) {
-		int neededCapacity = numBatchItems << 2;
+		int neededCapacity = (int)((uint)numBatchItems * 4u);
 		if (@this._vertexArray is null || @this._vertexArray.Length < neededCapacity) {
 			@this._vertexArray = GC.AllocateUninitializedArray<VertexPositionColorTexture>(neededCapacity, pinned: true);
 		}

@@ -2,11 +2,12 @@
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.OpenGL;
 using SpriteMaster.Extensions;
-using SpriteMaster.Extensions.Reflection;
 using System;
+using System.Collections.Generic;
 using System.Numerics;
-using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using static Microsoft.Xna.Framework.Graphics.VertexDeclaration.VertexDeclarationAttributeInfo;
 
 namespace SpriteMaster.GL;
 
@@ -23,7 +24,8 @@ internal static partial class GraphicsDeviceExt {
 
 	internal static unsafe class SpriteBatcherValues {
 		internal const int MaxBatchSize = SpriteBatcher.MaxBatchSize;
-		internal static readonly short[] Indices16 = GC.AllocateUninitializedArray<short>(MaxBatchSize * 6);
+		internal const int MaxIndicesCount = MaxBatchSize * 6;
+		internal static readonly short[] Indices16 = GC.AllocateUninitializedArray<short>(MaxIndicesCount);
 
 #if false
 		internal static readonly Lazy<GLExt.ObjectId> IndexBuffer16 = new(() => GetIndexBuffer(Indices16), mode: LazyThreadSafetyMode.None);
@@ -149,13 +151,25 @@ internal static partial class GraphicsDeviceExt {
 		// Iterate over each attribute, setting the bitmask's bits appropriately for each offset in the array.
 		uint attributeBit = 1u;
 		uint bitmask = 0U;
-		for (int attribute = 0; attribute < attributes.Length; ++attribute, attributeBit <<= 1) {
-			bool flagValue = attributes[attribute];
+		foreach (var flagValue in attributes) {
 			int flag = flagValue.ReinterpretAs<byte>();
 
 			bitmask |= (uint)-flag & attributeBit;
+
+			attributeBit <<= 1;
 		}
 
+		// If the bitmask is different, then attribute enablement has changed - take the slow path.
+		// This is incredibly rare, surprisingly.
+		if (bitmask != EnabledAttributeBitmask) {
+			return SetVertexAttributeArraySlowPath(attributes);
+		}
+
+		return true;
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static bool SetVertexAttributeBitmask(GraphicsDevice @this, uint bitmask, bool[] attributes) {
 		// If the bitmask is different, then attribute enablement has changed - take the slow path.
 		// This is incredibly rare, surprisingly.
 		if (bitmask != EnabledAttributeBitmask) {
@@ -217,7 +231,7 @@ internal static partial class GraphicsDeviceExt {
 	// in 99% of cases by just using a simple inline cache like this. This hits almost every time.
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static VertexDeclaration.VertexDeclarationAttributeInfo GetAttributeInfo(VertexDeclaration @this, Shader shader, int programHash) {
-		if (LastProgramHash != programHash || LastAttributeInfo is not { } attributeInfo) {
+		if (LastProgramHash != programHash || LastAttributeInfo is not {} attributeInfo) {
 			LastAttributeInfo = attributeInfo = @this.GetAttributeInfo(shader, programHash);
 			LastProgramHash = programHash;
 		}
@@ -227,26 +241,17 @@ internal static partial class GraphicsDeviceExt {
 
 	private static readonly bool SupportsInstancing = DrawState.Device.GraphicsCapabilities.SupportsInstancing;
 
-	private static readonly Func<object, int> GetInstanceFrequency = typeof(GraphicsDevice)
-		.GetNestedType("BufferBindingInfo", BindingFlags.Public | BindingFlags.NonPublic)?
-		.GetFieldGetter<object, int>("InstanceFrequency") ?? (_ => 1);
-
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static unsafe void VertexDeclarationApply(VertexDeclaration @this, Shader shader, nint offset, int programHash) {
 		VertexDeclaration.VertexDeclarationAttributeInfo attributeInfo = GetAttributeInfo(@this, shader, programHash);
 
 		uint vertexStride = (uint)@this.VertexStride;
-
-		// This allows us to avoid a more complex boolean check every iteration of the loop
-		bool resetInstancing = false;
-		if (SupportsInstancing) {
-			resetInstancing = GetInstanceFrequency(GraphicsDevice._bufferBindingInfos[0]) != 0;
-		}
+		uint bitmask = 0u;
 
 		// It's faster to iterate over a list-span than a list itself. Significantly so (about 5x).
 		foreach (var element in attributeInfo.Elements.AsSpan()) {
 			// Call our function pointer version - this is called a lot, so we want reduced overhead.
-			GLExt.VertexAttribPointer(
+			VertexAttribPointerInternal(
 				(uint)element.AttributeLocation,
 				element.NumberOfElements,
 				(GLExt.ValueType)element.VertexAttribPointerType,
@@ -254,13 +259,174 @@ internal static partial class GraphicsDeviceExt {
 				vertexStride,
 				offset + element.Offset
 			);
-			if (resetInstancing) {
+
+			bitmask |= 1u << element.AttributeLocation;
+
+			// This allows us to avoid a more complex boolean check every iteration of the loop
+			if (SupportsInstancing) {
 				MonoGame.OpenGL.GL.VertexAttribDivisor(element.AttributeLocation, 0);
 			}
 		}
-		SetVertexAttributeArray(@this.GraphicsDevice, attributeInfo.EnabledAttributes);
+		SetVertexAttributeBitmask(@this.GraphicsDevice, bitmask, attributeInfo.EnabledAttributes);
 		GraphicsDevice._attribsDirty = true;
 	}
+
+	#region BindBufferOverride
+
+	private static readonly Dictionary<BufferTarget, GLExt.ObjectId> OtherBufferBindings = new();
+	private static readonly GLExt.ObjectId[] PrimaryBufferBindingsArray = GC.AllocateArray<GLExt.ObjectId>(2, pinned: true);
+	private static readonly unsafe GLExt.ObjectId* PrimaryBufferBindings = PrimaryBufferBindingsArray.GetPointerFromPinned();
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static void BindBufferOverride(BufferTarget target, int obj) =>
+		BindBufferInternal(target, (GLExt.ObjectId)obj);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static unsafe void BindBufferInternal(BufferTarget target, GLExt.ObjectId obj) {
+		int offset = (int)target - (int)BufferTarget.ArrayBuffer;
+
+		if (offset <= 1) {
+			if (PrimaryBufferBindings[offset] != obj) {
+				PrimaryBufferBindings[offset] = obj;
+				GLExt.BindBuffer(target, obj);
+			}
+		}
+		else {
+			BindBufferInternalSlowPath(target, obj);
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	private static unsafe void BindBufferInternalSlowPath(BufferTarget target, GLExt.ObjectId obj) {
+		if (!OtherBufferBindings.TryGetValue(target, out var boundObj) || boundObj != obj) {
+			OtherBufferBindings[target] = obj;
+			GLExt.BindBuffer(target, obj);
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static unsafe bool BindBufferInternalResult(BufferTarget target, GLExt.ObjectId obj) {
+		int offset = (int)target - (int)BufferTarget.ArrayBuffer;
+
+		if (PrimaryBufferBindings[offset] != obj) {
+			PrimaryBufferBindings[offset] = obj;
+			GLExt.BindBuffer(target, obj);
+			return true;
+		}
+
+		return false;
+	}
+
+	#endregion
+
+	#region VertexAttributeDivisor
+
+	private static readonly Lazy<int> MaxVertexAttributes = new(
+		() => {
+			MonoGame.OpenGL.GL.GetInteger((int)MonoGame.OpenGL.GetPName.MaxVertexAttribs, out int value);
+			return value;
+		}
+	);
+
+	private static readonly uint[] VertexAttribDivisorsArray = GC.AllocateArray<uint>(MaxVertexAttributes.Value, pinned: true);
+	private static readonly unsafe uint* VertexAttribDivisors = VertexAttribDivisorsArray.GetPointerFromPinned();
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static unsafe void VertexAttribDivisorOverride(int index, int divisor) {
+		uint uDivisor = (uint)divisor;
+		
+		if (VertexAttribDivisors[index] != uDivisor) {
+			VertexAttribDivisors[index] = uDivisor;
+
+			GLExt.VertexAttribDivisor((uint)index, uDivisor);
+		}
+	}
+
+	#endregion
+
+	#region VertexAttributePointer
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static void VertexAttribPointerOverride(
+		int location,
+		int elementCount,
+		VertexAttribPointerType type,
+		bool normalize,
+		int stride,
+		IntPtr data
+	) {
+		VertexAttribPointerInternal(
+			(uint)location,
+			elementCount,
+			(GLExt.ValueType)type,
+			normalize,
+			(uint)stride,
+			data
+		);
+	}
+
+	[StructLayout(LayoutKind.Sequential, Pack = 4)]
+	private readonly record struct AttributePointer(
+		nint Data,							// 8
+		int ElementCount,				// 12
+		GLExt.ValueType Type,		// 16
+		uint Stride,						// 20
+		bool Normalize					// 21 (24)
+	) {
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal unsafe bool FastEquals(in AttributePointer other) {
+			ulong* thisPtr = (ulong*)Unsafe.AsPointer(ref Unsafe.AsRef(this));
+			ulong* otherPtr = (ulong*)Unsafe.AsPointer(ref Unsafe.AsRef(other));
+
+			return
+				thisPtr[0] == otherPtr[0] &&
+				thisPtr[1] == otherPtr[1] &&
+				thisPtr[2] == otherPtr[2];
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal unsafe bool FastEqualsBr(in AttributePointer other) {
+			ulong* thisPtr = (ulong*)Unsafe.AsPointer(ref Unsafe.AsRef(this));
+			ulong* otherPtr = (ulong*)Unsafe.AsPointer(ref Unsafe.AsRef(other));
+
+			return
+				(thisPtr[0] == otherPtr[0]) &
+				(thisPtr[1] == otherPtr[1]) &
+				(thisPtr[2] == otherPtr[2]);
+		}
+	};
+
+	private static readonly AttributePointer[] VertexAttributePointersArray = GC.AllocateArray<AttributePointer>(MaxVertexAttributes.Value, pinned: true);
+	private static readonly unsafe AttributePointer* VertexAttributePointers = VertexAttributePointersArray.GetPointerFromPinned();
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static unsafe void VertexAttribPointerInternal(
+		uint location,
+		int elementCount,
+		GLExt.ValueType type,
+		bool normalize,
+		uint stride,
+		nint data
+	) {
+		var currentAttributePointer = new AttributePointer(data, elementCount, type, stride, normalize);
+		var attributePointer = VertexAttributePointers + location;
+		if (currentAttributePointer.FastEquals(*attributePointer)) {
+			return;
+		}
+
+		*attributePointer = currentAttributePointer;
+
+		GLExt.VertexAttribPointer(
+			location,
+			elementCount,
+			type,
+			normalize,
+			stride,
+			data
+		);
+	}
+
+	#endregion
 
 	internal static unsafe bool DrawUserIndexedPrimitives<TVertex, TIndex>(
 		GraphicsDevice @this,
@@ -284,11 +450,12 @@ internal static partial class GraphicsDeviceExt {
 			@this.ApplyState(true);
 
 			// Unbind current VBOs.
-			MonoGame.OpenGL.GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+			BindBufferInternal(BufferTarget.ArrayBuffer, GLExt.ObjectId.None);
 			GraphicsExtensions.CheckGLError();
-			MonoGame.OpenGL.GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
+			if (BindBufferInternalResult(BufferTarget.ElementArrayBuffer, GLExt.ObjectId.None)) {
+				@this._indexBufferDirty = true;
+			}
 			GraphicsExtensions.CheckGLError();
-			@this._indexBufferDirty = true;
 
 			var type = primitiveType.GetGl();
 			var count = primitiveType.GetElementCountArray(primitiveCount);
@@ -321,7 +488,7 @@ internal static partial class GraphicsDeviceExt {
 						GLExt.DrawRangeElements(
 							GLPrimitiveType.Triangles,
 							0,
-							SpriteBatcherValues.GetMaxArrayIndex(count, (uint)indexOffset),
+							SpriteBatcherValues.GetMaxArrayIndex((uint)primitiveCount, (uint)indexOffset),
 							count,
 							GLExt.ValueType.UnsignedShort,
 							offsetIndexPtr
@@ -348,11 +515,24 @@ internal static partial class GraphicsDeviceExt {
 		return true;
 	}
 
+	private static readonly MonoGame.OpenGL.GL.BindBufferDelegate OriginalBindBuffer =
+		MonoGame.OpenGL.GL.BindBuffer;
+
+	private static readonly MonoGame.OpenGL.GL.VertexAttribDivisorDelegate OriginalVertexAttribDivisor =
+		MonoGame.OpenGL.GL.VertexAttribDivisor;
+
+	private static readonly MonoGame.OpenGL.GL.VertexAttribPointerDelegate OriginalVertexAttribPointer =
+		MonoGame.OpenGL.GL.VertexAttribPointer;
+
 	// When the config changes, update the enablement booleans.
 	private static void OnConfigChanged() {
 		Enabled.DrawUserIndexedPrimitives =
 			Enabled.DrawUserIndexedPrimitivesInternal &&
 			SMConfig.Extras.OpenGL.Enabled &&
 			SMConfig.Extras.OpenGL.OptimizeDrawUserIndexedPrimitives;
+
+		MonoGame.OpenGL.GL.BindBuffer = BindBufferOverride;
+		MonoGame.OpenGL.GL.VertexAttribDivisor = VertexAttribDivisorOverride;
+		MonoGame.OpenGL.GL.VertexAttribPointer = VertexAttribPointerOverride;
 	}
 }
