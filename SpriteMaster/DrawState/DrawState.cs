@@ -70,8 +70,9 @@ internal static partial class DrawState {
 	private static TimeSpan ExpectedFrameTime = GameConstants.FrameTime.TimeSpan;
 	internal static bool ForceSynchronous = false;
 
-	private static TimeSpan[] LastFrameTimes = new TimeSpan[64];
 	private static int LastFrameTimesIndex = 0;
+	private static TimeSpan[] LastFrameTimesCPU = new TimeSpan[64];
+	private static TimeSpan[] LastFrameTimesTotal = new TimeSpan[64];
 	private static readonly System.Diagnostics.Stopwatch FrameStopwatch = System.Diagnostics.Stopwatch.StartNew();
 	private static readonly System.Diagnostics.Stopwatch RealFrameStopwatch = System.Diagnostics.Stopwatch.StartNew();
 
@@ -126,19 +127,31 @@ internal static partial class DrawState {
 
 		using var watchdogScoped = WatchDog.WatchDog.ScopedWorkingState;
 
-		TimeSpan? lastFrameTime = null;
+		TimeSpan? lastFrameTimeCPU = null;
+		TimeSpan? lastFrameTimeTotal = null;
 
 		if (Config.Debug.DisplayFrameTime) {
-			TimeSpan sumTime = TimeSpan.Zero;
-			foreach (var frameTime in LastFrameTimes) {
-				sumTime += frameTime;
-			}
+			{
+				TimeSpan sumTime = TimeSpan.Zero;
+				foreach (var frameTime in LastFrameTimesCPU) {
+					sumTime += frameTime;
+				}
 
-			sumTime /= LastFrameTimes.Length;
-			lastFrameTime = sumTime;
+				sumTime /= LastFrameTimesCPU.Length;
+				lastFrameTimeCPU = sumTime;
+			}
+			{
+				TimeSpan sumTime = TimeSpan.Zero;
+				foreach (var frameTime in LastFrameTimesTotal) {
+					sumTime += frameTime;
+				}
+
+				sumTime /= LastFrameTimesTotal.Length;
+				lastFrameTimeTotal = sumTime;
+			}
 		}
 
-		Debug.Mode.Draw(lastFrameTime);
+		Debug.Mode.Draw(lastFrameTimeCPU, lastFrameTimeTotal);
 
 		++CurrentFrame;
 
@@ -171,8 +184,9 @@ internal static partial class DrawState {
 
 		if (Config.Debug.DisplayFrameTime) {
 			int index = LastFrameTimesIndex++;
-			LastFrameTimesIndex %= LastFrameTimes.Length;
-			LastFrameTimes[index] = RealFrameStopwatch.Elapsed;
+			LastFrameTimesIndex %= LastFrameTimesCPU.Length;
+			LastFrameTimesCPU[index] = RealFrameStopwatch.Elapsed;
+			LastFrameTimesTotal[index] = FrameStopwatch.Elapsed;
 		}
 
 		if (!Config.IsEnabled) {

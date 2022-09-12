@@ -16,6 +16,7 @@ using System.Runtime.CompilerServices;
 using static SpriteMaster.Harmonize.Harmonize;
 
 using SpriteMaster.Extensions.Reflection;
+using StardewValley;
 using System.Linq;
 
 namespace SpriteMaster.Harmonize.Patches.PSpriteBatch;
@@ -273,6 +274,9 @@ internal static class PlatformRenderBatch {
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static void EnsureVertexCapacity(SpriteBatcher @this, int numBatchItems) {
+		if (Game1.spriteBatch is null || @this == Game1.spriteBatch._batcher) {
+			numBatchItems = SpriteBatcher.MaxBatchSize;
+		}
 		int neededCapacity = (int)((uint)numBatchItems * 4u);
 		if (@this._vertexArray is null || @this._vertexArray.Length < neededCapacity) {
 			@this._vertexArray = GC.AllocateUninitializedArray<VertexPositionColorTexture>(neededCapacity, pinned: true);

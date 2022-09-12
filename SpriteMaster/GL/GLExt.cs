@@ -577,6 +577,9 @@ internal static unsafe class GLExt {
 	internal static readonly delegate* unmanaged[Stdcall]<BufferTarget, GLExt.ObjectId, void> BindBuffer =
 		Delegates.LoadActionPtrRequired<BufferTarget, GLExt.ObjectId>("glBindBuffer");
 
+	internal static readonly delegate* unmanaged[Stdcall]<BufferTarget, nint, nint, BufferUsageHint, void> BufferData =
+		Delegates.LoadActionPtrRequired<BufferTarget, nint, nint, BufferUsageHint>("glBufferData");
+
 	internal static readonly delegate* unmanaged[Stdcall]<uint, uint, void> VertexAttribDivisor =
 		Delegates.LoadActionPtrRequired<uint, uint>("glVertexAttribDivisor");
 

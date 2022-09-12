@@ -1,12 +1,17 @@
-﻿using Microsoft.Toolkit.HighPerformance;
+﻿#define ENABLE_VBO
+// #define ENABLE_VBO_MULTI
+
+using Microsoft.Toolkit.HighPerformance;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.OpenGL;
 using SpriteMaster.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Reflection.Metadata.Ecma335;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Threading;
 using static Microsoft.Xna.Framework.Graphics.VertexDeclaration.VertexDeclarationAttributeInfo;
 
 namespace SpriteMaster.GL;
@@ -27,7 +32,6 @@ internal static partial class GraphicsDeviceExt {
 		internal const int MaxIndicesCount = MaxBatchSize * 6;
 		internal static readonly short[] Indices16 = GC.AllocateUninitializedArray<short>(MaxIndicesCount);
 
-#if false
 		internal static readonly Lazy<GLExt.ObjectId> IndexBuffer16 = new(() => GetIndexBuffer(Indices16), mode: LazyThreadSafetyMode.None);
 
 		// Creates an OpenGL index buffer object given the provided data.
@@ -54,7 +58,6 @@ internal static partial class GraphicsDeviceExt {
 				return GLExt.ObjectId.None;
 			}
 		}
-#endif
 
 		// Returns the greatest array index possible given the number of elements.
 		// We know that the 4th offset of each element (which is two triangles, 6 indices total) is the greatest,
@@ -273,9 +276,18 @@ internal static partial class GraphicsDeviceExt {
 
 	#region BindBufferOverride
 
+	private struct DirtyState {
+		internal uint VertexAttribPointer = uint.MaxValue;
+		internal bool VertexAttribDivisor = true;
+
+		public DirtyState() {}
+	}
+
 	private static readonly Dictionary<BufferTarget, GLExt.ObjectId> OtherBufferBindings = new();
 	private static readonly GLExt.ObjectId[] PrimaryBufferBindingsArray = GC.AllocateArray<GLExt.ObjectId>(2, pinned: true);
 	private static readonly unsafe GLExt.ObjectId* PrimaryBufferBindings = PrimaryBufferBindingsArray.GetPointerFromPinned();
+	private static readonly DirtyState[] BufferBindingsDirtyArray = GC.AllocateArray<DirtyState>(2, pinned: true);
+	private static readonly unsafe DirtyState* BufferBindingsDirty = BufferBindingsDirtyArray.GetPointerFromPinned();
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static void BindBufferOverride(BufferTarget target, int obj) =>
@@ -288,6 +300,7 @@ internal static partial class GraphicsDeviceExt {
 		if (offset <= 1) {
 			if (PrimaryBufferBindings[offset] != obj) {
 				PrimaryBufferBindings[offset] = obj;
+				BufferBindingsDirty[offset] = new();
 				GLExt.BindBuffer(target, obj);
 			}
 		}
@@ -310,6 +323,7 @@ internal static partial class GraphicsDeviceExt {
 
 		if (PrimaryBufferBindings[offset] != obj) {
 			PrimaryBufferBindings[offset] = obj;
+			BufferBindingsDirty[offset] = new();
 			GLExt.BindBuffer(target, obj);
 			return true;
 		}
@@ -335,7 +349,8 @@ internal static partial class GraphicsDeviceExt {
 	private static unsafe void VertexAttribDivisorOverride(int index, int divisor) {
 		uint uDivisor = (uint)divisor;
 		
-		if (VertexAttribDivisors[index] != uDivisor) {
+		if (BufferBindingsDirty[0].VertexAttribDivisor || VertexAttribDivisors[index] != uDivisor) {
+			BufferBindingsDirty[0].VertexAttribDivisor = false;
 			VertexAttribDivisors[index] = uDivisor;
 
 			GLExt.VertexAttribDivisor((uint)index, uDivisor);
@@ -410,9 +425,11 @@ internal static partial class GraphicsDeviceExt {
 	) {
 		var currentAttributePointer = new AttributePointer(data, elementCount, type, stride, normalize);
 		var attributePointer = VertexAttributePointers + location;
-		if (currentAttributePointer.FastEquals(*attributePointer)) {
+		if (!BufferBindingsDirty[0].VertexAttribPointer.GetBit((int)location) && currentAttributePointer.FastEquals(*attributePointer)) {
 			return;
 		}
+
+		BufferBindingsDirty[0].VertexAttribPointer.ClearBit((int)location);
 
 		*attributePointer = currentAttributePointer;
 
@@ -428,6 +445,218 @@ internal static partial class GraphicsDeviceExt {
 
 	#endregion
 
+	private const uint MaxSpriteBatchCount = SpriteBatcher.MaxBatchSize * 4u;
+	private const uint MaxSequentialBufferCount = MaxSpriteBatchCount * 64u;
+
+	private static GLExt.ObjectId MakeTransientVertexBuffer() {
+		try {
+			MonoGame.OpenGL.GL.GenBuffers(1, out int vertexBuffer);
+			GraphicsExtensions.CheckGLError();
+			MonoGame.OpenGL.GL.BindBuffer(BufferTarget.ArrayBuffer, vertexBuffer);
+			GraphicsExtensions.CheckGLError();
+
+			unsafe {
+				switch (VBOType) {
+					case VBType.BufferData:
+#if ENABLE_VBO_MULTI
+					case VBType.BufferDataMulti:
+#endif
+						break; // no need to initialize
+					case VBType.BufferSubDataFull:
+					case VBType.BufferMapDataFull:
+						GLExt.BufferData(
+							BufferTarget.ArrayBuffer,
+							(nint)MaxSpriteBatchCount * (nint)Marshal.SizeOf<VertexPositionColorTexture>(),
+							(nint)0,
+							(BufferUsageHint)35048
+						);
+						break;
+					case VBType.BufferMapDataSequential:
+					case VBType.BufferSubDataSequential:
+						GLExt.BufferData(
+							BufferTarget.ArrayBuffer,
+							(nint)MaxSequentialBufferCount * (nint)Marshal.SizeOf<VertexPositionColorTexture>(),
+							(nint)0,
+							(BufferUsageHint)35048
+						);
+						break;
+				}
+			}
+
+			GraphicsExtensions.CheckGLError();
+
+			return (GLExt.ObjectId)vertexBuffer;
+		}
+		catch (Exception) {
+			return GLExt.ObjectId.None;
+		}
+	}
+
+	private static readonly Lazy<GLExt.ObjectId> TransientVertexBuffer = new(MakeTransientVertexBuffer);
+#if ENABLE_VBO_MULTI
+	private static uint CurrentVertexBufferMultiIndex = 0;
+	private const uint MultiBuffers = 128;
+	private static readonly Lazy<GLExt.ObjectId[]> TransientVertexBufferMulti = new(() => {
+			var array = new GLExt.ObjectId[MultiBuffers];
+			for (int i = 0; i < array.Length; ++i) {
+				array[i] = MakeTransientVertexBuffer();
+			}
+			return array;
+		}
+	);
+
+	private static GLExt.ObjectId CurrentTransientVertexBufferMulti => TransientVertexBufferMulti.Value[CurrentVertexBufferMultiIndex++ % MultiBuffers];
+#endif
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static void ApplyVertexDeclaration(
+		GraphicsDevice @this,
+		VertexDeclaration declaration,
+		nint vertexPointer
+	) {
+		// Setup the vertex declaration to point at the VB data.
+		declaration.GraphicsDevice = @this;
+		// Use our optimized version.
+		VertexDeclarationApply(
+			declaration,
+			shader: @this._vertexShader,
+			offset: vertexPointer,
+			programHash: @this.ShaderProgramHash
+		);
+	}
+
+	private enum VBType {
+		BufferData,
+		BufferDataMulti,
+		BufferSubDataFull,
+		BufferSubDataSequential,
+		BufferMapDataFull,
+		BufferMapDataSequential,
+	}
+
+	private const VBType VBOType = VBType.BufferData;
+	private static nint CurrentBufferOffset = 0;
+
+	private const BufferAccess WriteOnly = (BufferAccess)35001;
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static unsafe nint HandleVertexBuffer<TVertex>(
+		TVertex[] vertexData,
+		int vertexOffset,
+		int numVertices,
+		VertexDeclaration vertexDeclaration
+	) where TVertex : unmanaged {
+		nint offset = vertexOffset * vertexDeclaration.VertexStride;
+		nint size = (nint)numVertices * vertexDeclaration.VertexStride;
+
+		switch (VBOType) {
+			case VBType.BufferData:
+			case VBType.BufferDataMulti: {
+				fixed (TVertex* vbPtr = vertexData) {
+					GLExt.BufferData(
+						BufferTarget.ArrayBuffer,
+						size,
+						(nint)vbPtr + offset,
+						BufferUsageHint.StreamDraw
+					);
+				}
+
+				GraphicsExtensions.CheckGLError();
+				return 0;
+			}
+			case VBType.BufferSubDataFull: {
+				fixed (TVertex* vbPtr = vertexData) {
+					MonoGame.OpenGL.GL.BufferSubData(
+						BufferTarget.ArrayBuffer,
+						(nint)0,
+						size,
+						(nint)vbPtr + offset
+					);
+				}
+
+				GraphicsExtensions.CheckGLError();
+				return 0;
+			}
+			case VBType.BufferMapDataFull: {
+				nint address = MonoGame.OpenGL.GL.MapBuffer(BufferTarget.ArrayBuffer, WriteOnly);
+				fixed (TVertex* vbPtr = vertexData) {
+					Buffer.MemoryCopy(
+						source: (void*)((nint)vbPtr + offset),
+						destination: (void*)address,
+						destinationSizeInBytes: size,
+						sourceBytesToCopy: size
+					);
+				}
+				MonoGame.OpenGL.GL.UnmapBuffer(BufferTarget.ArrayBuffer);
+
+				GraphicsExtensions.CheckGLError();
+				return 0;
+			}
+			case VBType.BufferSubDataSequential: {
+				nint bufferSize = (nint)MaxSequentialBufferCount * (nint)Marshal.SizeOf<VertexPositionColorTexture>();
+
+				nint bufferOffset = CurrentBufferOffset;
+				if (bufferOffset + size > bufferSize) {
+					CurrentBufferOffset = bufferOffset = 0;
+				}
+				else {
+					CurrentBufferOffset += size;
+				}
+
+				fixed (TVertex* vbPtr = vertexData) {
+					MonoGame.OpenGL.GL.BufferSubData(
+						BufferTarget.ArrayBuffer,
+						bufferOffset,
+						size,
+						(nint)vbPtr + offset
+					);
+				}
+
+				GraphicsExtensions.CheckGLError();
+				return bufferOffset;
+			}
+			case VBType.BufferMapDataSequential: {
+				nint bufferSize = (nint)MaxSequentialBufferCount * (nint)Marshal.SizeOf<VertexPositionColorTexture>();
+
+				nint bufferOffset = CurrentBufferOffset;
+				if (bufferOffset + size > bufferSize) {
+					CurrentBufferOffset = bufferOffset = 0;
+				}
+				else {
+					CurrentBufferOffset += size;
+				}
+
+				nint address = MonoGame.OpenGL.GL.MapBuffer(BufferTarget.ArrayBuffer, WriteOnly);
+				fixed (TVertex* vbPtr = vertexData) {
+					Buffer.MemoryCopy(
+						source: (void*)((nint)vbPtr + offset),
+						destination: (void*)(address + bufferOffset),
+						destinationSizeInBytes: size,
+						sourceBytesToCopy: size
+					);
+				}
+				MonoGame.OpenGL.GL.UnmapBuffer(BufferTarget.ArrayBuffer);
+
+				GraphicsExtensions.CheckGLError();
+				return bufferOffset;
+			}
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static GLExt.ObjectId GetTransientVertexBuffer() {
+#if ENABLE_VBO_MULTI
+		if (VBOType is VBType.BufferDataMulti) {
+			return CurrentTransientVertexBufferMulti;
+		}
+		else
+#endif
+		{
+			return TransientVertexBuffer.Value;
+		}
+	}
+
+	private const bool UseVertexBufferObject = true;
 	internal static unsafe bool DrawUserIndexedPrimitives<TVertex, TIndex>(
 		GraphicsDevice @this,
 		PrimitiveType primitiveType,
@@ -446,63 +675,81 @@ internal static partial class GraphicsDeviceExt {
 		}
 
 		try {
+			bool isSpriteBatcher = sizeof(TIndex) == 2 && ReferenceEquals(indexData, SpriteBatcherValues.Indices16);
+			bool useVertexBufferObject = UseVertexBufferObject && isSpriteBatcher;
+
 			// TODO : This can be optimized as well - lots of interdependant booleans.
 			@this.ApplyState(true);
 
+			(GLExt.ObjectId vbo, GLExt.ObjectId ibo) = useVertexBufferObject ?
+				(GetTransientVertexBuffer(), SpriteBatcherValues.IndexBuffer16.Value) :
+				(GLExt.ObjectId.None, GLExt.ObjectId.None);
+
 			// Unbind current VBOs.
-			BindBufferInternal(BufferTarget.ArrayBuffer, GLExt.ObjectId.None);
+			BindBufferInternal(BufferTarget.ArrayBuffer, vbo);
 			GraphicsExtensions.CheckGLError();
-			if (BindBufferInternalResult(BufferTarget.ElementArrayBuffer, GLExt.ObjectId.None)) {
+			if (BindBufferInternalResult(BufferTarget.ElementArrayBuffer, ibo)) {
 				@this._indexBufferDirty = true;
 			}
 			GraphicsExtensions.CheckGLError();
 
-			var type = primitiveType.GetGl();
 			var count = primitiveType.GetElementCountArray(primitiveCount);
 
 			// Perform as much work outside of 'fixed' as possible so as to limit the time the GC might have to stall if it is triggered.
 			nint vertexPointerOffset = vertexDeclaration.VertexStride * vertexOffset;
 
-			// Pin the buffers.
-			fixed (TVertex* vbPtr = vertexData) {
-				nint vertexPointer = (nint)vbPtr;
-				vertexPointer += vertexPointerOffset;
+			if (useVertexBufferObject) {
+				nint offset = HandleVertexBuffer<TVertex>(vertexData, vertexOffset, numVertices, vertexDeclaration);
 
 				// Setup the vertex declaration to point at the VB data.
-				vertexDeclaration.GraphicsDevice = @this;
-				// Use our optimized version.
-				VertexDeclarationApply(
-					vertexDeclaration,
-					shader: @this._vertexShader,
-					offset: vertexPointer,
-					programHash: @this.ShaderProgramHash
+				ApplyVertexDeclaration(@this, vertexDeclaration, offset);
+
+				GLExt.DrawRangeElements(
+					GLPrimitiveType.Triangles,
+					0,
+					SpriteBatcherValues.GetMaxArrayIndex((uint)primitiveCount, (uint)indexOffset),
+					count,
+					GLExt.ValueType.UnsignedShort,
+					indexOffset
 				);
+				GraphicsExtensions.CheckGLError();
+			}
+			else {
+				var type = primitiveType.GetGl();
 
-				fixed (TIndex* ibPtr = indexData) {
-					var offsetIndexPtr = (nint)(ibPtr + indexOffset);
+				// Pin the buffers.
+				fixed (TVertex* vbPtr = vertexData) {
+					nint vertexPointer = (nint)vbPtr + vertexPointerOffset;
 
-					//Draw
+					// Setup the vertex declaration to point at the VB data.
+					ApplyVertexDeclaration(@this, vertexDeclaration, vertexPointer);
 
-					// If we are drawing from the pre-cached spritebatcher indices, we can use `glDrawRangeElements` instead.
-					if (sizeof(TIndex) == 2 && ReferenceEquals(indexData, SpriteBatcherValues.Indices16)) {
-						GLExt.DrawRangeElements(
-							GLPrimitiveType.Triangles,
-							0,
-							SpriteBatcherValues.GetMaxArrayIndex((uint)primitiveCount, (uint)indexOffset),
-							count,
-							GLExt.ValueType.UnsignedShort,
-							offsetIndexPtr
-						);
+					fixed (TIndex* ibPtr = indexData) {
+						var offsetIndexPtr = (nint)(ibPtr + indexOffset);
+
+						//Draw
+						// If we are drawing from the pre-cached spritebatcher indices, we can use `glDrawRangeElements` instead.
+						if (isSpriteBatcher) {
+							GLExt.DrawRangeElements(
+								GLPrimitiveType.Triangles,
+								0,
+								SpriteBatcherValues.GetMaxArrayIndex((uint)primitiveCount, (uint)indexOffset),
+								count,
+								GLExt.ValueType.UnsignedShort,
+								offsetIndexPtr
+							);
+						}
+						else {
+							GLExt.DrawElements(
+								type,
+								count,
+								GetIndexType<TIndex>(),
+								offsetIndexPtr
+							);
+						}
+
+						GraphicsExtensions.CheckGLError();
 					}
-					else {
-						GLExt.DrawElements(
-							type,
-							count,
-							GetIndexType<TIndex>(),
-							offsetIndexPtr
-						);
-					}
-					GraphicsExtensions.CheckGLError();
 				}
 			}
 		}
