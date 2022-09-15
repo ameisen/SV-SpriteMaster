@@ -29,6 +29,11 @@ internal class MemoryCache<TKey, TValue> :
 	}
 
 	[Pure, MustUseReturnValue, MethodImpl(Runtime.MethodImpl.Inline)]
+	public override bool Contains(TKey key) {
+		return UnderlyingCache.Contains(key);
+	}
+
+	[Pure, MustUseReturnValue, MethodImpl(Runtime.MethodImpl.Inline)]
 	public override bool TryGet(TKey key, [NotNullWhen(true)] out TValue[]? value) {
 		return UnderlyingCache.TryGet(key, out value);
 	}
@@ -42,6 +47,16 @@ internal class MemoryCache<TKey, TValue> :
 
 		value = default;
 		return false;
+	}
+
+	[MustUseReturnValue, MethodImpl(Runtime.MethodImpl.Inline)]
+	public override bool TrySetDelegated<TValueGetter>(TKey key, TValueGetter valueGetter) where TValueGetter : struct {
+		return UnderlyingCache.TrySetDelegated(key, valueGetter);
+	}
+
+	[MustUseReturnValue, MethodImpl(Runtime.MethodImpl.Inline)]
+	public override bool TrySet(TKey key, TValue[] value) {
+		return UnderlyingCache.TrySet(key, value);
 	}
 
 	[MustUseReturnValue, MethodImpl(Runtime.MethodImpl.Inline)]

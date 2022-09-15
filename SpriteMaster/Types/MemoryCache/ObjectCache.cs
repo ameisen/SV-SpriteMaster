@@ -82,6 +82,13 @@ internal class ObjectCache<TKey, TValue> : AbstractObjectCache<TKey, TValue>
 	public override int Count => Cache.Count;
 
 	[Pure, MustUseReturnValue, MethodImpl(Runtime.MethodImpl.Inline)]
+	public override bool Contains(TKey key) {
+		using (CacheLock.Read) {
+			return Cache.ContainsKey(key);
+		}
+	}
+
+	[Pure, MustUseReturnValue, MethodImpl(Runtime.MethodImpl.Inline)]
 	public override TValue? Get(TKey key) {
 		if (TryGet(key, out var value)) {
 			return value;
@@ -102,6 +109,63 @@ internal class ObjectCache<TKey, TValue> : AbstractObjectCache<TKey, TValue>
 
 		value = default;
 		return false;
+	}
+
+	[MustUseReturnValue, MethodImpl(Runtime.MethodImpl.Inline)]
+	public override bool TrySetDelegated<TValueGetter>(TKey key, TValueGetter valueGetter) where TValueGetter : struct {
+		long sizeDelta;
+
+		using (CacheLock.ReadWrite) {
+			if (!Cache.ContainsKey(key)) {
+				var value = valueGetter.Invoke();
+				var size = GetSizeBytes(value);
+
+				using (CacheLock.Write) {
+					Cache.Add(key, new(value, RecentAccessList.AddFront(key), size));
+					sizeDelta = size;
+				}
+			}
+			else {
+				return false;
+			}
+
+			Interlocked.Add(ref CurrentSize, sizeDelta);
+		}
+
+		if (sizeDelta != 0L && Interlocked.Read(ref CurrentSize) > MaxSize) {
+			TrimEvent.Set();
+		}
+
+		return true;
+	}
+
+	[MustUseReturnValue, MethodImpl(Runtime.MethodImpl.Inline)]
+	public override bool TrySet(TKey key, TValue value) {
+		Contract.Assert(value is not null);
+
+		long sizeDelta;
+		var size = GetSizeBytes(value);
+
+		using (CacheLock.ReadWrite) {
+			if (!Cache.ContainsKey(key)) {
+
+				using (CacheLock.Write) {
+					Cache.Add(key, new(value, RecentAccessList.AddFront(key), size));
+					sizeDelta = size;
+				}
+			}
+			else {
+				return false;
+			}
+
+			Interlocked.Add(ref CurrentSize, sizeDelta);
+		}
+
+		if (sizeDelta != 0L && Interlocked.Read(ref CurrentSize) > MaxSize) {
+			TrimEvent.Set();
+		}
+
+		return true;
 	}
 
 	[MustUseReturnValue]

@@ -22,12 +22,20 @@ internal static class ResidentCache {
 	);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
+	internal static bool Contains(ulong key) =>
+		Cache.Contains(key);
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static byte[]? Get(ulong key) =>
 		Cache.Get(key);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static bool TryGet(ulong key, [NotNullWhen(true)] out byte[]? value) =>
 		Cache.TryGet(key, out value);
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	internal static bool TrySet(ulong key, byte[] value) =>
+		Cache.TrySet(key, value);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static void SetFast(ulong key, byte[] value) =>

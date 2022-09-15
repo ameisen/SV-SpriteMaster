@@ -49,7 +49,12 @@ internal static class Metadata {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal static void Purge() {
+	internal static void Purge(bool recache = false) {
+		if (recache && SMConfig.ResidentCache.Enabled) {
+			foreach (var p in Texture2DMetaTable) {
+				p.Value.PushToCache();
+			}
+		}
 		Texture2DMetaTable.Clear();
 		CacheReference.SetTarget(null!);
 		CacheMeta.SetTarget(null!);

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using JetBrains.Annotations;
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -56,8 +57,15 @@ internal abstract class AbstractMemoryCache<TKey, TValue> :
 	public abstract long SizeBytes { get; }
 	public abstract long TotalSize { get; }
 	public abstract int Count { get; }
+	[MustUseReturnValue]
+	public abstract bool Contains(TKey key);
 	public abstract TValue[]? Get(TKey key);
+	[MustUseReturnValue]
 	public abstract bool TryGet(TKey key, [NotNullWhen(true)] out TValue[]? value);
+	[MustUseReturnValue, MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public abstract bool TrySetDelegated<TValueGetter>(TKey key, TValueGetter valueGetter) where TValueGetter : struct, IMemoryCache<TKey, TValue>.IValueGetter;
+	[MustUseReturnValue]
+	public abstract bool TrySet(TKey key, TValue[] value);
 	public abstract TValue[] Set(TKey key, TValue[] value);
 	public abstract TValue[] SetOrTouch(TKey key, TValue[] value);
 	public abstract void SetFast(TKey key, TValue[] value);

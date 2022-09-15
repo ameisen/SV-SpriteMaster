@@ -8,6 +8,10 @@ internal interface IObjectCache<TKey, TValue> :
 	IDisposable, IAsyncDisposable, ICache
 	where TKey : notnull where TValue : notnull {
 
+	internal interface IValueGetter {
+		internal TValue Invoke();
+	}
+
 	/// <summary>
 	/// The name of the cache.
 	/// </summary>
@@ -24,6 +28,9 @@ internal interface IObjectCache<TKey, TValue> :
 	[Pure]
 	int Count { get; }
 
+	[Pure, MustUseReturnValue]
+	bool Contains(TKey key);
+
 	/// <summary>
 	/// Gets the value represented by the provided <paramref name="key"/>.
 	/// <para>Returns an empty <see cref="Nullable{TValue}"/> if it did not exist.</para>
@@ -36,6 +43,12 @@ internal interface IObjectCache<TKey, TValue> :
 	/// </summary>
 	[Pure, MustUseReturnValue]
 	bool TryGet(TKey key, [NotNullWhen(true)] out TValue? value);
+
+	[MustUseReturnValue]
+	bool TrySetDelegated<TValueGetter>(TKey key, TValueGetter valueGetter) where TValueGetter : struct, IValueGetter;
+
+	[MustUseReturnValue]
+	bool TrySet(TKey key, TValue value);
 
 	/// <summary>
 	/// Sets the value represented by the provided <paramref name="key"/>.

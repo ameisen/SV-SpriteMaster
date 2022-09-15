@@ -326,7 +326,7 @@ internal sealed class Texture2DMeta : IDisposable {
 
 			try {
 				// TODO : lock isn't granular enough.
-				if (Config.ResidentCache.AlwaysFlush) {
+				if (Config.ResidentCache.Enabled && Config.ResidentCache.AlwaysFlush) {
 					forcePurge = true;
 				}
 				else if (!bounds.HasValue && data.Length == refSize) {
@@ -429,7 +429,10 @@ internal sealed class Texture2DMeta : IDisposable {
 		using (Lock.Write) {
 			CachedRawDataInternal.SetTarget(null!);
 			CachedDataInternal.SetTarget(null!);
-			ResidentCache.RemoveFast(MetaId);
+			if (Config.ResidentCache.Enabled) {
+				ResidentCache.RemoveFast(MetaId);
+			}
+
 			Flags &= ~TextureFlag.Populated;
 		}
 	}
@@ -506,7 +509,10 @@ internal sealed class Texture2DMeta : IDisposable {
 
 					if (rawData is not null && rawData.Length != ExpectedByteSizeRaw) {
 						Debug.Error($"Size Mismatch in CachedData ResidentCache pull: {rawData.Length} != {ExpectedByteSizeRaw}");
-						ResidentCache.Remove(MetaId);
+						if (Config.ResidentCache.Enabled) {
+							ResidentCache.Remove(MetaId);
+						}
+
 						return null;
 					}
 
@@ -593,6 +599,17 @@ internal sealed class Texture2DMeta : IDisposable {
 		LastAccessFrame = DrawState.CurrentFrame;
 	}
 
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	internal void PushToCache() {
+		if (!Config.ResidentCache.Enabled) {
+			return;
+		}
+
+		if (CachedRawDataInternal.TryGetTarget(out var rawData)) {
+			ResidentCache.TrySet(MetaId, rawData);
+		}
+	}
+
 	[DoesNotReturn]
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	private static T ThrowNullReferenceException<T>(string name) =>
@@ -641,7 +658,10 @@ internal sealed class Texture2DMeta : IDisposable {
 	}
 
 	internal static void Cleanup(in ulong id) {
-		ResidentCache.RemoveFast(id);
+		if (Config.ResidentCache.Enabled) {
+			ResidentCache.RemoveFast(id);
+		}
+
 		if (SpriteDictionaries.Remove(id, out var instances)) {
 			foreach (var instance in instances.Values) {
 				instance.Suspend();

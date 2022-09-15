@@ -4,6 +4,7 @@ using SpriteMaster.Extensions;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -127,6 +128,11 @@ internal class CompressedMemoryCache<TKey, TValue> :
 	public override int Count => UnderlyingCache.Count;
 
 	[Pure, MustUseReturnValue, MethodImpl(Runtime.MethodImpl.Inline)]
+	public override bool Contains(TKey key) {
+		return UnderlyingCache.Contains(key);
+	}
+
+	[Pure, MustUseReturnValue, MethodImpl(Runtime.MethodImpl.Inline)]
 	public override TValue[]? Get(TKey key) {
 		if (UnderlyingCache.TryGet(key, out var entry)) {
 			return entry.UncompressedArray;
@@ -164,6 +170,50 @@ internal class CompressedMemoryCache<TKey, TValue> :
 
 		value = default;
 		return false;
+	}
+
+	[StructLayout(LayoutKind.Auto)]
+	private readonly struct ValueGetterStructInterfacing : IObjectCache<TKey, ValueEntry>.IValueGetter {
+		private readonly IMemoryCache<TKey, TValue>.IValueGetter Getter;
+		private readonly Compression.Algorithm Algorithm;
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal ValueGetterStructInterfacing(IMemoryCache<TKey, TValue>.IValueGetter getter, Compression.Algorithm algorithm) {
+			Getter = getter;
+			Algorithm = algorithm;
+		}
+
+		[MustUseReturnValue, MethodImpl(MethodImplOptions.AggressiveInlining)]
+		readonly ValueEntry IObjectCache<TKey, ValueEntry>.IValueGetter.Invoke() {
+			return new(Getter.Invoke(), Algorithm);
+		}
+	}
+
+	[StructLayout(LayoutKind.Auto)]
+	private readonly struct ValueGetterStruct : IObjectCache<TKey, ValueEntry>.IValueGetter {
+		private readonly TValue[] Value;
+		private readonly Compression.Algorithm Algorithm;
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal ValueGetterStruct(TValue[] value, Compression.Algorithm algorithm) {
+			Value = value;
+			Algorithm = algorithm;
+		}
+
+		[MustUseReturnValue, MethodImpl(MethodImplOptions.AggressiveInlining)]
+		readonly ValueEntry IObjectCache<TKey, ValueEntry>.IValueGetter.Invoke() {
+			return new(Value, Algorithm);
+		}
+	}
+
+	[MustUseReturnValue, MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public override bool TrySetDelegated<TValueGetter>(TKey key, TValueGetter valueGetter) where TValueGetter : struct {
+		return UnderlyingCache.TrySetDelegated(key, new ValueGetterStructInterfacing(valueGetter, CurrentAlgorithm));
+	}
+
+	[MustUseReturnValue, MethodImpl(Runtime.MethodImpl.Inline)]
+	public override bool TrySet(TKey key, TValue[] value) {
+		return UnderlyingCache.TrySetDelegated(key, new ValueGetterStruct(value, CurrentAlgorithm));
 	}
 
 	[MustUseReturnValue, MethodImpl(Runtime.MethodImpl.Inline)]

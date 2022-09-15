@@ -306,13 +306,25 @@ internal static class SpriteMap {
 		"winter"
 	};
 
+	internal static void Purge() {
+		foreach (var spriteInstance in SpriteInstanceReferences) {
+			try {
+				spriteInstance.Dispose(disposeChildren: true);
+			}
+			catch {
+				// ignored
+			}
+		}
+	}
+
 	internal static void SeasonPurge(string season) {
 		if (!Config.Garbage.SeasonalPurge) {
 			return;
 		}
 
-		try {
-			foreach (var spriteInstance in SpriteInstanceReferences) {
+		
+		foreach (var spriteInstance in SpriteInstanceReferences) {
+			try {
 				if (spriteInstance.Anonymous()) {
 					continue;
 				}
@@ -326,9 +338,9 @@ internal static class SpriteMap {
 					spriteInstance.Dispose();
 				}
 			}
-		}
-		catch {
-			// ignored
+			catch {
+				// ignored
+			}
 		}
 	}
 
