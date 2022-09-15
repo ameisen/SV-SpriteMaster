@@ -193,6 +193,8 @@ internal static partial class DrawState {
 			return;
 		}
 
+		Runtime.CorrectProcessorAffinity();
+
 		Garbage.EphemeralCollection.Collect(CurrentFrame);
 	}
 

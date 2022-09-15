@@ -72,7 +72,11 @@ internal abstract class AbstractObjectCache<TKey, TValue> :
 	[MustUseReturnValue]
 	public abstract TValue Set(TKey key, TValue value);
 
+	[MustUseReturnValue]
+	public abstract TValue SetOrTouch(TKey key, TValue value);
+
 	public abstract void SetFast(TKey key, TValue value);
+	public abstract void SetOrTouchFast(TKey key, TValue value);
 
 	[MustUseReturnValue, MethodImpl(Runtime.MethodImpl.Inline)]
 	public abstract TValue? Update(TKey key, TValue value);
@@ -82,6 +86,9 @@ internal abstract class AbstractObjectCache<TKey, TValue> :
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public abstract void RemoveFast(TKey key);
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	public abstract void Touch(TKey key);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public abstract void Trim(int count);

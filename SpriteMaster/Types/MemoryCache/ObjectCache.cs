@@ -15,6 +15,8 @@ namespace SpriteMaster.Types.MemoryCache;
 internal class ObjectCache<TKey, TValue> : AbstractObjectCache<TKey, TValue>
 	where TKey : notnull where TValue : notnull {
 
+	private static readonly bool IsTouchableValue = typeof(TValue).IsAssignableFrom(typeof(ITouchable));
+
 	[StructLayout(LayoutKind.Auto)]
 	private struct CacheEntry {
 		internal readonly TValue Value;
@@ -147,8 +149,54 @@ internal class ObjectCache<TKey, TValue> : AbstractObjectCache<TKey, TValue>
 		return value;
 	}
 
+	[MustUseReturnValue]
+	public override TValue SetOrTouch(TKey key, TValue value) {
+		Contract.Assert(value is not null);
+
+		Optional<TValue> original = default;
+		var size = GetSizeBytes(value);
+		long sizeDelta;
+
+		using (CacheLock.Write) {
+			if (Cache.TryGetValue(key, out var entry)) {
+				RecentAccessList.MoveToFront(entry.Node);
+				var originalValue = entry.Value;
+
+				original = originalValue;
+
+				var originalSize = entry.Size;
+				sizeDelta = size - originalSize;
+				entry.UpdateValue(value, size);
+				Cache[key] = entry;
+			}
+			else {
+				Cache.Add(key, new(value, RecentAccessList.AddFront(key), size));
+				sizeDelta = size;
+			}
+
+			Interlocked.Add(ref CurrentSize, sizeDelta);
+		}
+
+		if (sizeDelta != 0L) {
+			if (Interlocked.Read(ref CurrentSize) > MaxSize) {
+				TrimEvent.Set();
+			}
+		}
+
+
+		if (original.HasValue) {
+			OnEntryRemoved(key, original, EvictionReason.Replaced);
+		}
+
+		return value;
+	}
+
 	public override void SetFast(TKey key, TValue value) {
 		_ = Set(key, value);
+	}
+
+	public override void SetOrTouchFast(TKey key, TValue value) {
+		_ = SetOrTouch(key, value);
 	}
 
 	[MustUseReturnValue, MethodImpl(Runtime.MethodImpl.Inline)]
@@ -235,6 +283,31 @@ internal class ObjectCache<TKey, TValue> : AbstractObjectCache<TKey, TValue>
 
 		if (result.HasValue) {
 			OnEntryRemoved(key, result, EvictionReason.Removed);
+		}
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	public override void Touch(TKey key) {
+		if (!IsTouchableValue) {
+			return;
+		}
+
+		Optional<TValue> removeResult = default;
+
+		using (CacheLock.Write) {
+			if (Cache.TryGetValue(key, out var entry)) {
+				if (!((ITouchable)entry.Value).Touch()) {
+					removeResult = entry.Value;
+					Interlocked.Add(ref CurrentSize, -entry.Size);
+					RecentAccessList.Release(ref entry.Node);
+					entry.Node = default;
+				}
+				RecentAccessList.MoveToFront(entry.Node);
+			}
+		}
+
+		if (removeResult.HasValue) {
+			OnEntryRemoved(key, removeResult, EvictionReason.TokenExpired);
 		}
 	}
 

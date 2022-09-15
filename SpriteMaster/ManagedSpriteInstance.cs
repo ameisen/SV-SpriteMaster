@@ -451,13 +451,13 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 				textureType: textureType
 			);
 		}
-		catch (SpriteInfo.Initializer.DataMismatchException ex) {
+		catch (SpriteInfo.Initializer.InitializationException ex) {
 #if SHIPPING
 			Debug.Trace(
 #else
 			Debug.Error(
 #endif
-				$"Data Mismatch Exception when attempting to initialize SpriteInfo for {GetNameString()}",
+				$"Initialization Exception when attempting to initialize SpriteInfo for {GetNameString()}",
 				ex
 			);
 
@@ -477,7 +477,7 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 		}
 
 		// If the currentInstance hash matches, assume it's the same and just set it as ours.
-		if (currentInstance is not null && currentInstance.SpriteInfoHash == spriteInfoInitializer.Hash) {
+		if (currentInstance is not null && currentInstance.SpriteInfoHash == spriteInfoInitializer.HashForced) {
 			currentInstance.Invalidated = false;
 			SpriteMap.AddReplace(texture, currentInstance);
 
@@ -543,13 +543,15 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 			return currentInstance;
 		}
 
-		DrawState.IsUpdatedThisFrame = true;
+		if (currentInstance is null) {
+			DrawState.IsUpdatedThisFrame = true;
+		}
 
 		try {
 			var resampleTask = ResampleTask.Dispatch(
 				spriteInfo: new(spriteInfoInitializer),
 				async: useAsync,
-				previousInstance: currentInstance
+				previousInstance: (currentInstance?.IsLoaded ?? false) ? currentInstance : null
 			);
 			textureMeta.InFlightTasks[source] = new(currentRevision, resampleTask);
 
@@ -655,10 +657,10 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 	internal long MemorySize {
 		[MethodImpl(Runtime.MethodImpl.Inline)]
 		get {
-			if (!IsReady || Texture is null) {
+			if (!IsReady || Texture is not {} texture) {
 				return 0;
 			}
-			return Texture.SizeBytes();
+			return texture.SizeBytes();
 		}
 	}
 
@@ -801,9 +803,9 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 
 		Thread.MemoryBarrier();
 		IsLoaded = true;
-		if (PreviousSpriteInstance is not null) {
-			PreviousSpriteInstance.Suspend(true);
+		if (PreviousSpriteInstance is {} previousSpriteInstance) {
 			PreviousSpriteInstance = null;
+			previousSpriteInstance.Suspend(true);
 		}
 	}
 
@@ -814,8 +816,8 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 
 		LastReferencedFrame = DrawState.CurrentFrame;
 
-		if (RecentAccessNode.IsValid) {
-			RecentAccessList.MoveToFront(RecentAccessNode);
+		if (RecentAccessNode is { IsValid: true} recentAccessNode) {
+			RecentAccessList.MoveToFront(recentAccessNode);
 		}
 		else {
 			RecentAccessNode = RecentAccessList.AddFront(this.MakeWeak());
@@ -850,13 +852,23 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 	}
 
 	internal void Dispose(bool disposeChildren) {
-		if (disposeChildren && Texture is not null) {
-			if (!Texture.IsDisposed) {
-				Texture.Dispose();
-			}
+		if (disposeChildren && Texture is {} texture) {
 			Texture = null;
+			if (!texture.IsDisposed) {
+				texture.Dispose();
+			}
 		}
 		Dispose();
+	}
+
+	private Func<Delegate?>? DisposeChain(bool disposeChildren) {
+		if (disposeChildren && Texture is { } texture) {
+			Texture = null;
+			if (!texture.IsDisposed) {
+				texture.Dispose();
+			}
+		}
+		return DisposeChain();
 	}
 
 	internal void DisposeSuspended() {
@@ -867,14 +879,16 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 
 	private readonly object CleanupLock = new();
 	public void Dispose() {
+		Delegate? chainAction = () => DisposeChain();
+		while (chainAction is Func<Delegate?> callback) {
+			chainAction = callback.Invoke();
+		}
+	}
+
+	private Func<Delegate?>? DisposeChain() {
 		lock (CleanupLock) {
 			if (IsDisposed.CompareExchange(true, false) == true) {
-				return;
-			}
-
-			if (PreviousSpriteInstance is not null) {
-				PreviousSpriteInstance.Suspend(true);
-				PreviousSpriteInstance = null;
+				return null;
 			}
 
 			if (Reference.TryGetTarget(out var reference)) {
@@ -882,9 +896,9 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 				reference.Disposing -= OnParentDispose;
 			}
 
-			if (RecentAccessNode.IsValid) {
-				RecentAccessList.Release(ref RecentAccessNode);
+			if (RecentAccessNode is { IsValid: true } recentAccessNode) {
 				RecentAccessNode = default;
+				RecentAccessList.Release(ref recentAccessNode);
 			}
 
 			if (Suspended.CompareExchange(false, true) == true) {
@@ -892,22 +906,31 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 			}
 
 			GC.SuppressFinalize(this);
+
+			if (PreviousSpriteInstance is {} previousSpriteInstance) {
+				PreviousSpriteInstance = null;
+				// TODO : this can end up in a _very_ long chain of textures if things bork, and thus stack overflow.
+
+				return () => previousSpriteInstance.SuspendChain(true);
+			}
+
+			return null;
 		}
 	}
 
 	internal static void Cleanup(in CleanupData data) {
 		Debug.Trace("Cleaning up finalized ManagedSpriteInstance");
 		lock (data.CleanupLock) {
-			if (data.PreviousSpriteInstance is not null) {
-				data.PreviousSpriteInstance.Suspend(true);
+			if (data.PreviousSpriteInstance is {} previousSpriteInstance) {
+				previousSpriteInstance.Suspend(true);
 			}
 
 			if (data.ReferenceTexture.TryGetTarget(out var reference)) {
 				SpriteMap.Remove(data, reference);
 			}
 
-			if (data.RecentAccessNode.IsValid) {
-				RecentAccessList.Release(ref Unsafe.AsRef(data.RecentAccessNode));
+			if (data.RecentAccessNode is { IsValid: true} recentAccessNode) {
+				RecentAccessList.Release(ref Unsafe.AsRef(recentAccessNode));
 			}
 		}
 	}
@@ -920,30 +943,36 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 	}
 
 	internal void Suspend(bool clearChildrenIfDispose = false) {
+		Delegate? chainAction = () => SuspendChain(clearChildrenIfDispose);
+		while (chainAction is not null) {
+			chainAction = chainAction.DynamicInvoke(null) as Delegate;
+		}
+	}
+
+	private Func<Delegate?>? SuspendChain(bool clearChildrenIfDispose = false) {
 		lock (CleanupLock) {
 			if (IsDisposed) {
-				return;
+				return null;
 			}
 
 			if (Suspended.CompareExchange(true, false) == true) {
-				return;
+				return null;
 			}
 
 			if (StardewValley.Game1.quit) {
-				return;
+				return null;
 			}
 
 			if (!IsLoaded || !Config.SuspendedCache.Enabled) {
-				Dispose(clearChildrenIfDispose);
-				return;
+				return () => this.DisposeChain(clearChildrenIfDispose);
 			}
 
 			// TODO : Handle clearing any reference to _this_
 			PreviousSpriteInstance = null;
 
-			if (RecentAccessNode.IsValid) {
-				RecentAccessList.Release(ref RecentAccessNode);
+			if (RecentAccessNode is { IsValid: true } recentAccessNode) {
 				RecentAccessNode = default;
+				RecentAccessList.Release(ref recentAccessNode);
 			}
 
 			Invalidated = false;
@@ -954,6 +983,8 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 		}
 
 		Debug.Trace($"Sprite Instance '{Name}' {"Suspended".Pastel(DrawingColor.LightGoldenrodYellow)}");
+
+		return null;
 	}
 
 	internal bool Resurrect(XTexture2D texture, ulong spriteMapHash) {

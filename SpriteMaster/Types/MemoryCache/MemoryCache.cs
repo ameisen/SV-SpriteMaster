@@ -50,10 +50,22 @@ internal class MemoryCache<TKey, TValue> :
 		return UnderlyingCache.Set(key, value);
 	}
 
+	[MustUseReturnValue, MethodImpl(Runtime.MethodImpl.Inline)]
+	public override TValue[] SetOrTouch(TKey key, TValue[] value) {
+		Contract.Assert(value is not null);
+		return UnderlyingCache.SetOrTouch(key, value);
+	}
+
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public override void SetFast(TKey key, TValue[] value) {
 		Contract.Assert(value is not null);
-		_ = UnderlyingCache.Set(key, value);
+		UnderlyingCache.SetFast(key, value);
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	public override void SetOrTouchFast(TKey key, TValue[] value) {
+		Contract.Assert(value is not null);
+		UnderlyingCache.SetOrTouchFast(key, value);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
@@ -80,6 +92,11 @@ internal class MemoryCache<TKey, TValue> :
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public override ReadOnlySpan<TValue> RemoveSpan(TKey key) {
 		return UnderlyingCache.Remove(key);
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	public override void Touch(TKey key) {
+		UnderlyingCache.Touch(key);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]

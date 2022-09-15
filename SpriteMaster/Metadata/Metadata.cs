@@ -16,7 +16,7 @@ internal static class Metadata {
 	internal static Texture2DMeta Meta(this XTexture2D @this) {
 #if DEBUG
 		if (@this is InternalTexture2D) {
-			Debugger.Break();
+			Debug.Break();
 		}
 #endif
 		if (CacheReference == @this && CacheMeta.TryGetTarget(out var cachedMeta)) {

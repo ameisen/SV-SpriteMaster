@@ -59,9 +59,12 @@ internal abstract class AbstractMemoryCache<TKey, TValue> :
 	public abstract TValue[]? Get(TKey key);
 	public abstract bool TryGet(TKey key, [NotNullWhen(true)] out TValue[]? value);
 	public abstract TValue[] Set(TKey key, TValue[] value);
+	public abstract TValue[] SetOrTouch(TKey key, TValue[] value);
 	public abstract void SetFast(TKey key, TValue[] value);
+	public abstract void SetOrTouchFast(TKey key, TValue[] value);
 	public abstract TValue[]? Update(TKey key, TValue[] value);
 	public abstract TValue[]? Remove(TKey key);
+	public abstract void Touch(TKey key);
 	public abstract void RemoveFast(TKey key);
 	public abstract void Trim(int count);
 	public abstract void TrimTo(int count);

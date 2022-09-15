@@ -193,8 +193,8 @@ internal sealed class Texture2DMeta : IDisposable {
 	internal readonly SharedLock Lock = new(LockRecursionPolicy.SupportsRecursion);
 	internal readonly WeakReference<XTexture2D> Owner;
 	// TODO : this presently is not thread-safe.
-	private readonly WeakReference<byte[]> CachedDataInternal = new(null!);
-	private readonly WeakReference<byte[]> CachedRawDataInternal = new(null!);
+	internal readonly WeakReference<byte[]> CachedDataInternal = new(null!);
+	internal readonly WeakReference<byte[]> CachedRawDataInternal = new(null!);
 
 	/// <summary>Whenever a new <see cref="Texture2DMeta"/> is created, <see cref="CurrentId"/> is incremented and this is set to that.</summary>
 	private readonly ulong MetaId = Interlocked.Increment(ref CurrentId);
@@ -211,6 +211,11 @@ internal sealed class Texture2DMeta : IDisposable {
 	internal bool? Validation = null;
 	internal bool IsSystemRenderTarget = false;
 	internal readonly bool IsCompressed = false;
+
+	private volatile Task DecodingTask = Task.CompletedTask;
+	internal ulong DecodingTaskRevision = 0ul;
+
+	internal readonly bool IsCursors;
 
 	internal void IncrementRevision() => ++Revision;
 
@@ -231,6 +236,14 @@ internal sealed class Texture2DMeta : IDisposable {
 		else {
 			ExpectedByteSize = ExpectedByteSizeRaw;
 		}
+
+		var underlyingTexture = Mitigations.PyTK.Textures.GetUnderlyingTexture(texture, out bool hasUnderlying);
+		if (!hasUnderlying) {
+			underlyingTexture = null;
+		}
+
+		const string CursorsPath = @"LooseSprites\Cursors";
+		IsCursors = (texture.NormalizedName() == CursorsPath || underlyingTexture?.NormalizedName() == CursorsPath);
 	}
 
 	internal bool HasCachedData {
@@ -240,9 +253,9 @@ internal sealed class Texture2DMeta : IDisposable {
 				return false;
 			}
 
-			using (Lock.Read) {
+			using (Lock.ReadWrite) {
 				bool isPopulated = Flags.HasFlag(TextureFlag.Populated);
-				return isPopulated && CachedDataInternal.TryGetTarget(out _);
+				return isPopulated && CachedData is not null;
 			}
 		}
 	}
@@ -453,23 +466,21 @@ internal sealed class Texture2DMeta : IDisposable {
 				else {
 					if (ExpectedByteSizeRaw != (uint)value.Length) {
 						Console.Error.WriteLine($"Cached Raw Data length mismatch: {ExpectedByteSizeRaw} != {value.Length}");
-						if (Debugger.IsAttached) {
-							Debugger.Break();
-						}
+						Debug.Break();
 						Debug.Error(Environment.StackTrace);
 						InvalidateCachedRawData();
 						return;
 					}
 
 					using (Lock.Write) {
-						ResidentCache.Set(MetaId, value);
+						ResidentCache.SetOrTouchFast(MetaId, value);
 						CachedRawDataInternal.SetTarget(value);
 						if (!IsCompressed) {
 							CachedDataInternal.SetTarget(value);
 						}
 						else {
 							CachedDataInternal.SetTarget(null!);
-							DecodeTask.Dispatch(this);
+							DispatchDecodeTask(force: true);
 						}
 						Flags |= TextureFlag.Populated;
 					}
@@ -484,17 +495,56 @@ internal sealed class Texture2DMeta : IDisposable {
 	internal byte[]? CachedData {
 		[MethodImpl(Runtime.MethodImpl.Inline)]
 		get {
-			using (Lock.Read) {
+			using (Lock.ReadWrite) {
 				if (!Flags.HasFlag(TextureFlag.Populated)) {
 					return null;
 				}
 
-				if (!CachedDataInternal.TryGetTarget(out var target) && !IsCompressed) {
+				if (!CachedDataInternal.TryGetTarget(out var target)) {
 					// Attempt to pull the value out of the cache if the cache is a compressed cache.
-					target = ResidentCache.Get(MetaId);
+					var rawData = ResidentCache.Get(MetaId);
+
+					if (rawData is not null && rawData.Length != ExpectedByteSizeRaw) {
+						Debug.Error($"Size Mismatch in CachedData ResidentCache pull: {rawData.Length} != {ExpectedByteSizeRaw}");
+						ResidentCache.Remove(MetaId);
+						return null;
+					}
+
+					using (Lock.Write) {
+						if (rawData is null) {
+							InvalidateCachedRawData();
+						}
+						else {
+							CachedRawDataInternal.SetTarget(rawData);
+							if (!IsCompressed) {
+								CachedDataInternal.SetTarget(rawData);
+								target = rawData;
+							}
+							else {
+								CachedDataInternal.SetTarget(null!);
+								DispatchDecodeTask();
+							}
+						}
+					}
 				}
+
+				if (target is not null && target.Length != ExpectedByteSize) {
+					Debug.Error($"Size Mismatch in target pull: {target.Length} != {ExpectedByteSize}");
+					InvalidateCachedRawData();
+				}
+
 				return target;
 			}
+		}
+	}
+
+	private void DispatchDecodeTask(bool force = false) {
+		if (!force && !DecodingTask.IsCompleted) {
+			return;
+		}
+
+		if (CachedRawData is not null) {
+			DecodingTask = DecodeTask.Dispatch(this, Interlocked.Increment(ref DecodingTaskRevision));
 		}
 	}
 
@@ -526,13 +576,9 @@ internal sealed class Texture2DMeta : IDisposable {
 	internal void SetCachedDataUnsafe(Span<byte> data) {
 		if (ExpectedByteSize != (uint)data.Length) {
 			Console.Error.WriteLine($"Cached Data length mismatch: {ExpectedByteSize} != {data.Length}");
-			if (Debugger.IsAttached) {
-				Debugger.Break();
-			}
+			Debug.Break();
 			Debug.Error(Environment.StackTrace);
-			using (Lock.Write) {
-				CachedDataInternal.SetTarget(null!);
-			}
+			InvalidateCachedRawData();
 
 			return;
 		}

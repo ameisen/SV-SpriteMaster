@@ -17,11 +17,11 @@ internal class CompressedMemoryCache<TKey, TValue> :
 	private readonly ObjectCache<TKey, ValueEntry> UnderlyingCache;
 	private readonly Compression.Algorithm CurrentAlgorithm = Compression.GetPreferredAlgorithm(SMConfig.ResidentCache.Compress);
 
-	private sealed class ValueEntry : IByteSize, IDisposable {
+	private sealed class ValueEntry : ITouchable, IByteSize, IDisposable {
 		private readonly WeakReference<TValue[]> UncompressedInternal;
 		internal ReadOnlySpan<TValue> Uncompressed => GetUncompressed();
-		private byte[]? Compressed = null;
-		private readonly Task CompressionTask;
+		private volatile byte[]? Compressed = null;
+		private volatile Task CompressionTask;
 		private readonly long Size;
 		private readonly Compression.Algorithm Algorithm;
 
@@ -64,18 +64,53 @@ internal class CompressedMemoryCache<TKey, TValue> :
 				return uncompressed;
 			}
 
-			CompressionTask.Wait();
-			Compressed.AssertNotNull();
+			byte[]? compressed = null;
+			Task lastCompressionTask = null!;
+			do {
+				var currentCompressionTask = CompressionTask;
+				if (lastCompressionTask == currentCompressionTask) {
+					compressed.AssertNotNull();
+				}
+
+				try {
+					currentCompressionTask.Wait();
+				}
+				catch (ObjectDisposedException) {
+					continue;
+				}
+
+				compressed = Compressed;
+			} while (compressed is null);
 
 			lock (this) {
 				if (UncompressedInternal.TryGetTarget(out uncompressed)) {
 					return uncompressed;
 				}
 
-				var uncompressedData = Compressed!.Decompress<TValue>((int)Size, Algorithm);
+				var uncompressedData = compressed.Decompress<TValue>((int)Size, Algorithm);
 				UncompressedInternal.SetTarget(uncompressedData);
 				return uncompressedData;
 			}
+		}
+
+		[MethodImpl(Runtime.MethodImpl.Inline)]
+		public bool Touch() {
+			// Assume that the underlying raw data has changed (but not the size or actual handle)
+
+			if (!UncompressedInternal.TryGetTarget(out var uncompressed)) {
+				// If the underlying data has changed, but we no longer have the uncompressed data in-store,
+				// then our only choice is to discard the data altogether, which requires removing the element from the cache.
+				return false;
+			}
+
+			lock (this) {
+				Compressed = null;
+				var newCompressionTask = ICompressedMemoryCache.TaskFactory.StartNew(() => Compress(uncompressed));
+				var oldCompressionTask = Interlocked.Exchange(ref CompressionTask, newCompressionTask);
+				oldCompressionTask.Dispose();
+			}
+
+			return true;
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Inline)]
@@ -137,9 +172,20 @@ internal class CompressedMemoryCache<TKey, TValue> :
 		return value;
 	}
 
+	[MustUseReturnValue, MethodImpl(Runtime.MethodImpl.Inline)]
+	public override TValue[] SetOrTouch(TKey key, TValue[] value) {
+		UnderlyingCache.SetOrTouchFast(key, new(value, CurrentAlgorithm));
+		return value;
+	}
+
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public override void SetFast(TKey key, TValue[] value) {
 		UnderlyingCache.SetFast(key, new(value, CurrentAlgorithm));
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	public override void SetOrTouchFast(TKey key, TValue[] value) {
+		UnderlyingCache.SetOrTouchFast(key, new(value, CurrentAlgorithm));
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
@@ -172,6 +218,11 @@ internal class CompressedMemoryCache<TKey, TValue> :
 		}
 
 		return default;
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	public override void Touch(TKey key) {
+		UnderlyingCache.Touch(key);
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]

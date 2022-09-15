@@ -193,7 +193,7 @@ internal sealed class ConcurrentLinkedListSlim<T> {
 			// Increment and validate the current node count.
 			++Count;
 			Count.AssertPositiveOrZero();
-#if !SHIPPING || CONTRACTS_FULL
+#if (!SHIPPING || CONTRACTS_FULL) && !DEVELOPMENT
 			Count.AssertEqual(GetListCount());
 #endif
 
@@ -281,7 +281,7 @@ internal sealed class ConcurrentLinkedListSlim<T> {
 
 			ref Node node = ref GetNode(nodeRefLocal);
 
-#if !SHIPPING || CONTRACTS_FULL
+#if (!SHIPPING || CONTRACTS_FULL) && !DEVELOPMENT
 			if (nodeRef != Tail && nodeRef != Head && node.Previous == default && node.Next == default) {
 				ThrowHelper.ThrowInvalidOperationException("Dead Node being released");
 			}
@@ -311,7 +311,7 @@ internal sealed class ConcurrentLinkedListSlim<T> {
 			// Decrement and validate the current node count.
 			--Count;
 			Count.AssertPositiveOrZero();
-#if !SHIPPING || CONTRACTS_FULL
+#if (!SHIPPING || CONTRACTS_FULL) && !DEVELOPMENT
 			Count.AssertEqual(GetListCount());
 #endif
 			// Add the index to the node free list.
@@ -365,7 +365,7 @@ internal sealed class ConcurrentLinkedListSlim<T> {
 			);
 		}
 		catch {
-			Debugger.Break();
+			Debug.Break();
 			throw;
 		}
 	}
@@ -448,7 +448,7 @@ internal sealed class ConcurrentLinkedListSlim<T> {
 			}
 		}
 		catch {
-			Debugger.Break();
+			Debug.Break();
 			throw;
 		}
 	}
@@ -471,7 +471,7 @@ internal sealed class ConcurrentLinkedListSlim<T> {
 				NodeFreeList.Add(i);
 				ref Node node = ref NodeArray[i];
 				node.Value = default!;
-#if !SHIPPING || CONTRACTS_FULL
+#if (!SHIPPING || CONTRACTS_FULL) && !DEVELOPMENT
 				node.Next = default;
 				node.Previous = default;
 #endif

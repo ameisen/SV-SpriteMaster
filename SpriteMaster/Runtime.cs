@@ -1,6 +1,7 @@
 ﻿// #define SUPPORT_DIFFERENT_FRAMEWORKS
 
 using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster;
@@ -182,5 +183,23 @@ internal static class Runtime {
 
 	private static bool GetIsHDR() {
 		return false;
+	}
+
+	private static readonly int ProcessorCount = Environment.ProcessorCount;
+	private static readonly nint ExpectedMask = ProcessorCount == 64 ? nint.MaxValue : ((nint)1 << ProcessorCount) - 1;
+
+	private static readonly Process CurrentProcess = Process.GetCurrentProcess();
+
+	internal static void CorrectProcessorAffinity() {
+		if (ProcessorCount > 64) {
+			return;
+		}
+
+		nint expectedMask = ExpectedMask;
+
+		var currentAffinity = (nint)CurrentProcess.ProcessorAffinity;
+		if ((currentAffinity & expectedMask) != expectedMask) {
+			CurrentProcess.ProcessorAffinity = expectedMask;
+		}
 	}
 }

@@ -47,6 +47,8 @@ public sealed class SpriteMaster : Mod {
 
 		_ = ThreadingExt.IsMainThread;
 
+		Runtime.CorrectProcessorAffinity();
+
 		DirectoryCleanup.Cleanup();
 
 		GLExt.EnableDebugging();
@@ -66,6 +68,8 @@ public sealed class SpriteMaster : Mod {
 		if (assemblyPath is not null) {
 			DirectoryExt.CompressDirectory(assemblyPath, force: true);
 		}
+
+		TextureFileCache.Precache();
 	}
 
 	private void InitializeConfig() {
@@ -208,6 +212,8 @@ public sealed class SpriteMaster : Mod {
 #if !SHIPPING
 		ModManifest.UniqueID.AssertEqual(UniqueId);
 #endif
+
+		Runtime.CorrectProcessorAffinity();
 
 		Initialize();
 

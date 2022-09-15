@@ -63,7 +63,7 @@ internal static class SpriteMap {
 			var result = meta.TryAddToSpriteInstanceTable(instance.SpriteMapHash, instance);
 			if (!result) {
 				meta.GetSpriteInstanceTable().TryGetValue(instance.SpriteMapHash, out var current);
-				if (current is null || current.Invalidated) {
+				if (current is null || current.Invalidated || instance.PreviousSpriteInstance == current) {
 					meta.ReplaceInSpriteInstanceTable(instance.SpriteMapHash, instance);
 					result = true;
 				}

@@ -61,7 +61,7 @@ internal static unsafe class GLExt {
 
 		string errorMessage = $"GL.GetError() returned '{string.Join(", ", errorList)}': {expression}";
 		System.Diagnostics.Debug.WriteLine(errorMessage);
-		Debugger.Break();
+		Debug.Break();
 		throw new MonoGameGLException(errorMessage);
 	}
 
@@ -449,7 +449,7 @@ internal static unsafe class GLExt {
 			Debug.Error(errorMessage, ex);
 		}
 
-		Debugger.Break();
+		Debug.Break();
 #endif
 	}
 

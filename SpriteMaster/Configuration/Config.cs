@@ -724,6 +724,9 @@ internal static class Config {
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushTextureFileCache)]
 		[Attributes.LimitsInt(0, long.MaxValue)]
 		internal static long MaxSize = SizesExt.AsGiB(2);
+
+		[Attributes.Comment("Should all texture files in the Mods directory attempt to be pre-cached?")]
+		internal static bool Precache = false;
 	}
 
 	[Attributes.Advanced]
