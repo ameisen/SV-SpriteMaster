@@ -418,7 +418,10 @@ internal static class PTexture2D {
 					yield return instruction;
 				}
 				else if (instruction.opcode.Value == OpCodes.Ret.Value) {
-					yield return new(OpCodes.Jmp, postCall);
+					yield return new(instruction) {
+						opcode = OpCodes.Jmp,
+						operand = postCall
+					};
 				}
 				else {
 					yield return instruction;
