@@ -44,9 +44,12 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 
 	internal static bool Validate(XTexture2D texture, bool clean = false) {
 		var meta = texture.Meta();
-		if (meta.Validation.HasValue) {
+		var textureName = texture.Name;
+		if (meta.Validation.HasValue && meta.LastName == textureName) {
 			return meta.Validation.Value;
 		}
+
+		meta.LastName = textureName;
 
 		var topTexture = texture;
 		texture = texture.GetUnderlyingTexture(out bool hasUnderlying);
@@ -227,8 +230,10 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 				}
 			}
 
-			if (!(Configuration.Preview.Override.Instance?.ResampleSprites ?? Config.Resample.EnabledSprites) &&
-					!isLargeText && !isSmallText) {
+			if (
+				!(Configuration.Preview.Override.Instance?.ResampleSprites ?? Config.Resample.EnabledSprites) &&
+				!isLargeText && !isSmallText
+			) {
 				if (!meta.TracePrinted) {
 					meta.TracePrinted = true;
 					Debug.Trace(
@@ -239,7 +244,9 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 				return false;
 			}
 
-			if (!disableValidation && (isText || !texture.Anonymous())) {
+			bool isAnonymous = texture.Anonymous();
+
+			if (!disableValidation && (isText || !isAnonymous || isAnonymous != hasUnderlying)) {
 				meta.Validation = true;
 			}
 
@@ -251,6 +258,8 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 			if (clean) {
 				PurgeInvalidated(topTexture);
 			}
+
+			return false;
 		}
 
 		return true;

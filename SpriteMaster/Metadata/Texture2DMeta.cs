@@ -9,7 +9,6 @@ using SpriteMaster.Types.Interlocking;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -216,6 +215,9 @@ internal sealed class Texture2DMeta : IDisposable {
 	internal ulong DecodingTaskRevision = 0ul;
 
 	internal readonly bool IsCursors;
+
+	// Used for validation.
+	internal string? LastName;
 
 	internal void IncrementRevision() => ++Revision;
 
