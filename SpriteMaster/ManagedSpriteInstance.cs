@@ -44,15 +44,12 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 
 	internal static bool Validate(XTexture2D texture, bool clean = false) {
 		var meta = texture.Meta();
-		var textureName = texture.Name;
-		if (meta.Validation.HasValue && meta.LastName == textureName) {
+		if (meta.Validation.HasValue && !meta.CheckNameChange(texture)) {
 			return meta.Validation.Value;
 		}
 
-		meta.LastName = textureName;
-
 		var topTexture = texture;
-		texture = texture.GetUnderlyingTexture(out bool hasUnderlying);
+		texture = texture.GetUnderlyingTexture(out bool isManaged);
 
 		bool InnerValidate() {
 			if (texture is InternalTexture2D) {
@@ -246,7 +243,7 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 
 			bool isAnonymous = texture.Anonymous();
 
-			if (!disableValidation && (isText || !isAnonymous || isAnonymous != hasUnderlying)) {
+			if (!disableValidation && (isText || !isAnonymous || isAnonymous != isManaged)) {
 				meta.Validation = true;
 			}
 
@@ -265,31 +262,32 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 		return true;
 	}
 
-	private static readonly TexelTimer TexelAverage = new();
-	private static readonly TexelTimer TexelAverageCached = new();
-	private static readonly TexelTimer TexelAverageSync = new();
-	private static readonly TexelTimer TexelAverageCachedSync = new();
+	private static class TexelTimers {
+		internal static readonly TexelTimer Average = new();
+		internal static readonly TexelTimer AverageCached = new();
+		internal static readonly TexelTimer AverageSync = new();
+		internal static readonly TexelTimer AverageCachedSync = new();
+	}
 
 	internal static void ClearTimers() {
-		TexelAverage.Reset();
-		TexelAverageCached.Reset();
-		TexelAverageSync.Reset();
-		TexelAverageCachedSync.Reset();
+		TexelTimers.Average.Reset();
+		TexelTimers.AverageCached.Reset();
+		TexelTimers.AverageSync.Reset();
+		TexelTimers.AverageCachedSync.Reset();
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	private static TexelTimer GetTimer(bool cached, bool async) {
-		if (async) {
-			return cached ? TexelAverageCached : TexelAverage;
-		}
-		else {
-			return cached ? TexelAverageCachedSync : TexelAverageSync;
-		}
-	}
+	private static TexelTimer GetTimer(bool cached, bool async) =>
+		(cached, async) switch {
+			(false, false) => TexelTimers.AverageSync,
+			(false, true) => TexelTimers.Average,
+			(true, false) => TexelTimers.AverageCachedSync,
+			(true, true) => TexelTimers.AverageCached
+		};
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private static TexelTimer GetTimer(XTexture2D texture, bool async, out bool isCached) {
-		var isTextureCached = SpriteInfo.IsCached(texture);
+		var isTextureCached = texture.Meta().CachedDataNonBlocking is not null;
 		isCached = isTextureCached;
 		return GetTimer(isTextureCached, async);
 	}

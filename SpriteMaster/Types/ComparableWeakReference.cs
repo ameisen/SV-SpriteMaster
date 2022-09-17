@@ -38,7 +38,7 @@ where T : class? {
 
 	internal ComparableWeakReference(T target) : this(new WeakReference<T>(target)) { }
 
-	internal ComparableWeakReference(WeakReference<T> reference) {
+	private ComparableWeakReference(WeakReference<T> reference) {
 		reference.TryGetTarget(out var target);
 		Reference = new(target!);
 	}

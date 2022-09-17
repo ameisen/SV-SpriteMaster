@@ -3,6 +3,7 @@ using SpriteMaster.Caching;
 using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using SpriteMaster.Hashing;
+using SpriteMaster.Mitigations.PyTK;
 using SpriteMaster.Resample;
 using SpriteMaster.Types;
 using SpriteMaster.Types.Interlocking;
@@ -10,6 +11,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,6 +21,8 @@ namespace SpriteMaster.Metadata;
 
 // TODO : This needs a Finalize thread dispatcher, and needs to remove cached data for it from the ResidentCache.
 internal sealed class Texture2DMeta : IDisposable {
+	private const string CursorsPath = @"LooseSprites\Cursors";
+
 	private static readonly ConcurrentDictionary<ulong, SpriteDictionary> SpriteDictionaries = new();
 	private readonly SpriteDictionary SpriteInstanceTable;
 
@@ -214,10 +218,53 @@ internal sealed class Texture2DMeta : IDisposable {
 	private volatile Task DecodingTask = Task.CompletedTask;
 	internal ulong DecodingTaskRevision = 0ul;
 
-	internal readonly bool IsCursors;
+	internal readonly bool IsManagedTexture;
 
-	// Used for validation.
-	internal string? LastName;
+	internal bool IsCursors { get; private set; }
+
+	private bool CheckIsCursors(XTexture2D texture) {
+		if (texture.NormalizedName() == CursorsPath) {
+			return true;
+		}
+
+		if (IsManagedTexture) {
+			var underlyingTexture = texture.GetUnderlyingTexture(out bool isManaged);
+			if (!isManaged) {
+				underlyingTexture = null;
+			}
+
+			return underlyingTexture?.NormalizedName() == CursorsPath;
+		}
+		else {
+			return false;
+		}
+	}
+
+	private string? PreviousName;
+
+	internal bool CheckNameChange(XTexture2D texture) {
+		while (true) {
+			Contract.Assert(Owner.TryGetTarget(out var target) && target == texture);
+
+			var previousName = PreviousName;
+			var currentName = texture.Name;
+			if (previousName == currentName) {
+				if (IsManagedTexture && texture.GetUnderlyingTexture(out _) is { } innerTexture && innerTexture != texture) {
+					texture = innerTexture;
+					continue;
+				}
+
+				return false;
+			}
+
+			if (!IsCursors) {
+				IsCursors = CheckIsCursors(texture);
+			}
+
+			PreviousName = currentName;
+			return true;
+		}
+	}
 
 	internal void IncrementRevision() => ++Revision;
 
@@ -239,13 +286,9 @@ internal sealed class Texture2DMeta : IDisposable {
 			ExpectedByteSize = ExpectedByteSizeRaw;
 		}
 
-		var underlyingTexture = Mitigations.PyTK.Textures.GetUnderlyingTexture(texture, out bool hasUnderlying);
-		if (!hasUnderlying) {
-			underlyingTexture = null;
-		}
+		IsManagedTexture = Mitigations.PyTK.Textures.IsPyTKTexture(texture);
 
-		const string CursorsPath = @"LooseSprites\Cursors";
-		IsCursors = (texture.NormalizedName() == CursorsPath || underlyingTexture?.NormalizedName() == CursorsPath);
+		IsCursors = CheckIsCursors(texture);
 	}
 
 	internal bool HasCachedData {

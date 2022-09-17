@@ -231,10 +231,6 @@ internal sealed class SpriteInfo : IDisposable {
 	internal static void Purge(XTexture2D reference, Bounds? bounds, in DataRef<byte> data, bool animated) =>
 		reference.Meta().Purge(reference, bounds, data, animated: animated);
 
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal static bool IsCached(XTexture2D reference) =>
-		reference.Meta().CachedDataNonBlocking is not null;
-
 	[StructLayout(LayoutKind.Auto)]
 	internal readonly ref struct Initializer {
 
