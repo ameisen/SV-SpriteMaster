@@ -455,11 +455,21 @@ internal static class Setup {
 			case "SpriteMaster.Configuration.Config+Resample.Scaler":
 				PreviewOverride.Scaler = ExtractCombinedEnum<Resample.Scaler>((string)value);
 				break;
+			case "SpriteMaster.Configuration.Config+Resample.ScalerPortrait":
+				PreviewOverride.ScalerPortrait = ExtractCombinedEnum<Resample.Scaler>((string)value);
+				break;
+			case "SpriteMaster.Configuration.Config+Resample.ScalerText":
+				PreviewOverride.ScalerText = ExtractCombinedEnum<Resample.Scaler>((string)value);
+				break;
 			case "SpriteMaster.Configuration.Config+Resample.ScalerGradient":
 				PreviewOverride.ScalerGradient = ExtractCombinedEnum<Resample.Scaler>((string)value);
 				break;
 			case "SpriteMaster.Configuration.Config+Resample.EnabledSprites":
 				PreviewOverride.ResampleSprites = (bool)value;
+				SMMetadata.FlushValidations();
+				break;
+			case "SpriteMaster.Configuration.Config+Resample.EnabledPortraits":
+				PreviewOverride.ResamplePortraits = (bool)value;
 				SMMetadata.FlushValidations();
 				break;
 			case "SpriteMaster.Configuration.Config+Resample.EnabledLargeText":

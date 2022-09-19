@@ -6,8 +6,11 @@ internal class Override {
 	internal bool Enabled = false;
 	internal bool ResampleEnabled = false;
 	internal Resample.Scaler Scaler = Resample.Scaler.None;
+	internal Resample.Scaler ScalerPortrait = Resample.Scaler.None;
+	internal Resample.Scaler ScalerText = Resample.Scaler.None;
 	internal Resample.Scaler ScalerGradient = Resample.Scaler.None;
 	internal bool ResampleSprites = false;
+	internal bool ResamplePortraits = false;
 	internal bool ResampleLargeText = false;
 	internal bool ResampleSmallText = false;
 
@@ -20,8 +23,11 @@ internal class Override {
 		Enabled = Config.IsUnconditionallyEnabled,
 		ResampleEnabled = Config.Resample.Enabled,
 		Scaler = Config.Resample.Scaler,
+		ScalerPortrait = Config.Resample.ScalerPortrait,
+		ScalerText = Config.Resample.ScalerText,
 		ScalerGradient = Config.Resample.ScalerGradient,
 		ResampleSprites = Config.Resample.EnabledSprites,
+		ResamplePortraits = Config.Resample.EnabledPortraits,
 		ResampleLargeText = Config.Resample.EnabledLargeText,
 		ResampleSmallText = Config.Resample.EnabledSmallText,
 

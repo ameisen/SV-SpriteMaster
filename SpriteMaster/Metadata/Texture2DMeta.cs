@@ -55,6 +55,16 @@ internal sealed class Texture2DMeta : IDisposable {
 	internal readonly ConcurrentDictionary<Bounds, InFlightData> InFlightTasks = new();
 	internal TextureFlag Flags = TextureFlag.None; // TODO use properties for this
 
+	internal enum SpriteType {
+		Unknown = 0,
+		Sprite,
+		SmallText,
+		LargeText,
+		Portrait,
+	}
+
+	internal SpriteType Type = SpriteType.Sprite;
+
 	internal IReadOnlyDictionary<ulong, ManagedSpriteInstance> GetSpriteInstanceTable() => SpriteInstanceTable;
 
 	internal void SetSpriteHash(Bounds bounds, ulong hash) {

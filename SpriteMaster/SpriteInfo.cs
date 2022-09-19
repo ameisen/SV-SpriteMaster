@@ -43,6 +43,8 @@ internal sealed class SpriteInfo : IDisposable {
 	private readonly int RawOffset;
 	private readonly int RawStride;
 	internal readonly Resample.Scaler Scaler;
+	internal readonly Resample.Scaler ScalerPortrait;
+	internal readonly Resample.Scaler ScalerText;
 	internal readonly Resample.Scaler ScalerGradient;
 	internal readonly BlendState BlendState;
 	internal readonly SpriteFlags Flags;
@@ -216,6 +218,8 @@ internal sealed class SpriteInfo : IDisposable {
 					ExpectedScale.GetLongHashCode(),
 					Reference.Format.GetLongHashCode(),
 					Scaler.GetLongHashCode(),
+					ScalerPortrait.GetLongHashCode(),
+					ScalerText.GetLongHashCode(),
 					ScalerGradient.GetLongHashCode()
 				);
 
@@ -245,6 +249,8 @@ internal sealed class SpriteInfo : IDisposable {
 		internal readonly uint ExpectedScale;
 		internal readonly TextureType TextureType;
 		internal readonly Resample.Scaler Scaler;
+		internal readonly Resample.Scaler ScalerPortrait;
+		internal readonly Resample.Scaler ScalerText;
 		internal readonly Resample.Scaler ScalerGradient;
 		// For statistics and throttling
 		internal readonly SpriteFlags Flags;
@@ -376,10 +382,14 @@ internal sealed class SpriteInfo : IDisposable {
 			if (Configuration.Preview.Override.Instance is {} instance) {
 				flags |= SpriteFlags.Preview;
 				Scaler = instance.Scaler;
+				ScalerPortrait = instance.ScalerPortrait;
+				ScalerText = instance.ScalerText;
 				ScalerGradient = instance.ScalerGradient;
 			}
 			else {
 				Scaler = Config.Resample.Scaler;
+				ScalerPortrait = Config.Resample.ScalerPortrait;
+				ScalerText = Config.Resample.ScalerText;
 				ScalerGradient = Config.Resample.ScalerGradient;
 			}
 
@@ -488,6 +498,8 @@ internal sealed class SpriteInfo : IDisposable {
 				ExpectedScale.GetLongHashCode(),
 				reference.Format.GetLongHashCode(),
 				Scaler.GetLongHashCode(),
+				ScalerPortrait.GetLongHashCode(),
+				ScalerText.GetLongHashCode(),
 				ScalerGradient.GetLongHashCode()
 			);
 			return (result, dataHash);
@@ -514,6 +526,8 @@ internal sealed class SpriteInfo : IDisposable {
 		ReferenceData = referenceData;
 
 		Scaler = initializer.Scaler;
+		ScalerPortrait = initializer.ScalerPortrait;
+		ScalerText = initializer.ScalerText;
 		ScalerGradient = initializer.ScalerGradient;
 
 		Flags = initializer.Flags;

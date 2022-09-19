@@ -279,7 +279,20 @@ internal sealed class Resampler {
 			}
 		}
 
-		var scalerType = isGradient ? input.ScalerGradient : input.Scaler;
+		Scaler scalerType;
+		switch (input.Reference.Meta().Type) {
+			default:
+			case Texture2DMeta.SpriteType.Sprite:
+				scalerType = isGradient ? input.ScalerGradient : input.Scaler;
+				break;
+			case Texture2DMeta.SpriteType.Portrait:
+				scalerType = input.ScalerPortrait;
+				break;
+			case Texture2DMeta.SpriteType.LargeText:
+			case Texture2DMeta.SpriteType.SmallText:
+				scalerType = input.ScalerText;
+				break;
+		}
 
 		if (
 			!Config.Resample.Recolor.Enabled &&

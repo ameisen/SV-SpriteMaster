@@ -51,6 +51,8 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 		var topTexture = texture;
 		texture = texture.GetUnderlyingTexture(out bool isManaged);
 
+		bool forceClean = false;
+
 		bool InnerValidate() {
 			if (texture is InternalTexture2D) {
 				if (!meta.TracePrinted) {
@@ -167,47 +169,59 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 			}
 
 			var isText = texture.Format == SurfaceFormat.Dxt3 || topTexture.Format == SurfaceFormat.Dxt3;
-			var isLargeText = isText && IsLargeFont();
-			var isSmallText = isText && !isLargeText;
+			Texture2DMeta.SpriteType spriteType = true switch {
+				_ when isText && IsLargeFont() => Texture2DMeta.SpriteType.LargeText,
+				_ when isText => Texture2DMeta.SpriteType.SmallText,
+				_ when texture.NormalizedName().Contains("Portraits") || topTexture.NormalizedName().Contains("Portraits") => Texture2DMeta.SpriteType.Portrait,
+				_ => Texture2DMeta.SpriteType.Sprite
+			};
 
-			if (isLargeText) {
+			if (spriteType == Texture2DMeta.SpriteType.LargeText) {
 				meta.Flags |= Texture2DMeta.TextureFlag.IsLargeFont;
 			}
 			else {
 				meta.Flags &= ~Texture2DMeta.TextureFlag.IsLargeFont;
 			}
 
-			if (isSmallText) {
+			if (spriteType == Texture2DMeta.SpriteType.SmallText) {
 				meta.Flags |= Texture2DMeta.TextureFlag.IsSmallFont;
 			}
 			else {
 				meta.Flags &= ~Texture2DMeta.TextureFlag.IsSmallFont;
 			}
 
-			if (!(Configuration.Preview.Override.Instance?.ResampleLargeText ?? Config.Resample.EnabledLargeText) &&
-					isLargeText) {
-				if (!meta.TracePrinted) {
-					meta.TracePrinted = true;
-					Debug.Trace(
-						$"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Is Font (and text resampling is disabled)"
-					);
+			var currentType = meta.Type;
+			if (currentType != spriteType) {
+				if (currentType != Texture2DMeta.SpriteType.Unknown) {
+					// We need to flush the texture then because it has changed what it is
+					forceClean = true;
 				}
-
-				return false;
+				meta.Type = spriteType;
 			}
 
-			if (!(Configuration.Preview.Override.Instance?.ResampleSmallText ?? Config.Resample.EnabledSmallText) &&
-					isSmallText) {
-				// The only BC2 texture that I've _ever_ seen is the internal font
-
+			void TracePrint(string reason) {
 				if (!meta.TracePrinted) {
 					meta.TracePrinted = true;
 					Debug.Trace(
-						$"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Is Basic Font (and basic text resampling is disabled)"
+						$"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', {reason}"
 					);
 				}
+			}
 
-				return false;
+			switch (spriteType) {
+				case Texture2DMeta.SpriteType.LargeText when !(Configuration.Preview.Override.Instance?.ResampleLargeText ?? Config.Resample.EnabledLargeText):
+					TracePrint("Is Font (and text resampling is disabled)");
+					return false;
+				case Texture2DMeta.SpriteType.SmallText when !(Configuration.Preview.Override.Instance?.ResampleSmallText ?? Config.Resample.EnabledSmallText):
+					// The only BC2 texture that I've _ever_ seen is the internal font
+					TracePrint("Is Basic Font (and basic text resampling is disabled)");
+					return false;
+				case Texture2DMeta.SpriteType.Portrait when !(Configuration.Preview.Override.Instance?.ResamplePortraits ?? Config.Resample.EnabledPortraits):
+					TracePrint("Is Portrait (and portrait resampling is disabled)");
+					return false;
+				case Texture2DMeta.SpriteType.Sprite when !(Configuration.Preview.Override.Instance?.ResampleSprites ?? Config.Resample.EnabledSprites):
+					TracePrint("Is Sprite (and sprite resampling is disabled)");
+					return false;
 			}
 
 			if (!texture.Anonymous()) {
@@ -227,20 +241,6 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 				}
 			}
 
-			if (
-				!(Configuration.Preview.Override.Instance?.ResampleSprites ?? Config.Resample.EnabledSprites) &&
-				!isLargeText && !isSmallText
-			) {
-				if (!meta.TracePrinted) {
-					meta.TracePrinted = true;
-					Debug.Trace(
-						$"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Is Sprite (and sprite resampling is disabled)"
-					);
-				}
-
-				return false;
-			}
-
 			bool isAnonymous = texture.Anonymous();
 
 			if (!disableValidation && (isText || !isAnonymous || isAnonymous != isManaged)) {
@@ -252,11 +252,15 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 
 		if (!InnerValidate()) {
 			meta.Validation = false;
-			if (clean) {
+			if (clean || forceClean) {
 				PurgeInvalidated(topTexture);
 			}
 
 			return false;
+		}
+
+		if (forceClean) {
+			PurgeInvalidated(topTexture);
 		}
 
 		return true;

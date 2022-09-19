@@ -308,6 +308,9 @@ internal static class Config {
 		[Attributes.Comment("Should resampling be enabled for normal sprites?")]
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllRenderingCaches)]
 		internal static bool EnabledSprites = true;
+		[Attributes.Comment("Should resampling be enabled for portraits?")]
+		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllRenderingCaches)]
+		internal static bool EnabledPortraits = true;
 		[Attributes.Comment("Should resampling be enabled for regular text?")]
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllRenderingCaches)]
 		internal static bool EnabledLargeText = true;
@@ -321,9 +324,18 @@ internal static class Config {
 		[Attributes.Comment("What scaling algorithm should be used by default?")]
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllRenderingCaches)]
 		internal static Root.Resample.Scaler Scaler = Root.Resample.Scaler.xBRZ;
+		[Attributes.MenuName("Scaler (Portraits)")]
+		[Attributes.Comment("What scaling algorithm should be used for portraits?")]
+		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllRenderingCaches)]
+		internal static Root.Resample.Scaler ScalerPortrait = Root.Resample.Scaler.xBRZ;
+		[Attributes.MenuName("Scaler (Text)")]
+		[Attributes.Comment("What scaling algorithm should be used for text?")]
+		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllRenderingCaches)]
+		internal static Root.Resample.Scaler ScalerText = Root.Resample.Scaler.xBRZ;
+		[Attributes.MenuName("Scaler (Gradients)")]
 		[Attributes.Comment("What scaling algorithm should be used for gradient sprites?")]
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllRenderingCaches)]
-		internal static Root.Resample.Scaler ScalerGradient = Root.Resample.Scaler.None;
+		internal static Root.Resample.Scaler ScalerGradient = Root.Resample.Scaler.EPX;
 		[Attributes.Comment("Should dynamic scaling be used (scaling based upon apparent sprite size)")]
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllRenderingCaches)]
 		[Attributes.Advanced]

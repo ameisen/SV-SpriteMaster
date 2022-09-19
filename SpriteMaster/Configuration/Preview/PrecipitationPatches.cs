@@ -1,5 +1,4 @@
-﻿using SpriteMaster.Types.Exceptions;
-using StardewValley;
+﻿using StardewValley;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using SMHarmonize = SpriteMaster.Harmonize;
