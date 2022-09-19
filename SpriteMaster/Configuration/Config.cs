@@ -329,7 +329,7 @@ internal static class Config {
 		[Attributes.Advanced]
 		internal static bool EnableDynamicScale = true;
 
-		[Attributes.Comment("Should excess transparent rows/colums be trimmed?")]
+		[Attributes.Comment("Should excess transparent rows/columns be trimmed?")]
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllRenderingCaches)]
 		[Attributes.Advanced]
 		internal static bool TrimExcessTransparency = true;
@@ -337,10 +337,23 @@ internal static class Config {
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllRenderingCaches)]
 		[Attributes.Advanced]
 		internal static bool AssumeGammaCorrected = true;
+		[Attributes.Comment("Minimum scale factor of sprites (clamped to chosen scaler)")]
+		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllRenderingCaches)]
+		[Attributes.LimitsInt(1, 6)]
+		internal static int MinScale = 1;
 		[Attributes.Comment("Maximum scale factor of sprites (clamped to chosen scaler)")]
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllRenderingCaches)]
 		[Attributes.LimitsInt(1, 6)]
 		internal static int MaxScale = 6;
+		[Attributes.Comment("What value should be added to the calculated scale?")]
+		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllRenderingCaches)]
+		[Attributes.Advanced]
+		[Attributes.LimitsReal(0.0, 6.0)]
+		internal static float OverScale = 0.5f;
+		[Attributes.Comment("Should sprites that are already at their rendering size be forced to be rescaled?")]
+		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllRenderingCaches)]
+		[Attributes.Advanced]
+		internal static bool ForceOverScaling = true;
 		[Attributes.Comment("Minimum edge length of a sprite to be considered for resampling")]
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllRenderingCaches)]
 		[Attributes.LimitsInt(1, AbsoluteMaxTextureDimension)]

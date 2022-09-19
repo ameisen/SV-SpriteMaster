@@ -314,6 +314,27 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 			return scaleTexture;
 		}
 
+		uint maxScale = (uint)Config.Resample.MaxScale;
+		for (uint temporaryScale = expectedScale + 1; temporaryScale <= maxScale; ++temporaryScale) {
+			if (SpriteMap.TryGetReady(texture, source, temporaryScale, out var tempScaleTexture)) {
+				if (tempScaleTexture.NoResample) {
+					return null;
+				}
+
+				return tempScaleTexture;
+			}
+		}
+
+		for (uint temporaryScale = expectedScale - 1; temporaryScale >= 2U; --temporaryScale) {
+			if (SpriteMap.TryGetReady(texture, source, temporaryScale, out var tempScaleTexture)) {
+				if (tempScaleTexture.NoResample) {
+					return null;
+				}
+
+				return tempScaleTexture;
+			}
+		}
+
 		return null;
 	}
 
@@ -376,13 +397,7 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 		bool textureChain = false;
 		ManagedSpriteInstance? currentInstance = null;
 
-		static bool ValidateInstance(ManagedSpriteInstance instance) {
-			return
-				!instance.IsDisposed &&
-				instance.IsPreview == (Configuration.Preview.Override.Instance is not null);
-		}
-
-		if (SpriteMap.TryGet(texture, source, expectedScale, out var scaleTexture) && ValidateInstance(scaleTexture)) {
+		if (SpriteMap.TryGet(texture, source, expectedScale, out var scaleTexture, out ulong spriteHash) && SpriteMap.ValidateInstance(scaleTexture)) {
 			if (scaleTexture.Invalidated) {
 				currentInstance = scaleTexture;
 				textureChain = true;
@@ -391,7 +406,7 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 			{
 				case true:
 					return scaleTexture;
-				case false when scaleTexture.PreviousSpriteInstance is not null && scaleTexture.PreviousSpriteInstance.IsReady && ValidateInstance(scaleTexture.PreviousSpriteInstance):
+				case false when scaleTexture.PreviousSpriteInstance is not null && scaleTexture.PreviousSpriteInstance.IsReady && SpriteMap.ValidateInstance(scaleTexture.PreviousSpriteInstance):
 					currentInstance = scaleTexture.PreviousSpriteInstance;
 					textureChain = false;
 					break;
@@ -399,6 +414,24 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 					currentInstance = scaleTexture;
 					textureChain = false;
 					break;
+			}
+		}
+
+		// If we didn't find a previous texture, check for one with a different scale
+		if (currentInstance is null) {
+			uint maxScale = (uint)Config.Resample.MaxScale;
+			for (uint temporaryScale = expectedScale + 1; temporaryScale <= maxScale; ++temporaryScale) {
+				if (SpriteMap.TryGetReady(texture, source, temporaryScale, out var tempScaleTexture)) {
+					currentInstance = tempScaleTexture;
+				}
+			}
+
+			if (currentInstance is null) {
+				for (uint temporaryScale = expectedScale - 1; temporaryScale >= 2U; --temporaryScale) {
+					if (SpriteMap.TryGetReady(texture, source, temporaryScale, out var tempScaleTexture)) {
+						currentInstance = tempScaleTexture;
+					}
+				}
 			}
 		}
 
@@ -504,7 +537,7 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 		var currentRevision = textureMeta.Revision;
 		// Check if there is already an in-flight task for this instance.
 		// TODO : this logic feels duplicated - we can already query for the Instance, and it already holds a WeakReference to the task...
-		if (textureMeta.InFlightTasks.TryGetValue(source, out var inFlightTask) && inFlightTask.Revision == currentRevision) {
+		if (textureMeta.InFlightTasks.TryGetValue(source, out var inFlightTask) && inFlightTask.Revision == currentRevision && inFlightTask.SpriteHash == spriteHash) {
 			if (
 				inFlightTask.ResampleTask.Status != TaskStatus.WaitingToRun &&
 				currentInstance is not null &&
@@ -560,7 +593,7 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 				async: useAsync,
 				previousInstance: (currentInstance?.IsLoaded ?? false) ? currentInstance : null
 			);
-			textureMeta.InFlightTasks[source] = new(currentRevision, resampleTask);
+			textureMeta.InFlightTasks[source] = new(currentRevision, spriteHash, resampleTask);
 
 			ManagedSpriteInstance? result;
 			if (resampleTask.IsCompletedSuccessfully) {

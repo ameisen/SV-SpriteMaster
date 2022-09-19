@@ -41,6 +41,11 @@ internal static partial class OnDrawImpl {
 		[NotNullWhen(true)] out ManagedSpriteInstance? spriteInstance,
 		bool create = false
 	) {
+		if (expectedScale <= 1U && !SMConfig.Resample.ForceOverScaling) {
+			spriteInstance = null;
+			return false;
+		}
+
 		if (
 			LastDrawSpriteInstance is not null &&
 			LastDrawSpriteInstance.IsReady && !LastDrawSpriteInstance.IsDisposed && !LastDrawSpriteInstance.Suspended &&

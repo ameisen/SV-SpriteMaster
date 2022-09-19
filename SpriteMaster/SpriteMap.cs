@@ -85,14 +85,20 @@ internal static class SpriteMap {
 		}
 	}
 
+	internal static bool ValidateInstance(ManagedSpriteInstance instance) {
+		return
+			!instance.IsDisposed &&
+			instance.IsPreview == (Configuration.Preview.Override.Instance is not null);
+	}
+
 	internal static bool TryGetReady(XTexture2D texture, Bounds source, uint expectedScale, [NotNullWhen(true)] out ManagedSpriteInstance? result) {
-		if (TryGet(texture, source, expectedScale, out var internalResult)) {
-			if (internalResult.IsReady) {
+		if (TryGet(texture, source, expectedScale, out var internalResult, out _)) {
+			if (ValidateInstance(internalResult) && internalResult.IsReady) {
 				result = internalResult;
 				return true;
 			}
 
-			if (internalResult.PreviousSpriteInstance?.IsReady ?? false) {
+			if (internalResult.PreviousSpriteInstance is {} previousSpriteInstance && ValidateInstance(previousSpriteInstance) && previousSpriteInstance.IsReady) {
 				result = internalResult.PreviousSpriteInstance;
 				result.Resurrect(texture, internalResult.SpriteMapHash);
 				return true;
@@ -102,8 +108,9 @@ internal static class SpriteMap {
 		return false;
 	}
 
-	internal static bool TryGet(XTexture2D texture, Bounds source, uint expectedScale, [NotNullWhen(true)] out ManagedSpriteInstance? result) {
+	internal static bool TryGet(XTexture2D texture, Bounds source, uint expectedScale, [NotNullWhen(true)] out ManagedSpriteInstance? result, out ulong hash) {
 		var rectangleHash = SpriteHash(texture: texture, source: source, expectedScale: expectedScale, preview: Configuration.Preview.Override.Instance is not null);
+		hash = rectangleHash;
 
 		var meta = texture.Meta();
 		var spriteTable = meta.GetSpriteInstanceTable();
