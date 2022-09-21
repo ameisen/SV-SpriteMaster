@@ -42,7 +42,6 @@ internal sealed class Monitor {
 	internal void TriggerGarbageCollection() {
 		lock (CollectLock) {
 			Garbage.Collect(compact: true, blocking: true, background: false);
-			DrawState.TriggerCollection.Set(true);
 		}
 	}
 
@@ -62,7 +61,6 @@ internal sealed class Monitor {
 
 			if (collect) {
 				Garbage.Collect(compact: true, blocking: true, background: false);
-				DrawState.TriggerCollection.Set(true);
 			}
 		}
 	}
@@ -155,8 +153,6 @@ internal sealed class Monitor {
 
 					lock (CollectLock) {
 						ResidentCache.Purge();
-						DrawState.TriggerCollection.Set(true);
-						// TODO : Do other cleanup attempts here.
 					}
 				}
 				catch (ThreadInterruptedException) {

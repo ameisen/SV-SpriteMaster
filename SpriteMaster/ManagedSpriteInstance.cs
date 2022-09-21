@@ -542,8 +542,15 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 		// Check if there is already an in-flight task for this instance.
 		// TODO : this logic feels duplicated - we can already query for the Instance, and it already holds a WeakReference to the task...
 		if (textureMeta.InFlightTasks.TryGetValue(source, out var inFlightTask) && inFlightTask.Revision == currentRevision && inFlightTask.SpriteHash == spriteHash) {
+			TaskStatus taskStatus = TaskStatus.RanToCompletion;
+			bool taskCompleted = true;
+			if (inFlightTask.ResampleTask.TryGetTarget(out var resampleTask)) {
+				taskStatus = resampleTask.Status;
+				taskCompleted = resampleTask.IsCompleted;
+			}
+
 			if (
-				inFlightTask.ResampleTask.Status != TaskStatus.WaitingToRun &&
+				taskStatus != TaskStatus.WaitingToRun &&
 				currentInstance is not null &&
 				(currentInstance.IsReady ||
 				(currentInstance.DeferredTask.TryGetTarget(out var deferredTask) && !deferredTask.IsCompleted))
@@ -552,7 +559,7 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 				return currentInstance;
 			}
 
-			if (!inFlightTask.ResampleTask.IsCompleted) {
+			if (!taskCompleted) {
 				allowCache = false;
 				return null;
 			}
@@ -592,12 +599,14 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 		}
 
 		try {
+			SpriteMap.Remove(spriteHash, textureMeta, forceDispose: true);
+
 			var resampleTask = ResampleTask.Dispatch(
 				spriteInfo: new(spriteInfoInitializer),
 				async: useAsync,
 				previousInstance: (currentInstance?.IsLoaded ?? false) ? currentInstance : null
 			);
-			textureMeta.InFlightTasks[source] = new(currentRevision, spriteHash, resampleTask);
+			textureMeta.InFlightTasks[source] = new(currentRevision, spriteHash, new(resampleTask));
 
 			ManagedSpriteInstance? result;
 			if (resampleTask.IsCompletedSuccessfully) {

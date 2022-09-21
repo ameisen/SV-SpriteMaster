@@ -51,7 +51,7 @@ internal sealed class Texture2DMeta : IDisposable {
 	private readonly ConcurrentDictionary<Bounds, SpriteData> SpriteDataMap = new();
 	private static readonly ConcurrentDictionary<string, ConcurrentDictionary<Bounds, SpriteData>> GlobalSpriteDataMaps = new();
 
-	internal readonly record struct InFlightData(long Revision, ulong SpriteHash, Task ResampleTask);
+	internal readonly record struct InFlightData(long Revision, ulong SpriteHash, WeakReference<Task> ResampleTask);
 	internal readonly ConcurrentDictionary<Bounds, InFlightData> InFlightTasks = new();
 	internal TextureFlag Flags = TextureFlag.None; // TODO use properties for this
 

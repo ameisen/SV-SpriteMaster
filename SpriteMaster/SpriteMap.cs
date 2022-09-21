@@ -208,6 +208,26 @@ internal static class SpriteMap {
 		instance?.Suspend();
 	}
 
+	internal static void Remove(ulong hash, Texture2DMeta meta, bool forceDispose) {
+		var spriteTable = meta.GetSpriteInstanceTable();
+
+		ManagedSpriteInstance? instance = null;
+		using (meta.Lock.Write) {
+			spriteTable.TryGetValue(hash, out var instance0);
+			meta.RemoveFromSpriteInstanceTable(hash, dispose: false, out var instance1);
+			instance = instance0 ?? instance1;
+		}
+
+		if (instance is not null) {
+			if (forceDispose) {
+				instance.Dispose();
+			}
+			else {
+				instance.Suspend();
+			}
+		}
+	}
+
 	// TODO : CP-A support - we hit here repeatedly for animated textures.
 	// This obviously prevents things from caching or functioning for sprites that are animated.
 	// The logic needs to be overridden and previously-cached textures stored in some fashion for sprites

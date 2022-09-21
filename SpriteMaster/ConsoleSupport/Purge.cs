@@ -114,7 +114,6 @@ internal static partial class ConsoleSupport {
 
 		if (collect) {
 			Garbage.Collect(compact: true, blocking: true, background: false);
-			DrawState.TriggerCollection.Set(true);
 		}
 	}
 }
