@@ -176,6 +176,10 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 				_ => Texture2DMeta.SpriteType.Sprite
 			};
 
+			if (spriteType == Texture2DMeta.SpriteType.Portrait) {
+				spriteType = spriteType;
+			}
+
 			if (spriteType == Texture2DMeta.SpriteType.LargeText) {
 				meta.Flags |= Texture2DMeta.TextureFlag.IsLargeFont;
 			}
