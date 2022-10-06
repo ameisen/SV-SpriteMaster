@@ -288,7 +288,7 @@ internal static class Config {
 		internal static bool HonorHDRSettings = true;
 	}
 
-	internal readonly record struct TextureRef(string Texture, Bounds Bounds);
+	internal readonly record struct TextureRef(Regex Pattern, Bounds Bounds);
 
 	internal static class Resample {
 		[Attributes.Ignore]
@@ -611,7 +611,8 @@ internal static class Config {
 			[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllRenderingCaches)]
 			[Attributes.GMCMHidden]
 			internal static List<string> BlackList = new() {
-				@"LooseSprites\Cursors::256,308:50,34", // UI borders
+				@"LooseSprites\Cursors::256,308:50,34",	// UI borders
+				@"Portraits\",													// Portraits
 			};
 			[Attributes.Ignore]
 			internal static TextureRef[] BlackListS = Array.Empty<TextureRef>();

@@ -75,6 +75,9 @@ public static class Program {
 						case "preview":
 							preview = true;
 							break;
+						case "convert":
+							preview = false;
+							break;
 						default:
 							result.Add(arg);
 							break;
