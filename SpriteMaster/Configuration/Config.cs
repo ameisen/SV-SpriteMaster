@@ -76,7 +76,7 @@ internal static class Config {
 	[Attributes.GMCMHidden] internal static string ConfigVersion = "";
 
 	[Attributes.Ignore]
-	internal static string ClearConfigBefore = GenerateAssemblyVersionString(0, 15, 0, 0, BuildType.Beta, 4);
+	internal static string ClearConfigBefore = GenerateAssemblyVersionString(0, 15, 0, 0, BuildType.Beta, 10);
 
 	[Attributes.Ignore] internal static bool ForcedDisable = false;
 
@@ -737,7 +737,7 @@ internal static class Config {
 		[Attributes.LimitsInt(0, long.MaxValue)]
 		internal static long MaxSize = SizesExt.AsGiB(2);
 		[Attributes.Comment("The preferred compression algorithm for the resident cache")]
-		internal static Compression.Algorithm Compress = Compression.BestAlgorithm;
+		internal static Compression.Algorithm Compress = Compression.Algorithm.None;
 	}
 
 	[Attributes.Advanced]
