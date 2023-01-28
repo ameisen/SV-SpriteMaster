@@ -6,7 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
-namespace SpriteMaster.Types;
+namespace MusicMaster.Types;
 internal class ConcurrentSet<T> :
 	ICollection<T>,
 	IEnumerable<T>,

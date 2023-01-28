@@ -9,7 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 
-namespace SpriteMaster.Types;
+namespace MusicMaster.Types;
 
 internal sealed class ConcurrentLinkedListSlim<T> {
 	private const MethodImplOptions Inline = Runtime.MethodImpl.Inline;

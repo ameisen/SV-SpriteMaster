@@ -826,13 +826,13 @@ internal static class Config {
 			internal static bool OptimizeTexture2DGetData = true;
 
 			[Attributes.Comment("Should DrawUserIndexedPrimitives be optimized?")]
-			internal const bool OptimizeDrawUserIndexedPrimitives = true;
+			internal static bool OptimizeDrawUserIndexedPrimitives = false;
 
 			[Attributes.Comment("Should glCopyTexture by used?")]
 			internal static bool UseCopyTexture = true;
 
 			[Attributes.Comment("Should glTexStorage be used?")]
-			internal const bool UseTexStorage = true;
+			internal static bool UseTexStorage = true;
 		}
 
 		internal static class Snow {

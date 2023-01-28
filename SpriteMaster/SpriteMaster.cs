@@ -150,7 +150,7 @@ public sealed class SpriteMaster : Mod {
 		}
 		catch (Exception ex)
 		{
-			Debug.Warning("Could not register 'spritemaster' for console commands", ex);
+			Debug.Warning($"Could not register '{name}' for console commands", ex);
 			return false;
 		}
 	}

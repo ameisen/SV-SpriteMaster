@@ -462,7 +462,7 @@ internal sealed class Scene1 : Scene {
 
 			var offset = regionOffset;
 			offset -= (Vector2F)textMeasure;
-			offset.X = 0;
+			offset.X = 2;
 
 			Utility.drawTextWithShadow(
 				b: batch,

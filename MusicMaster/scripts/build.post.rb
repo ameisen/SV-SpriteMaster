@@ -85,8 +85,8 @@ default_const(:Copy32, false)
 default_const(:Copy64, !Copy32)
 default_const(:Mono, Pathname.new("C:", "Program Files", "Mono", "bin"))
 default_const(:GamePath, File.join("C:", "Program Files (x86)", "Steam", "steamapps", "common", "Stardew Valley"))
-default_const(:Primary, "SpriteMaster.dll")
-default_const(:TempAssembly, "SpriteMaster.merged.dll")
+default_const(:Primary, "MusicMaster.dll")
+default_const(:TempAssembly, "MusicMaster.merged.dll")
 default_const(:DotNetRuntime, File.join("C:", "Program Files", "dotnet", "packs", "Microsoft.NETCore.App.Ref", "5.0.0", "ref", "net5.0"))
 default_const(:IgnoreModFilePatterns, [])
 
@@ -108,7 +108,7 @@ puts "Primary: #{Primary}"
 puts "32-bit: #{Copy32 ? "enabled" : "disabled"}"
 puts "64-bit: #{Copy64 ? "enabled" : "disabled"}"
 
-PrebuiltPaths = [SolutionDir + 'Libraries', Pathname.new('Libraries'), Pathname.new('Extra')]
+PrebuiltPaths = [SolutionDir + 'Libraries']
 
 class Library
 	attr_reader :path, :name, :ext
@@ -311,15 +311,15 @@ def StripBinary(library:, target:)
 			il_strip_binary,
 			library,
 			target,
-			'-e', 'SpriteMaster.SpriteMaster',
-			'-e', 'SpriteMaster.Harmonize.Patches.Cleanup',
-			'-e', 'SpriteMaster.Harmonize.Patches.NVTT',
-			'-e', 'SpriteMaster.Harmonize.Patches.PGraphicsDevice',
-			'-e', 'SpriteMaster.Harmonize.Patches.PGraphicsDeviceManager',
-			'-e', 'SpriteMaster.Harmonize.Patches.PSpriteBatch.Begin',
-			'-e', 'SpriteMaster.Harmonize.Patches.PSpriteBatch.PlatformRenderBatch',
-			'-e', 'SpriteMaster.Harmonize.Patches.PSpriteBatch.Patch.Draw',
-			'-e', 'SpriteMaster.Harmonize.Patches.PTexture2D',
+			'-e', 'MusicMaster.MusicMaster',
+			'-e', 'MusicMaster.Harmonize.Patches.Cleanup',
+			'-e', 'MusicMaster.Harmonize.Patches.NVTT',
+			'-e', 'MusicMaster.Harmonize.Patches.PGraphicsDevice',
+			'-e', 'MusicMaster.Harmonize.Patches.PGraphicsDeviceManager',
+			'-e', 'MusicMaster.Harmonize.Patches.PSpriteBatch.Begin',
+			'-e', 'MusicMaster.Harmonize.Patches.PSpriteBatch.PlatformRenderBatch',
+			'-e', 'MusicMaster.Harmonize.Patches.PSpriteBatch.Patch.Draw',
+			'-e', 'MusicMaster.Harmonize.Patches.PTexture2D',
 			*sub_assemblies.flat_map { |e| ['-import', e] },
 			'-import', DotNetRuntime + 'System.Runtime.dll'
 		)

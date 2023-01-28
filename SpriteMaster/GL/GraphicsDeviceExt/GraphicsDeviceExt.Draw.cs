@@ -8,11 +8,9 @@ using SpriteMaster.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
-using System.Reflection.Metadata.Ecma335;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
-using static Microsoft.Xna.Framework.Graphics.VertexDeclaration.VertexDeclarationAttributeInfo;
 
 namespace SpriteMaster.GL;
 
@@ -756,6 +754,7 @@ internal static partial class GraphicsDeviceExt {
 		catch (Exception ex) when (ex is MemberAccessException or MonoGameGLException) {
 			Debug.Error($"Disabling OpenGL Optimization due to exception", ex);
 			Enabled.DrawUserIndexedPrimitivesInternal = false;
+			OnConfigChanged();
 			return false;
 		}
 
