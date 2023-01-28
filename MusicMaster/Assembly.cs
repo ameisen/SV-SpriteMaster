@@ -17,7 +17,7 @@ using System.Security;
 [assembly: InternalsVisibleTo("Strings")]
 [assembly: InternalsVisibleTo("Math")]
 [assembly: SecurityRules(SecurityRuleSet.Level2, SkipVerificationInFullTrust = true)]
-[assembly: ChangeList("d271948:0.15.0-beta.10-1-gd271948")]
+[assembly: ChangeList("ae17843:0.15.0-beta.10-3-gae17843")]
 [assembly: BuildComputerName("Palatinate")]
 [assembly: FullVersion("0.15.0.111.0-beta.11.0")]
 
