@@ -337,3 +337,4 @@ Libraries_/
 SpriteMaster/Hashing/Algorithms/XxHash3Exp/
 loc.rb
 .secret/
+*.mp3

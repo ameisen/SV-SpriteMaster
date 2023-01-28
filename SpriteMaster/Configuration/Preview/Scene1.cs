@@ -1,17 +1,13 @@
-﻿using GenericModConfigMenu;
-using Microsoft.Xna.Framework;
+﻿// #define WITH_HD_PORTRAITS_SUPPORT
+
 using SpriteMaster.Extensions;
-using SpriteMaster.Extensions.Reflection;
 using SpriteMaster.Types;
-using StardewModdingAPI;
 using StardewValley;
-using StardewValley.Locations;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 
 namespace SpriteMaster.Configuration.Preview;
@@ -425,10 +421,14 @@ internal sealed class Scene1 : Scene {
 		}
 	}
 
+#if WITH_HD_PORTRAITS_SUPPORT
 	private static readonly Lazy<IHDPortraitsAPI?> HdPortraitsApi = new(
 		// ReSharper disable once StringLiteralTypo
 		() => SpriteMaster.Self.Helper.ModRegistry.GetApi<IHDPortraitsAPI>("tlitookilakin.HDPortraits")
 	);
+#else
+	private static readonly Lazy<IHDPortraitsAPI?> HdPortraitsApi = new(() => null);
+#endif
 
 	[Flags]
 	private enum PortraitType {
