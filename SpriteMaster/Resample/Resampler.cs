@@ -821,7 +821,9 @@ internal sealed class Resampler {
 
 			if (!TextureEncode.Encode(
 					data: uncompressedBitmapData,
+#pragma warning disable CS9091
 					format: ref format,
+#pragma warning restore CS9091
 					dimensions: scaledSize,
 					hasAlpha: hasAlpha,
 					isPunchthroughAlpha: isPunchThroughAlpha,
