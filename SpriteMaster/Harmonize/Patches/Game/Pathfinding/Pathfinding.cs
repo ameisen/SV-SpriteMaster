@@ -172,9 +172,9 @@ internal static partial class Pathfinding {
 
 	private static bool ExploreWarpPointsImpl(
 		GameLocation startLocation,
-		List<string> route,
 		in RouteList routeList,
-		Dictionary<string, GameLocation> locations
+		Dictionary<string, GameLocation> locations,
+		GenderedTuple<ConcurrentDictionary<RouteKey, List<string>>>? concurrentRoutes = null
 	) {
 		using var generalFoundDisposable = ObjectPoolExt.Take<HashSet<string>>(s => s.Clear());
 		var generalFound = generalFoundDisposable.Value;
@@ -186,10 +186,73 @@ internal static partial class Pathfinding {
 		var femaleFound = femaleFoundDisposable.Value;
 		femaleFound.EnsureCapacity(routeList.Capacity);
 
+		var maleList = routeList.Male;
+		var femaleList = routeList.Female;
+		var generalList = routeList.General;
+
 		bool honorGender = SMConfig.Extras.Pathfinding.HonorGenderLocking;
 
+		(
+			ConcurrentBag<List<string>>? Routes,
+			ConcurrentDictionary<RouteKey, List<string>>? ConcurrentRoutes
+		) GetGenderedRoutes(List<string> route) {
+			if (honorGender) {
+				return (
+						generalList,
+						concurrentRoutes?.General
+				);
+			}
+
+			bool containsMale = MaleLocations.AnyF(route.Contains);
+
+			if (containsMale) {
+				return (
+					maleList,
+					concurrentRoutes?.Male
+				);
+			}
+
+			bool containsFemale = FemaleLocations.AnyF(route.Contains);
+
+			if (containsFemale) {
+				return (
+					femaleList,
+					concurrentRoutes?.Female
+				);
+			}
+
+			return (
+				generalList,
+				concurrentRoutes?.General
+			);
+		}
+
 		void AddToRouteList(ConcurrentBag<List<string>> list, HashSet<string> found, List<string> route) {
+			ConcurrentDictionary<RouteKey, List<string>>? concurrentMap = null;
+			if (concurrentRoutes.HasValue) {
+				if (found == generalFound) {
+					concurrentMap = concurrentRoutes.Value.General;
+				}
+				else if (found == maleFound) {
+					concurrentMap = concurrentRoutes.Value.Male;
+				}
+				else if (found == femaleFound) {
+					concurrentMap = concurrentRoutes.Value.Female;
+				}
+			}
+
 			list.Add(route);
+			concurrentMap?.TryAdd(new(route.FirstF(), route.LastF()), route);
+
+			void AddSubList(List<string> subRoute, bool toThis) {
+				var (thisList, thisConcurrentMap) = GetGenderedRoutes(subRoute);
+
+				if (toThis) {
+					thisList?.Add(subRoute);
+				}
+
+				thisConcurrentMap?.TryAdd(new(subRoute.FirstF(), subRoute.LastF()), subRoute);
+			}
 
 			// Repeatedly remove the last element from the route, and add it into the routeList. This allows us to bypass having to recalculate for smaller paths in many cases,
 			// as we've already calculated them.
@@ -198,7 +261,16 @@ internal static partial class Pathfinding {
 					break;
 				}
 				var subList = route.GetRange(0, len);
-				list.Add(subList);
+				AddSubList(subList, true);
+			}
+
+			if (concurrentRoutes is not null) {
+				for (int start = 1; start < route.Count - 1; ++start) {
+					for (int len = route.Count - start; len >= 2; --len) {
+						var subList = route.GetRange(start, len);
+						AddSubList(subList, false);
+					}
+				}
 			}
 		}
 
@@ -221,7 +293,61 @@ internal static partial class Pathfinding {
 				continue;
 			}
 
-			if (Dijkstra(startLocation, location, locations, Array.Empty<string>()) is not { } result) {
+			List<string> result;
+
+			bool haveMale = !honorGender;
+			bool haveFemale = !honorGender;
+
+			if (concurrentRoutes.HasValue) {
+				var routeKey = new RouteKey(startLocation.Name, location.Name);
+
+				if (concurrentRoutes.Value.General.TryGetValue(routeKey, out var concurrentGeneralResult)) {
+					haveMale = true;
+					haveFemale = true;
+					AddToRouteListChecked(routeList.General, generalFound, concurrentGeneralResult);
+				}
+				else {
+					if (concurrentRoutes.Value.Male.TryGetValue(routeKey, out var concurrentMaleResult)) {
+						haveMale = true;
+						AddToRouteListChecked(routeList.Male, maleFound, concurrentMaleResult);
+					}
+
+					if (concurrentRoutes.Value.Female.TryGetValue(routeKey, out var concurrentFemaleResult)) {
+						haveFemale = true;
+						AddToRouteListChecked(routeList.Female, femaleFound, concurrentFemaleResult);
+					}
+				}
+			}
+
+			if (haveMale && haveFemale) {
+				continue;
+			}
+
+			if (haveMale || haveFemale) {
+				if (haveMale) {
+					if (!MaleLocations.ContainsF(startLocation.Name) && !MaleLocations.ContainsF(location.Name)) {
+						if (Dijkstra(startLocation, location, locations, MaleLocations) is { } femaleResult) {
+							haveFemale = true;
+							AddToRouteListChecked(routeList.Female, femaleFound, femaleResult);
+						}
+					}
+				}
+				else {
+					if (!FemaleLocations.ContainsF(startLocation.Name) && !FemaleLocations.ContainsF(location.Name)) {
+						if (Dijkstra(startLocation, location, locations, FemaleLocations) is { } maleResult) {
+							haveMale = true;
+							AddToRouteListChecked(routeList.Male, maleFound, maleResult);
+						}
+					}
+				}
+
+				continue;
+			}
+			
+			if (Dijkstra(startLocation, location, locations, Array.Empty<string>()) is { } calculatedResult) {
+				result = calculatedResult;
+			}
+			else {
 				continue;
 			}
 
@@ -230,27 +356,36 @@ internal static partial class Pathfinding {
 			switch (containsMale, containsFemale) {
 				case (true, true): {
 					// Both?!
-					if (Dijkstra(startLocation, location, locations, MaleLocations) is { } femaleResult) {
-						AddToRouteListChecked(routeList.Female, femaleFound, femaleResult);
+					if (!MaleLocations.ContainsF(startLocation.Name) && !MaleLocations.ContainsF(location.Name)) {
+						if (Dijkstra(startLocation, location, locations, MaleLocations) is { } femaleResult) {
+							AddToRouteListChecked(routeList.Female, femaleFound, femaleResult);
+						}
 					}
-					if (Dijkstra(startLocation, location, locations, FemaleLocations) is { } maleResult) {
-						AddToRouteListChecked(routeList.Male, maleFound, maleResult);
+
+					if (!FemaleLocations.ContainsF(startLocation.Name) && !FemaleLocations.ContainsF(location.Name)) {
+						if (Dijkstra(startLocation, location, locations, FemaleLocations) is { } maleResult) {
+							AddToRouteListChecked(routeList.Male, maleFound, maleResult);
+						}
 					}
 				} break;
 				case (true, false): {
-						// Male
-						AddToRouteListChecked(routeList.Male, maleFound, result);
+					// Male
+					AddToRouteListChecked(routeList.Male, maleFound, result);
 
-					if (Dijkstra(startLocation, location, locations, MaleLocations) is { } femaleResult) {
-						AddToRouteListChecked(routeList.Female, femaleFound, femaleResult);
+					if (!MaleLocations.ContainsF(startLocation.Name) && !MaleLocations.ContainsF(location.Name)) {
+						if (Dijkstra(startLocation, location, locations, MaleLocations) is { } femaleResult) {
+							AddToRouteListChecked(routeList.Female, femaleFound, femaleResult);
+						}
 					}
 				} break;
 				case (false, true): {
-						// Female
-						AddToRouteListChecked(routeList.Female, femaleFound, result);
+					// Female
+					AddToRouteListChecked(routeList.Female, femaleFound, result);
 
-					if (Dijkstra(startLocation, location, locations, FemaleLocations) is { } maleResult) {
-						AddToRouteListChecked(routeList.Male, maleFound, maleResult);
+					if (!FemaleLocations.ContainsF(startLocation.Name) && !FemaleLocations.ContainsF(location.Name)) {
+						if (Dijkstra(startLocation, location, locations, FemaleLocations) is { } maleResult) {
+							AddToRouteListChecked(routeList.Male, maleFound, maleResult);
+						}
 					}
 				} break;
 				case (false, false):

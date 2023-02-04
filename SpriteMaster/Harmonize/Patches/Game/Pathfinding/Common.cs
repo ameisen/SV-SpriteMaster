@@ -17,6 +17,8 @@ internal static partial class Pathfinding {
 	private static readonly string[] MaleLocations = { "BathHouse_MensLocker" };
 	private static readonly string[] FemaleLocations = { "BathHouse_WomensLocker" };
 
+	internal readonly record struct GenderedTuple<T>(T General, T Male, T Female);
+
 	[StructLayout(LayoutKind.Auto)]
 	private readonly struct RouteKey : IEquatable<RouteKey> {
 		internal readonly string Start;
