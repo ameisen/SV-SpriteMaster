@@ -825,8 +825,19 @@ internal static class Config {
 			[Attributes.Comment("Should Texture2D.GetData be optimized?")]
 			internal static bool OptimizeTexture2DGetData = true;
 
-			[Attributes.Comment("Should DrawUserIndexedPrimitives be optimized?")]
-			internal static bool OptimizeDrawUserIndexedPrimitives = false;
+			internal static class DrawUserIndexedPrimitives {
+				[Attributes.Comment("Should the call be optimized?")]
+				internal static bool Optimize = true;
+
+				[Attributes.Comment("Should advanced optimizations be enabled?")]
+				internal static bool Advanced = true;
+
+				[Attributes.Comment("Should Vertex Buffer Objects be used?")]
+				internal static bool UseVertexBufferObjects = false;
+
+				[Attributes.Comment("Should Index Buffer Objects be used?")]
+				internal static bool UseIndexBufferObjects = false;
+			}
 
 			[Attributes.Comment("Should glCopyTexture by used?")]
 			internal static bool UseCopyTexture = true;

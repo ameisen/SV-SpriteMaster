@@ -11,6 +11,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
+using static SpriteMaster.GL.GLExt.Delegates;
 
 namespace SpriteMaster.GL;
 
@@ -21,8 +22,26 @@ internal static partial class GraphicsDeviceExt {
 	}
 
 	private static class Enabled {
-		internal static bool DrawUserIndexedPrimitivesInternal = true;
-		internal static bool DrawUserIndexedPrimitives = DrawUserIndexedPrimitivesInternal;
+		internal enum OptimizationLevel {
+			Disabled = 0,
+			Basic = 1,
+			Advanced = 2
+		}
+
+		internal static class DrawUserIndexedPrimitives {
+			internal const bool Internal = true;
+			internal static bool BasicInternal = true;
+			internal static bool AdvancedInternal = true;
+
+			internal static bool Basic =
+				Internal && BasicInternal;
+
+			// ReSharper disable once MemberHidesStaticFromOuterClass
+			internal static bool Enabled = Basic;
+
+			internal static bool VertexBufferObjects = true;
+			internal static bool IndexBufferObjects = true;
+		}
 	}
 
 	internal static unsafe class SpriteBatcherValues {
@@ -104,7 +123,7 @@ internal static partial class GraphicsDeviceExt {
 			PrimitiveType.TriangleStrip => GLPrimitiveType.TriangleStrip,
 			PrimitiveType.LineList => GLPrimitiveType.Lines,
 			PrimitiveType.LineStrip => GLPrimitiveType.LineStrip,
-			_ => ThrowHelper.ThrowArgumentException<GLPrimitiveType>(nameof(primitiveType))
+			_ => ThrowHelper.ThrowArgumentException<GLPrimitiveType>(primitiveType.ToString(), nameof(primitiveType))
 		};
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -461,6 +480,7 @@ internal static partial class GraphicsDeviceExt {
 #endif
 						break; // no need to initialize
 					case VBType.BufferSubDataFull:
+					case VBType.BufferSubDataFullMulti:
 					case VBType.BufferMapDataFull:
 						GLExt.BufferData(
 							BufferTarget.ArrayBuffer,
@@ -527,12 +547,13 @@ internal static partial class GraphicsDeviceExt {
 		BufferData,
 		BufferDataMulti,
 		BufferSubDataFull,
+		BufferSubDataFullMulti,
 		BufferSubDataSequential,
 		BufferMapDataFull,
 		BufferMapDataSequential,
 	}
 
-	private const VBType VBOType = VBType.BufferData;
+	private const VBType VBOType = VBType.BufferSubDataFull;
 	private static nint CurrentBufferOffset = 0;
 
 	private const BufferAccess WriteOnly = (BufferAccess)35001;
@@ -562,7 +583,8 @@ internal static partial class GraphicsDeviceExt {
 				GraphicsExtensions.CheckGLError();
 				return 0;
 			}
-			case VBType.BufferSubDataFull: {
+			case VBType.BufferSubDataFull:
+			case VBType.BufferSubDataFullMulti: {
 				fixed (TVertex* vbPtr = vertexData) {
 					MonoGame.OpenGL.GL.BufferSubData(
 						BufferTarget.ArrayBuffer,
@@ -644,7 +666,7 @@ internal static partial class GraphicsDeviceExt {
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static GLExt.ObjectId GetTransientVertexBuffer() {
 #if ENABLE_VBO_MULTI
-		if (VBOType is VBType.BufferDataMulti) {
+		if (VBOType is (VBType.BufferDataMulti or VBType.BufferSubDataFullMulti)) {
 			return CurrentTransientVertexBufferMulti;
 		}
 		else
@@ -654,8 +676,47 @@ internal static partial class GraphicsDeviceExt {
 		}
 	}
 
-	private const bool UseVertexBufferObject = true;
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static unsafe bool DrawUserIndexedPrimitives<TVertex, TIndex>(
+		GraphicsDevice @this,
+		PrimitiveType primitiveType,
+		TVertex[] vertexData,
+		int vertexOffset,
+		int numVertices,
+		TIndex[] indexData,
+		int indexOffset,
+		int primitiveCount,
+		VertexDeclaration vertexDeclaration
+	) where TVertex : unmanaged where TIndex : unmanaged {
+		if (Enabled.DrawUserIndexedPrimitives.Basic) {
+			return DrawUserIndexedPrimitivesBasic(
+				@this,
+				primitiveType,
+				vertexData,
+				vertexOffset,
+				numVertices,
+				indexData,
+				indexOffset,
+				primitiveCount,
+				vertexDeclaration
+			);
+		}
+		else {
+			return DrawUserIndexedPrimitivesAdvanced(
+				@this,
+				primitiveType,
+				vertexData,
+				vertexOffset,
+				numVertices,
+				indexData,
+				indexOffset,
+				primitiveCount,
+				vertexDeclaration
+			);
+		}
+	}
+
+	private static unsafe bool DrawUserIndexedPrimitivesBasic<TVertex, TIndex>(
 		GraphicsDevice @this,
 		PrimitiveType primitiveType,
 		TVertex[] vertexData,
@@ -668,20 +729,73 @@ internal static partial class GraphicsDeviceExt {
 	) where TVertex : unmanaged where TIndex : unmanaged {
 		++DrawState.Statistics.DrawCalls;
 
-		if (!Enabled.DrawUserIndexedPrimitives) {
+		if (!Enabled.DrawUserIndexedPrimitives.Enabled) {
 			return false;
 		}
 
 		try {
-			bool isSpriteBatcher = sizeof(TIndex) == 2 && ReferenceEquals(indexData, SpriteBatcherValues.Indices16);
-			bool useVertexBufferObject = UseVertexBufferObject && isSpriteBatcher;
-
 			// TODO : This can be optimized as well - lots of interdependant booleans.
 			@this.ApplyState(true);
 
-			(GLExt.ObjectId vbo, GLExt.ObjectId ibo) = useVertexBufferObject ?
-				(GetTransientVertexBuffer(), SpriteBatcherValues.IndexBuffer16.Value) :
-				(GLExt.ObjectId.None, GLExt.ObjectId.None);
+			GLExt.BindBuffer(BufferTarget.ArrayBuffer, 0);
+			GLExt.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
+			@this._indexBufferDirty = true;
+			fixed (TVertex* vertexPtr = vertexData) {
+				fixed (TIndex* indexPtr = indexData) {
+					nint offset = (nint)vertexPtr + (vertexDeclaration.VertexStride * vertexOffset);
+					vertexDeclaration.GraphicsDevice = @this;
+					vertexDeclaration.Apply(@this._vertexShader, offset, @this.ShaderProgramHash);
+					GLExt.DrawElements(
+						primitiveType.GetGl(),
+						primitiveType.GetElementCountArray(primitiveCount),
+						sizeof(TIndex) == 2 ? GLExt.ValueType.UnsignedShort : GLExt.ValueType.UnsignedInt,
+						(nint)indexPtr + (indexOffset * sizeof(TIndex))
+					);
+				}
+			}
+		}
+		catch (Exception ex) when (ex is MemberAccessException or MonoGameGLException) {
+			Debug.Error($"Disabling OpenGL DrawUserIndexedPrimitives Basic Optimizations due to exception", ex);
+			Enabled.DrawUserIndexedPrimitives.BasicInternal = false;
+			OnConfigChanged();
+			return false;
+		}
+
+		return true;
+	}
+
+	private static unsafe bool DrawUserIndexedPrimitivesAdvanced<TVertex, TIndex>(
+		GraphicsDevice @this,
+		PrimitiveType primitiveType,
+		TVertex[] vertexData,
+		int vertexOffset,
+		int numVertices,
+		TIndex[] indexData,
+		int indexOffset,
+		int primitiveCount,
+		VertexDeclaration vertexDeclaration
+	) where TVertex : unmanaged where TIndex : unmanaged {
+		++DrawState.Statistics.DrawCalls;
+
+		if (!Enabled.DrawUserIndexedPrimitives.Enabled) {
+			return false;
+		}
+
+		try {
+			// TODO : This can be optimized as well - lots of interdependant booleans.
+			@this.ApplyState(true);
+
+			bool isSpriteBatcher = sizeof(TIndex) == 2 && ReferenceEquals(indexData, SpriteBatcherValues.Indices16);
+			GLExt.ObjectId vbo;
+			GLExt.ObjectId ibo;
+			if (isSpriteBatcher) {
+				vbo = Enabled.DrawUserIndexedPrimitives.VertexBufferObjects ? GetTransientVertexBuffer() : GLExt.ObjectId.None;
+				ibo = Enabled.DrawUserIndexedPrimitives.IndexBufferObjects ? SpriteBatcherValues.IndexBuffer16.Value : GLExt.ObjectId.None;
+			}
+			else {
+				vbo = GLExt.ObjectId.None;
+				ibo = GLExt.ObjectId.None;
+			}
 
 			// Unbind current VBOs.
 			BindBufferInternal(BufferTarget.ArrayBuffer, vbo);
@@ -693,27 +807,39 @@ internal static partial class GraphicsDeviceExt {
 
 			var count = primitiveType.GetElementCountArray(primitiveCount);
 
-			// Perform as much work outside of 'fixed' as possible so as to limit the time the GC might have to stall if it is triggered.
-			nint vertexPointerOffset = vertexDeclaration.VertexStride * vertexOffset;
-
-			if (useVertexBufferObject) {
+			if (vbo is not GLExt.ObjectId.None) {
 				nint offset = HandleVertexBuffer<TVertex>(vertexData, vertexOffset, numVertices, vertexDeclaration);
 
 				// Setup the vertex declaration to point at the VB data.
 				ApplyVertexDeclaration(@this, vertexDeclaration, offset);
 
-				GLExt.DrawRangeElements(
-					GLPrimitiveType.Triangles,
-					0,
-					SpriteBatcherValues.GetMaxArrayIndex((uint)primitiveCount, (uint)indexOffset),
-					count,
-					GLExt.ValueType.UnsignedShort,
-					indexOffset
-				);
-				GraphicsExtensions.CheckGLError();
+				void DrawRangeElements(nint indexOffset) {
+					GLExt.DrawRangeElements(
+						GLPrimitiveType.Triangles,
+						0,
+						SpriteBatcherValues.GetMaxArrayIndex((uint)primitiveCount, (uint)indexOffset),
+						count,
+						GLExt.ValueType.UnsignedShort,
+						indexOffset
+					);
+
+					GraphicsExtensions.CheckGLError();
+				}
+
+				if (ibo is not GLExt.ObjectId.None) {
+					DrawRangeElements(indexOffset);
+				}
+				else {
+					fixed (TIndex* ibPtr = indexData) {
+						var offsetIndexPtr = (nint)(ibPtr + indexOffset);
+
+						DrawRangeElements(offsetIndexPtr);
+					}
+				}
 			}
 			else {
-				var type = primitiveType.GetGl();
+				// Perform as much work outside of 'fixed' as possible so as to limit the time the GC might have to stall if it is triggered.
+				nint vertexPointerOffset = vertexDeclaration.VertexStride * vertexOffset;
 
 				// Pin the buffers.
 				fixed (TVertex* vbPtr = vertexData) {
@@ -722,10 +848,8 @@ internal static partial class GraphicsDeviceExt {
 					// Setup the vertex declaration to point at the VB data.
 					ApplyVertexDeclaration(@this, vertexDeclaration, vertexPointer);
 
-					fixed (TIndex* ibPtr = indexData) {
-						var offsetIndexPtr = (nint)(ibPtr + indexOffset);
-
-						//Draw
+					void DrawElements(nint indexOffset) {
+						// Draw
 						// If we are drawing from the pre-cached spritebatcher indices, we can use `glDrawRangeElements` instead.
 						if (isSpriteBatcher) {
 							GLExt.DrawRangeElements(
@@ -734,26 +858,37 @@ internal static partial class GraphicsDeviceExt {
 								SpriteBatcherValues.GetMaxArrayIndex((uint)primitiveCount, (uint)indexOffset),
 								count,
 								GLExt.ValueType.UnsignedShort,
-								offsetIndexPtr
+								indexOffset
 							);
 						}
 						else {
 							GLExt.DrawElements(
-								type,
+								primitiveType.GetGl(),
 								count,
 								GetIndexType<TIndex>(),
-								offsetIndexPtr
+								indexOffset
 							);
 						}
 
 						GraphicsExtensions.CheckGLError();
 					}
+
+					if (ibo is not GLExt.ObjectId.None) {
+						DrawElements(indexOffset);
+					}
+					else {
+						fixed (TIndex* ibPtr = indexData) {
+							var offsetIndexPtr = (nint)(ibPtr + indexOffset);
+
+							DrawElements(offsetIndexPtr);
+						}
+					}
 				}
 			}
 		}
 		catch (Exception ex) when (ex is MemberAccessException or MonoGameGLException) {
-			Debug.Error($"Disabling OpenGL Optimization due to exception", ex);
-			Enabled.DrawUserIndexedPrimitivesInternal = false;
+			Debug.Error($"Disabling OpenGL DrawUserIndexedPrimitives Advanced Optimizations due to exception", ex);
+			Enabled.DrawUserIndexedPrimitives.AdvancedInternal = false;
 			OnConfigChanged();
 			return false;
 		}
@@ -772,10 +907,33 @@ internal static partial class GraphicsDeviceExt {
 
 	// When the config changes, update the enablement booleans.
 	private static void OnConfigChanged() {
-		Enabled.DrawUserIndexedPrimitives =
-			Enabled.DrawUserIndexedPrimitivesInternal &&
+		bool drawUserIndexedPrimitivesEnabled =
+			Enabled.DrawUserIndexedPrimitives.Internal &&
 			SMConfig.Extras.OpenGL.Enabled &&
-			SMConfig.Extras.OpenGL.OptimizeDrawUserIndexedPrimitives;
+			SMConfig.Extras.OpenGL.DrawUserIndexedPrimitives.Optimize;
+
+		bool drawUserIndexPrimitivesBasic =
+			drawUserIndexedPrimitivesEnabled &&
+			Enabled.DrawUserIndexedPrimitives.BasicInternal;
+
+		bool drawUserIndexPrimitivesAdvanced =
+			drawUserIndexedPrimitivesEnabled &&
+			Enabled.DrawUserIndexedPrimitives.AdvancedInternal &&
+			SMConfig.Extras.OpenGL.DrawUserIndexedPrimitives.Advanced;
+
+		Enabled.DrawUserIndexedPrimitives.Enabled =
+			drawUserIndexPrimitivesBasic ||
+			drawUserIndexPrimitivesAdvanced;
+
+		Enabled.DrawUserIndexedPrimitives.Basic =
+			drawUserIndexPrimitivesBasic &&
+			!drawUserIndexPrimitivesAdvanced;
+
+		Enabled.DrawUserIndexedPrimitives.VertexBufferObjects =
+			SMConfig.Extras.OpenGL.DrawUserIndexedPrimitives.UseVertexBufferObjects;
+
+		Enabled.DrawUserIndexedPrimitives.IndexBufferObjects =
+			SMConfig.Extras.OpenGL.DrawUserIndexedPrimitives.UseIndexBufferObjects;
 
 		MonoGame.OpenGL.GL.BindBuffer = BindBufferOverride;
 		MonoGame.OpenGL.GL.VertexAttribDivisor = VertexAttribDivisorOverride;
