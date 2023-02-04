@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project>
 	<PropertyGroup>
+		<CheckEolTargetFramework>false</CheckEolTargetFramework>
+	
 		<RootNamespace>SpriteMaster</RootNamespace>
 		<Product>SpriteMaster-SV</Product>
 		<Authors>Digital Carbide (Michael Kuklinski)</Authors>
