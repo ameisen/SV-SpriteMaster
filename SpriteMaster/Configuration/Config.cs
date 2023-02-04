@@ -836,7 +836,7 @@ internal static class Config {
 				internal static bool UseVertexBufferObjects = false;
 
 				[Attributes.Comment("Should Index Buffer Objects be used?")]
-				internal static bool UseIndexBufferObjects = false;
+				internal static bool UseIndexBufferObjects = true;
 			}
 
 			[Attributes.Comment("Should glCopyTexture by used?")]
