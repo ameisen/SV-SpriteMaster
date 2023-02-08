@@ -4,6 +4,7 @@ using SpriteMaster.Harmonize.Patches;
 using SpriteMaster.Metadata;
 using SpriteMaster.Types;
 using StardewModdingAPI;
+using System;
 
 namespace SpriteMaster.GL;
 
@@ -34,7 +35,7 @@ internal static partial class Texture2DExt {
 			return false;
 		}
 
-		if (!source.TryMeta(out var meta) || !meta.HasCachedData) {
+		if (!source.TryMeta(out var sourceMeta) || !sourceMeta.HasCachedData) {
 			return false;
 		}
 
@@ -42,9 +43,7 @@ internal static partial class Texture2DExt {
 			return false;
 		}
 
-		if (!target.GetGlMeta().Flags.HasFlag(Texture2DOpenGlMeta.Flag.Initialized)) {
-			return false;
-		}
+		bool targetInitialized = target.GetGlMeta().Flags.HasFlag(Texture2DOpenGlMeta.Flag.Initialized);
 
 		// We have to perform an internal SetData to make sure SM's caches are kept intact
 		var cachedData = PTexture2D.GetCachedData<byte>(
@@ -68,7 +67,18 @@ internal static partial class Texture2DExt {
 				// Flush errors
 				GLExt.SwallowOrReportErrors();
 
+				if (!targetInitialized) {
+					try {
+						Texture2DExt.InitializeTexture(target);
+					}
+					catch {
+						success = false;
+						return;
+					}
+				}
+
 				try {
+					target.CheckTextureMip();
 					GLExt.AlwaysChecked(
 						() => GLExt.CopyImageSubData.Function(
 							(GLExt.ObjectId)source.glTexture,

@@ -11,6 +11,8 @@ namespace SpriteMaster.Harmonize;
 [MeansImplicitUse(ImplicitUseTargetFlags.WithMembers)]
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
 internal class HarmonizeAttribute : Attribute {
+	internal readonly record struct EnablementPair(Type Type, string Member);
+
 	internal Type? Type => _lazyType.Value;
 	private readonly Lazy<Type?> _lazyType;
 	internal readonly string? Name;
@@ -24,6 +26,7 @@ internal class HarmonizeAttribute : Attribute {
 	internal readonly Type[]? ArgumentTypes;
 	internal readonly Type[]? GenericTypes;
 	internal readonly Type[]? GenericConstraints;
+	internal readonly EnablementPair? Enabled;
 
 	private static Lazy<Type?> AsLazy(Func<Type?> factory) => new(factory);
 	private static Lazy<Type?> AsLazy(Type? value) => new(value);
@@ -101,7 +104,9 @@ internal class HarmonizeAttribute : Attribute {
 		string? forMod = null,
 		Type[]? argumentTypes = null,
 		Type[]? genericTypes = null,
-		Type[]? genericConstraints = null
+		Type[]? genericConstraints = null,
+		Type? enabledType = null,
+		string? enabledMember = null
 	) {
 		_lazyType = type;
 		Name = method;
@@ -115,6 +120,7 @@ internal class HarmonizeAttribute : Attribute {
 		ArgumentTypes = argumentTypes;
 		GenericTypes = genericTypes;
 		GenericConstraints = genericConstraints;
+		Enabled = (enabledType is not null && enabledMember is not null) ? new(enabledType, enabledMember) : null;
 	}
 
 	internal HarmonizeAttribute(
@@ -129,7 +135,9 @@ internal class HarmonizeAttribute : Attribute {
 		string? forMod = null,
 		Type[]? argumentTypes = null,
 		Type[]? genericTypes = null,
-		Type[]? genericConstraints = null
+		Type[]? genericConstraints = null,
+		Type? enabledType = null,
+		string? enabledMember = null
 	) : this(
 		type: AsLazy(type),
 		method: method,
@@ -142,8 +150,10 @@ internal class HarmonizeAttribute : Attribute {
 		forMod: forMod,
 		argumentTypes: argumentTypes,
 		genericTypes: genericTypes,
-		genericConstraints: genericConstraints
-		) {
+		genericConstraints: genericConstraints,
+		enabledType: enabledType,
+		enabledMember: enabledMember
+	) {
 	}
 
 	internal HarmonizeAttribute(
@@ -159,7 +169,9 @@ internal class HarmonizeAttribute : Attribute {
 		string? forMod = null,
 		Type[]? argumentTypes = null,
 		Type[]? genericTypes = null,
-		Type[]? genericConstraints = null
+		Type[]? genericConstraints = null,
+		Type? enabledType = null,
+		string? enabledMember = null
 	) :
 		this(
 			type: AsLazy(() => CheckPlatform(platform) ? GetAssembly(assembly, critical: critical, forMod: forMod)?.GetType(type, true) : null),
@@ -173,7 +185,9 @@ internal class HarmonizeAttribute : Attribute {
 			forMod: forMod,
 			argumentTypes: argumentTypes,
 			genericTypes: genericTypes,
-			genericConstraints: genericConstraints
+			genericConstraints: genericConstraints,
+			enabledType: enabledType,
+			enabledMember: enabledMember
 		) { }
 
 	internal HarmonizeAttribute(
@@ -189,7 +203,9 @@ internal class HarmonizeAttribute : Attribute {
 		string? forMod = null,
 		Type[]? argumentTypes = null,
 		Type[]? genericTypes = null,
-		Type[]? genericConstraints = null
+		Type[]? genericConstraints = null,
+		Type? enabledType = null,
+		string? enabledMember = null
 	) :
 		this(
 			type: AsLazy(() => CheckPlatform(platform) ? parent.Assembly.GetType(type, true) : null),
@@ -203,7 +219,9 @@ internal class HarmonizeAttribute : Attribute {
 			forMod: forMod,
 			argumentTypes: argumentTypes,
 			genericTypes: genericTypes,
-			genericConstraints: genericConstraints
+			genericConstraints: genericConstraints,
+			enabledType: enabledType,
+			enabledMember: enabledMember
 		) { }
 
 	internal HarmonizeAttribute(
@@ -218,7 +236,9 @@ internal class HarmonizeAttribute : Attribute {
 		string? forMod = null,
 		Type[]? argumentTypes = null,
 		Type[]? genericTypes = null,
-		Type[]? genericConstraints = null
+		Type[]? genericConstraints = null,
+		Type? enabledType = null,
+		string? enabledMember = null
 	) :
 		this(
 			type: AsLazy(() => CheckPlatform(platform) ? ResolveType(type) : null),
@@ -232,7 +252,9 @@ internal class HarmonizeAttribute : Attribute {
 			forMod: forMod,
 			argumentTypes: argumentTypes,
 			genericTypes: genericTypes,
-			genericConstraints: genericConstraints
+			genericConstraints: genericConstraints,
+			enabledType: enabledType,
+			enabledMember: enabledMember
 		) { }
 
 	internal HarmonizeAttribute(
@@ -248,7 +270,9 @@ internal class HarmonizeAttribute : Attribute {
 		string? forMod = null,
 		Type[]? argumentTypes = null,
 		Type[]? genericTypes = null,
-		Type[]? genericConstraints = null
+		Type[]? genericConstraints = null,
+		Type? enabledType = null,
+		string? enabledMember = null
 	) :
 		this(
 			type: AsLazy(() => CheckPlatform(platform) ? ResolveType(parent.Assembly, type) : null),
@@ -262,7 +286,9 @@ internal class HarmonizeAttribute : Attribute {
 			forMod: forMod,
 			argumentTypes: argumentTypes,
 			genericTypes: genericTypes,
-			genericConstraints: genericConstraints
+			genericConstraints: genericConstraints,
+			enabledType: enabledType,
+			enabledMember: enabledMember
 		) { }
 
 	internal HarmonizeAttribute(
@@ -278,7 +304,9 @@ internal class HarmonizeAttribute : Attribute {
 		string? forMod = null,
 		Type[]? argumentTypes = null,
 		Type[]? genericTypes = null,
-		Type[]? genericConstraints = null
+		Type[]? genericConstraints = null,
+		Type? enabledType = null,
+		string? enabledMember = null
 	) :
 		this(
 			type: AsLazy(() => CheckPlatform(platform) ? ResolveType(GetAssembly(assembly, critical: critical, forMod: forMod), type) : null),
@@ -292,7 +320,9 @@ internal class HarmonizeAttribute : Attribute {
 			forMod: forMod,
 			argumentTypes: argumentTypes,
 			genericTypes: genericTypes,
-			genericConstraints: genericConstraints
+			genericConstraints: genericConstraints,
+			enabledType: enabledType,
+			enabledMember: enabledMember
 		) { }
 
 	internal HarmonizeAttribute(
@@ -306,7 +336,9 @@ internal class HarmonizeAttribute : Attribute {
 		string? forMod = null,
 		Type[]? argumentTypes = null,
 		Type[]? genericTypes = null,
-		Type[]? genericConstraints = null
+		Type[]? genericConstraints = null,
+		Type? enabledType = null,
+		string? enabledMember = null
 	) :
 		this(
 			type: (Type?)null,
@@ -320,7 +352,9 @@ internal class HarmonizeAttribute : Attribute {
 			forMod: forMod,
 			argumentTypes: argumentTypes,
 			genericTypes: genericTypes,
-			genericConstraints: genericConstraints
+			genericConstraints: genericConstraints,
+			enabledType: enabledType,
+			enabledMember: enabledMember
 		) { }
 
 	internal HarmonizeAttribute(
@@ -333,7 +367,9 @@ internal class HarmonizeAttribute : Attribute {
 		string? forMod = null,
 		Type[]? argumentTypes = null,
 		Type[]? genericTypes = null,
-		Type[]? genericConstraints = null
+		Type[]? genericConstraints = null,
+		Type? enabledType = null,
+		string? enabledMember = null
 	) :
 		this(
 			type: (Type?)null,
@@ -347,6 +383,8 @@ internal class HarmonizeAttribute : Attribute {
 			forMod: forMod,
 			argumentTypes: argumentTypes,
 			genericTypes: genericTypes,
-			genericConstraints: genericConstraints
+			genericConstraints: genericConstraints,
+			enabledType: enabledType,
+			enabledMember: enabledMember
 		) { }
 }

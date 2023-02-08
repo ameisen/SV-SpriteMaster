@@ -1,7 +1,9 @@
 ﻿//#define GL_DEBUG
 
+using LinqFasterer;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.OpenGL;
+using SpriteMaster.Extensions;
 using SpriteMaster.Extensions.Reflection;
 using System;
 using System.Collections.Generic;
@@ -10,6 +12,8 @@ using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading;
 
 // Defined with a 32-bit depth
 using GLEnum = System.UInt32;
@@ -53,13 +57,20 @@ internal static unsafe class GLExt {
 
 	[DebuggerHidden, DoesNotReturn]
 	private static void HandleError(ErrorCode error, string expression) {
-		var errorList = new List<ErrorCode> { error };
-
-		while ((error = (ErrorCode)MonoGame.OpenGL.GL.GetError()) != ErrorCode.NoError) {
-			errorList.Add(error);
+		using var errorList = ObjectPoolExt<List<string>>.Take(list => list.Clear());
+		if (error is not ErrorCode.NoError) {
+			errorList.Value.Add(error.ToString());
 		}
 
-		string errorMessage = $"GL.GetError() returned '{string.Join(", ", errorList)}': {expression}";
+		if (Interlocked.Exchange(ref LastCallbackException, null) is { } callbackException) {
+			errorList.Value.Add(callbackException.Message);
+		}
+
+		while ((error = (ErrorCode)MonoGame.OpenGL.GL.GetError()) != ErrorCode.NoError) {
+			errorList.Value.Add(error.ToString());
+		}
+
+		string errorMessage = $"GL.GetError() returned '{string.Join(", ", errorList.Value)}': {expression}";
 		System.Diagnostics.Debug.WriteLine(errorMessage);
 		Debug.Break();
 		throw new MonoGameGLException(errorMessage);
@@ -73,12 +84,13 @@ internal static unsafe class GLExt {
 
 	[DebuggerHidden, MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static void AlwaysCheckError(string? expression = null, [CallerMemberName] string member = "") {
-		var error = (ErrorCode)MonoGame.OpenGL.GL.GetError();
-		if (error == ErrorCode.NoError) {
-			return;
+		if (LastCallbackException is not null) {
+			HandleError(ErrorCode.NoError, expression ?? member);
 		}
 
-		HandleError(error, expression ?? member);
+		if ((ErrorCode)MonoGame.OpenGL.GL.GetError() is var error and not ErrorCode.NoError) {
+			HandleError(error, expression ?? member);
+		}
 	}
 
 	[DebuggerHidden, MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -92,6 +104,8 @@ internal static unsafe class GLExt {
 
 	[DebuggerHidden, MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static void AlwaysSwallowErrors() {
+		LastCallbackException = null;
+
 		while ((ErrorCode)MonoGame.OpenGL.GL.GetError() != ErrorCode.NoError) {
 			// Do Nothing
 		}
@@ -100,6 +114,8 @@ internal static unsafe class GLExt {
 	[Conditional("GL_DEBUG"), Conditional("CONTRACTS_FULL"), Conditional("DEBUG")]
 	[DebuggerHidden, MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static void SwallowErrors() {
+		LastCallbackException = null;
+
 		while ((ErrorCode)MonoGame.OpenGL.GL.GetError() != ErrorCode.NoError) {
 			// Do Nothing
 		}
@@ -177,6 +193,12 @@ internal static unsafe class GLExt {
 		AlwaysCheckError(expression);
 	}
 
+	internal readonly record struct FunctionFeature(string? Feature, string Name) {
+		// ReSharper disable once InconsistentNaming
+		internal FunctionFeature(string Name) : this(Feature: null, Name: Name) {
+		}
+	}
+
 	// ReSharper disable MemberHidesStaticFromOuterClass
 	internal static class Delegates {
 		private static readonly MethodInfo? LoadFunctionGeneric =
@@ -212,6 +234,17 @@ internal static unsafe class GLExt {
 
 			return address;
 		}
+		internal static nint? LoadActionPtr(in FunctionFeature function) {
+			if (function.Feature is {} feature && !MonoGame.OpenGL.GL.Extensions.Contains(feature)) {
+				return null;
+			}
+
+			if (Sdl.GL.GetProcAddress(function.Name) is var address && address == IntPtr.Zero) {
+				return null;
+			}
+
+			return address;
+		}
 
 		internal static nint LoadActionPtrRequired(string function) {
 			if (LoadActionPtr(function) is not {} address) {
@@ -219,6 +252,34 @@ internal static unsafe class GLExt {
 			}
 
 			return address;
+		}
+
+		internal static nint LoadActionPtrRequired(in FunctionFeature function) {
+			if (LoadActionPtr(in function) is not { } address) {
+				throw new DelegateException(function.Name);
+			}
+
+			return address;
+		}
+
+		internal static nint LoadActionPtrRequired(params FunctionFeature[] functions) {
+			foreach (var function in functions) {
+				if (LoadActionPtr(function) is { } address) {
+					return address;
+				}
+			}
+
+			throw new DelegateException(functions.SelectF(function => function.Name).FirstOrDefaultF() ?? "<Unknown>");
+		}
+
+		internal static nint LoadActionPtrRequired(string feature, params string[] functions) {
+			foreach (var function in functions) {
+				if (LoadActionPtr(function) is { } address) {
+					return address;
+				}
+			}
+
+			throw new DelegateException(functions.FirstOrDefaultF() ?? "<Unknown>");
 		}
 
 		/*
@@ -238,11 +299,6 @@ internal static unsafe class GLExt {
 		internal static delegate* unmanaged[Stdcall]<TArg0, void> LoadActionPtrRequired<TArg0>(string function) =>
 			(delegate* unmanaged[Stdcall]<TArg0, void>)LoadActionPtrRequired(function);
 
-		/*
-		internal static ActionPtr<TArg0> LoadActionPtrRequired2<TArg0>(string function) =>
-			new(LoadActionPtrRequired(function));
-		*/
-
 		internal static delegate* unmanaged[Stdcall]<TArg0, TArg1, void> LoadActionPtrRequired<TArg0, TArg1>(string function) =>
 			(delegate* unmanaged[Stdcall]<TArg0, TArg1, void>)LoadActionPtrRequired(function);
 
@@ -257,6 +313,60 @@ internal static unsafe class GLExt {
 
 		internal static delegate* unmanaged[Stdcall]<TArg0, TArg1, TArg2, TArg3, TArg4, TArg5, void> LoadActionPtrRequired<TArg0, TArg1, TArg2, TArg3, TArg4, TArg5>(string function) =>
 			(delegate* unmanaged[Stdcall]<TArg0, TArg1, TArg2, TArg3, TArg4, TArg5, void>)LoadActionPtrRequired(function);
+
+		internal static delegate* unmanaged[Stdcall]<TArg0, void> LoadActionPtrRequired<TArg0>(string feature, string function) =>
+			(delegate* unmanaged[Stdcall]<TArg0, void>)LoadActionPtrRequired(feature, function);
+
+		internal static delegate* unmanaged[Stdcall]<TArg0, TArg1, void> LoadActionPtrRequired<TArg0, TArg1>(string feature, string function) =>
+			(delegate* unmanaged[Stdcall]<TArg0, TArg1, void>)LoadActionPtrRequired(feature, function);
+
+		internal static delegate* unmanaged[Stdcall]<TArg0, TArg1, TArg2, void> LoadActionPtrRequired<TArg0, TArg1, TArg2>(string feature, string function) =>
+			(delegate* unmanaged[Stdcall]<TArg0, TArg1, TArg2, void>)LoadActionPtrRequired(feature, function);
+
+		internal static delegate* unmanaged[Stdcall]<TArg0, TArg1, TArg2, TArg3, void> LoadActionPtrRequired<TArg0, TArg1, TArg2, TArg3>(string feature, string function) =>
+			(delegate* unmanaged[Stdcall]<TArg0, TArg1, TArg2, TArg3, void>)LoadActionPtrRequired(feature, function);
+
+		internal static delegate* unmanaged[Stdcall]<TArg0, TArg1, TArg2, TArg3, TArg4, void> LoadActionPtrRequired<TArg0, TArg1, TArg2, TArg3, TArg4>(string feature, string function) =>
+			(delegate* unmanaged[Stdcall]<TArg0, TArg1, TArg2, TArg3, TArg4, void>)LoadActionPtrRequired(feature, function);
+
+		internal static delegate* unmanaged[Stdcall]<TArg0, TArg1, TArg2, TArg3, TArg4, TArg5, void> LoadActionPtrRequired<TArg0, TArg1, TArg2, TArg3, TArg4, TArg5>(string feature, string function) =>
+			(delegate* unmanaged[Stdcall]<TArg0, TArg1, TArg2, TArg3, TArg4, TArg5, void>)LoadActionPtrRequired(feature, function);
+
+		internal static delegate* unmanaged[Stdcall]<TArg0, void> LoadActionPtrRequired<TArg0>(params FunctionFeature[] functions) =>
+			(delegate* unmanaged[Stdcall]<TArg0, void>)LoadActionPtrRequired(functions);
+
+		internal static delegate* unmanaged[Stdcall]<TArg0, TArg1, void> LoadActionPtrRequired<TArg0, TArg1>(params FunctionFeature[] functions) =>
+			(delegate* unmanaged[Stdcall]<TArg0, TArg1, void>)LoadActionPtrRequired(functions);
+
+		internal static delegate* unmanaged[Stdcall]<TArg0, TArg1, TArg2, void> LoadActionPtrRequired<TArg0, TArg1, TArg2>(params FunctionFeature[] functions) =>
+			(delegate* unmanaged[Stdcall]<TArg0, TArg1, TArg2, void>)LoadActionPtrRequired(functions);
+
+		internal static delegate* unmanaged[Stdcall]<TArg0, TArg1, TArg2, TArg3, void> LoadActionPtrRequired<TArg0, TArg1, TArg2, TArg3>(params FunctionFeature[] functions) =>
+			(delegate* unmanaged[Stdcall]<TArg0, TArg1, TArg2, TArg3, void>)LoadActionPtrRequired(functions);
+
+		internal static delegate* unmanaged[Stdcall]<TArg0, TArg1, TArg2, TArg3, TArg4, void> LoadActionPtrRequired<TArg0, TArg1, TArg2, TArg3, TArg4>(params FunctionFeature[] functions) =>
+			(delegate* unmanaged[Stdcall]<TArg0, TArg1, TArg2, TArg3, TArg4, void>)LoadActionPtrRequired(functions);
+
+		internal static delegate* unmanaged[Stdcall]<TArg0, TArg1, TArg2, TArg3, TArg4, TArg5, void> LoadActionPtrRequired<TArg0, TArg1, TArg2, TArg3, TArg4, TArg5>(params FunctionFeature[] functions) =>
+			(delegate* unmanaged[Stdcall]<TArg0, TArg1, TArg2, TArg3, TArg4, TArg5, void>)LoadActionPtrRequired(functions);
+
+		internal static delegate* unmanaged[Stdcall]<TArg0, void> LoadActionPtrRequired<TArg0>(string feature, params string[] functions) =>
+			(delegate* unmanaged[Stdcall]<TArg0, void>)LoadActionPtrRequired(feature, functions);
+
+		internal static delegate* unmanaged[Stdcall]<TArg0, TArg1, void> LoadActionPtrRequired<TArg0, TArg1>(string feature, params string[] functions) =>
+			(delegate* unmanaged[Stdcall]<TArg0, TArg1, void>)LoadActionPtrRequired(feature, functions);
+
+		internal static delegate* unmanaged[Stdcall]<TArg0, TArg1, TArg2, void> LoadActionPtrRequired<TArg0, TArg1, TArg2>(string feature, params string[] functions) =>
+			(delegate* unmanaged[Stdcall]<TArg0, TArg1, TArg2, void>)LoadActionPtrRequired(feature, functions);
+
+		internal static delegate* unmanaged[Stdcall]<TArg0, TArg1, TArg2, TArg3, void> LoadActionPtrRequired<TArg0, TArg1, TArg2, TArg3>(string feature, params string[] functions) =>
+			(delegate* unmanaged[Stdcall]<TArg0, TArg1, TArg2, TArg3, void>)LoadActionPtrRequired(feature, functions);
+
+		internal static delegate* unmanaged[Stdcall]<TArg0, TArg1, TArg2, TArg3, TArg4, void> LoadActionPtrRequired<TArg0, TArg1, TArg2, TArg3, TArg4>(string feature, params string[] functions) =>
+			(delegate* unmanaged[Stdcall]<TArg0, TArg1, TArg2, TArg3, TArg4, void>)LoadActionPtrRequired(feature, functions);
+
+		internal static delegate* unmanaged[Stdcall]<TArg0, TArg1, TArg2, TArg3, TArg4, TArg5, void> LoadActionPtrRequired<TArg0, TArg1, TArg2, TArg3, TArg4, TArg5>(string feature, params string[] functions) =>
+			(delegate* unmanaged[Stdcall]<TArg0, TArg1, TArg2, TArg3, TArg4, TArg5, void>)LoadActionPtrRequired(feature, functions);
 
 #if false
 		internal static class Sdl {
@@ -289,6 +399,20 @@ internal static unsafe class GLExt {
 #endif
 
 		[UnmanagedFunctionPointer(CallingConvention.Winapi)]
+		internal delegate void CreateTextures(
+			TextureTarget target,
+			int n,
+			[Out] ObjectId* textures
+		);
+
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)]
+		internal delegate void CreateTexture(
+			TextureTarget target,
+			int n,
+			ref ObjectId texture
+		);
+
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)]
 		internal delegate void TexStorage2D(
 			TextureTarget target,
 			int levels,
@@ -307,17 +431,9 @@ internal static unsafe class GLExt {
 		);
 
 		[UnmanagedFunctionPointer(CallingConvention.Winapi)]
-		internal delegate void TexStorage2DExt(
-			TextureTarget target,
-			int levels,
-			SizedInternalFormat internalFormat,
-			int width,
-			int height
-		);
-
-		[UnmanagedFunctionPointer(CallingConvention.Winapi)]
 		internal delegate void TextureStorage2DExt(
-			ObjectId target,
+			ObjectId texture,
+			TextureTarget target,
 			int levels,
 			SizedInternalFormat internalFormat,
 			int width,
@@ -344,7 +460,7 @@ internal static unsafe class GLExt {
 		);
 
 		[UnmanagedFunctionPointer(CallingConvention.Winapi)]
-		internal unsafe delegate void GetInteger64Delegate(
+		internal delegate void GetInteger64Delegate(
 			int param,
 			[Out] long* data
 		);
@@ -422,6 +538,7 @@ internal static unsafe class GLExt {
 		Notification = 0x826B
 	}
 
+	private static MonoGameGLException? LastCallbackException = null;
 	[DebuggerHidden]
 	private static void DebugMessageCallbackHandler(int source, int type, int id, int severityValue, int length, nint message, nint userParam) {
 #if GL_DEBUG || DEBUG || CONTRACTS_FULL
@@ -447,6 +564,7 @@ internal static unsafe class GLExt {
 		}
 		catch (MonoGameGLException ex) {
 			Debug.Error(errorMessage, ex);
+			LastCallbackException = ex;
 		}
 
 		Debug.Break();
@@ -500,6 +618,55 @@ internal static unsafe class GLExt {
 		internal ToggledDelegate(string name) : this(Delegates.Generic<TDelegate>.LoadFunction(name)) {
 		}
 
+		internal ToggledDelegate(string feature, string name) : this(
+			MonoGame.OpenGL.GL.Extensions.Contains(feature) ?
+				Delegates.Generic<TDelegate>.LoadFunction(name) :
+				null
+			) {
+		}
+
+		internal ToggledDelegate(params FunctionFeature[] functions) {
+			foreach (var function in functions) {
+				if (function.Feature is { } feature && !MonoGame.OpenGL.GL.Extensions.Contains(feature)) {
+					continue;
+				}
+
+				var functionDelegate = Delegates.Generic<TDelegate>.LoadFunction(function.Name);
+				if (functionDelegate is null) {
+					continue;
+				}
+
+				Function = functionDelegate;
+				_enabled = true;
+				return;
+			}
+
+			Function = null;
+			_enabled = false;
+		}
+
+		internal ToggledDelegate(string feature, params string[] functions) {
+			if (!MonoGame.OpenGL.GL.Extensions.Contains(feature)) {
+				Function = null;
+				_enabled = false;
+				return;
+			}
+
+			foreach (var function in functions) {
+				var functionDelegate = Delegates.Generic<TDelegate>.LoadFunction(function);
+				if (functionDelegate is null) {
+					continue;
+				}
+
+				Function = functionDelegate;
+				_enabled = true;
+				return;
+			}
+
+			Function = null;
+			_enabled = false;
+		}
+
 		public readonly void Disable() => Unsafe.AsRef(in _enabled) = false;
 
 //[MemberNotNullWhen(true, "Function")]
@@ -549,27 +716,53 @@ internal static unsafe class GLExt {
 	internal static readonly delegate* unmanaged<TextureTarget, int, PixelInternalFormat, int, int, void> TexStorage2DPtr =
 		(delegate* unmanaged<TextureTarget, int, PixelInternalFormat, int, int, void>)(void*)Delegates.LoadFunctionPtr("glTexStorage2D");
 #endif
-	internal static readonly ToggledDelegate<Delegates.TexStorage2D> TexStorage2D = new("glTexStorage2D");
-	internal static readonly ToggledDelegate<Delegates.TextureStorage2D> TextureStorage2D = new("glTextureStorage2D");
+	internal static readonly ToggledDelegate<Delegates.CreateTextures> CreateTextures = new(
+		new FunctionFeature("GL_EXT_direct_state_access", "glCreateTexturesEXT"),
+		new FunctionFeature("GL_ARB_direct_state_access", "glCreateTexturesARB"),
+		new FunctionFeature("GL_ARB_direct_state_access", "glCreateTextures")
+	);
+	internal static readonly ToggledDelegate<Delegates.TexStorage2D> TexStorage2D = new(
+		"GL_EXT_texture_storage",
+		"glTexStorage2DEXT",
+		"glTexStorage2D"
+	);
+	internal static readonly ToggledDelegate<Delegates.TextureStorage2D> TextureStorage2D = new(
+		"GL_EXT_texture_storage",
+		"glTextureStorage2D"
+	);
+	internal static readonly ToggledDelegate<Delegates.TextureStorage2DExt> TextureStorage2DExt = new(
+		"GL_EXT_texture_storage",
+		"glTextureStorage2DEXT"
+	);
 
-	internal static readonly ToggledDelegate<Delegates.TexStorage2DExt> TexStorage2DExt = new("glTexStorage2DEXT");
-	internal static readonly ToggledDelegate<Delegates.TextureStorage2DExt> TextureStorage2DExt = new("glTextureStorage2DEXT");
+	internal static readonly ToggledDelegate<Delegates.CopyImageSubData> CopyImageSubData = new(
+		"GL_ARB_copy_image",
+		"glCopyImageSubDataEXT",
+		"glCopyImageSubData"
+	);
 
-	internal static readonly ToggledDelegate<Delegates.CopyImageSubData> CopyImageSubData = new("glCopyImageSubData");
+	internal static readonly ToggledDelegate<Delegates.GetInteger64Delegate> GetInteger64v =
+		new("glGetInteger64v");
 
-	internal static readonly ToggledDelegate<Delegates.GetInteger64Delegate> GetInteger64v = new("glGetInteger64v");
+	internal static readonly ToggledDelegate<Delegates.GetTexImageDelegate> GetTexImage =
+		new("glGetTexImage");
 
-	internal static readonly ToggledDelegate<Delegates.GetTexImageDelegate> GetTexImage = new("glGetTexImage");
-
-	internal static readonly ToggledDelegate<Delegates.GetTextureSubImageDelegate> GetTextureSubImage = new("glGetTextureSubImage");
-	internal static readonly ToggledDelegate<Delegates.GetCompressedTexImageDelegate> GetCompressedTexImage = new("glGetCompressedTexImage");
-	internal static readonly ToggledDelegate<Delegates.GetCompressedTextureSubImageDelegate> GetCompressedTextureSubImage = new("glGetCompressedTextureSubImage");
+	internal static readonly ToggledDelegate<Delegates.GetTextureSubImageDelegate> GetTextureSubImage =
+		new("GL_ARB_get_texture_sub_image", "glGetTextureSubImage");
+	internal static readonly ToggledDelegate<Delegates.GetCompressedTexImageDelegate> GetCompressedTexImage =
+		new("glGetCompressedTexImage");
+	internal static readonly ToggledDelegate<Delegates.GetCompressedTextureSubImageDelegate> GetCompressedTextureSubImage =
+		new("GL_ARB_get_texture_sub_image", "glGetCompressedTextureSubImage");
 
 	internal static readonly delegate* unmanaged[Stdcall]<GLPrimitiveType, uint, ValueType, nint, void> DrawElements =
 		Delegates.LoadActionPtrRequired<GLPrimitiveType, uint, ValueType, nint>("glDrawElements");
 
 	internal static readonly delegate* unmanaged[Stdcall]<GLPrimitiveType, uint, uint, uint, ValueType, nint, void> DrawRangeElements =
-		Delegates.LoadActionPtrRequired<GLPrimitiveType, uint, uint, uint, ValueType, nint>("glDrawRangeElements");
+		Delegates.LoadActionPtrRequired<GLPrimitiveType, uint, uint, uint, ValueType, nint>(
+			"GL_EXT_draw_range_elements",
+			"glDrawRangeElements",
+			"glDrawRangeElementsEXT"
+		);
 
 	internal static readonly delegate* unmanaged[Stdcall]<uint, int, ValueType, bool, uint, nint, void> VertexAttribPointer =
 		Delegates.LoadActionPtrRequired<uint, int, ValueType, bool, uint, nint>("glVertexAttribPointer");
@@ -581,8 +774,51 @@ internal static unsafe class GLExt {
 		Delegates.LoadActionPtrRequired<BufferTarget, nint, nint, BufferUsageHint>("glBufferData");
 
 	internal static readonly delegate* unmanaged[Stdcall]<uint, uint, void> VertexAttribDivisor =
-		Delegates.LoadActionPtrRequired<uint, uint>("glVertexAttribDivisor");
+		Delegates.LoadActionPtrRequired<uint, uint>(
+			"GL_ARB_instanced_arrays",
+			"glVertexAttribDivisorEXT",
+			"glVertexAttribDivisorARB",
+			"glVertexAttribDivisor"
+		);
 
-	internal static readonly Delegates.DrawElements DrawElements2 = Delegates.Generic<Delegates.DrawElements>.LoadFunctionRequired("glDrawElements");
-	internal static readonly Delegates.DrawRangeElements DrawRangeElements2 = Delegates.Generic<Delegates.DrawRangeElements>.LoadFunctionRequired("glDrawRangeElements");
+	internal static readonly delegate* unmanaged[Stdcall]<TextureTarget, TextureParameterName, nint, void> GetTexParameteriv =
+		Delegates.LoadActionPtrRequired<TextureTarget, TextureParameterName, nint>("glGetTexParameteriv");
+
+	internal static void Dump() {
+		var dumpBuilder = new StringBuilder();
+
+		dumpBuilder.AppendLine("GLExt Dump:");
+
+		var fields = typeof(GLExt)
+			.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+
+		List<(string Name, bool Enabled)> fieldValues = new();
+
+		foreach (var field in fields) {
+			var fieldValue = field.GetValue(null);
+			bool enabled;
+
+			switch (fieldValue)
+			{
+				case IToggledDelegate toggledDelegate:
+					enabled = toggledDelegate.Enabled;
+					break;
+				case nint pointer:
+					enabled = pointer != 0;
+					break;
+				default:
+					continue;
+			}
+
+			fieldValues.Add((field.Name, enabled));
+		}
+
+		int maxName = fieldValues.MaxF(pair => pair.Name.Length);
+
+		foreach (var (name, enabled) in fieldValues) {
+			dumpBuilder.AppendLine($"  {name.PadRight(maxName)}: {enabled}");
+		}
+
+		Debug.Message(dumpBuilder.ToString());
+	}
 }

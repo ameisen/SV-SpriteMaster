@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using SpriteMaster.Extensions.Reflection;
+using SpriteMaster.GL;
 using SpriteMaster.Metadata;
 using SpriteMaster.Types;
 using StardewValley;
@@ -48,7 +49,9 @@ internal static class PGraphicsDeviceManager {
 		typeof(Game1),
 		"SetWindowSize",
 		Fixation.Prefix,
-		PriorityLevel.Last
+		PriorityLevel.Last,
+		enabledType: typeof(SMConfig.Debug),
+		enabledMember: nameof(Config.Debug.TestZoomedOutOverMax)
 	)]
 	public static bool OnSetWindowSize(Game1 __instance, ref int w, ref int h) {
 		if (Config.Debug.TestZoomedOutOverMax) {
@@ -196,6 +199,7 @@ internal static class PGraphicsDeviceManager {
 		if (!DumpedSystemInfo) {
 			try {
 				SystemInfo.Dump(__instance, device);
+				GLExt.Dump();
 			}
 			catch {
 				// ignored

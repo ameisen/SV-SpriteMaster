@@ -833,7 +833,7 @@ internal static class Config {
 				internal static bool Advanced = true;
 
 				[Attributes.Comment("Should Vertex Buffer Objects be used?")]
-				internal static bool UseVertexBufferObjects = false;
+				internal const bool UseVertexBufferObjects = false;
 
 				[Attributes.Comment("Should Index Buffer Objects be used?")]
 				internal static bool UseIndexBufferObjects = true;
