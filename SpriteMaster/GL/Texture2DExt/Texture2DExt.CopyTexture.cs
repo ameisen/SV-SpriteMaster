@@ -16,6 +16,11 @@ internal static partial class Texture2DExt {
 		Bounds targetArea,
 		PatchMode patchMode
 	) {
+		// Intel drivers on Windows have trouble with glCopyTexSubImage, as seen by Blender's workaround for it.
+		if (SystemInfo.Graphics.Vendor is SystemInfo.Graphics.Vendors.Intel && OperatingSystem.IsWindows()) {
+			return false;
+		}
+
 		if (!Configuration.Config.Extras.OpenGL.Enabled || !SMConfig.Extras.OpenGL.UseCopyTexture) {
 			return false;
 		}

@@ -798,6 +798,9 @@ internal static class Config {
 			[Attributes.Comment("Should NPC Warp Points code be optimized?")]
 			internal static bool OptimizeWarpPoints = true;
 
+			[Attributes.Comment("Should cross-thread optimizations be enabled?")]
+			internal static bool EnableCrossThreadOptimizations = true;
+
 			[Attributes.Comment("Should gender-locked locations be honored?")]
 			internal static bool HonorGenderLocking = true;
 		}

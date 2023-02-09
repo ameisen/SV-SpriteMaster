@@ -189,7 +189,10 @@ internal static partial class Pathfinding {
 
 		GameLocation? backwoodsLocation = Game1.locations.FirstOrDefaultF(location => location.Name == "Backwoods");
 
-		GenderedTuple<ConcurrentDictionary<RouteKey, List<string>>> concurrentRoutes = new(new(), new(), new());
+		GenderedTuple<ConcurrentDictionary<RouteKey, List<string>>>? concurrentRoutes =
+			SMConfig.Extras.Pathfinding.EnableCrossThreadOptimizations ?
+				new(new(), new(), new()) :
+				null;
 
 		// Iterate over every location in parallel, and collect all paths to every other location.
 		Parallel.ForEach(Game1.locations, location => {
