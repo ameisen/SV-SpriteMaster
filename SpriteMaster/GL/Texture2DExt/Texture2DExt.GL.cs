@@ -94,7 +94,7 @@ internal static partial class Texture2DExt {
 
 	[Conditional("CHECK_TEXTURE_MIP")]
 	internal static void CheckTextureMip(this Texture2D texture) {
-		MonoGame.OpenGL.GL.BindTexture(TextureTarget.Texture2D, texture.glTexture);
+		GLExt.BindTexture(TextureTarget.Texture2D, texture.glTexture);
 		unsafe {
 			Span<int> levels = stackalloc int[2];
 			fixed (int* levelsPtr = levels) {
@@ -140,7 +140,7 @@ internal static partial class Texture2DExt {
 		else {
 			GLExt.Checked(() => MonoGame.OpenGL.GL.GenTextures(1, out texture));
 		}
-		GLExt.Checked(() => MonoGame.OpenGL.GL.BindTexture(TextureTarget.Texture2D, texture));
+		GLExt.BindTextureChecked(TextureTarget.Texture2D, texture);
 
 		@this.glTexture = texture;
 

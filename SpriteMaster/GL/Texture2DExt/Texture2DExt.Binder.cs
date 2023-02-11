@@ -1,4 +1,5 @@
-﻿using MonoGame.OpenGL;
+﻿using Microsoft.Xna.Framework.Graphics;
+using MonoGame.OpenGL;
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -33,7 +34,7 @@ internal static partial class Texture2DExt {
 				return;
 			}
 
-			GLExt.Checked(() => MonoGame.OpenGL.GL.BindTexture(TextureTarget.Texture2D, (int)texture));
+			GLExt.BindTextureChecked(TextureTarget.Texture2D, texture);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Inline)]
@@ -47,7 +48,7 @@ internal static partial class Texture2DExt {
 				return;
 			}
 
-			GLExt.Checked(() => MonoGame.OpenGL.GL.BindTexture(TextureTarget.Texture2D, (int)texture));
+			GLExt.BindTextureChecked(TextureTarget.Texture2D, texture);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Inline)]
@@ -58,7 +59,7 @@ internal static partial class Texture2DExt {
 				return;
 			}
 
-			GLExt.Checked(() => MonoGame.OpenGL.GL.BindTexture(TextureTarget.Texture2D, (int)previousTexture));
+			GLExt.BindTextureChecked(TextureTarget.Texture2D, previousTexture);
 		}
 	}
 }

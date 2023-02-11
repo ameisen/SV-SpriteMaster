@@ -25,7 +25,7 @@ internal static partial class Texture2DExt {
 				size.Height
 			);
 
-			MonoGame.OpenGL.GL.BindTexture(TextureTarget.Texture2D, @this.glTexture);
+			GLExt.BindTexture(TextureTarget.Texture2D, @this.glTexture);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -50,7 +50,7 @@ internal static partial class Texture2DExt {
 				size.Height
 			);
 
-			MonoGame.OpenGL.GL.BindTexture(TextureTarget.Texture2D, @this.glTexture);
+			GLExt.BindTexture(TextureTarget.Texture2D, @this.glTexture);
 		}
 	}
 
@@ -221,7 +221,7 @@ internal static partial class Texture2DExt {
 
 					GenerateTexture(@this, useStorage);
 					@this.CheckTextureMip();
-					GLExt.Checked(new(MonoGame.OpenGL.GL.BindTexture), TextureTarget.Texture2D, @this.glTexture);
+					GLExt.BindTextureChecked(TextureTarget.Texture2D, @this.glTexture);
 
 					if (useStorage) {
 						// https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexStorage2D.xhtml
@@ -303,7 +303,7 @@ internal static partial class Texture2DExt {
 		texture.CheckTextureMip();
 
 		if (!data.IsEmpty) {
-			GLExt.Checked(() => MonoGame.OpenGL.GL.PixelStore(PixelStoreParameter.UnpackAlignment, Math.Min(texture.Format.GetSize(), 8)));
+			GLExt.PixelStoreChecked(PixelStoreName.UnpackAlignment, Math.Min(texture.Format.GetSize(), 8));
 		}
 
 		meta ??= texture.GetGlMeta();

@@ -124,7 +124,7 @@ internal static partial class Texture2DExt {
 		}
 
 		Bounds fullRect = (@this.Extent() >> level).Max(1);
-		bool entireTexture = false;
+		bool entireTexture;
 		if (!rect.HasValue) {
 			rect = fullRect;
 			entireTexture = true;
@@ -150,22 +150,41 @@ internal static partial class Texture2DExt {
 				));
 				return;
 			}
-			
-			int fullLayerSize = @this.Format.SizeBytes(fullRect.Size);
-			Span<byte> tempBuffer = fullLayerSize <= 0x2000
-				? stackalloc byte[fullLayerSize]
-				: GC.AllocateUninitializedArray<byte>(fullLayerSize);
 
-			fixed (byte* buffer = tempBuffer) {
-				byte* localBuffer = buffer;
-				GLExt.Checked(() => GLExt.GetCompressedTexImage.Function!(
-					TextureTarget.Texture2D,
+			if (GLExt.GetCompressedTextureSubImage.Enabled) {
+				GLExt.Checked(() => GLExt.GetCompressedTextureSubImage.Function(
+					(GLExt.ObjectId)@this.glTexture,
 					level,
-					(nint)localBuffer
+					rect.Value.X,
+					rect.Value.Y,
+					0,
+					(uint)rect.Value.Width,
+					(uint)rect.Value.Height,
+					1,
+					(uint)(data.Length * sizeof(T)),
+					(nint)data.Pointer
 				));
+				GLExt.BindTextureChecked(TextureTarget.Texture2D, @this.glTexture);
 			}
+			else {
+				int fullLayerSize = @this.Format.SizeBytes(fullRect.Size);
+				Span<byte> tempBuffer = fullLayerSize <= 0x2000
+					? stackalloc byte[fullLayerSize]
+					: GC.AllocateUninitializedArray<byte>(fullLayerSize);
 
-			CopyBlocked(tempBuffer, data.AsSpan, @this.Format, @this.Format.BlockEdge(), fullRect.Size, rect.Value);
+				fixed (byte* buffer = tempBuffer) {
+					byte* localBuffer = buffer;
+					GLExt.Checked(
+						() => GLExt.GetCompressedTexImage.Function!(
+							TextureTarget.Texture2D,
+							level,
+							(nint)localBuffer
+						)
+					);
+				}
+
+				CopyBlocked(tempBuffer, data.AsSpan, @this.Format, @this.Format.BlockEdge(), fullRect.Size, rect.Value);
+			}
 		}
 
 		void ReadUncompressed() {
@@ -180,23 +199,44 @@ internal static partial class Texture2DExt {
 				return;
 			}
 
-			int fullLayerSize = @this.Format.SizeBytes(fullRect.Size);
-			Span<byte> tempBuffer = fullLayerSize <= 0x2000
-				? stackalloc byte[fullLayerSize]
-				: GC.AllocateUninitializedArray<byte>(fullLayerSize);
-
-			fixed (byte* buffer = tempBuffer) {
-				byte* localBuffer = buffer;
-				GLExt.Checked(() => GLExt.GetTexImage.Function!(
-					TextureTarget.Texture2D,
+			if (GLExt.GetTextureSubImage.Enabled) {
+				GLExt.Checked(() => GLExt.GetTextureSubImage.Function(
+					(GLExt.ObjectId)@this.glTexture,
 					level,
+					rect.Value.X,
+					rect.Value.Y,
+					0,
+					(uint)rect.Value.Width,
+					(uint)rect.Value.Height,
+					1,
 					@this.glFormat,
 					@this.glType,
-					(nint)localBuffer
+					(uint)(data.Length * sizeof(T)),
+					(nint)data.Pointer
 				));
+				GLExt.BindTextureChecked(TextureTarget.Texture2D, @this.glTexture);
 			}
+			else {
+				int fullLayerSize = @this.Format.SizeBytes(fullRect.Size);
+				Span<byte> tempBuffer = fullLayerSize <= 0x2000
+					? stackalloc byte[fullLayerSize]
+					: GC.AllocateUninitializedArray<byte>(fullLayerSize);
 
-			CopyRaw(tempBuffer, data.AsSpan, @this.Format, fullRect.Size, rect.Value);
+				fixed (byte* buffer = tempBuffer) {
+					byte* localBuffer = buffer;
+					GLExt.Checked(
+						() => GLExt.GetTexImage.Function!(
+							TextureTarget.Texture2D,
+							level,
+							@this.glFormat,
+							@this.glType,
+							(nint)localBuffer
+						)
+					);
+				}
+
+				CopyRaw(tempBuffer, data.AsSpan, @this.Format, fullRect.Size, rect.Value);
+			}
 		}
 
 		bool usedStorage = @this.GetGlMeta().Flags.HasFlag(Texture2DOpenGlMeta.Flag.Storage);
@@ -205,50 +245,14 @@ internal static partial class Texture2DExt {
 			// Flush errors
 			GLExt.SwallowOrReportErrors();
 
-			GLExt.Checked(() => OGL.BindTexture(TextureTarget.Texture2D, @this.glTexture));
-			GLExt.Checked(() => OGL.PixelStore(PixelStoreParameter.PackAlignment, Math.Min(sizeof(T), 8)));
+			GLExt.BindTextureChecked(TextureTarget.Texture2D, @this.glTexture);
+			GLExt.PixelStoreChecked(PixelStoreName.PackAlignment, Math.Min(sizeof(T), 8));
 
 			if (@this.glFormat == PixelFormat.CompressedTextureFormats) {
-				if (GLExt.GetCompressedTextureSubImage.Enabled) {
-					GLExt.Checked(() => GLExt.GetCompressedTextureSubImage.Function(
-						(GLExt.ObjectId)@this.glTexture,
-						level,
-						rect.Value.X,
-						rect.Value.Y,
-						0,
-						(uint)rect.Value.Width,
-						(uint)rect.Value.Height,
-						1,
-						(uint)(data.Length * sizeof(T)),
-						(nint)data.Pointer
-					));
-					GLExt.Checked(() => OGL.BindTexture(TextureTarget.Texture2D, @this.glTexture));
-				}
-				else {
-					ReadCompressed();
-				}
+				ReadCompressed();
 			}
 			else {
-				if (GLExt.GetTextureSubImage.Enabled) {
-					GLExt.Checked(() => GLExt.GetTextureSubImage.Function(
-						(GLExt.ObjectId)@this.glTexture,
-						level,
-						rect.Value.X,
-						rect.Value.Y,
-						0,
-						(uint)rect.Value.Width,
-						(uint)rect.Value.Height,
-						1,
-						@this.glFormat,
-						@this.glType,
-						(uint)(data.Length * sizeof(T)),
-						(nint)data.Pointer
-					));
-					GLExt.Checked(() => OGL.BindTexture(TextureTarget.Texture2D, @this.glTexture));
-				}
-				else {
-					ReadUncompressed();
-				}
+				ReadUncompressed();
 			}
 		}
 		catch (MonoGameGLException ex) {

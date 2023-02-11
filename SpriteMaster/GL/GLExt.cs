@@ -5,10 +5,12 @@ using Microsoft.Xna.Framework.Graphics;
 using MonoGame.OpenGL;
 using SpriteMaster.Extensions;
 using SpriteMaster.Extensions.Reflection;
+using SpriteMaster.Mitigations.PyTK;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -27,6 +29,35 @@ internal static unsafe class GLExt {
 	internal enum ObjectId : uint {
 		None = 0
 	};
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	internal static ObjectId AsObjectId(this int value) => (ObjectId)value;
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	internal static int AsInt(this ObjectId value) => (int)value;
+
+	internal class GLExtException : MonoGameGLException {
+		protected GLExtException(string message) : base(message) { }
+
+		[DoesNotReturn]
+		[MethodImpl(Runtime.MethodImpl.ErrorPath)]
+		internal static void Throw(string message) =>
+			throw new GLExtException(message);
+	}
+
+	internal sealed class GLExtValueException : GLExtException {
+		private GLExtValueException(string message) : base(message) { }
+
+		[DoesNotReturn]
+		[MethodImpl(Runtime.MethodImpl.ErrorPath)]
+		internal static void Throw(string name, int value) =>
+			throw new GLExtValueException($"Value for '{name}' was invalid: '{value}'");
+
+		[DoesNotReturn]
+		[MethodImpl(Runtime.MethodImpl.ErrorPath)]
+		internal static void Throw<TEnum>(TEnum name, int value) where TEnum : unmanaged, Enum =>
+			throw new GLExtValueException($"Value for '{name}' was invalid: '{value}'");
+	}
 
 	internal enum ErrorCode : GLEnum {
 		NoError = 0x0000,
@@ -55,6 +86,15 @@ internal static unsafe class GLExt {
 	}
 	// ReSharper restore UnusedMember.Global
 
+	private static readonly Lazy<HashSet<string>> _extensionsLazy = new(() => MonoGame.OpenGL.GL.Extensions.ToHashSet(), isThreadSafe: false);
+	internal static HashSet<string> Extensions => _extensionsLazy.Value;
+
+	internal static void FlushErrors() {
+		while (MonoGame.OpenGL.GL.GetError() != MonoGame.OpenGL.ErrorCode.NoError) {
+			// Flush the error buffer
+		}
+	}
+
 	[DebuggerHidden, DoesNotReturn]
 	private static void HandleError(ErrorCode error, string expression) {
 		using var errorList = ObjectPoolExt<List<string>>.Take(list => list.Clear());
@@ -81,6 +121,19 @@ internal static unsafe class GLExt {
 	internal static void CheckError(string? expression = null, [CallerMemberName] string member = "") {
 		AlwaysCheckError(expression, member);
 	}
+
+	[Conditional("GL_DEBUG"), Conditional("CONTRACTS_FULL"), Conditional("DEBUG")]
+	[DebuggerHidden, MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static void CheckErrorExpression((string Expression, object? Value)[] arguments, string callerMember, [CallerMemberName] string member = "") {
+		member = member.RemoveFromEnd("Checked");
+
+		var expandedArguments = arguments.Select(pair => $"{pair.Expression} [[{pair.Value}]]");
+
+		AlwaysCheckError($"{member}({string.Join(", ", expandedArguments)})", callerMember);
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	private static (string Expression, object? Value)[] MethodArgs(params (string Expression, object? Value)[] arguments) => arguments;
 
 	[DebuggerHidden, MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static void AlwaysCheckError(string? expression = null, [CallerMemberName] string member = "") {
@@ -134,8 +187,20 @@ internal static unsafe class GLExt {
 	}
 
 	[DebuggerHidden, MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static void Checked<TAction, T0>(TAction action, T0 param0, [CallerArgumentExpression("action")] string expression = "") where TAction : IMethodStruct<T0> {
+		action.Invoke(param0);
+		CheckError(expression);
+	}
+
+	[DebuggerHidden, MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static void Checked<T0, T1>(Action<T0, T1> action, T0 param0, T1 param1, [CallerArgumentExpression("action")] string expression = "") {
 		action(param0, param1);
+		CheckError(expression);
+	}
+
+	[DebuggerHidden, MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static void Checked<TAction, T0, T1>(TAction action, T0 param0, T1 param1, [CallerArgumentExpression("action")] string expression = "") where TAction : IMethodStruct<T0, T1> {
+		action.Invoke(param0, param1);
 		CheckError(expression);
 	}
 
@@ -146,14 +211,32 @@ internal static unsafe class GLExt {
 	}
 
 	[DebuggerHidden, MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static void Checked<TAction, T0, T1, T2>(TAction action, T0 param0, T1 param1, T2 param2, [CallerArgumentExpression("action")] string expression = "") where TAction : IMethodStruct<T0, T1, T2> {
+		action.Invoke(param0, param1, param2);
+		CheckError(expression);
+	}
+
+	[DebuggerHidden, MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static void Checked<T0, T1, T2, T3>(Action<T0, T1, T2, T3> action, T0 param0, T1 param1, T2 param2, T3 param3, [CallerArgumentExpression("action")] string expression = "") {
 		action(param0, param1, param2, param3);
 		CheckError(expression);
 	}
 
 	[DebuggerHidden, MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static void Checked<TAction, T0, T1, T2, T3>(TAction action, T0 param0, T1 param1, T2 param2, T3 param3, [CallerArgumentExpression("action")] string expression = "") where TAction : IMethodStruct<T0, T1, T2, T3> {
+		action.Invoke(param0, param1, param2, param3);
+		CheckError(expression);
+	}
+
+	[DebuggerHidden, MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static void Checked<T0, T1, T2, T3, T4>(Action<T0, T1, T2, T3, T4> action, T0 param0, T1 param1, T2 param2, T3 param3, T4 param4, [CallerArgumentExpression("action")] string expression = "") {
 		action(param0, param1, param2, param3, param4);
+		CheckError(expression);
+	}
+
+	[DebuggerHidden, MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static void Checked<TAction, T0, T1, T2, T3, T4>(TAction action, T0 param0, T1 param1, T2 param2, T3 param3, T4 param4, [CallerArgumentExpression("action")] string expression = "") where TAction : IMethodStruct<T0, T1, T2, T3, T4> {
+		action.Invoke(param0, param1, param2, param3, param4);
 		CheckError(expression);
 	}
 
@@ -235,7 +318,7 @@ internal static unsafe class GLExt {
 			return address;
 		}
 		internal static nint? LoadActionPtr(in FunctionFeature function) {
-			if (function.Feature is {} feature && !MonoGame.OpenGL.GL.Extensions.Contains(feature)) {
+			if (function.Feature is {} feature && !Extensions.Contains(feature)) {
 				return null;
 			}
 
@@ -619,15 +702,19 @@ internal static unsafe class GLExt {
 		}
 
 		internal ToggledDelegate(string feature, string name) : this(
-			MonoGame.OpenGL.GL.Extensions.Contains(feature) ?
+			Extensions.Contains(feature) ?
 				Delegates.Generic<TDelegate>.LoadFunction(name) :
 				null
 			) {
 		}
 
-		internal ToggledDelegate(params FunctionFeature[] functions) {
+		private static (TDelegate? Delegate, bool Enabled) Load(bool toggle, FunctionFeature[] functions) {
+			if (!toggle) {
+				return default;
+			}
+
 			foreach (var function in functions) {
-				if (function.Feature is { } feature && !MonoGame.OpenGL.GL.Extensions.Contains(feature)) {
+				if (function.Feature is { } feature && !Extensions.Contains(feature)) {
 					continue;
 				}
 
@@ -636,20 +723,26 @@ internal static unsafe class GLExt {
 					continue;
 				}
 
-				Function = functionDelegate;
-				_enabled = true;
-				return;
+				return (functionDelegate, true);
 			}
 
-			Function = null;
-			_enabled = false;
+			return default;
 		}
 
-		internal ToggledDelegate(string feature, params string[] functions) {
-			if (!MonoGame.OpenGL.GL.Extensions.Contains(feature)) {
-				Function = null;
-				_enabled = false;
-				return;
+		internal ToggledDelegate(params FunctionFeature[] functions) : this(toggle: true, functions) {
+		}
+
+		internal ToggledDelegate(bool toggle, params FunctionFeature[] functions) {
+			(Function, _enabled) = Load(toggle, functions);
+		}
+
+		private static (TDelegate? Delegate, bool Enabled) Load(bool toggle, string feature, string[] functions) {
+			if (!toggle) {
+				return default;
+			}
+
+			if (!Extensions.Contains(feature)) {
+				return default;
 			}
 
 			foreach (var function in functions) {
@@ -658,13 +751,17 @@ internal static unsafe class GLExt {
 					continue;
 				}
 
-				Function = functionDelegate;
-				_enabled = true;
-				return;
+				return (functionDelegate, true);
 			}
 
-			Function = null;
-			_enabled = false;
+			return default;
+		}
+
+		internal ToggledDelegate(string feature, params string[] functions) : this(toggle: true, feature, functions) {
+		}
+
+		internal ToggledDelegate(bool toggle, string feature, params string[] functions) {
+			(Function, _enabled) = Load(toggle, feature, functions);
 		}
 
 		public readonly void Disable() => Unsafe.AsRef(in _enabled) = false;
@@ -712,6 +809,33 @@ internal static unsafe class GLExt {
 	internal static bool IsLegalIndexType(this ValueType type) =>
 		type is ValueType.UnsignedByte or ValueType.UnsignedShort or ValueType.UnsignedInt;
 
+	internal interface IMethodStruct { }
+
+	internal interface IMethodStruct<T0> : IMethodStruct {
+		[DebuggerHidden, MethodImpl(MethodImplOptions.AggressiveInlining)]
+		void Invoke(T0 _);
+	}
+
+	internal interface IMethodStruct<T0, T1> : IMethodStruct {
+		[DebuggerHidden, MethodImpl(MethodImplOptions.AggressiveInlining)]
+		void Invoke(T0 _0, T1 _1);
+	}
+
+	internal interface IMethodStruct<T0, T1, T2> : IMethodStruct {
+		[DebuggerHidden, MethodImpl(MethodImplOptions.AggressiveInlining)]
+		void Invoke(T0 _0, T1 _1, T2 _2);
+	}
+
+	internal interface IMethodStruct<T0, T1, T2, T3> : IMethodStruct {
+		[DebuggerHidden, MethodImpl(MethodImplOptions.AggressiveInlining)]
+		void Invoke(T0 _0, T1 _1, T2 _2, T3 _3);
+	}
+
+	internal interface IMethodStruct<T0, T1, T2, T3, T4> : IMethodStruct {
+		[DebuggerHidden, MethodImpl(MethodImplOptions.AggressiveInlining)]
+		void Invoke(T0 _0, T1 _1, T2 _2, T3 _3, T4 _4);
+	}
+
 #if false
 	internal static readonly delegate* unmanaged<TextureTarget, int, PixelInternalFormat, int, int, void> TexStorage2DPtr =
 		(delegate* unmanaged<TextureTarget, int, PixelInternalFormat, int, int, void>)(void*)Delegates.LoadFunctionPtr("glTexStorage2D");
@@ -722,12 +846,11 @@ internal static unsafe class GLExt {
 		new FunctionFeature("GL_ARB_direct_state_access", "glCreateTextures")
 	);
 	internal static readonly ToggledDelegate<Delegates.TexStorage2D> TexStorage2D = new(
-		"GL_EXT_texture_storage",
-		"glTexStorage2DEXT",
-		"glTexStorage2D"
+		new FunctionFeature("GL_EXT_texture_storage", "glTexStorage2DEXT"),
+		new FunctionFeature("GL_ARB_texture_storage", "glTexStorage2D")
 	);
 	internal static readonly ToggledDelegate<Delegates.TextureStorage2D> TextureStorage2D = new(
-		"GL_EXT_texture_storage",
+		"GL_ARB_texture_storage",
 		"glTextureStorage2D"
 	);
 	internal static readonly ToggledDelegate<Delegates.TextureStorage2DExt> TextureStorage2DExt = new(
@@ -736,13 +859,16 @@ internal static unsafe class GLExt {
 	);
 
 	internal static readonly ToggledDelegate<Delegates.CopyImageSubData> CopyImageSubData = new(
-		"GL_ARB_copy_image",
-		"glCopyImageSubDataEXT",
-		"glCopyImageSubData"
+		toggle: false,
+		new FunctionFeature("GL_EXT_copy_image", "glCopyImageSubDataEXT"),
+		new FunctionFeature("GL_ARB_copy_image", "glCopyImageSubData")
 	);
 
 	internal static readonly ToggledDelegate<Delegates.GetInteger64Delegate> GetInteger64v =
-		new("glGetInteger64v");
+		new(
+			new FunctionFeature("GetInteger64vEXT"),
+			new FunctionFeature("glGetInteger64v")
+		);
 
 	internal static readonly ToggledDelegate<Delegates.GetTexImageDelegate> GetTexImage =
 		new("glGetTexImage");
@@ -759,9 +885,8 @@ internal static unsafe class GLExt {
 
 	internal static readonly delegate* unmanaged[Stdcall]<GLPrimitiveType, uint, uint, uint, ValueType, nint, void> DrawRangeElements =
 		Delegates.LoadActionPtrRequired<GLPrimitiveType, uint, uint, uint, ValueType, nint>(
-			"GL_EXT_draw_range_elements",
-			"glDrawRangeElements",
-			"glDrawRangeElementsEXT"
+			new FunctionFeature("GL_EXT_draw_range_elements", "glDrawRangeElementsEXT"),
+			new FunctionFeature("glDrawRangeElements")
 		);
 
 	internal static readonly delegate* unmanaged[Stdcall]<uint, int, ValueType, bool, uint, nint, void> VertexAttribPointer =
@@ -783,6 +908,143 @@ internal static unsafe class GLExt {
 
 	internal static readonly delegate* unmanaged[Stdcall]<TextureTarget, TextureParameterName, nint, void> GetTexParameteriv =
 		Delegates.LoadActionPtrRequired<TextureTarget, TextureParameterName, nint>("glGetTexParameteriv");
+
+	#region BindTexture
+
+	private static readonly delegate* unmanaged[Stdcall]<TextureTarget, GLExt.ObjectId, void> _bindTexture = 
+		Delegates.LoadActionPtrRequired<TextureTarget, GLExt.ObjectId>("glBindTexture");
+
+	private static GLExt.ObjectId _lastBoundTexture = GLExt.ObjectId.None;
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	internal static void BindTexture(TextureTarget target, GLExt.ObjectId texture) {
+		if (target is TextureTarget.Texture2D) {
+			/*if (texture != _lastBoundTexture)*/ {
+				_bindTexture(target, texture);
+				_lastBoundTexture = texture;
+			}
+		}
+		else {
+			_bindTexture(target, texture);
+		}
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	internal static void BindTexture(TextureTarget target, int texture) =>
+		BindTexture(target, (GLExt.ObjectId)texture);
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	internal static void BindTextureChecked(
+		TextureTarget target,
+		GLExt.ObjectId texture,
+		[CallerArgumentExpression("target")] string targetExpression = "",
+		[CallerArgumentExpression("texture")] string textureExpression = "",
+		[CallerMemberName] string member = ""
+	) {
+		BindTexture(target, texture);
+		CheckErrorExpression(MethodArgs((targetExpression, target), (textureExpression, texture)), member);
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	internal static void BindTextureChecked(
+		TextureTarget target,
+		int texture,
+		[CallerArgumentExpression("target")] string targetExpression = "",
+		[CallerArgumentExpression("texture")] string textureExpression = "",
+		[CallerMemberName] string member = ""
+	) {
+		BindTextureChecked(target, (ObjectId)texture, targetExpression, textureExpression, member);
+	}
+
+	#endregion
+
+	#region PixelStore
+
+	private static readonly delegate* unmanaged[Stdcall]<PixelStoreName, int, void> _pixelStorei =
+		Delegates.LoadActionPtrRequired<PixelStoreName, int>("glPixelStorei"); // glPixelStoref is basically useless for us
+
+	private static class PixelStoreValues {
+		private static int _packAlignment;
+		private static int _unpackAlignment;
+
+		[Conditional("GL_DEBUG"), Conditional("CONTRACTS_FULL"), Conditional("DEBUG")]
+		[MethodImpl(Runtime.MethodImpl.Inline)]
+		private static void CheckAlignment(PixelStoreName name, int value) {
+			if (value is not (1 or 2 or 4 or 8)) {
+				GLExtValueException.Throw(name, value);
+			}
+		}
+
+		// These are the ones commonly-used
+		internal static int PackAlignment {
+			[MethodImpl(Runtime.MethodImpl.Inline)]
+			get => _packAlignment;
+			[MethodImpl(Runtime.MethodImpl.Inline)]
+			set {
+				CheckAlignment(PixelStoreName.PackAlignment, value);
+				_packAlignment = value;
+			}
+		}
+		internal static int UnpackAlignment {
+			[MethodImpl(Runtime.MethodImpl.Inline)]
+			get => _unpackAlignment;
+			[MethodImpl(Runtime.MethodImpl.Inline)]
+			set {
+				CheckAlignment(PixelStoreName.UnpackAlignment, value);
+				_unpackAlignment = value;
+			}
+		}
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	internal static void PixelStore(PixelStoreName name, int parameter) {
+		if (name is (PixelStoreName.PackAlignment or PixelStoreName.UnpackAlignment)) {
+			if (name is PixelStoreName.PackAlignment) {
+				/*if (PixelStoreValues.PackAlignment != parameter)*/ {
+					PixelStoreValues.PackAlignment = parameter;
+					_pixelStorei(PixelStoreName.PackAlignment, parameter);
+				}
+			}
+			else {
+				/*if (PixelStoreValues.UnpackAlignment != parameter)*/ {
+					PixelStoreValues.UnpackAlignment = parameter;
+					_pixelStorei(PixelStoreName.UnpackAlignment, parameter);
+				}
+			}
+		}
+		else {
+			_pixelStorei(name, parameter);
+		}
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	internal static void PixelStore(PixelStoreParameter name, int parameter) =>
+		PixelStore((PixelStoreName)name, parameter);
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	internal static void PixelStoreChecked(
+		PixelStoreName name,
+		int parameter,
+		[CallerArgumentExpression("name")] string nameExpression = "",
+		[CallerArgumentExpression("parameter")] string parameterExpression = "",
+		[CallerMemberName] string member = ""
+	) {
+		PixelStore(name, parameter);
+		CheckErrorExpression(MethodArgs((nameExpression, name), (parameterExpression, parameter)), member);
+	}
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	internal static void PixelStoreChecked(
+		PixelStoreParameter name,
+		int parameter,
+		[CallerArgumentExpression("name")] string nameExpression = "",
+		[CallerArgumentExpression("parameter")]
+		string parameterExpression = "",
+		[CallerMemberName] string member = ""
+	) =>
+		PixelStoreChecked((PixelStoreName)name, parameter, nameExpression, parameterExpression, member);
+
+	#endregion
 
 	internal static void Dump() {
 		var dumpBuilder = new StringBuilder();
@@ -821,4 +1083,18 @@ internal static unsafe class GLExt {
 
 		Debug.Message(dumpBuilder.ToString());
 	}
+
+	static GLExt() {
+		MonoGame.OpenGL.GL.BindTexture = BindTexture;
+		MonoGame.OpenGL.GL.GetInteger(GetPName.TextureBinding2D, out int currentBinding);
+		_lastBoundTexture = (ObjectId)currentBinding;
+
+		MonoGame.OpenGL.GL.PixelStore = PixelStore;
+		MonoGame.OpenGL.GL.GetInteger((GetPName)PixelStoreName.PackAlignment, out int packAlignment);
+		PixelStoreValues.PackAlignment = packAlignment;
+		MonoGame.OpenGL.GL.GetInteger((GetPName)PixelStoreName.UnpackAlignment, out int unpackAlignment);
+		PixelStoreValues.UnpackAlignment = unpackAlignment;
+	}
 }
+
+// glGetInteger64vEXT 
