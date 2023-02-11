@@ -20,9 +20,13 @@ namespace SpriteMaster.Harmonize.Patches;
 [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Harmony")]
 internal static class PGraphicsDeviceManager {
 	private struct DeviceState {
-		private Vector2I Size = new(int.MinValue);
 		private bool Initialized = false;
+		private Vector2I Size = new(int.MinValue);
 		private bool IsFullscreen = false;
+		private DisplayOrientation Orientation = unchecked((DisplayOrientation)0xFFFF_FFFF);
+		private bool HardwareModeSwitch = false;
+		private bool PreferHalfPixelOffset = false;
+		private GraphicsProfile Profile = (GraphicsProfile)(-1);
 
 		public DeviceState() { }
 
@@ -33,13 +37,26 @@ internal static class PGraphicsDeviceManager {
 				instance.PreferredBackBufferHeight
 			);
 
-			if (Initialized && IsFullscreen == isFullscreen && Size == size) {
+			if (
+				instance.GraphicsDevice is not null &&
+				Initialized &&
+				IsFullscreen == isFullscreen &&
+				Size == size &&
+				Orientation == instance.SupportedOrientations &&
+				HardwareModeSwitch == instance.HardwareModeSwitch &&
+				PreferHalfPixelOffset == instance.PreferHalfPixelOffset &&
+				Profile == instance.GraphicsProfile
+			) {
 				return false;
 			}
 
 			Initialized = true;
 			IsFullscreen = isFullscreen;
 			Size = size;
+			Orientation = instance.SupportedOrientations;
+			HardwareModeSwitch = instance.HardwareModeSwitch;
+			PreferHalfPixelOffset = instance.PreferHalfPixelOffset;
+			Profile = instance.GraphicsProfile;
 			return true;
 		}
 	}
