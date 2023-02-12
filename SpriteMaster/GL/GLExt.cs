@@ -12,10 +12,12 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Metadata.Ecma335;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
+using Console = System.Console;
 
 // Defined with a 32-bit depth
 using GLEnum = System.UInt32;
@@ -276,9 +278,57 @@ internal static unsafe class GLExt {
 		AlwaysCheckError(expression);
 	}
 
-	internal readonly record struct FunctionFeature(string? Feature, string Name) {
+	internal static readonly Lazy<(int Major, int Minor)> ContextVersion = new(
+		() => {
+			try {
+				MonoGame.OpenGL.GL.GetInteger(0x821B, out var majorVersion);
+				MonoGame.OpenGL.GL.GetInteger(0x821C, out var minorVersion);
+
+				return (majorVersion, minorVersion);
+			}
+			catch {
+				return (2, 0);
+			}
+		}, isThreadSafe: false
+	);
+
+	internal readonly struct FunctionFeature {
+		internal readonly (int Major, int Minor)? Version = null;
+		internal readonly string? Feature = null;
+		internal readonly string Name;
+
 		// ReSharper disable once InconsistentNaming
-		internal FunctionFeature(string Name) : this(Feature: null, Name: Name) {
+		internal FunctionFeature(string name) {
+			Name = name;
+		}
+
+		internal FunctionFeature(string? feature, string name) {
+			Feature = feature;
+			Name = name;
+		}
+
+		internal FunctionFeature((int Major, int minor)? version, string name) {
+			Version = version;
+			Name = name;
+		}
+
+		internal bool Validate() {
+			if (Feature is { } feature && !Extensions.Contains(feature)) {
+				return false;
+			}
+
+			if (Version is { } version) {
+				var contextVersion = ContextVersion.Value;
+				if (version.Major < contextVersion.Major) {
+					return false;
+				}
+
+				if (version.Major == contextVersion.Major && version.Minor < contextVersion.Minor) {
+					return false;
+				}
+			}
+
+			return true;
 		}
 	}
 
@@ -297,6 +347,7 @@ internal static unsafe class GLExt {
 					((_, _) => null);
 
 			internal static T? LoadFunction(string function) {
+				var f = LoadFunctionDelegator(function, false);
 				return LoadFunctionDelegator(function, false);
 			}
 
@@ -311,17 +362,20 @@ internal static unsafe class GLExt {
 		}
 
 		internal static nint? LoadActionPtr(string function) {
+			// Doesn't work on Linux due to their use of a dispatch table
 			if (Sdl.GL.GetProcAddress(function) is var address && address == IntPtr.Zero) {
 				return null;
 			}
 
 			return address;
 		}
+
 		internal static nint? LoadActionPtr(in FunctionFeature function) {
-			if (function.Feature is {} feature && !Extensions.Contains(feature)) {
+			if (!function.Validate()) {
 				return null;
 			}
 
+			// Doesn't work on Linux due to their use of a dispatch table
 			if (Sdl.GL.GetProcAddress(function.Name) is var address && address == IntPtr.Zero) {
 				return null;
 			}
@@ -483,6 +537,13 @@ internal static unsafe class GLExt {
 
 		[UnmanagedFunctionPointer(CallingConvention.Winapi)]
 		internal delegate void CreateTextures(
+			TextureTarget target,
+			int n,
+			[Out] ObjectId* textures
+		);
+
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)]
+		internal delegate void CreateTexturesButt(
 			TextureTarget target,
 			int n,
 			[Out] ObjectId* textures
@@ -714,12 +775,11 @@ internal static unsafe class GLExt {
 			}
 
 			foreach (var function in functions) {
-				if (function.Feature is { } feature && !Extensions.Contains(feature)) {
+				if (!function.Validate()) {
 					continue;
 				}
 
-				var functionDelegate = Delegates.Generic<TDelegate>.LoadFunction(function.Name);
-				if (functionDelegate is null) {
+				if (Delegates.Generic<TDelegate>.LoadFunction(function.Name) is not {} functionDelegate) {
 					continue;
 				}
 
@@ -841,8 +901,6 @@ internal static unsafe class GLExt {
 		(delegate* unmanaged<TextureTarget, int, PixelInternalFormat, int, int, void>)(void*)Delegates.LoadFunctionPtr("glTexStorage2D");
 #endif
 	internal static readonly ToggledDelegate<Delegates.CreateTextures> CreateTextures = new(
-		new FunctionFeature("GL_EXT_direct_state_access", "glCreateTexturesEXT"),
-		new FunctionFeature("GL_ARB_direct_state_access", "glCreateTexturesARB"),
 		new FunctionFeature("GL_ARB_direct_state_access", "glCreateTextures")
 	);
 	internal static readonly ToggledDelegate<Delegates.TexStorage2D> TexStorage2D = new(
@@ -859,15 +917,13 @@ internal static unsafe class GLExt {
 	);
 
 	internal static readonly ToggledDelegate<Delegates.CopyImageSubData> CopyImageSubData = new(
-		toggle: false,
 		new FunctionFeature("GL_EXT_copy_image", "glCopyImageSubDataEXT"),
 		new FunctionFeature("GL_ARB_copy_image", "glCopyImageSubData")
 	);
 
 	internal static readonly ToggledDelegate<Delegates.GetInteger64Delegate> GetInteger64v =
 		new(
-			new FunctionFeature("GetInteger64vEXT"),
-			new FunctionFeature("glGetInteger64v")
+			new FunctionFeature((3, 2), "glGetInteger64v")
 		);
 
 	internal static readonly ToggledDelegate<Delegates.GetTexImageDelegate> GetTexImage =
@@ -1050,6 +1106,8 @@ internal static unsafe class GLExt {
 		var dumpBuilder = new StringBuilder();
 
 		dumpBuilder.AppendLine("GLExt Dump:");
+		var contextVersion = ContextVersion.Value;
+		dumpBuilder.AppendLine($"  Context Version: {contextVersion.Major}.{contextVersion.Minor}");
 
 		var fields = typeof(GLExt)
 			.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);

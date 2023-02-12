@@ -119,10 +119,6 @@ internal static partial class Texture2DExt {
 			return false;
 		}
 
-		if (!GLExt.GetCompressedTexImage.Enabled || !GLExt.GetTexImage.Enabled) {
-			return false;
-		}
-
 		Bounds fullRect = (@this.Extent() >> level).Max(1);
 		bool entireTexture;
 		if (!rect.HasValue) {
@@ -142,8 +138,8 @@ internal static partial class Texture2DExt {
 		bool success = true;
 
 		void ReadCompressed() {
-			if (entireTexture) {
-				GLExt.Checked(() => GLExt.GetCompressedTexImage.Function!(
+			if (entireTexture && GLExt.GetCompressedTexImage.Enabled) {
+				GLExt.Checked(() => GLExt.GetCompressedTexImage.Function(
 					TextureTarget.Texture2D,
 					level,
 					(nint)data.Pointer
@@ -188,8 +184,8 @@ internal static partial class Texture2DExt {
 		}
 
 		void ReadUncompressed() {
-			if (entireTexture) {
-				GLExt.Checked(() => GLExt.GetTexImage.Function!(
+			if (entireTexture && GLExt.GetTexImage.Enabled) {
+				GLExt.Checked(() => GLExt.GetTexImage.Function(
 					TextureTarget.Texture2D,
 					level,
 					@this.glFormat,
