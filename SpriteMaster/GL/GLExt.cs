@@ -975,7 +975,7 @@ internal static unsafe class GLExt {
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static void BindTexture(TextureTarget target, GLExt.ObjectId texture) {
 		if (target is TextureTarget.Texture2D) {
-			/*if (texture != _lastBoundTexture)*/ {
+			if (texture != _lastBoundTexture) {
 				_bindTexture(target, texture);
 				_lastBoundTexture = texture;
 			}
@@ -1056,13 +1056,13 @@ internal static unsafe class GLExt {
 	internal static void PixelStore(PixelStoreName name, int parameter) {
 		if (name is (PixelStoreName.PackAlignment or PixelStoreName.UnpackAlignment)) {
 			if (name is PixelStoreName.PackAlignment) {
-				/*if (PixelStoreValues.PackAlignment != parameter)*/ {
+				if (PixelStoreValues.PackAlignment != parameter) {
 					PixelStoreValues.PackAlignment = parameter;
 					_pixelStorei(PixelStoreName.PackAlignment, parameter);
 				}
 			}
 			else {
-				/*if (PixelStoreValues.UnpackAlignment != parameter)*/ {
+				if (PixelStoreValues.UnpackAlignment != parameter) {
 					PixelStoreValues.UnpackAlignment = parameter;
 					_pixelStorei(PixelStoreName.UnpackAlignment, parameter);
 				}
