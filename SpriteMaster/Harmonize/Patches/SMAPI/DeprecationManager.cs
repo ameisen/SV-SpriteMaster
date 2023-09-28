@@ -7,7 +7,7 @@ internal static class DeprecationManager {
 	private static readonly object DeprecationManagerLock = new();
 
 	[Harmonize(
-		typeof(StardewModdingAPI.Framework.ModLoading.RewriteFacades.AccessToolsFacade),
+		typeof(StardewModdingAPI.Mod),
 		"StardewModdingAPI.Framework.Deprecations.DeprecationManager",
 		"Warn",
 		Harmonize.Fixation.Prefix,
@@ -27,7 +27,7 @@ internal static class DeprecationManager {
 	}
 
 	[Harmonize(
-		typeof(StardewModdingAPI.Framework.ModLoading.RewriteFacades.AccessToolsFacade),
+		typeof(StardewModdingAPI.Mod),
 		"StardewModdingAPI.Framework.Deprecations.DeprecationManager",
 		"Warn",
 		Harmonize.Fixation.Finalizer,
@@ -47,7 +47,7 @@ internal static class DeprecationManager {
 	}
 
 	[Harmonize(
-		typeof(StardewModdingAPI.Framework.ModLoading.RewriteFacades.AccessToolsFacade),
+		typeof(StardewModdingAPI.Mod),
 		"StardewModdingAPI.Framework.Deprecations.DeprecationManager",
 		"PrintQueued",
 		Harmonize.Fixation.Prefix,
@@ -59,7 +59,7 @@ internal static class DeprecationManager {
 	}
 
 	[Harmonize(
-		typeof(StardewModdingAPI.Framework.ModLoading.RewriteFacades.AccessToolsFacade),
+		typeof(StardewModdingAPI.Mod),
 		"StardewModdingAPI.Framework.Deprecations.DeprecationManager",
 		"PrintQueued",
 		Harmonize.Fixation.Finalizer,
