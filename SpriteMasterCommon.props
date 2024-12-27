@@ -16,7 +16,7 @@
 		<AssemblyVersion>0.15.0.*</AssemblyVersion>
 		<FileVersion>0.15.0.116.0</FileVersion>
 		
-		<TargetFramework>net5.0</TargetFramework>
+		<TargetFramework>net6.0</TargetFramework>
 		<FileAlignment>512</FileAlignment>
 		<LangVersion>preview</LangVersion>
 		<PlatformTarget>AnyCPU</PlatformTarget>

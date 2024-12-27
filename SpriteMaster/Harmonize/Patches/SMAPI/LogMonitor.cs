@@ -28,7 +28,7 @@ internal static class LogMonitor {
 	}
 
 	[Harmonize(
-		typeof(StardewModdingAPI.Framework.ModLoading.RewriteFacades.AccessToolsFacade),
+		typeof(StardewModdingAPI.Utilities.DelegatingModHooks),
 		"StardewModdingAPI.Framework.Monitor",
 		"LogImpl",
 		Harmonize.Fixation.Prefix,
@@ -56,7 +56,7 @@ internal static class LogMonitor {
 	}
 
 	[Harmonize(
-		typeof(StardewModdingAPI.Framework.ModLoading.RewriteFacades.AccessToolsFacade),
+		typeof(StardewModdingAPI.Utilities.DelegatingModHooks),
 		"StardewModdingAPI.Framework.Monitor",
 		"LogImpl",
 		Harmonize.Fixation.Finalizer,

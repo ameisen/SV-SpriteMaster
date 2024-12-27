@@ -78,7 +78,7 @@
 		<PackageReference Include="Microsoft.Toolkit.HighPerformance" Version="7.1.2" />
 		<PackageReference Include="OptimizedPriorityQueue" Version="5.1.0" />
 		<PackageReference Include="Pastel" Version="3.0.1" />
-		<PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.0.1-sm2" />
+		<PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.3.2" />
 		<PackageReference Include="Tomlyn" Version="0.16.2" />
 		<PackageReference Include="ZstdNet" Version="1.4.5" GeneratePathProperty="true">
 			<ExcludeAssets>all</ExcludeAssets>

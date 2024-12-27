@@ -1,5 +1,6 @@
 ﻿using SpriteMaster.Configuration;
 using StardewValley;
+using StardewValley.Pathfinding;
 using System.Collections.Generic;
 using System.Threading;
 

@@ -77,7 +77,7 @@ internal static class ClickCrash {
 	}
 
 	[Harmonize(
-		typeof(StardewModdingAPI.Framework.ModLoading.RewriteFacades.AccessToolsFacade),
+		typeof(StardewModdingAPI.Utilities.DelegatingModHooks),
 		"StardewModdingAPI.Framework.SModHooks",
 		"StartTask",
 		Harmonize.Fixation.Prefix,
@@ -93,7 +93,7 @@ internal static class ClickCrash {
 	}
 
 	[Harmonize(
-		typeof(StardewModdingAPI.Framework.ModLoading.RewriteFacades.AccessToolsFacade),
+		typeof(StardewModdingAPI.Utilities.DelegatingModHooks),
 		"StardewModdingAPI.Framework.SModHooks",
 		"StartTask",
 		Harmonize.Fixation.Postfix,

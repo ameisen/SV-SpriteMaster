@@ -11,7 +11,7 @@ using System.Runtime.CompilerServices;
 namespace SpriteMaster.Harmonize.Patches.SMAPI;
 
 internal static class PAssetDataForImage {
-	private static readonly Assembly ReferenceAssembly = typeof(StardewModdingAPI.Framework.ModLoading.RewriteFacades.AccessToolsFacade).Assembly;
+	private static readonly Assembly ReferenceAssembly = typeof(StardewModdingAPI.Utilities.DelegatingModHooks).Assembly;
 	private static readonly Type? AssetDataForImageType = ReferenceAssembly.
 		GetType("StardewModdingAPI.Framework.Content.AssetDataForImage");
 	private static readonly byte MinOpacity = (byte?)AssetDataForImageType?.
@@ -139,7 +139,7 @@ internal static class PAssetDataForImage {
 	}
 
 	[Harmonize(
-		typeof(StardewModdingAPI.Framework.ModLoading.RewriteFacades.AccessToolsFacade),
+		typeof(StardewModdingAPI.Utilities.DelegatingModHooks),
 		"StardewModdingAPI.Framework.Content.AssetDataForImage",
 		"PatchImage",
 		Harmonize.Fixation.Prefix,
@@ -190,7 +190,7 @@ internal static class PAssetDataForImage {
 	}
 
 	[Harmonize(
-	typeof(StardewModdingAPI.Framework.ModLoading.RewriteFacades.AccessToolsFacade),
+	typeof(StardewModdingAPI.Utilities.DelegatingModHooks),
 	"StardewModdingAPI.Framework.Content.AssetDataForImage",
 	"PatchImageImpl",
 	Harmonize.Fixation.Prefix,
