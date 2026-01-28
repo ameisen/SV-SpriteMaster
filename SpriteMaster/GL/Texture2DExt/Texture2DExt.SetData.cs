@@ -91,11 +91,9 @@ internal static partial class Texture2DExt {
 							GLExt.PixelStoreChecked(PixelStoreName.UnpackAlignment, Math.Min(@this.Format.GetSize(), 8));
 							isSet = true;
 							initialized = false;
-							return (GLExt.ObjectId)@this.glTexture;
 						}
-						else {
-							return (GLExt.ObjectId)@this.glTexture;
-						}
+
+						return (GLExt.ObjectId)@this.glTexture;
 					});
 
 					if (!isSet) {

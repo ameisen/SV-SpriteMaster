@@ -54,10 +54,8 @@ internal interface IObjectCache<TKey, TValue> :
 	/// Sets the value represented by the provided <paramref name="key"/>.
 	/// <para>Returns <paramref name="value"/>.</para>
 	/// </summary>
-	[MustUseReturnValue]
 	TValue Set(TKey key, TValue value);
 
-	[MustUseReturnValue]
 	TValue SetOrTouch(TKey key, TValue value);
 
 	/// <summary>

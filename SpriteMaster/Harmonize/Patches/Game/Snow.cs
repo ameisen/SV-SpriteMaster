@@ -2,14 +2,12 @@
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using SpriteMaster.Configuration;
 using SpriteMaster.Configuration.Preview;
 using SpriteMaster.Core;
 using SpriteMaster.Extensions;
 using SpriteMaster.Extensions.Reflection;
 using SpriteMaster.Types;
 using SpriteMaster.Types.Exceptions;
-using SpriteMaster.Types.Pooling;
 using StardewValley;
 using StardewValley.Locations;
 using System;
@@ -93,7 +91,7 @@ internal static class Snow {
 		Harmonize.PriorityLevel.First,
 		critical: false
 	)]
-	public static void WeatherDebrisReverse(WeatherDebris __instance, Vector2 position, int which, float rotationVelocity, float dx, float dy) {
+	public static void WeatherDebrisReverse(WeatherDebris __instance, XVector2 position, int which, float rotationVelocity, float dx, float dy) {
 		throw new ReversePatchException();
 	}
 
@@ -137,7 +135,7 @@ internal static class Snow {
 		}
 	}
 
-	private static bool IsPuffersnow = false;
+	private static bool IsPufferSnow = false;
 
 	private static bool ShouldDrawSnow => PrecipitationPatches.IsSnowingHereExt() && Game1.currentLocation.IsOutdoors && Game1.currentLocation is not Desert;
 
@@ -192,14 +190,16 @@ internal static class Snow {
 
 		var snowColor = GetSnowColor(out bool additive);
 
+		bool useAdditiveBlend = !(IsPufferSnow || !additive);
+
 		var batchSortMode = DrawState.CurrentSortMode;
 		var batchBlendState = DrawState.CurrentBlendState;
 		var batchSamplerState = DrawState.CurrentSamplerState;
 
 		Game1.spriteBatch.End();
 		Game1.spriteBatch.Begin(
-			sortMode: (IsPuffersnow || !additive) ? SpriteSortMode.Texture : SpriteSortMode.Deferred,
-			blendState: (IsPuffersnow || !additive) ? BlendState.AlphaBlend : BlendState.Additive,
+			sortMode: useAdditiveBlend ? SpriteSortMode.Deferred : SpriteSortMode.Texture,
+			blendState: useAdditiveBlend ? BlendState.Additive : BlendState.AlphaBlend,
 			samplerState: SMConfig.Resample.IsEnabled ? SamplerState.LinearClamp : SamplerState.PointClamp,
 			rasterizerState: Game1.spriteBatch.GraphicsDevice.RasterizerState
 		);
@@ -208,7 +208,7 @@ internal static class Snow {
 
 		try {
 			if (__instance.takingMapScreenshot) {
-				XTexture2D drawTexture = IsPuffersnow ? FishTexture.Value : Game1.mouseCursors;
+				XTexture2D drawTexture = IsPufferSnow ? FishTexture.Value : Game1.mouseCursors;
 
 				foreach (var weatherDebris in AllWeatherDebris) {
 					var item = (SnowWeatherDebris)weatherDebris;
@@ -220,7 +220,7 @@ internal static class Snow {
 					Game1.spriteBatch.Draw(
 						texture: drawTexture,
 						position: position,
-						sourceRectangle: IsPuffersnow ? new(0, 0, 24, 24) : item.ReferenceSourceRect,
+						sourceRectangle: IsPufferSnow ? new(0, 0, 24, 24) : item.ReferenceSourceRect,
 						color: snowColor,
 						rotation: item.Rotation,
 						origin: XVector2.Zero,
@@ -231,7 +231,7 @@ internal static class Snow {
 				}
 			}
 			else if (Game1.viewport.X > -Game1.viewport.Width) {
-				if (IsPuffersnow) {
+				if (IsPufferSnow) {
 					XTexture2D drawTexture = FishTexture.Value;
 
 					foreach (var weatherDebris in MappedWeatherDebris.Values) {
@@ -354,7 +354,7 @@ internal static class Snow {
 
 		if (Game1.windGust == 0f) {
 			if (localRandom.NextDouble() < 0.001) {
-				Game1.windGust += localRandom.Next(-10, -1) / 100f;
+				Game1.windGust += localRandom.Next(-10, -1) * 0.01f;
 				PreviousWind = WeatherDebris.globalWind;
 				WeatherDebris.globalWind += Game1.windGust;
 				if (Game1.soundBank is not null) {
@@ -372,7 +372,7 @@ internal static class Snow {
 
 		// Update particles
 		foreach (var item in AllWeatherDebris) {
-			(item as SnowWeatherDebris)!.Update();
+			((SnowWeatherDebris)item).Update();
 		}
 
 		if (Scene.Current is null) {
@@ -416,19 +416,23 @@ internal static class Snow {
 		var standingPosition = Game1.player.getStandingPosition();
 
 		if (
-			!overrideConstraints && (
-				!PrecipitationPatches.IsSnowingHereExt() ||
-				!Game1.currentLocation.IsOutdoors ||
+			!PrecipitationPatches.IsSnowingHereExt() ||
+			!Game1.currentLocation.IsOutdoors ||
+			(
 				direction is not (0 or 2) &&
 				(
-					Game1.player.getStandingX() < Game1.viewport.Width / 2 ||
-					Game1.player.getStandingX() > Game1.currentLocation.Map.DisplayWidth - Game1.viewport.Width / 2) ||
-					direction is not (1 or 3) && (
-						Game1.player.getStandingY() < Game1.viewport.Height / 2 ||
-						Game1.player.getStandingY() > Game1.currentLocation.Map.DisplayHeight - Game1.viewport.Height / 2
-					)
+					standingPosition.X < Game1.viewport.Width / 2.0f ||
+					standingPosition.X > Game1.currentLocation.Map.DisplayWidth - (Game1.viewport.Width * 0.5f)
 				)
-			) {
+			) ||
+			(
+				direction is not (1 or 3) &&
+				(
+					standingPosition.Y < Game1.viewport.Height / 2.0f ||
+					standingPosition.Y > Game1.currentLocation.Map.DisplayHeight - (Game1.viewport.Height * 0.5f)
+				)
+			)
+		) {
 			return true;
 		}
 
@@ -481,7 +485,14 @@ internal static class Snow {
 
 		var localRandom = ThreadRandom.Value!;
 
-		IsPuffersnow = localRandom.NextDouble() < Config.Extras.Snow.PuffersnowChance;
+		if (SMConfig.Extras.Snow.PuffersnowChance is var chance and > 0.0f)
+		{
+			IsPufferSnow = localRandom.NextDouble() < chance;
+		}
+		else
+		{
+			IsPufferSnow = false;
+		}
 
 		Game1.isDebrisWeather = true;
 		int debrisToMake = localRandom.Next(SMConfig.Extras.Snow.MinimumDensity, SMConfig.Extras.Snow.MaximumDensity);
@@ -527,7 +538,7 @@ internal static class Snow {
 		);
 
 		AllWeatherDebris.Sort((d1, d2) => {
-			var sourceDiff = GetSourceRect(d1).GetHashCode() - GetSourceRect(d2).GetHashCode();
+			var sourceDiff = d1.GetSourceRect().GetHashCode() - d2.GetSourceRect().GetHashCode();
 			if (sourceDiff != 0) {
 				return sourceDiff;
 			}

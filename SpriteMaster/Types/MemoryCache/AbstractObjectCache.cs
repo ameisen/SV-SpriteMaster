@@ -78,10 +78,8 @@ internal abstract class AbstractObjectCache<TKey, TValue> :
 	[MustUseReturnValue]
 	public abstract bool TrySet(TKey key, TValue value);
 
-	[MustUseReturnValue]
 	public abstract TValue Set(TKey key, TValue value);
 
-	[MustUseReturnValue]
 	public abstract TValue SetOrTouch(TKey key, TValue value);
 
 	public abstract void SetFast(TKey key, TValue value);

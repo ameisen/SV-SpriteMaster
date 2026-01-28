@@ -1,6 +1,5 @@
 ﻿using JetBrains.Annotations;
 using LinqFasterer;
-using Microsoft.VisualBasic.CompilerServices;
 using Priority_Queue;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types.Pooling;
@@ -10,7 +9,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using xTile.Dimensions;
 
 namespace SpriteMaster.Harmonize.Patches.Game.Pathfinding;
 

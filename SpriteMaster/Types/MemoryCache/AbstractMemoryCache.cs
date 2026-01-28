@@ -41,7 +41,13 @@ internal abstract class AbstractMemoryCache<TKey, TValue> :
 	public virtual ReadOnlySpan<TValue> RemoveSpan(TKey key) =>
 		Remove(key);
 
-	internal static IMemoryCache<TKey, TValue> Create(string name, RemovalCallbackDelegate<TKey, TValue[]>? removalAction = null, long? maxSize = null, long? maxCount = null, bool compressed = false) {
+	internal static IMemoryCache<TKey, TValue> Create(
+		string name,
+		RemovalCallbackDelegate<TKey, TValue[]>? removalAction = null,
+		long? maxSize = null,
+		long? maxCount = null,
+		bool compressed = false
+	) {
 		if (compressed) {
 			return new CompressedMemoryCache<TKey, TValue>(name, maxSize, removalAction);
 		}

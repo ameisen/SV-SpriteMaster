@@ -1,4 +1,4 @@
-using SpriteMaster.Extensions;
+﻿using SpriteMaster.Extensions;
 using SpriteMaster.Extensions.Reflection;
 using System;
 using System.Diagnostics;
@@ -20,15 +20,18 @@ internal static class ClickCrash {
 
 	static ClickCrash() {
 		try {
-			var platformGetter = typeof(XNA.Game).GetFieldGetter<object, object>("Platform") ?? throw new NullReferenceException("PlatformGetter");
-			var platform = platformGetter(StardewValley.GameRunner.instance) ?? throw new NullReferenceException("Platform");
+			var platformGetter = typeof(XNA.Game).GetFieldGetter<object, object>("Platform") ??
+				throw new NullReferenceException("PlatformGetter");
+			var platform = platformGetter(StardewValley.GameRunner.instance) ??
+				throw new NullReferenceException("Platform");
 			var sdlGamePlatformType =
 				typeof(XColor).Assembly.
 				GetType("Microsoft.Xna.Framework.SdlGamePlatform");
 			var sdlLoopMethodInfo =
 				sdlGamePlatformType?.
 				GetMethod("SdlRunLoop", BindingFlags.Instance | AllMethods);
-			SdlLoopMethod = sdlLoopMethodInfo?.CreateDelegate<Action>(platform) ?? throw new NullReferenceException(nameof(SdlLoopMethod));
+			SdlLoopMethod = sdlLoopMethodInfo?.CreateDelegate<Action>(platform) ??
+				throw new NullReferenceException(nameof(SdlLoopMethod));
 		}
 		catch (Exception ex) {
 			Debug.Error("Failed to configure SDL ticker", ex);

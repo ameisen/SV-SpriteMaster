@@ -1,9 +1,6 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
-using SpriteMaster.Configuration;
 using SpriteMaster.Types;
 using StardewValley;
-using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -16,10 +13,12 @@ internal static class ShadowedText {
 		_ => false
 	};
 
-	[DoesNotReturn]
-	[MethodImpl(MethodImplOptions.NoInlining)]
-	private static void ThrowNullArgumentException(string name) =>
-		throw new ArgumentNullException(name);
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	private static float GetLayerDepth(float layerDepth, XVector2 position) {
+		return layerDepth == 1.0f ?
+			position.Y * 0.0001f :
+			layerDepth;
+	}
 
 	[Harmonize(
 		typeof(StardewValley.Utility),
@@ -46,9 +45,7 @@ internal static class ShadowedText {
 			return true;
 		}
 
-		if (layerDepth == -1f) {
-			layerDepth = position.Y / 10000f;
-		}
+		layerDepth = GetLayerDepth(layerDepth, position);
 
 		/*
 		if (horizontalShadowOffset == -1) {
@@ -60,7 +57,7 @@ internal static class ShadowedText {
 		*/
 
 		if (text is null) {
-			ThrowNullArgumentException(nameof(text));
+			ThrowHelper.ThrowArgumentNullException(nameof(text));
 		}
 
 		DrawStrokedText(
@@ -105,12 +102,10 @@ internal static class ShadowedText {
 		}
 
 		if (font is null) {
-			ThrowNullArgumentException(nameof(font));
+			ThrowHelper.ThrowArgumentNullException(nameof(font));
 		}
 
-		if (layerDepth == -1f) {
-			layerDepth = position.Y / 10000f;
-		}
+		layerDepth = GetLayerDepth(layerDepth, position);
 
 		if (horizontalShadowOffset == -1) {
 			horizontalShadowOffset = ((font.Equals(Game1.smallFont) || LongWords) ? (-2) : (-3));
@@ -165,12 +160,10 @@ internal static class ShadowedText {
 		}
 
 		if (font is null) {
-			ThrowNullArgumentException(nameof(font));
+			ThrowHelper.ThrowArgumentNullException(nameof(font));
 		}
 
-		if (layerDepth == -1f) {
-			layerDepth = position.Y / 10000f;
-		}
+		layerDepth = GetLayerDepth(layerDepth, position);
 
 		if (horizontalShadowOffset == -1) {
 			horizontalShadowOffset = ((font.Equals(Game1.smallFont) || LongWords) ? (-2) : (-3));
@@ -210,7 +203,7 @@ internal static class ShadowedText {
 		int numShadows
 	) {
 		if (font is null) {
-			ThrowNullArgumentException(nameof(font));
+			ThrowHelper.ThrowArgumentNullException(nameof(font));
 		}
 
 		for (int y = -1; y <= 1; ++y) {

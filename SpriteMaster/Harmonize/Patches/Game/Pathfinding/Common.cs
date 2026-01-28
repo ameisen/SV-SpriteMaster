@@ -1,5 +1,4 @@
 ﻿using LinqFasterer;
-using Microsoft.Toolkit.HighPerformance;
 using SpriteMaster.Extensions;
 using SpriteMaster.Hashing;
 using System;
