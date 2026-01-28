@@ -63,7 +63,7 @@ internal static class SpriteMap {
 			var result = meta.TryAddToSpriteInstanceTable(instance.SpriteMapHash, instance);
 			if (!result) {
 				meta.GetSpriteInstanceTable().TryGetValue(instance.SpriteMapHash, out var current);
-				if (current is null || current.Invalidated || instance.PreviousSpriteInstance == current) {
+				if (current is null || current.Invalidated/* || instance.PreviousSpriteInstance == current*/) {
 					meta.ReplaceInSpriteInstanceTable(instance.SpriteMapHash, instance);
 					result = true;
 				}
@@ -98,11 +98,13 @@ internal static class SpriteMap {
 				return true;
 			}
 
+			/*
 			if (internalResult.PreviousSpriteInstance is {} previousSpriteInstance && ValidateInstance(previousSpriteInstance) && previousSpriteInstance.IsReady) {
 				result = internalResult.PreviousSpriteInstance;
 				result.Resurrect(texture, internalResult.SpriteMapHash);
 				return true;
 			}
+			*/
 		}
 		result = null;
 		return false;

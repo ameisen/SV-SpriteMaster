@@ -410,10 +410,12 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 			{
 				case true:
 					return scaleTexture;
+				/*
 				case false when scaleTexture.PreviousSpriteInstance is not null && scaleTexture.PreviousSpriteInstance.IsReady && SpriteMap.ValidateInstance(scaleTexture.PreviousSpriteInstance):
 					currentInstance = scaleTexture.PreviousSpriteInstance;
 					textureChain = false;
 					break;
+				*/
 				default:
 					currentInstance = scaleTexture;
 					textureChain = false;
@@ -687,7 +689,7 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 	internal IScalerInfo? ScalerInfo = null;
 	internal ulong SpriteMapHash { get; private set; }
 	private readonly uint ReferenceScale;
-	internal ManagedSpriteInstance? PreviousSpriteInstance = null;
+	//internal ManagedSpriteInstance? PreviousSpriteInstance = null;
 	internal volatile bool Invalidated = false;
 	internal readonly InterlockedBool Suspended = false;
 	internal bool NoResample = false;
@@ -757,7 +759,7 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 	}
 
 	internal ManagedSpriteInstance(string assetName, SpriteInfo spriteInfo, Bounds sourceRectangle, TextureType textureType, bool async, uint expectedScale, ManagedSpriteInstance? previous = null) {
-		PreviousSpriteInstance = previous;
+		//PreviousSpriteInstance = previous;
 
 		TexType = textureType;
 
@@ -864,10 +866,12 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 
 		Thread.MemoryBarrier();
 		IsLoaded = true;
+		/*
 		if (PreviousSpriteInstance is {} previousSpriteInstance) {
 			PreviousSpriteInstance = null;
 			previousSpriteInstance.Suspend(true);
 		}
+		*/
 	}
 
 	internal void UpdateReferenceFrame() {
@@ -894,7 +898,7 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 		internal readonly ulong MapHash;
 
 		internal CleanupData(ManagedSpriteInstance instance) {
-			PreviousSpriteInstance = instance.PreviousSpriteInstance;
+			//PreviousSpriteInstance = instance.PreviousSpriteInstance;
 			ReferenceTexture = instance.Reference;
 			RecentAccessNode = instance.RecentAccessNode;
 			instance.RecentAccessNode = default;
@@ -968,12 +972,14 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 
 			GC.SuppressFinalize(this);
 
+			/*
 			if (PreviousSpriteInstance is {} previousSpriteInstance) {
 				PreviousSpriteInstance = null;
 				// TODO : this can end up in a _very_ long chain of textures if things bork, and thus stack overflow.
 
 				return () => previousSpriteInstance.SuspendChain(true);
 			}
+			*/
 
 			return null;
 		}
@@ -1033,7 +1039,7 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 			}
 
 			// TODO : Handle clearing any reference to _this_
-			PreviousSpriteInstance = null;
+			//PreviousSpriteInstance = null;
 
 			if (RecentAccessNode is { IsValid: true } recentAccessNode) {
 				RecentAccessNode = default;
