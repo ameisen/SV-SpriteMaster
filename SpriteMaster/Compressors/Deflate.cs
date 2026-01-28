@@ -45,6 +45,16 @@ internal static class Deflate {
 		}
 	}
 
+	private static CompressionLevel GetCompressionLevel(Compression.Level level) {
+		return level switch {
+			Compression.Level.None => CompressionLevel.None,
+			Compression.Level.Fastest => CompressionLevel.BestSpeed,
+			Compression.Level.Normal => CompressionLevel.Default,
+			Compression.Level.Maximum => CompressionLevel.BestCompression,
+			_ => ThrowHelper.ThrowArgumentOutOfRangeException<CompressionLevel>(nameof(level), level, null)
+		};
+	}
+
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static int CompressedLengthEstimate(ReadOnlySpan<byte> data) => data.Length >> 1;
 
@@ -69,9 +79,9 @@ internal static class Deflate {
 	}
 
 	[Pure, MustUseReturnValue]
-	internal static byte[] Compress(byte[] data) {
+	internal static byte[] Compress(byte[] data, Compression.Level level = Compression.Level.Normal) {
 		using var val = new MemoryStream(CompressedLengthEstimate(data));
-		using (var compressor = new ZlibStream(val, CompressionMode.Compress, CompressionLevel.BestCompression)) {
+		using (var compressor = new ZlibStream(val, CompressionMode.Compress, GetCompressionLevel(level))) {
 			SetStrategy?.Invoke(compressor, CompressionStrategy.Filtered);
 			compressor.Write(data, 0, data.Length);
 		}
@@ -79,9 +89,9 @@ internal static class Deflate {
 	}
 
 	[Pure, MustUseReturnValue, MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static byte[] CompressBytes(ReadOnlySpan<byte> data) {
+	private static byte[] CompressBytes(ReadOnlySpan<byte> data, Compression.Level level = Compression.Level.Normal) {
 		using var val = new MemoryStream(CompressedLengthEstimate(data));
-		using (var compressor = new ZlibStream(val, CompressionMode.Compress, CompressionLevel.BestCompression)) {
+		using (var compressor = new ZlibStream(val, CompressionMode.Compress, GetCompressionLevel(level))) {
 			SetStrategy?.Invoke(compressor, CompressionStrategy.Filtered);
 			compressor.Write(data.ToArray(), 0, data.Length);
 		}
@@ -98,7 +108,7 @@ internal static class Deflate {
 		(int)(((long)size + (sizeof(T) - 1)) / sizeof(T));
 
 	[Pure, MustUseReturnValue]
-	internal static unsafe T[] Compress<T>(ReadOnlySpan<byte> data) where T : unmanaged {
+	internal static unsafe T[] Compress<T>(ReadOnlySpan<byte> data, Compression.Level level = Compression.Level.Normal) where T : unmanaged {
 		if (typeof(T) == typeof(byte)) {
 			return (T[])(object)CompressBytes(data);
 		}
@@ -118,7 +128,7 @@ internal static class Deflate {
 		fixed (T* resultPtr = result) {
 			using var resultStream = new UnmanagedMemoryStream((byte*)resultPtr, result.Length * sizeof(T));
 
-			using var compressor = new ZlibStream(resultStream, CompressionMode.Compress, CompressionLevel.BestCompression);
+			using var compressor = new ZlibStream(resultStream, CompressionMode.Compress, GetCompressionLevel(level));
 			SetStrategy?.Invoke(compressor, CompressionStrategy.Filtered);
 			compressor.Write(data.ToArray(), 0, data.Length);
 			compressor.Flush();

@@ -51,7 +51,7 @@ internal class CompressedMemoryCache<TKey, TValue> :
 
 		[MethodImpl(Runtime.MethodImpl.Inline)]
 		private void Compress(TValue[] uncompressed) {
-			Compressed = uncompressed.AsReadOnlySpan().AsBytes().Compress<byte>(Algorithm);
+			Compressed = uncompressed.AsReadOnlySpan().AsBytes().Compress<byte>(Algorithm, Compression.Level.Fastest);
 		}
 
 		[MethodImpl(Runtime.MethodImpl.Inline)]

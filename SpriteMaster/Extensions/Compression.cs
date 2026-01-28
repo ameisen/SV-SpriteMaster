@@ -16,6 +16,13 @@ internal static class Compression {
 		Best = Zstd,
 	}
 
+	internal enum Level {
+		None = 0,
+		Fastest,
+		Normal,
+		Maximum
+	}
+
 	internal static readonly Algorithm BestAlgorithm = GetPreferredAlgorithm();
 
 	[Pure, MustUseReturnValue, MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -73,46 +80,46 @@ internal static class Compression {
 		throw new NotImplementedException($"Unknown Compression Algorithm: '{algorithm}'");
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal static byte[] Compress(this byte[] data, Algorithm algorithm) => algorithm switch {
+	internal static byte[] Compress(this byte[] data, Algorithm algorithm, Level level = Level.Normal) => algorithm switch {
 		Algorithm.None => data,
-		Algorithm.Compress => Compressors.SystemIo.Compress(data),
-		Algorithm.Deflate => Compressors.Deflate.Compress(data),
-		Algorithm.Zstd => Compressors.Zstd.Compress(data),
+		Algorithm.Compress => Compressors.SystemIo.Compress(data, level),
+		Algorithm.Deflate => Compressors.Deflate.Compress(data, level),
+		Algorithm.Zstd => Compressors.Zstd.Compress(data, level),
 		_ => ThrowUnknownCompressionAlgorithmException<byte[]>(algorithm)
 	};
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal static T[] Compress<T>(this ReadOnlySpan<byte> data, Algorithm algorithm) where T : unmanaged => algorithm switch {
+	internal static T[] Compress<T>(this ReadOnlySpan<byte> data, Algorithm algorithm, Level level = Level.Normal) where T : unmanaged => algorithm switch {
 		Algorithm.None => ConvertArray<T>(data),
-		Algorithm.Compress => Compressors.SystemIo.Compress<T>(data),
-		Algorithm.Deflate => Compressors.Deflate.Compress<T>(data),
-		Algorithm.Zstd => Compressors.Zstd.Compress<T>(data),
+		Algorithm.Compress => Compressors.SystemIo.Compress<T>(data, level),
+		Algorithm.Deflate => Compressors.Deflate.Compress<T>(data, level),
+		Algorithm.Zstd => Compressors.Zstd.Compress<T>(data, level),
 		_ => ThrowUnknownCompressionAlgorithmException<T[]>(algorithm)
 	};
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal static T[] Compress<T>(this Span<byte> data, Algorithm algorithm) where T : unmanaged => Compress<T>((ReadOnlySpan<byte>)data, algorithm);
+	internal static T[] Compress<T>(this Span<byte> data, Algorithm algorithm, Level level = Level.Maximum) where T : unmanaged => Compress<T>((ReadOnlySpan<byte>)data, algorithm, level);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal static T[] Compress<T>(this PinnedSpan<byte> data, Algorithm algorithm) where T : unmanaged => Compress<T>((Span<byte>)data, algorithm);
+	internal static T[] Compress<T>(this PinnedSpan<byte> data, Algorithm algorithm, Level level = Level.Maximum) where T : unmanaged => Compress<T>((Span<byte>)data, algorithm, level);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal static T[] Compress<T>(this ReadOnlyPinnedSpan<byte> data, Algorithm algorithm) where T : unmanaged => Compress<T>((ReadOnlySpan<byte>)data, algorithm);
+	internal static T[] Compress<T>(this ReadOnlyPinnedSpan<byte> data, Algorithm algorithm, Level level = Level.Maximum) where T : unmanaged => Compress<T>((ReadOnlySpan<byte>)data, algorithm, level);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal static byte[] Compress(this byte[] data) => Compress(data, BestAlgorithm);
+	internal static byte[] Compress(this byte[] data, Level level = Level.Maximum) => Compress(data, BestAlgorithm, level);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal static T[] Compress<T>(this ReadOnlySpan<byte> data) where T : unmanaged => Compress<T>(data, BestAlgorithm);
+	internal static T[] Compress<T>(this ReadOnlySpan<byte> data, Level level = Level.Maximum) where T : unmanaged => Compress<T>(data, BestAlgorithm, level);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal static T[] Compress<T>(this Span<byte> data) where T : unmanaged => Compress<T>((ReadOnlySpan<byte>)data);
+	internal static T[] Compress<T>(this Span<byte> data, Level level = Level.Maximum) where T : unmanaged => Compress<T>((ReadOnlySpan<byte>)data, level);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal static T[] Compress<T>(this ReadOnlyPinnedSpan<byte> data) where T : unmanaged => Compress<T>(data, BestAlgorithm);
+	internal static T[] Compress<T>(this ReadOnlyPinnedSpan<byte> data, Level level = Level.Maximum) where T : unmanaged => Compress<T>(data, BestAlgorithm, level);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal static T[] Compress<T>(this PinnedSpan<byte> data) where T : unmanaged => Compress<T>((ReadOnlySpan<byte>)data);
+	internal static T[] Compress<T>(this PinnedSpan<byte> data, Level level = Level.Maximum) where T : unmanaged => Compress<T>((ReadOnlySpan<byte>)data, level);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static byte[] Decompress(this byte[] data, int size, Algorithm algorithm) {

@@ -100,26 +100,44 @@ internal static class Zstd {
 		}
 	}
 
+	private static int GetCompressionLevel(Compression.Level level) {
+		return level switch {
+			Compression.Level.None => Options.CompressionMinimum.CompressionLevel,
+			Compression.Level.Fastest => Options.CompressionMinimum.CompressionLevel,
+			Compression.Level.Normal => Options.CompressionDefault.CompressionLevel,
+			Compression.Level.Maximum => Options.CompressionMaximum.CompressionLevel,
+			_ => ThrowHelper.ThrowArgumentOutOfRangeException<int>(nameof(level), level, null)
+		};
+	}
+
 	private static class Options {
+		internal static readonly ZstdNet.CompressionOptions CompressionMinimum = new(ZstdNet.CompressionOptions.MinCompressionLevel);
 		internal static readonly ZstdNet.CompressionOptions CompressionDefault = new(ZstdNet.CompressionOptions.DefaultCompressionLevel);
+		internal static readonly ZstdNet.CompressionOptions CompressionMaximum = new(ZstdNet.CompressionOptions.MaxCompressionLevel);
 		internal static readonly ZstdNet.DecompressionOptions DecompressionDefault = new(null);
 	}
 
 	[Pure, MustUseReturnValue, MethodImpl(MethodImpl.Inline)]
-	private static Compressor GetEncoder() => new(Options.CompressionDefault);
+	private static Compressor GetEncoder(Compression.Level level) => level switch {
+		Compression.Level.None => new(Options.CompressionMinimum),
+		Compression.Level.Fastest => new(Options.CompressionMinimum),
+		Compression.Level.Normal => new(Options.CompressionDefault),
+		Compression.Level.Maximum => new(Options.CompressionMaximum),
+		_ => ThrowHelper.ThrowArgumentOutOfRangeException<Compressor>(nameof(level), level, null)
+	};
 
 	[Pure, MustUseReturnValue, MethodImpl(MethodImpl.Inline)]
 	private static Decompressor GetDecoder() => new(Options.DecompressionDefault);
 
 	[Pure, MustUseReturnValue, MethodImpl(MethodImpl.RunOnce)]
 	private static byte[] CompressTest(byte[] data) {
-		using var encoder = GetEncoder();
+		using var encoder = GetEncoder(Compression.Level.Normal);
 		return encoder.Wrap(data);
 	}
 
 	[Pure, MustUseReturnValue, MethodImpl(MethodImpl.Inline)]
-	private static byte[] CompressBytes(byte[] data) {
-		using var encoder = GetEncoder();
+	private static byte[] CompressBytes(byte[] data, Compression.Level level = Compression.Level.Normal) {
+		using var encoder = GetEncoder(level);
 		return encoder.Wrap(data);
 	}
 
@@ -133,33 +151,33 @@ internal static class Zstd {
 
 
 	[Pure, MustUseReturnValue, MethodImpl(MethodImpl.Inline)]
-	internal static byte[] Compress(byte[] data) {
-		using var encoder = GetEncoder();
+	internal static byte[] Compress(byte[] data, Compression.Level level = Compression.Level.Normal) {
+		using var encoder = GetEncoder(level);
 		return encoder.Wrap(data);
 	}
 
 	[Pure, MustUseReturnValue, MethodImpl(MethodImpl.Inline)]
-	private static byte[] CompressBytes(ReadOnlySpan<byte> data) {
-		using var encoder = GetEncoder();
+	private static byte[] CompressBytes(ReadOnlySpan<byte> data, Compression.Level level = Compression.Level.Normal) {
+		using var encoder = GetEncoder(level);
 		return encoder.Wrap(data);
 	}
 
 	[Pure, MustUseReturnValue, MethodImpl(MethodImpl.Inline)]
-	internal static unsafe T[] Compress<T>(ReadOnlySpan<byte> data) where T : unmanaged {
+	internal static unsafe T[] Compress<T>(ReadOnlySpan<byte> data, Compression.Level level = Compression.Level.Normal) where T : unmanaged {
 		if (typeof(T) == typeof(byte)) {
 			return (T[])(object)CompressBytes(data);
 		}
 
-		using var encoder = GetEncoder();
 		ulong capacityBytes = ZstdNet.Compressor.GetCompressBoundLong((ulong)data.Length);
 		long capacityElements = AlignCount<T>((long)capacityBytes);
 		if (capacityElements > int.MaxValue) {
-			var resultArray = CompressBytes(data);
+			var resultArray = CompressBytes(data, level);
 			T[] copiedResult = GC.AllocateUninitializedArray<T>(AlignCount<T>(resultArray.Length));
 			resultArray.AsReadOnlySpan().CopyTo(copiedResult.AsSpan().AsBytes());
 			return copiedResult;
 		}
 
+		using var encoder = GetEncoder(level);
 		T[] result = GC.AllocateUninitializedArray<T>((int)capacityElements);
 		int length = AlignCount<T>(encoder.Delegator.Wrap(data, result.AsSpan().AsBytes()));
 		if (result.Length != length) {

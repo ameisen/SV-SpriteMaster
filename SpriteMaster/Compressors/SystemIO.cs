@@ -44,6 +44,16 @@ internal static class SystemIo {
 		}
 	}
 
+	private static IOC.CompressionLevel GetCompressionLevel(Compression.Level level) {
+		return level switch {
+			Compression.Level.None => IOC.CompressionLevel.NoCompression,
+			Compression.Level.Fastest => IOC.CompressionLevel.Fastest,
+			Compression.Level.Normal => IOC.CompressionLevel.Optimal,
+			Compression.Level.Maximum => IOC.CompressionLevel.SmallestSize,
+			_ => ThrowHelper.ThrowArgumentOutOfRangeException<IOC.CompressionLevel>(nameof(level), level, null)
+		};
+	}
+
 	[Pure, MustUseReturnValue, MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static int CompressedLengthEstimate(ReadOnlySpan<byte> data) => data.Length >> 1;
 
@@ -70,18 +80,18 @@ internal static class SystemIo {
 	}
 
 	[Pure, MustUseReturnValue]
-	internal static byte[] Compress(byte[] data) {
+	internal static byte[] Compress(byte[] data, Compression.Level level = Compression.Level.Normal) {
 		using var val = new MemoryStream(CompressedLengthEstimate(data));
-		using (var compressor = new IOC.DeflateStream(val, IOC.CompressionLevel.Optimal)) {
+		using (var compressor = new IOC.DeflateStream(val, GetCompressionLevel(level))) {
 			compressor.Write(data, 0, data.Length);
 		}
 		return val.GetArray();
 	}
 
 	[Pure, MustUseReturnValue, MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static byte[] CompressBytes(ReadOnlySpan<byte> data) {
+	private static byte[] CompressBytes(ReadOnlySpan<byte> data, Compression.Level level = Compression.Level.Normal) {
 		using var val = new MemoryStream(CompressedLengthEstimate(data));
-		using (var compressor = new IOC.DeflateStream(val, IOC.CompressionLevel.Optimal)) {
+		using (var compressor = new IOC.DeflateStream(val, GetCompressionLevel(level))) {
 			compressor.Write(data);
 		}
 		return val.GetArray();
@@ -96,7 +106,7 @@ internal static class SystemIo {
 		(int)(((long)size + (sizeof(T) - 1)) / sizeof(T));
 
 	[Pure, MustUseReturnValue]
-	internal static unsafe T[] Compress<T>(ReadOnlySpan<byte> data) where T : unmanaged {
+	internal static unsafe T[] Compress<T>(ReadOnlySpan<byte> data, Compression.Level level = Compression.Level.Normal) where T : unmanaged {
 		if (typeof(T) == typeof(byte)) {
 			return (T[])(object)CompressBytes(data);
 		}
@@ -116,7 +126,7 @@ internal static class SystemIo {
 		fixed (T* resultPtr = result) {
 			using var resultStream = new UnmanagedMemoryStream((byte*)resultPtr, result.Length * sizeof(T));
 
-			using var compressor = new IOC.DeflateStream(resultStream, IOC.CompressionLevel.Optimal);
+			using var compressor = new IOC.DeflateStream(resultStream, GetCompressionLevel(level));
 			compressor.Write(data.ToArray(), 0, data.Length);
 			compressor.Flush();
 			resultLength = resultStream.Position;
