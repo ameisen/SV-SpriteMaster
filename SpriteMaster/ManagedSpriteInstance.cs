@@ -5,7 +5,6 @@ using SpriteMaster.Caching;
 using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
-using SpriteMaster.Mitigations.PyTK;
 using SpriteMaster.Resample;
 using SpriteMaster.Tasking;
 using SpriteMaster.Types;
@@ -49,7 +48,6 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 		}
 
 		var topTexture = texture;
-		texture = texture.GetUnderlyingTexture(out bool isManaged);
 
 		bool forceClean = false;
 
@@ -243,7 +241,7 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 
 			bool isAnonymous = texture.Anonymous();
 
-			if (!disableValidation && (isText || !isAnonymous || isAnonymous != isManaged)) {
+			if (!disableValidation && (isText || !isAnonymous || isAnonymous)) {
 				meta.Validation = true;
 			}
 

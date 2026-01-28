@@ -3,7 +3,6 @@ using SpriteMaster.Caching;
 using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using SpriteMaster.Hashing;
-using SpriteMaster.Mitigations.PyTK;
 using SpriteMaster.Resample;
 using SpriteMaster.Types;
 using SpriteMaster.Types.Interlocking;
@@ -228,8 +227,6 @@ internal sealed class Texture2DMeta : IDisposable {
 	private volatile Task DecodingTask = Task.CompletedTask;
 	internal ulong DecodingTaskRevision = 0ul;
 
-	internal readonly bool IsManagedTexture;
-
 	internal bool IsCursors { get; private set; }
 
 	private bool CheckIsCursors(XTexture2D texture) {
@@ -237,17 +234,7 @@ internal sealed class Texture2DMeta : IDisposable {
 			return true;
 		}
 
-		if (IsManagedTexture) {
-			var underlyingTexture = texture.GetUnderlyingTexture(out bool isManaged);
-			if (!isManaged) {
-				underlyingTexture = null;
-			}
-
-			return underlyingTexture?.NormalizedName() == CursorsPath;
-		}
-		else {
-			return false;
-		}
+		return false;
 	}
 
 	private string? PreviousName;
@@ -259,11 +246,6 @@ internal sealed class Texture2DMeta : IDisposable {
 			var previousName = PreviousName;
 			var currentName = texture.Name;
 			if (previousName == currentName) {
-				if (IsManagedTexture && texture.GetUnderlyingTexture(out _) is { } innerTexture && innerTexture != texture) {
-					texture = innerTexture;
-					continue;
-				}
-
 				return false;
 			}
 
@@ -295,8 +277,6 @@ internal sealed class Texture2DMeta : IDisposable {
 		else {
 			ExpectedByteSize = ExpectedByteSizeRaw;
 		}
-
-		IsManagedTexture = Mitigations.PyTK.Textures.IsPyTKTexture(texture);
 
 		IsCursors = CheckIsCursors(texture);
 	}
