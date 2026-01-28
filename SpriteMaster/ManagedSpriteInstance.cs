@@ -1034,7 +1034,7 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 				return null;
 			}
 
-			if (!IsLoaded || !Config.SuspendedCache.Enabled) {
+			if (!IsLoaded || !SMConfig.SuspendedCache.Enabled) {
 				return () => this.DisposeChain(clearChildrenIfDispose);
 			}
 
@@ -1069,7 +1069,7 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 				return false;
 			}
 
-			if (!IsLoaded || !Config.SuspendedCache.Enabled) {
+			if (!IsLoaded || !SMConfig.SuspendedCache.Enabled) {
 				SuspendedSpriteCache.RemoveFast(this);
 				return false;
 			}

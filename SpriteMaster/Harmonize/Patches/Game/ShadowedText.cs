@@ -42,7 +42,7 @@ internal static class ShadowedText {
 		float shadowIntensity = 1f,
 		int numShadows = 3
 	) {
-		if (!Config.IsUnconditionallyEnabled || !Config.Extras.StrokeShadowedText) {
+		if (!SMConfig.IsUnconditionallyEnabled || !SMConfig.Extras.StrokeShadowedText) {
 			return true;
 		}
 
@@ -100,7 +100,7 @@ internal static class ShadowedText {
 		float shadowIntensity = 1f,
 		int numShadows = 3
 	) {
-		if (!Config.IsUnconditionallyEnabled || !Config.Extras.StrokeShadowedText) {
+		if (!SMConfig.IsUnconditionallyEnabled || !SMConfig.Extras.StrokeShadowedText) {
 			return true;
 		}
 
@@ -160,7 +160,7 @@ internal static class ShadowedText {
 		int verticalShadowOffset = -1,
 		int numShadows = 3
 	) {
-		if (!Config.IsUnconditionallyEnabled || !Config.Extras.StrokeShadowedText) {
+		if (!SMConfig.IsUnconditionallyEnabled || !SMConfig.Extras.StrokeShadowedText) {
 			return true;
 		}
 

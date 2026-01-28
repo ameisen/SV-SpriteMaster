@@ -2,7 +2,6 @@
 using JetBrains.Annotations;
 using LinqFasterer;
 using Microsoft.Xna.Framework.Graphics;
-using SpriteMaster.Configuration;
 using SpriteMaster.Extensions.Reflection;
 using System;
 using System.Collections.Generic;
@@ -94,7 +93,7 @@ internal static class StableSort {
 			return;
 		}
 
-		if (!Config.IsEnabled || !Config.Extras.StableSort) {
+		if (!SMConfig.IsEnabled || !SMConfig.Extras.StableSort) {
 			Array.Sort(array, index, length);
 			return;
 		}

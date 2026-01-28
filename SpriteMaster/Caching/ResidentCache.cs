@@ -11,7 +11,7 @@ namespace SpriteMaster.Caching;
 /// Used to cache original texture data so it doesn't need to perform blocking fetches as often
 /// </summary>
 internal static class ResidentCache {
-	internal static bool Enabled => Config.ResidentCache.Enabled;
+	internal static bool Enabled => SMConfig.ResidentCache.Enabled;
 
 	private static IMemoryCache<ulong, byte> Cache = CreateCache();
 
@@ -19,8 +19,8 @@ internal static class ResidentCache {
 
 	private static IMemoryCache<ulong, byte> CreateCache() => AbstractMemoryCache<ulong, byte>.Create(
 		name: "ResidentCache",
-		maxSize: Config.ResidentCache.MaxSize,
-		compressed: Config.ResidentCache.Compress != Compression.Algorithm.None
+		maxSize: SMConfig.ResidentCache.MaxSize,
+		compressed: SMConfig.ResidentCache.Compress != Compression.Algorithm.None
 	);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
@@ -71,10 +71,11 @@ internal static class ResidentCache {
 		}
 
 		bool isCompressed = Cache is ICompressedMemoryCache;
-		bool shouldCompress = Config.ResidentCache.Compress != Compression.Algorithm.None;
+		bool shouldCompress = SMConfig.ResidentCache.Compress != Compression.Algorithm.None;
 		if (isCompressed != shouldCompress) {
-			var newCache = CreateCache();
+			var newCache = CreateCache(); // TODO : We could carry over data
 			var oldCache = Interlocked.Exchange(ref Cache, newCache);
+			// TODO : add locks around oldCache and Cache everywhere else so we don't dispose it while it's in use
 			oldCache.Dispose();
 		}
 	}

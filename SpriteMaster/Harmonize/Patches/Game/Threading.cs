@@ -1,6 +1,5 @@
 ﻿using HarmonyLib;
 using LinqFasterer;
-using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using SpriteMaster.Extensions.Reflection;
 using System;
@@ -19,9 +18,6 @@ internal static class Threading {
 		GetFieldGetter<List<Action>>("actions") ??
 			throw new NullReferenceException(nameof(ThreadingActionsGet));
 	
-	// TODO : find a nice, generic way to do this without [ModuleInitializer]
-	private static readonly bool Functional = true;
-
 	[Harmonize(
 		typeof(Microsoft.Xna.Framework.Threading),
 		"Run",
@@ -31,7 +27,7 @@ internal static class Threading {
 		critical: false
 	)]
 	public static bool Run() {
-		if (!Functional || !Config.IsUnconditionallyEnabled || !Config.Extras.OptimizeEngineTaskRunner) {
+		if (!SMConfig.IsUnconditionallyEnabled || !SMConfig.Extras.OptimizeEngineTaskRunner) {
 			return true;
 		}
 

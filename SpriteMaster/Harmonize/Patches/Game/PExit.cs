@@ -1,5 +1,4 @@
-﻿using SpriteMaster.Configuration;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 
 namespace SpriteMaster.Harmonize.Patches.Game;
 
@@ -12,7 +11,7 @@ internal static class PExit {
 		critical: false
 	)]
 	public static bool Exit() {
-		if (!Config.IsUnconditionallyEnabled || !Config.Extras.FastQuit) {
+		if (!SMConfig.IsUnconditionallyEnabled || !SMConfig.Extras.FastQuit) {
 			return true;
 		}
 

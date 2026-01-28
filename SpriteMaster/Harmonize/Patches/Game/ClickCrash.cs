@@ -1,4 +1,3 @@
-﻿using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using SpriteMaster.Extensions.Reflection;
 using System;
@@ -52,7 +51,7 @@ internal static class ClickCrash {
 		critical: false
 	)]
 	public static void SdlRunLoopPost(object __instance) {
-		if (!Config.IsEnabled || !Config.Extras.PreventUnresponsive) {
+		if (!SMConfig.IsEnabled || !SMConfig.Extras.PreventUnresponsive) {
 			return;
 		}
 
@@ -85,7 +84,7 @@ internal static class ClickCrash {
 		critical: false
 	)]
 	public static void StartTaskPre(object __instance, Task task, string id) {
-		if (!Config.IsEnabled || !Config.Extras.PreventUnresponsive) {
+		if (!SMConfig.IsEnabled || !SMConfig.Extras.PreventUnresponsive) {
 			return;
 		}
 
@@ -102,7 +101,7 @@ internal static class ClickCrash {
 		critical: false
 	)]
 	public static void StartTaskPre<T>(T __instance, Task<T> task, string id) {
-		if (!Config.IsEnabled || !Config.Extras.PreventUnresponsive) {
+		if (!SMConfig.IsEnabled || !SMConfig.Extras.PreventUnresponsive) {
 			return;
 		}
 

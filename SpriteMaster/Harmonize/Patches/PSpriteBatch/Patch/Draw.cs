@@ -1,7 +1,6 @@
 ﻿// #define DO_UNNEEDED_PATCHES
 
 using Microsoft.Xna.Framework.Graphics;
-using SpriteMaster.Configuration;
 using SpriteMaster.Core;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
@@ -42,7 +41,7 @@ internal static class Draw {
 		float layerDepth,
 		ref ManagedTexture2D? __state
 	) {
-		if (!Config.IsEnabled) {
+		if (!SMConfig.IsEnabled) {
 			return true;
 		}
 
@@ -76,7 +75,7 @@ internal static class Draw {
 		ref float layerDepth,
 		ref ManagedTexture2D? __state
 	) {
-		if (!Config.IsEnabled) {
+		if (!SMConfig.IsEnabled) {
 			return true;
 		}
 
@@ -109,7 +108,7 @@ internal static class Draw {
 		SpriteEffects effects = SpriteEffects.None,
 		float layerDepth = 0f
 	) {
-		if (!Config.IsEnabled) {
+		if (!SMConfig.IsEnabled) {
 			return true;
 		}
 
@@ -165,7 +164,7 @@ internal static class Draw {
 		SpriteEffects effects = SpriteEffects.None,
 		float layerDepth = 0f
 	) {
-		if (!Config.IsEnabled) {
+		if (!SMConfig.IsEnabled) {
 			return true;
 		}
 
@@ -190,7 +189,7 @@ internal static class Draw {
 
 	[Harmonize("Draw", priority: Harmonize.PriorityLevel.Last)]
 	public static bool OnDraw(XSpriteBatch __instance, ref XTexture2D? texture, ref XVector2 position, ref XRectangle? sourceRectangle, ref XColor color, float rotation, ref XVector2 origin, ref XVector2 scale, SpriteEffects effects, float layerDepth) {
-		if (!Config.IsEnabled) {
+		if (!SMConfig.IsEnabled) {
 			return true;
 		}
 

@@ -1,5 +1,4 @@
-﻿using SpriteMaster.Configuration;
-using StardewValley;
+﻿using StardewValley;
 using StardewValley.Pathfinding;
 using System.Collections.Generic;
 using System.Threading;
@@ -22,7 +21,7 @@ internal class MasterSchedulePatch {
 	public static bool ParseMasterSchedulePre(NPC __instance, ref MasterSchedule? __result, string? rawData, ref bool __state) {
 		__state = false;
 
-		if (!Config.IsUnconditionallyEnabled || !Config.Extras.FixMasterSchedule) {
+		if (!SMConfig.IsUnconditionallyEnabled || !SMConfig.Extras.FixMasterSchedule) {
 			return true;
 		}
 
@@ -59,7 +58,7 @@ internal class MasterSchedulePatch {
 		critical: false
 	)]
 	public static void ParseMasterSchedulePost(NPC __instance, string rawData, bool __state) {
-		if (!Config.IsUnconditionallyEnabled || !Config.Extras.FixMasterSchedule) {
+		if (!SMConfig.IsUnconditionallyEnabled || !SMConfig.Extras.FixMasterSchedule) {
 			return;
 		}
 
@@ -87,7 +86,7 @@ internal class MasterSchedulePatch {
 		critical: false
 	)]
 	public static bool GetSchedulePre(NPC __instance, ref MasterSchedule? __result, int dayOfMonth) {
-		if (!Config.IsUnconditionallyEnabled || !Config.Extras.FixGetSchedule) {
+		if (!SMConfig.IsUnconditionallyEnabled || !SMConfig.Extras.FixGetSchedule) {
 			return true;
 		}
 

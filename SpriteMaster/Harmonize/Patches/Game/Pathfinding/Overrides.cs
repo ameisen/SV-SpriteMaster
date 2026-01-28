@@ -3,7 +3,6 @@
 using HarmonyLib;
 using LinqFasterer;
 using Microsoft.Toolkit.HighPerformance.Helpers;
-using SpriteMaster.Configuration;
 using SpriteMaster.Extensions.Reflection;
 using SpriteMaster.Types.Exceptions;
 using SpriteMaster.Types.Reflection;
@@ -46,7 +45,7 @@ internal static partial class Pathfinding {
 		critical: false
 	)]
 	public static bool GetLocationRoute(NPC __instance, ref List<string>? __result, string startingLocation, string endingLocation) {
-		if (!Config.IsUnconditionallyEnabled || !Config.Extras.Pathfinding.OptimizeWarpPoints) {
+		if (!SMConfig.IsUnconditionallyEnabled || !SMConfig.Extras.Pathfinding.OptimizeWarpPoints) {
 			return true;
 		}
 
@@ -167,7 +166,7 @@ internal static partial class Pathfinding {
 		critical: false
 	)]
 	public static bool PopulateRoutesFromLocationToLocationListPrefix() {
-		if (!Config.IsUnconditionallyEnabled || !Config.Extras.Pathfinding.OptimizeWarpPoints) {
+		if (!SMConfig.IsUnconditionallyEnabled || !SMConfig.Extras.Pathfinding.OptimizeWarpPoints) {
 			return true;
 		}
 
@@ -222,7 +221,7 @@ internal static partial class Pathfinding {
 		critical: false
 	)]
 	public static void PopulateRoutesFromLocationToLocationListPostfix() {
-		if (!Config.IsUnconditionallyEnabled || !Config.Extras.Pathfinding.OptimizeWarpPoints) {
+		if (!SMConfig.IsUnconditionallyEnabled || !SMConfig.Extras.Pathfinding.OptimizeWarpPoints) {
 			return;
 		}
 
@@ -238,7 +237,7 @@ internal static partial class Pathfinding {
 		critical: false
 	)]
 	public static bool ExploreWarpPointsPre(ref bool __result, GameLocation l, List<string> route) {
-		if (!Config.IsUnconditionallyEnabled || !Config.Extras.Pathfinding.OptimizeWarpPoints) {
+		if (!SMConfig.IsUnconditionallyEnabled || !SMConfig.Extras.Pathfinding.OptimizeWarpPoints) {
 			return true;
 		}
 
@@ -278,7 +277,7 @@ internal static partial class Pathfinding {
 		critical: false
 	)]
 	public static void ExploreWarpPointsPost(ref bool __result, GameLocation l, List<string> route) {
-		if (!Config.IsUnconditionallyEnabled || !Config.Extras.Pathfinding.OptimizeWarpPoints) {
+		if (!SMConfig.IsUnconditionallyEnabled || !SMConfig.Extras.Pathfinding.OptimizeWarpPoints) {
 			return;
 		}
 

@@ -12,7 +12,7 @@ namespace SpriteMaster.Caching;
 internal static class SuspendedSpriteCache {
 	private static readonly AbstractObjectCache<ulong, ManagedSpriteInstance> Cache = new ObjectCache<ulong, ManagedSpriteInstance>(
 		name: "SuspendedSpriteCache",
-		maxSize: Config.SuspendedCache.MaxCacheSize,
+		maxSize: SMConfig.SuspendedCache.MaxCacheSize,
 		removalAction: OnEntryRemoved
 	);
 
@@ -29,7 +29,7 @@ internal static class SuspendedSpriteCache {
 	}
 
 	internal static void Add(ManagedSpriteInstance instance) {
-		if (!Config.SuspendedCache.Enabled) {
+		if (!SMConfig.SuspendedCache.Enabled) {
 			instance.Dispose();
 			return;
 		}
@@ -39,7 +39,7 @@ internal static class SuspendedSpriteCache {
 	}
 
 	internal static ManagedSpriteInstance? Fetch(ulong hash) {
-		if (!Config.SuspendedCache.Enabled) {
+		if (!SMConfig.SuspendedCache.Enabled) {
 			return null;
 		}
 

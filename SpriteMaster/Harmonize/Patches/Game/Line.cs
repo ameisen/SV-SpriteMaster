@@ -1,7 +1,5 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
-using SpriteMaster.Configuration;
 using SpriteMaster.Types;
-using StardewValley;
 using System;
 
 namespace SpriteMaster.Harmonize.Patches.Game;
@@ -30,7 +28,7 @@ internal static class Line {
 		critical: false
 	)]
 	public static bool DrawLineWithScreenCoordinates(int x1, int y1, int x2, int y2, XSpriteBatch b, XColor color1, float layerDepth) {
-		if (!Config.IsEnabled || !Config.Extras.SmoothLines || !Config.Resample.IsEnabled) {
+		if (!SMConfig.IsEnabled || !SMConfig.Extras.SmoothLines || !SMConfig.Resample.IsEnabled) {
 			return true;
 		}
 

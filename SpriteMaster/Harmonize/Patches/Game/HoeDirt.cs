@@ -19,7 +19,7 @@ internal static class HoeDirt {
 		critical: false
 	)]
 	public static bool DrawAboveFrontLayerPre(GameLocation __instance, XSpriteBatch b) {
-		if (!Configuration.Config.Extras.EnableDirtDrawOptimizations || !Configuration.Config.IsEnabled) {
+		if (!SMConfig.Extras.EnableDirtDrawOptimizations || !SMConfig.IsEnabled) {
 			return true;
 		}
 

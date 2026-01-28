@@ -176,7 +176,7 @@ internal static class Snow {
 	public static bool DrawWeatherPre(Game1 __instance, GameTime time, RenderTarget2D target_screen, ref DrawWeatherState __state) {
 		__state = new(Ran: false);
 
-		if (!Config.IsEnabled || !Config.Extras.Snow.IsEnabled) {
+		if (!SMConfig.IsEnabled || !SMConfig.Extras.Snow.IsEnabled) {
 			return true;
 		}
 
@@ -200,7 +200,7 @@ internal static class Snow {
 		Game1.spriteBatch.Begin(
 			sortMode: (IsPuffersnow || !additive) ? SpriteSortMode.Texture : SpriteSortMode.Deferred,
 			blendState: (IsPuffersnow || !additive) ? BlendState.AlphaBlend : BlendState.Additive,
-			samplerState: Config.Resample.IsEnabled ? SamplerState.LinearClamp : SamplerState.PointClamp,
+			samplerState: SMConfig.Resample.IsEnabled ? SamplerState.LinearClamp : SamplerState.PointClamp,
 			rasterizerState: Game1.spriteBatch.GraphicsDevice.RasterizerState
 		);
 
@@ -340,7 +340,7 @@ internal static class Snow {
 	public static bool UpdateWeatherPre(GameTime time, ref bool __state) {
 		__state = true;
 
-		if (!Config.IsEnabled || !Config.Extras.Snow.IsEnabled) {
+		if (!SMConfig.IsEnabled || !SMConfig.Extras.Snow.IsEnabled) {
 			return true;
 		}
 
@@ -405,7 +405,7 @@ internal static class Snow {
 		critical: false
 	)]
 	public static bool UpdateRainDropPositionForPlayerMovement(int direction, bool overrideConstraints, float speed) {
-		if (!Config.IsEnabled || !Config.Extras.Snow.IsEnabled) {
+		if (!SMConfig.IsEnabled || !SMConfig.Extras.Snow.IsEnabled) {
 			return true;
 		}
 
@@ -445,7 +445,7 @@ internal static class Snow {
 		critical: false
 	)]
 	public static bool PopulateDebrisWeatherArray() {
-		if (!Config.IsEnabled || !Config.Extras.Snow.IsEnabled) {
+		if (!SMConfig.IsEnabled || !SMConfig.Extras.Snow.IsEnabled) {
 			return true;
 		}
 
@@ -473,7 +473,7 @@ internal static class Snow {
 	private const float DirectionMultiplier = 1.0f / 50f;
 
 	internal static void PopulateWeather(Vector2I screenSize) {
-		if (!Config.IsEnabled || !Config.Extras.Snow.IsEnabled) {
+		if (!SMConfig.IsEnabled || !SMConfig.Extras.Snow.IsEnabled) {
 			return;
 		}
 
@@ -482,7 +482,7 @@ internal static class Snow {
 		IsPuffersnow = localRandom.NextDouble() < Config.Extras.Snow.PuffersnowChance;
 
 		Game1.isDebrisWeather = true;
-		int debrisToMake = localRandom.Next(Config.Extras.Snow.MinimumDensity, Config.Extras.Snow.MaximumDensity);
+		int debrisToMake = localRandom.Next(SMConfig.Extras.Snow.MinimumDensity, SMConfig.Extras.Snow.MaximumDensity);
 		int currentScreenArea = screenSize.Width * screenSize.Height;
 		double ratio = (double)currentScreenArea / ReferenceScreenArea;
 		debrisToMake = (debrisToMake * ratio).RoundToInt();
@@ -502,8 +502,8 @@ internal static class Snow {
 					dx: random.Next(-10, 0) * DirectionMultiplier,
 					dy: random.Next(10) * DirectionMultiplier,
 					rotation: GetRandomFloat(random, 0.0f, 2.0f * MathF.PI),
-					rotationRate: GetRandomFloat(random, -1.0f, 1.0f) * Config.Extras.Snow.MaximumRotationSpeed,
-					scale: MathF.Sqrt(GetRandomFloat(random, MinScale, MaxScale)) * Config.Extras.Snow.MaximumScale
+					rotationRate: GetRandomFloat(random, -1.0f, 1.0f) * SMConfig.Extras.Snow.MaximumRotationSpeed,
+					scale: MathF.Sqrt(GetRandomFloat(random, MinScale, MaxScale)) * SMConfig.Extras.Snow.MaximumScale
 				);
 
 				List<SnowWeatherDebris>? mappedList;
@@ -542,7 +542,7 @@ internal static class Snow {
 	}
 
 	internal static void OnWindowResized(Vector2I size) {
-		if (!Config.IsEnabled || !Config.Extras.Snow.IsEnabled) {
+		if (!SMConfig.IsEnabled || !SMConfig.Extras.Snow.IsEnabled) {
 			return;
 		}
 

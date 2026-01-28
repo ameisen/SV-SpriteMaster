@@ -1,23 +1,14 @@
-﻿using HarmonyLib;
-using LinqFasterer;
-using Microsoft.Xna.Framework.Graphics;
+﻿using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using SpriteMaster.Harmonize.Patches.Game;
-using SpriteMaster.Harmonize.Patches.PSpriteBatch.Patch;
 using SpriteMaster.Resample;
 using SpriteMaster.Types;
+using StardewValley;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Reflection.Emit;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using static SpriteMaster.Harmonize.Harmonize;
-
-using SpriteMaster.Extensions.Reflection;
-using StardewValley;
-using System.Linq;
 
 namespace SpriteMaster.Harmonize.Patches.PSpriteBatch;
 
@@ -154,7 +145,7 @@ internal static class PlatformRenderBatch {
 		GraphicsDevice? ____device,
 		ref States __state
 	) {
-		if (!Config.IsEnabled) {
+		if (!SMConfig.IsEnabled) {
 			return;
 		}
 
@@ -214,7 +205,7 @@ internal static class PlatformRenderBatch {
 		GraphicsDevice? ____device,
 		States __state
 	) {
-		if (!Config.IsEnabled) {
+		if (!SMConfig.IsEnabled) {
 			return;
 		}
 
@@ -244,7 +235,7 @@ internal static class PlatformRenderBatch {
 		platform: Platform.MonoGame
 	)]
 	public static bool OnEnsureArrayCapacity(SpriteBatcher __instance, int numBatchItems) {
-		if (!Config.IsEnabled || !EnsureArrayCapacityEnabled) {
+		if (!SMConfig.IsEnabled || !EnsureArrayCapacityEnabled) {
 			if (__instance._index == GL.GraphicsDeviceExt.SpriteBatcherValues.Indices16) {
 				__instance._index = null;
 			}
