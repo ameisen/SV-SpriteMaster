@@ -298,7 +298,7 @@ internal static class Snow {
 			Game1.spriteBatch.Begin(batchSortMode, batchBlendState, batchSamplerState);
 		}
 
-		var locationWeather = Game1.netWorldState.Value.GetWeatherForLocation(GameLocation.LocationContext.Default);
+		var locationWeather = Game1.netWorldState.Value.GetWeatherForLocation(LocationContexts.DefaultId);
 
 		__state = new(true, true, PrecipitationPatches.PrecipitationOverride, locationWeather.isSnowing.Value);
 		PrecipitationPatches.PrecipitationOverride = PrecipitationType.None;
@@ -324,7 +324,7 @@ internal static class Snow {
 		}
 
 		PrecipitationPatches.PrecipitationOverride = __state.PreviousOverride;
-		Game1.netWorldState.Value.GetWeatherForLocation(GameLocation.LocationContext.Default).isSnowing.Value = __state.PreviousSnowValue;
+		Game1.netWorldState.Value.GetWeatherForLocation(LocationContexts.DefaultId).isSnowing.Value = __state.PreviousSnowValue;
 	}
 
 	private static float PreviousWind = 0.0f;
@@ -404,7 +404,7 @@ internal static class Snow {
 		instance: false,
 		critical: false
 	)]
-	public static bool UpdateRainDropPositionForPlayerMovement(int direction, bool overrideConstraints, float speed) {
+	public static bool UpdateRainDropPositionForPlayerMovement(int direction, float speed) {
 		if (!SMConfig.IsEnabled || !SMConfig.Extras.Snow.IsEnabled) {
 			return true;
 		}
@@ -412,6 +412,8 @@ internal static class Snow {
 		if (!ShouldDrawSnow) {
 			return true;
 		}
+
+		var standingPosition = Game1.player.getStandingPosition();
 
 		if (
 			!overrideConstraints && (
@@ -430,7 +432,7 @@ internal static class Snow {
 			return true;
 		}
 
-		Game1.updateDebrisWeatherForMovement(AllWeatherDebris, direction, overrideConstraints, speed);
+		Game1.updateDebrisWeatherForMovement(AllWeatherDebris, direction, speed);
 		return true;
 	}
 

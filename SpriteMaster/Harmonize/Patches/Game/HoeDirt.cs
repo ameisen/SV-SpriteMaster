@@ -42,10 +42,10 @@ internal static class HoeDirt {
 					}
 
 					if (feat is StardewValley.TerrainFeatures.HoeDirt dirtFeat) {
-						dirtFeat.DrawOptimized(DirtBatch, FertBatch, b, tile);
+						dirtFeat.DrawOptimized(DirtBatch, FertBatch, b);
 					}
 					else {
-						feat.draw(b, tile);
+						feat.draw(b);
 					}
 				}
 			}

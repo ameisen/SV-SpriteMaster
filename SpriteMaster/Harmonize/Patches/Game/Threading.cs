@@ -1,25 +1,23 @@
 ﻿using HarmonyLib;
-using LinqFasterer;
 using SpriteMaster.Extensions;
 using SpriteMaster.Extensions.Reflection;
 using System;
 using System.Collections.Generic;
-using static SpriteMaster.Harmonize.Harmonize;
-using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
+using static SpriteMaster.Harmonize.Harmonize;
 
 namespace SpriteMaster.Harmonize.Patches.Game;
 
 internal static class Threading {
 	private static readonly Func<List<Action>> ThreadingActionsGet = 
-		typeof(Microsoft.Xna.Framework.Threading).
-		GetFieldGetter<List<Action>>("actions") ??
+		typeof(XNA.Threading).
+		GetFieldGetter<List<Action>>("_queuedActions") ??
 			throw new NullReferenceException(nameof(ThreadingActionsGet));
 	
 	[Harmonize(
-		typeof(Microsoft.Xna.Framework.Threading),
+		typeof(XNA.Threading),
 		"Run",
 		Harmonize.Fixation.Prefix,
 		Harmonize.PriorityLevel.Last,
@@ -42,7 +40,7 @@ internal static class Threading {
 	}
 
 	[HarmonizeTranspile(
-		typeof(Microsoft.Xna.Framework.Threading),
+		typeof(XNA.Threading),
 		"EnsureUIThread",
 		argumentTypes: new Type[] {},
 		platform: Platform.MonoGame,
