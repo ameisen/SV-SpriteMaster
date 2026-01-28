@@ -62,24 +62,24 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="FastExpressionCompiler.LightExpression" Version="3.3.3" />
-		<PackageReference Include="IgnoresAccessChecksToGenerator" Version="0.5.1" />
-		<!--<PackageReference Include="ILRepack" Version="2.1.0-beta1" GeneratePathProperty="true" ExcludeAssets="all" />-->
-		<PackageReference Include="JetBrains.Annotations" Version="2022.3.1">
+		<IgnoresAccessChecksTo Include="MonoGame.Framework" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="FastExpressionCompiler.LightExpression" Version="5.3.0" />
+		<PackageReference Include="JetBrains.Annotations" Version="2025.2.4">
 			<ExcludeAssets>runtime</ExcludeAssets>
 		</PackageReference>
-		<!--
-		<PackageReference Include="Krafs.Publicizer" Version="1.0.3">
+		<PackageReference Include="Krafs.Publicizer" Version="2.3.0">
 		  <PrivateAssets>all</PrivateAssets>
 		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		-->
 		<PackageReference Include="LinqFasterer" Version="2.1.0" />
 		<PackageReference Include="Microsoft.Toolkit.HighPerformance" Version="7.1.2" />
 		<PackageReference Include="OptimizedPriorityQueue" Version="5.1.0" />
-		<PackageReference Include="Pastel" Version="3.0.1" />
-		<PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.3.2" />
-		<PackageReference Include="Tomlyn" Version="0.16.2" />
+		<PackageReference Include="Pastel" Version="7.0.1" />
+		<PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.4.0" />
+		<PackageReference Include="Tomlyn" Version="0.20.0" />
 		<PackageReference Include="ZstdNet" Version="1.4.5" GeneratePathProperty="true">
 			<ExcludeAssets>all</ExcludeAssets>
 		</PackageReference>
@@ -94,41 +94,16 @@
 		<InternalsAssemblyUseEmptyMethodBodies>false</InternalsAssemblyUseEmptyMethodBodies>
 	</PropertyGroup>
 
-	
-	<!--
-	<PropertyGroup>
-		<Publicize>$(Publicize);MonoGame.Framework:Microsoft.Xna.Framework.Graphics.Texture.glTarget</Publicize>
-		<Publicize>$(Publicize);MonoGame.Framework:Microsoft.Xna.Framework.Graphics.Texture.glInternalFormat</Publicize>
-		<Publicize>$(Publicize);MonoGame.Framework:Microsoft.Xna.Framework.Graphics.Texture.glFormat</Publicize>
-		<Publicize>$(Publicize);MonoGame.Framework:Microsoft.Xna.Framework.Graphics.Texture.glTarget</Publicize>
-		<Publicize>$(Publicize);MonoGame.Framework:Microsoft.Xna.Framework.Graphics.Texture.glType</Publicize>
-		<Publicize>$(Publicize);MonoGame.Framework:Microsoft.Xna.Framework.Graphics.Texture.GetSizeForLevel</Publicize>
-		<Publicize>$(Publicize);MonoGame.Framework:Microsoft.Xna.Framework.Graphics.Texture2D.GenerateGLTextureIfRequired</Publicize>
-		<Publicize>$(Publicize);MonoGame.Framework:Microsoft.Xna.Framework.Graphics.Texture2D.PlatformConstruct</Publicize>
-		<Publicize>$(Publicize);MonoGame.Framework:MonoGame.OpenGL.TextureTarget</Publicize>
-		<Publicize>$(Publicize);MonoGame.Framework:MonoGame.OpenGL.PixelFormat</Publicize>
-		<Publicize>$(Publicize);MonoGame.Framework:MonoGame.OpenGL.PixelInternalFormat</Publicize>
-		<Publicize>$(Publicize);MonoGame.Framework:MonoGame.OpenGL.PixelStoreParameter</Publicize>
-		<Publicize>$(Publicize);MonoGame.Framework:MonoGame.OpenGL.GL.CompressedTexImage2D</Publicize>
-		<Publicize>$(Publicize);MonoGame.Framework:MonoGame.OpenGL.GL.TexImage2D</Publicize>
-		<Publicize>$(Publicize);MonoGame.Framework:MonoGame.OpenGL.GL.BindTexture</Publicize>
-		<Publicize>$(Publicize);MonoGame.Framework:MonoGame.OpenGL.GL.PixelStore</Publicize>
-		<Publicize>$(Publicize);MonoGame.Framework:MonoGame.OpenGL.GL.Finish</Publicize>
-		<Publicize>$(Publicize);MonoGame.Framework:Microsoft.Xna.Framework.Graphics.GraphicsExtensions.GetGLFormat</Publicize>
-		<Publicize>$(Publicize);MonoGame.Framework:Microsoft.Xna.Framework.Graphics.GraphicsExtensions.GetBoundTexture2D</Publicize>
-		<Publicize>$(Publicize);MonoGame.Framework:Microsoft.Xna.Framework.Threading.BlockOnUIThread</Publicize>
-		<Publicize>$(Publicize);MonoGame.Framework:StbImageSharp.ImageResult</Publicize>
-		<Publicize>$(Publicize);MonoGame.Framework:StbImageSharp.StbImage</Publicize>
-		<Publicize>$(Publicize);MonoGame.Framework:StbImageSharp.StbImage.stbi__context</Publicize>
-		<DoNotPublicize>$(DoNotPublicize);MonoGame.Framework:Microsoft.Xna.Framework.Graphics.Texture.Dispose</DoNotPublicize>
-		<DoNotPublicize>$(DoNotPublicize);MonoGame.Framework:Microsoft.Xna.Framework.Graphics.GraphicsResource.Disposing</DoNotPublicize>
-	</PropertyGroup>
+	<ItemGroup>
+		<Publicize Include="MonoGame.Framework" />
+		<DoNotPublicize Include="MonoGame.Framework:Microsoft.Xna.Framework.Graphics.Texture.Dispose" />
+		<DoNotPublicize Include="MonoGame.Framework:Microsoft.Xna.Framework.Graphics.GraphicsResource.Disposing" />
+	</ItemGroup>
 	
 	<ItemGroup>
 		<Publicize Include="$(Publicize)" />
 		<DoNotPublicize Include="$(DoNotPublicize)" />
 	</ItemGroup>
-	-->
 	
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
 		<Exec Command="$(ProjectDir)scripts\build.post.rb 'OutDir=$(OutDir)' 'SolutionDir=$(SolutionDir)' 'ILRepack=$(PkgILRepack)' 'ILStrip=$(PkgBrokenevent_ILStrip_CLI)' 'IgnoreModFilePatterns=$(IgnoreModFilePatterns)'" />

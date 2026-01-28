@@ -150,13 +150,13 @@ internal static unsafe partial class XxHash3 {
 	[Pure]
 	[MethodImpl(Inline)]
 	private static T Read<T>(this ref byte data, uint offset) where T : unmanaged {
-		return Unsafe.ReadUnaligned<T>(ref Unsafe.AddByteOffset(ref data, new(offset)));
+		return Unsafe.ReadUnaligned<T>(ref Unsafe.AddByteOffset(ref data, offset));
 	}
 
 	[Pure]
 	[MethodImpl(Inline)]
 	private static ref byte Offset(this ref byte data, uint offset) {
-		return ref Unsafe.AddByteOffset(ref data, new(offset));
+		return ref Unsafe.AddByteOffset(ref data, offset);
 	}
 
 	[Pure]

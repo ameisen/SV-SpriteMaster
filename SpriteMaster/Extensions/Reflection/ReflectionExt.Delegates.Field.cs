@@ -15,7 +15,7 @@ internal static partial class ReflectionExt {
 			return null;
 		}
 
-		var objExp = Expression.Parameter(type, "object");
+		var objExp = Expression.Parameter(typeof(TObject), "object");
 		var valueExp = Expression.Parameter(typeof(TMember), "value");
 		var convertedValueExp = Expression.Convert(valueExp, field.FieldType);
 
@@ -35,7 +35,7 @@ internal static partial class ReflectionExt {
 			return null;
 		}
 
-		var objExp = Expression.Parameter(type, "object");
+		var objExp = Expression.Parameter(typeof(TObject), "object");
 		Expression memberExp = Expression.Field(objExp, field);
 		return Expression.Lambda<Func<TObject, TMember>>(memberExp, objExp).CompileFast();
 	}
