@@ -757,7 +757,7 @@ internal static class Config {
 
 	[Attributes.Advanced]
 	internal static class SuspendedCache {
-		[Attributes.Comment("Should the suspended sprite cache be enabled?")]
+		[Attributes.Comment("Should the suspended sprite cache be enabled (required for animated sprites)?")]
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushSuspendedSpriteCache)]
 		internal static bool Enabled = true;
 		[Attributes.Comment("What is the maximum size (in bytes) to store in suspended sprite cache?")]

@@ -23,6 +23,10 @@ internal static class ResidentCache {
 		compressed: SMConfig.ResidentCache.Compress != Compression.Algorithm.None
 	);
 
+	static ResidentCache() {
+		SMConfig.ConfigChanged += OnSettingsChanged;
+	}
+
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static bool Contains(ulong key) =>
 		Cache.Contains(key);
