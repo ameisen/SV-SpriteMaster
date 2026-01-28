@@ -5,19 +5,16 @@ using Microsoft.Xna.Framework.Graphics;
 using MonoGame.OpenGL;
 using SpriteMaster.Extensions;
 using SpriteMaster.Extensions.Reflection;
-using SpriteMaster.Mitigations.PyTK;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
-using System.Reflection.Metadata.Ecma335;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
-using Console = System.Console;
 
 // Defined with a 32-bit depth
 using GLEnum = System.UInt32;
@@ -319,11 +316,11 @@ internal static unsafe class GLExt {
 
 			if (Version is { } version) {
 				var contextVersion = ContextVersion.Value;
-				if (version.Major < contextVersion.Major) {
+				if (contextVersion.Major < version.Major) {
 					return false;
 				}
 
-				if (version.Major == contextVersion.Major && version.Minor < contextVersion.Minor) {
+				if (contextVersion.Major == version.Major && contextVersion.Minor < version.Minor) {
 					return false;
 				}
 			}
@@ -671,8 +668,10 @@ internal static unsafe class GLExt {
 	private delegate void DebugMessageCallbackProc(int source, int type, int id, int severity, int length, nint message, nint userParam);
 
 	private static readonly DebugMessageCallbackProc DebugProc = DebugMessageCallbackHandler;
-	delegate void DebugMessageCallbackDelegate(DebugMessageCallbackProc callback, nint userParam);
-	static readonly DebugMessageCallbackDelegate DebugMessageCallback =
+
+	private delegate void DebugMessageCallbackDelegate(DebugMessageCallbackProc callback, nint userParam);
+
+	private static readonly DebugMessageCallbackDelegate DebugMessageCallback =
 		Delegates.Generic<DebugMessageCallbackDelegate>.LoadFunction("glDebugMessageCallback")!;
 
 	private enum CallbackSeverity : int {
