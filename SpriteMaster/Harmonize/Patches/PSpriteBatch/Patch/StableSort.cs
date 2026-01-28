@@ -14,7 +14,7 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch.Patch;
 
 internal static class StableSort {
 	private static readonly Type? SpriteBatchItemType = typeof(XSpriteBatch).Assembly.GetType("Microsoft.Xna.Framework.Graphics.SpriteBatchItem");
-	private static readonly Func<object?, float>? GetSortKeyImpl = SpriteBatchItemType?.GetFieldGetter<object?, float>("SortKey");
+	private static readonly Func<object, float>? GetSortKeyImpl = SpriteBatchItemType?.GetFieldGetter<object, float>("SortKey");
 
 	private readonly record struct KeyType<TKey>(TKey Key, int Index) where TKey : IComparable<TKey>;
 
@@ -29,7 +29,7 @@ internal static class StableSort {
 		}
 	}
 
-	private interface ISortKeyGetter<TObject, TKey> where TKey : IComparable<TKey> {
+	private interface ISortKeyGetter<in TObject, out TKey> where TKey : IComparable<TKey> {
 		TKey Invoke(TObject obj);
 	}
 

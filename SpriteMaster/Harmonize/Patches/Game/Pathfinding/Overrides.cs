@@ -1,17 +1,13 @@
 ﻿//#define VALIDATE_ROUTES
+//#define DUPLICATE_ROUTE_CHECK
 
-using HarmonyLib;
 using LinqFasterer;
-using Microsoft.Toolkit.HighPerformance.Helpers;
 using SpriteMaster.Extensions.Reflection;
-using SpriteMaster.Types.Exceptions;
 using SpriteMaster.Types.Reflection;
 using StardewValley;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace SpriteMaster.Harmonize.Patches.Game.Pathfinding;
@@ -93,7 +89,9 @@ internal static partial class Pathfinding {
 			}
 		}
 
+#if DUPLICATE_ROUTE_CHECK
 		var duplicateRoutes = new HashSet<(string Start, string End)>();
+#endif
 		var mismatchedRoutes = new Dictionary<(string Start, string End), (List<string> Reference, List<string> Calculated)>();
 
 
@@ -104,7 +102,9 @@ internal static partial class Pathfinding {
 			}
 
 			if (!calculatedRoutesMap.TryAdd((route.FirstF(), route.LastF()), route)) {
+#if DUPLICATE_ROUTE_CHECK
 				duplicateRoutes.Add((route.FirstF(), route.LastF()));
+#endif
 			}
 		}
 
@@ -140,14 +140,14 @@ internal static partial class Pathfinding {
 			}
 		}
 
-		/*
+#if DUPLICATE_ROUTE_CHECK
 		if (duplicateRoutes.Count != 0) {
 			Debug.Error("Duplicate Routes:");
 			foreach (var route in duplicateRoutes) {
 				Debug.Error($"Duplicate Route {(route.Start, route.End)}");
 			}
 		}
-		*/
+#endif
 
 		if (mismatchedRoutes.Count != 0) {
 			Debug.Error("Mismatched Routes:");
