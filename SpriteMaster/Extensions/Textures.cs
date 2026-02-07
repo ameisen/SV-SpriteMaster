@@ -449,7 +449,7 @@ internal static class Textures {
 					fixed (TRaw* subDataPtr = subData) {
 						using var dumpTexture = new DumpTexture2D(
 							new ReadOnlyPinnedSpan<byte>(subData, (byte*)subDataPtr, subData.Length * sizeof(TRaw)).Fixed,
-							StardewValley.Game1.graphics.GraphicsDevice,
+							GameSupport.GraphicsDevice,
 							destBound.Width,
 							destBound.Height,
 							mipmap: false,

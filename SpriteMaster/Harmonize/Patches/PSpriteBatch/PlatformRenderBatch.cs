@@ -4,7 +4,6 @@ using SpriteMaster.Extensions;
 using SpriteMaster.Harmonize.Patches.Game;
 using SpriteMaster.Resample;
 using SpriteMaster.Types;
-using StardewValley;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
@@ -14,7 +13,7 @@ namespace SpriteMaster.Harmonize.Patches.PSpriteBatch;
 
 [SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
 [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Harmony")]
-internal static class PlatformRenderBatch {
+internal static partial class PlatformRenderBatch {
 	[DoesNotReturn]
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	private static T ThrowModeUnimplementedException<T>(string name, TextureAddressMode addressMode) =>
@@ -265,9 +264,8 @@ internal static class PlatformRenderBatch {
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static void EnsureVertexCapacity(SpriteBatcher @this, int numBatchItems) {
-		if (Game1.spriteBatch is null || @this == Game1.spriteBatch._batcher) {
-			numBatchItems = SpriteBatcher.MaxBatchSize;
-		}
+		numBatchItems = GetMaxBatchSize(@this) ?? numBatchItems;
+
 		int neededCapacity = (int)((uint)numBatchItems * 4u);
 		if (@this._vertexArray is null || @this._vertexArray.Length < neededCapacity) {
 			@this._vertexArray = GC.AllocateUninitializedArray<VertexPositionColorTexture>(neededCapacity, pinned: true);

@@ -25,10 +25,12 @@ internal partial struct Vector2I :
 	internal static readonly Vector2I MinusOne = (-1, -1);
 	internal static readonly Vector2I Empty = Zero;
 
+#if NETCOREAPP3_0_OR_GREATER
 	private readonly Vector128<int> AsVec128 => Vector128.CreateScalarUnsafe(Packed).AsInt32();
 	private readonly Vector128<int> AsVec128Zeroed => Vector128.CreateScalar(Packed).AsInt32();
 	private readonly Vector128<int> AsVec128Max => Vector128.Create(Packed, ulong.MaxValue).AsInt32();
 	private readonly Vector128<int> AsVec128Min => Vector128.Create(Packed, 0x8000_0000_8000_0000ul).AsInt32();
+#endif
 
 	internal ulong Packed;
 
@@ -120,13 +122,7 @@ internal partial struct Vector2I :
 	internal Vector2I(XNA.Point v) : this(v.X, v.Y) { }
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal Vector2I(XTilePoint v) : this(v.X, v.Y) { }
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal Vector2I(DrawingSize v) : this(v.Width, v.Height) { }
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal Vector2I(XTileSize v) : this(v.Width, v.Height) { }
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal Vector2I(XTexture2D tex) : this(tex.Width, tex.Height) { }
@@ -144,13 +140,7 @@ internal partial struct Vector2I :
 	public static implicit operator XNA.Point(Vector2I vec) => new(vec.X, vec.Y);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	public static implicit operator XTilePoint(Vector2I vec) => new(vec.X, vec.Y);
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static implicit operator DrawingSize(Vector2I vec) => new(vec.X, vec.Y);
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	public static implicit operator XTileSize(Vector2I vec) => new(vec.X, vec.Y);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static implicit operator XVector2(Vector2I vec) => new(vec.X, vec.Y);
@@ -162,13 +152,7 @@ internal partial struct Vector2I :
 	public static implicit operator Vector2I(XNA.Point vec) => new(vec);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	public static implicit operator Vector2I(XTilePoint vec) => new(vec);
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static implicit operator Vector2I(DrawingSize vec) => new(vec);
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	public static implicit operator Vector2I(XTileSize vec) => new(vec);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static implicit operator Bounds(Vector2I vec) => new(vec);

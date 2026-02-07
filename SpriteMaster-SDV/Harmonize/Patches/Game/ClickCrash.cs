@@ -11,7 +11,6 @@ namespace SpriteMaster.Harmonize.Patches.Game;
 internal static class ClickCrash {
 	private const BindingFlags AllMethods = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.FlattenHierarchy;
 
-	private static bool HasWindow => StardewValley.Game1.game1.Window is not null;
 	private static readonly TimeSpan RunLoopAfter = TimeSpan.FromMilliseconds(100);
 
 	private static readonly Stopwatch SdlUpdate = Stopwatch.StartNew();
@@ -22,7 +21,7 @@ internal static class ClickCrash {
 		try {
 			var platformGetter = typeof(XNA.Game).GetFieldGetter<object, object>("Platform") ??
 				throw new NullReferenceException("PlatformGetter");
-			var platform = platformGetter(StardewValley.GameRunner.instance) ??
+			var platform = platformGetter(GameSupport.GameRunnerInstance) ??
 				throw new NullReferenceException("Platform");
 			var sdlGamePlatformType =
 				typeof(XColor).Assembly.

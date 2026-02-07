@@ -6,7 +6,7 @@ using System.Text;
 
 namespace SpriteMaster.Configuration;
 
-internal static class Command {
+internal static partial class Command {
 	private static Serialize.Category Root => Serialize.Root;
 
 	[Command("config", "Config Commands")]
@@ -211,7 +211,7 @@ internal static class Command {
 			Caching.TextureFileCache.Purge();
 		}
 		if (options.Flags.HasFlag(Attributes.OptionsAttribute.Flag.ResetDisplay)) {
-			StardewValley.Game1.graphics.ApplyChanges();
+			OnResetDisplay();
 		}
 		if (options.Flags.HasFlag(Attributes.OptionsAttribute.Flag.GarbageCollect)) {
 			Extensions.Garbage.Collect(compact: true, blocking: true, background: false);

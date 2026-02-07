@@ -5,10 +5,10 @@ using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using SpriteMaster.Hashing;
 using SpriteMaster.Metadata;
+using SpriteMaster.Resample;
 using SpriteMaster.Types;
 using SpriteMaster.Types.Interlocking;
 using System;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -16,11 +16,7 @@ using System.Text;
 
 namespace SpriteMaster;
 
-/// <summary>
-/// A wrapper during the resampling process that encapsulates the properties of the sprite itself
-/// <para>Warning: <seealso cref="SpriteInfo">SpriteInfo</seealso> holds a reference to the reference texture's data in its <seealso cref="ReferenceDataInternal">ReferenceData field</seealso>.</para>
-/// </summary>
-internal sealed class SpriteInfo : IDisposable {
+internal class SpriteInfoBase : IDisposable {
 	[Flags]
 	internal enum SpriteFlags {
 		None = 0,
@@ -31,30 +27,93 @@ internal sealed class SpriteInfo : IDisposable {
 		WasCached = 1 << 3,
 		Preview = 1 << 4,
 		Animated = 1 << 5,
+		ForcePadding = 1 << 6,
 	}
 
-	internal readonly XTexture2D Reference;
-	internal readonly Texture2DMeta Meta;
 	internal readonly Bounds Bounds;
-	internal Vector2I ReferenceSize => Reference.Extent();
 	internal readonly Vector2B Wrapped;
 	internal readonly TextureType TextureType;
 	internal readonly uint ExpectedScale;
-	private readonly int RawOffset;
-	private readonly int RawStride;
-	internal readonly Resample.Scaler Scaler;
-	internal readonly Resample.Scaler ScalerPortrait;
-	internal readonly Resample.Scaler ScalerText;
-	internal readonly Resample.Scaler ScalerGradient;
-	internal readonly BlendState BlendState;
+	protected internal readonly int RawOffset;
+	protected internal readonly int RawStride;
+	internal readonly Scaler Scaler;
+	internal BlendState BlendState { get; private set; }
 	internal readonly SpriteFlags Flags;
-	private volatile bool Broken = false;
+	protected internal volatile bool Broken = false;
 
 	internal bool BlendEnabled => Flags.HasFlag(SpriteFlags.BlendEnabled);
-	internal bool IsWater => Flags.HasFlag(SpriteFlags.IsWater);
+	internal bool IsWater => Flags.HasFlag(SpriteFlags.IsWater); // TODO : stardew-only
 	internal bool IsFont => Flags.HasFlag(SpriteFlags.IsFont);
 	internal bool IsAnimated => Flags.HasFlag(SpriteFlags.Animated);
 	internal bool IsPreview => Flags.HasFlag(SpriteFlags.Preview);
+	internal bool ForcePadding => Flags.HasFlag(SpriteFlags.ForcePadding);
+
+	internal SpriteInfoBase(
+		BlendState blendState,
+		uint expectedScale,
+		Bounds bounds,
+		TextureType textureType,
+		in (int Offset, int Stride) rawOffsetStride,
+		Scaler scaler,
+		SpriteFlags flags,
+		Vector2B wrapped
+	) {
+		BlendState = blendState;
+		ExpectedScale = expectedScale;
+		Bounds = bounds;
+		TextureType = textureType;
+		RawOffset = rawOffsetStride.Offset;
+		RawStride = rawOffsetStride.Stride;
+
+		Scaler = scaler;
+
+		Flags = flags;
+		Wrapped = wrapped;
+	}
+
+	public virtual void Dispose() {
+		BlendState = null!;
+	}
+}
+
+internal sealed class BasicSpriteInfo : SpriteInfoBase, IDisposable {
+	internal byte[]? ReferenceData { get; private set; }
+
+	internal Bounds ReferenceSize => Bounds;
+
+	internal BasicSpriteInfo(
+		byte[] referenceData,
+		BlendState blendState,
+		uint expectedScale,
+		Bounds bounds,
+		TextureType textureType,
+		in (int Offset, int Stride) rawOffsetStride,
+		Scaler scaler,
+		SpriteFlags flags,
+		Vector2B wrapped
+	) : base(blendState, expectedScale, bounds, textureType, in rawOffsetStride, scaler, flags, wrapped) {
+		ReferenceData = referenceData;
+	}
+
+	public override void Dispose() {
+		base.Dispose();
+		ReferenceData = null;
+	}
+}
+
+/// <summary>
+/// A wrapper during the resampling process that encapsulates the properties of the sprite itself
+/// <para>Warning: <seealso cref="SpriteInfo">SpriteInfo</seealso> holds a reference to the reference texture's data in its <seealso cref="ReferenceDataInternal">ReferenceData field</seealso>.</para>
+/// </summary>
+internal sealed class SpriteInfo : SpriteInfoBase, IDisposable {
+	internal readonly XTexture2D Reference;
+	internal readonly Texture2DMeta Meta;
+
+	internal readonly Scaler ScalerPortrait;
+	internal readonly Scaler ScalerText;
+	internal readonly Scaler ScalerGradient;
+
+	internal Vector2I ReferenceSize => Reference.Extent();
 
 	public override string ToString() => $"SpriteInfo[Name: '{Reference.Name}', ReferenceSize: {ReferenceSize}, Size: {Bounds}]";
 
@@ -506,17 +565,35 @@ internal sealed class SpriteInfo : IDisposable {
 		}
 	}
 
-	internal SpriteInfo(in Initializer initializer) {
+	private static (int Offset, int Stride) GetRawOffsetStride(in Initializer initializer) {
+		var format = initializer.Reference.Format.IsCompressed() ? SurfaceFormat.Color : initializer.Reference.Format;
+		var rawStride = format.StrideBytes(initializer.Reference.Extent());
+
+		return (
+			(rawStride * initializer.Bounds.Top) + format.SizeBytes(initializer.Bounds.Left),
+			rawStride
+		);
+	}
+
+	internal SpriteInfo(in Initializer initializer) : base(
+		blendState: initializer.BlendState,
+		expectedScale: initializer.ExpectedScale,
+		bounds: initializer.Bounds,
+		textureType: initializer.TextureType,
+		rawOffsetStride: GetRawOffsetStride(initializer),
+		scaler: initializer.Scaler,
+		flags: initializer.Flags,
+		wrapped: new(
+			initializer.SamplerState.AddressU == TextureAddressMode.Wrap,
+			initializer.SamplerState.AddressV == TextureAddressMode.Wrap
+		)
+	) {
 		Reference = initializer.Reference;
 		Meta = initializer.Meta;
-		BlendState = initializer.BlendState;
-		ExpectedScale = initializer.ExpectedScale;
-		Bounds = initializer.Bounds;
-		TextureType = initializer.TextureType;
 
-		var format = Reference.Format.IsCompressed() ? SurfaceFormat.Color : Reference.Format;
-		var rawStride = RawStride = format.StrideBytes(ReferenceSize);
-		RawOffset = (rawStride * Bounds.Top) + format.SizeBytes(Bounds.Left);
+		ScalerPortrait = initializer.ScalerPortrait;
+		ScalerText = initializer.ScalerText;
+		ScalerGradient = initializer.ScalerGradient;
 
 		if (initializer.ReferenceData is not { } referenceData) {
 			ThrowHelper.ThrowArgumentNullException(nameof(initializer.ReferenceData));
@@ -524,18 +601,6 @@ internal sealed class SpriteInfo : IDisposable {
 		}
 
 		ReferenceData = referenceData;
-
-		Scaler = initializer.Scaler;
-		ScalerPortrait = initializer.ScalerPortrait;
-		ScalerText = initializer.ScalerText;
-		ScalerGradient = initializer.ScalerGradient;
-
-		Flags = initializer.Flags;
-		var samplerState = initializer.SamplerState;
-		Wrapped = new(
-			samplerState.AddressU == TextureAddressMode.Wrap,
-			samplerState.AddressV == TextureAddressMode.Wrap
-		);
 
 		if (initializer.DataHash is {} dataHash) {
 			SpriteDataHashInternal = dataHash;
@@ -546,7 +611,8 @@ internal sealed class SpriteInfo : IDisposable {
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	public void Dispose() {
+	public override void Dispose() {
+		base.Dispose();
 		ReferenceData = null;
 		Unsafe.AsRef(Meta) = null!;
 		HashInternal = 0ul;

@@ -357,7 +357,7 @@ internal abstract class Scene : IDisposable {
 		var originalFadeToBlackAlpha = Game1.fadeToBlackAlpha;
 		try {
 			Game1.graphics.GraphicsDevice.Viewport = new(Region);
-			Game1.viewport = Region;
+			Game1.viewport = new(Region.X, Region.Y, Region.InvertedWidth, Region.InvertedHeight);
 			Game1.fadeToBlackAlpha = 0.0f;
 			Game1.updateWeather(Game1.currentGameTime);
 		}

@@ -329,6 +329,7 @@ internal static unsafe partial class XxHash3 {
 		// 16x16 = 1024 bytes
 		// 16x32 = 2048 bytes
 
+#if NETCOREAPP3_0_OR_GREATER
 		if (UseAvx2 || UseSse2) {
 			// Checks if it's a power of two
 			if (BitOperations.PopCount(length) == 1) {
@@ -387,6 +388,7 @@ internal static unsafe partial class XxHash3 {
 
 			return HashLongFixed(data, length);
 		}
+#endif
 
 		var accumulatorStore = new Accumulator();
 		ulong* accumulator = accumulatorStore.Data;
@@ -427,6 +429,7 @@ internal static unsafe partial class XxHash3 {
 		// 16x16 = 1024 bytes
 		// 16x32 = 2048 bytes
 
+#if NETCOREAPP3_0_OR_GREATER
 		if (UseAvx2 || UseSse2) {
 			// Checks if it's a power of two
 			if (BitOperations.PopCount(length) == 1) {
@@ -485,6 +488,7 @@ internal static unsafe partial class XxHash3 {
 
 			return HashLongFixed(data, length);
 		}
+#endif
 
 		// TODO : should do this faster, but we only run on systems that support SIMD...
 		Span<byte> tempData = SpanExt.Make<byte>((int)length);
@@ -495,6 +499,7 @@ internal static unsafe partial class XxHash3 {
 		}
 	}
 
+#if NETCOREAPP3_0_OR_GREATER
 	[Pure, MustUseReturnValue]
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	private static ulong HashLongFixed(byte* data, uint length) {
@@ -518,12 +523,14 @@ internal static unsafe partial class XxHash3 {
 
 		return Sse2Impl.HashLong(data, length);
 	}
+#endif
 
 	[Pure, MustUseReturnValue]
 	[MethodImpl(Inline)]
 	private static ulong MergeAccumulators(ref Accumulator accumulator, ulong start) {
 		ulong result = start;
 
+#if NETCOREAPP3_0_OR_GREATER
 		if (UseAvx2) {
 			ref var accumulator256 = ref accumulator.Data256;
 
@@ -561,7 +568,9 @@ internal static unsafe partial class XxHash3 {
 			result += MixAccumulators(data2.GetElement(0), data2.GetElement(1));
 			result += MixAccumulators(data3.GetElement(0), data3.GetElement(1));
 		}
-		else {
+		else
+#endif
+		{
 			result += MixAccumulators(accumulator.Data[0], accumulator.Data[1], SecretValues64.Secret0B, SecretValues64.Secret13);
 			result += MixAccumulators(accumulator.Data[2], accumulator.Data[3], SecretValues64.Secret1B, SecretValues64.Secret23);
 			result += MixAccumulators(accumulator.Data[4], accumulator.Data[5], SecretValues64.Secret2B, SecretValues64.Secret33);
@@ -678,6 +687,7 @@ internal static unsafe partial class XxHash3 {
 	[MethodImpl(Inline)]
 	private static void Accumulate(ulong* accumulator, byte* data, byte* secret, uint stripeCount) {
 		uint i = 0;
+#if NETCOREAPP3_0_OR_GREATER
 		if (UseAvx2) {
 			for (; i + 7u < stripeCount; i += 8u) {
 				PrefetchNonTemporalNext(data + (i * StripeLength) + 0x040);
@@ -700,6 +710,7 @@ internal static unsafe partial class XxHash3 {
 				Avx2Impl.Accumulate1024(accumulator, data + (i * StripeLength), secret + (i * 8u));
 			}
 		}
+#endif
 		for (; i < stripeCount; ++i) {
 			PrefetchNonTemporalNext(data + (i * StripeLength) + 0x040);
 			Accumulate512(accumulator, data + (i * StripeLength), secret + (i * 8u));
@@ -709,6 +720,7 @@ internal static unsafe partial class XxHash3 {
 	// xxh3_accumulate_512
 	[MethodImpl(Inline)]
 	private static void Accumulate512(ulong* accumulator, byte* data, byte* secret) {
+#if NETCOREAPP3_0_OR_GREATER
 		if (UseAvx2) {
 			Avx2Impl.Accumulate512(accumulator, data, secret);
 		}
@@ -718,7 +730,9 @@ internal static unsafe partial class XxHash3 {
 		else if (UseNeon) {
 			NeonImpl.Accumulate512(accumulator, data, secret);
 		}
-		else {
+		else
+#endif
+		{
 			ScalarImpl.Accumulate512(accumulator, data, secret);
 		}
 	}
@@ -726,6 +740,7 @@ internal static unsafe partial class XxHash3 {
 	// xxh3_scramble_acc
 	[MethodImpl(Inline)]
 	private static void ScrambleAccumulator(ulong* accumulator, byte* secret) {
+#if NETCOREAPP3_0_OR_GREATER
 		if (UseAvx2) {
 			Avx2Impl.ScrambleAccumulator(accumulator, secret);
 		}
@@ -735,7 +750,9 @@ internal static unsafe partial class XxHash3 {
 		else if (UseNeon) {
 			NeonImpl.ScrambleAccumulator(accumulator, secret);
 		}
-		else {
+		else
+#endif
+		{
 			ScalarImpl.ScrambleAccumulator(accumulator, secret);
 		}
 	}
@@ -745,9 +762,12 @@ internal static unsafe partial class XxHash3 {
 	[MethodImpl(Inline)]
 	private static ulong Mul128Fold64(ulong lhs, ulong rhs) {
 		ulong low;
-		ulong high = Extensions.Simd.Support.Bmi2 ?
-			Bmi2.X64.MultiplyNoFlags(lhs, rhs, &low) :
-			Math.BigMul(lhs, rhs, out low);
+		ulong high =
+#if NETCOREAPP3_0_OR_GREATER
+			Extensions.Simd.Support.Bmi2 ?
+				Bmi2.X64.MultiplyNoFlags(lhs, rhs, &low) :
+#endif
+				Math.BigMul(lhs, rhs, out low);
 		return low ^ high;
 	}
 }

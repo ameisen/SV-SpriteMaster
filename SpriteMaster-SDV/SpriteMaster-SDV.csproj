@@ -116,10 +116,6 @@
 		</Reference>
 	</ItemGroup>
 
-	<ItemGroup>
-	  <Folder Include="Resample\Scalers\xBREPX\" />
-	</ItemGroup>
-
 	<Target Name="PreBuild" BeforeTargets="PreBuildEvent">
 	  <Exec Command="$(SolutionDir)SetVersion.rb -q" WorkingDirectory="$(SolutionDir)" />
 	</Target>

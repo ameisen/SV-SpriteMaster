@@ -4,6 +4,7 @@ using StardewValley;
 using StardewValley.Locations;
 using StardewValley.Monsters;
 using StardewValley.TerrainFeatures;
+using xTile.Dimensions;
 
 namespace SpriteMaster.Harmonize.Patches.Game;
 
@@ -31,7 +32,8 @@ internal static class HoeDirt {
 		FertBatch.Begin(SpriteSortMode.Texture, BlendState.AlphaBlend, SamplerState.PointClamp);
 
 		try {
-			Bounds gameViewport = Game1.viewport;
+			Rectangle gameViewportRaw = Game1.viewport;
+			Bounds gameViewport = new(gameViewportRaw.X, gameViewportRaw.Y, gameViewportRaw.Width, gameViewportRaw.Height);
 			Vector2I startTile = (gameViewport.Offset / 64) + 1;
 			Vector2I maxTile = (gameViewport.End / 64) + (3, 7);
 			for (int y = startTile.Y; y < maxTile.Y; ++y) {

@@ -1,7 +1,5 @@
-﻿using Pastel;
-using SpriteMaster.Configuration;
+﻿using SpriteMaster.Configuration;
 using SpriteMaster.Hashing;
-using StardewModdingAPI;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

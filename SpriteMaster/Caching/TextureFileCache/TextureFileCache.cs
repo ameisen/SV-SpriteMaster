@@ -1,79 +1,43 @@
-﻿using JetBrains.Annotations;
-using Pastel;
+﻿using Pastel;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using SpriteMaster.Types.MemoryCache;
-using StardewModdingAPI;
-using StardewValley;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace SpriteMaster.Caching;
 
-using ImageResultObject = System.Object;
-
 internal static partial class TextureFileCache {
-	[StructLayout(LayoutKind.Auto)]
-	private readonly struct RawTextureData : IRawTextureData {
-		private readonly Vector2I Size;
-		private readonly XColor[] Data;
-
-		[Pure]
-		readonly int IRawTextureData.Width => Size.Width;
-		[Pure]
-		readonly int IRawTextureData.Height => Size.Height;
-		[Pure]
-		readonly XColor[] IRawTextureData.Data => Data;
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal RawTextureData(Vector2I size, XColor[] data) {
-			Size = size;
-			Data = data;
-		}
-	}
-
 	private static readonly IMemoryCache<string, XColor> Cache =
 		AbstractMemoryCache<string, XColor>.Create(name: "File Cache", maxSize: SMConfig.TextureFileCache.MaxSize, compressed: true);
 
 	private static readonly ConcurrentDictionary<string, Vector2I> TextureInfoCache = new();
 
-	[MustUseReturnValue, MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static bool OnLoadRawImageData(LocalizedContentManager __instance, ref IRawTextureData __result, FileInfo file, bool forRawData) {
+	private static (Vector2I Size, XColor[] Data)? GetRawImageData(string resolvedPath, bool forRawData) {
 		if (!Stb.Enabled || !SMConfig.TextureFileCache.Enabled) {
-			return true;
+			return null;
 		}
-
-		bool copyArray = forRawData;
-
-		string path = file.FullName;
-		string resolvedPath = Path.GetFullPath(path);
 
 		if (TextureInfoCache.TryGetValue(resolvedPath, out var cachedSize)) {
 			if (Cache.TryGet(resolvedPath, out var cachedValue)) {
-				__result = new RawTextureData(
-					size: cachedSize,
-					copyArray ? cachedValue.CloneFast() : cachedValue
-				);
-
 				Debug.Trace($"Loading Texture '{resolvedPath}' from cache.".Pastel(DrawingColor.LightGreen));
-				return false;
+
+				return (
+					cachedSize,
+					forRawData ? cachedValue.CloneFast() : cachedValue
+				);
 			}
 		}
 
-		return !LoadFromFile(path: resolvedPath, copyArray: copyArray, swallowExceptions: false, out __result!);
+		return null;
 	}
 
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	private static bool LoadFromFile(string path, bool copyArray, bool swallowExceptions, [NotNullWhen(true)] out IRawTextureData? result) {
+	private static (Vector2I Size, XColor[] Data)? LoadFromFile(string path, bool copyArray, bool swallowExceptions) {
 		Debug.Trace($"Loading Texture '{path}' from file.");
 		var rawData = File.ReadAllBytes(path);
 		try {
@@ -90,12 +54,10 @@ internal static partial class TextureFileCache {
 			TextureInfoCache.AddOrUpdate(path, resultSize, (_, _) => resultSize);
 			Cache.Set(path, resultData);
 
-			result = new RawTextureData(
-				size: resultSize,
-				copyArray ? resultData.CloneFast() : resultData
+			return (
+				Size: resultSize,
+				Data: copyArray ? resultData.CloneFast() : resultData
 			);
-
-			return true;
 		}
 		catch (Exception ex) {
 			if (!swallowExceptions) {
@@ -103,20 +65,22 @@ internal static partial class TextureFileCache {
 				Debug.Error($"{nameof(OnLoadRawImageData)} exception while processing '{path}'", ex);
 			}
 
-			result = null;
-			return false;
+			return null;
 		}
 	}
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	private static void ProcessTexture(Span<Color8> data) {
+#if NETCOREAPP3_0_OR_GREATER
 		if (UseAvx2) {
 			ProcessTextureAvx2(data);
 		}
 		else if (UseSse2) {
 			ProcessTextureSse2Unrolled(data);
 		}
-		else {
+		else
+#endif
+		{
 			ProcessTextureScalar(data);
 		}
 	}
@@ -126,37 +90,6 @@ internal static partial class TextureFileCache {
 		var oldCache = Interlocked.Exchange(ref Unsafe.AsRef(Cache), newCache);
 		TextureInfoCache.Clear();
 		oldCache?.Dispose();
-	}
-
-	private static string? GetModsPath() {
-		const BindingFlags smapiBindingFlags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy;
-
-		// Try to use reflection first.
-		Type apiConstants = typeof(StardewModdingAPI.Constants);
-		if (apiConstants.GetProperty("ModsPath", smapiBindingFlags)?.GetValue(null) is string modsPath && Directory.Exists(modsPath)) {
-			return modsPath;
-		}
-		if (apiConstants.GetProperty("DefaultModsPath", smapiBindingFlags)?.GetValue(null) is string defaultModsPath && Directory.Exists(defaultModsPath)) {
-			return defaultModsPath;
-		}
-
-		string? rootDirectory = Path.GetDirectoryName(SpriteMaster.Assembly.Location);
-
-		bool IsModsDirectory() {
-			return File.Exists(Path.Combine(rootDirectory, "Stardew Valley.dll"));
-		}
-
-		string? previousDirectory = rootDirectory;
-		while (rootDirectory is not null && rootDirectory.Length != 0 && !IsModsDirectory()) {
-			previousDirectory = rootDirectory;
-			rootDirectory = Path.GetDirectoryName(rootDirectory);
-		}
-
-		if (rootDirectory is not null) {
-			return previousDirectory!;
-		}
-
-		return null;
 	}
 
 	internal static List<FileInfo> GetAllTextures(string root) {

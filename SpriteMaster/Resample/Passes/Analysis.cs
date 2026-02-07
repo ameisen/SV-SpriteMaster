@@ -238,7 +238,7 @@ internal static class Analysis {
 			data: data,
 			bounds: bounds,
 			wrapped: wrapped,
-			strict: reference is not null && !reference.Anonymous() && Config.Resample.Padding.StrictList.Contains(reference.NormalizedName())
+			strict: reference is not null && !reference.Anonymous() && SMConfig.Resample.Padding.StrictList.Contains(reference.NormalizedName())
 		);
 	}
 }

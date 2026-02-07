@@ -4,7 +4,7 @@ using System;
 namespace SpriteMaster.Harmonize;
 
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-internal abstract class HarmonizeConditionalAttribute : Attribute {
+internal abstract class HarmonizeConditionalAttribute2 : Attribute {
 	internal abstract bool Condition { get; }
 }
 
@@ -18,16 +18,16 @@ internal enum Comparator {
 }
 
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-internal abstract class HarmonizeVersionConditionalAttribute : HarmonizeConditionalAttribute {
+internal abstract class HarmonizeVersionConditionalAttribute2 : HarmonizeConditionalAttribute2 {
 	internal readonly Comparator Comparator;
 	internal readonly StardewModdingAPI.ISemanticVersion Comparand;
 
-	internal HarmonizeVersionConditionalAttribute(Comparator comparator, StardewModdingAPI.ISemanticVersion comparand) {
+	internal HarmonizeVersionConditionalAttribute2(Comparator comparator, StardewModdingAPI.ISemanticVersion comparand) {
 		Comparator = comparator;
 		Comparand = comparand;
 	}
 
-	internal HarmonizeVersionConditionalAttribute(Comparator comparator, string comparand) {
+	internal HarmonizeVersionConditionalAttribute2(Comparator comparator, string comparand) {
 		Comparator = comparator;
 		Comparand = new SemanticVersion(comparand);
 	}
@@ -55,7 +55,7 @@ internal abstract class HarmonizeVersionConditionalAttribute : HarmonizeConditio
 }
 
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-internal class HarmonizeSmapiVersionConditionalAttribute : HarmonizeVersionConditionalAttribute {
+internal class HarmonizeSmapiVersionConditionalAttribute : HarmonizeVersionConditionalAttribute2 {
 	internal override bool Condition => TestCondition(StardewModdingAPI.Constants.ApiVersion);
 
 	internal HarmonizeSmapiVersionConditionalAttribute(Comparator comparator, StardewModdingAPI.ISemanticVersion comparand) :

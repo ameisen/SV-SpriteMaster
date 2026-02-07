@@ -190,9 +190,6 @@ internal partial struct Bounds :
 	internal Bounds(XRectangle rect) : this(rect.X, rect.Y, rect.Width, rect.Height) { }
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal Bounds(XTileRectangle rect) : this(rect.X, rect.Y, rect.Width, rect.Height) { }
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal Bounds(XTexture2D tex) : this(tex.Width, tex.Height) { }
 
 	//[MethodImpl(Runtime.MethodImpl.Inline)]
@@ -232,16 +229,10 @@ internal partial struct Bounds :
 	public static implicit operator XRectangle(Bounds bounds) => new(bounds.X, bounds.Y, bounds.InvertedWidth, bounds.InvertedHeight);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	public static implicit operator XTileRectangle(Bounds bounds) => new(bounds.X, bounds.Y, bounds.InvertedWidth, bounds.InvertedHeight);
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static implicit operator Bounds(DrawingRectangle rect) => new(rect);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static implicit operator Bounds(XRectangle rect) => new(rect);
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	public static implicit operator Bounds(XTileRectangle rect) => new(rect);
 
 	public override readonly string ToString() => $"[[{X}, {Y}] [{InvertedWidth}, {InvertedHeight}]]";
 

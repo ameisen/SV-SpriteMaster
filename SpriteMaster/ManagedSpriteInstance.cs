@@ -9,7 +9,6 @@ using SpriteMaster.Resample;
 using SpriteMaster.Tasking;
 using SpriteMaster.Types;
 using SpriteMaster.Types.Interlocking;
-using StardewValley;
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -23,7 +22,7 @@ using WeakTexture = System.WeakReference<Microsoft.Xna.Framework.Graphics.Textur
 
 namespace SpriteMaster;
 
-internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
+internal sealed partial class ManagedSpriteInstance : IByteSize, IDisposable {
 	private static readonly ConcurrentLinkedListSlim<WeakInstance> RecentAccessList = new();
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
@@ -156,10 +155,10 @@ internal sealed class ManagedSpriteInstance : IByteSize, IDisposable {
 					return true;
 				}
 
-				if (Game1.dialogueFont is null) {
+				if (CheckIsDialogFont(texture, topTexture) is not { } result) {
 					disableValidation = true;
 				}
-				else if (texture == Game1.dialogueFont.Texture || topTexture == Game1.dialogueFont.Texture) {
+				else if (result) {
 					return true;
 				}
 

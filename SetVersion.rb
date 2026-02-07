@@ -28,12 +28,15 @@ end
 
 class Project
 	@Path = nil
-	def initialize(path)
+	@BaseProject = false
+	def initialize(path, base_project: false)
 		@Path = Pathname.new(path).freeze
+		@BaseProject = base_project
 		self.freeze
 	end
 	
 	def path = @Path
+	def base_project? = @BaseProject
 	alias_method :to_s, :path
 	alias_method :to_str, :path
 	def manifest = @Path + 'manifest.json'
@@ -42,6 +45,14 @@ end
 
 def search_projects_recursive(current, &block)
 	if (current + FileNames::Manifest).file? && (current + FileNames::AssemblySource).file?
+		yield Project.new(current)
+		return
+	end
+
+	if (
+		current.children.select(&:file?).any? { |file| file.extname.downcase == ".shproj" } &&
+		(current + FileNames::AssemblySource).file?
+	)
 		yield Project.new(current)
 		return
 	end
@@ -369,6 +380,7 @@ def update_props
 end
 
 def update_manifest(project)
+	return unless project.manifest.file?
 	manifest = nil
 	File.open(project.manifest.to_s, "r:bom|utf-8") { |file|
 		manifest = JSON.parse(file.read)
@@ -387,6 +399,8 @@ def update_manifest(project)
 	end
 end
 
+ERROR_ON_ATTRIBUTE_MISSING = false
+
 def update_assembly(project)
 	tags, status = Open3.capture2('git', '-C', __dir__, 'describe', '--tags')
 	unless status.success?
@@ -398,19 +412,28 @@ def update_assembly(project)
 	end
 	hostname = Socket.gethostname&.strip || "unknown"
 
-
-	assembly = nil
 	retries = 10
+	
+	lines = nil
 
-	while retries > 0
-		File.open(project.assembly.to_s, "r:bom|utf-8") { |file|
-			assembly = file.read
-		}
+	try_read = lambda { |assembly_file|
+		assembly = nil
+	
+		while retries > 0
+			File.open(assembly_file.to_s, "r:bom|utf-8") { |file|
+				assembly = file.read
+			}
 
-		lines = assembly.split("\n")
-		break if !lines.nil? && lines.length != 0
-		retries -= 1
-	end
+			lines = [] if lines.nil?
+
+			lines.append(*assembly.split("\n"))
+			break if !lines.nil? && lines.length != 0
+			retries -= 1
+		end
+	}
+	
+	try_read[project.assembly]
+	#try_read[Projects.first { |proj| proj.base_project? }.assembly]
 
 	new_changelist = "#{cl.strip}:#{tags.strip}"
 	update_attribute = lambda { |name, new|
@@ -419,10 +442,14 @@ def update_assembly(project)
 
 		line_idx = lines.find_index{ |l| l.strip.start_with?(prefix) }
 		if line_idx == -1 || line_idx.nil?
-			STDERR.puts("prefix: #{prefix}")
-			STDERR.puts("file:")
-			STDERR.puts lines
-			raise "Could not find #{name} attribute in assembly file '#{project.assembly}'"
+			if ERROR_ON_ATTRIBUTE_MISSING
+				STDERR.puts("prefix: #{prefix}")
+				STDERR.puts("file:")
+				STDERR.puts lines
+				raise "Could not find #{name} attribute in assembly file '#{project.assembly}'"
+			else
+				return false
+			end
 		end
 		current = lines[line_idx][prefix.length...-suffix.length]
 		if current == new

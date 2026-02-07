@@ -11,9 +11,6 @@ global using DrawingPoint = System.Drawing.Point;
 global using DrawingRectangle = System.Drawing.Rectangle;
 global using DrawingSize = System.Drawing.Size;
 global using half = System.Half;
-global using XTilePoint = xTile.Dimensions.Location;
-global using XTileRectangle = xTile.Dimensions.Rectangle;
-global using XTileSize = xTile.Dimensions.Size;
 global using PureAttribute = System.Diagnostics.Contracts.PureAttribute;
 using System;
 using System.Runtime.CompilerServices;
@@ -32,7 +29,7 @@ using System.Security;
 [assembly: InternalsVisibleTo("Strings")]
 [assembly: InternalsVisibleTo("Math")]
 [assembly: SecurityRules(SecurityRuleSet.Level2, SkipVerificationInFullTrust = true)]
-[assembly: ChangeList("410b6a2:0.15.0-beta.16-3-g410b6a2")]
+[assembly: ChangeList("7f55df0:0.15.0-beta.16-21-g7f55df0")]
 [assembly: BuildComputerName("Palatinate")]
 [assembly: FullVersion("0.15.0.116.0-beta.16.0")]
 

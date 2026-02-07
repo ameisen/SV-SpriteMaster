@@ -9,16 +9,13 @@ internal partial struct Bounds :
 	IEquatable<DrawingRectangle>,
 	IEquatable<DrawingRectangle?>,
 	IEquatable<XRectangle>,
-	IEquatable<XRectangle?>,
-	IEquatable<XTileRectangle>,
-	IEquatable<XTileRectangle?> {
+	IEquatable<XRectangle?> {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public override readonly bool Equals(object? other) => other switch {
 		Bounds bounds => Equals(bounds),
 		DrawingRectangle rect => Equals(rect),
 		XRectangle rect => Equals(rect),
-		XTileRectangle rect => Equals(rect),
 		_ => false,
 	};
 
@@ -39,12 +36,6 @@ internal partial struct Bounds :
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public readonly bool Equals(XRectangle? other) => other.HasValue && Equals((Bounds)other.Value);
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	public readonly bool Equals(XTileRectangle other) => Equals((Bounds)other);
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	public readonly bool Equals(XTileRectangle? other) => other.HasValue && Equals((Bounds)other.Value);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static bool operator ==(Bounds lhs, Bounds rhs) => lhs.Equals(rhs);
@@ -75,16 +66,4 @@ internal partial struct Bounds :
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static bool operator !=(XRectangle lhs, Bounds rhs) => !(lhs == rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	public static bool operator ==(Bounds lhs, XTileRectangle rhs) => lhs.Equals(rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	public static bool operator !=(Bounds lhs, XTileRectangle rhs) => !(lhs == rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	public static bool operator ==(XTileRectangle lhs, Bounds rhs) => rhs.Equals(lhs);
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	public static bool operator !=(XTileRectangle lhs, Bounds rhs) => !(lhs == rhs);
 }

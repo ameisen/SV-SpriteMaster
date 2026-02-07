@@ -3,7 +3,6 @@ using SpriteMaster.Extensions;
 using SpriteMaster.Harmonize.Patches;
 using SpriteMaster.Metadata;
 using SpriteMaster.Types;
-using StardewModdingAPI;
 using System;
 
 namespace SpriteMaster.GL;
@@ -13,8 +12,7 @@ internal static partial class Texture2DExt {
 		XTexture2D source,
 		Bounds sourceArea,
 		XTexture2D target,
-		Bounds targetArea,
-		PatchMode patchMode
+		Bounds targetArea
 	) {
 		// Intel drivers on Windows have trouble with glCopyTexSubImage, as seen by Blender's workaround for it.
 		if (SystemInfo.Graphics.Vendor is SystemInfo.Graphics.Vendors.Intel && OperatingSystem.IsWindows()) {
@@ -26,10 +24,6 @@ internal static partial class Texture2DExt {
 		}
 
 		if (!GLExt.CopyImageSubData.Enabled) {
-			return false;
-		}
-
-		if (patchMode != PatchMode.Replace) {
 			return false;
 		}
 

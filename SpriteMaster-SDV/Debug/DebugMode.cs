@@ -40,7 +40,9 @@ internal static partial class Debug {
 				var mouseRaw = (Vector2I)Game1.getMousePositionRaw();
 
 				if (Game1.uiMode) {
-					var screenRatio = (Vector2F)(Vector2I)Game1.uiViewport.Size / (Vector2F)(Vector2I)Game1.viewport.Size;
+					var screenRatio =
+						(Vector2F)Vector2I.From(Game1.uiViewport.Size.Width, Game1.uiViewport.Size.Height) /
+						(Vector2F)Vector2I.From(Game1.viewport.Size.Width, Game1.viewport.Size.Height);
 					return ((Vector2F)mouseRaw * screenRatio).NearestInt();
 				}
 				else {
@@ -464,7 +466,8 @@ internal static partial class Debug {
 			try {
 				var font = Game1.smallFont;
 
-				Vector2I minDimensions = (Vector2I)Game1.viewport.Size / 5;
+
+				Vector2I minDimensions = Vector2I.From(Game1.viewport.Size.Width, Game1.viewport.Size.Height) / 5;
 				Vector2F actualDimensions = Vector2F.Zero;
 
 				var lineOffsets = new float[lines.Count];

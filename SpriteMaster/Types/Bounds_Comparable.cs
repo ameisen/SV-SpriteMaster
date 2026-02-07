@@ -11,16 +11,13 @@ internal partial struct Bounds :
 	IComparable<DrawingRectangle>,
 	IComparable<DrawingRectangle?>,
 	IComparable<XRectangle>,
-	IComparable<XRectangle?>,
-	IComparable<XTileRectangle>,
-	IComparable<XTileRectangle?> {
+	IComparable<XRectangle?> {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public readonly int CompareTo(object? other) => other switch {
 		Bounds bounds => CompareTo(bounds),
 		DrawingRectangle rect => CompareTo((Bounds)rect),
 		XRectangle rect => CompareTo((Bounds)rect),
-		XTileRectangle rect => CompareTo((Bounds)rect),
 		_ => Extensions.Exceptions.ThrowArgumentException<int>(nameof(other), other)
 	};
 
@@ -41,10 +38,4 @@ internal partial struct Bounds :
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public readonly int CompareTo(XRectangle? other) => other.HasValue ? CompareTo((Bounds)other.Value) : CompareTo((object?)null);
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	public readonly int CompareTo(XTileRectangle other) => CompareTo((Bounds)other);
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	public readonly int CompareTo(XTileRectangle? other) => other.HasValue ? CompareTo((Bounds)other.Value) : CompareTo((object?)null);
 }

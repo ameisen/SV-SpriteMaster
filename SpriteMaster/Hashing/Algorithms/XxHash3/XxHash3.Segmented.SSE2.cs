@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if NETCOREAPP3_0_OR_GREATER
+using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
@@ -768,3 +769,4 @@ internal static unsafe partial class XxHash3 {
 		}
 	}
 }
+#endif

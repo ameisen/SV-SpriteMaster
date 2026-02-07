@@ -1,9 +1,10 @@
-﻿using SpriteMaster.Extensions;
+﻿#if NETCOREAPP3_0_OR_GREATER
+using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using System;
 using System.Runtime.CompilerServices;
-using System.Runtime.Intrinsics.X86;
 using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
 
 namespace SpriteMaster.Caching;
 
@@ -69,3 +70,4 @@ internal static partial class TextureFileCache {
 		}
 	}
 }
+#endif

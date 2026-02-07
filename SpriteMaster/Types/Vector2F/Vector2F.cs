@@ -88,13 +88,7 @@ internal partial struct Vector2F : ILongHash {
 	internal Vector2F(XNA.Point v) : this(v.X, v.Y) { }
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal Vector2F(XTilePoint v) : this(v.X, v.Y) { }
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal Vector2F(DrawingSize v) : this(v.Width, v.Height) { }
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	internal Vector2F(XTileSize v) : this(v.Width, v.Height) { }
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal void Set(float x, float y) => NumericVector = new(x, y);
@@ -145,13 +139,7 @@ internal partial struct Vector2F : ILongHash {
 	public static implicit operator Vector2F(XNA.Point vec) => new(vec);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	public static implicit operator Vector2F(XTilePoint vec) => new(vec);
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static implicit operator Vector2F(DrawingSize vec) => new(vec);
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	public static implicit operator Vector2F(XTileSize vec) => new(vec);
 
 	internal readonly float LengthSquared => NumericsVector2.Dot(NumericVector, NumericVector);
 	internal readonly float Length => MathF.Sqrt(LengthSquared);

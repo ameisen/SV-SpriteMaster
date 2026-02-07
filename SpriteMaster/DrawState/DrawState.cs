@@ -6,12 +6,9 @@ using SpriteMaster.Extensions.Reflection;
 using SpriteMaster.Tasking;
 using SpriteMaster.Types;
 using SpriteMaster.Types.Interlocking;
-using StardewValley;
 using System;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using xTile.Display;
 
 namespace SpriteMaster;
 
@@ -101,10 +98,10 @@ internal static partial class DrawState {
 		}
 	}
 	internal static void UpdateDevice() {
-		var currentDevice = Game1.graphics.GraphicsDevice;
+		var currentDevice = GetCurrentGraphicsDeviceGame();
 		if (currentDevice != PreviousDevice) {
 			PreviousDevice = currentDevice;
-			Harmonize.Patches.Game.HoeDirt.OnNewGraphicsDevice(currentDevice);
+			OnUpdateDevice(currentDevice);
 		}
 	}
 
@@ -131,7 +128,7 @@ internal static partial class DrawState {
 		TimeSpan? lastFrameTimeCPU = null;
 		TimeSpan? lastFrameTimeTotal = null;
 
-		if (Config.Debug.DisplayFrameTime) {
+		if (SMConfig.Debug.DisplayFrameTime) {
 			{
 				TimeSpan sumTime = TimeSpan.Zero;
 				foreach (var frameTime in LastFrameTimesCPU) {
@@ -157,11 +154,11 @@ internal static partial class DrawState {
 		++CurrentFrame;
 
 		if (TriggerCollection.GetAndClear()) {
-			ManagedSpriteInstance.PurgeTextures((Config.Garbage.RequiredFreeMemorySoft * Config.Garbage.RequiredFreeMemoryHysteresis).NearestLong());
+			ManagedSpriteInstance.PurgeTextures((SMConfig.Garbage.RequiredFreeMemorySoft * SMConfig.Garbage.RequiredFreeMemoryHysteresis).NearestLong());
 			Garbage.Collect(compact: true, blocking: true, background: false);
 		}
 
-		if (Config.AsyncScaling.CanFetchAndLoadSameFrame || !IsUpdatedThisFrame) {
+		if (SMConfig.AsyncScaling.CanFetchAndLoadSameFrame || !IsUpdatedThisFrame) {
 			var remaining = ActualRemainingFrameTime();
 			SynchronizedTaskScheduler.Instance.Dispatch(remaining);
 		}
@@ -183,7 +180,7 @@ internal static partial class DrawState {
 			IsUpdatedThisFrame = false;
 		}
 
-		if (Config.Debug.DisplayFrameTime) {
+		if (SMConfig.Debug.DisplayFrameTime) {
 			int index = LastFrameTimesIndex++;
 			LastFrameTimesIndex %= LastFrameTimesCPU.Length;
 			LastFrameTimesCPU[index] = RealFrameStopwatch.Elapsed;
@@ -199,38 +196,6 @@ internal static partial class DrawState {
 		Garbage.EphemeralCollection.Collect(CurrentFrame);
 	}
 
-	private static readonly WeakReference<xTile.Display.IDisplayDevice> LastMitigatedDevice = new(null!);
-	private static readonly Type? PyDisplayDeviceType = ReflectionExt.GetTypeExt(@"PyTK.Types.PyDisplayDevice");
-	private static readonly Action<IDisplayDevice, bool>? AdjustOriginSetter = PyDisplayDeviceType?.GetFieldSetter<IDisplayDevice, bool>("adjustOrigin");
-
-	private static readonly Predicate<IDisplayDevice>? IsPyDisplayDevice =
-		PyDisplayDeviceType?.GetIsDelegate<IDisplayDevice>();
-
-	// ReSharper disable once InconsistentNaming
-	private static void DisablePyTKMitigation() {
-		if (!Config.Extras.ModPatches.DisablePyTKMitigation) {
-			return;
-		}
-
-		if (IsPyDisplayDevice is not { } isPyDisplayDevice || AdjustOriginSetter is not { } adjustOriginSetter) {
-			return;
-		}
-
-		var mapDisplayDevice = Game1.mapDisplayDevice;
-
-		if (LastMitigatedDevice.TryGetTarget(out var lastDevice) && lastDevice == mapDisplayDevice) {
-			return;
-		}
-
-		if (!isPyDisplayDevice(mapDisplayDevice)) {
-			return;
-		}
-
-		adjustOriginSetter(mapDisplayDevice, false);
-
-		LastMitigatedDevice.SetTarget(Game1.mapDisplayDevice);
-	}
-
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static void OnPresentPost() {
 		FrameStopwatch.Restart();
@@ -238,9 +203,6 @@ internal static partial class DrawState {
 		using var watchdogScoped = WatchDog.WatchDog.ScopedWorkingState;
 
 		Core.OnDrawImpl.ResetLastDrawCache();
-
-		// Apply the PyTK mediation here because we do not know when it might be set up
-		DisablePyTKMitigation();
 
 		Statistics.Reset();
 	}
@@ -288,7 +250,7 @@ internal static partial class DrawState {
 		if (renderTarget is null) {
 			ForceSynchronous = false;
 		}
-		else if (renderTarget == Game1.game1.uiScreen || renderTarget == Game1.game1.screen) {
+		else if (ForceSynchronousOnTarget(renderTarget)) {
 			ForceSynchronous = false;
 		}
 		else {

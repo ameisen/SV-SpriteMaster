@@ -4,7 +4,6 @@ using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using SpriteMaster.Resample;
 using SpriteMaster.Types;
-using StardewModdingAPI;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -16,7 +15,7 @@ using Root = SpriteMaster;
 
 namespace SpriteMaster.Configuration;
 
-internal static class Config {
+internal static partial class Config {
 	internal static readonly string ModuleName =
 		typeof(SMConfig).Namespace?.Split('.').ElementAtOrDefaultF(0) ?? "SpriteMaster";
 
@@ -94,9 +93,6 @@ internal static class Config {
 	internal static bool IsEnabled => ToggledEnable && IsUnconditionallyEnabled;
 #pragma warning restore CS0618 // Type or member is obsolete
 
-	[Attributes.Comment("Button to toggle SpriteMaster")]
-	internal static SButton ToggleButton = SButton.F11;
-
 	[Attributes.Ignore]
 	internal static int
 		ClampDimension =
@@ -143,13 +139,6 @@ internal static class Config {
 #endif
 		;
 
-[Attributes.Ignore]
-	internal static readonly string LocalRootDefault = System.IO.Path.Combine(
-		Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-		"StardewValley",
-		"Mods",
-		ModuleName
-	);
 	internal static string LocalRoot => DataStoreOverride.Length == 0 ? LocalRootDefault : DataStoreOverride;
 	[Attributes.Comment("If the data cache is preferred to be elsewhere, it can be set here")]
 	[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushFileCache)]
@@ -208,7 +197,7 @@ internal static class Config {
 	}
 
 	[Attributes.Advanced]
-	internal static class Debug {
+	internal static partial class Debug {
 		[Attributes.Comment("Should a frametime counter be displayed?")]
 		[Attributes.Advanced]
 		internal static bool DisplayFrameTime =
@@ -221,25 +210,9 @@ internal static class Config {
 		[Attributes.Ignore]
 		internal const bool TestZoomedOutOverMax = false;
 
-		internal static class Logging {
-			internal static LogLevel LogLevel = LogLevel.Trace;
+		internal static partial class Logging {
 #if (!SHIPPING && !RELEASE) || LOG_MONITOR
 			internal static bool SilenceOtherMods = true;
-			internal static string[] SilencedMods = new[] {
-				"Farm Type Manager",
-				"Quest Framework",
-				"AntiSocial NPCs",
-				"SMAPI",
-				"Json Assets",
-				"Content Patcher",
-				"Free Love",
-				"Mail Framework Mod",
-				"Shop Tile Framework",
-				"Custom Companions",
-				"Farmer Helper",
-				"Wind Effects",
-				"Multiple Spouse Dialogs"
-			};
 #endif
 		}
 

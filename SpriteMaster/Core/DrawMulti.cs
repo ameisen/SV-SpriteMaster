@@ -3,12 +3,10 @@ using SpriteMaster.Extensions;
 using SpriteMaster.Harmonize;
 using SpriteMaster.Harmonize.Patches.Game;
 using SpriteMaster.Types;
-using SpriteMaster.Types.Exceptions;
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using static SpriteMaster.Harmonize.Harmonize;
-using static StardewValley.BellsAndWhistles.PlayerStatusList;
 
 namespace SpriteMaster.Core;
 

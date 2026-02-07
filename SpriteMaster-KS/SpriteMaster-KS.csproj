@@ -1,0 +1,150 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+	<Import Project="$(SolutionDir)\SpriteMaster\SpriteMaster.projitems" Label="Shared" />
+	<Import Project="$(SolutionDir)SpriteMasterCommon.props" />
+
+	<PropertyGroup>
+		<AssemblyName>SpriteMaster-KS</AssemblyName>
+		<PackageId>SpriteMaster-KS</PackageId>
+		<TargetFramework>net462</TargetFramework>
+		<ProjectGuid>3EB63596-00A0-4C08-930D-A5851B827B76</ProjectGuid>
+		<EnableHarmony>true</EnableHarmony>
+		<RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
+		<NoWarn>0162;7035</NoWarn>
+		<IgnoreModFilePatterns>$(IgnoreModFilePatterns), \.dll\.config$, ILMerge, runtimes, net452</IgnoreModFilePatterns>
+		<Configurations>Debug;Release;Development;Shipping;ReleaseUntraced;ShippingAsserts</Configurations>
+		<EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+		<RunAnalyzersDuringBuild>False</RunAnalyzersDuringBuild>
+		<PackageProjectUrl>https://github.com/ameisen/SV-SpriteMaster</PackageProjectUrl>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<RepositoryUrl>https://github.com/ameisen/SV-SpriteMaster</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<Nullable>enable</Nullable>
+		<DebugSymbols>true</DebugSymbols>
+		<DebugType>embedded</DebugType>
+		<EmbedAllSources>false</EmbedAllSources>
+		
+		<RestoreAdditionalProjectSources>$(RestoreSources);https://api.nuget.org/v3/index.json</RestoreAdditionalProjectSources>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+	  <DefineConstants>TRACE;CONTRACTS_FULL</DefineConstants>
+	  <Optimize>true</Optimize>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseUntraced|AnyCPU'">
+	  <DefineConstants>RELEASE;CONTRACTS_FULL</DefineConstants>
+	  <Optimize>true</Optimize>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Shipping|AnyCPU'">
+	  <DefineConstants>SHIPPING</DefineConstants>
+	  <Optimize>true</Optimize>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ShippingAsserts|AnyCPU'">
+	  <DefineConstants>SHIPPING;CONTRACTS_FULL</DefineConstants>
+	  <Optimize>true</Optimize>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Development|AnyCPU'">
+	  <DefineConstants>DEVELOPMENT;CONTRACTS_FULL</DefineConstants>
+	  <Optimize>true</Optimize>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+	  <DefineConstants>DEBUG;TRACE</DefineConstants>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <Compile Remove="Resample\**" />
+	  <EmbeddedResource Remove="Resample\**" />
+	  <None Remove="Resample\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Include="..\README.md">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<IgnoresAccessChecksTo Include="MonoGame.Framework" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="FastExpressionCompiler.LightExpression" Version="5.3.0" />
+		<PackageReference Include="Hafner.Compatibility.CallerInformationAttributes.G2" Version="1.0.1" />
+		<PackageReference Include="Hafner.Compatibility.DynamicallyAccessedMembersAttribute" Version="1.1.3" />
+		<PackageReference Include="IsExternalInit" Version="1.0.3">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="JetBrains.Annotations" Version="2025.2.4">
+			<ExcludeAssets>runtime</ExcludeAssets>
+		</PackageReference>
+		<PackageReference Include="Krafs.Publicizer" Version="2.3.0">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="LinqFasterer" Version="2.1.0" />
+		<PackageReference Include="Nullable" Version="1.3.1">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="OptimizedPriorityQueue" Version="5.1.0" />
+		<PackageReference Include="Pastel" Version="7.0.1" />
+		<PackageReference Include="Tomlyn" Version="0.20.0" />
+		<PackageReference Include="ZstdNet" Version="1.4.5" GeneratePathProperty="true">
+			<ExcludeAssets>all</ExcludeAssets>
+		</PackageReference>
+		
+		<Reference Include="$(PkgZstdNet)\lib\net45\ZstdNet.dll">
+			<Private>true</Private>
+		</Reference>
+		
+		<Reference Include="MonoGame.Framework">
+		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Kynseed\MonoGame.Framework.dll</HintPath>
+		</Reference>
+	</ItemGroup>
+	
+	<PropertyGroup>
+		<InternalsAssemblyNames>MonoGame.Framework</InternalsAssemblyNames>
+		<InternalsAssemblyUseEmptyMethodBodies>false</InternalsAssemblyUseEmptyMethodBodies>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Publicize Include="MonoGame.Framework" />
+		<DoNotPublicize Include="MonoGame.Framework:Microsoft.Xna.Framework.Graphics.Texture.Dispose" />
+		<DoNotPublicize Include="MonoGame.Framework:Microsoft.Xna.Framework.Graphics.GraphicsResource.Disposing" />
+	</ItemGroup>
+	
+	<ItemGroup>
+		<Publicize Include="$(Publicize)" />
+		<DoNotPublicize Include="$(DoNotPublicize)" />
+	</ItemGroup>
+	
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+		<Exec Command="$(ProjectDir)scripts\build.post.rb 'OutDir=$(OutDir)' 'SolutionDir=$(SolutionDir)' 'ILRepack=$(PkgILRepack)' 'ILStrip=$(PkgBrokenevent_ILStrip_CLI)' 'IgnoreModFilePatterns=$(IgnoreModFilePatterns)'" />
+	</Target>
+
+	<ItemGroup>
+		<Reference Update="Stardew Valley">
+			<Aliases>destination</Aliases>
+		</Reference>
+	</ItemGroup>
+
+	<Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+	  <Exec Command="$(SolutionDir)SetVersion.rb -q" WorkingDirectory="$(SolutionDir)" />
+	</Target>
+
+	<ItemGroup>
+	  <None Remove="C:\Users\mike\.nuget\packages\zstdnet\1.4.5\build\x64\libzstd.dll" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Remove="C:\Users\mike\.nuget\packages\zstdnet\1.4.5\build\x86\libzstd.dll" />
+	</ItemGroup>
+	
+</Project>

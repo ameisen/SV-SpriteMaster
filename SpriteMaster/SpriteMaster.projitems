@@ -39,7 +39,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)CpuIdParser\GenericParser.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)CpuIdParser\IntelParser.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Debug\Debug.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Debug\DebugMode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Debug\Debug_Dump.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Debug\Debug_Output.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Debug\Debug_Prints.cs" />
@@ -107,7 +106,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Harmonize\HarmonizeConditionalAttribute.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Harmonize\HarmonizeFinalizeCatcher.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Harmonize\HarmonizeTranspileAttribute.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Harmonize\Patches\Game\ClickCrash.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Harmonize\Patches\Game\Threading.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Harmonize\Patches\PGraphicsDevice.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Harmonize\Patches\PGraphicsDeviceManager.cs" />
@@ -246,7 +244,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Types\Exceptions\UnknownEnumException.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Types\Exceptions\UnknownValueException.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Types\ExclusiveLock.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Types\ExtendedButton.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Types\ExtentI.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Types\FixedArray.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Types\Fixed\Fixed16.cs" />

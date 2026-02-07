@@ -1,5 +1,4 @@
 ﻿using LinqFasterer;
-using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using System;
@@ -22,34 +21,36 @@ internal static class Padding {
 	private static PaddingParameters? GetPaddingParameters(
 		Vector2I spriteSize,
 		uint scale,
-		SpriteInfo input,
+		SpriteInfoBase input,
 		bool forcePadding,
 		in Analysis.LegacyResults analysis
 	) {
-		if (!Config.Resample.Padding.Enabled) {
+		if (!SMConfig.Resample.Padding.Enabled) {
 			return null;
 		}
 
 		QuadB hasPadding = QuadB.True;
 		QuadB solidEdge = (
-			new(analysis.Repeat.Horizontal | analysis.Wrapped.X | spriteSize.Width <= 1),
-			new(analysis.Repeat.Vertical | analysis.Wrapped.Y | spriteSize.Height <= 1)
+			new(analysis.Repeat.Horizontal | analysis.Wrapped.X | (spriteSize.Width <= 1)),
+			new(analysis.Repeat.Vertical | analysis.Wrapped.Y | (spriteSize.Height <= 1))
 		);
 
-		if (!Config.Resample.Padding.PadSolidEdges) {
+		if (!SMConfig.Resample.Padding.PadSolidEdges) {
 			hasPadding = solidEdge.Invert;
 		}
 
-		if (Config.Resample.Padding.AlwaysList.AnyF(prefix => input.Reference.NormalizedName().StartsWith(prefix))) {
+		SpriteInfo? spriteInfo = input as SpriteInfo;
+
+		if (spriteInfo is not null && SMConfig.Resample.Padding.AlwaysList.AnyF(prefix => spriteInfo.Reference.NormalizedName().StartsWith(prefix))) {
 			hasPadding = QuadB.True;
 		}
 
-		int minTexels = Config.Resample.Padding.MinimumSizeTexels;
+		int minTexels = SMConfig.Resample.Padding.MinimumSizeTexels;
 
 		if (hasPadding.Any && (spriteSize.X <= minTexels && spriteSize.Y <= minTexels)) {
 			hasPadding = QuadB.False;
 		}
-		else if (hasPadding.Any && (Config.Resample.Padding.IgnoreUnknown && !input.Reference.Anonymous())) {
+		else if (hasPadding.Any && SMConfig.Resample.Padding.IgnoreUnknown && spriteInfo?.Reference.Anonymous() == false) {
 			hasPadding = QuadB.False;
 		}
 
@@ -66,7 +67,7 @@ internal static class Padding {
 
 		var expectedPadding = (int)Math.Max(1U, scale / 2);
 
-		int clampDimension = Config.ClampDimension;
+		int clampDimension = SMConfig.ClampDimension;
 
 		if (hasPadding.Left) {
 			if ((paddedSpriteSize.X + expectedPadding) * scale > clampDimension) {
@@ -120,7 +121,7 @@ internal static class Padding {
 		ReadOnlySpan<Color16> data,
 		Vector2I spriteSize,
 		uint scale,
-		SpriteInfo input,
+		SpriteInfoBase input,
 		bool forcePadding,
 		scoped in Analysis.LegacyResults analysis,
 		out PaddingQuad padding,
@@ -148,16 +149,16 @@ internal static class Padding {
 			int GetCurrentRowOffset() => y * paddedSpriteSize.Width;
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			void WritePaddingY(Span<Color16> data) {
+			void WritePaddingY(Span<Color16> inData) {
 				for (int i = 0; i < expectedPadding; ++i, ++y) {
 					var strideOffset = GetCurrentRowOffset();
-					data.Slice(strideOffset, paddedSpriteSize.Width).Fill(PadConstant);
+					inData.Slice(strideOffset, paddedSpriteSize.Width).Fill(PadConstant);
 				}
 			}
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			int WritePaddingX(Span<Color16> data, int xOffset) {
-				data.Slice(xOffset, expectedPadding).Fill(PadConstant);
+			int WritePaddingX(Span<Color16> inData, int xOffset) {
+				inData.Slice(xOffset, expectedPadding).Fill(PadConstant);
 				return expectedPadding;
 			}
 
@@ -259,7 +260,7 @@ internal static class Padding {
 	internal static bool IsBlacklisted(Bounds bounds, XTexture2D reference) {
 		var normalizedName = reference.NormalizedName();
 
-		foreach (var blacklistedRef in Config.Resample.Padding.BlackListS) {
+		foreach (var blacklistedRef in SMConfig.Resample.Padding.BlackListS) {
 			if (!blacklistedRef.Pattern.IsMatch(normalizedName)) {
 				continue;
 			}

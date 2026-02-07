@@ -1,11 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.2.11415.280 d18.0
+VisualStudioVersion = 18.2.11415.280
 MinimumVisualStudioVersion = 17.0.795.42246
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SpriteMaster-SDV", "SpriteMaster-SDV\SpriteMaster-SDV.csproj", "{C270B7AD-DA11-4176-83B9-8998FE58A601}"
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "SpriteMaster", "SpriteMaster\SpriteMaster.shproj", "{43A77187-6E3D-40BB-9D96-D23B6D0CDEB9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpriteMaster-KS", "SpriteMaster-KS\SpriteMaster-KS.csproj", "{3EB63596-00A0-4C08-930D-A5851B827B76}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "SpriteMaster-Resampler", "SpriteMaster-Resampler\SpriteMaster-Resampler.shproj", "{F91B271A-9AE2-480A-A24D-2E21E25FF1C0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,6 +33,18 @@ Global
 		{C270B7AD-DA11-4176-83B9-8998FE58A601}.Shipping|Any CPU.Build.0 = Shipping|Any CPU
 		{C270B7AD-DA11-4176-83B9-8998FE58A601}.ShippingAsserts|Any CPU.ActiveCfg = ShippingAsserts|Any CPU
 		{C270B7AD-DA11-4176-83B9-8998FE58A601}.ShippingAsserts|Any CPU.Build.0 = ShippingAsserts|Any CPU
+		{3EB63596-00A0-4C08-930D-A5851B827B76}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3EB63596-00A0-4C08-930D-A5851B827B76}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3EB63596-00A0-4C08-930D-A5851B827B76}.Development|Any CPU.ActiveCfg = Development|Any CPU
+		{3EB63596-00A0-4C08-930D-A5851B827B76}.Development|Any CPU.Build.0 = Development|Any CPU
+		{3EB63596-00A0-4C08-930D-A5851B827B76}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3EB63596-00A0-4C08-930D-A5851B827B76}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3EB63596-00A0-4C08-930D-A5851B827B76}.ReleaseUntraced|Any CPU.ActiveCfg = ReleaseUntraced|Any CPU
+		{3EB63596-00A0-4C08-930D-A5851B827B76}.ReleaseUntraced|Any CPU.Build.0 = ReleaseUntraced|Any CPU
+		{3EB63596-00A0-4C08-930D-A5851B827B76}.Shipping|Any CPU.ActiveCfg = Shipping|Any CPU
+		{3EB63596-00A0-4C08-930D-A5851B827B76}.Shipping|Any CPU.Build.0 = Shipping|Any CPU
+		{3EB63596-00A0-4C08-930D-A5851B827B76}.ShippingAsserts|Any CPU.ActiveCfg = ShippingAsserts|Any CPU
+		{3EB63596-00A0-4C08-930D-A5851B827B76}.ShippingAsserts|Any CPU.Build.0 = ShippingAsserts|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -37,7 +53,9 @@ Global
 		SolutionGuid = {99B52420-C34F-442B-BE1C-EEDE50281AC0}
 	EndGlobalSection
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		SpriteMaster\SpriteMaster.projitems*{3eb63596-00a0-4c08-930d-a5851b827b76}*SharedItemsImports = 5
 		SpriteMaster\SpriteMaster.projitems*{43a77187-6e3d-40bb-9d96-d23b6d0cdeb9}*SharedItemsImports = 13
 		SpriteMaster\SpriteMaster.projitems*{c270b7ad-da11-4176-83b9-8998fe58a601}*SharedItemsImports = 5
+		SpriteMaster-Resampler\SpriteMaster-Resampler.projitems*{f91b271a-9ae2-480a-a24d-2e21e25ff1c0}*SharedItemsImports = 13
 	EndGlobalSection
 EndGlobal

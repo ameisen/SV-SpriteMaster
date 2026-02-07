@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿#if NETCOREAPP3_0_OR_GREATER
+using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.Arm;
 // ReSharper disable MemberHidesStaticFromOuterClass
@@ -120,3 +121,4 @@ internal static unsafe partial class XxHash3 {
 		}
 	}
 }
+#endif

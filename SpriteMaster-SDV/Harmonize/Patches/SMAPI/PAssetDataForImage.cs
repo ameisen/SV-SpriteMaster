@@ -166,7 +166,7 @@ internal static class PAssetDataForImage {
 		if (sourceArea.Value.Size != targetArea.Value.Size)
 			ThrowNotSameSizeException();
 
-		if (GL.Texture2DExt.CopyTexture(source, sourceArea.Value, target, targetArea.Value, patchMode)) {
+		if (patchMode is PatchMode.Replace && GL.Texture2DExt.CopyTexture(source, sourceArea.Value, target, targetArea.Value)) {
 			return false;
 		}
 

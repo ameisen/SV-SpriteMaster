@@ -14,15 +14,19 @@ internal static unsafe partial class XxHash3 {
 	private const MethodImplOptions Hot =
 		(MethodImplOptions)0;
 
+#if NETCOREAPP3_0_OR_GREATER
 	private const bool UseAvx512 = Extensions.Simd.Support.Avx512;
 	internal static readonly bool UseAvx2 = true && Extensions.Simd.Support.Avx2;
 	internal static readonly bool UseSse2 = Extensions.Simd.Support.Enabled && Sse2.IsSupported;
 	internal static readonly bool UseNeon = Extensions.Simd.Support.Enabled && AdvSimd.IsSupported;
+#endif
 
 	private static readonly int VectorSize =
+#if NETCOREAPP3_0_OR_GREATER
 		UseAvx512 ? 512 :
 		UseAvx2 ? 256 :
 		(UseSse2 || UseNeon) ? 128 :
+#endif
 		64;
 	private const bool UsePrefetch = true;
 	private const uint CacheLine = 0x40u;
@@ -34,9 +38,11 @@ internal static unsafe partial class XxHash3 {
 			return;
 		}
 
+#if NETCOREAPP3_0_OR_GREATER
 		if (Sse.IsSupported) {
 			Sse.Prefetch0(((byte*)address) + PrefetchDistance);
 		}
+#endif
 	}
 
 	[MethodImpl(Inline)]
@@ -45,9 +51,11 @@ internal static unsafe partial class XxHash3 {
 			return;
 		}
 
+#if NETCOREAPP3_0_OR_GREATER
 		if (Sse.IsSupported) {
 			Sse.PrefetchNonTemporal(((byte*)address) + PrefetchDistance);
 		}
+#endif
 	}
 
 	private static class Prime32 {

@@ -6,9 +6,7 @@ using SpriteMaster.Extensions.Reflection;
 using SpriteMaster.GL;
 using SpriteMaster.Metadata;
 using SpriteMaster.Types;
-using StardewValley;
 using System;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
@@ -18,7 +16,7 @@ namespace SpriteMaster.Harmonize.Patches;
 
 [SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "Harmony")]
 [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Harmony")]
-internal static class PGraphicsDeviceManager {
+internal static partial class PGraphicsDeviceManager {
 	private struct DeviceState {
 		private bool Initialized = false;
 		private Vector2I Size = new(int.MinValue);
@@ -63,23 +61,6 @@ internal static class PGraphicsDeviceManager {
 	private static DeviceState LastState = new();
 
 	[Harmonize(
-		typeof(Game1),
-		"SetWindowSize",
-		Fixation.Prefix,
-		PriorityLevel.Last,
-		enabledType: typeof(SMConfig.Debug),
-		enabledMember: nameof(Config.Debug.TestZoomedOutOverMax)
-	)]
-	public static bool OnSetWindowSize(Game1 __instance, ref int w, ref int h) {
-		if (Config.Debug.TestZoomedOutOverMax) {
-			Game1.options.desiredBaseZoomLevel = 0.25f;
-			Game1.options.baseZoomLevel = 0.25f;
-		}
-
-		return true;
-	}
-
-	[Harmonize(
 		typeof(RenderTarget2D),
 		Constructor,
 		Fixation.Prefix,
@@ -99,41 +80,12 @@ internal static class PGraphicsDeviceManager {
 		out bool __state
 	) {
 		using var watchdogScoped = WatchDog.WatchDog.ScopedWorkingState;
-		var stackTrace = new StackTrace(fNeedFileInfo: false);
 
-		if (stackTrace.GetFrame(0)?.GetMethod()?.DeclaringType == typeof(StardewValley.Game1)) {
-			__state = true;
-		}
-
-		foreach (var frame in stackTrace.GetFrames()) {
-			var method = frame.GetMethod();
-			if (method?.DeclaringType != typeof(StardewValley.Game1)) {
-				continue;
-			}
-
-			switch (method.Name) {
-				case "SetWindowSize": {
-						__state = true;
-						if (LastGraphicsDevice is null || !LastGraphicsDevice.TryGetTarget(out var device)) {
-							return;
-						}
-
-						preferredMultiSampleCount = (Config.DrawState.AntialiasingSamples > 1) ? Config.DrawState.AntialiasingSamples : 0;
-						preferredDepthFormat = device.PresentationParameters.DepthStencilFormat;
-						preferredFormat = device.PresentationParameters.BackBufferFormat;
-					}
-					return;
-
-				case "Initialize":
-				case "allocateLightmap":
-				case "takeMapScreenshot": {
-						__state = true;
-					}
-					return;
-			}
-		}
-
-		__state = false;
+		__state = ShouldManageRenderTarget(
+			ref preferredFormat,
+			ref preferredDepthFormat,
+			ref preferredMultiSampleCount
+		);
 	}
 
 	[Harmonize(

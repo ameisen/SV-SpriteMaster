@@ -12,12 +12,8 @@ internal partial struct Vector2I :
 	IEquatable<DrawingPoint?>,
 	IEquatable<XNA.Point>,
 	IEquatable<XNA.Point?>,
-	IEquatable<XTilePoint>,
-	IEquatable<XTilePoint?>,
 	IEquatable<DrawingSize>,
-	IEquatable<DrawingSize?>,
-	IEquatable<XTileSize>,
-	IEquatable<XTileSize?> {
+	IEquatable<DrawingSize?> {
 
 	#region Equals
 
@@ -26,9 +22,7 @@ internal partial struct Vector2I :
 		Vector2I vec => Equals(vec),
 		DrawingPoint vec => Equals(vec),
 		XNA.Point vec => Equals(vec),
-		XTilePoint vec => Equals(vec),
 		DrawingSize vec => Equals(vec),
-		XTileSize vec => Equals(vec),
 		Tuple<int, int> vector => Equals(new Vector2F(vector.Item1, vector.Item2)),
 		ValueTuple<int, int> vector => Equals(vector),
 		_ => false,
@@ -59,22 +53,10 @@ internal partial struct Vector2I :
 	public readonly bool Equals(XNA.Point? other) => other is not null && this == (Vector2I)other.Value;
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	public readonly bool Equals(XTilePoint other) => this == (Vector2I)other;
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	public readonly bool Equals(XTilePoint? other) => other is not null && this == (Vector2I)other.Value;
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public readonly bool Equals(DrawingSize other) => this == (Vector2I)other;
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public readonly bool Equals(DrawingSize? other) => other is not null && this == (Vector2I)other.Value;
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	public readonly bool Equals(XTileSize other) => this == (Vector2I)other;
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	public readonly bool Equals(XTileSize? other) => other is not null && this == (Vector2I)other.Value;
 
 	#endregion
 
@@ -123,18 +105,6 @@ internal partial struct Vector2I :
 	public static bool operator !=(XNA.Point lhs, Vector2I rhs) => !(lhs == rhs);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	public static bool operator ==(Vector2I lhs, XTilePoint rhs) => lhs.Equals(rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	public static bool operator !=(Vector2I lhs, XTilePoint rhs) => !(lhs == rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	public static bool operator ==(XTilePoint lhs, Vector2I rhs) => rhs.Equals(lhs);
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	public static bool operator !=(XTilePoint lhs, Vector2I rhs) => !(lhs == rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static bool operator ==(Vector2I lhs, DrawingSize rhs) => lhs.Equals(rhs);
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
@@ -145,18 +115,6 @@ internal partial struct Vector2I :
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	public static bool operator !=(DrawingSize lhs, Vector2I rhs) => !(lhs == rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	public static bool operator ==(Vector2I lhs, XTileSize rhs) => lhs.Equals(rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	public static bool operator !=(Vector2I lhs, XTileSize rhs) => !(lhs == rhs);
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	public static bool operator ==(XTileSize lhs, Vector2I rhs) => rhs.Equals(lhs);
-
-	[MethodImpl(Runtime.MethodImpl.Inline)]
-	public static bool operator !=(XTileSize lhs, Vector2I rhs) => !(lhs == rhs);
 
 	#endregion
 }
