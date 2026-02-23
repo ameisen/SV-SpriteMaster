@@ -1,5 +1,4 @@
-﻿using SpriteMaster.Configuration;
-using SpriteMaster.Extensions;
+﻿using SpriteMaster.Extensions;
 using SpriteMaster.Types.MemoryCache;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;

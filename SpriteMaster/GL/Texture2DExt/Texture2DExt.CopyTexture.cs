@@ -19,7 +19,7 @@ internal static partial class Texture2DExt {
 			return false;
 		}
 
-		if (!Configuration.Config.Extras.OpenGL.Enabled || !SMConfig.Extras.OpenGL.UseCopyTexture) {
+		if (!SMConfig.Extras.OpenGL.Enabled || !SMConfig.Extras.OpenGL.UseCopyTexture) {
 			return false;
 		}
 

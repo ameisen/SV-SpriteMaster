@@ -1,3 +1,4 @@
+global using SMConfig = SpriteMaster.Configuration.Config;
 global using XNA = Microsoft.Xna.Framework;
 global using XColor = Microsoft.Xna.Framework.Color;
 global using XGraphics = Microsoft.Xna.Framework.Graphics;
@@ -6,12 +7,9 @@ global using XTexture2D = Microsoft.Xna.Framework.Graphics.Texture2D;
 global using XRectangle = Microsoft.Xna.Framework.Rectangle;
 global using XVector2 = Microsoft.Xna.Framework.Vector2;
 global using DefaultScaler = SpriteMaster.Resample.Scalers.xBRZ;
-global using DrawingColor = System.Drawing.Color;
-global using DrawingPoint = System.Drawing.Point;
 global using DrawingRectangle = System.Drawing.Rectangle;
 global using DrawingSize = System.Drawing.Size;
 global using half = System.Half;
-global using PureAttribute = System.Diagnostics.Contracts.PureAttribute;
 using System;
 using System.Runtime.CompilerServices;
 using System.Security;
@@ -29,7 +27,7 @@ using System.Security;
 [assembly: InternalsVisibleTo("Strings")]
 [assembly: InternalsVisibleTo("Math")]
 [assembly: SecurityRules(SecurityRuleSet.Level2, SkipVerificationInFullTrust = true)]
-[assembly: ChangeList("7f55df0:0.15.0-beta.16-21-g7f55df0")]
+[assembly: ChangeList("9ec3d23:0.15.0-beta.16-22-g9ec3d23")]
 [assembly: BuildComputerName("Palatinate")]
 [assembly: FullVersion("0.15.0.116.0-beta.16.0")]
 

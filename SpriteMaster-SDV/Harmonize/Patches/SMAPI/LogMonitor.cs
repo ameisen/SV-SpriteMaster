@@ -1,6 +1,5 @@
 ﻿#if (!SHIPPING && !RELEASE) || LOG_MONITOR
 
-using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using SpriteMaster.Extensions.Reflection;
 using StardewModdingAPI;
@@ -19,7 +18,7 @@ internal static class LogMonitor {
 			return false;
 		}
 
-		var configSilencedMods = Config.Debug.Logging.SilencedMods;
+		var configSilencedMods = SMConfig.Debug.Logging.SilencedMods;
 		if (SilencedMods.Count == 0 && configSilencedMods.Length != 0) {
 			SilencedMods.AddRange(configSilencedMods);
 		}
@@ -36,7 +35,7 @@ internal static class LogMonitor {
 		critical: false
 	)]
 	public static bool LogImplPre(IMonitor __instance, string? source, string? message, object level) {
-		if (!Config.Debug.Logging.SilenceOtherMods) {
+		if (!SMConfig.Debug.Logging.SilenceOtherMods) {
 			return true;
 		}
 

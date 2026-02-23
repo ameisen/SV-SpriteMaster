@@ -1,11 +1,14 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
 	<Import Project="$(SolutionDir)\SpriteMaster\SpriteMaster.projitems" Label="Shared" />
+	<Import Project="..\SpriteMaster-Resampler\SpriteMaster-Resampler.projitems" Label="Shared" />
+	<Import Project="..\SpriteMaster-Runtime\SpriteMaster-Runtime.projitems" Label="Shared" />
 	<Import Project="$(SolutionDir)SpriteMasterCommon.props" />
 
 	<PropertyGroup>
-		<AssemblyName>SpriteMaster-SDV</AssemblyName>
+		<AssemblyName>SpriteMaster</AssemblyName>
 		<PackageId>SpriteMaster-SV</PackageId>
+		<ModFolderName>SpriteMaster</ModFolderName>
 		<ProjectGuid>C270B7AD-DA11-4176-83B9-8998FE58A601</ProjectGuid>
 		<EnableHarmony>true</EnableHarmony>
 		<RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
@@ -56,6 +59,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <None Include="..\LICENSE.md">
+	    <Pack>True</Pack>
+	    <PackagePath></PackagePath>
+	  </None>
 	  <None Include="..\README.md">
 	    <Pack>True</Pack>
 	    <PackagePath>\</PackagePath>
@@ -93,6 +100,8 @@
 	<PropertyGroup>
 		<InternalsAssemblyNames>MonoGame.Framework</InternalsAssemblyNames>
 		<InternalsAssemblyUseEmptyMethodBodies>false</InternalsAssemblyUseEmptyMethodBodies>
+		<AssemblyTitle>SpriteMaster</AssemblyTitle>
+		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
 	</PropertyGroup>
 
 	<ItemGroup>

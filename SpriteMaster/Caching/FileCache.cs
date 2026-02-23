@@ -25,7 +25,7 @@ internal static class FileCache {
 	private static readonly Version RuntimeVersion = typeof(Runtime).Assembly.GetName().Version!;
 	private static readonly ulong AssemblyHash = AssemblyVersion.GetSafeHash().Fuse(RuntimeVersion.GetSafeHash()).Unsigned();
 	private static readonly string CacheName = $"{TextureCacheName}_{AssemblyVersion}";
-	private static readonly string LocalDataPath = Path.Combine(Config.LocalRoot, CacheName);
+	private static readonly string LocalDataPath = Path.Combine(SMConfig.LocalRoot, CacheName);
 	private static readonly string DumpPath = Path.Combine(LocalDataPath, "dump");
 
 	private static bool SystemCompression = false;
@@ -156,9 +156,9 @@ internal static class FileCache {
 			}
 		}
 	}
-	private static readonly Profiler CacheProfiler = Config.FileCache.Profile && Config.FileCache.Enabled ? new() : null!;
+	private static readonly Profiler CacheProfiler = SMConfig.FileCache.Profile && SMConfig.FileCache.Enabled ? new() : null!;
 
-	private static readonly ConcurrentDictionary<string, SaveState> SavingMap = Config.FileCache.Enabled ? new() : null!;
+	private static readonly ConcurrentDictionary<string, SaveState> SavingMap = SMConfig.FileCache.Enabled ? new() : null!;
 
 	internal static bool Fetch(
 		string path,
@@ -185,15 +185,15 @@ internal static class FileCache {
 		try {
 			CurrentTaskLock.EnterReadLock();
 
-			if (!Config.FileCache.Enabled || !File.Exists(path)) {
+			if (!SMConfig.FileCache.Enabled || !File.Exists(path)) {
 				return false;
 			}
 
-			int retries = Config.FileCache.LockRetries;
+			int retries = SMConfig.FileCache.LockRetries;
 
 			while (retries-- > 0) {
 				if (SavingMap.TryGetValue(path, out var state) && state != SaveState.Saved) {
-					Thread.Sleep(Config.FileCache.LockSleepMilliseconds);
+					Thread.Sleep(SMConfig.FileCache.LockSleepMilliseconds);
 					continue;
 				}
 
@@ -204,7 +204,7 @@ internal static class FileCache {
 				}
 
 				try {
-					long startTime = Config.FileCache.Profile ? DateTime.Now.Ticks : 0L;
+					long startTime = SMConfig.FileCache.Profile ? DateTime.Now.Ticks : 0L;
 
 					Scaler scaler;
 					using (var reader = new BinaryReader(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))) {
@@ -246,7 +246,7 @@ internal static class FileCache {
 						}
 					}
 
-					if (Config.FileCache.Profile) {
+					if (SMConfig.FileCache.Profile) {
 						var meanTicks = CacheProfiler.AddFetchTime((ulong)(DateTime.Now.Ticks - startTime));
 						Debug.Info($"Mean Time Per Fetch: {(double)meanTicks / TimeSpan.TicksPerMillisecond} ms");
 					}
@@ -268,7 +268,7 @@ internal static class FileCache {
 							return false;
 						case IOException iox when WasLocked(iox):
 							Debug.Trace($"File was locked when trying to load cache file '{path}': {ex} - {ex.Message} [{retries} retries]");
-							Thread.Sleep(Config.FileCache.LockSleepMilliseconds);
+							Thread.Sleep(SMConfig.FileCache.LockSleepMilliseconds);
 							break;
 					}
 				}
@@ -292,7 +292,7 @@ internal static class FileCache {
 		bool gradient,
 		ReadOnlyPinnedSpan<byte> data
 	) {
-		if (!Config.FileCache.Enabled) {
+		if (!SMConfig.FileCache.Enabled) {
 			return true;
 		}
 		CurrentTaskLock.EnterReadLock();
@@ -307,13 +307,13 @@ internal static class FileCache {
 					var data = ((ReadOnlyPinnedSpan<byte>.FixedSpan)obj!).AsSpan;
 					bool failure = false;
 					try {
-						long startTime = Config.FileCache.Profile ? DateTime.Now.Ticks : 0L;
+						long startTime = SMConfig.FileCache.Profile ? DateTime.Now.Ticks : 0L;
 
 						using (var writer = new BinaryWriter(new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None))) {
 							if (!writer.BaseStream.CanWrite) {
 								return;
 							}
-							var algorithm = SystemCompression && !Config.FileCache.ForceCompress ? Compression.Algorithm.None : Config.FileCache.Compress;
+							var algorithm = SystemCompression && !SMConfig.FileCache.ForceCompress ? Compression.Algorithm.None : SMConfig.FileCache.Compress;
 
 							ReadOnlySpan<byte> compressedData = data.Compress<byte>(algorithm);
 
@@ -339,13 +339,13 @@ internal static class FileCache {
 
 							writer.Write(compressedData);
 
-							if (Config.FileCache.Profile) {
+							if (SMConfig.FileCache.Profile) {
 								writer.Flush();
 							}
 						}
 						SavingMap.TryUpdate(path, SaveState.Saved, SaveState.Saving);
 
-						if (Config.FileCache.Profile) {
+						if (SMConfig.FileCache.Profile) {
 							var meanTicks = CacheProfiler.AddStoreTime((ulong)(DateTime.Now.Ticks - startTime));
 							Debug.Info($"Mean Time Per Store: {(double)meanTicks / TimeSpan.TicksPerMillisecond} ms");
 						}
@@ -379,8 +379,8 @@ internal static class FileCache {
 	}
 
 	internal static void Purge(bool reset = false) {
-		var configState = Config.FileCache.Enabled;
-		Config.FileCache.Enabled = false;
+		var configState = SMConfig.FileCache.Enabled;
+		SMConfig.FileCache.Enabled = false;
 		CurrentTaskLock.EnterWriteLock();
 		try {
 			// TODO : This isn't perfect as there's a race condition for when tasks are _just_ started.
@@ -392,7 +392,7 @@ internal static class FileCache {
 		}
 		finally {
 			CurrentTaskLock.ExitWriteLock();
-			Config.FileCache.Enabled = configState;
+			SMConfig.FileCache.Enabled = configState;
 		}
 	}
 
@@ -409,7 +409,7 @@ internal static class FileCache {
 
 	private static void DeleteCaches(string? retain) {
 		try {
-			foreach (var root in new[] { Config.LocalRoot }) {
+			foreach (var root in new[] { SMConfig.LocalRoot }) {
 				var directories = Directory.EnumerateDirectories(root);
 				foreach (var directory in directories) {
 					try {
@@ -420,7 +420,7 @@ internal static class FileCache {
 							continue;
 						}
 						var endPath = Path.GetFileName(directory);
-						if (Config.FileCache.Purge || (endPath != retain && endPath != JunctionCacheName)) {
+						if (SMConfig.FileCache.Purge || (endPath != retain && endPath != JunctionCacheName)) {
 							// If it doesn't match, it's outdated and should be deleted.
 							Directory.Delete(directory, true);
 						}
@@ -433,7 +433,7 @@ internal static class FileCache {
 	}
 
 	private static void BuildCache() {
-		if (Config.FileCache.Enabled) {
+		if (SMConfig.FileCache.Enabled) {
 			try {
 				// Create the directory path
 				Directory.CreateDirectory(LocalDataPath);
@@ -445,7 +445,7 @@ internal static class FileCache {
 				if (Runtime.IsWindows) {
 					// Use System compression if it is preferred and no other compression algorithm is supported for some reason.
 					// https://stackoverflow.com/questions/624125/compress-a-folder-using-ntfs-compression-in-net
-					if (Config.FileCache.PreferSystemCompression || (int)Config.FileCache.Compress <= (int)Compression.Algorithm.Deflate) {
+					if (SMConfig.FileCache.PreferSystemCompression || (int)SMConfig.FileCache.Compress <= (int)Compression.Algorithm.Deflate) {
 						SystemCompression = DirectoryExt.CompressDirectory(LocalDataPath);
 					}
 				}
@@ -457,7 +457,7 @@ internal static class FileCache {
 
 		try {
 			Directory.CreateDirectory(LocalDataPath);
-			if (Config.Debug.Sprite.DumpReference || Config.Debug.Sprite.DumpResample) {
+			if (SMConfig.Debug.Sprite.DumpReference || SMConfig.Debug.Sprite.DumpResample) {
 				Directory.CreateDirectory(DumpPath);
 			}
 		}
@@ -467,12 +467,12 @@ internal static class FileCache {
 
 		// Set up a symbolic link to aid in debugging.
 		try {
-			Directory.Delete(Path.Combine(Config.LocalRoot, JunctionCacheName), false);
+			Directory.Delete(Path.Combine(SMConfig.LocalRoot, JunctionCacheName), false);
 		}
 		catch { /* Ignore failure */ }
 		try {
 			CreateSymbolicLink(
-				link: Path.Combine(Config.LocalRoot, JunctionCacheName),
+				link: Path.Combine(SMConfig.LocalRoot, JunctionCacheName),
 				target: Path.Combine(LocalDataPath),
 				type: LinkType.Directory
 			);
@@ -482,7 +482,7 @@ internal static class FileCache {
 
 	static FileCache() {
 		try {
-			Config.FileCache.Compress = Compression.GetPreferredAlgorithm(Config.FileCache.Compress);
+			SMConfig.FileCache.Compress = Compression.GetPreferredAlgorithm(SMConfig.FileCache.Compress);
 
 			// Delete any old caches.
 			DeleteCaches(CacheName);

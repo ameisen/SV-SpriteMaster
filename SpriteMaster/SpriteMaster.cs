@@ -2,7 +2,6 @@
 using JetBrains.Annotations;
 using LinqFasterer;
 using SpriteMaster.Caching;
-using SpriteMaster.Configuration;
 using SpriteMaster.Experimental;
 using SpriteMaster.Extensions;
 using SpriteMaster.GL;
@@ -65,21 +64,21 @@ public sealed partial class SpriteMaster {
 	}
 
 	private void InitializeConfig() {
-		Config.SetPath(Path.Combine(ModDirectory, ConfigName));
+		SMConfig.SetPath(Path.Combine(ModDirectory, ConfigName));
 
-		Config.DefaultConfig = new MemoryStream();
-		Serialize.Save(Config.DefaultConfig, leaveOpen: true);
+		SMConfig.DefaultConfig = new MemoryStream();
+		Configuration.Serialize.Save(SMConfig.DefaultConfig, leaveOpen: true);
 
-		if (!Config.IgnoreConfig) {
-			Serialize.Load(Config.Path);
+		if (!SMConfig.IgnoreConfig) {
+			Configuration.Serialize.Load(SMConfig.Path);
 		}
 
-		if (Versioning.IsOutdated(Config.ConfigVersion)) {
-			Debug.Info($"config.toml is out of date ({Config.ConfigVersion} < {Config.ClearConfigBefore}), rewriting it.");
+		if (Versioning.IsOutdated(SMConfig.ConfigVersion)) {
+			Debug.Info($"config.toml is out of date ({SMConfig.ConfigVersion} < {SMConfig.ClearConfigBefore}), rewriting it.");
 
-			Serialize.Load(Config.DefaultConfig, retain: true);
-			Config.DefaultConfig.Position = 0;
-			Config.ConfigVersion = Versioning.CurrentVersion;
+			Configuration.Serialize.Load(SMConfig.DefaultConfig, retain: true);
+			SMConfig.DefaultConfig.Position = 0;
+			SMConfig.ConfigVersion = Versioning.CurrentVersion;
 		}
 
 		static Regex ProcessTexturePattern(string pattern) {
@@ -89,9 +88,9 @@ public sealed partial class SpriteMaster {
 			return new(pattern, RegexOptions.Compiled);
 		}
 
-		static Config.TextureRef[] ProcessTextureRefs(List<string> textureRefStrings) {
+		static SMConfig.TextureRef[] ProcessTextureRefs(List<string> textureRefStrings) {
 			// handle sliced textures. At some point I will add struct support.
-			var result = new Config.TextureRef[textureRefStrings.Count];
+			var result = new SMConfig.TextureRef[textureRefStrings.Count];
 			for (int i = 0; i < result.Length; ++i) {
 				var slicedTexture = textureRefStrings[i];
 				//@"LooseSprites\Cursors::0,640:2000,256"
@@ -118,8 +117,8 @@ public sealed partial class SpriteMaster {
 			return result;
 		}
 
-		Config.Resample.SlicedTexturesS = ProcessTextureRefs(Config.Resample.SlicedTextures);
-		Config.Resample.Padding.BlackListS = ProcessTextureRefs(Config.Resample.Padding.BlackList);
+		SMConfig.Resample.SlicedTexturesS = ProcessTextureRefs(SMConfig.Resample.SlicedTextures);
+		SMConfig.Resample.Padding.BlackListS = ProcessTextureRefs(SMConfig.Resample.Padding.BlackList);
 
 		// Compile blacklist patterns
 		static Regex[] ProcessTexturePatterns(List<string> texturePatternStrings) {
@@ -131,8 +130,8 @@ public sealed partial class SpriteMaster {
 		}
 
 
-		Config.Resample.BlacklistPatterns = ProcessTexturePatterns(Config.Resample.Blacklist);
-		Config.Resample.GradientBlacklistPatterns = ProcessTexturePatterns(Config.Resample.GradientBlacklist);
+		SMConfig.Resample.BlacklistPatterns = ProcessTexturePatterns(SMConfig.Resample.Blacklist);
+		SMConfig.Resample.GradientBlacklistPatterns = ProcessTexturePatterns(SMConfig.Resample.GradientBlacklist);
 	}
 
 	private bool Initialized = false;

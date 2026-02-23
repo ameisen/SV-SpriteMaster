@@ -64,7 +64,7 @@ internal sealed class ManagedTexture2D : InternalTexture2D {
 		Interlocked.Add(ref TotalAllocatedSize, (ulong)this.SizeBytes());
 		Interlocked.Increment(ref TotalManagedTextures);
 
-		if (Configuration.Config.Garbage.ShouldCollectAccountOwnedTextures) {
+		if (SMConfig.Garbage.ShouldCollectAccountOwnedTextures) {
 			Garbage.MarkOwned(format, dimensions.Area);
 			Marked = true;
 		}

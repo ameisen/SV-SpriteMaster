@@ -1,5 +1,4 @@
-﻿global using SMConfig = SpriteMaster.Configuration.Config;
-using LinqFasterer;
+﻿using LinqFasterer;
 using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Extensions;
 using SpriteMaster.Resample;
@@ -16,7 +15,7 @@ using Root = SpriteMaster;
 namespace SpriteMaster.Configuration;
 
 internal static partial class Config {
-	internal static readonly string ModuleName =
+	internal static string ModuleName =>
 		typeof(SMConfig).Namespace?.Split('.').ElementAtOrDefaultF(0) ?? "SpriteMaster";
 
 	[Attributes.Ignore] internal static string Path { get; private set; } = null!;
@@ -389,20 +388,6 @@ internal static partial class Config {
 		};
 		[Attributes.Ignore]
 		internal static TextureRef[] SlicedTexturesS = Array.Empty<TextureRef>();
-		[Attributes.Advanced]
-		internal static class BlockMultipleAnalysis {
-			[Attributes.Comment("Should sprites be analyzed to see if they are block multiples?")]
-			[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllRenderingCaches)]
-			internal static bool Enabled = true;
-			[Attributes.Comment("What threshold should be used for block multiple analysis?")]
-			[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllRenderingCaches)]
-			[Attributes.LimitsInt(0, 255)]
-			internal static int EqualityThreshold = 1;
-			[Attributes.Comment("How many blocks can be different for the test to still pass?")]
-			[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllRenderingCaches)]
-			[Attributes.LimitsInt(1, int.MaxValue)]
-			internal static int MaxInequality = 1;
-		}
 
 		[Attributes.Comment("What textures or spritesheets use 4xblock sizes?")]
 		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllRenderingCaches)]
@@ -468,6 +453,35 @@ internal static partial class Config {
 			[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllRenderingCaches)]
 			[Attributes.LimitsReal(0.0, 1.0)]
 			internal static double MinimumPremultipliedOpaqueProportion = 0.05;
+
+			[Attributes.Advanced]
+			internal static class WrapDetection {
+				[Attributes.Comment("Should edge-wrap analysis be enabled?")]
+				[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllRenderingCaches)]
+				internal const bool Enabled = true;
+				[Attributes.Comment("What is the threshold percentage of alpha values to be used to determine if it is a wrapping edge?")]
+				[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllRenderingCaches)]
+				[Attributes.LimitsReal(0.0, 1.0)]
+				internal static float EdgeThreshold = 0.2f;
+				[Attributes.Comment("What is the minimum alpha value assumed to be opaque?")]
+				[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllRenderingCaches)]
+				internal static byte AlphaThreshold = 1;
+			}
+
+			[Attributes.Advanced]
+			internal static class BlockMultiple {
+				[Attributes.Comment("Should sprites be analyzed to see if they are block multiples?")]
+				[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllRenderingCaches)]
+				internal static bool Enabled = true;
+				[Attributes.Comment("What threshold should be used for block multiple analysis?")]
+				[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllRenderingCaches)]
+				[Attributes.LimitsInt(0, 255)]
+				internal static int EqualityThreshold = 1;
+				[Attributes.Comment("How many blocks can be different for the test to still pass?")]
+				[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllRenderingCaches)]
+				[Attributes.LimitsInt(1, int.MaxValue)]
+				internal static int MaxInequality = 1;
+			}
 		}
 
 		[Attributes.Ignore]
@@ -663,20 +677,6 @@ internal static partial class Config {
 			[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllRenderingCaches)]
 			internal static bool UseGradientBlockCopy = false;
 		}
-	}
-
-	[Attributes.Advanced]
-	internal static class WrapDetection {
-		[Attributes.Comment("Should edge-wrap analysis be enabled?")]
-		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllRenderingCaches)]
-		internal const bool Enabled = true;
-		[Attributes.Comment("What is the threshold percentage of alpha values to be used to determine if it is a wrapping edge?")]
-		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllRenderingCaches)]
-		[Attributes.LimitsReal(0.0, 1.0)]
-		internal static float EdgeThreshold = 0.2f;
-		[Attributes.Comment("What is the minimum alpha value assumed to be opaque?")]
-		[Attributes.OptionsAttribute(Attributes.OptionsAttribute.Flag.FlushAllRenderingCaches)]
-		internal static byte AlphaThreshold = 1;
 	}
 
 	[Attributes.Advanced]

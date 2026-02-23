@@ -2,7 +2,6 @@
 using LinqFasterer;
 using Microsoft.Toolkit.HighPerformance;
 using Microsoft.Xna.Framework.Graphics;
-using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using SpriteMaster.Extensions.Reflection;
 using SpriteMaster.Metadata;
@@ -224,7 +223,7 @@ internal static class PTexture2D {
 		int startIndex,
 		int elementCount
 	) where T : unmanaged {
-		if (!Config.IsEnabled || !Config.SMAPI.ApplyGetDataPatch) {
+		if (!SMConfig.IsEnabled || !SMConfig.SMAPI.ApplyGetDataPatch) {
 			return true;
 		}
 

@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <RootNamespace>SpriteMaster</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <AssemblyName>SpriteMaster-Resampler</AssemblyName>
+    <AssemblyTitle>SpriteMaster-Resampler</AssemblyTitle>
+	<LangVersion>preview</LangVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>$(DefineConstants);SM_LIBRARY</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DefineConstants>$(DefineConstants);SM_LIBRARY</DefineConstants>
+  </PropertyGroup>
+
+  <Import Project="..\SpriteMaster-Resampler\SpriteMaster-Resampler.projitems" Label="Shared" />
+
+  <Import Project="..\SpriteMaster-Runtime\SpriteMaster-Runtime.projitems" Label="Shared" />
+
+  <Import Project="..\SpriteMaster-External\SpriteMaster-External.projitems" Label="Shared" />
+
+  <ItemGroup>
+    <PackageReference Include="FastExpressionCompiler.LightExpression" Version="5.3.0" />
+    <PackageReference Include="JetBrains.Annotations" Version="2025.2.4" />
+    <PackageReference Include="LinqFasterer" Version="2.1.0" />
+    <PackageReference Include="Microsoft.Toolkit.HighPerformance" Version="7.1.2" />
+    <PackageReference Include="Pastel" Version="7.0.1" />
+  </ItemGroup>
+
+</Project>

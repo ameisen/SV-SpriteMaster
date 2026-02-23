@@ -15,7 +15,10 @@ internal static class Attributes {
 	}
 
 	[AttributeUsage(AttributeTargets.All, AllowMultiple = false, Inherited = true)]
-	internal sealed class IgnoreAttribute : ConfigAttribute { }
+	internal class IgnoreAttribute : ConfigAttribute { }
+
+	[AttributeUsage(AttributeTargets.All, AllowMultiple = false, Inherited = true)]
+	internal class NotImplementedAttribute : IgnoreAttribute { }
 
 	[AttributeUsage(AttributeTargets.All, AllowMultiple = false, Inherited = true)]
 	internal sealed class RetainAttribute : ConfigAttribute { }

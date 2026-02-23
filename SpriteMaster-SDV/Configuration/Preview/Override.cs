@@ -20,19 +20,19 @@ internal class Override {
 
 #pragma warning disable CS0618 // Type or member is obsolete
 	internal static Override FromConfig => new() {
-		Enabled = Config.IsUnconditionallyEnabled,
-		ResampleEnabled = Config.Resample.Enabled,
-		Scaler = Config.Resample.Scaler,
-		ScalerPortrait = Config.Resample.ScalerPortrait,
-		ScalerText = Config.Resample.ScalerText,
-		ScalerGradient = Config.Resample.ScalerGradient,
-		ResampleSprites = Config.Resample.EnabledSprites,
-		ResamplePortraits = Config.Resample.EnabledPortraits,
-		ResampleLargeText = Config.Resample.EnabledLargeText,
-		ResampleSmallText = Config.Resample.EnabledSmallText,
+		Enabled = SMConfig.IsUnconditionallyEnabled,
+		ResampleEnabled = SMConfig.Resample.Enabled,
+		Scaler = SMConfig.Resample.Scaler,
+		ScalerPortrait = SMConfig.Resample.ScalerPortrait,
+		ScalerText = SMConfig.Resample.ScalerText,
+		ScalerGradient = SMConfig.Resample.ScalerGradient,
+		ResampleSprites = SMConfig.Resample.EnabledSprites,
+		ResamplePortraits = SMConfig.Resample.EnabledPortraits,
+		ResampleLargeText = SMConfig.Resample.EnabledLargeText,
+		ResampleSmallText = SMConfig.Resample.EnabledSmallText,
 
-		SetLinearUnresampled = Config.DrawState.SetLinearUnresampled,
-		SetLinear = Config.DrawState.SetLinear
+		SetLinearUnresampled = SMConfig.DrawState.SetLinearUnresampled,
+		SetLinear = SMConfig.DrawState.SetLinear
 	};
 #pragma warning restore CS0618 // Type or member is obsolete
 }

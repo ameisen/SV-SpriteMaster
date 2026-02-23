@@ -168,7 +168,7 @@ internal static partial class Texture2DExt {
 		SurfaceType type,
 		bool shared
 	) where T : unmanaged {
-		if (!Configuration.Config.Extras.OpenGL.Enabled) {
+		if (!SMConfig.Extras.OpenGL.Enabled) {
 			return false;
 		}
 

@@ -1,5 +1,4 @@
-﻿using SpriteMaster.Configuration;
-using SpriteMaster.Extensions;
+﻿using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using SpriteMaster.Types.Fixed;
 using StardewModdingAPI;
@@ -147,7 +146,7 @@ internal static class PAssetDataForImage {
 		critical: false
 	)]
 	public static bool PatchImage(IAssetDataForImage __instance, XTexture2D source, XRectangle? sourceArea, XRectangle? targetArea, PatchMode patchMode) {
-		if (!Config.SMAPI.ApplyPatchEnabled) {
+		if (!SMConfig.SMAPI.ApplyPatchEnabled) {
 			return true;
 		}
 
@@ -198,7 +197,7 @@ internal static class PAssetDataForImage {
 	critical: false
 )]
 	public static bool PatchImageImpl(IAssetDataForImage __instance, XColor[] sourceData, int sourceWidth, int sourceHeight, XRectangle sourceArea, XRectangle targetArea, PatchMode patchMode, int startRow = 0) {
-		if (!Config.SMAPI.ApplyPatchEnabled) {
+		if (!SMConfig.SMAPI.ApplyPatchEnabled) {
 			return true;
 		}
 

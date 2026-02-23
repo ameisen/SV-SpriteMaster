@@ -1,0 +1,130 @@
+﻿using System;
+using System.Runtime.CompilerServices;
+
+namespace SpriteMaster.Types;
+
+internal partial struct Vector2I :
+	IEquatable<Vector2I>,
+	IEquatable<Vector2I?>,
+	IEquatable<(int, int)>,
+	IEquatable<(int, int)?>
+#if !SM_LIBRARY
+	,
+	IEquatable<DrawingPoint>,
+	IEquatable<DrawingPoint?>,
+	IEquatable<XNA.Point>,
+	IEquatable<XNA.Point?>,
+	IEquatable<DrawingSize>,
+	IEquatable<DrawingSize?>
+#endif
+{
+
+	#region Equals
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	public override readonly bool Equals(object? other) => other switch {
+		Vector2I vec => Equals(vec),
+#if !SM_LIBRARY
+		DrawingPoint vec => Equals(vec),
+		XNA.Point vec => Equals(vec),
+		DrawingSize vec => Equals(vec),
+#endif
+		Tuple<int, int> vector => Equals(new Vector2F(vector.Item1, vector.Item2)),
+		ValueTuple<int, int> vector => Equals(vector),
+		_ => false,
+	};
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	public readonly bool Equals(Vector2I other) => Packed == other.Packed;
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	public readonly bool Equals(Vector2I? other) => other is not null && Equals(other.Value);
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	public readonly bool Equals((int, int) other) => this == (Vector2I)other;
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	public readonly bool Equals((int, int)? other) => other is not null && this == (Vector2I)other.Value;
+
+#if !SM_LIBRARY
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	public readonly bool Equals(DrawingPoint other) => this == (Vector2I)other;
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	public readonly bool Equals(DrawingPoint? other) => other is not null && this == (Vector2I)other.Value;
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	public readonly bool Equals(XNA.Point other) => this == (Vector2I)other;
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	public readonly bool Equals(XNA.Point? other) => other is not null && this == (Vector2I)other.Value;
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	public readonly bool Equals(DrawingSize other) => this == (Vector2I)other;
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	public readonly bool Equals(DrawingSize? other) => other is not null && this == (Vector2I)other.Value;
+#endif
+
+	#endregion
+
+	#region == and !=
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	public static bool operator ==(Vector2I lhs, Vector2I rhs) => lhs.Packed == rhs.Packed;
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	public static bool operator !=(Vector2I lhs, Vector2I rhs) => lhs.Packed != rhs.Packed;
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	public static bool operator ==(Vector2I lhs, (int X, int Y) rhs) => lhs.Equals(rhs);
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	public static bool operator !=(Vector2I lhs, (int X, int Y) rhs) => !(lhs == rhs);
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	public static bool operator ==((int X, int Y) lhs, Vector2I rhs) => rhs.Equals(lhs);
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	public static bool operator !=((int X, int Y) lhs, Vector2I rhs) => !(lhs == rhs);
+
+#if !SM_LIBRARY
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	public static bool operator ==(Vector2I lhs, DrawingPoint rhs) => lhs.Equals(rhs);
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	public static bool operator !=(Vector2I lhs, DrawingPoint rhs) => !(lhs == rhs);
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	public static bool operator ==(DrawingPoint lhs, Vector2I rhs) => rhs.Equals(lhs);
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	public static bool operator !=(DrawingPoint lhs, Vector2I rhs) => !(lhs == rhs);
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	public static bool operator ==(Vector2I lhs, XNA.Point rhs) => lhs.Equals(rhs);
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	public static bool operator !=(Vector2I lhs, XNA.Point rhs) => !(lhs == rhs);
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	public static bool operator ==(XNA.Point lhs, Vector2I rhs) => rhs.Equals(lhs);
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	public static bool operator !=(XNA.Point lhs, Vector2I rhs) => !(lhs == rhs);
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	public static bool operator ==(Vector2I lhs, DrawingSize rhs) => lhs.Equals(rhs);
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	public static bool operator !=(Vector2I lhs, DrawingSize rhs) => !(lhs == rhs);
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	public static bool operator ==(DrawingSize lhs, Vector2I rhs) => rhs.Equals(lhs);
+
+	[MethodImpl(Runtime.MethodImpl.Inline)]
+	public static bool operator !=(DrawingSize lhs, Vector2I rhs) => !(lhs == rhs);
+#endif
+
+	#endregion
+}

@@ -2,7 +2,6 @@
 using LinqFasterer;
 using Microsoft.Xna.Framework.Input;
 using SpriteMaster.Caching;
-using SpriteMaster.Configuration;
 using SpriteMaster.Experimental;
 using SpriteMaster.Extensions;
 using SpriteMaster.Harmonize.Patches.Game;
@@ -77,12 +76,12 @@ public sealed partial class SpriteMaster : Mod {
 
 		Initialize();
 
-		if (Config.ShowIntroMessage && !Config.SkipIntro) {
+		if (SMConfig.ShowIntroMessage && !SMConfig.SkipIntro) {
 			Helper.Events.GameLoop.UpdateTicked += OnUpdateTicked;
-			Config.ShowIntroMessage = false;
+			SMConfig.ShowIntroMessage = false;
 		}
 
-		Serialize.Save(Config.Path);
+		Configuration.Serialize.Save(SMConfig.Path);
 
 		foreach (var prefix in new[] { "spritemaster", "sm" }) {
 			_ = TryAddConsoleCommand(prefix, "SpriteMaster Commands", ConsoleSupport.Invoke);
@@ -114,7 +113,7 @@ public sealed partial class SpriteMaster : Mod {
 	}
 
 	private void OnUpdateTicked(object? sender, UpdateTickedEventArgs args) {
-		if (!Config.ShowIntroMessage) {
+		if (!SMConfig.ShowIntroMessage) {
 			return;
 		}
 
@@ -135,7 +134,7 @@ public sealed partial class SpriteMaster : Mod {
 	}
 
 	private void OnWarp(object? _, WarpedEventArgs args) {
-		if (Config.AsyncScaling.FlushSynchronizedTasksOnWarp) {
+		if (SMConfig.AsyncScaling.FlushSynchronizedTasksOnWarp) {
 			SynchronizedTaskScheduler.Instance.FlushPendingTasks();
 		}
 
@@ -282,14 +281,14 @@ public sealed partial class SpriteMaster : Mod {
 
 	private static void OnButtonPressed(object? _, ButtonPressedEventArgs args) {
 
-		if (args.Button == Config.ToggleButton) {
+		if (args.Button == SMConfig.ToggleButton) {
 			var keyboardState = Game1.GetKeyboardState();
 			var control = keyboardState.IsKeyDown(Keys.LeftControl) || keyboardState.IsKeyDown(Keys.RightControl);
 			if (control) {
-				Config.ToggledEnable = !Config.ToggledEnable;
+				SMConfig.ToggledEnable = !SMConfig.ToggledEnable;
 			}
 			else {
-				Config.Resample.ToggledEnable = !Config.Resample.ToggledEnable;
+				SMConfig.Resample.ToggledEnable = !SMConfig.Resample.ToggledEnable;
 			}
 		}
 	}

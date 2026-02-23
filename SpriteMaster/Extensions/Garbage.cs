@@ -27,11 +27,11 @@ internal static class Garbage {
 		//Debug.Error("Interactive GC");
 
 		try {
-			GCSettings.LatencyMode = Config.Garbage.LatencyMode;
-			Debug.Info($"GC Latency Mode set to {Config.Garbage.LatencyMode}");
+			GCSettings.LatencyMode = SMConfig.Garbage.LatencyMode;
+			Debug.Info($"GC Latency Mode set to {SMConfig.Garbage.LatencyMode}");
 		}
 		catch (Exception ex) {
-			Debug.Warning($"Failed to set GC Latency Mode to '{Config.Garbage.LatencyMode}': {ex.GetTypeName()}: {ex.Message}, attempting to fall back...");
+			Debug.Warning($"Failed to set GC Latency Mode to '{SMConfig.Garbage.LatencyMode}': {ex.GetTypeName()}: {ex.Message}, attempting to fall back...");
 
 			foreach (var mode in new[] { GCLatencyMode.SustainedLowLatency, GCLatencyMode.LowLatency, GCLatencyMode.Interactive }) {
 				try {
@@ -139,7 +139,7 @@ internal static class Garbage {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static void MarkUnowned(SurfaceFormat format, int texels) {
-		if (!Config.Garbage.CollectAccountUnownedTextures) {
+		if (!SMConfig.Garbage.CollectAccountUnownedTextures) {
 			return;
 		}
 		texels.AssertPositiveOrZero();
@@ -149,7 +149,7 @@ internal static class Garbage {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal static void UnmarkUnowned(SurfaceFormat format, int texels) {
-		if (!Config.Garbage.CollectAccountUnownedTextures) {
+		if (!SMConfig.Garbage.CollectAccountUnownedTextures) {
 			return;
 		}
 		texels.AssertPositiveOrZero();
@@ -164,10 +164,10 @@ internal static class Garbage {
 		internal static readonly Stopwatch Stopwatch = Stopwatch.StartNew();
 
 		internal static readonly MemberInfo EphemeralCollectPeriodMember =
-			typeof(Config.Garbage).GetField(
-				nameof(Config.Garbage.EphemeralCollectPeriod),
+			typeof(SMConfig.Garbage).GetField(
+				nameof(SMConfig.Garbage.EphemeralCollectPeriod),
 				BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static
-			) ?? throw new NullReferenceException(nameof(Config.Garbage.EphemeralCollectPeriod));
+			) ?? throw new NullReferenceException(nameof(SMConfig.Garbage.EphemeralCollectPeriod));
 		internal static readonly Limit<TimeSpan> Limits = new() {
 			Min = EphemeralCollectPeriodMember.GetCustomAttribute<Attributes.LimitsTimeSpanAttribute>()?.MinValue ?? TimeSpan.Zero,
 			Max = EphemeralCollectPeriodMember.GetCustomAttribute<Attributes.LimitsTimeSpanAttribute>()?.MaxValue ?? TimeSpan.MaxValue,
@@ -175,7 +175,7 @@ internal static class Garbage {
 
 		[MethodImpl(Runtime.MethodImpl.Inline)]
 		internal static void Collect(ulong currentFrame) {
-			if (Stopwatch.Elapsed < Config.Garbage.EphemeralCollectPeriod) {
+			if (Stopwatch.Elapsed < SMConfig.Garbage.EphemeralCollectPeriod) {
 				return;
 			}
 
@@ -201,11 +201,11 @@ internal static class Garbage {
 			}
 
 			if (totalPauseDuration > TimeSpan.Zero) {
-				double timeRatio = Config.Garbage.EphemeralCollectPauseGoal / totalPauseDuration;
+				double timeRatio = SMConfig.Garbage.EphemeralCollectPauseGoal / totalPauseDuration;
 
-				var newTimeSpan = Config.Garbage.EphemeralCollectPeriod * timeRatio;
+				var newTimeSpan = SMConfig.Garbage.EphemeralCollectPeriod * timeRatio;
 				newTimeSpan = Limits.Clamp(newTimeSpan);
-				Config.Garbage.EphemeralCollectPeriod = newTimeSpan;
+				SMConfig.Garbage.EphemeralCollectPeriod = newTimeSpan;
 			}
 
 			// general stats

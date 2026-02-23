@@ -2,7 +2,6 @@
 using Microsoft.Xna.Framework.Graphics;
 using Pastel;
 using SpriteMaster.Caching;
-using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
 using SpriteMaster.Resample;
@@ -88,11 +87,11 @@ internal sealed partial class ManagedSpriteInstance : IByteSize, IDisposable {
 				return false;
 			}
 
-			if (Math.Max(topTexture.Width, topTexture.Height) <= Config.Resample.MinimumTextureDimensions) {
+			if (Math.Max(topTexture.Width, topTexture.Height) <= SMConfig.Resample.MinimumTextureDimensions) {
 				if (!meta.TracePrinted) {
 					meta.TracePrinted = true;
 					Debug.Trace(
-						$"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Is Too Small: ({topTexture.Extent().ToString(DrawingColor.Orange)} <= {Config.Resample.MinimumTextureDimensions.ToString(DrawingColor.Orange)})"
+						$"Not Scaling Texture '{texture.NormalizedName(DrawingColor.LightYellow)}', Is Too Small: ({topTexture.Extent().ToString(DrawingColor.Orange)} <= {SMConfig.Resample.MinimumTextureDimensions.ToString(DrawingColor.Orange)})"
 					);
 				}
 
@@ -206,23 +205,23 @@ internal sealed partial class ManagedSpriteInstance : IByteSize, IDisposable {
 			}
 
 			switch (spriteType) {
-				case Texture2DMeta.SpriteType.LargeText when !(Configuration.Preview.Override.Instance?.ResampleLargeText ?? Config.Resample.EnabledLargeText):
+				case Texture2DMeta.SpriteType.LargeText when !(Configuration.Preview.Override.Instance?.ResampleLargeText ?? SMConfig.Resample.EnabledLargeText):
 					TracePrint("Is Font (and text resampling is disabled)");
 					return false;
-				case Texture2DMeta.SpriteType.SmallText when !(Configuration.Preview.Override.Instance?.ResampleSmallText ?? Config.Resample.EnabledSmallText):
+				case Texture2DMeta.SpriteType.SmallText when !(Configuration.Preview.Override.Instance?.ResampleSmallText ?? SMConfig.Resample.EnabledSmallText):
 					// The only BC2 texture that I've _ever_ seen is the internal font
 					TracePrint("Is Basic Font (and basic text resampling is disabled)");
 					return false;
-				case Texture2DMeta.SpriteType.Portrait when !(Configuration.Preview.Override.Instance?.ResamplePortraits ?? Config.Resample.EnabledPortraits):
+				case Texture2DMeta.SpriteType.Portrait when !(Configuration.Preview.Override.Instance?.ResamplePortraits ?? SMConfig.Resample.EnabledPortraits):
 					TracePrint("Is Portrait (and portrait resampling is disabled)");
 					return false;
-				case Texture2DMeta.SpriteType.Sprite when !(Configuration.Preview.Override.Instance?.ResampleSprites ?? Config.Resample.EnabledSprites):
+				case Texture2DMeta.SpriteType.Sprite when !(Configuration.Preview.Override.Instance?.ResampleSprites ?? SMConfig.Resample.EnabledSprites):
 					TracePrint("Is Sprite (and sprite resampling is disabled)");
 					return false;
 			}
 
 			if (!texture.Anonymous()) {
-				foreach (var blacklistPattern in Config.Resample.BlacklistPatterns) {
+				foreach (var blacklistPattern in SMConfig.Resample.BlacklistPatterns) {
 					if (!blacklistPattern.IsMatch(texture.NormalizedName())) {
 						continue;
 					}
@@ -299,7 +298,7 @@ internal sealed partial class ManagedSpriteInstance : IByteSize, IDisposable {
 #endif
 
 	internal static ManagedSpriteInstance? Fetch(XTexture2D texture, Bounds source, uint expectedScale) {
-		if (!Config.IsEnabled || !Config.Resample.IsEnabled) {
+		if (!SMConfig.IsEnabled || !SMConfig.Resample.IsEnabled) {
 			return null;
 		}
 
@@ -315,7 +314,7 @@ internal sealed partial class ManagedSpriteInstance : IByteSize, IDisposable {
 			return scaleTexture;
 		}
 
-		uint maxScale = (uint)Config.Resample.MaxScale;
+		uint maxScale = (uint)SMConfig.Resample.MaxScale;
 		for (uint temporaryScale = expectedScale + 1; temporaryScale <= maxScale; ++temporaryScale) {
 			if (SpriteMap.TryGetReady(texture, source, temporaryScale, out var tempScaleTexture)) {
 				if (tempScaleTexture.NoResample) {
@@ -341,7 +340,7 @@ internal sealed partial class ManagedSpriteInstance : IByteSize, IDisposable {
 
 	internal static bool TryResurrect(in SpriteInfo.Initializer initializer, [NotNullWhen(true)] out ManagedSpriteInstance? resurrected) {
 		// Check for a suspended sprite instance that happens to match.
-		if (!Config.SuspendedCache.Enabled) {
+		if (!SMConfig.SuspendedCache.Enabled) {
 			resurrected = null;
 			return false;
 		}
@@ -361,7 +360,7 @@ internal sealed partial class ManagedSpriteInstance : IByteSize, IDisposable {
 
 	internal static bool TryResurrect(SpriteInfo info, [NotNullWhen(true)] out ManagedSpriteInstance? resurrected) {
 		// Check for a suspended sprite instance that happens to match.
-		if (!Config.SuspendedCache.Enabled) {
+		if (!SMConfig.SuspendedCache.Enabled) {
 			resurrected = null;
 			return false;
 		}
@@ -384,7 +383,7 @@ internal sealed partial class ManagedSpriteInstance : IByteSize, IDisposable {
 	internal static ManagedSpriteInstance? FetchOrCreate(XTexture2D texture, Bounds source, uint expectedScale, bool sliced, out bool allowCache) {
 		allowCache = true;
 
-		if (!Config.IsEnabled || !Config.Resample.IsEnabled) {
+		if (!SMConfig.IsEnabled || !SMConfig.Resample.IsEnabled) {
 			return null;
 		}
 
@@ -422,7 +421,7 @@ internal sealed partial class ManagedSpriteInstance : IByteSize, IDisposable {
 
 		// If we didn't find a previous texture, check for one with a different scale
 		if (currentInstance is null) {
-			uint maxScale = (uint)Config.Resample.MaxScale;
+			uint maxScale = (uint)SMConfig.Resample.MaxScale;
 			for (uint temporaryScale = expectedScale + 1; temporaryScale <= maxScale; ++temporaryScale) {
 				if (SpriteMap.TryGetReady(texture, source, temporaryScale, out var tempScaleTexture)) {
 					currentInstance = tempScaleTexture;
@@ -450,12 +449,12 @@ internal sealed partial class ManagedSpriteInstance : IByteSize, IDisposable {
 			return null;
 		}
 
-		bool useStalling = Config.Resample.UseFrametimeStalling && !GameState.IsLoading;
+		bool useStalling = SMConfig.Resample.UseFrametimeStalling && !GameState.IsLoading;
 
 		bool useAsync =
-			Config.AsyncScaling.Enabled &&
-			(Config.AsyncScaling.EnabledForUnknownTextures || !texture.Anonymous()) &&
-			source.Area >= Config.AsyncScaling.MinimumSizeTexels;
+			SMConfig.AsyncScaling.Enabled &&
+			(SMConfig.AsyncScaling.EnabledForUnknownTextures || !texture.Anonymous()) &&
+			source.Area >= SMConfig.AsyncScaling.MinimumSizeTexels;
 		// !textureMeta.HasCachedData
 
 		TimeSpan? remainingTime = null;

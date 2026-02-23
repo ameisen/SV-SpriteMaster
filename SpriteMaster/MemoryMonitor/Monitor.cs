@@ -1,6 +1,5 @@
 ﻿using JetBrains.Annotations;
 using SpriteMaster.Caching;
-using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using System;
 using System.Collections.Generic;
@@ -75,8 +74,8 @@ internal sealed class Monitor {
 				continue;
 			}
 
-			ulong hardRequired = ClampedWiden(Interlocked.Read(ref Config.Garbage.RequiredFreeMemoryHard));
-			ulong softRequired = ClampedWiden(Interlocked.Read(ref Config.Garbage.RequiredFreeMemorySoft));
+			ulong hardRequired = ClampedWiden(Interlocked.Read(ref SMConfig.Garbage.RequiredFreeMemoryHard));
+			ulong softRequired = ClampedWiden(Interlocked.Read(ref SMConfig.Garbage.RequiredFreeMemorySoft));
 
 			if (TryPurge<HardPurgeMethod>(hardRequired) || TryPurge<SoftPurgeMethod>(softRequired)) {
 				DrawState.TriggerCollection.Set(true);

@@ -1,6 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using SpriteMaster.Extensions.Reflection;
 using SpriteMaster.Tasking;
@@ -187,7 +186,7 @@ internal static partial class DrawState {
 			LastFrameTimesTotal[index] = FrameStopwatch.Elapsed;
 		}
 
-		if (!Config.IsEnabled) {
+		if (!SMConfig.IsEnabled) {
 			return;
 		}
 

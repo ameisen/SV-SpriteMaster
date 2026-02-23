@@ -1,0 +1,110 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects Condition="'$(MSBuildVersion)' == '' Or '$(MSBuildVersion)' &lt; '16.0'">$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <SharedGUID>82d4054e-75eb-49a8-972e-149961387631</SharedGUID>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <Import_RootNamespace>SpriteMaster_Runtime</Import_RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)AttributePolyfills.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Colors\ColorConstant.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Colors\ColorHelpers.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Colors\ColorSpace.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Contracts.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CpuIdParser\AmdParser.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CpuIdParser\GenericParser.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CpuIdParser\IntelParser.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Debug\Debug.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Debug\Debug_Output.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Debug\Debug_Prints.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\ArrayExt.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\Collections.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\Common.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\Exceptions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\Floating.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\HashExt.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\IntegerBitwiseExt.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\IntegerCastExt.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\LinqExt.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\MathExt.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\MemoryStreamExt.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\NumericsExt.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\ObjectPoolExt.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\Range.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\Reflection\ReflectionExt.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\Reflection\ReflectionExt.Delegates.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\Reflection\ReflectionExt.Delegates.Field.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\Reflection\ReflectionExt.Delegates.Property.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\Reflection\ReflectionExtTypes.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\Reinterpret.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\Simd\Support.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\SpanExt.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\StringExt.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)extensions\UnsafeExt.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\Untraced.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SystemInfo.CpuId.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SystemInfo.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)FixedArray.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Hashing\Algorithms\XxHash3\SegmentedSpan.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Hashing\Algorithms\XxHash3\XxHash3.Accumulator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Hashing\Algorithms\XxHash3\XxHash3.AVX2.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Hashing\Algorithms\XxHash3\XxHash3.Common.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Hashing\Algorithms\XxHash3\XxHash3.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Hashing\Algorithms\XxHash3\XxHash3.Neon.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Hashing\Algorithms\XxHash3\XxHash3.Scalar.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Hashing\Algorithms\XxHash3\XxHash3.Segmented.AVX2.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Hashing\Algorithms\XxHash3\XxHash3.Segmented.SSE2.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Hashing\Algorithms\XxHash3\XxHash3.SSE2.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Hashing\HashUtility.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Hashing\HashUtility.XxHash3.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Numeric\Float.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Runtime.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ThrowHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\Arrays.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\Bounds.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\Bounds_Comparable.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\Bounds_Equatable.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\Color16.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\Color8.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\ConcurrentSet.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\Exceptions\InvalidTypeParameterException.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\Exceptions\UnknownArgumentEnumException.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\Exceptions\UnknownArgumentException.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\Exceptions\UnknownEnumException.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\Exceptions\UnknownValueException.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\ExtentI.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\Fixed\Fixed16.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\Fixed\Fixed8.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\LongHash.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\PackedUInt.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\PaddingQuad.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\Pooling\IObjectPool.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\Pooling\ObjectPool.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\Pooling\PooledObject.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\Pooling\TrackingObjectPool.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\QuadB.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\Reflection\VariableAccessor.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\Reflection\VariableAttributes.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\Reflection\VariableInfo.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\Reflection\VariableStaticAccessor.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\Spans\PinnedSpan.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\Spans\PinnedSpanCommon.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\Spans\PinnedSpanDebugView.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\Spans\ReadOnlyPinnedSpan.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\TextureType.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\Vector2B.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\Vector2F\Vector2F.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\Vector2F\Vector2F_Comparable.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\Vector2F\Vector2F_Equatable.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\Vector2F\Vector2F_Methods.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\Vector2F\Vector2F_Operators.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\Vector2I\Vector2I.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\Vector2I\Vector2I_Comparable.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\Vector2I\Vector2I_Equatable.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\Vector2I\Vector2I_Methods.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Types\Vector2I\Vector2I_Operators.cs" />
+  </ItemGroup>
+</Project>

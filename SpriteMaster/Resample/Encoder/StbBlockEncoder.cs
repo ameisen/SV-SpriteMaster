@@ -28,11 +28,11 @@ internal static class StbBlockEncoder {
 		TextureFormat resultFormat = hasAlpha ? TextureFormat.BC3 : TextureFormat.BC1;
 		var resultBytes = SpanExt.MakePinned<byte>(RequiredSize(dimensions, hasAlpha));
 
-		var compressionMode = Configuration.Config.Resample.BlockCompression.Quality switch {
+		var compressionMode = SMConfig.Resample.BlockCompression.Quality switch {
 			CompressionQuality.Low => CompressionMode.Normal,
 			CompressionQuality.Medium => CompressionMode.Dither,
 			CompressionQuality.High => CompressionMode.HighQuality,
-			_ => ThrowHelper.ThrowInvalidOperationException<CompressionMode>($"Unknown Quality: '{Configuration.Config.Resample.BlockCompression.Quality}'")
+			_ => ThrowHelper.ThrowInvalidOperationException<CompressionMode>($"Unknown Quality: '{SMConfig.Resample.BlockCompression.Quality}'")
 		};
 
 		CompressDxt(resultBytes, data.AsBytes(), dimensions, hasAlpha, compressionMode);

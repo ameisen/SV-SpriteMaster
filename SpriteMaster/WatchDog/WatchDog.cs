@@ -1,5 +1,4 @@
-﻿using SpriteMaster.Configuration;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -29,7 +28,7 @@ internal static class WatchDog {
 	internal static WorkingStateCookie ScopedWorkingState => new();
 
 	internal static void Initialize() {
-		if (!Config.WatchDog.Enabled) {
+		if (!SMConfig.WatchDog.Enabled) {
 			return;
 		}
 
@@ -43,7 +42,7 @@ internal static class WatchDog {
 	}
 
 	internal static void Tick() {
-		if (!Config.WatchDog.Enabled) {
+		if (!SMConfig.WatchDog.Enabled) {
 			return;
 		}
 
@@ -62,7 +61,7 @@ internal static class WatchDog {
 	}
 
 	internal static void SetWorkingState(bool state) {
-		if (!Config.WatchDog.Enabled) {
+		if (!SMConfig.WatchDog.Enabled) {
 			return;
 		}
 
@@ -115,7 +114,7 @@ internal static class WatchDog {
 		// Otherwise, check if the last tick was longer than the interrupt interval ago
 		var threadTimestamp = LastTickMap[thread];
 		var difference = currentTimestamp - threadTimestamp;
-		if (difference >= Config.WatchDog.InterruptInterval) {
+		if (difference >= SMConfig.WatchDog.InterruptInterval) {
 			// Check if the thread is actually waiting on a lock.
 			if (thread.ThreadState != System.Threading.ThreadState.WaitSleepJoin) {
 				// This means that a thread is spinning, most likely. We cannot interrupt it, but we can warn about it.
@@ -141,7 +140,7 @@ internal static class WatchDog {
 	private static void WatchdogRun() {
 		bool wasInterrupted = false;
 		while (true) {
-			Thread.Sleep(wasInterrupted ? Config.WatchDog.ShortSleepInterval : Config.WatchDog.DefaultSleepInterval);
+			Thread.Sleep(wasInterrupted ? SMConfig.WatchDog.ShortSleepInterval : SMConfig.WatchDog.DefaultSleepInterval);
 			wasInterrupted = false;
 			var timestamp = Stopwatch.GetTimestamp();
 			lock (WatchedThreadsLock) {

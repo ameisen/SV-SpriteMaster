@@ -26,7 +26,7 @@ internal static class Versioning {
 	internal static readonly string FullVersion = GetAssemblyAttribute<FullVersionAttribute>()?.Value ?? CurrentVersion;
 
 	internal static bool IsOutdated(string configVersion) {
-		string referenceVersion = Config.ClearConfigBefore;
+		string referenceVersion = SMConfig.ClearConfigBefore;
 
 		var configStrArray = configVersion.Split('.');
 		var referenceStrArray = referenceVersion.Split('.');
@@ -60,5 +60,5 @@ internal static class Versioning {
 	}
 
 	internal static string StringHeader =>
-		$"SpriteMaster {FullVersion} build {AssemblyVersion.Revision} ({Config.BuildConfiguration}, {ChangeList}, {BuildComputerName})";
+		$"SpriteMaster {FullVersion} build {AssemblyVersion.Revision} ({SMConfig.BuildConfiguration}, {ChangeList}, {BuildComputerName})";
 }

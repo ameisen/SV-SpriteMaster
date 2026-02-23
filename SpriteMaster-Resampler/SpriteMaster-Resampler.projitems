@@ -9,5 +9,75 @@
     <Import_RootNamespace>SpriteMaster_Resampler</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\CompressionFormat.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\CompressionQuality.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Deposterize.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\IScalerInfo.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Passes\Analysis.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Passes\BlockMultipleAnalysis.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Passes\ExtractSprite.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Passes\GammaCorrection.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Passes\Padding.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Passes\PremultipliedAlpha.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Passes\PremultipliedAlpha.Scalar.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Recolor.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Resampler.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scaler.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\AbstractScaler.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\Common.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\Config.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\EPX\Config.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\EPX\Scaler.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\EPX\ScalerInfo.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\EPX\ScalerInterface.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\IScale.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\IScaler.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\LuminanceConfig.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\SuperXBR\Cg\CgMath.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\SuperXBR\Cg\DiffTexel.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\SuperXBR\Cg\Float2.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\SuperXBR\Cg\Float3.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\SuperXBR\Cg\Float3_Swizzles.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\SuperXBR\Cg\Float4.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\SuperXBR\Cg\Float4_Swizzles.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\SuperXBR\Config.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\SuperXBR\Passes\Pass.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\SuperXBR\Passes\Pass0.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\SuperXBR\Passes\Pass1.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\SuperXBR\Passes\Pass2.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\SuperXBR\ScalePass.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\SuperXBR\Scaler.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\SuperXBR\ScalerInfo.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\SuperXBR\ScalerInterface.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\xBREPX\Config.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\xBREPX\Scaler.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\xBREPX\ScalerInfo.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\xBREPX\ScalerInterface.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\xBRZ\Blend\BlendInfo.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\xBRZ\Blend\BlendResult.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\xBRZ\Blend\BlendType.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\xBRZ\Color\ColorComparer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\xBRZ\Common\RotationDegree.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\xBRZ\Config.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\xBRZ\Scaler.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\xBRZ\ScalerInfo.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\xBRZ\ScalerInterface.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\xBRZ\Structures\Kernel3x3.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\xBRZ\Structures\Kernel4x4.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\xBRZ\Structures\OutputMatrix.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\xBRZ\Structures\Rotator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\xBRZ\Structures\ScalerImplementations.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Resample\Scalers\xBRZ\Structures\ScaleSize.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SpriteInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)Resample\Scalers\SuperXBR\Reference\custom-jinc2-sharper.cg" />
+    <None Include="$(MSBuildThisFileDirectory)Resample\Scalers\SuperXBR\Reference\forum.cgp" />
+    <None Include="$(MSBuildThisFileDirectory)Resample\Scalers\SuperXBR\Reference\smart-morph.glsl" />
+    <None Include="$(MSBuildThisFileDirectory)Resample\Scalers\SuperXBR\Reference\super-xbr-6p-small-details.cgp" />
+    <None Include="$(MSBuildThisFileDirectory)Resample\Scalers\SuperXBR\Reference\super-xbr-params.inc" />
+    <None Include="$(MSBuildThisFileDirectory)Resample\Scalers\SuperXBR\Reference\super-xbr-small-details-pass0.cg" />
+    <None Include="$(MSBuildThisFileDirectory)Resample\Scalers\SuperXBR\Reference\super-xbr-small-details-pass1.cg" />
+    <None Include="$(MSBuildThisFileDirectory)Resample\Scalers\SuperXBR\Reference\super-xbr-small-details-pass2.cg" />
   </ItemGroup>
 </Project>

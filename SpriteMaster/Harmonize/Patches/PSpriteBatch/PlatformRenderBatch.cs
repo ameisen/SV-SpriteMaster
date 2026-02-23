@@ -1,5 +1,4 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
-using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using SpriteMaster.Harmonize.Patches.Game;
 using SpriteMaster.Resample;
@@ -46,14 +45,14 @@ internal static partial class PlatformRenderBatch {
 	}
 
 	private static SamplerState GetNewSamplerState(Texture? texture, SamplerState reference) {
-		if (!Config.DrawState.IsSetLinear) {
+		if (!SMConfig.DrawState.IsSetLinear) {
 			return reference;
 		}
 
 		bool isInternalTexture = texture is InternalTexture2D;
 		bool isLighting = !isInternalTexture && (texture?.NormalizedName().StartsWith(@"LooseSprites\Lighting\") ?? false);
 
-		if (!isInternalTexture && !isLighting && !Config.DrawState.IsSetLinearUnresampled) {
+		if (!isInternalTexture && !isLighting && !SMConfig.DrawState.IsSetLinearUnresampled) {
 			return reference;
 		}
 

@@ -1,6 +1,5 @@
 ﻿//#define SM_SINGLE_THREAD
 
-using SpriteMaster.Configuration;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -87,7 +86,7 @@ internal sealed class ThreadedTaskScheduler : TaskScheduler, IDisposable {
 			var thread = Thread.CurrentThread;
 			onInit?.Invoke(thread, index);
 			try {
-				while (!Config.ForcedDisable) {
+				while (!SMConfig.ForcedDisable) {
 					try {
 						foreach (var task in PendingTasks.GetConsumingEnumerable(DisposeCancellation.Token)) {
 							using var workingState = WatchDog.WatchDog.ScopedWorkingState;
@@ -121,7 +120,7 @@ internal sealed class ThreadedTaskScheduler : TaskScheduler, IDisposable {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	protected override void QueueTask(Task task) {
-		if (!Config.IsEnabled) {
+		if (!SMConfig.IsEnabled) {
 			return;
 		}
 

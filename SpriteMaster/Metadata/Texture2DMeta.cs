@@ -1,6 +1,5 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using SpriteMaster.Caching;
-using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using SpriteMaster.Hashing;
 using SpriteMaster.Resample;
@@ -152,16 +151,16 @@ internal sealed class Texture2DMeta : IDisposable {
 	internal bool IsAnimated(Bounds bounds) =>
 		SpriteHasFlag(bounds, SpriteFlag.Animated);
 
-	private readonly Dictionary<Bounds, Config.TextureRef?> SlicedCache = new();
+	private readonly Dictionary<Bounds, SMConfig.TextureRef?> SlicedCache = new();
 
-	internal bool CheckSliced(Bounds bounds, [NotNullWhen(true)] out Config.TextureRef? result) {
+	internal bool CheckSliced(Bounds bounds, [NotNullWhen(true)] out SMConfig.TextureRef? result) {
 		if (SlicedCache.TryGetValue(bounds, out var textureRef)) {
 			result = textureRef;
 			return textureRef.HasValue;
 		}
 
 		if (NormalizedName is not null) {
-			foreach (var slicedTexture in Config.Resample.SlicedTexturesS) {
+			foreach (var slicedTexture in SMConfig.Resample.SlicedTexturesS) {
 				if (!slicedTexture.Pattern.IsMatch(NormalizedName)) {
 					continue;
 				}
@@ -284,7 +283,7 @@ internal sealed class Texture2DMeta : IDisposable {
 	internal bool HasCachedData {
 		[MethodImpl(Runtime.MethodImpl.Inline)]
 		get {
-			if (!Config.ResidentCache.Enabled) {
+			if (!SMConfig.ResidentCache.Enabled) {
 				return false;
 			}
 
@@ -361,7 +360,7 @@ internal sealed class Texture2DMeta : IDisposable {
 
 			try {
 				// TODO : lock isn't granular enough.
-				if (Config.ResidentCache.Enabled && Config.ResidentCache.AlwaysFlush) {
+				if (SMConfig.ResidentCache.Enabled && SMConfig.ResidentCache.AlwaysFlush) {
 					forcePurge = true;
 				}
 				else if (!bounds.HasValue && data.Length == refSize) {
@@ -464,7 +463,7 @@ internal sealed class Texture2DMeta : IDisposable {
 		using (Lock.Write) {
 			CachedRawDataInternal.SetTarget(null!);
 			CachedDataInternal.SetTarget(null!);
-			if (Config.ResidentCache.Enabled) {
+			if (SMConfig.ResidentCache.Enabled) {
 				ResidentCache.RemoveFast(MetaId);
 			}
 
@@ -475,7 +474,7 @@ internal sealed class Texture2DMeta : IDisposable {
 	internal byte[]? CachedRawData {
 		[MethodImpl(Runtime.MethodImpl.Inline)]
 		get {
-			if (!Config.ResidentCache.Enabled) {
+			if (!SMConfig.ResidentCache.Enabled) {
 				return null;
 			}
 
@@ -489,7 +488,7 @@ internal sealed class Texture2DMeta : IDisposable {
 		}
 		set {
 			try {
-				if (!Config.ResidentCache.Enabled) {
+				if (!SMConfig.ResidentCache.Enabled) {
 					return;
 				}
 
@@ -544,7 +543,7 @@ internal sealed class Texture2DMeta : IDisposable {
 
 					if (rawData is not null && rawData.Length != ExpectedByteSizeRaw) {
 						Debug.Error($"Size Mismatch in CachedData ResidentCache pull: {rawData.Length} != {ExpectedByteSizeRaw}");
-						if (Config.ResidentCache.Enabled) {
+						if (SMConfig.ResidentCache.Enabled) {
 							ResidentCache.Remove(MetaId);
 						}
 
@@ -594,7 +593,7 @@ internal sealed class Texture2DMeta : IDisposable {
 	internal byte[]? CachedDataNonBlocking {
 		[MethodImpl(Runtime.MethodImpl.Inline)]
 		get {
-			if (!Config.ResidentCache.Enabled) {
+			if (!SMConfig.ResidentCache.Enabled) {
 				return null;
 			}
 
@@ -636,7 +635,7 @@ internal sealed class Texture2DMeta : IDisposable {
 
 	[MethodImpl(Runtime.MethodImpl.Inline)]
 	internal void PushToCache() {
-		if (!Config.ResidentCache.Enabled) {
+		if (!SMConfig.ResidentCache.Enabled) {
 			return;
 		}
 
@@ -693,7 +692,7 @@ internal sealed class Texture2DMeta : IDisposable {
 	}
 
 	internal static void Cleanup(in ulong id) {
-		if (Config.ResidentCache.Enabled) {
+		if (SMConfig.ResidentCache.Enabled) {
 			ResidentCache.RemoveFast(id);
 		}
 

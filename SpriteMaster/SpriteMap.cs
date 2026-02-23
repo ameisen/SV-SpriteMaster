@@ -1,7 +1,6 @@
 ﻿#define WITH_SPRITE_REFERENCE_SET
 
 using LinqFasterer;
-using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using SpriteMaster.Hashing;
 using SpriteMaster.Metadata;
@@ -347,7 +346,7 @@ internal static class SpriteMap {
 	}
 
 	internal static void SeasonPurge(string season) {
-		if (!Config.Garbage.SeasonalPurge) {
+		if (!SMConfig.Garbage.SeasonalPurge) {
 			return;
 		}
 

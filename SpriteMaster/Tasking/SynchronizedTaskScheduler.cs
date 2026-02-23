@@ -1,5 +1,4 @@
-﻿using SpriteMaster.Configuration;
-using SpriteMaster.Extensions;
+﻿using SpriteMaster.Extensions;
 using SpriteMaster.Types;
 using System;
 using System.Collections.Generic;
@@ -192,7 +191,7 @@ internal sealed class SynchronizedTaskScheduler : TaskScheduler, IDisposable {
 				return;
 			}
 
-			if (Config.AsyncScaling.ThrottledSynchronousLoads && !GameState.IsLoading) {
+			if (SMConfig.AsyncScaling.ThrottledSynchronousLoads && !GameState.IsLoading) {
 				Span<int> processed = stackalloc int[PriorityCount];
 				for (int i = 0; i < processed.Length; ++i) {
 					processed[i] = 0;

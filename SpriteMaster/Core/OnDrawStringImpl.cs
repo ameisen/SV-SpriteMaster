@@ -52,7 +52,7 @@ internal static class OnDrawStringImpl {
 		SpriteEffects effects,
 		float layerDepth
 	) {
-		if (!Configuration.Config.IsEnabled || !Configuration.Config.Resample.IsEnabled) {
+		if (!SMConfig.IsEnabled || !SMConfig.Resample.IsEnabled) {
 			return Continue;
 		}
 
@@ -75,7 +75,7 @@ internal static class OnDrawStringImpl {
 		SpriteEffects effects,
 		float layerDepth
 	) {
-		if (!Configuration.Config.IsEnabled || !Configuration.Config.Resample.IsEnabled) {
+		if (!SMConfig.IsEnabled || !SMConfig.Resample.IsEnabled) {
 			return Continue;
 		}
 
@@ -246,11 +246,11 @@ internal static class OnDrawStringImpl {
 	) where TCharSource : ICharSource {
 		var textureFlags = spriteFont.Texture?.Meta().Flags ?? default;
 
-		if (textureFlags.HasFlag(Texture2DMeta.TextureFlag.IsLargeFont) && !(Configuration.Preview.Override.Instance?.ResampleLargeText ?? Configuration.Config.Resample.EnabledLargeText)) {
+		if (textureFlags.HasFlag(Texture2DMeta.TextureFlag.IsLargeFont) && !(Configuration.Preview.Override.Instance?.ResampleLargeText ?? SMConfig.Resample.EnabledLargeText)) {
 			return true;
 		}
 
-		if (textureFlags.HasFlag(Texture2DMeta.TextureFlag.IsSmallFont) && !(Configuration.Preview.Override.Instance?.ResampleSmallText ?? Configuration.Config.Resample.EnabledSmallText)) {
+		if (textureFlags.HasFlag(Texture2DMeta.TextureFlag.IsSmallFont) && !(Configuration.Preview.Override.Instance?.ResampleSmallText ?? SMConfig.Resample.EnabledSmallText)) {
 			return true;
 		}
 

@@ -1,5 +1,4 @@
-﻿using SpriteMaster.Configuration;
-using SpriteMaster.Extensions;
+﻿using SpriteMaster.Extensions;
 using SpriteMaster.Metadata;
 using SpriteMaster.Types;
 using System;
@@ -10,12 +9,12 @@ namespace SpriteMaster.Core;
 
 internal static partial class OnDrawImpl {
 	[MethodImpl(Runtime.MethodImpl.Inline)]
-	private static bool GetIsSliced(Bounds bounds, XTexture2D reference, [NotNullWhen(true)] out Config.TextureRef? result) {
+	private static bool GetIsSliced(Bounds bounds, XTexture2D reference, [NotNullWhen(true)] out SMConfig.TextureRef? result) {
 		return reference.Meta().CheckSliced(bounds, out result);
 	}
 
 	private static bool Cleanup(this ref Bounds sourceBounds, XTexture2D reference) {
-		if (Config.ClampInvalidBounds && !sourceBounds.ClampToChecked(reference.Extent(), out var clampedBounds)) {
+		if (SMConfig.ClampInvalidBounds && !sourceBounds.ClampToChecked(reference.Extent(), out var clampedBounds)) {
 			//Debug.Warning($"Draw.Cleanup: '{reference.SafeName()}' bounds '{sourceBounds}' are not contained in reference bounds '{(Bounds)reference.Bounds}' - clamped ({(sourceBounds.Degenerate ? "degenerate" : "")})");
 			sourceBounds = clampedBounds;
 		}
@@ -142,7 +141,7 @@ internal static partial class OnDrawImpl {
 			var extent = reference.Extent();
 
 			// If the reference texture is too small to consider resampling, return null
-			if (extent.MaxOf <= Config.Resample.MinimumTextureDimensions) {
+			if (extent.MaxOf <= SMConfig.Resample.MinimumTextureDimensions) {
 				return null;
 			}
 

@@ -1,6 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using SpriteMaster.Configuration;
 using SpriteMaster.Extensions;
 using SpriteMaster.Extensions.Reflection;
 using SpriteMaster.GL;
@@ -132,8 +131,8 @@ internal static partial class PGraphicsDeviceManager {
 		@this.GraphicsProfile = GraphicsProfile.HiDef;
 		//@this.PreferMultiSampling = Config.DrawState.MSAASamples > 1;
 		@this.SynchronizeWithVerticalRetrace = true;
-		@this.PreferredBackBufferFormat = (Config.DrawState.HonorHDRSettings && Runtime.IsHDR) ? Config.DrawState.BackbufferHDRFormat : Config.DrawState.BackbufferFormat;
-		if (Config.DrawState.DisableDepthBuffer) {
+		@this.PreferredBackBufferFormat = (SMConfig.DrawState.HonorHDRSettings && Runtime.IsHDR) ? SMConfig.DrawState.BackbufferHDRFormat : SMConfig.DrawState.BackbufferFormat;
+		if (SMConfig.DrawState.DisableDepthBuffer) {
 			@this.PreferredDepthStencilFormat = DepthFormat.None;
 		}
 
@@ -197,7 +196,7 @@ internal static partial class PGraphicsDeviceManager {
 				var maxTextureSizeProperty = GetPrivateField(device, "_maxTextureSize");
 				int? maxTextureSize = maxTextureSizeProperty?.GetValue<int>(device);
 				if (maxTextureSize.HasValue) {
-					Config.ClampDimension = maxTextureSize.Value;
+					SMConfig.ClampDimension = maxTextureSize.Value;
 				}
 			}
 			else {
@@ -222,7 +221,7 @@ internal static partial class PGraphicsDeviceManager {
 						throw new NullReferenceException(nameof(maxTextureSizeProperty));
 					}
 
-					for (var currentDimension = Config.AbsoluteMaxTextureDimension; currentDimension >= Config.BaseMaxTextureDimension; currentDimension >>= 1) {
+					for (var currentDimension = SMConfig.AbsoluteMaxTextureDimension; currentDimension >= SMConfig.BaseMaxTextureDimension; currentDimension >>= 1) {
 						maxTextureSizeProperty.SetValue(capabilities, currentDimension);
 						var maxTextureAspectRatioField = GetPrivateField(capabilities, "MaxTextureAspectRatio");
 						if (maxTextureAspectRatioField is null) {
@@ -230,7 +229,7 @@ internal static partial class PGraphicsDeviceManager {
 						}
 						maxTextureAspectRatioField.SetValue(capabilities, currentDimension / 2);
 						try {
-							Config.ClampDimension = currentDimension;
+							SMConfig.ClampDimension = currentDimension;
 							//Math.Min(i, Config.PreferredMaxTextureDimension);
 							using (new DumpTexture2D(@this.GraphicsDevice, currentDimension, currentDimension) { Name = "Resolution Test Texture" })
 							{
@@ -240,9 +239,9 @@ internal static partial class PGraphicsDeviceManager {
 							break;
 						}
 						catch {
-							Config.ClampDimension = Config.BaseMaxTextureDimension;
-							maxTextureSizeProperty.SetValue(capabilities, Config.BaseMaxTextureDimension);
-							maxTextureAspectRatioField.SetValue(capabilities, Config.BaseMaxTextureDimension / 2);
+							SMConfig.ClampDimension = SMConfig.BaseMaxTextureDimension;
+							maxTextureSizeProperty.SetValue(capabilities, SMConfig.BaseMaxTextureDimension);
+							maxTextureAspectRatioField.SetValue(capabilities, SMConfig.BaseMaxTextureDimension / 2);
 						}
 						Garbage.Collect(compact: true, blocking: true, background: false);
 					}
